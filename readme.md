@@ -2,7 +2,13 @@
 
 Un jeu d'aventure textuel pour apprendre le terminal Linux : on explore un monde avec `ls` et `cd`, on parle aux habitants avec `less`, et chaque nouveau sort appris est une vraie commande.
 
-Cette édition est un fork de [Terminus](https://github.com/mprat/terminus), créé au MIT par Michele Pratusevich et Shawn Conrad. Elle garde le même monde et la même histoire, les traduit en français, et y ajoute beaucoup de notions Linux.
+Cette édition est un fork de [Terminus](https://github.com/mprat/terminus), créé au MIT par Michele Pratusevich et Shawn Conrad. Elle garde le même monde et la même histoire, les traduit en français, y ajoute beaucoup de notions Linux et les relie à la vie d'une école de cybersécurité.
+
+## L'histoire
+
+C'est le jour de la rentrée. Tu es en première année à Cybersup, ta Convocation annonce une épreuve pratique « dont le lieu et le surveillant seront communiqués en temps voulu », et l'école est sens dessus dessous : un intrus qui se fait appeler le Sorcier Noir a pris le contrôle de Terminus, le monde d'entraînement de l'école. Les M2 de la war room ont tous leur compte verrouillé. Le tien est trop neuf pour être sur sa liste. Et Laurent, le directeur pédagogique, est introuvable.
+
+À toi d'entrer dans Terminus, d'y apprendre les sorts du terminal auprès de ses habitants, et de remonter jusqu'à la Citadelle.
 
 ## Jouer
 
@@ -39,6 +45,7 @@ La partie est sauvegardée automatiquement dans le navigateur. La commande `reco
 | Tuyaux | `\|` `cut` `sort` `uniq` | la Taverne (nouveau) |
 | Utilisateurs et mots de passe | `whoami` `id` `passwd` `chown` | Cybersup (remplace le MIT) |
 | Processus | `ps` `top` `kill` `kill -9` | Cybersup |
+| Enquête dans des journaux | `grep`, `cut`, `sort`, `uniq` combinés | la war room de Cybersup |
 | Chercher des fichiers | `find` `tree` | Cybersup |
 | Disques et sauvegardes | `df` `du` `tar` | Cybersup |
 | Tâches planifiées | `crontab` | Cybersup |
@@ -50,17 +57,21 @@ La partie est sauvegardée automatiquement dans le navigateur. La commande `reco
 
 **Des pièges pédagogiques assumés** : écraser un fichier avec `>` au lieu de `>>`, `sudo cd` qui n'existe pas, `kill` refusé sur le processus d'un autre, `chmod` refusé quand on n'est pas propriétaire, un script sans le droit `x`, un lien symbolique avec une cible relative, un processus qui renaît tant que `cron` le relance, `less` qui ne suffit plus sur un fichier de 200 lignes.
 
-**Une fin** : le jeu d'origine s'arrêtait au mot de passe sudo. Ici, il ouvre la Citadelle du Sorcier Noir, dont le combat final réutilise tout ce qui a été appris. Le Sorcier Noir se révèle être Laurent, directeur pédagogique de Cybersup : toute l'aventure était un examen.
+**Une fin** : le jeu d'origine s'arrêtait au mot de passe sudo. Ici, il ouvre la Citadelle du Sorcier Noir, dont le combat final réutilise tout ce qui a été appris. Le Sorcier Noir se révèle être Laurent, directeur pédagogique de Cybersup : Terminus était l'épreuve pratique, et la crise de la war room était l'examen des M2.
 
-**De l'expérience et une note** : chaque sort appris, chaque sort utilisé pour la première fois, chaque lieu découvert et chaque quête rapportent des XP (3500 au total). Dix niveaux, de « Touriste du terminal » à « Root », une barre de progression toujours visible, et une note sur 20 avec mention sur le diplôme final. La commande `xp` détaille d'où viennent les points et ce qu'il reste à gagner.
+**L'école dans le jeu** : le campus de Puteaux (accueil, feuille d'émargement, carte étudiante, tableau d'affichage, BDE et sa boutique, war room avec ses voyants et son écran mural qui suit la progression du joueur), les campus de Lille et de Marseille accessibles uniquement par `ssh`, une enquête d'analyste dans les journaux de connexion, le CTF de l'école. Après la victoire, les habitants de Terminus tombent le masque : ce sont d'anciens élèves et des intervenants. Hormis Laurent, tous les personnages sont inventés.
 
-**Un journal de quêtes** (`quetes`) avec 13 étapes principales et 22 quêtes secondaires.
+**De l'expérience et une note** : chaque sort appris, chaque sort utilisé pour la première fois, chaque lieu découvert et chaque quête rapportent des XP (3770 au total). Dix niveaux calqués sur le cursus (Candidat, Admis, B1, B2, B3, M1, M2, Alternant confirmé, Diplômé, Root), une barre de progression toujours visible, et une note sur 20 avec mention sur le diplôme final. La commande `xp` détaille d'où viennent les points et ce qu'il reste à gagner.
+
+**Un bulletin** (`bulletin`) : les 52 sorts regroupés en six blocs de compétences, BC 01 à BC 06, chacun noté sur 20 et marqué « acquis » quand tous ses sorts ont été appris puis utilisés. Le relevé figure sur le diplôme.
+
+**Un journal de quêtes** (`quetes`) avec 13 étapes principales et 27 quêtes secondaires.
 
 ## Pour les formateurs
 
 Le déroulé complet, avec la solution de chaque étape et le barème, se trouve dans [docs/solution.md](docs/solution.md).
 
-Repères pour la notation : finir la quête principale sans rien faire d'autre donne environ 10 sur 20 ; la solution complète donne 20 sur 20. Le diplôme final (`cat Diplome` dans la Citadelle) affiche le nom du joueur, son score, sa note, sa mention et son temps de jeu : une capture d'écran suffit pour relever les résultats d'un groupe. Le nom est celui que le joueur a écrit dans le LivreDOr de la Taverne.
+Repères pour la notation : finir la quête principale au plus court donne 10 sur 20 ; la solution complète donne 20 sur 20. Le diplôme final (`cat Diplome` dans la Citadelle) affiche le nom du joueur, son score, sa note, sa mention et son temps de jeu : une capture d'écran suffit pour relever les résultats d'un groupe. Le nom est celui que le joueur a écrit dans le LivreDOr de la Taverne.
 
 ## Développement
 

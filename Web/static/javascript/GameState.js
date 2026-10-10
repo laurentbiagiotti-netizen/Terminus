@@ -26,7 +26,7 @@
  */
 
 var CLE_SAUVEGARDE = "terminus-cybersup";
-var VERSION_SAUVEGARDE = 2;
+var VERSION_SAUVEGARDE = 3;
 
 /* Barème de l'expérience. */
 var XP_SORT_APPRIS = 10;      // apprendre un sort
@@ -38,16 +38,32 @@ var XP_QUETE_SECONDAIRE = 50; // une quête secondaire
 
 /* Les niveaux : la part de l'expérience totale qu'il faut avoir atteinte. */
 var NIVEAUX = [
-	{ part: 0,    titre: "Touriste du terminal" },
-	{ part: 0.02, titre: "Novice" },
-	{ part: 0.06, titre: "Apprenti" },
-	{ part: 0.12, titre: "Initié" },
-	{ part: 0.20, titre: "Adepte" },
-	{ part: 0.30, titre: "Mage" },
-	{ part: 0.42, titre: "Grand Mage" },
-	{ part: 0.56, titre: "Archimage" },
-	{ part: 0.72, titre: "Administrateur" },
+	{ part: 0,    titre: "Candidat" },
+	{ part: 0.02, titre: "Admis" },
+	{ part: 0.06, titre: "B1" },
+	{ part: 0.12, titre: "B2" },
+	{ part: 0.20, titre: "B3" },
+	{ part: 0.30, titre: "M1" },
+	{ part: 0.42, titre: "M2" },
+	{ part: 0.56, titre: "Alternant confirmé" },
+	{ part: 0.72, titre: "Diplômé" },
 	{ part: 0.88, titre: "Root" }
+];
+
+/* Le bulletin : les sorts regroupés en blocs de compétences. */
+var BLOCS_DE_COMPETENCES = [
+	{ code: "BC 01", titre: "Se repérer et se documenter",
+	  sorts: ["ls", "cd", "pwd", "less", "help", "man", "clear", "exit", "history"] },
+	{ code: "BC 02", titre: "Manipuler lieux et objets",
+	  sorts: ["mv", "cp", "rm", "mkdir", "rmdir", "touch", "ln", "find", "tree", "tar"] },
+	{ code: "BC 03", titre: "Lire et filtrer des textes",
+	  sorts: ["cat", "head", "tail", "wc", "diff", "grep", "echo", "sort", "uniq", "cut"] },
+	{ code: "BC 04", titre: "Droits, utilisateurs et sécurité",
+	  sorts: ["chmod", "chown", "whoami", "id", "passwd", "sudo"] },
+	{ code: "BC 05", titre: "Processus et automatisation",
+	  sorts: ["ps", "top", "kill", "crontab", "bash", "alias", "unalias", "export", "env", "date"] },
+	{ code: "BC 06", titre: "Système et réseau",
+	  sorts: ["df", "du", "hostname", "ping", "ssh", "apt", "cowsay"] }
 ];
 
 var QUETES_PRINCIPALES = [
@@ -101,6 +117,11 @@ var QUETES_SECONDAIRES = [
 	{ id: "s_archive", titre: "Extraire la sauvegarde de la SalleServeurs" },
 	{ id: "s_ssh", titre: "Voyager par ssh" },
 	{ id: "s_apt", titre: "Installer un paquet" },
+	{ id: "s_emargement", titre: "Signer la FeuilleEmargement de la rentrée" },
+	{ id: "s_soc", titre: "Identifier l'attaquant dans les journaux de la WarRoom" },
+	{ id: "s_bde", titre: "Faire l'inventaire des sweats du BDE" },
+	{ id: "s_campus", titre: "Rendre visite aux campus de Lille et de Marseille" },
+	{ id: "s_annales", titre: "Mettre la main sur les annales de l'examen", secrete: true },
 	{ id: "s_chaussette", titre: "Retrouver la chaussette gauche", secrete: true }
 ];
 
@@ -113,6 +134,7 @@ function GameState(){
 	this.seen = {};
 	this.nbCommandes = 0;
 	this.nom = null;
+	this.dernierLieu = null;   // dernier lieu visité dans Terminus (affiché sur l'écran de la war room)
 	this.chargee = false;
 	// Expérience
 	this.xp = 0;
@@ -249,6 +271,40 @@ GameState.prototype.mention = function(){
 	if (n >= 12) return "Assez bien";
 	if (n >= 10) return "Passable";
 	return "Admis de justesse (mais root quand même)";
+};
+
+/* Une ligne par bloc de compétences : note sur 20 et état. */
+GameState.prototype.bulletin = function(){
+	var lignes = [];
+	for (var i = 0; i < BLOCS_DE_COMPETENCES.length; i++){
+		var bloc = BLOCS_DE_COMPETENCES[i], points = 0, utilises = 0;
+		for (var k = 0; k < bloc.sorts.length; k++){
+			if (this.spells[bloc.sorts[k]]) points += 0.5;
+			if (this.usages[bloc.sorts[k]]){ points += 0.5; utilises++; }
+		}
+		var note = Math.round(points / bloc.sorts.length * 40) / 2;
+		var etat = utilises === bloc.sorts.length ? "acquis" : (points > 0 ? "en cours d'acquisition" : "non évalué");
+		lignes.push("  " + bloc.code + "  " + completerDroite(bloc.titre, 33) + completerGauche(String(note).replace(".", ","), 4) + " / 20   " + etat);
+	}
+	return lignes;
+};
+
+GameState.prototype.texteDuBulletin = function(){
+	var lignes = [C.gras("BULLETIN · relevé de compétences"), ""].concat(this.bulletin());
+	lignes.push("");
+	lignes.push("  " + completerDroite("Moyenne générale (voir xp)", 40) + completerGauche(String(this.note()).replace(".", ","), 4) + " / 20   " +
+		(this.has("victoire") ? this.mention() : "épreuve en cours"));
+	lignes.push("");
+	lignes.push(C.gris("Un bloc est acquis quand chacun de ses sorts a été appris puis lancé au moins une fois."));
+	var manquants = [];
+	for (var i = 0; i < BLOCS_DE_COMPETENCES.length; i++){
+		for (var k = 0; k < BLOCS_DE_COMPETENCES[i].sorts.length; k++){
+			var sort = BLOCS_DE_COMPETENCES[i].sorts[k];
+			if (this.spells[sort] && !this.usages[sort]) manquants.push(sort);
+		}
+	}
+	if (manquants.length > 0) lignes.push(C.gris("Sorts connus mais jamais lancés : " + manquants.join(", ")));
+	return lignes.join("\n");
 };
 
 GameState.prototype.tempsTexte = function(){
@@ -400,19 +456,21 @@ GameState.prototype.texteDuDiplome = function(){
 	var pr = this.progression();
 	var complet = this.xp >= pr.max;
 	return "" +
-		"=====================================================\n" +
-		"            DIPLÔME DE MAGE DU TERMINAL\n" +
-		"=====================================================\n" +
+		"=================================================================\n" +
+		"            CYBERSUP · DIPLÔME DE MAGE DU TERMINAL\n" +
+		"=================================================================\n" +
 		"\n" +
 		"  Décerné à : " + (this.nom || JOUEUR) + "\n" +
 		"\n" +
-		"  pour avoir vaincu le Sorcier Noir lors de l'examen\n" +
-		"  de Terminus, armé d'un simple terminal.\n" +
+		"  promo B1 de Cybersup, pour avoir vaincu le Sorcier Noir\n" +
+		"  lors de l'épreuve pratique de Terminus, armé d'un simple terminal.\n" +
 		"\n" +
 		"  SCORE FINAL         : " + this.xp + " XP sur " + pr.max + "\n" +
 		"  NOTE                : " + this.noteTexte() + "\n" +
 		"  Mention             : " + this.mention() + "\n" +
 		"  Niveau atteint      : " + pr.niveau + " sur " + NIVEAUX.length + ", " + pr.titre + "\n" +
+		"\n" +
+		"  Relevé de compétences\n" + this.bulletin().join("\n") + "\n" +
 		"\n" +
 		"  Sorts maîtrisés     : " + this.knownSpells().length + " sur " + ORDRE_DES_SORTS.length + "\n" +
 		"  Quêtes secondaires  : " + this.nbSecondaires() + " sur " + QUETES_SECONDAIRES.length + "\n" +
@@ -421,7 +479,7 @@ GameState.prototype.texteDuDiplome = function(){
 		"\n" +
 		"  Signé : Laurent, Directeur Pédagogique de Cybersup\n" +
 		"          (et Sorcier Noir à ses heures)\n" +
-		"=====================================================" +
+		"=================================================================" +
 		(this.nom ? "" : "\n(Pour faire figurer ton nom sur le diplôme, va signer le LivreDOr de la Taverne.)") +
 		(complet ? "" : "\n(La note peut encore monter : le diplôme se met à jour tout seul. Tape xp pour voir où il reste des points à prendre.)");
 };
@@ -580,6 +638,26 @@ on le croise jusque dans les FichiersDuNoyau. » Grep soupire. « Greeep. »");
 qu'on prononce son vrai nom à voix haute, devant lui. Et un nom, ça se prononce avec echo. »");
     		this.complete("s_client");
     		break;
+    	case "attaquantIdentifie":
+    		say("Grace tape l'adresse sur son clavier. « " + ADRESSE_ATTAQUANT + "... Attends. Ce n'est pas une adresse de l'extérieur : \
+c'est une machine de chez nous. Regarde hotes.txt, en SalleReseau : elle s'appelle citadelle. L'attaque part de l'intérieur de Terminus.\n\
+Et tu as vu la toute dernière ligne du journal ? Il a fini par entrer... avec le compte de Laurent. \
+Soit on lui a volé son mot de passe, soit... Non. Non, rien. Trouve cette citadelle. »");
+    		CheffeDeQuart.addCmdText("less", "« Bien joué pour l'adresse. On sait maintenant d'où vient l'attaque : la machine citadelle, \
+quelque part au fond de Terminus. D'ici, on ne peut rien contre elle : nos comptes sont verrouillés. Toi, tu peux y aller. \
+On te suit sur l'EcranMural. »");
+    		this.complete("s_soc");
+    		break;
+    	case "inventaireFait":
+    		poser(BDE, Autocollant);
+    		say("« " + NB_SWEATS + " ! Pile ce que j'aurais dit, à quelques dizaines près. » Ada fouille dans un carton. \
+« Tiens, ton Autocollant. Et passe jeudi à l'afterwork, il y aura des pizzas. »");
+    		this.complete("s_bde");
+    		break;
+    	case "campusVisites":
+    		say("Lille et Marseille : les trois campus de l'école te connaissent désormais, et tu n'as pas usé une semelle.");
+    		this.complete("s_campus");
+    		break;
     	case "processusArretes":
     		say("Le formateur applaudit. « Propre. Retiens bien : ps pour voir, kill pour arrêter, -9 pour les têtus, \
 et sudo quand le processus n'est pas à toi. Ça te resservira plus tôt que tu ne crois. »");
@@ -628,6 +706,25 @@ Laurent t'y attend, sa cape sur le bras.");
     		if (EasternMountains.removeItem(OldMan)) poser(EasternMountains, MotDuVieilHomme);
     		EasternMountains.changeIntroText("Tu suis un sentier de montagne qui finit par te mener à l'entrée d'une grotte. \
 Le rocher où s'asseyait le vieil homme est vide.");
+    		// Le rideau tombe : les habitants de Terminus n'ont plus de rôle à tenir.
+    		Tavernier.addCmdText("less", "Le tavernier a tombé le tablier. « Examen terminé, je peux arrêter de faire semblant de savoir tirer une bière. \
+Ken, promo d'il y a trois ans, aujourd'hui analyste dans un centre d'opérations de sécurité. Laurent rappelle toujours quelques anciens \
+pour jouer les habitants. Et entre nous : trier, compter, repérer celui qui revient trop souvent, c'est exactement ce que je fais \
+toute la journée, avec les mêmes sorts. Sauf que ce ne sont pas des chopes. »");
+    		Librarian.addCmdText("less", "« Tu peux m'appeler Barbara. Je ne suis pas vraiment bibliothécaire : je donne le cours d'analyse de journaux \
+aux B3, et Laurent m'a demandé de garder un œil sur Grep. C'est plutôt lui qui me surveille. » Grep hausse les épaules. « Greeep. »");
+    		Vendor.addCmdText("less", "Le marchand retire ses dents en or : un dentier de farces et attrapes. « Tim, M1, trésorier du BDE. \
+Laurent m'a donné le rôle parce que j'ai, paraît-il, une tête à vendre des sorts. Si tu veux un vrai sweat, la boutique est au local du BDE, à l'école. »");
+    		Artisan.addCmdText("less", "« Annie. Dans la vraie vie, je viens le jeudi parler d'automatisation aux M1 : tout ce qu'on fait deux fois, \
+on l'écrit dans un script. Tu l'as vu avec le dragon. Les horloges, en revanche, sont vraiment à moi. »");
+    		Farmer.addCmdText("less", "« Alan, B2, en alternance chez un hébergeur. Le coup de l'épi unique, c'est moi qui l'ai proposé : \
+chez nous, on appelle ça ne pas avoir de sauvegarde. Depuis, j'en fais deux. »");
+    		CheffeDeQuart.addCmdText("less", "« C'était TOI, dans la Citadelle ! On a tout suivi sur l'écran. Les voyants sont repassés au vert, \
+et devine qui est sorti du simulateur en retirant une fausse barbe ? L'intrus, les comptes verrouillés, la crise : \
+il nous faisait passer notre épreuve à nous aussi, pendant que tu passais la tienne. On a eu 14. \
+Il paraît qu'on a mis trop longtemps à penser à la nouvelle recrue. »");
+    		TableauAffichage.setText(TEXTE_TABLEAU + "\n\nRÉSULTATS DE L'ÉPREUVE PRATIQUE : une seule copie rendue, et elle est bonne. Félicitations à " + (this.nom || JOUEUR) +
+    			", qui a vaincu le Sorcier Noir. Le directeur pédagogique rappelle qu'il n'était « pas si méchant ».");
     		Villageois.addCmdText("less", "« Tu as entendu ? Le Sorcier Noir est vaincu ! Par un apprenti, à ce qu'on dit, \
 avec un simple terminal. On raconte même que c'était un examen depuis le début. Moi, je n'y crois pas : \
 personne ne se donnerait autant de mal pour un contrôle de connaissances. »");
@@ -757,7 +854,7 @@ GameState.prototype.save = function(){
 		var donnees = {
 			v: VERSION_SAUVEGARDE,
 			flags: this.flags, spells: this.spells, quests: this.quests, seen: this.seen,
-			nb: this.nbCommandes, nom: this.nom,
+			nb: this.nbCommandes, nom: this.nom, lieu: this.dernierLieu,
 			xp: this.xp, usages: this.usages, visites: this.visited, niveau: this.niveauAnnonce, temps: this.tempsMs,
 			env: this.env, alias: this.alias, paquets: this.paquets, cron: this.cron,
 			ici: current_room.path(),
@@ -809,6 +906,7 @@ GameState.prototype.load = function(){
 		this.seen = donnees.seen || {};
 		this.nbCommandes = donnees.nb || 0;
 		this.nom = donnees.nom || null;
+		this.dernierLieu = donnees.lieu || null;
 		this.xp = donnees.xp || 0;
 		this.usages = donnees.usages || {};
 		this.visited = donnees.visites || {};

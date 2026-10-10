@@ -5,7 +5,7 @@ Ce document déroule la partie dans un ordre direct, quêtes secondaires compris
 Trois repères utiles en salle :
 
 - un joueur bloqué tape `quetes` : le journal donne l'étape en cours et un indice ;
-- un joueur qui veut savoir où il en est tape `xp` : niveau, note sur 20, et ce qui reste à gagner ;
+- un joueur qui veut savoir où il en est tape `xp` (niveau, note sur 20, ce qui reste à gagner) ou `bulletin` (relevé par blocs de compétences) ;
 - un joueur perdu tape `cd` pour rentrer à la Maison, puis `cd -` pour revenir d'où il vient.
 
 ## Le barème
@@ -13,16 +13,37 @@ Trois repères utiles en salle :
 | Action | XP |
 | --- | --- |
 | Étape de la quête principale (13) | 100 chacune, 300 pour la victoire finale |
-| Quête secondaire (22) | 50 |
+| Quête secondaire (27, dont 2 secrètes) | 50 |
 | Sort appris (44, les 8 premiers sont connus au départ) | 10 |
 | Première utilisation d'un sort (52) | 5 |
-| Lieu découvert (40) | 5 |
+| Lieu découvert (44) | 5 |
 
-Le total possible est de 3500 XP. La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
+Le total possible est de 3770 XP. La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
 
-Ordres de grandeur : un parcours réduit au strict nécessaire (une quarantaine de commandes, impossible sans connaître la solution) donne 10,5 sur 20. La solution ci-dessous donne 19,5. Les derniers points se gagnent en visitant chaque lieu et en lançant chaque sort au moins une fois : `xp` liste ceux qui n'ont jamais servi.
+Ordres de grandeur : un parcours réduit au strict nécessaire (une quarantaine de commandes, impossible sans connaître la solution) donne 10 sur 20. La solution ci-dessous, dernier chapitre compris, donne 20 sur 20. Les derniers points se gagnent en visitant chaque lieu et en lançant chaque sort au moins une fois : `xp` liste ceux qui n'ont jamais servi.
 
-Dix niveaux, de « Touriste du terminal » à « Root ».
+Dix niveaux calqués sur le cursus : Candidat, Admis, B1, B2, B3, M1, M2, Alternant confirmé, Diplômé, Root.
+
+Le bulletin regroupe les 52 sorts en six blocs de compétences, notés chacun sur 20 :
+
+| Bloc | Contenu |
+| --- | --- |
+| BC 01 | Se repérer et se documenter |
+| BC 02 | Manipuler lieux et objets |
+| BC 03 | Lire et filtrer des textes |
+| BC 04 | Droits, utilisateurs et sécurité |
+| BC 05 | Processus et automatisation |
+| BC 06 | Système et réseau |
+
+Un bloc est « acquis » quand chacun de ses sorts a été appris puis lancé au moins une fois. Le relevé figure sur le diplôme.
+
+## Le fil de l'histoire
+
+Le joueur est un nouvel étudiant de B1, le jour de la rentrée. Sa Convocation annonce une épreuve pratique dont le lieu et le surveillant seront « communiqués en temps voulu ». À l'école, la WarRoom est en crise : un intrus, le Sorcier Noir, a pris le contrôle de Terminus, le monde d'entraînement de l'école, et a verrouillé les comptes de tout le monde sauf celui du nouveau. Laurent est introuvable.
+
+Le joueur traverse donc Terminus (la même histoire que le jeu d'origine), pendant que l'EcranMural de la WarRoom suit sa progression. À la fin, le Sorcier Noir se révèle être Laurent : Terminus était l'épreuve pratique, la crise de la WarRoom était l'examen des M2, et les habitants de Terminus sont d'anciens élèves et des intervenants qui reprennent leur vraie identité quand on retourne leur parler.
+
+Hormis Laurent, tous les personnages sont inventés. Ils portent des prénoms de pionniers de l'informatique (Ada, Grace, Hedy, Dennis, Linus, Margaret, Radia, Vint, Evi, Ken, Barbara, Tim, Annie, Alan).
 
 ## 1. La Maison et l'Académie
 
@@ -31,6 +52,7 @@ Notions : `ls`, `cd`, `less`, chemins, `--help`, `mv`, joker `*`, `cat`, `head`,
 ```
 ls
 less LettreDeBienvenue
+less Convocation
 ls -a
 less .ChaussetteGauche
 cd ForetOuest/AcademieDesSorts
@@ -100,6 +122,8 @@ La Bibliothèque et son arrière-salle :
 ```
 cd Bibliotheque
 less LevierDiscret
+ls -a
+less .AnnalesDExamen
 cd ArriereSalle
 less Bibliothecaire
 grep chien LivreExercice
@@ -178,9 +202,36 @@ Le mot de passe sudo est `P1ngouin`. Il est demandé une seule fois, en saisie m
 
 ## 5. Cybersup
 
-Notions : `id`, `passwd`, `chown`, `ps`, `top`, `kill`, `kill -9`, `whoami`, `apt`, `find`, `tree`, `df`, `du`, `tar`, `crontab`, `hostname`, `ping`, `ssh`, `exit`.
+Notions : `id`, `passwd`, `chown`, `ps`, `top`, `kill`, `kill -9`, `whoami`, `apt`, `find`, `tree`, `df`, `du`, `tar`, `crontab`, `hostname`, `ping`, `ssh`, `exit`, et une enquête dans des journaux de connexion.
 
 Accessible depuis la Maison à tout moment. `ps`, `kill` et `crontab` sont nécessaires pour le combat final.
+
+L'accueil, la war room et le BDE :
+
+```
+cd ~/Cybersup
+less Accueil
+echo MonNom >> FeuilleEmargement
+cat CarteEtudiante
+less PlanDuCampus
+less TableauAffichage
+cd WarRoom
+less CheffeDeQuart
+cat EcranMural
+less Voyants
+less MainCourante
+grep ECHEC auth.log | cut -d" " -f4 | sort | uniq -c | sort -n
+echo 10.0.66.6
+cd ../BDE
+less PresidenteDuBDE
+grep -c sweat Inventaire
+echo 28
+mv Autocollant ~
+```
+
+L'enquête de la WarRoom est le travail de base d'un analyste : dans `auth.log` (heure, résultat, compte visé, adresse), isoler les échecs, garder la colonne des adresses, compter. L'adresse trouvée, 10.0.66.6, est celle de la machine `citadelle`, et la dernière ligne du journal montre que l'intrus est entré avec le compte de Laurent. L'EcranMural, les Voyants et la CarteEtudiante changent au fil de la partie.
+
+Les salles techniques :
 
 ```
 cd ~/Cybersup
@@ -209,10 +260,17 @@ tar -xf Baie2/.sauvegardes/sauvegarde-lundi.tar
 cat rapport-incident.txt
 cd ../SalleReseau
 less AdminReseau
-ping terminus
-ssh terminus
+cat hotes.txt
+ping lille
+ssh lille
+less EtudiantDeLille
+exit
+ssh marseille
+less EtudianteDeMarseille
 exit
 ```
+
+Les campus de Lille et de Marseille n'ont pas de porte : `cd CampusLille` est refusé, on n'y entre que par `ssh`, et `exit` ramène au point de départ. Les deux étudiants donnent chacun un indice pour le combat final.
 
 `passwd` refuse les mots de passe de moins de 12 caractères, sans majuscule, sans minuscule ou sans chiffre, et ceux qui contiennent un mot trop courant. Rien n'est enregistré. `apt install` exige `sudo`, obtenu au chapitre 4. Le rapport d'incident extrait de l'archive explique la mécanique du bouclier du Sorcier.
 
@@ -247,7 +305,7 @@ Quatre étapes :
 3. Le vrai nom est dans un fichier caché, illisible sans root, et trop long pour `less`.
 4. Le nom se prononce avec `echo`. Un nom deviné sans avoir lu le phylactère est refusé.
 
-Après la victoire, le BureauDeLaurent s'ouvre (`MotDeLaurent`, `Credits`), le vieil homme a quitté sa montagne, et le diplôme affiche le score final, la note sur 20 et la mention. Le diplôme se met à jour si le joueur continue à gagner de l'XP.
+Après la victoire, le BureauDeLaurent s'ouvre (`MotDeLaurent`, `Credits`), le vieil homme a quitté sa montagne, les voyants de la WarRoom passent au vert, le TableauAffichage annonce le résultat, et les habitants de Terminus se présentent sous leur vrai jour quand on retourne leur parler. Le diplôme affiche le score final, la note sur 20, la mention et le relevé de compétences. Le diplôme se met à jour si le joueur continue à gagner de l'XP.
 
 ## Pour aller chercher 20 sur 20
 
@@ -256,6 +314,7 @@ Il reste à visiter les derniers lieux et à lancer au moins une fois les sorts 
 ```
 cd ~/Cybersup/BureauDeLaurent
 cat MotDeLaurent
+less ~/Village/Taverne/Tavernier
 cd ~/Cybersup/SalleServeurs/Baie1
 cd ../Baie2/.sauvegardes
 cd ../../Baie3
@@ -275,6 +334,7 @@ unalias ll
 sudo chown apprenti Panneau
 clear
 xp
+bulletin
 ```
 
-À ce stade le compteur affiche 3500 XP sur 3500, niveau 10 (Root), 20 sur 20, félicitations du jury.
+À ce stade le compteur affiche 3770 XP sur 3770, niveau 10 (Root), 20 sur 20, félicitations du jury, et les six blocs du bulletin sont acquis.

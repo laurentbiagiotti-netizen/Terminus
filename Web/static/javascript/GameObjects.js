@@ -36,6 +36,7 @@ Home.addItem(new Item("LettreDeBienvenue", "Bienvenue ! Si tu découvres le jeu,
         "Si tu ne sais plus où tu es, tape « pwd ».\n" +
         "Si tu ne sais plus quoi faire, tape « quetes ». Et « help » te rappelle tes sorts.\n\n" +
 		"Vas-y, explore. Nous espérons que ce que tu trouveras te plaira.\n" +
+        "Ta Convocation de rentrée à Cybersup est arrivée ce matin : elle est posée juste à côté.\n" +
         "Tout ce que tu apprendras ici fonctionne aussi dans un vrai terminal Linux.",
     "item_manuscript.gif"));
 var ChaussetteGauche = new Item(".ChaussetteGauche",
@@ -44,6 +45,26 @@ cachée par un simple point au début de son nom. Sous Linux, c'est tout ce qu'i
 pour qu'une chose échappe à « ls ».",
     "none.gif").droits("rw-r--r--", JOUEUR);
 Home.addItem(ChaussetteGauche);
+Home.addItem(new Item("Convocation",
+    "CYBERSUP · école de cybersécurité\n\
+8 Terrasse Bellini, Puteaux (La Défense)\n\
+\n\
+CONVOCATION DE RENTRÉE\n\
+\n\
+Tu es attendu aujourd'hui pour ta rentrée en première année (B1).\n\
+\n\
+  1. Passe à l'Accueil du campus retirer ta carte étudiante et signer la feuille d'émargement.\n\
+     Le campus est tout près de chez toi : cd Cybersup\n\
+  2. Suis ton premier cours, en SalleDeCours.\n\
+  3. Une épreuve pratique clôturera la journée. Le lieu et le nom du surveillant \
+te seront communiqués en temps voulu.\n\
+\n\
+Aucun document autorisé pendant l'épreuve, sauf le manuel (man).\n\
+\n\
+Laurent, Directeur Pédagogique\n\
+\n\
+PS : d'ici là, rien ne t'interdit d'aller te promener. Il paraît que la forêt est belle en cette saison.",
+    "item_manuscript.gif"));
 
 //WESTERN FOREST
 var WesternForest = new Room("ForetOuest",
@@ -77,7 +98,8 @@ rien de cassé.\n\
 « Pardon, pardon ! Je cours tellement que je ne regardais pas devant moi... Dis donc, on ne s'est \
 jamais croisés. Tu débarques, pas vrai ? » Clin d'œil. « T'inquiète, c'est plein de nouveaux \
 aujourd'hui. Va donc essayer un cours d'initiation gratuit ! Je t'aurais bien montré le chemin, \
-mais je file en classe. Entre dans la salle de Cours, on s'occupera de toi. Et si tu veux apprendre \
+mais je file en classe : je n'ai pas encore signé la feuille de présence, et ici ça ne pardonne pas. \
+Entre dans la salle de Cours, on s'occupera de toi. Et si tu veux apprendre \
 à lire comme un vrai mage, passe au Scriptorium. À plus ! »\n\
 L'élève disparaît au coin du couloir avant que tu aies pu lui demander son nom. Dommage : \
 quelqu'un de sympathique, et à peu près de ton âge.",
@@ -404,7 +426,9 @@ var Villageois = new Item("Villageois",
     "« Excusez-moi », commences-tu. L'homme se retourne en sursautant. \
 « Oh, bonjour ! Bienvenue à Terminus. Il faudra nous pardonner, on est tous un peu \
 à cran ces temps-ci, avec ce Sorcier Noir qui répand sa corruption tout le long de la \
-côte. Fais attention à toi ! Si tu cherches des nouvelles, la Taverne est l'endroit où tout se dit. »",
+côte. Fais attention à toi ! Si tu cherches des nouvelles, la Taverne est l'endroit où tout se dit.\n\
+Et méfie-toi des drôles de voyageurs qu'on croise ces jours-ci : des jeunes gens en capuche, un grand Y brodé dans le dos, \
+qui prennent des notes sur tout ce qu'on fait. Des espions du sorcier, si tu veux mon avis. »",
     "item_citizen1.gif").personnage();
 TownSquare.addItem(Villageois);
 var LecteurDeJournal = new Item("LecteurDeJournal",
@@ -421,6 +445,15 @@ var DistraughtLady = new Item("DameEploree",
 y est pour quelque chose. »",
     "item_lady.gif").personnage().revele("s_enfant");
 TownSquare.addItem(DistraughtLady);
+TownSquare.addItem(new Item("AvisALaPopulation",
+    "AVIS À LA POPULATION\n\
+\n\
+JEUDI SOIR, à la Taverne : un chevalier viendra raconter son métier à qui voudra l'entendre. Hydromel offert.\n\
+\n\
+LE FORGERON cherche un apprenti en alternance : trois jours à la forge, deux jours à l'Académie.\n\
+\n\
+RAPPEL : malgré la corruption qui ronge la côte, les examens sont maintenus.",
+    "item_sign.gif"));
 
 //MARKETPLACE
 var Marketplace = new Room("Marche",
@@ -542,6 +575,17 @@ var Lever = new Item("LevierDiscret",
 un panneau coulisse et dévoile une arrière-salle secrète.",
    "item_lever.gif");
 Library.addItem(Lever);
+var Annales = new Item(".AnnalesDExamen",
+    "ANNALES (ne pas laisser traîner)\n\
+\n\
+Sujet de l'an dernier : « Vaincre le Sorcier Noir. Durée : libre. Documents autorisés : man. »\n\
+Moyenne de la promotion : 9,5 sur 20.\n\
+Appréciation générale : « Trop de candidats s'acharnent sur le bouclier sans se demander ce qui le relance. \
+Trop peu pensent à regarder ce qui est caché. »\n\
+\n\
+Tu relis deux fois. Que fait un sujet d'examen dans une bibliothèque de village ?",
+    "item_manuscript.gif");
+Library.addItem(Annales);
 
 //BACK ROOM
 var BackRoom = new Room("ArriereSalle",
@@ -903,16 +947,59 @@ Taverne.addItem(Tavernier);
 
 //CYBERSUP (remplace le MIT du jeu d'origine : ps, kill, whoami, find)
 var Cybersup = new Room("Cybersup",
-    "Tu arrives en tapis volant à Cybersup, l'école de cybersécurité ! Des tours de verre \
-s'élèvent tout autour. Ici, on n'apprend pas la magie : on apprend comment elle fonctionne vraiment, \
-et comment défendre les machines qui font tourner le monde.",
+    "Tu arrives en tapis volant à Cybersup, l'école de cybersécurité, au 8 Terrasse Bellini ! Les tours de verre \
+de La Défense s'élèvent tout autour. Ici, on n'apprend pas la magie : on apprend comment elle fonctionne vraiment, \
+et comment défendre les machines qui font tourner le monde. Aujourd'hui, pourtant, une drôle de rumeur court les couloirs : \
+il se passe quelque chose dans la WarRoom.",
     "loc_stata.gif");
-Cybersup.addItem(new Item("LettreAdmission",
-    "Félicitations pour ton admission à Cybersup !\n\
-Tu apprendras ici des sorts qu'aucune académie de magie n'enseigne : surveiller les processus, \
-traquer les fichiers, comprendre qui a le droit de faire quoi. \
-Commence par la SalleDeCours. Bon courage !",
-    "item_manuscript.gif"));
+Cybersup.addItem(new Item("Accueil",
+    "« Bienvenue à Cybersup ! Moi, c'est Hedy, je tiens l'accueil. Tu es de la nouvelle promo de B1 ? Parfait. \
+Ta CarteEtudiante est prête, elle est là, sur le comptoir.\n\
+\n\
+Il faudra aussi signer la FeuilleEmargement : on ajoute son nom à la fin, sans effacer celui des autres. \
+Tu ne sais pas encore écrire dans un objet ? Ce n'est pas grave. Un barde de ma connaissance l'enseigne très bien, \
+dans une taverne du pays de Terminus. Reviens signer quand tu sauras.\n\
+\n\
+Pour t'y retrouver, lis le PlanDuCampus. Ton premier cours est en SalleDeCours. \
+Et si tu cherches Laurent, le directeur pédagogique... prends un ticket. Tout le monde le cherche depuis ce matin, \
+surtout ceux de la WarRoom. »",
+    "item_lady.gif").personnage().revele("s_emargement"));
+var CarteEtudiante = new Item("CarteEtudiante", "", "item_locker.gif");
+Cybersup.addItem(CarteEtudiante);
+var TEXTE_EMARGEMENT =
+    "FEUILLE D'ÉMARGEMENT · promo B1 · jour de rentrée\n\
+Blaise\nCharles\nGeorge\nJohn\nKatherine\nKurt\nSophie";
+var FeuilleEmargement = new Item("FeuilleEmargement", TEXTE_EMARGEMENT, "item_manuscript.gif").droits("rw-rw-rw-");
+Cybersup.addItem(FeuilleEmargement);
+Cybersup.addItem(new Item("PlanDuCampus",
+    "PLAN DU CAMPUS DE PUTEAUX\n\
+\n\
+  SalleDeCours      processus, paquets, chasse au drapeau\n\
+  SalleServeurs     disques, sauvegardes, tâches planifiées\n\
+  SalleReseau       machines, ping, ssh\n\
+  WarRoom           le centre d'opérations : surveillance et gestion de crise\n\
+  BDE               le bureau des étudiants et sa boutique\n\
+  BureauDeLaurent   direction pédagogique (porte fermée)\n\
+\n\
+Les deux autres campus de l'école, Lille et Marseille, ne sont pas la porte à côté : \
+on les rejoint par le réseau. Demande en SalleReseau.",
+    "item_sign.gif"));
+var TEXTE_TABLEAU =
+    "TABLEAU D'AFFICHAGE\n\
+\n\
+JEUDI, 18 h : afterwork. Une ancienne élève, aujourd'hui analyste dans un centre d'opérations de sécurité, \
+raconte sa première nuit d'astreinte. Pizzas offertes par le BDE.\n\
+\n\
+JOBDATING : douze entreprises cherchent des alternants. Venez avec un CV, repartez avec un contrat (ou au moins un stylo).\n\
+\n\
+CTF DE L'ÉCOLE : chasse au drapeau par équipes de trois. Inscriptions au BDE. Échauffement en SalleDeCours.\n\
+\n\
+RAPPEL : la feuille de présence se signe chaque matin. « J'étais là, mais en esprit » n'est pas une signature.\n\
+\n\
+EXERCICE DE CRISE : la WarRoom est réservée aux M2 toute la journée. Si les voyants sont rouges, ne paniquez pas. \
+Si les M2 paniquent, paniquez.";
+var TableauAffichage = new Item("TableauAffichage", TEXTE_TABLEAU, "item_sign.gif");
+Cybersup.addItem(TableauAffichage);
 Cybersup.addItem(new Item("Pancarte",
     "Sur la porte du BureauDeLaurent, une pancarte :\n\n\
   LAURENT, Directeur Pédagogique\n\
@@ -921,7 +1008,7 @@ Cybersup.addItem(new Item("Pancarte",
 La porte est fermée à clé. Un ls -l te dirait qui a le droit d'entrer.",
     "item_sign.gif"));
 Cybersup.addItem(new Item("RSSI",
-    "« Halte ! Responsable de la sécurité des systèmes d'information. RSSI, pour les intimes. \
+    "« Halte ! Auguste, responsable de la sécurité des systèmes d'information. RSSI, pour les intimes. \
 Personne ne va plus loin sans trois vérifications.\n\
 \n\
 Un : qui es-tu ? Le sort id te le dira : ton numéro d'utilisateur, ton groupe, et tous les groupes auxquels tu appartiens. \
@@ -940,7 +1027,7 @@ var SalleDeCours = new Room("SalleDeCours",
 et un formateur qui t'attendait manifestement.",
     "loc_classroom.gif");
 SalleDeCours.addItem(new Item("Formateur",
-    "Le formateur trace au tableau une colonne de numéros. « Tout sort qu'on lance devient un processus : \
+    "Le formateur, Dennis d'après son badge, trace au tableau une colonne de numéros. « Tout sort qu'on lance devient un processus : \
 un programme en train de tourner. Chacun porte un numéro unique, son PID, et appartient à celui qui l'a lancé.\n\
 \n\
   ps             liste les processus en cours\n\
@@ -978,7 +1065,7 @@ SalleDeCours.addProc(4243, "golem_tetu", JOUEUR, {
     killText: "Le golem_tetu n'a pas le temps de protester : le signal KILL ne se discute pas."
 });
 SalleDeCours.addItem(new Item("EtudianteCurieuse",
-    "« Tu cherches quelque chose ? Moi aussi, tout le temps. Ici on organise des CTF, des chasses au drapeau : \
+    "« Tu cherches quelque chose ? Moi aussi, tout le temps. Margaret, B3. Avec le BDE on organise le CTF de l'école, une chasse au drapeau : \
 quelqu'un cache un fichier, les autres le traquent.\n\
 \n\
   find LIEU -name NOM       fouille un lieu et tout ce qu'il contient, cachettes comprises\n\
@@ -1025,7 +1112,7 @@ jeudi     test de restauration (une sauvegarde jamais testée n'est pas une sauv
 ];
 Sauvegardes.addItem(ArchiveLundi);
 SalleServeurs.addItem(new Item("Administratrice",
-    "« Ah, de l'aide ! Voilà ce qu'une administratrice vérifie tous les matins.\n\
+    "« Ah, de l'aide ! Evi, administratrice système. Voilà ce que je vérifie tous les matins, crise ou pas crise.\n\
 \n\
 La place. Un disque plein, et plus rien ne marche.\n\
   df -h              le remplissage de chaque disque\n\
@@ -1051,7 +1138,8 @@ var SalleReseau = new Room("SalleReseau",
 Un administrateur réseau y est à moitié enfoui.",
     "item_workstation.gif");
 SalleReseau.addItem(new Item("AdminReseau",
-    "Une voix sort de l'armoire. « Le réseau, c'est simple : des machines qui portent un nom et qui se parlent.\n\
+    "Une voix sort de l'armoire. « Vint, administrateur réseau. Ne débranche rien. \
+Le réseau, c'est simple : des machines qui portent un nom et qui se parlent.\n\
 \n\
   hostname        le nom de la machine où tu es (regarde ton invite, juste après l'arobase)\n\
   ping MACHINE    lui envoie de petits paquets pour vérifier qu'elle répond\n\
@@ -1059,15 +1147,18 @@ SalleReseau.addItem(new Item("AdminReseau",
   exit            referme la connexion et te ramène d'où tu viens\n\
 \n\
 La liste des machines est dans hotes.txt. Tu ne peux te connecter que là où tu as un compte : \
-ici, les machines où tu as déjà mis les pieds.\n\
+les machines où tu as déjà mis les pieds, plus celles des campus de Lille et de Marseille, \
+où j'ouvre un compte à chaque rentrée. Personne n'y va à pied.\n\
 \n\
-Essaie : ping terminus, puis ssh terminus. Regarde ton invite changer. Puis exit, et te revoilà ici. \
+Essaie : ping lille, puis ssh lille. Regarde ton invite changer. Puis exit, et te revoilà ici. \
 C'est le moyen de transport le plus rapide de ce monde. »",
     "item_citizen1.gif").personnage().enseigne("hostname", "ping", "ssh").revele("s_ssh"));
 SalleReseau.addItem(new Item("hotes.txt",
     "# Les machines du réseau. Sous Linux, ce fichier s'appelle /etc/hosts.\n\
-10.0.0.1     terminus     la Maison et tout le pays\n\
-10.0.42.1    cybersup     l'école\n\
+10.0.0.1     terminus     la Maison et tout le pays de Terminus\n\
+10.0.92.1    cybersup     le campus de Puteaux\n\
+10.0.59.1    lille        le campus de Lille\n\
+10.0.13.1    marseille    le campus de Marseille\n\
 10.0.66.6    citadelle    accès restreint"));
 Baie3.addItem(new Item(".bash_history",
     "ls\ncd Baie2\nls\nls -a\ncd .sauvegardes\ncat flag.txt\nwhoami\nsudo rm -rf /\n# oups",
@@ -1076,6 +1167,167 @@ Baie3.addItem(new Item("PenseBete",
     "Note laissée par un élève :\n« Le fichier .bash_history garde la trace de tout ce qu'on tape dans un terminal. \
 Il est caché, mais pas secret : ls -a le montre. Ne JAMAIS y laisser un mot de passe. \
 Et ne jamais, jamais taper la dernière commande de celui-ci. »"));
+
+//WAR ROOM (nouveau : l'enquête dans les journaux)
+var WarRoom = new Room("WarRoom",
+    "La war room de Cybersup : des écrans du sol au plafond, une table en fer à cheval, \
+et des voyants qui baignent la salle de leur lumière. Une demi-douzaine d'étudiants de M2 fixent les écrans, \
+casque sur les oreilles. Personne ne lève la tête quand tu entres.",
+    "loc_warroom.gif");
+var CheffeDeQuart = new Item("CheffeDeQuart",
+    "« Toi, là ! La nouvelle recrue ! Tu tombes bien. Grace, M2, cheffe de quart aujourd'hui. Je te résume la crise en trente secondes.\n\
+\n\
+Terminus, c'est notre monde d'entraînement : un pays entier, simulé, où l'on apprend les sorts du terminal. \
+Depuis ce matin, un intrus qui se fait appeler le Sorcier Noir en a pris le contrôle. Il corrompt tout, région après région : \
+regarde l'EcranMural. Il a verrouillé nos comptes à tous, et Laurent, le seul à avoir les clés du simulateur, est introuvable. \
+Mauvais jour pour disparaître.\n\
+\n\
+Ton compte à toi est tout neuf : il n'est pas sur sa liste. Tu peux encore entrer dans Terminus, par la forêt ou par la prairie, \
+depuis chez toi. Nous, on te suit d'ici, sur les écrans.\n\
+\n\
+Et si tu veux te rendre utile tout de suite : le journal auth.log enregistre chaque tentative de connexion à nos machines \
+(l'heure, le résultat, le compte visé, l'adresse d'origine). Quelqu'un essaie des mots de passe à la chaîne depuis ce matin. \
+Trouve-moi l'adresse d'où viennent le plus d'échecs, et crie-la-moi : echo ADRESSE. C'est le travail de base d'un analyste :\n\
+\n\
+  grep ECHEC auth.log                       ne garde que les échecs\n\
+  grep ECHEC auth.log | cut -d\" \" -f4       ne garde que la quatrième colonne : l'adresse\n\
+  ... | sort | uniq -c | sort -n            compte chaque adresse, la pire en dernier\n\
+\n\
+Tu ne connais pas encore ces sorts ? Les gens de Terminus te les apprendront : la bibliothécaire, le tavernier. \
+Reviens quand tu sauras. »",
+    "item_grad.gif").personnage().revele("s_soc");
+WarRoom.addItem(CheffeDeQuart);
+var EcranMural = new Item("EcranMural", "", "loc_warroom.gif");
+WarRoom.addItem(EcranMural);
+var Voyants = new Item("Voyants", "", "loc_warroom.gif");
+WarRoom.addItem(Voyants);
+WarRoom.addItem(new Item("MainCourante",
+    "MAIN COURANTE DE LA CELLULE DE CRISE\n\
+\n\
+08:47  Les voyants passent à l'orange. Quelqu'un tente des mots de passe en série sur nos machines.\n\
+09:02  Voyants rouges. L'intrus est entré dans Terminus, le simulateur.\n\
+09:05  Il signe ses messages « le Sorcier Noir ». Très original.\n\
+09:10  Nos comptes sont verrouillés un par un. Laurent injoignable.\n\
+09:12  Quelqu'un a vu Laurent ?\n\
+09:30  La corruption gagne Oston. Nouvelle-Console ne répond plus.\n\
+09:41  Le café est froid. Moral en baisse.\n\
+09:55  Idée de Grace : envoyer quelqu'un dont le compte n'est pas encore connu de l'intrus. Une nouvelle recrue.\n\
+10:00  En attente d'une nouvelle recrue.",
+    "item_manuscript.gif"));
+var ADRESSE_ATTAQUANT = "10.0.66.6";
+var JournalAuth = (function(){
+    var h = new Hasard(9264);
+    var legitimes = [["grace", "10.0.92.14"], ["ada", "10.0.92.27"], ["dennis", "10.0.92.31"], ["evi", "10.0.92.8"],
+        ["linus", "10.0.59.3"], ["radia", "10.0.13.8"], ["margaret", "10.0.92.40"], ["vint", "10.0.92.5"]];
+    var cibles = ["root", "admin", "laurent", "root", "test", "laurent", "invite", "root"];
+    var lignes = [];
+    var secondes = 7 * 3600 + 58 * 60;
+    function heure(){
+        return deuxChiffres(Math.floor(secondes / 3600)) + ":" + deuxChiffres(Math.floor(secondes / 60) % 60) + ":" + deuxChiffres(secondes % 60);
+    }
+    for (var n = 0; n < 240; n++){
+        secondes += 3 + h.entier(28);
+        if (h.suivant() < 0.55){
+            lignes.push(heure() + " ECHEC " + h.choix(cibles) + " " + ADRESSE_ATTAQUANT);
+        } else {
+            var qui = h.choix(legitimes);
+            lignes.push(heure() + " " + (h.suivant() < 0.12 ? "ECHEC" : "SUCCES") + " " + qui[0] + " " + qui[1]);
+        }
+    }
+    secondes += 11;
+    lignes.push(heure() + " SUCCES laurent " + ADRESSE_ATTAQUANT);
+    return new Item("auth.log", lignes.join("\n"));
+})();
+WarRoom.addItem(JournalAuth);
+
+//BDE (nouveau : la vie de l'école)
+var BDE = new Room("BDE",
+    "Le local du BDE, le bureau des étudiants : un canapé qui a connu trois promos, une machine à café héroïque, \
+et des cartons de sweats empilés jusqu'au plafond.",
+    "loc_market.gif");
+var NB_SWEATS = 0;
+var Inventaire = (function(){
+    var h = new Hasard(4096);
+    var articles = ["sweat", "sweat", "tshirt", "tshirt", "mug", "casquette", "autocollant", "gourde"];
+    var tailles = ["S", "M", "L", "XL"];
+    var couleurs = ["noir", "blanc", "orange", "marine"];
+    var lignes = [];
+    for (var n = 0; n < 96; n++){
+        var article = h.choix(articles);
+        if (article === "sweat") NB_SWEATS++;
+        lignes.push(article + ":" + (article === "sweat" || article === "tshirt" ? h.choix(tailles) : "unique") + ":" + h.choix(couleurs));
+    }
+    return new Item("Inventaire", lignes.join("\n"), "item_historybook.gif");
+})();
+BDE.addItem(new Item("PresidenteDuBDE",
+    "« Salut ! Ada, présidente du BDE. Le BDE, c'est tout ce qui n'est pas dans le programme : les afterworks du jeudi, \
+le CTF de l'école, les soirées, et la boutique. On vient de recevoir les nouveaux sweats, regarde.\n\
+\n\
+D'ailleurs, tu tombes à pic. Je dois annoncer ce soir combien de sweats il nous reste, et l'Inventaire fait des kilomètres. \
+Chaque ligne, c'est un article en stock : son type, sa taille, sa couleur. Combien de lignes parlent d'un sweat ? \
+Crie-moi le nombre : echo NOMBRE.\n\
+\n\
+  grep -c sweat Inventaire          compte les lignes qui contiennent « sweat »\n\
+  grep sweat Inventaire | wc -l     la même chose, avec un tuyau\n\
+\n\
+Tu ne connais pas grep ? La bibliothécaire de Terminus te l'apprendra. Reviens me voir après : il y a un autocollant à la clé. »",
+    "item_student.gif").personnage().revele("s_bde"));
+BDE.addItem(Inventaire);
+BDE.addItem(new Item("Boutique",
+    "BOUTIQUE DU BDE\n\
+\n\
+  Sweat à capuche, grand Y dans le dos ............ le classique\n\
+  T-shirt « Ça marche sur ma machine » ............ pour les jours de démonstration\n\
+  Mug « chmod 777 n'est pas une solution » ........ pour les lendemains de démonstration\n\
+  Autocollants ..................................... offerts aux gens serviables",
+    "loc_market.gif"));
+BDE.addItem(new Item("AfficheCTF",
+    "CTF DE L'ÉCOLE\n\
+\n\
+Une chasse au drapeau : des épreuves cachées dans des machines, un drapeau à trouver dans chacune, \
+un classement, des équipes de trois.\n\
+\n\
+Trois règles : on n'attaque que les machines du jeu, on ne sabote pas les autres équipes, \
+et on note tout ce qu'on trouve.\n\
+\n\
+Échauffement permanent : un drapeau est caché dans la SalleServeurs. Demande à Margaret, en SalleDeCours.",
+    "item_sign.gif"));
+var Autocollant = new Item("Autocollant",
+    "Un autocollant du BDE : « Il n'y a pas de nuage. Il y a juste l'ordinateur de quelqu'un d'autre. »\n\
+Il est à toi : rien ne t'empêche de le rapporter chez toi (mv Autocollant ~).",
+    "item_trinket.gif").droits("rw-r--r--", JOUEUR);
+
+//LES AUTRES CAMPUS (nouveau : on n'y va que par ssh)
+var CampusLille = new Room("CampusLille",
+    "Le campus de Lille. Par la fenêtre, de la brique rouge et un ciel qui hésite. La salle sent la gaufre.",
+    "loc_stata.gif");
+CampusLille.removeCommand("cd");
+CampusLille.addCmdText("cd", "Lille est à plus de deux cents kilomètres : on n'y va pas à pied. \
+Par le réseau, en revanche, c'est l'affaire d'une seconde : ssh lille (voir la SalleReseau).");
+CampusLille.addItem(new Item("EtudiantDeLille",
+    "« Tiens, de la visite de Puteaux ! Linus, B3. Tu es venu par ssh ? Normal : c'est le seul train qui n'a jamais de retard.\n\
+\n\
+Ici on suit la crise de la WarRoom sur nos écrans. J'ai un tuyau pour toi, c'est le cas de le dire. \
+Les intrus adorent laisser des tâches planifiées derrière eux : tu arrêtes leur programme, il revient une minute plus tard. \
+Le jour où ça t'arrive, ne t'acharne pas. Demande-toi qui le relance. »",
+    "item_boy.gif").personnage().revele("s_campus"));
+CampusLille.addItem(new Item("Gaufre",
+    "Une gaufre fourrée, encore tiède. Elle ne survivrait pas au voyage par ssh."));
+var CampusMarseille = new Room("CampusMarseille",
+    "Le campus de Marseille. Du soleil plein les vitres, et quelqu'un a encore laissé la fenêtre ouverte sur le bruit du port.",
+    "loc_stata.gif");
+CampusMarseille.removeCommand("cd");
+CampusMarseille.addCmdText("cd", "Marseille est à l'autre bout du pays : on n'y va pas à pied. \
+Par le réseau, en revanche, c'est l'affaire d'une seconde : ssh marseille (voir la SalleReseau).");
+CampusMarseille.addItem(new Item("EtudianteDeMarseille",
+    "« Oh, de la visite ! Radia, M1. Assieds-toi, tu as bien cinq minutes. Non ? Vous n'avez jamais cinq minutes, à Puteaux.\n\
+\n\
+Un conseil quand même, pour ton affaire de sorcier. Un secret bien gardé, sur une machine, c'est presque toujours \
+un fichier caché (ls -a), que seul son propriétaire a le droit de lire (ls -l), et trop long pour être lu d'une traite. \
+Tu vois le tableau ? Alors tu sais déjà avec quels sorts on l'ouvre. »",
+    "item_lady.gif").personnage().revele("s_campus"));
+CampusMarseille.addItem(new Item("CartePostale",
+    "Une carte postale des calanques, punaisée au mur. Au dos : « Le réseau passe mal ici. C'est fait exprès. »"));
 
 var BureauDeLaurent = new Room("BureauDeLaurent",
     "Un bureau encombré : des piles de copies, une cape noire jetée sur le dossier d'une chaise, \
@@ -1198,7 +1450,12 @@ Alors je t'ai mis dans de mauvais pas.\n\
 \n\
 Le vieil homme qui te soufflait la réponse à chaque man ? C'était moi. Je ne suis pas si vieux, c'est la barbe. \
 L'enfant dans la cage ? Ma stagiaire, très bien payée en chocolat. Les trolls sont des intermittents du spectacle. \
-Et le fermier a toujours eu deux épis.\n\
+Et le fermier a toujours eu deux épis. Quant aux habitants de Terminus, ce sont d'anciens élèves et des intervenants \
+de l'école, qui se prêtent au jeu chaque année : retourne les voir, ils n'ont plus de rôle à tenir.\n\
+\n\
+Ta convocation annonçait une épreuve pratique, « lieu et surveillant communiqués en temps voulu ». Voilà : c'est communiqué. \
+Et pendant que tu passais la tienne, les M2 de la WarRoom passaient la leur, sans le savoir non plus : \
+un exercice de crise, avec un intrus qui leur verrouillait leurs comptes. Deux examens pour le prix d'une attaque.\n\
 \n\
 Ce que tu as appris ici n'a rien de magique, et c'est la meilleure nouvelle de la journée : \
 ls, cd, grep, chmod, ps, kill, sudo... ces sorts fonctionnent tels quels sur de vraies machines, \
@@ -1274,6 +1531,10 @@ link_rooms(Home, Cybersup);
 link_rooms(Cybersup, SalleDeCours);
 link_rooms(Cybersup, SalleServeurs);
 link_rooms(Cybersup, SalleReseau);
+link_rooms(Cybersup, WarRoom);
+link_rooms(Cybersup, BDE);
+link_rooms(Cybersup, CampusLille);
+link_rooms(Cybersup, CampusMarseille);
 link_rooms(Cybersup, BureauDeLaurent);
 link_rooms(SalleServeurs, Baie1);
 link_rooms(SalleServeurs, Baie2);
@@ -1338,7 +1599,62 @@ function verifierMonde(){
     })());
     une("processusArretes", !SalleDeCours.hasProcNamed("sortilege_infini") && !SalleDeCours.hasProcNamed("golem_tetu"));
     une("demonsMorts", Citadelle.procs.length === 0);
+    une("campusVisites", state.visited[CampusLille.id] === true && state.visited[CampusMarseille.id] === true);
     if (state.has("victoire")) Diplome.cmd_text["less"] = state.texteDuDiplome();
+    // Les objets de l'école qui se tiennent à jour tout seuls.
+    CarteEtudiante.cmd_text["less"] = texteCarteEtudiante();
+    EcranMural.cmd_text["less"] = texteEcranMural();
+    Voyants.cmd_text["less"] = texteVoyants();
+}
+
+function texteCarteEtudiante(){
+    var pr = state.progression();
+    return "CARTE ÉTUDIANTE · CYBERSUP\n\n" +
+        "  Nom          : " + (state.nom || "(à compléter : signe la FeuilleEmargement)") + "\n" +
+        "  Identifiant  : " + JOUEUR + "\n" +
+        "  Promo        : B1, rentrée de cette année\n" +
+        "  Campus       : Puteaux\n" +
+        "  Niveau       : " + pr.niveau + " sur " + NIVEAUX.length + ", " + pr.titre + "\n" +
+        "  Expérience   : " + pr.xp + " XP\n\n" +
+        "Cette carte se met à jour toute seule. Ne la plie pas.";
+}
+
+function texteEcranMural(){
+    function ligne(nom, etat){
+        var points = "";
+        while (nom.length + points.length < 26) points += ".";
+        return "  " + nom + " " + points + " " + etat;
+    }
+    var fini = state.has("victoire");
+    var citadelle = "position inconnue";
+    if (state.quests["s_soc"] || state.has("certificatLu")) citadelle = "SOURCE DE L'ATTAQUE (10.0.66.6)";
+    if (state.has("demonsMorts")) citadelle = "défenses tombées";
+    if (fini) citadelle = "reprise";
+    return "ÉCRAN MURAL · supervision de Terminus, le simulateur\n\n" +
+        ligne("Maison", "calme") + "\n" +
+        ligne("Académie des Sorts", "calme") + "\n" +
+        ligne("Portail", state.has("ouvrirPortail") ? "ouvert" : "scellé") + "\n" +
+        ligne("Place du village", fini ? "on danse sur la place" : "population inquiète") + "\n" +
+        ligne("Ferme", state.has("CornCopied") ? "récolte sauvée" : "récolte détruite") + "\n" +
+        ligne("Clairière", state.has("HouseMade") ? "chaumière rebâtie" : "maison détruite") + "\n" +
+        ligne("Caverne des Trolls", state.has("enfantLibre") ? "enfant libéré" : "un enfant retenu") + "\n" +
+        ligne("Oston", fini ? "restauré" : "CORROMPU") + "\n" +
+        ligne("Nouvelle-Console", fini ? "restaurée" : "NE RÉPOND PLUS") + "\n" +
+        ligne("Citadelle", citadelle) + "\n\n" +
+        "  Agent sur le terrain : " + (state.nom || JOUEUR) + "\n" +
+        "  Dernière position connue dans Terminus : " + (state.dernierLieu || "aucune, il n'y est pas encore entré") + "\n" +
+        "  Étapes franchies : " + QUETES_PRINCIPALES.filter(function(q){ return state.quests[q.id]; }).length + " sur " + QUETES_PRINCIPALES.length;
+}
+
+function texteVoyants(){
+    if (state.has("victoire")){
+        return "Les voyants sont au VERT fixe. Un gong a retenti quand le dernier a basculé, et quelqu'un a applaudi.";
+    }
+    if (state.has("demonsMorts")){
+        return "Les voyants sont passés à l'ORANGE : les défenses de l'intrus sont tombées. Toute la salle retient son souffle.";
+    }
+    return "Les voyants pulsent en ROUGE : un intrus est actif dans Terminus. \
+Ce sont les mêmes voyants qui servent de minuteur pendant les examens. Vert : on a le temps. Orange : il faut conclure. Rouge : posez les stylos.";
 }
 
 /* Indices quand le joueur est presque dans le vrai. */
@@ -1364,6 +1680,7 @@ GameEvents.addListener("read", function(e){
         if (!state.has("pullLever")) state.applyState("pullLever");
     }
     if (e.item === ChaussetteGauche && (e.cmd === "less" || e.cmd === "cat")) state.complete("s_chaussette");
+    if (e.item === Annales && (e.cmd === "less" || e.cmd === "cat")) state.complete("s_annales");
     if (e.item === GrandParchemin && (e.cmd === "head" || e.cmd === "tail" || e.cmd === "wc")){
         state.set("parchemin_" + e.cmd);
         if (state.has("parchemin_head") && state.has("parchemin_tail") && state.has("parchemin_wc") && !state.has("parcheminMesure")){
@@ -1391,6 +1708,23 @@ GameEvents.addListener("echo", function(e){
             say("Le tavernier secoue la tête. « " + e.text.trim() + " ? Non. Recompte. »");
         }
     }
+    if (e.room === WarRoom && state.seen["s_soc"] && !state.quests["s_soc"]){
+        var dit = e.text.trim();
+        if (dit === ADRESSE_ATTAQUANT){
+            state.applyState("attaquantIdentifie");
+        } else if (/^\d+\.\d+\.\d+\.\d+$/.test(dit)){
+            say("Grace vérifie sur son écran. « Non, celle-là n'a que quelques échecs : quelqu'un qui tape mal son mot de passe. \
+Cherche celle qui en compte des dizaines. »");
+        }
+    }
+    if (e.room === BDE && state.seen["s_bde"] && !state.quests["s_bde"]){
+        var nombre = e.text.trim();
+        if (nombre === String(NB_SWEATS)){
+            state.applyState("inventaireFait");
+        } else if (/^\d+$/.test(nombre)){
+            say("Ada fait la moue. « " + nombre + " ? Ça ne colle pas avec les cartons. Recompte : seulement les lignes où il y a écrit sweat. »");
+        }
+    }
     if (e.room === Citadelle && !state.has("victoire")){
         if (memeMot(e.text, VRAI_NOM)){
             if (!state.has("demonsMorts")){
@@ -1406,21 +1740,33 @@ GameEvents.addListener("echo", function(e){
     }
 });
 
-/* Écrire dans le LivreDOr de la Taverne. */
+/* Signer : le LivreDOr de la Taverne et la FeuilleEmargement de l'école. */
 GameEvents.addListener("write", function(e){
-    if (e.item !== LivreDOr) return;
-    var signature = e.text.split("\n")[0].trim();
-    if (!e.append){
-        LivreDOr.setText(TEXTE_LIVRE_DOR + (signature !== "" ? "\n" + e.text : ""));
-        say("Le tavernier blêmit. « Mes signatures ! Tu as tout ÉCRASÉ avec ton chevron unique ! » \
+    var registres = [
+        { item: LivreDOr, texte: TEXTE_LIVRE_DOR, quete: "s_livredor",
+          ecrase: "Le tavernier blêmit. « Mes signatures ! Tu as tout ÉCRASÉ avec ton chevron unique ! » \
 Il sort une copie de sous le comptoir en grommelant, recolle les pages et y ajoute ta ligne lui-même. \
-« Deux chevrons pour ajouter. DEUX. »");
-    } else {
-        say("Ta signature rejoint celles des autres voyageurs. Le barde applaudit.");
-    }
-    if (signature !== ""){
-        state.nom = signature.replace(/^[«"'\s]+|[»"'\s]+$/g, "").substring(0, 30);
-        state.complete("s_livredor");
+« Deux chevrons pour ajouter. DEUX. »",
+          ajoute: "Ta signature rejoint celles des autres voyageurs. Le barde applaudit." },
+        { item: FeuilleEmargement, texte: TEXTE_EMARGEMENT, quete: "s_emargement",
+          ecrase: "Hedy pâlit. « Tu viens d'effacer toute la promo ! Un seul chevron écrase, il en faut deux pour ajouter. » \
+Elle ressort une feuille de secours du tiroir (ce n'est manifestement pas la première fois) et y recopie ton nom.",
+          ajoute: "Hedy vérifie la feuille. « Parfait, ta présence est officielle. Ton nom est sur ta carte étudiante. »" }
+    ];
+    for (var i = 0; i < registres.length; i++){
+        var r = registres[i];
+        if (e.item !== r.item) continue;
+        var signature = e.text.split("\n")[0].trim();
+        if (!e.append){
+            r.item.setText(r.texte + (signature !== "" ? "\n" + e.text : ""));
+            say(r.ecrase);
+        } else {
+            say(r.ajoute);
+        }
+        if (signature !== ""){
+            state.nom = signature.replace(/^[«"'\s]+|[»"'\s]+$/g, "").substring(0, 30);
+            state.complete(r.quete);
+        }
     }
 });
 
@@ -1491,6 +1837,7 @@ GameEvents.addListener("apt", function(e){
 
 /* Arriver quelque part (même en sautant des étapes avec un long chemin). */
 GameEvents.addListener("enter", function(e){
+    if (e.room !== Home && !joueurDans(Cybersup)) state.dernierLieu = e.room.room_name;
     if (joueurDans(Tunnel)) state.complete("m_tunnel");
     if (joueurDans(TownSquare)) state.complete("m_portail");
     if (e.room === Paradise && !state.has("fin")) state.applyState("fin");

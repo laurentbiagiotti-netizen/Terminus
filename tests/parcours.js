@@ -39,13 +39,17 @@ contient(t("vim"), "existe bel et bien sous Linux", "commande réelle absente");
 contient(t("less lettredebienvenue"), "majuscules et minuscules", "indice sur la casse");
 contient(t("cd /"), "partent de ta Maison", "pas de chemin absolu");
 contient(t("less .ChaussetteGauche"), "chaussette gauche", "lecture de la chaussette");
+s = t("less Convocation");
+contient(s, "8 Terrasse Bellini", "la convocation de rentrée");
+contient(s, "Laurent, Directeur Pédagogique", "la convocation est signée");
 verifier(jeu.lire("state.quests.s_chaussette") === true, "quête secrète de la chaussette");
 
 // --- Académie ---
 s = t("cd ForetOuest/AcademieDesSorts");
 contient(s, "AcademieDesSorts", "cd avec un chemin");
 contient(s, "+15 XP", "XP de découverte : deux lieux traversés et le premier cd");
-contient(t("xp"), "Niveau 2 : Novice", "tableau d'expérience");
+verifier(/Niveau [12] : (Candidat|Admis)/.test(t("xp")), "tableau d'expérience, niveaux calqués sur le cursus");
+contient(t("bulletin"), "BC 01  Se repérer et se documenter", "bulletin par blocs de compétences");
 contient(t("ls --help"), "LiSter", "--help");
 contient(t("less EleveEnRetard"), "Scriptorium", "l'élève");
 contient(t("cd Cours"), "Cours", "cd Cours");
@@ -120,7 +124,9 @@ jeu = jeu2; t = jeu.taper;
 // --- Village ---
 s = t("ls");
 contient(s, "Taverne/", "la taverne");
-t("less Villageois"); t("less LecteurDeJournal"); t("less DameEploree");
+contient(t("less Villageois"), "un grand Y brodé dans le dos", "les voyageurs en capuche");
+t("less LecteurDeJournal"); t("less DameEploree");
+contient(t("less AvisALaPopulation"), "en alternance", "l'avis à la population");
 t("cd Marche");
 contient(t("less SortRm"), "Nouveau sort appris : rm", "rm");
 contient(t("less SortMkdir"), "Quête accomplie : Apprendre les sorts du Marché", "mkdir");
@@ -147,6 +153,9 @@ contient(t("pwd"), "PlaceDuVillage/Marche", "pwd donne le vrai chemin");
 t("cd ../Bibliotheque");
 contient(t("grep sudo GrimoireTropCool"), "ne connais pas encore", "grep inconnu");
 contient(t("less LevierDiscret"), "arrière-salle", "le levier");
+verifier(t("ls").indexOf("Annales") === -1, "les annales sont cachées");
+contient(t("ls -a"), ".AnnalesDExamen", "ls -a montre les annales");
+contient(t("less .AnnalesDExamen"), "Mettre la main sur les annales", "quête secrète des annales");
 contient(t("ls"), "ArriereSalle/", "l'arrière-salle apparaît");
 t("cd ArriereSalle");
 contient(t("less Bibliothecaire"), "Nouveau sort appris : grep", "grep");
@@ -278,7 +287,41 @@ contient(t("echo Laurent"), "bouclier", "le bouclier protège le sorcier");
 
 // --- Cybersup ---
 contient(t("cd ~/Cybersup"), "Cybersup", "arrivée à Cybersup");
-t("less LettreAdmission");
+s = t("less Accueil");
+contient(s, "Hedy", "l'accueil");
+contient(t("cat CarteEtudiante"), "Ada Lovelace", "la carte étudiante reprend le nom signé à la taverne");
+contient(t("echo Zoe > FeuilleEmargement"), "effacer toute la promo", "un chevron écrase la feuille d'émargement");
+contient(t("cat FeuilleEmargement"), "Katherine", "la feuille est rétablie");
+contient(t("echo Ada Lovelace >> FeuilleEmargement"), "ta présence est officielle", "signer la feuille d'émargement");
+verifier(jeu.lire("state.quests.s_emargement") === true, "quête de l'émargement");
+contient(t("less PlanDuCampus"), "WarRoom", "le plan du campus");
+contient(t("less TableauAffichage"), "afterwork", "le tableau d'affichage");
+// La war room et l'enquête dans les journaux
+t("cd WarRoom");
+contient(t("less CheffeDeQuart"), "Grace", "la cheffe de quart");
+contient(t("less Voyants"), "ROUGE", "les voyants sont rouges");
+s = t("cat EcranMural");
+contient(s, "SOURCE DE L'ATTAQUE", "l'écran mural suit l'avancée dans Terminus");
+contient(s, "chaumière rebâtie", "l'écran mural reflète les quêtes");
+contient(s, "Dernière position connue dans Terminus : Citadelle", "l'écran mural suit le joueur");
+contient(t("less MainCourante"), "En attente d'une nouvelle recrue", "la main courante");
+contient(t("grep ECHEC auth.log | cut -d\" \" -f4 | sort | uniq -c | sort -n | tail -n 1"), "10.0.66.6", "l'enquête trouve l'adresse");
+contient(t("echo 10.0.92.8"), "quelques échecs", "mauvaise adresse");
+s = t("echo 10.0.66.6");
+contient(s, "citadelle", "l'adresse mène à la citadelle");
+contient(s, "Identifier l'attaquant", "quête de la war room");
+contient(t("tail -n 1 auth.log"), "SUCCES laurent 10.0.66.6", "l'intrus est entré avec le compte de Laurent");
+// Le BDE
+t("cd ../BDE");
+contient(t("less PresidenteDuBDE"), "Ada", "la présidente du BDE");
+var sweats = t("grep -c sweat Inventaire").split("\n")[0].trim();
+verifier(sweats === String(jeu.lire("NB_SWEATS")), "grep -c compte les sweats : " + sweats);
+contient(t("grep sweat Inventaire | wc -l"), sweats, "le tuyau donne le même compte");
+contient(t("echo 3"), "Recompte", "mauvais compte");
+contient(t("echo " + sweats), "Faire l'inventaire des sweats", "quête du BDE");
+contient(t("mv Autocollant ~"), "Maison", "rapporter l'autocollant chez soi");
+contient(t("less Boutique"), "chmod 777", "la boutique");
+t("cd ..");
 contient(t("less Pancarte"), "Directeur Pédagogique", "la pancarte");
 contient(t("less RSSI"), "Nouveau sort appris : passwd", "passwd");
 contient(t("id"), "uid=1000(apprenti)", "id");
@@ -352,6 +395,20 @@ contient(s, "Voyager par ssh", "quête ssh");
 contient(t("hostname"), "terminus", "hostname après ssh");
 contient(t("exit"), "SalleReseau", "exit referme la connexion");
 contient(t("exit"), "On ne quitte pas", "exit sans connexion");
+// Les autres campus : seulement par le réseau
+contient(t("cd ~/Cybersup/CampusLille"), "on n'y va pas à pied", "Lille ne se rejoint pas avec cd");
+t("cd ~/Cybersup/SalleReseau");
+contient(t("cat hotes.txt"), "marseille", "la liste des machines");
+contient(t("ping -c 1 lille"), "1 reçus", "ping lille");
+contient(t("ssh lille"), "Bienvenue sur lille", "ssh lille");
+contient(t("hostname"), "lille", "hostname à Lille");
+contient(t("less EtudiantDeLille"), "Linus", "l'étudiant de Lille");
+contient(t("ssh marseille"), "Bienvenue sur marseille", "ssh d'un campus à l'autre");
+s = t("less EtudianteDeMarseille");
+contient(s, "Radia", "l'étudiante de Marseille");
+verifier(jeu.lire("state.quests.s_campus") === true, "quête des campus");
+contient(t("exit"), "CampusLille", "exit ramène à Lille");
+contient(t("exit"), "SalleReseau", "exit ramène à Puteaux");
 
 // --- Citadelle, le combat ---
 contient(t("ssh citadelle"), "Bienvenue sur citadelle", "retour à la citadelle par ssh");
@@ -389,6 +446,7 @@ s = t("cat Diplome");
 contient(s, "Ada Lovelace", "le diplôme porte le nom signé");
 contient(s, "Sorts maîtrisés     : 52 sur 52", "tous les sorts");
 contient(s, "SCORE FINAL", "le score final est sur le diplôme");
+contient(s, "BC 04  Droits, utilisateurs et sécurité", "le relevé de compétences est sur le diplôme");
 contient(s, "/ 20", "la note est sur le diplôme");
 contient(t("rm Laurent"), "directeur pédagogique", "on ne supprime pas Laurent");
 s = t("cd Paradis");
@@ -398,8 +456,16 @@ contient(t("ls"), "rien d'intéressant", "ls au paradis");
 contient(t("cd ~/Cybersup/BureauDeLaurent"), "fausse barbe", "le bureau est ouvert");
 contient(t("cat Credits"), "Michele Pratusevich", "les crédits");
 contient(t("cd ~/PrairieNord/MontagnesEst && ls"), "MotSurLeRocher", "le vieil homme est parti");
+// Le rideau est tombé : les habitants de Terminus et l'école ont changé de ton
+contient(t("less ~/Village/Taverne/Tavernier"), "Ken", "le tavernier se présente");
+contient(t("less ~/Village/Marche/Marchand"), "trésorier du BDE", "le marchand se présente");
+contient(t("less ~/Cybersup/WarRoom/Voyants"), "VERT", "les voyants sont verts");
+contient(t("less ~/Cybersup/WarRoom/CheffeDeQuart"), "On a eu 14", "la war room passait aussi son épreuve");
+contient(t("cat ~/Cybersup/WarRoom/EcranMural"), "reprise", "l'écran mural après la victoire");
+contient(t("cat ~/Cybersup/TableauAffichage"), "une seule copie rendue", "les résultats sont affichés");
+contient(t("cat ~/Cybersup/CarteEtudiante"), "Niveau", "la carte étudiante affiche le niveau");
 s = t("quetes");
-contient(s, "22 accomplies sur 22", "journal complet");
+contient(s, "27 accomplies sur 27", "journal complet");
 verifier(s.indexOf("[ ]") === -1, "plus aucune quête ouverte");
 
 // --- Score : il ne manque que quelques premières utilisations et quelques lieux ---
@@ -423,6 +489,8 @@ verifier(jeu.lire("state.xp") === jeu.lire("state.xpMax()"), "20 / 20 est atteig
 s = t("xp");
 contient(s, "Niveau 10 : Root", "niveau maximal");
 contient(s, "20 / 20", "note maximale");
+s = t("bulletin");
+verifier((s.match(/20 \/ 20   acquis/g) || []).length === 6, "les six blocs sont acquis");
 contient(t("cat ~/PrairieNord/MontagnesEst/Grotte/CouloirSombre/SalleHumide/.Tunnel/ChambreDePierre/Portail/PlaceDuVillage/PontBrise/Clairiere/SentierSinistre/CaverneDesTrolls/Toboggan/FichiersDuNoyau/Citadelle/Diplome"), "Félicitations du jury", "mention maximale sur le diplôme");
 
 // --- La partie terminée se recharge aussi ---

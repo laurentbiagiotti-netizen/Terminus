@@ -55,6 +55,8 @@ Shell.variable = function(nom){
 
 /* Nom de la machine sur laquelle se trouve le joueur. */
 Shell.hote = function(){
+	if (typeof CampusLille !== "undefined" && joueurDans(CampusLille)) return "lille";
+	if (typeof CampusMarseille !== "undefined" && joueurDans(CampusMarseille)) return "marseille";
 	if (typeof Cybersup !== "undefined" && joueurDans(Cybersup)) return "cybersup";
 	if (typeof Citadelle !== "undefined" && joueurDans(Citadelle)) return "citadelle";
 	return "terminus";
@@ -66,7 +68,7 @@ function say(texte){
 }
 
 /* Sorts toujours disponibles : ce sont des commandes du jeu, pas de Linux. */
-var SORTS_DU_JEU = ["quetes", "xp", "score", "recommencer", "sorts", "aide"];
+var SORTS_DU_JEU = ["quetes", "xp", "score", "bulletin", "recommencer", "sorts", "aide"];
 
 /* Vraies commandes Linux absentes de ce monde : on le dit gentiment. */
 var COMMANDES_REELLES = ["vi", "vim", "nano", "emacs", "apt-get", "yum", "dnf", "pacman", "scp",
@@ -1282,7 +1284,8 @@ Shell.sorts.help = function(args, io){
 	}
 	lignes.push("");
 	lignes.push("Pour le détail d'un sort : " + C.vert("man SORT") + " (par exemple man ls).");
-	lignes.push("Ton journal de quêtes : " + C.vert("quetes") + ". Ton expérience et ta note : " + C.vert("xp") + ". Repartir de zéro : " + C.vert("recommencer") + ".");
+	lignes.push("Ton journal de quêtes : " + C.vert("quetes") + ". Ton expérience et ta note : " + C.vert("xp") + ". Ton relevé de compétences : " + C.vert("bulletin") + ".");
+	lignes.push("Repartir de zéro : " + C.vert("recommencer") + ".");
 	lignes.push(C.gris("Astuces : la touche Tab complète les noms, la flèche du haut rappelle tes derniers sorts."));
 	return lignes.join("\n");
 };

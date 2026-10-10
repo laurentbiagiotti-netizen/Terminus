@@ -218,7 +218,48 @@ def ecran_titre():
     enregistrer(im, "titlescreen_cybersup.gif")
 
 
+def war_room():
+    im = cadre()
+    d = ImageDraw.Draw(im)
+    # mur d'écrans : un grand au centre, deux petits de chaque côté
+    d.rectangle([30, 16, 74, 44], outline=BLANC, fill=NOIR)
+    for x, y in [(14, 18), (14, 32), (78, 18), (78, 32)]:
+        d.rectangle([x, y, x + 12, y + 10], outline=BLANC, fill=NOIR)
+    # petits écrans : courbes et barres
+    d.line([(16, 25), (19, 22), (22, 24), (24, 20)], fill=VERT)
+    for i, hauteur in enumerate([3, 6, 4, 7]):
+        d.line([16 + i * 3, 40, 16 + i * 3, 40 - hauteur], fill=VERT)
+    d.line([(80, 24), (83, 26), (86, 21), (88, 23)], fill=VERT)
+    for i in range(3):
+        d.line([80, 35 + i * 2, 88 - i * 2, 35 + i * 2], fill=VERT)
+    # grand écran : une carte, des régions, un point d'alerte
+    d.polygon([(36, 24), (44, 20), (52, 23), (56, 30), (50, 38), (40, 39), (34, 33)], outline=VERT)
+    d.polygon([(58, 22), (66, 21), (70, 27), (66, 34), (60, 32)], outline=VERT)
+    d.line([(44, 20), (46, 30), (40, 39)], fill=VERT)
+    d.ellipse([62, 25, 66, 29], outline=BLANC)
+    d.point((64, 27), fill=BLANC)
+    d.line([(46, 30), (62, 27)], fill=BLANC)
+    # voyant d'alerte au plafond, avec ses rayons
+    d.rectangle([49, 11, 55, 14], fill=BLANC)
+    for dx, dy in [(-6, 0), (6, 0), (-4, -2), (4, -2)]:
+        d.point((52 + dx, 12 + dy), fill=BLANC)
+    # table en fer à cheval et postes de travail
+    d.arc([18, 46, 86, 96], 180, 360, fill=BLANC)
+    d.arc([26, 54, 78, 98], 180, 360, fill=BLANC)
+    d.line([18, 71, 26, 76], fill=BLANC)
+    d.line([86, 71, 78, 76], fill=BLANC)
+    for x, y in [(24, 60), (37, 52), (52, 49), (67, 52), (80, 60)]:
+        d.rectangle([x - 3, y - 4, x + 3, y], outline=BLANC, fill=VERT)
+        d.line([x - 4, y + 2, x + 4, y + 2], fill=BLANC)
+    # trois silhouettes de dos
+    for x in (34, 52, 70):
+        d.ellipse([x - 3, 72, x + 3, 78], fill=BLANC)
+        d.polygon([(x - 6, Y1 - 1), (x - 5, 81), (x + 5, 81), (x + 6, Y1 - 1)], fill=VERT)
+    enregistrer(im, "loc_warroom.gif")
+
+
 if __name__ == "__main__":
+    war_room()
     taverne()
     chope()
     luth()

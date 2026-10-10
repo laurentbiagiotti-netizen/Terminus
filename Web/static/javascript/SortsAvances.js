@@ -351,6 +351,8 @@ Shell.sorts.top = function(args, io){
 var DISQUES = {
 	"terminus": [["/dev/grimoire", 52428800, 46137344, "/"], ["/dev/parchemins", 209715200, 63963136, "/home"], ["tmpfs", 2097152, 1228, "/tmp"]],
 	"cybersup": [["/dev/baie1", 524288000, 199229440, "/"], ["/dev/baie2", 104857600, 99614720, "/sauvegardes"], ["/dev/baie3", 209715200, 41943040, "/home"]],
+	"lille": [["/dev/beffroi", 262144000, 73400320, "/"], ["/dev/gaufres", 10485760, 10380902, "/reserve"]],
+	"marseille": [["/dev/vieuxport", 262144000, 52428800, "/"], ["/dev/calanques", 104857600, 2097152, "/home"]],
 	"citadelle": [["/dev/abysses", 698351616, 698351616, "/"], ["/dev/phylactere", 1024, 4, "/ame"]]
 };
 
@@ -620,7 +622,9 @@ Shell.sorts.tar = function(args, io){
 
 var HOTES = {
 	"terminus": { ip: "10.0.0.1", arrivee: function(){ return Home; } },
-	"cybersup": { ip: "10.0.42.1", arrivee: function(){ return Cybersup; } },
+	"cybersup": { ip: "10.0.92.1", arrivee: function(){ return Cybersup; } },
+	"lille": { ip: "10.0.59.1", ouvert: true, arrivee: function(){ return CampusLille; } },
+	"marseille": { ip: "10.0.13.1", ouvert: true, arrivee: function(){ return CampusMarseille; } },
 	"citadelle": { ip: "10.0.66.6", arrivee: function(){ return Citadelle; } }
 };
 
@@ -675,7 +679,7 @@ Shell.sorts.ssh = function(args, io){
 	}
 	if (hote === Shell.hote()) throw new ShellError("Tu es déjà sur " + hote + " : regarde ton invite, juste après l'arobase.");
 	var arrivee = HOTES[hote].arrivee();
-	if (!state.visited[arrivee.id]){
+	if (!state.visited[arrivee.id] && !HOTES[hote].ouvert){
 		throw new ShellError(JOUEUR + "@" + hote + " : Permission denied (publickey).\n" +
 			C.gris("(Tu n'as pas encore de compte sur cette machine. Il faut d'abord s'y rendre à pied, au moins une fois.)"));
 	}
@@ -800,3 +804,7 @@ Shell.sorts.xp = function(args, io){
 	return state.tableauXP();
 };
 Shell.sorts.score = Shell.sorts.xp;
+
+Shell.sorts.bulletin = function(args, io){
+	return state.texteDuBulletin();
+};
