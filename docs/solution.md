@@ -23,6 +23,20 @@ Chaque partie est différente. Au premier lancement, le jeu tire une graine au h
 
 Recopier la solution du voisin ne marche donc pas : il faut refaire chaque recherche. Le diplôme final porte un code de vérification qui résume la partie (prénom, score, note, temps, indices utilisés). La page de classement le décode, refuse les codes retouchés ou incohérents et signale un même code envoyé par deux personnes. Ce code reste indicatif : le jeu tourne dans le navigateur et son code est public.
 
+## Sommaire
+
+- [Le barème](#le-barème)
+- [Le fil de l'histoire](#le-fil-de-lhistoire)
+- [Chapitre 1 : Terminus](#chapitre-1--terminus-lépreuve-de-première-année)
+  1. [La Maison et l'Académie](#1-la-maison-et-lacadémie)
+  2. [La grotte et le Portail](#2-la-grotte-et-le-portail)
+  3. [Le village](#3-le-village)
+  4. [Du pont aux Fichiers du Noyau](#4-du-pont-aux-fichiers-du-noyau)
+  5. [Cybersup](#5-cybersup)
+  6. [Le combat final](#6-le-combat-final)
+  - [Pour aller chercher 20 sur 20](#pour-aller-chercher-20-sur-20)
+- [Chapitre 2 : la Crypte](#chapitre-2--la-crypte-la-mission-cyber)
+
 ## Le barème
 
 | Action | XP |
@@ -60,7 +74,11 @@ Le joueur traverse donc Terminus (la même histoire que le jeu d'origine), penda
 
 Hormis Laurent, tous les personnages sont inventés. Ils portent des prénoms de pionniers de l'informatique (Ada, Grace, Hedy, Dennis, Linus, Margaret, Radia, Vint, Evi, Ken, Barbara, Tim, Annie, Alan).
 
-## 1. La Maison et l'Académie
+## Chapitre 1 : Terminus (l'épreuve de première année)
+
+Le chapitre 1 se joue en choisissant la première enveloppe au démarrage. Il mène de la Maison jusqu'à la victoire sur le Sorcier Noir, en six étapes.
+
+### 1. La Maison et l'Académie
 
 Notions : `ls`, `cd`, `less`, chemins, `--help`, `mv`, joker `*`, `cat`, `head`, `tail`, `wc`, `diff`.
 
@@ -89,7 +107,7 @@ diff CopieDuMatin CopieDuSoir
 
 Le Professeur enseigne `mv`, indispensable pour la suite. Le Scriptorium est facultatif mais rend la stèle du Portail beaucoup plus simple. `diff` révèle que la copie du soir a été falsifiée (article 17 modifié, article 41 ajouté).
 
-## 2. La grotte et le Portail
+### 2. La grotte et le Portail
 
 Notions : `man`, `help`, `history`, `!!`, fichiers cachés (`ls -a`), permissions (`ls -l`, `chmod`).
 
@@ -110,7 +128,7 @@ cd Portail/PlaceDuVillage
 
 Deux verrous ici. Le tunnel s'appelle `.Tunnel` : il n'apparaît qu'avec `ls -a`. Le Portail n'a pas le droit `x` : `cd` répond « Permission non accordée » jusqu'au `chmod`. La formule est à la dernière ligne de la stèle, que `less` ne montre pas (le texte fait 167 lignes).
 
-## 3. Le village
+### 3. Le village
 
 Notions : `rm`, `mkdir`, `rmdir`, `alias`, variables (`export`, `env`, `$PWD`), liens symboliques (`ln -s`), `grep`, `echo`, `>`, `>>`, tuyau `|`, `cut`, `sort`, `uniq`, `touch`, `cp`, scripts (`bash`, `./`, `chmod +x`), `date`.
 
@@ -190,7 +208,7 @@ Le script `remonter.sh` n'a pas le droit `x` : `./remonter.sh` échoue tant que 
 
 L'ApprentieHorlogere tend un piège volontaire : elle demande `cp BrouillonDePlan PlanDuDragon`, alors que PlanDuDragon existe déjà. Comme sous Linux, `cp` écrase sans prévenir, et l'Artisane réagit. Il faut remettre la sauvegarde cachée (`cp .PlanDuDragon.bak PlanDuDragon`), puis refaire la copie avec `cp -i` et répondre non. Un joueur qui utilise `cp -i` d'emblée (ou qui regarde avec `ls` avant) gagne la quête sans rien casser. `mv` écrase de la même façon, et `mv -i` demande aussi.
 
-## 4. Du pont aux Fichiers du Noyau
+### 4. Du pont aux Fichiers du Noyau
 
 Notions : chemins vers un autre lieu (`..`, `.`, `Cage/...`), `grep` sur plusieurs fichiers, `sudo`.
 
@@ -219,7 +237,7 @@ less SorcierNoir
 
 Le mot de passe sudo `<motdepasse>` est celui que `grep motdepasse= *` a trouvé dans les ArchivesDuNoyau. Il est demandé une seule fois, en saisie masquée. La dernière commande fait un premier passage dans la Citadelle : c'est ce qui permettra d'y revenir par `ssh`.
 
-## 5. Cybersup
+### 5. Cybersup
 
 Notions : `id`, `passwd`, `chown`, `ps`, `top`, `kill`, `kill -9`, `whoami`, `apt`, `find`, `tree`, `df`, `du`, `tar`, `crontab`, `hostname`, `ping`, `ssh`, `exit`, et une enquête dans des journaux de connexion.
 
@@ -295,7 +313,7 @@ Les campus de Lille et de Marseille n'ont pas de porte : `cd CampusLille` est re
 
 Le BureauDeLaurent est fermé (`drwx------ laurent`). `chmod` y est refusé, puisque le joueur n'en est pas propriétaire, et `sudo cd` n'existe pas. Mais `sudo ls BureauDeLaurent` et `sudo cat BureauDeLaurent/Agenda` fonctionnent, et l'agenda vend la mèche avant l'heure. `sudo chown $USER BureauDeLaurent` suivi d'un `chmod` ouvre aussi la porte.
 
-## 6. Le combat final
+### 6. Le combat final
 
 Notions réutilisées : `ssh`, `ps`, `sudo kill`, `kill -9`, `crontab`, `ls -a`, permissions, tuyau, `grep`, `echo`.
 
@@ -326,7 +344,7 @@ Quatre étapes :
 
 Après la victoire, le BureauDeLaurent s'ouvre (`MotDeLaurent`, `Credits`), le vieil homme a quitté sa montagne, les voyants de la WarRoom passent au vert, le TableauAffichage annonce le résultat, et les habitants de Terminus se présentent sous leur vrai jour quand on retourne leur parler. Le diplôme affiche le score final, la note sur 20, la mention et le relevé de compétences. Le diplôme se met à jour si le joueur continue à gagner de l'XP.
 
-## Pour aller chercher 20 sur 20
+### Pour aller chercher 20 sur 20
 
 Il reste à visiter les derniers lieux et à lancer au moins une fois les sorts qui n'ont pas encore servi. `xp` les liste.
 
@@ -358,7 +376,7 @@ bulletin
 
 À ce stade le compteur affiche 3820 XP sur 3820, niveau 10 (Root), 20 sur 20, félicitations du jury, et les six blocs du bulletin sont acquis.
 
-## 7. Chapitre 2 : la Crypte
+## Chapitre 2 : la Crypte (la mission cyber)
 
 Notions : empreintes (`sha256sum`, `sha256sum -c`), encodage (`base64`, `base64 -d`), bit SUID (`ls -l`, `find -perm -4000`, `chmod u-s`), sortie d'erreur (`2>`, `2>/dev/null`), ports en écoute (`ss -tlnp`), édition de fichiers (`nano`), clés SSH (`ssh-keygen`, clé publique et clé privée, `authorized_keys`).
 
