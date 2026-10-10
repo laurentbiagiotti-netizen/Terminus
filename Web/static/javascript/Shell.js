@@ -308,9 +308,20 @@ Shell.chercher = function(chemin, io, cmd){
 	return Shell.chercherDepuis(current_room, chemin, io, cmd);
 };
 
+/* La racine « / » de la machine où se trouve un lieu : une machine du réseau, ou la Citadelle au chapitre 2. */
+Shell.racineAbsolue = function(lieu){
+	var racine = typeof racineDe === "function" ? racineDe(lieu) : null;
+	if (racine) return racine;
+	if (typeof Citadelle === "undefined" || typeof state === "undefined" || !state.has("reseauOuvert")) return null;
+	for (var l = lieu, garde = 0; l && garde++ < 100; l = l.parents[0]){
+		if (l === Citadelle) return Citadelle;
+	}
+	return null;
+};
+
 Shell.chercherDepuis = function(depart, chemin, io, cmd){
 	if (chemin === "") throw new ShellError((cmd ? cmd + " : " : "") + "chemin vide");
-	var racineHote = chemin.charAt(0) === "/" && typeof racineDe === "function" ? racineDe(depart) : null;
+	var racineHote = chemin.charAt(0) === "/" ? Shell.racineAbsolue(depart) : null;
 	if (racineHote){
 		// Sur une machine du réseau de l'école, / est la racine de cette machine.
 		depart = racineHote;
@@ -427,7 +438,19 @@ var enterRoom = function(new_room){
 	GameEvents.fire({ type: "enter", room: new_room, from: ancien });
 };
 
+/* Changer de machine sans passer par ssh (cd ~ depuis une connexion) referme les connexions ouvertes. */
 Shell.sorts.cd = function(args, io){
+	var hoteAvant = Shell.hote();
+	var sortie = Shell.cdSimple(args, io);
+	if (Shell.pile_ssh.length > 0 && Shell.hote() !== hoteAvant){
+		Shell.pile_ssh = [];
+		sortie += "\n" + C.gris("(Tu étais connecté à " + hoteAvant + " par ssh. Sur une vraie machine, ~ désignerait ton dossier sur " + hoteAvant +
+			" ; ici, ta Maison est sur ta machine de départ : la connexion à " + hoteAvant + " est donc fermée.)");
+	}
+	return sortie;
+};
+
+Shell.cdSimple = function(args, io){
 	if (io.sudo){
 		throw new ShellError("sudo : cd : commande introuvable\n" +
 			C.gris("(Piège classique : cd n'est pas un programme mais un sort intégré au terminal, sudo ne peut donc pas le lancer.\n" +
@@ -593,7 +616,7 @@ Shell.sorts.less = function(args, io){
 		affiche = lignes.slice(0, PAGE_LESS).join("\n");
 		if (trouve) Shell.apresLecture(trouve, affiche, "less", io);
 		return affiche + "\n" + C.gris("-- Fin de la première page. Ce texte compte " + lignes.length +
-			" lignes : c'est trop pour tout dérouler ici.\n-- Les mages lisent les longs textes par morceaux (head, tail) ou y cherchent un mot (grep).");
+			" lignes : c'est trop pour tout dérouler ici.\n-- cat affiche tout d'un coup ; les mages préfèrent lire par morceaux (head, tail) ou chercher un mot (grep).");
 	}
 	if (trouve) Shell.apresLecture(trouve, affiche, "less", io);
 	return affiche === "" ? C.gris("(vide)") : affiche;
@@ -1492,8 +1515,13 @@ Shell.sorts.kill = function(args, io){
 			continue;
 		}
 		if (proc.noyau){
-			messages.push("kill : (" + pid + ") : rien ne se passe. " + proc.name + " est un thread du noyau : il ignore les signaux.\n" +
-				C.gris("(Grace, à la radio : « Pas celui-là. Le vrai noyau ne se tue pas. Cherche qui écoute sur le port suspect : ss. »)"));
+			messages.push("kill : (" + pid + ") : rien ne se passe. " + proc.name + " est un thread du noyau : il ignore les signaux." +
+				(Shell.graceNoyauDite === state.nbCommandes ? "" : "\n" + C.gris("(Grace, à la radio : « Pas celui-là. Le vrai noyau ne se tue pas. Cherche qui écoute sur le port suspect : ss. »)")));
+			Shell.graceNoyauDite = state.nbCommandes;
+			continue;
+		}
+		if (proc.protege){
+			messages.push("kill : (" + pid + ") : " + proc.name + " est un service de la machine. " + C.gris(proc.protege));
 			continue;
 		}
 		if (proc.sig9 && !force){
@@ -1544,7 +1572,16 @@ Shell.sorts.exit = function(args, io){
  * la session du joueur : sa partie est mise de côté sur cet ordinateur, et le joueur suivant
  * commence la sienne. En redonnant le même prénom, on retrouve sa partie.
  */
+var PAGE_LOGOUT = C.gras("logout") + " : fermer sa session\n\n" +
+	"  logout      dans une connexion ssh : la ferme, comme exit (Ctrl+D fait pareil)\n" +
+	"  logout      sur ta machine de départ : ferme ta session de jeu. Ta partie est mise de côté\n" +
+	"              sur cet ordinateur, et le joueur suivant commence la sienne.\n\n" +
+	"Pour reprendre ta partie, redonne ton prénom au démarrage : le jeu te la propose (s'il y en a\n" +
+	"plusieurs au même prénom, il les liste avec leur niveau et leur date). Une partie mise de côté\n" +
+	"est oubliée au bout de 90 jours.";
+
 Shell.sorts.logout = function(args, io){
+	if (args.indexOf("--help") > -1) return PAGE_LOGOUT;
 	if (Shell.pile_ssh.length > 0) return Shell.sorts.exit(args, io);
 	if (!io.tty) throw new ShellError("logout : il faut un écran, pas de tuyau.");
 	var qui = PROFIL.prenom || JOUEUR;
@@ -1586,7 +1623,8 @@ Shell.sorts.man = function(args, io){
 	if (args.length < 1){
 		return "Il faut interroger le vieil homme sur un sort précis pour obtenir une réponse. Par exemple : man ls";
 	}
-	var sort = args[0];
+	var sort = args[0] === "vi" ? "vim" : args[0];
+	if (sort === "logout") return PAGE_LOGOUT;
 	if (sort === "man"){
 		return "« C'est MOI, le vieil homme (man), nom d'une pipe ! On ne demande pas un manuel sur le manuel. »\n" +
 			"Les sorts que tu peux me demander : " + state.knownSpells().join(", ") + ".";
@@ -1675,6 +1713,7 @@ var SORTS_APPRIS_EN_ROUTE = {
 
 /* Où apprendre un sort : on cherche dans le monde l'objet ou le personnage qui l'enseigne. */
 Shell.ouApprendre = function(sort){
+	if (sort === "vi") sort = "vim";
 	if (SORTS_APPRIS_EN_ROUTE[sort]) return SORTS_APPRIS_EN_ROUTE[sort];
 	for (var id in World.rooms){
 		if (!World.rooms.hasOwnProperty(id)) continue;
@@ -1683,8 +1722,8 @@ Shell.ouApprendre = function(sort){
 			if (lieu.items[i].teaches.indexOf(sort) === -1) continue;
 			var parent = lieu.parents[0];
 			if (lieu.chapitre === 2 && !state.has("crypteOuverte")) return "Il s'apprend au chapitre 2, sous la Citadelle.";
-			if (lieu === current_room) return lieu.items[i].itemname + " est juste ici et peut te l'apprendre : " +
-				(lieu.items[i].person ? "parle-lui" : "lis-le") + " avec cat " + lieu.items[i].itemname + " (cat est connu dès le départ).";
+			if (lieu === current_room) return "Il s'apprend ici même, " + (lieu.items[i].person ? "auprès de " : "en lisant ") + lieu.items[i].itemname +
+				" : cat " + lieu.items[i].itemname;
 			var machine = typeof racineDe === "function" ? racineDe(lieu) : null;
 			if (machine) return "Il s'apprend " + (lieu.items[i].person ? "auprès de " : "en lisant ") + lieu.items[i].itemname +
 				", sur la machine " + machine.racineHote + " (ssh " + machine.racineHote + ")" + (lieu === machine ? "" : ", dans " + Shell.cheminAffiche(lieu)) + ".";
@@ -1711,6 +1750,7 @@ Shell.appeler = function(nom, args, io){
 	}
 	var sortie = Shell.sorts[nom](args, io);
 	if (MANUEL[nom]) state.premierUsage(nom);
+	else if (nom === "vi") state.premierUsage("vim");
 	return sortie;
 };
 
@@ -1871,7 +1911,7 @@ Shell.tuyau = function(jetons){
 				Shell.definirVariable(argv[0], "");
 				return true;
 			}
-			var io = { stdin: stdin, stdinSansFin: stdinSansFin, tty: sorties[1].t === "ecran", sudo: false, erreurs: [] };
+			var io = { stdin: stdin, stdinSansFin: stdinSansFin, tty: sorties[1].t === "ecran", sortie1: sorties[1], sudo: false, erreurs: [] };
 			io.err = (function(liste){ return function(message){ liste.push(message); }; })(io.erreurs);
 			var nom = argv[0], args = argv.slice(1);
 			if (nom === "sudo"){
@@ -1923,6 +1963,8 @@ Shell.tuyau = function(jetons){
 				var c = sorties[n];
 				if (c.t === "fichier" && !versFichiers.some(function(v){ return v.cible === c; })) versFichiers.push({ cible: c, morceaux: [], sansFin: false });
 			});
+			// Un sort qui écrit lui-même plus tard dans sa redirection (gpg, après la phrase de passe) : on n'y touche pas ici.
+			if (io.sortieGeree) versFichiers = versFichiers.filter(function(v){ return v.cible !== sorties[1]; });
 			versFichiers.forEach(function(v){
 				var contenu = v.morceaux.filter(function(m){ return m !== ""; }).join("\n");
 				if (contenu === "" && v.cible.ajout) return;

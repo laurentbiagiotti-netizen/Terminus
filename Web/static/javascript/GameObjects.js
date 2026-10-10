@@ -31,7 +31,8 @@ Home.addItem(new Item("LettreDeBienvenue", "Bienvenue ! Si tu découvres le jeu,
 		"Regarde autour de toi avec le sort « ls ».\n" +
 		"Va dans un autre lieu avec « cd LIEU ».\n" +
 		"Reviens sur tes pas avec « cd .. ».\n" +
-		"Examine un objet ou parle à quelqu'un avec « less OBJET ».\n\n" +
+		"Examine un objet ou parle à quelqu'un avec « cat OBJET ».\n" +
+		"Pour un très long texte, « less OBJET » en montre la première page.\n\n" +
         "Si tu ne sais plus où tu es, tape « pwd ».\n" +
         "Si tu ne sais plus quoi faire, tape « quetes ». Et « help » te rappelle tes sorts.\n\n" +
 		"Vas-y, explore. Nous espérons que ce que tu trouveras te plaira.\n" +

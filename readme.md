@@ -23,7 +23,7 @@ python3 -m http.server 8000
 
 Le jeu est alors disponible sur `http://localhost:8000`.
 
-Au premier lancement, le jeu demande ton prénom : il devient ton identifiant sur le système (`whoami`, l'invite, les propriétaires des fichiers, le diplôme). Il propose ensuite deux convocations : l'épreuve de première année (chapitre 1, pour découvrir le terminal), ou la mission cyber (chapitre 2 directement, pour qui connaît déjà les bases : on arrive en renfort après l'épreuve des B1). La partie est sauvegardée automatiquement dans le navigateur. Sur un ordinateur partagé, `logout` (ou Ctrl+D) ferme la session : la partie est mise de côté, le joueur suivant commence la sienne, et on retrouve la sienne en redonnant son prénom. La commande `recommencer` repart de zéro, avec une nouvelle partie.
+Au premier lancement, le jeu demande ton prénom : il devient ton identifiant sur le système (`whoami`, l'invite, les propriétaires des fichiers, le diplôme). Il propose ensuite deux convocations : l'épreuve de première année (chapitre 1, pour découvrir le terminal), ou la mission cyber (chapitre 2 directement, pour qui connaît déjà les bases : on arrive en renfort après l'épreuve des B1). La partie est sauvegardée automatiquement dans le navigateur. Sur un ordinateur partagé, `logout` (ou Ctrl+D) ferme la session : la partie est mise de côté, le joueur suivant commence la sienne. En redonnant son prénom au démarrage, le jeu propose de reprendre sa partie (s'il y en a plusieurs au même prénom, il les liste avec leur niveau et leur date) ; une partie mise de côté est oubliée au bout de 90 jours. La commande `recommencer` repart de zéro, avec une nouvelle partie.
 
 ## Ce que cette édition ajoute
 
@@ -31,10 +31,10 @@ Au premier lancement, le jeu demande ton prénom : il devient ton identifiant su
 
 | Notion | Sorts | Où on l'apprend |
 | --- | --- | --- |
-| Se déplacer, regarder | `ls` `cd` `pwd` `less` `man` `help` `clear` `exit` | dès le départ |
+| Se déplacer, regarder, lire | `ls` `cd` `pwd` `cat` `less` `man` `help` `clear` `exit` | dès le départ |
 | Options, aide, fichiers cachés | `ls -a` `ls -l` `--help` `history` `!!` | les manuscrits du vieil homme |
 | Déplacer, renommer, jokers | `mv` `*` | l'Académie des Sorts |
-| Lire et comparer des textes | `cat` `head` `tail` `wc` `diff` | le Scriptorium (nouveau) |
+| Lire et comparer des textes | `head` `tail` `wc` `diff` | le Scriptorium (nouveau) |
 | Permissions | `chmod` et la lecture de `rwxr-xr-x` | la stèle du Portail |
 | Créer et supprimer | `rm` `mkdir` `rmdir` `touch` `cp` | le Marché, l'Atelier |
 | Personnaliser son terminal | `alias` `unalias` `export` `env` `$USER` `$PWD` | le Marché |

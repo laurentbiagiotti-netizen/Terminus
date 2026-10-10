@@ -600,10 +600,10 @@ var ProgrammePasswd = programmeBinaire("passwd", "binaire-passwd", "rwsr-xr-x",
 	"passwd : ce programme change le mot de passe de celui qui le lance. Pour ça, il doit écrire dans /etc/shadow, \
 que seul root peut modifier : d'où son bit SUID, tout à fait normal. (Ici, utilise plutôt le sort passwd.)");
 var Sha256Sums = new Item("SHA256SUMS",
-	sha256(TEXTE_GARDIEN_ORIGINAL) + "  gardien\n" +
-	sha256(ProgrammePasswd.getText()) + "  passwd\n" +
-	sha256(TEXTE_PORTIER) + "  portier\n" +
-	sha256(TEXTE_VEILLEUR) + "  veilleur\n",
+	sha256(contenuExact(TEXTE_GARDIEN_ORIGINAL, Gardien.sansFinDeLigne)) + "  gardien\n" +
+	sha256(contenuExact(ProgrammePasswd.getText(), ProgrammePasswd.sansFinDeLigne)) + "  passwd\n" +
+	sha256(contenuExact(Portier.getText(), Portier.sansFinDeLigne)) + "  portier\n" +
+	sha256(contenuExact(Veilleur.getText(), Veilleur.sansFinDeLigne)) + "  veilleur\n",
 	"item_sign.gif").droits("rw-r--r--", "root");
 [Gardien, ProgrammePasswd, Portier, Veilleur, Sha256Sums].forEach(function(item){ DossierBin.addItem(item); });
 
@@ -1092,6 +1092,13 @@ Ce n'est pas un exercice. Quelqu'un est vraiment entré.\n\n\
 Laurent est resté là-haut, dans la Citadelle. Connecte-toi à la machine : ssh citadelle. Il t'expliquera le reste, \
 et moi je te suivrai à la radio. Ton compte a les droits sudo pour la mission. »");
 	CheffeDeQuart.teaches = [];
+	// Le renfort n'a pas joué l'épreuve : la révélation du Corbeau doit se comprendre sans elle.
+	var texteCorbeau = Corbeau.getText()
+		.replace("Tu la connais : c'est l'enfant de la cage ! Enfin, la stagiaire de Laurent.",
+			"Tu ne l'as jamais vue. La radio grésille, c'est Laurent : « Frances ?! C'est ma stagiaire. Ce matin, dans l'épreuve des première année, elle jouait l'enfant enlevée par le Sorcier Noir. »")
+		.replace("Pendant que je jouais l'enfant enlevée, j'avais", "Ce matin, pendant que je jouais l'enfant enlevée dans l'épreuve des B1, j'avais");
+	Corbeau.setText(texteCorbeau);
+	if (Corbeau.cmd_text && Corbeau.cmd_text["less"]) Corbeau.addCmdText("less", texteCorbeau);
 	TableauAffichage.setText(TEXTE_TABLEAU + "\n\nRÉSULTATS DE L'ÉPREUVE PRATIQUE DES B1 : le Sorcier Noir est vaincu. Félicitations à la promo.");
 }
 
@@ -1159,11 +1166,12 @@ Shell.sorts.chapitre = function(args, io){
 		return C.gras("LES CHAPITRES") + "\n\n" +
 			"  1. Terminus      " + (state.has("victoire") ? (state.has("chapitre1Saute") ? C.gris("non joué (mission cyber)") : C.vert("terminé")) : C.jaune("en cours")) +
 			"   L'épreuve de première année : Linux de base, jusqu'au Sorcier Noir. Note sur le Diplome.\n" +
-			"  2. La Crypte     " + (state.quests["c_corbeau"] ? C.vert("terminé") : (state.has("crypteOuverte") ? C.jaune("ouvert") : C.gris("fermé"))) +
-			"   La mission cyber : empreintes, base64, SUID, ports, clés SSH. Note sur le CertificatCyber.\n\n" +
+			"  2. La Crypte     " + (state.quests["c_rapport"] ? C.vert("terminé") : (state.has("crypteOuverte") ? C.jaune("ouvert") : C.gris("fermé"))) +
+			"   La mission cyber : la Crypte, puis tout le réseau de l'école, jusqu'au rapport d'incident. Note sur le CertificatCyber.\n\n" +
 			C.gris(chapitre2Possible() ?
 				"Le chapitre 2 s'ouvre en battant le Sorcier Noir. Si tu connais déjà les bases, tu peux aussi partir tout de suite en mission cyber : chapitre 2" :
-				(state.has("crypteOuverte") ? "La Crypte est sous la Citadelle : ssh citadelle, puis cd Crypte." :
+				(state.quests["c_rapport"] ? "Mission terminée : ton CertificatCyber est dans ta Maison (cat ~/CertificatCyber)." :
+				state.has("crypteOuverte") ? "La Crypte est sous la Citadelle : ssh citadelle, puis cd Crypte. Tape quetes pour l'étape en cours." :
 				"Le chapitre 2 s'ouvre quand tu auras battu le Sorcier Noir."));
 	}
 	if (demande === "1") return state.has("chapitre1Saute") ?

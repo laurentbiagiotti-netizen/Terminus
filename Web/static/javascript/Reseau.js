@@ -170,10 +170,11 @@ fichier(CitadelleEtc, "ProcedureComptes",
 	"PROCÉDURE : NETTOYER LES COMPTES APRÈS UNE INTRUSION (fiche d'Evi)\n\n" +
 	"1. Chercher les comptes qui ont l'UID 0 : ce sont tous des root.\n   awk -F: '$3 == 0 { print $1 }' /etc/passwd\n   Un seul doit sortir : root. Tout autre est un compte caché.\n" +
 	"2. Le supprimer : sudo userdel NOM\n" +
-	"3. Vérifier qui a le droit sudo : groups NOM, et le fichier sudoers.\n" +
-	"4. Retirer une ligne de sudoers : JAMAIS en éditant le fichier directement. sudo visudo, qui vérifie la syntaxe.\n   (visudo ouvre vim si tu le connais, nano sinon.)\n\n" +
+	"3. Vérifier qui a le droit sudo : on peut l'avoir par le groupe sudo (groups NOM), ou par une ligne à son nom dans sudoers.\n" +
+	"4. Le retirer du groupe sudo : sudo usermod -rG sudo NOM\n" +
+	"5. Retirer sa ligne de sudoers : JAMAIS en éditant le fichier directement. sudo visudo, qui vérifie la syntaxe.\n   (visudo ouvre vim si tu le connais, nano sinon.) Ne touche pas aux lignes de root et du groupe sudo.\n\n" +
 	"Rappel : /etc/passwd liste les comptes (nom:x:UID:GID:...), /etc/shadow leurs mots de passe chiffrés,\n/etc/group les groupes, /etc/sudoers qui peut devenir root.",
-	{ enseigne: ["userdel", "visudo", "groups", "awk"], image: "item_manuscript.gif" });
+	{ enseigne: ["userdel", "usermod", "visudo", "groups", "awk"], image: "item_manuscript.gif" });
 
 function journalAuth(lignes){ return lignes.join("\n") + "\n"; }
 var AuthLog2 = fichier(CitadelleLog, "auth.log.2.gz", "", {
@@ -205,7 +206,7 @@ fichier(CitadelleLog, "CarnetDuVeilleur",
 
 var NotesCorbeau = fichier(CacheCorbeau, "notes.gpg", texteArmure("notes-corbeau"), {
 	owner: "corbeau", mode: "rw-r--r--", age: 0, heure: HEURE_PREMIERE, image: "item_locker.gif",
-	gpg: { phrase: PHRASE_CORBEAU, clair:
+	gpg: { phrase: PHRASE_CORBEAU, armure: texteArmure("notes-corbeau"), clair:
 		"CARNET DU CORBEAU\n\n" +
 		"- Entrée par le labo : la clé SSH d'un compte de TP traînait dans un dossier partagé.\n" +
 		"- De là, la Citadelle. Un compte de secours, " + COMPTE_CACHE + ", avec l'UID 0. Au cas où.\n" +
@@ -234,9 +235,11 @@ var FicheReflexe = fichier(Racine, "FicheReflexe",
 	{ enseigne: ["pgrep", "lsof", "strings", "tr", "gpg", "pkill", "file", "xxd"], revele: ["s_c_xxd"], image: "item_manuscript.gif" });
 
 var PHRASE_GRAFFITI = "Je reviens chaque nuit à trois heures, par la porte que personne ne regarde.";
-var Graffiti = fichier(Caveau, "Graffiti", PHRASE_GRAFFITI.split("").reverse().join("") + "\n" +
-	"(Quelqu'un a écrit à l'envers. rev remet chaque ligne à l'endroit : rev Graffiti)",
+var Graffiti = fichier(Caveau, "Graffiti", PHRASE_GRAFFITI.split("").reverse().join(""),
 	{ enseigne: ["rev"], revele: ["s_c_rev"], image: "item_sign.gif" });
+GameEvents.addListener("read", function(e){
+	if (e.item === Graffiti && e.cmd !== "rev") say(C.gris("(Quelqu'un a écrit à l'envers. rev remet chaque ligne à l'endroit : rev Graffiti)"));
+});
 
 /* ------------------------------------------------------------------ */
 /* Les machines du réseau                                              */
@@ -319,11 +322,14 @@ var ZoneEcole = fichier(DnsBind, "ecole.zone",
 	"badgeuse  IN A 10.0.92.31\n" +
 	"dns       IN A 10.0.92.53\n" +
 	"labo      IN A " + IP_LABO + "\n" +
+	"poste-47  IN A " + ADRESSE_POSTE_CORBEAU + "\n" +
 	"sauvegarde IN A 10.0.92.200\n" +
 	"coffre    IN A 10.0.92.250\n" +
 	"parefeu   IN A 10.0.92.254\n" +
 	"maj       IN A " + ADRESSE_POSTE_CORBEAU + "\n", { age: 0, heure: HEURE_PREMIERE });
 function fichierZoneDns(){ return ZoneEcole; }
+var ZONE_LEGITIME = [["cybersup", "10.0.92.1"], ["web", "10.0.92.10"], ["mail", "10.0.92.11"], ["imprimante", "10.0.92.30"], ["badgeuse", "10.0.92.31"],
+	["dns", "10.0.92.53"], ["labo", IP_LABO], ["poste-47", ADRESSE_POSTE_CORBEAU], ["sauvegarde", "10.0.92.200"], ["coffre", "10.0.92.250"], ["parefeu", "10.0.92.254"]];
 
 /* --- labo : la salle de TP, par où le Corbeau est entré --- */
 var Labo = machine("labo", "La machine du labo de TP. Les étudiants s'y connectent pour s'entraîner. Le Corbeau aussi, cette nuit.");
@@ -385,13 +391,14 @@ var LECONS_VIM = {
 	"lecon5.txt": (function(){
 		var t = "LEÇON 5 : chercher, remplacer partout, aller au bout\n\n" +
 			"/mot cherche mot ; n va au suivant, N au précédent.\n:%s/ancien/nouveau/g remplace partout dans le fichier.\n" +
-			"G va à la dernière ligne, gg à la première.\n\nRemplace chaque erreur par succès, puis corrige la toute dernière ligne.\n\n";
+			"G va à la dernière ligne, gg à la première.\n\n1. Remplace chaque erreur par succès, en une seule commande.\n" +
+			"2. Va à la toute dernière ligne avec G : elle finit par un point d'interrogation. Remplace-le par un point (place-toi dessus avec $, puis r.).\n\n";
 		var lignes = ["Analyse du journal : erreur de connexion à 03:12.", "Le service répond.", "Le disque est plein à 40 %.",
 			"Sauvegarde : erreur de copie.", "Le pare-feu filtre les paquets.", "Le DNS répond en 2 ms.",
 			"Mise à jour : erreur de signature.", "Les badges fonctionnent.", "L'imprimante a encore du papier.",
 			"Messagerie : erreur de livraison.", "Le site web répond.", "Tout le reste va bien."];
 		for (var i = 0; i < 2; i++) t += lignes.join("\n") + "\n";
-		return t + "---> FIN ? Remplace ce point d'interrogation par un point.\n";
+		return t + "---> FIN ?\n";
 	})()
 };
 Object.keys(LECONS_VIM).forEach(function(nom){
@@ -403,7 +410,8 @@ fichier(VimTuteur, "TuteurVim",
 	"- le mode NORMAL, où chaque touche est une commande (au démarrage) ;\n- le mode INSERTION, où l'on écrit (i pour y entrer, Échap pour en sortir) ;\n" +
 	"- la ligne de commande, qui commence par : (:w enregistre, :q quitte, :wq les deux, :q! quitte sans enregistrer).\n\n" +
 	"Les cinq leçons de ce dossier se font dans l'ordre : vim lecon1.txt, et ainsi de suite. Chacune dit quoi faire.\n" +
-	"Si tu es perdu : Échap, puis :q! pour sortir sans rien casser. Tout le monde est passé par là.\n\n" +
+	"Si tu es perdu : Échap, puis :q! pour sortir sans rien casser. Tout le monde est passé par là.\n" +
+		"Une leçon abîmée ? rm leconN.txt : le tuteur en remet une copie neuve.\n\n" +
 	"(Les boutons en bas de l'éditeur aident sur téléphone : Échap, i, x, dd, u, :w, :wq, :q!.)",
 	{ enseigne: ["vim"], revele: ["s_v_quitter", "s_v_x", "s_v_i", "s_v_A", "s_v_dw", "s_v_dd", "s_v_u", "s_v_p", "s_v_r", "s_v_cw", "s_v_recherche", "s_v_substitution", "s_v_G", "s_v_quitter_force"], image: "item_professor.gif" });
 
@@ -417,7 +425,7 @@ fichier(Parefeu, "ConsignesParefeu",
 	"CONSIGNES DU PARE-FEU\n\nsudo ufw status numbered      les règles, numérotées\nsudo ufw deny from ADRESSE    bloquer une machine\n" +
 	"sudo ufw enable               activer le pare-feu (sans ça, les règles ne servent à rien)\nsudo ufw delete N             retirer la règle N\n\n" +
 	"traceroute MACHINE montre que tout passe par ici.", { enseigne: ["ufw", "traceroute"], image: "item_sign.gif" });
-fichier(ParefeuLog, "ufw.log", "(vide : le pare-feu est désactivé depuis une mise à jour, la semaine dernière. Oups.)", { image: "item_manuscript.gif" });
+var ParefeuUfwLog = fichier(ParefeuLog, "ufw.log", "(vide : le pare-feu est désactivé depuis une mise à jour, la semaine dernière. Oups.)", { image: "item_manuscript.gif" });
 
 /* --- sauvegarde --- */
 var Sauvegarde = machine("sauvegarde", "Le serveur de sauvegarde : il garde des copies de tout, et maintenant les preuves de l'enquête.");
@@ -543,6 +551,38 @@ Labo.addProc(tirerPids("bash-corbeau", 1, 3000, 3999)[0], "-bash", "corbeau", { 
 Labo.addProc(tirerPids("maj-auto", 1, 4000, 4999)[0], "maj-auto", "corbeau", { cpu: 3.2, service: "maj-auto",
 	fichiers: ["/tmp/.maj/maj-auto", "TCP labo:43122->" + ADRESSE_POSTE_CORBEAU + ":51234 (ESTABLISHED)"] });
 
+/*
+ * Les démons qui tiennent les ports de chaque machine : ps, ss -tlnp, lsof et nmap racontent la même histoire.
+ * On ne les tue pas à la main (un service se gère avec systemctl).
+ */
+var DEMONS_PAR_SERVICE = { ssh: "sshd", http: "httpd", https: "httpd", smtp: "postfix", imap: "dovecot", domain: "named", jetdirect: "jetdirect", "http-alt": "badged" };
+var TEXTE_SERVICE_PROTEGE = "(Le tuer couperait le service pour toute l'école, et parfois ta propre connexion. Un service se gère avec systemctl, pas avec kill.)";
+Racine.addProc(PID_SSHD, "sshd", "root", { cpu: 0.1, protege: TEXTE_SERVICE_PROTEGE, fichiers: ["TCP *:22 (LISTEN)"] });
+Racine.addProc(588, "postier", "root", { cpu: 0.1, protege: TEXTE_SERVICE_PROTEGE, fichiers: ["TCP 127.0.0.1:25 (LISTEN)"] });
+Object.keys(HOTES).forEach(function(nom){
+	var h = HOTES[nom];
+	if (!h.arrivee || !h.ports) return;
+	var racine = h.arrivee();
+	Object.keys(h.ports).forEach(function(numero){
+		var demon = DEMONS_PAR_SERVICE[h.ports[numero].service] || h.ports[numero].service;
+		var existant = racine.procs.filter(function(p){ return p.name === demon; })[0];
+		if (!existant) existant = racine.addProc(tirerPids("demon-" + nom + "-" + demon, 1, 300, 999)[0], demon, "root", { cpu: 0.1, protege: TEXTE_SERVICE_PROTEGE, fichiers: [] });
+		existant.protege = TEXTE_SERVICE_PROTEGE;
+		existant.fichiers = (existant.fichiers || []).concat(["TCP *:" + numero + " (LISTEN)"]).filter(function(f, i, t){ return t.indexOf(f) === i; });
+	});
+});
+var prisesDeLaCitadelle = prisesDe;
+prisesDe = function(hote){
+	var h = HOTES[hote];
+	if (!h || !h.arrivee || !h.ports) return prisesDeLaCitadelle(hote);
+	var racine = h.arrivee();
+	return Object.keys(h.ports).map(function(numero){
+		var demon = DEMONS_PAR_SERVICE[h.ports[numero].service] || h.ports[numero].service;
+		var p = racine.procs.filter(function(x){ return x.name === demon; })[0];
+		return { etat: "LISTEN", local: "0.0.0.0:" + numero, service: h.ports[numero].service, pair: "0.0.0.0:*", proc: demon, pid: p ? p.pid : 0, owner: "root" };
+	});
+};
+
 /* À l'ouverture de la Crypte, ce qui sert à l'enquête apparaît dans le monde. */
 var MementoReseau = new Item("MementoReseau",
 	"Un mémo de Vint, l'administrateur réseau, punaisé au-dessus des câbles :\n\n" +
@@ -600,11 +640,11 @@ var QUETES_CHAPITRE2 = [
 	{ id: "c_dns", titre: "Corriger le faux enregistrement DNS",
 	  indice: "La zone DNS de l'école est sur la machine dns, dans /etc/bind. Un nom y pointe vers une adresse qui n'a rien à faire là." },
 	{ id: "c_parefeu", titre: "Bloquer le poste de l'attaquant au pare-feu",
-	  indice: "Les connexions du Corbeau venaient toutes d'un même poste. Le pare-feu se règle sur la machine parefeu." },
+	  indice: "Le Corbeau est passé par le labo, mais il venait d'un poste à lui : who, sur le labo, montre d'où venait sa session. C'est ce poste qu'il faut bloquer, sur la machine parefeu." },
 	{ id: "c_compte", titre: "Supprimer le compte caché d'UID 0",
 	  indice: "Sur la Citadelle, /etc/passwd liste les comptes. La ProcedureComptes, dans /etc, explique comment repérer un faux root." },
 	{ id: "c_sudo", titre: "Retirer le droit sudo du Corbeau",
-	  indice: "Le fichier /etc/sudoers de la Citadelle donne au Corbeau tous les droits, sans mot de passe. Il ne se modifie qu'avec visudo." },
+	  indice: "Le Corbeau a le droit sudo de deux façons : une ligne à son nom dans /etc/sudoers, et sa place dans le groupe sudo (groups corbeau). Il faut retirer les deux. sudoers ne se modifie qu'avec visudo." },
 	{ id: "c_cle", titre: "Retirer la clé du Corbeau",
 	  indice: "Le Corbeau a laissé sa clé dans les clés autorisées de root, dans le dossier caché de la Racine. Le ManuelDeNano explique comment modifier un fichier." },
 	{ id: "c_coffre", titre: "Obtenir un accès au coffre",
@@ -693,17 +733,17 @@ INDICES_CHAPITRE2.c_mail = [
 	"La pièce jointe est encodée en base64 entre deux lignes « pièce jointe ». sed -n garde un intervalle de lignes, grep -v retire celles qui gênent.",
 	"ssh mail, cd /var/spool, puis sed -n '/^--- pièce jointe/,/^--- fin/p' message-0042.eml | grep -v '^---' | base64 -d"];
 INDICES_CHAPITRE2.c_dns = [
-	"dig maj.cybersup.lan donne une adresse qui n'est ni un serveur ni l'école. La ligne est dans /etc/bind/ecole.zone, à retirer en sudo.",
+	"dig maj.cybersup.lan donne une adresse, et dig -x sur cette adresse dit à qui elle est vraiment : poste-47, un simple poste de travail. Le nom maj n'a rien à faire là. La ligne est dans /etc/bind/ecole.zone, à retirer en sudo (et seulement elle).",
 	"ssh dns, sudo vim /etc/bind/ecole.zone, place-toi sur la ligne maj, dd, puis :wq"];
 INDICES_CHAPITRE2.c_parefeu = [
-	"Le pare-feu est désactivé. Il faut bloquer l'adresse du poste du Corbeau (vue avec who sur le labo) et l'activer.",
+	"Le pare-feu est désactivé. Il faut bloquer l'adresse du POSTE du Corbeau, celle d'où venait sa session sur le labo (who), et activer le pare-feu. Pas l'adresse du labo : le labo est une machine de l'école qu'il a seulement traversée.",
 	"ssh parefeu, sudo ufw deny from " + ADRESSE_POSTE_CORBEAU + ", puis sudo ufw enable"];
 INDICES_CHAPITRE2.c_compte = [
 	"Un compte d'UID 0 est un root. awk -F: '$3 == 0' /etc/passwd les liste tous.",
 	"ssh citadelle, cd etc, awk -F: '$3 == 0 { print $1 }' passwd, puis sudo userdel " + COMPTE_CACHE];
 INDICES_CHAPITRE2.c_sudo = [
-	"La ligne fautive commence par corbeau dans /etc/sudoers. visudo l'ouvre dans l'éditeur, en sudo.",
-	"ssh citadelle, sudo visudo, place-toi sur la ligne corbeau, supprime-la (dd dans vim, Ctrl+K dans nano), puis enregistre"];
+	"Une ligne commence par corbeau dans /etc/sudoers (sudo visudo l'ouvre), et groups corbeau montre qu'il est aussi dans le groupe sudo : usermod -rG retire quelqu'un d'un groupe.",
+	"Sur la Citadelle : sudo usermod -rG sudo corbeau, puis sudo visudo, place-toi sur la ligne corbeau, supprime-la (dd dans vim, Ctrl+K dans nano), et enregistre (:wq)"];
 INDICES_CHAPITRE2.c_cle = [
 	"Le fichier est .ssh/authorized_keys, dans la Racine. Il appartient à root : sudo nano. La ligne à retirer finit par corbeau@nid.",
 	"Dans la Racine : sudo nano .ssh/authorized_keys, place le curseur sur la ligne corbeau@nid, Ctrl+K, puis Ctrl+X et O pour enregistrer."];
@@ -743,7 +783,7 @@ function texteRadioReseau(){
 		case "c_dns": return debut + "Le mail venait d'un faux domaine. Et le Corbeau a ajouté un nom dans notre DNS pour détourner les mises à jour. Machine dns, dossier /etc/bind. »";
 		case "c_parefeu": return debut + "DNS corrigé. Maintenant on ferme la porte : le pare-feu est désactivé depuis une semaine, et le poste du Corbeau peut toujours entrer. Machine parefeu. »";
 		case "c_compte": return debut + "Pare-feu actif. Retour sur la Citadelle : son journal montre un useradd en pleine nuit. Un compte de trop, avec les droits de root. »";
-		case "c_sudo": return debut + "Compte supprimé. Mais le Corbeau a toujours le droit sudo sur la Citadelle, sans mot de passe. Vérifie /etc/sudoers. »";
+		case "c_sudo": return debut + "Compte supprimé. Mais le Corbeau a toujours le droit sudo sur la Citadelle : par /etc/sudoers, et par le groupe sudo. Retire-lui les deux. »";
 		case "c_cle": return debut + "Plus de sudo. Reste sa clé SSH dans les clés autorisées de root, dans la Racine. Evi a laissé un ManuelDeNano par là. »";
 		case "c_coffre": return debut + "Toutes ses portes sont fermées. Il reste à savoir QUI c'est. Evi peut t'ouvrir le coffre, où tout converge : ses ConsignesDuCoffre sont dans la SalleServeurs. »";
 		case "c_preuves": return debut + "Avant d'aller plus loin : le faux kworker gardait un fichier ouvert. C'est une preuve. Mets-la à l'abri sur la sauvegarde avant de la toucher : la ProcedurePreuves est dans la SalleServeurs. »";
@@ -771,22 +811,56 @@ function verifierReseau(){
 	if (!majAuto.actif && !majAuto.auto) state.complete("c_service");
 	if (!Labo.procs.some(function(p){ return p.name === "sshd: corbeau@pts/1"; })) state.complete("c_labo");
 	if (!WebUploads.hasItem(PagePiegee) && !WebUploads.getNode("maj.php")) state.complete("c_web");
-	if (ZoneEcole.getText().indexOf(ADRESSE_POSTE_CORBEAU) === -1 && /web\s+IN A 10\.0\.92\.10/.test(ZoneEcole.getText())) state.complete("c_dns");
-	else if (ZoneEcole.getText().indexOf(ADRESSE_POSTE_CORBEAU) === -1 && !state.has("zoneAbimee")){
-		state.set("zoneAbimee");
-		say("La radio grésille : « Attention, la zone DNS a perdu des lignes qui servaient ! Remets web en place (web IN A 10.0.92.10). »");
+	// Le DNS est corrigé quand la ligne maj a disparu et que toutes les vraies machines y sont encore.
+	var zone = zoneDns();
+	var manquantes = ZONE_LEGITIME.filter(function(l){ return !zone.some(function(r){ return r.nom === l[0] && r.type === "A" && r.valeur === l[1]; }); });
+	var majPresent = zone.some(function(r){ return r.nom === "maj"; });
+	if (!majPresent && manquantes.length === 0) state.complete("c_dns");
+	else if (manquantes.length && state.texteZoneSignale !== manquantes.join("|")){
+		state.texteZoneSignale = manquantes.join("|");
+		say("La radio grésille : « Attention, la zone DNS a perdu des lignes qui servaient : " + manquantes.map(function(l){ return l[0]; }).join(", ") +
+			". Plus personne ne trouve ces machines par leur nom ! Remets-les (par exemple : " + manquantes[0][0] + " IN A " + manquantes[0][1] + "), et ne retire que la ligne maj. »");
 	}
 	var pf = state.reseau.parefeu;
-	if (pf.actif && pf.regles.some(function(r){ return r.action === "deny" && (r.de === ADRESSE_POSTE_CORBEAU || r.de === ADRESSE_POSTE_CORBEAU + "/32"); })) state.complete("c_parefeu");
+	if (posteBloque()) state.complete("c_parefeu");
+	else if (state.quests["c_parefeu"] && !state.has("parefeuRouvert")){
+		state.set("parefeuRouvert");
+		say("La radio grésille. C'est Grace : « Mes sondes revoient passer le poste " + ADRESSE_POSTE_CORBEAU + " : le pare-feu ne le bloque plus ! sudo ufw status numbered sur parefeu. »");
+	}
+	if (posteBloque()) delete state.flags["parefeuRouvert"];
+	ParefeuUfwLog.setText(pf.actif ?
+		"[UFW BLOCK] IN=eth0 SRC=" + (posteBloque() ? ADRESSE_POSTE_CORBEAU + " DST=10.0.92.53 PROTO=TCP DPT=22 (bloqué)" : "(rien de bloqué pour l'instant)") :
+		"(vide : le pare-feu est désactivé depuis une mise à jour, la semaine dernière. Oups.)");
+	ParefeuUfwLog.modifie = false;
 	if (!/^maintenance:/m.test(PasswdCitadelle.getText())){
 		delete UTILISATEURS[COMPTE_CACHE];
 		state.complete("c_compte");
 	}
-	if (!/^\s*corbeau\s/m.test(SudoersCitadelle.getText())) state.complete("c_sudo");
+	if (sudoCorbeauRetire()) state.complete("c_sudo");
 	if (/^corbeau:!/m.test(ShadowLabo.getText())) state.complete("s_c_verrou");
 	// La preuve : une copie identique de notes.gpg dans /preuves, et son empreinte au registre.
+	// La copie doit être identique à la preuve telle que le Corbeau l'a laissée, et son empreinte notée au registre.
 	var copie = SauvegardePreuves.getItemFromName("notes.gpg");
-	if (copie !== -1 && copie.getText() === NotesCorbeau.getText() && RegistrePreuves.getText().indexOf(sha256(contenuExact(NotesCorbeau.getText()))) > -1) state.complete("c_preuves");
+	var empreinteOrigine = sha256(contenuExact(NotesCorbeau.gpg.armure));
+	if (copie !== -1 && sha256(contenuExact(copie.getText())) === empreinteOrigine && RegistrePreuves.getText().indexOf(empreinteOrigine) > -1) state.complete("c_preuves");
+	else if (copie !== -1 && sha256(contenuExact(copie.getText())) !== empreinteOrigine && !state.has("preuveAbimee")){
+		state.set("preuveAbimee");
+		say("La radio grésille. C'est Grace : « La copie de notes.gpg sur la sauvegarde ne correspond pas à l'original : la preuve a été modifiée. " +
+			"Une preuve abîmée ne vaut plus rien. Il y a une copie intacte dans la mémoire du faux kworker : je la remets dans /tmp/.cache de la Citadelle. Recommence, sans y toucher. »");
+	}
+	// Tant que la preuve n'est pas à l'abri, l'original abîmé ou effacé est remis en place (une fois annoncé).
+	if (!state.quests["c_preuves"] && state.has("reseauOuvert") && (NotesCorbeau.getText() !== NotesCorbeau.gpg.armure || CacheCorbeau.getItemFromName("notes.gpg") === -1)){
+		var ancienne = CacheCorbeau.getItemFromName("notes.gpg");
+		if (ancienne !== -1 && ancienne !== NotesCorbeau) CacheCorbeau.removeItem(ancienne);
+		NotesCorbeau.setText(NotesCorbeau.gpg.armure);
+		NotesCorbeau.modifie = false;
+		if (!CacheCorbeau.hasItem(NotesCorbeau)) CacheCorbeau.addItem(NotesCorbeau);
+		if (!state.has("preuveRestauree")){
+			state.set("preuveRestauree");
+			say("La radio grésille. C'est Grace : « Tu as touché à notes.gpg avant de le mettre à l'abri ! Une preuve modifiée ne vaut plus rien. " +
+				"Heureusement, le faux kworker en gardait une copie en mémoire : je la remets dans /tmp/.cache. Cette fois, copie-la d'abord, sans la modifier. »");
+		}
+	}
 	// Le Corbeau n'attend au coffre que lorsque toutes ses portes sont fermées.
 	var restantes = etapesAvantCorbeau();
 	if (state.quests["c_gpg"] && restantes.length === 0 && !Coffre.hasItem(Corbeau) && !state.quests["c_corbeau"]) poser(Coffre, Corbeau);
@@ -798,6 +872,45 @@ function verifierReseau(){
 	if (state.quests["c_corbeau"] && !Home.hasItem(ModeleRapport) && !state.has("modelePose")){ state.set("modelePose"); poser(Home, ModeleRapport); }
 	if (state.has("cleCorbeauRetiree") && !SalleServeurs.hasItem(ProcedurePreuves)) poser(SalleServeurs, ProcedurePreuves);
 	if (Object.keys(state.reseau.hotesUname || {}).length >= 4) state.complete("s_c_uname");
+	// Une leçon de vim supprimée revient, neuve, comme quand on relance vimtutor.
+	Object.keys(LECONS_VIM).forEach(function(nom){
+		if (VimTuteur.getItemFromName(nom) !== -1) return;
+		fichier(VimTuteur, nom, LECONS_VIM[nom], { owner: JOUEUR, mode: "rw-r--r--", image: "item_manuscript.gif" });
+		say(C.gris("(Le tuteur remet une copie neuve de " + nom + " dans vimtuteur.)"));
+	});
+}
+
+/*
+ * Le droit sudo du Corbeau est retiré quand : sa ligne a disparu de sudoers (modifié avec visudo),
+ * il n'est plus dans le groupe sudo, et sudoers donne toujours les droits à root et au groupe sudo.
+ */
+function sudoCorbeauRetire(){
+	var sudoers = SudoersCitadelle.getText();
+	var groupes = lignesDe(GroupCitadelle.getText()).filter(function(l){ return l.split(":")[0] === "sudo"; })[0] || "";
+	var membres = (groupes.split(":")[3] || "").split(",");
+	return state.has("visudoUtilise") && !/^\s*corbeau\s/m.test(sudoers) && membres.indexOf("corbeau") === -1 &&
+		/^\s*root\s+ALL/m.test(sudoers) && /^\s*%sudo\s+ALL/m.test(sudoers);
+}
+
+/* Le pare-feu, comme ufw : la première règle qui concerne l'adresse décide (une règle limitée à un port ne suffit pas). */
+function adresseDansPlage(plage, ip){
+	if (plage === "Anywhere" || plage === "any") return true;
+	var m = /^(\d+\.\d+\.\d+\.\d+)(?:\/(\d+))?$/.exec(plage);
+	if (!m) return false;
+	var bits = m[2] === undefined ? 32 : parseInt(m[2], 10);
+	function nombre(a){ return a.split(".").reduce(function(t, o){ return t * 256 + parseInt(o, 10); }, 0); }
+	var bloc = Math.pow(2, 32 - bits);
+	return Math.floor(nombre(m[1]) / bloc) === Math.floor(nombre(ip) / bloc);
+}
+function posteBloque(){
+	var pf = state.reseau.parefeu;
+	if (!pf.actif) return false;
+	for (var i = 0; i < pf.regles.length; i++){
+		var r = pf.regles[i];
+		if ((r.vers || "Anywhere") !== "Anywhere" || !adresseDansPlage(r.de, ADRESSE_POSTE_CORBEAU)) continue;
+		return r.action === "deny" || r.action === "reject";
+	}
+	return false;
 }
 
 /* Les étapes principales à boucler avant de rencontrer le Corbeau. */
@@ -839,6 +952,15 @@ function rapportComplet(texte){
 GameEvents.addListener("read", function(e){
 	if (e.item === AuthLog2 && e.cmd === "zcat") state.complete("c_journaux");
 	if (e.item && e.item.itemname === "job-017.txt" && current_room === ImprimanteSpool || (e.item && e.item.itemname === "job-017.txt")) state.complete("s_c_imprimante");
+});
+GameEvents.addListener("ufwChange", function(e){
+	if (e.regle && e.regle.de && (e.regle.action === "deny" || e.regle.action === "reject") && adresseDansPlage(e.regle.de, IP_LABO) && !adresseDansPlage(e.regle.de, ADRESSE_POSTE_CORBEAU)){
+		say("La radio grésille. C'est Grace : « Tu viens de bloquer " + e.regle.de + " : c'est le labo de TP, une machine de l'école ! Le Corbeau l'a seulement traversé. " +
+			"Son vrai poste, c'est l'adresse d'où venait sa session sur le labo (who). Retire cette règle : sudo ufw delete N. »");
+	}
+	if (e.regle && (e.regle.action === "allow") && adresseDansPlage(e.regle.de, ADRESSE_POSTE_CORBEAU)){
+		say(C.jaune("Attention : cette règle AUTORISE le poste du Corbeau. Si elle passe avant un deny, c'est elle qui décide."));
+	}
 });
 GameEvents.addListener("nmap", function(e){ if (e.reseau && !state.has("reseauCartographie")) state.applyState("reseauCartographie"); });
 GameEvents.addListener("base64", function(e){ if (e.decode && e.text.indexOf("charge du Corbeau") > -1) state.complete("c_mail"); });
@@ -890,10 +1012,21 @@ GameEvents.addListener("vimQuitte", function(e){
 	if (e.info && e.info.commandes && e.info.commandes[":q!modifie"]) state.complete("s_v_quitter_force");
 });
 GameEvents.addListener("write", function(e){
-	if (!e.vim) {
-		if (e.item === ZoneEcole || e.item === SudoersCitadelle) return;
+	if (e.item === SudoersCitadelle){
+		var t = e.text || "";
+		if (e.visudo) state.set("visudoUtilise");
+		else if (!state.has("sudoersAlaMain")){
+			state.set("sudoersAlaMain");
+			say("Evi, à la radio : « Tu as modifié /etc/sudoers directement ? Une seule faute de frappe et plus personne ne peut utiliser sudo sur la Citadelle. " +
+				"Rouvre-le avec sudo visudo : il vérifie la syntaxe avant d'enregistrer. »");
+		}
+		if (!/^\s*root\s+ALL/m.test(t) || !/^\s*%sudo\s+ALL/m.test(t)){
+			say("Evi, à la radio : « Attention, sudoers ne donne plus les droits à " + (!/^\s*root\s+ALL/m.test(t) ? "root" : "au groupe sudo (et donc à Laurent)") +
+				". Ne retire que la ligne du Corbeau : remets les autres (la copie d'origine : root ALL=(ALL:ALL) ALL et %sudo ALL=(ALL:ALL) ALL). »");
+		}
 		return;
 	}
+	if (!e.vim) return;
 	var cmds = e.vim.commandes || {};
 	var t = e.text, nom = e.item.itemname;
 	if (cmds.u) state.complete("s_v_u");
@@ -916,7 +1049,7 @@ GameEvents.addListener("write", function(e){
 		if (nom === "lecon5.txt"){
 			if (cmds["/"] && cmds.n) state.complete("s_v_recherche");
 			if (cmds[":%s"] && t.indexOf("erreur") === -1 && t.indexOf("succès") > -1) state.complete("s_v_substitution");
-			if (cmds.G && /---> FIN\.\s*$/.test(t)) state.complete("s_v_G");
+			if (cmds.G && /---> FIN ?\.\s*$/.test(t)) state.complete("s_v_G");
 		}
 	}
 	if (nom === "rapport.txt" && e.room === Home && rapportComplet(t) && !state.has("victoireCyber")) state.applyState("victoireCyber");

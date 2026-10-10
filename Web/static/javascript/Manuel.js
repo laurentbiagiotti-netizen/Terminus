@@ -68,11 +68,12 @@ var MANUEL = {
 	resume: "regarder un objet, parler à quelqu'un",
 	titre: "regarder, examiner, parler",
 	page:
-"Utilise « less » pour examiner un objet ou adresser la parole à quelqu'un.\n\n" +
+"Utilise « less » pour examiner un objet ou adresser la parole à quelqu'un,\n" +
+"comme cat.\n\n" +
 "  less OBJET\n\n" +
 "Sous Linux, less affiche un texte page par page. Ici, quand un texte est\n" +
-"trop long, il n'en montre que la première page : pour le reste, il faudra\n" +
-"apprendre head, tail et grep."
+"trop long, il n'en montre que la première page. Pour le reste : cat affiche\n" +
+"tout d'un coup, head et tail un morceau, grep cherche un mot."
 },
 "help": {
 	resume: "revoir la liste de ses sorts",

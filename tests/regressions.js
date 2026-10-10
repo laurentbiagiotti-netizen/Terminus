@@ -234,7 +234,7 @@ jb.taper("cd Racine");
 jb.taper("less ../../Radio");
 var vrai = jb.lire("Racine.procs.filter(function(p){ return p.noyau; })[0].pid");
 contient(jb.taper("sudo kill -9 " + vrai), "thread du noyau", "un vrai kworker ignore les signaux");
-verifier(jb.lire("Racine.procs.length") === 7, "le vrai kworker est toujours là");
+verifier(jb.lire("Racine.procs.filter(function(p){ return /kworker/.test(p.name); }).length") === 7, "le vrai kworker est toujours là");
 contient(jb.taper("ps"), "[kworker/", "ps affiche les threads du noyau entre crochets");
 
 // --- La mission cyber raconte l'histoire du renfort ---
@@ -256,6 +256,132 @@ var j14 = nouveauMonde(st14, 24);
 j14.taper("chapitre 2", "oui");
 j14.taper("ssh citadelle");
 contient(nouveauMonde(st14).taper("less Laurent"), "le renfort", "le texte du renfort survit au rechargement");
+
+// --- Audit du chapitre 2 (octobre) ---
+var a1 = nouveauMonde({}, 31);
+a1.taper("chapitre 2", "oui");
+a1.taper("ssh citadelle");
+a1.taper("cd Crypte");
+a1.taper("less Archiviste");
+a1.taper("cd bin");
+s = a1.taper("sha256sum -c SHA256SUMS");
+contient(s, "passwd: OK", "passwd n'est pas signalé comme trafiqué");
+contient(s, "1 somme", "un seul programme trafiqué");
+contient(a1.taper("cat /etc/passwd"), "maintenance", "chemin absolu sur la Citadelle");
+a1.taper("cd /");
+contient(a1.taper("pwd"), "Citadelle", "cd / mène à la racine de la Citadelle");
+contient(a1.taper("cd ~"), "connexion à citadelle est donc fermée", "cd ~ referme la connexion ssh");
+contient(a1.taper("exit"), "On ne quitte pas", "plus de connexion fantôme après cd ~");
+
+// logout : deux joueurs au même prénom
+var stL = {};
+var l1 = nouveauMonde(stL, 41);
+l1.lire("adopterPrenom('Thomas'); state.save()");
+l1.taper("logout", "oui");
+var l2 = nouveauMonde(stL, 42);
+verifier(l2.lire("sessionsDuPrenom('thomas').length") === 1, "la partie de Thomas est proposée, pas reprise d'office");
+l2.lire("adopterPrenom('Thomas'); state.save()");
+l2.taper("cd ForetOuest");
+l2.taper("logout", "oui");
+var l3 = nouveauMonde(stL, 43);
+verifier(l3.lire("sessionsDuPrenom('Thomas').length") === 2, "deux Thomas gardent chacun leur partie");
+contient(l3.lire("decrireSession(sessionsDuPrenom('Thomas')[0])"), "chapitre 1", "la partie mise de côté est décrite");
+verifier(l3.lire("reprendreSession(sessionsDuPrenom('Thomas')[1])") === true, "reprendre la partie choisie");
+verifier(nouveauMonde(stL).lire("current_room.room_name") === "ForetOuest", "c'est bien la partie choisie qui revient");
+verifier(nouveauMonde(stL).lire("sessionsDuPrenom('Thomas').length") === 1, "l'autre Thomas attend toujours");
+
+// Les leçons de vim
+var a2 = nouveauMonde({}, 32);
+jouerJusqua(a2, "less TuteurVim");
+a2.taper("rm lecon1.txt");
+contient(a2.taper("ls"), "lecon1.txt", "une leçon supprimée revient");
+contient(a2.taper("cat lecon5.txt"), "---> FIN ?", "la dernière ligne de la leçon 5");
+a2.editer("function(t){ return { texte: t.replace(/erreur/g, 'succès').replace('---> FIN ?', '---> FIN.'), commandes: { G: true, ':%s': true, r: true } }; }");
+a2.taper("vim lecon5.txt");
+verifier(a2.lire("state.quests.s_v_G") === true, "la leçon 5 se valide en suivant la consigne à la lettre");
+contient(a2.taper("xp"), "", "xp");
+verifier(a2.taper("xp").indexOf(".machines") === -1, "xp ne montre pas le dossier caché .machines");
+
+// Le pare-feu lit ses règles dans l'ordre
+var a3 = nouveauMonde({}, 33);
+jouerJusqua(a3, "less ConsignesParefeu");
+var poste = a3.lire("ADRESSE_POSTE_CORBEAU"), mdp3 = a3.lire("MOT_DE_PASSE_SUDO");
+contient(a3.taper("sudo ufw deny from " + a3.lire("IP_LABO"), mdp3), "labo de TP", "Grace prévient quand on bloque le labo");
+a3.taper("sudo ufw delete 1", mdp3);
+a3.taper("sudo ufw allow from " + poste, mdp3);
+a3.taper("sudo ufw deny from " + poste, mdp3);
+a3.taper("sudo ufw enable", mdp3);
+verifier(a3.lire("state.quests.c_parefeu") !== true, "un allow avant le deny laisse passer le Corbeau");
+contient(a3.taper("sudo ufw insert 1 deny from " + poste, mdp3), "Rule inserted", "ufw insert");
+verifier(a3.lire("state.quests.c_parefeu") === true, "la règle insérée en tête bloque le poste");
+contient(a3.taper("cat /var/log/ufw.log"), poste, "ufw.log montre le blocage");
+a3.taper("sudo ufw disable", mdp3);
+contient(a3.taper("ls"), "", "");
+verifier(a3.lire("state.has('parefeuRouvert')") === true, "Grace signale un pare-feu désactivé après coup");
+
+// sudoers : visudo seulement, et sans casser les autres lignes
+var a4 = nouveauMonde({}, 34);
+jouerJusqua(a4, "sudo cat sudoers");
+var mdp4 = a4.lire("MOT_DE_PASSE_SUDO");
+a4.editer("function(t){ return { texte: t.replace('corbeau ALL=(ALL) NOPASSWD: ALL', 'corbeau ALL=(ALL NOPASSWD ALL'), commandes: { cw: true } }; }");
+contient(a4.taper("sudo visudo", mdp4), "syntax error", "visudo refuse une parenthèse non fermée");
+a4.editer("function(t){ return t.split('\\n').filter(function(l){ return l.indexOf('corbeau') !== 0; }).join('\\n'); }");
+contient(a4.taper("sudo nano sudoers", mdp4), "visudo", "Evi rappelle qu'on modifie sudoers avec visudo");
+verifier(a4.lire("state.quests.c_sudo") !== true, "modifier sudoers à la main ne valide pas l'étape");
+a4.editer("function(t){ return ''; }");
+contient(a4.taper("sudo visudo", mdp4), "ne donne plus les droits", "vider sudoers est signalé");
+verifier(a4.lire("state.quests.c_sudo") !== true, "un sudoers vidé ne valide pas l'étape");
+
+// La preuve et gpg
+var a5 = nouveauMonde({}, 35);
+jouerJusqua(a5, "sha1sum notes.gpg");
+var mdp5 = a5.lire("MOT_DE_PASSE_SUDO");
+a5.editer("function(t){ return 'casse'; }");
+contient(a5.taper("sudo nano notes.gpg", mdp5), "touché à notes.gpg", "Grace refuse une preuve modifiée");
+contient(a5.taper("cat notes.gpg"), "BEGIN PGP MESSAGE", "la preuve intacte est remise en place");
+var a6 = nouveauMonde({}, 36);
+jouerJusqua(a6, "strings .porte | grep phrase | cut -d= -f3 | tr 'A-Za-z' 'N-ZA-Mn-za-m'");
+a6.taper("cd ../..");
+a6.taper("cd tmp/.cache");
+a6.taper("gpg -d notes.gpg > ~/carnet.txt", a6.lire("PHRASE_CORBEAU"));
+contient(a6.taper("cat ~/carnet.txt"), "CARNET DU CORBEAU", "gpg -d > FICHIER écrit dans le fichier");
+contient(a6.taper("gpg -d notes.gpg | head -n 2"), "tuyau", "gpg explique qu'il ne peut pas alimenter un tuyau ici");
+
+// Fin du chapitre 2
+var a7 = nouveauMonde({}, 37);
+jouerJusqua(a7, "less Corbeau");
+contient(a7.taper("chapitre"), "ouvert", "le chapitre 2 n'est pas terminé avant le rapport");
+jouerJusqua(a7, "cat CertificatCyber");
+contient(a7.taper("chapitre"), "terminé", "le chapitre 2 est terminé après le rapport");
+contient(a7.taper("quetes"), "dans ta Maison", "le journal dit où est le certificat");
+
+// Mission cyber : le chapitre 1 ne bouge plus, la révélation se comprend, le code ne change pas à chaque lecture
+var a8 = nouveauMonde({}, 38);
+a8.taper("chapitre 2", "oui");
+var xp1 = a8.lire("state.xp");
+a8.taper("pwd"); a8.taper("history"); a8.taper("cd ~/Village");
+verifier(a8.lire("state.xp") === xp1, "en mission cyber, les gains du chapitre 1 ne comptent pas");
+verifier(a8.taper("xp").indexOf("Niveau") === -1, "xp ne montre que le chapitre 2 en mission cyber");
+contient(a8.lire("Corbeau.getText()"), "Tu ne l'as jamais vue", "la révélation du Corbeau se comprend sans le chapitre 1");
+a8.taper("ssh citadelle");
+contient(a8.taper("man logout"), "mise de côté", "man logout");
+contient(a8.taper("logout --help"), "90 jours", "logout --help");
+a8.lire("state.dateVictoire2 = '2026-10-10'");
+var c1 = a8.lire("state.codeDuCertificat()"); a8.taper("pwd"); a8.taper("pwd");
+verifier(a8.lire("state.codeDuCertificat()") === c1, "le code du certificat ne change pas d'une lecture à l'autre");
+
+// Le réseau raconte une seule histoire
+var a9 = nouveauMonde({}, 39);
+jouerJusqua(a9, "less NotesDNS");
+contient(a9.taper("dig -x " + a9.lire("ADRESSE_POSTE_CORBEAU")), "poste-47", "dig -x donne le même nom que nmap");
+var a10 = nouveauMonde({}, 40);
+jouerJusqua(a10, "less Graffiti");
+verifier(a10.taper("rev Graffiti").indexOf("itiffarG") === -1, "rev Graffiti ne renverse que le graffiti");
+a10.taper("cd Racine");
+contient(a10.taper("ps"), "sshd", "ps montre le sshd que ss annonce");
+var a11 = nouveauMonde({}, 41);
+jouerJusqua(a11, "less TuteurVim");
+contient(a11.taper("vi lecon1.txt"), "[vim", "vi est l'autre nom de vim");
 
 console.log(verifications + " vérifications, " + echecs + " échec" + (echecs > 1 ? "s" : ""));
 process.exit(echecs ? 1 : 0);

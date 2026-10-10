@@ -229,10 +229,14 @@ html, body{
     min-height: 1.45em;
     color: var(--texte);
     border-top: 1px solid var(--trait);
-    white-space: pre;
-    overflow: hidden;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
-.vim-position{ color: var(--gris); }
+.vim-position{ color: var(--gris); white-space: nowrap; }
+@media (max-width: 480px){
+    .editeur-pied button{ min-width: 2.2em; padding: 6px 6px; }
+    #touches button{ min-width: 2.1em; padding: 6px 5px; }
+}
 .vim-capture{
     position: absolute;
     left: -9999px;

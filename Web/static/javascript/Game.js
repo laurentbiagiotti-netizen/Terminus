@@ -10,7 +10,7 @@ var MESSAGE_ACCUEIL =
 	"Regarde autour de toi avec le sort " + C.vert("ls") + ".\n" +
 	"Va dans un autre lieu avec " + C.vert("cd LIEU") + ".\n" +
 	"Reviens sur tes pas avec " + C.vert("cd ..") + ".\n" +
-	"Examine un objet ou parle à quelqu'un avec " + C.vert("cat OBJET") + ". Pour un long texte, " + C.vert("less OBJET") + " le fait défiler page par page.\n\n" +
+	"Examine un objet ou parle à quelqu'un avec " + C.vert("cat OBJET") + ". Pour un très long texte, " + C.vert("less OBJET") + " en montre la première page.\n\n" +
 	"Si tu ne sais plus où tu es, tape " + C.vert("pwd") + ". Si tu ne sais plus quoi faire, tape " + C.vert("quetes") + ".\n" +
 	"Chaque sort appris, chaque lieu découvert et chaque quête rapportent de l'expérience : tape " + C.vert("xp") + " pour voir ta note.\n\n" +
 	"Vas-y, explore. Nous espérons que ce que tu trouveras te plaira. Commence par taper ls.\n";
@@ -108,16 +108,47 @@ function demanderPrenom(){
 			demanderPrenom();
 			return;
 		}
-		if (reprendreSession(reponse)){
-			term.echo("\nUne partie à ce prénom était mise de côté sur cet ordinateur. On la reprend...");
-			window.location.reload();
+		var anciennes = sessionsDuPrenom(reponse);
+		if (anciennes.length){
+			proposerReprise(reponse, anciennes);
 			return;
 		}
-		var identifiant = adopterPrenom(reponse);
-		term.echo("\nEnchanté, " + C.gras(PROFIL.prenom) + ". Sur ce système, tu seras " + C.vert(identifiant) +
-			C.gris(" (c'est ce que répondra le sort whoami)") + ".\n");
-		state.save();
-		demanderParcours();
+		nouvellePartie(reponse);
+	});
+}
+
+function nouvellePartie(prenom){
+	var identifiant = adopterPrenom(prenom);
+	term.echo("\nEnchanté, " + C.gras(PROFIL.prenom) + ". Sur ce système, tu seras " + C.vert(identifiant) +
+		C.gris(" (c'est ce que répondra le sort whoami)") + ".\n");
+	state.save();
+	demanderParcours();
+}
+
+/* Des parties à ce prénom attendent sur cet ordinateur : on demande avant d'en reprendre une. */
+function proposerReprise(prenom, anciennes){
+	var texte = "\n" + (anciennes.length === 1 ? "Une partie à ce prénom a été mise de côté sur cet ordinateur :" : "Des parties à ce prénom ont été mises de côté sur cet ordinateur :") + "\n";
+	anciennes.forEach(function(x, i){ texte += "  " + C.vert(String(i + 1)) + "  " + decrireSession(x) + "\n"; });
+	texte += "  " + C.vert("n") + "  ce n'est pas la mienne : commencer une nouvelle partie\n";
+	term.echo(texte);
+	term.demander(anciennes.length === 1 ? "Tape 1 pour la reprendre, ou n : " : "Tape le numéro de ta partie, ou n : ", false, function(reponse){
+		var choix = String(reponse).trim().toLowerCase();
+		var n = parseInt(choix, 10);
+		if (n >= 1 && n <= anciennes.length){
+			if (reprendreSession(anciennes[n - 1])){
+				term.echo("On reprend ta partie...");
+				window.location.reload();
+			} else {
+				term.echo(C.jaune("Impossible de reprendre cette partie (stockage indisponible)."));
+			}
+			return;
+		}
+		if (choix === "n" || choix === "non" || choix === "nouvelle"){
+			nouvellePartie(prenom);
+			return;
+		}
+		term.echo(C.jaune("Réponds par un numéro de la liste, ou n."));
+		proposerReprise(prenom, anciennes);
 	});
 }
 

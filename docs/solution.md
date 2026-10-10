@@ -56,7 +56,7 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
 | --- | --- |
 | Étape de la quête principale (13) | 100 chacune, 300 pour la victoire finale |
 | Quête secondaire (28, dont 2 secrètes) | 50 |
-| Sort appris (44, les 9 premiers sont connus au départ, dont cat) | 10 |
+| Sort appris (43 : 52 sorts, dont 9 connus au départ, `cat` compris) | 10 |
 | Première utilisation d'un sort (52) | 5 |
 | Lieu découvert (44) | 5 |
 
@@ -93,7 +93,7 @@ Le chapitre 1 se joue en choisissant la première enveloppe au démarrage. Il m�
 
 ### 1. La Maison et l'Académie
 
-Notions : `ls`, `cd`, `less`, chemins, `--help`, `mv`, joker `*`, `cat`, `head`, `tail`, `wc`, `diff`.
+Notions : `ls`, `cd`, `cat` et `less` (connus dès le départ), chemins, `--help`, `mv`, joker `*`, `head`, `tail`, `wc`, `diff`.
 
 ```
 ls
@@ -479,7 +479,7 @@ exit
 
 ### 8. Les journaux de la Citadelle
 
-Une fois l'écoute coupée, la Citadelle montre ses dossiers système : `etc`, `var/log` et `tmp`. Les journaux de la veille sont compressés : `zcat` les lit sans les décompresser. La ligne `Accepted` donne l'heure de la première connexion du Corbeau (à noter pour le rapport) et l'adresse d'où il venait : le labo de TP.
+Au chapitre 2, la Citadelle a aussi ses dossiers système : `etc`, `var/log` et `tmp` (les chemins absolus comme `/etc/passwd` y marchent). Les journaux de la veille sont compressés : `zcat` les lit sans les décompresser. La ligne `Accepted` donne l'heure de la première connexion du Corbeau (à noter pour le rapport) et l'adresse d'où il venait : le labo de TP.
 
 ```
 ssh citadelle
@@ -491,7 +491,6 @@ cat auth.log
 zcat auth.log.1.gz
 zcat auth.log.2.gz | grep Accepted
 sudo journalctl -u sshd
-last
 echo brouillon > ~/essai.txt
 gzip ~/essai.txt
 gunzip ~/essai.txt.gz
@@ -563,10 +562,10 @@ Les touches, leçon par leçon :
 | 2 | sur la première ligne `--->`, se placer sur « dans », `i`, taper « mots » et une espace, Échap ; sur la deuxième, `A`, taper « de nulle part. », Échap ; `:wq` |
 | 3 | sur le deuxième « le » puis sur le deuxième « protège », `dw` ; sur la ligne « Cette ligne ne sert à rien », `dd` ; `u` annule, `dd` refait ; `:wq` |
 | 4 | sur la ligne « 2) deuxième », `dd`, puis `p` sur la ligne « 1) première » ; sur le « o » d'attoque, `ra` ; sur « ouvert », `cw`, taper « fermé », Échap ; `:wq` |
-| 5 | `/erreur` puis `n` pour voir les suivantes ; `:%s/erreur/succès/g` ; `G` pour la dernière ligne, remplacer « ? Remplace ce point d'interrogation par un point. » par « . » (par exemple avec `x` et `D`, ou `cw`) ; `:wq` |
+| 5 | `/erreur` puis `n` pour voir les suivantes ; `:%s/erreur/succès/g` ; `G` pour la dernière ligne (`---> FIN ?`), `$` pour aller sur le point d'interrogation, `r.` pour le remplacer par un point ; `:wq` |
 | brouillon.txt | `i`, taper n'importe quoi, Échap, puis `:q!` : on sort sans rien enregistrer |
 
-Sortir de vim pour la première fois rapporte aussi une quête secondaire. Sur téléphone, les boutons en bas de l'éditeur envoient Échap, `i`, `x`, `dd`, `u`, `:w`, `:wq` et `:q!`.
+Sortir de vim pour la première fois rapporte aussi une quête secondaire. Une leçon abîmée se recommence : `rm leconN.txt`, et le tuteur en remet une copie neuve. `vi` est l'autre nom de `vim`, et `ZZ` enregistre et quitte comme `:wq`. Sur téléphone, les boutons en bas de l'éditeur envoient Échap, `i`, `x`, `dd`, `u`, `:w`, `:wq` et `:q!`.
 
 ### 11. Le site web, la messagerie, le DNS, le pare-feu
 
@@ -626,7 +625,7 @@ cat ufw.log
 exit
 ```
 
-La page piégée du site a l'attribut immuable : même root ne peut pas la supprimer avant `chattr -i`. La pièce jointe du mail est encodée en base64 entre deux lignes repères : `sed -n '/début/,/fin/p'` garde l'intervalle, `grep -v` retire les repères. Dans `vim ecole.zone`, on descend sur la ligne qui commence par `maj` (par exemple `/maj` puis Entrée), `dd`, puis `:wq`.
+La page piégée du site a l'attribut immuable : même root ne peut pas la supprimer avant `chattr -i`. La pièce jointe du mail est encodée en base64 entre deux lignes repères : `sed -n '/début/,/fin/p'` garde l'intervalle, `grep -v` retire les repères. `dig -x` sur l'adresse de `maj` répond `poste-47` : un simple poste de travail se fait passer pour le serveur des mises à jour. Dans `vim ecole.zone`, on descend sur la ligne qui commence par `maj` (par exemple `/maj` puis Entrée), `dd`, puis `:wq`. Si on retire une autre ligne par erreur, la radio dit laquelle remettre. Au pare-feu, les règles se lisent dans l'ordre : un `allow` pour le poste placé avant le `deny` le laisse passer (`sudo ufw insert 1 deny from ...` met la règle en tête). Bloquer l'adresse du labo est une erreur que Grace signale : le Corbeau n'a fait que le traverser.
 
 ### 12. L'imprimante et la badgeuse
 
@@ -652,13 +651,15 @@ less ProcedureComptes
 awk -F: '$3 == 0 { print $1 }' passwd
 sudo userdel maintenance
 groups corbeau
+sudo usermod -rG sudo corbeau
+groups corbeau
 sudo cat sudoers
 sudo visudo
 sudo cat sudoers
 exit
 ```
 
-`visudo` ouvre vim (ou nano pour qui ne connaît pas encore vim). On se place sur la ligne qui commence par `corbeau`, `dd`, puis `:wq`. `visudo` vérifie la syntaxe avant d'enregistrer : une ligne cassée est refusée.
+Le Corbeau a le droit sudo de deux façons : par le groupe `sudo` (`groups corbeau`) et par une ligne à son nom dans sudoers. `usermod -rG sudo corbeau` le sort du groupe. `visudo` ouvre sudoers dans vim (ou nano pour qui ne connaît pas encore vim) : on se place sur la ligne qui commence par `corbeau`, `dd`, puis `:wq`. `visudo` vérifie la syntaxe avant d'enregistrer : une ligne cassée est refusée. Modifier sudoers directement (`sudo nano /etc/sudoers`) ne valide pas l'étape, et Evi le fait remarquer ; retirer aussi les lignes de root ou du groupe sudo non plus.
 
 ### 14. Les preuves et les notes chiffrées
 
@@ -696,7 +697,7 @@ echo mes notes > ~/secret.txt
 gpg -c ~/secret.txt
 ```
 
-`gpg -d` demande la phrase de passe : c'est le résultat du tuyau sur `strings` (ROT13 défait par `tr`). Le carnet du Corbeau résume toute l'intrusion et donne rendez-vous au coffre. Le Corbeau ne s'y montre qu'une fois toutes les étapes précédentes faites ; sinon, Grace dit à la radio ce qu'il reste.
+`gpg -d` demande la phrase de passe : c'est le résultat du tuyau sur `strings` (ROT13 défait par `tr`). `gpg -d notes.gpg > carnet.txt` écrit le texte clair dans un fichier. Si le joueur modifie `notes.gpg` avant de l'avoir copié, Grace refuse la preuve et remet l'original en place : une preuve se copie et s'empreinte avant qu'on y touche. Le carnet du Corbeau résume toute l'intrusion et donne rendez-vous au coffre. Le Corbeau ne s'y montre qu'une fois toutes les étapes précédentes faites ; sinon, Grace dit à la radio ce qu'il reste.
 
 ### 15. Le Corbeau et le rapport d'incident
 

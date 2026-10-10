@@ -317,6 +317,15 @@ Shell.sorts.id = function(args, io){
 	var groupes = uid + "(" + nom + ")";
 	if (nom === JOUEUR && state.has("sudoOK")) groupes += ",27(sudo)";
 	if (nom === "laurent") groupes += ",27(sudo),1042(direction)";
+	// Sur une machine qui a son fichier /etc/group, les groupes secondaires viennent de là (comme groups).
+	var fichierGroupes = typeof fichierSysteme === "function" ? fichierSysteme("group") : null;
+	if (fichierGroupes && nom !== JOUEUR){
+		groupes = uid + "(" + nom + ")";
+		lignesDe(fichierGroupes.getText()).forEach(function(l){
+			var c = l.split(":");
+			if (c.length >= 4 && c[3].split(",").indexOf(nom) > -1) groupes += "," + c[2] + "(" + c[0] + ")";
+		});
+	}
 	return "uid=" + uid + "(" + nom + ") gid=" + uid + "(" + nom + ") groupes=" + groupes;
 };
 

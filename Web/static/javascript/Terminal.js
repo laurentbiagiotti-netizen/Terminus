@@ -74,6 +74,27 @@ function Terminal(elements){
 	this.saisie.addEventListener("keydown", function(e){ self.touche(e); });
 	// Taper n'importe ou sur la page ecrit dans le terminal, meme sans avoir clique dedans.
 	document.addEventListener("keydown", function(e){
+		var editeur = document.getElementById("editeur");
+		if (editeur){
+			// Un éditeur est ouvert : les touches lui reviennent, jamais au terminal caché derrière.
+			var champ = editeur.querySelector(".vim-capture, textarea");
+			if (champ && e.target !== champ){
+				e.preventDefault();
+				champ.focus();
+				if (champ.className === "vim-capture") champ.dispatchEvent(new KeyboardEvent("keydown", { key: e.key, ctrlKey: e.ctrlKey, metaKey: e.metaKey, altKey: e.altKey, shiftKey: e.shiftKey, bubbles: false, cancelable: true }));
+			}
+			return;
+		}
+		if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d" && document.activeElement !== self.saisie){
+			// Ctrl+D hors de la ligne : pas de « ajouter aux favoris », mais la même chose que dans la ligne.
+			e.preventDefault();
+			if (self.saisie.value === "" && !self.question){
+				self.echo(self.texteInvite + "logout");
+				self.onCommande("logout");
+				self.defiler();
+			}
+			return;
+		}
 		if (document.activeElement === self.saisie) return;
 		if (e.ctrlKey || e.metaKey || e.altKey) return;
 		var cible = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : "";
@@ -442,6 +463,10 @@ Terminal.prototype.editerVim = function(options, enregistrer){
 		ligneCommande = "";
 		message = "";
 		var m;
+		if (/^(w|wq|x)!$/.test(cmd)){
+			if (options.lectureSeule){ message = "E212: Can't open file for writing" + (options.sudo ? "" : " (fichier d'un autre : il faut le rouvrir avec sudo vim)"); return; }
+			cmd = cmd.replace("!", "");
+		}
 		if (cmd === "w"){ note(":w"); ecrire(); return; }
 		if (cmd === "wq" || cmd === "x"){ note(":wq"); if (ecrire()) fermer(); return; }
 		if (cmd === "q"){
@@ -581,6 +606,15 @@ Terminal.prototype.editerVim = function(options, enregistrer){
 				}
 				note("p"); changer(); return;
 			case "r": attente = "r"; return;
+			case "dG":
+				attente = ""; memoriser();
+				registre = { lignes: lignes.splice(l), ligne: true };
+				if (lignes.length === 0) lignes = [""];
+				l = Math.max(0, Math.min(l, lignes.length - 1)); c = 0;
+				note("dG"); changer(); return;
+			case "Z": attente = "Z"; return;
+			case "ZZ": attente = ""; note(":wq"); if (!modifie){ fermer(); return; } if (ecrire()) fermer(); return;
+			case "ZQ": attente = ""; commandeDirecte("q!"); return;
 			case "u":
 				if (!annulations.length){ message = "Already at oldest change"; return; }
 				var etat = annulations.pop();
@@ -648,6 +682,7 @@ Terminal.prototype.editerVim = function(options, enregistrer){
 	capture.addEventListener("keydown", function(e){
 		if (e.key === "Unidentified" || e.key === "Process") return; // clavier de téléphone : on passe par l'événement input
 		if (e.ctrlKey && e.key.toLowerCase() === "c"){ e.preventDefault(); touche("Escape"); dessiner(); return; }
+		if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d"){ e.preventDefault(); return; }
 		if (e.ctrlKey || e.metaKey) return;
 		if (e.key.length === 1 || ["Escape", "Enter", "Backspace", "Tab", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].indexOf(e.key) > -1){
 			e.preventDefault();
@@ -661,14 +696,19 @@ Terminal.prototype.editerVim = function(options, enregistrer){
 		for (var i = 0; i < texte.length; i++) touche(texte.charAt(i) === "\n" ? "Enter" : texte.charAt(i));
 		if (fond.parentNode) dessiner();
 	});
-	zone.addEventListener("mousedown", function(e){ e.preventDefault(); capture.focus(); });
+	// Un clic n'importe où dans l'éditeur (hors boutons) garde la saisie dans vim.
+	fond.addEventListener("mousedown", function(e){
+		if (e.target && e.target.tagName === "BUTTON") return;
+		e.preventDefault();
+		capture.focus();
+	});
 
 	fond.appendChild(zone);
 	fond.appendChild(statut);
 	fond.appendChild(capture);
 	fond.appendChild(pied);
 	document.body.appendChild(fond);
-	message = "\"" + (options.titre || "") + "\" " + lignes.length + "L" + (options.lectureSeule ? " [lecture seule]" : "") + "   (i pour écrire, Échap puis :wq pour enregistrer et quitter)";
+	message = "\"" + (options.titre || "") + "\" " + (options.nouveau ? "[Nouveau]" : lignes.length + "L") + (options.lectureSeule ? " [lecture seule]" : "") + "  (i écrire, Échap puis :wq)";
 	dessiner();
 	capture.focus();
 };

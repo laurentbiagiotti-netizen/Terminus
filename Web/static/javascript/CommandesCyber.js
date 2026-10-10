@@ -889,9 +889,34 @@ Shell.sorts.userdel = function(args, io){
 
 Shell.sorts.usermod = function(args, io){
 	var verrou = args.indexOf("-L") > -1, deverrou = args.indexOf("-U") > -1;
-	var nom = args.filter(function(a){ return a.charAt(0) !== "-"; })[0];
-	if (!nom || (!verrou && !deverrou)) throw new ShellError("usermod : utilisation ici : sudo usermod -L NOM (verrouiller le compte) ou -U (le déverrouiller)");
+	var retirer = args.some(function(a){ return /^-[a-zA-Z]*r/.test(a) && a !== "--"; }), ajouter = args.some(function(a){ return /^-[a-zA-Z]*a/.test(a); });
+	var groupe = null, mots = [];
+	for (var i = 0; i < args.length; i++){
+		if (/^-[a-zA-Z]*G$/.test(args[i])){ groupe = args[++i] || null; continue; }
+		if (args[i].charAt(0) !== "-") mots.push(args[i]);
+	}
+	var nom = mots[0];
+	if (!nom || (!verrou && !deverrou && !groupe)) throw new ShellError("usermod : utilisations ici :\n  sudo usermod -L NOM          verrouiller le compte (-U pour le déverrouiller)\n" +
+		"  sudo usermod -rG GROUPE NOM  retirer NOM du GROUPE\n  sudo usermod -aG GROUPE NOM  ajouter NOM au GROUPE");
 	if (!io.sudo) throw new ShellError("usermod : Permission denied.\n" + C.gris("(Réservé à root : sudo usermod ...)"));
+	if (groupe){
+		if (!retirer && !ajouter) throw new ShellError("usermod : -G seul remplacerait TOUS les groupes de " + nom + ". Précise -aG (ajouter) ou -rG (retirer).");
+		var fichierGroupes = fichierSysteme("group");
+		var passwdG = fichierSysteme("passwd");
+		if (!passwdG || !new RegExp("^" + nom + ":", "m").test(passwdG.getText())) throw new ShellError("usermod : user '" + nom + "' does not exist");
+		if (!fichierGroupes || !new RegExp("^" + groupe + ":", "m").test(fichierGroupes.getText())) throw new ShellError("usermod : group '" + groupe + "' does not exist");
+		fichierGroupes.setText(lignesDe(fichierGroupes.getText()).map(function(l){
+			var c = l.split(":");
+			if (c[0] !== groupe || c.length < 4) return l;
+			var membres = c[3] === "" ? [] : c[3].split(",");
+			membres = membres.filter(function(m){ return m !== nom; });
+			if (ajouter) membres.push(nom);
+			c[3] = membres.join(",");
+			return c.join(":");
+		}).join("\n"));
+		GameEvents.fire({ type: "usermod", qui: nom, groupe: groupe, retire: retirer, host: Shell.hote() });
+		return "";
+	}
 	var shadow = fichierSysteme("shadow");
 	if (!shadow || !new RegExp("^" + nom + ":", "m").test(shadow.getText())) throw new ShellError("usermod : user '" + nom + "' does not exist");
 	shadow.setText(lignesDe(shadow.getText()).map(function(l){
@@ -916,7 +941,7 @@ Shell.sorts.visudo = function(args, io){
 		lignesDe(nouveau).forEach(function(l, i){
 			var t = l.trim();
 			if (t === "" || t.charAt(0) === "#" || /^Defaults\s+\S/.test(t) || /^@includedir\s/.test(t)) return;
-			if (!/^%?[\w.-]+\s+[\w.-]+\s*=\s*(\([^)]*\)\s*)?(NOPASSWD:\s*)?\S/.test(t)) fautes.push(i + 1);
+			if (!/^%?[\w.-]+\s+[\w.-]+\s*=\s*(\([\w.,:%\s-]*\)\s*)?((NO)?PASSWD:\s*)?(ALL|\/[^\s,]+)(\s*,\s*(ALL|\/[^\s,]+))*$/.test(t)) fautes.push(i + 1);
 		});
 		if (fautes.length){
 			term.echo(C.rouge(">>> /etc/sudoers: syntax error near line " + fautes[0] + " <<<") + "\n" +
@@ -1000,7 +1025,9 @@ Shell.sorts.dig = function(args, io){
 	if (!nom) throw new ShellError("dig : quel nom chercher ? Utilisation : dig NOM, ou dig -x ADRESSE pour la recherche inverse");
 	var reponses = [];
 	if (inverse){
-		zoneDns().forEach(function(r){ if (r.type === "A" && r.valeur === nom) reponses.push({ q: nom.split(".").reverse().join(".") + ".in-addr.arpa.", type: "PTR", v: r.nom + ".cybersup.lan." }); });
+		// La recherche inverse donne le nom officiel de la machine : le premier enregistrement de la zone pour cette adresse.
+		var officiel = zoneDns().filter(function(r){ return r.type === "A" && r.valeur === nom; })[0];
+		if (officiel) reponses.push({ q: nom.split(".").reverse().join(".") + ".in-addr.arpa.", type: "PTR", v: officiel.nom + ".cybersup.lan." });
 	} else {
 		var courtNom = nom.replace(/\.cybersup\.lan\.?$/, "");
 		zoneDns().forEach(function(r){
@@ -1106,19 +1133,30 @@ Shell.sorts.ufw = function(args, io){
 			pf.regles.forEach(function(r, i){
 				lignes.push((args[1] === "numbered" ? "[" + completerGauche(i + 1, 2) + "] " : "     ") + completerDroite(r.vers || "Anywhere", 27) + completerDroite(r.action.toUpperCase() + " IN", 12) + r.de);
 			});
+			if (pf.regles.length) lignes.push("", C.gris("(Les règles se lisent dans l'ordre : la première qui correspond à une connexion décide.)"));
 		}
 		return lignes.join("\n");
 	}
 	if (action === "enable"){ pf.actif = true; GameEvents.fire({ type: "ufwChange" }); return "Firewall is active and enabled on system startup"; }
 	if (action === "disable"){ pf.actif = false; GameEvents.fire({ type: "ufwChange" }); return "Firewall stopped and disabled on system startup"; }
-	if (action === "deny" || action === "allow"){
+	// ufw insert N RÈGLE : la règle prend la place N (les règles sont lues dans l'ordre, la première qui correspond décide).
+	var position = null;
+	if (action === "insert"){
+		position = parseInt(args[1], 10);
+		if (isNaN(position) || position < 1 || position > pf.regles.length + 1) throw new ShellError("ERROR: Invalid position '" + args[1] + "'");
+		args = args.slice(2);
+		action = args[0];
+	}
+	if (action === "deny" || action === "allow" || action === "reject"){
 		var m = args.slice(1).join(" ");
-		var r;
-		if ((r = /^from\s+(\S+)(?:\s+to\s+any)?(?:\s+port\s+(\d+))?$/.exec(m))) pf.regles.push({ action: action, de: r[1], vers: r[2] ? r[2] + "/tcp" : "Anywhere" });
-		else if ((r = /^(\d+)(\/tcp)?$/.exec(m))) pf.regles.push({ action: action, de: "Anywhere", vers: r[1] + "/tcp" });
-		else throw new ShellError("ERROR: Wrong number of arguments\n" + C.gris("(Exemples : sudo ufw deny from 10.0.92.47, sudo ufw allow 22)"));
-		GameEvents.fire({ type: "ufwChange" });
-		return "Rule added";
+		var r, regle;
+		if ((r = /^from\s+(\S+)(?:\s+to\s+any)?(?:\s+port\s+(\d+))?$/.exec(m))) regle = { action: action, de: r[1], vers: r[2] ? r[2] + "/tcp" : "Anywhere" };
+		else if ((r = /^(\d+)(\/tcp)?$/.exec(m))) regle = { action: action, de: "Anywhere", vers: r[1] + "/tcp" };
+		else throw new ShellError("ERROR: Wrong number of arguments\n" + C.gris("(Exemples : sudo ufw deny from 10.0.92.47, sudo ufw allow 22, sudo ufw insert 1 deny from 10.0.92.47)"));
+		if (position !== null) pf.regles.splice(position - 1, 0, regle);
+		else pf.regles.push(regle);
+		GameEvents.fire({ type: "ufwChange", regle: regle });
+		return position !== null ? "Rule inserted" : "Rule added";
 	}
 	if (action === "delete"){
 		var n = parseInt(args[1], 10);
@@ -1127,7 +1165,7 @@ Shell.sorts.ufw = function(args, io){
 		GameEvents.fire({ type: "ufwChange" });
 		return "Rule deleted";
 	}
-	throw new ShellError("ufw : action « " + action + " » inconnue ici. Celles qui existent : status, enable, disable, deny, allow, delete");
+	throw new ShellError("ufw : action « " + action + " » inconnue ici. Celles qui existent : status, enable, disable, deny, allow, reject, insert, delete");
 };
 
 /* Un chemin sur une machine du réseau : MACHINE:/chemin. */
@@ -1191,6 +1229,8 @@ function texteArmure(sel){
 	return "-----BEGIN PGP MESSAGE-----\n\n" + base64Aleatoire(sel + "-1", 64) + "\n" + base64Aleatoire(sel + "-2", 64) + "\n=" + base64Aleatoire(sel + "-3", 4) + "\n-----END PGP MESSAGE-----";
 }
 
+function texteCourt(t){ return String(t).replace(/\s+/g, " ").substring(0, 12); }
+
 Shell.sorts.gpg = function(args, io){
 	var dechiffrer = args.indexOf("-d") > -1 || args.indexOf("--decrypt") > -1;
 	var chiffrer = args.indexOf("-c") > -1 || args.indexOf("--symmetric") > -1;
@@ -1203,8 +1243,15 @@ Shell.sorts.gpg = function(args, io){
 	if (noms.length !== 1) throw new ShellError("gpg : un seul fichier à la fois");
 	if (!io.tty && dechiffrer && sortie === null && io.stdin === null) { /* la phrase de passe se tape quand même à l'écran */ }
 	var t = Shell.objetLisible(noms[0], io, "gpg");
+	// La phrase de passe se demande après coup : la sortie va donc là où pointait la redirection (> FICHIER).
+	var versFichier = io.sortie1 && io.sortie1.t === "fichier" ? io.sortie1 : null;
+	if (dechiffrer && io.sortie1 && io.sortie1.t === "tuyau") throw new ShellError("gpg : ici, gpg ne peut pas envoyer le texte déchiffré dans un tuyau.\n" +
+		C.gris("(Écris-le dans un fichier : gpg -d " + noms[0] + " > carnet.txt, ou gpg -o carnet.txt -d " + noms[0] + ", puis lis ce fichier.)"));
+	if (dechiffrer && versFichier) io.sortieGeree = true;
 	if (dechiffrer){
 		if (!t.item.gpg) throw new ShellError("gpg : no valid OpenPGP data found.\ngpg : decrypt_message failed: Unknown system error");
+		if (t.item.gpg.armure && t.item.getText() !== t.item.gpg.armure) throw new ShellError("gpg: CRC error; " + texteCourt(t.item.getText()) + "\ngpg: decryption failed: Checksum error\n" +
+			C.gris("(Le fichier chiffré a été modifié : il ne se déchiffre plus. Une preuve, on n'y touche pas.)"));
 		term.demander("Phrase de passe : ", true, function(phrase){
 			if (phrase !== t.item.gpg.phrase){
 				term.echo("gpg: AES256.CFB encrypted data\ngpg: decryption failed: Bad session key\n" + C.gris("(Mauvaise phrase de passe.)"));
@@ -1213,6 +1260,7 @@ Shell.sorts.gpg = function(args, io){
 				return;
 			}
 			if (sortie) Shell.ecrire(sortie, t.item.gpg.clair, false);
+			else if (versFichier) Shell.ecrire(versFichier.cible, t.item.gpg.clair, versFichier.ajout);
 			else term.echo("gpg: AES256.CFB encrypted data\ngpg: encrypted with 1 passphrase\n" + t.item.gpg.clair);
 			GameEvents.fire({ type: "gpg", decrypt: true, ok: true, item: t.item });
 			Shell.fin();
@@ -1235,7 +1283,7 @@ Shell.sorts.gpg = function(args, io){
 			if (existant instanceof Item) t.room.removeItem(existant);
 			var chiffre = new Item(nom, texteArmure("gpg-" + nom + "-" + state.nbCommandes), "item_locker.gif");
 			chiffre.owner = JOUEUR;
-			chiffre.gpg = { phrase: phrase, clair: t.item.getText() };
+			chiffre.gpg = { phrase: phrase, clair: t.item.getText(), armure: chiffre.getText() };
 			t.room.addItem(chiffre);
 			term.echo(C.gris("(" + nom + " créé : sans la phrase de passe, son contenu est illisible.)"));
 			GameEvents.fire({ type: "gpg", decrypt: false, item: chiffre });
@@ -1263,7 +1311,7 @@ Shell.sorts.vim = function(args, io){
 	var lieu = r ? r.dir : current_room, sudo = !!io.sudo, cible = item;
 	var lectureSeule = item ? (!Shell.bit(item, "w", io) || !!item.immuable) : (r ? !Shell.bit(r.dir, "w", io) : false);
 	term.editer({
-		titre: nom || "[Sans nom]", texte: item ? item.getText() : "", mode: "vim", lectureSeule: lectureSeule,
+		titre: nom || "[Sans nom]", texte: item ? item.getText() : "", mode: "vim", lectureSeule: lectureSeule, nouveau: !item, sudo: sudo,
 		quitter: function(info){
 			GameEvents.fire({ type: "vimQuitte", info: info, item: cible, nom: r ? r.name : null, room: lieu });
 			Shell.fin();

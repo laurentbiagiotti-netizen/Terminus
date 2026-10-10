@@ -74,7 +74,7 @@ var QUETES_PRINCIPALES = [
 	{ id: "m_tunnel", titre: "Trouver le passage caché",
 	  indice: "Les VieuxManuscrits du vieil homme parlent de choses cachées, dont le nom commence par un point." },
 	{ id: "m_portail", titre: "Ouvrir le Portail",
-	  indice: "La Stele de la ChambreDePierre explique tout, mais la formule est gravée tout en bas. Au Scriptorium de l'Académie, on apprend à lire la fin d'un texte." },
+	  indice: "La Stele de la ChambreDePierre explique tout, mais la formule est gravée tout en bas : cat affiche tout le texte, et tail (qu'on apprend au Scriptorium de l'Académie) seulement sa fin." },
 	{ id: "m_marche", titre: "Apprendre les sorts du Marché",
 	  indice: "Au Marche de la PlaceDuVillage, deux parchemins de sorts attendent d'être lus." },
 	{ id: "m_pont", titre: "Réparer le PontBrise",
@@ -246,6 +246,7 @@ GameState.prototype.setCurrentRoom = function(newRoom){
 /* ---------------- sorts ---------------- */
 
 GameState.prototype.knows = function(sort){
+	if (sort === "vi") sort = "vim"; // vi est l'autre nom de vim
 	return this.spells[sort] === true;
 };
 
@@ -280,15 +281,17 @@ GameState.prototype.learn = function(sort){
 	if (this.spells[sort]) return;
 	this.spells[sort] = true;
 	if (chapitreDuSort(sort) === 2) this.xp2 += XP_SORT_APPRIS;
-	else this.xp += XP_SORT_APPRIS;
+	else if (!this.has("chapitre1Saute")) this.xp += XP_SORT_APPRIS;
 	jouerSon("sort");
-	say(C.vert("✦ Nouveau sort appris : " + sort) + " (" + MANUEL[sort].resume + "). Détail : man " + sort + C.gris("  +" + XP_SORT_APPRIS + " XP"));
+	say(C.vert("✦ Nouveau sort appris : " + sort) + " (" + MANUEL[sort].resume + "). Détail : man " + sort + (chapitreDuSort(sort) === 2 || !this.has("chapitre1Saute") ? C.gris("  +" + XP_SORT_APPRIS + " XP") : ""));
 	GameEvents.fire({ type: "learn", spell: sort });
 };
 
 /* ---------------- experience ---------------- */
 
 GameState.prototype.gagner = function(points, raison, chapitre){
+	// En mission cyber, le chapitre 1 n'est pas noté : ses petits gains ne s'affichent ni ne comptent.
+	if (chapitre !== 2 && this.has("chapitre1Saute")) return;
 	if (chapitre === 2) this.xp2 += points;
 	else this.xp += points;
 	this.gainsDuTour.push({ points: points, raison: raison });
@@ -562,7 +565,7 @@ GameState.prototype.bilanXP = function(){
 		this.gainsDuTour = [];
 	}
 	var n = this.niveau();
-	if (n > this.niveauAnnonce){
+	if (n > this.niveauAnnonce && !this.has("chapitre1Saute")){
 		this.niveauAnnonce = n;
 		jouerSon("niveau");
 		say(C.cyan("▲ Niveau " + n + " : " + NIVEAUX[n - 1].titre + " !") +
@@ -576,6 +579,13 @@ function barre(part, largeur){
 }
 
 GameState.prototype.tableauXP = function(){
+	// En mission cyber, seul le chapitre 2 compte.
+	if (this.has("chapitre1Saute") && typeof QUETES_CHAPITRE2 !== "undefined"){
+		return [C.gras("EXPÉRIENCE"), "", C.gris("Mission cyber : le chapitre 1 n'est pas joué ni noté pour toi."), "", this.tableauXP2(), "",
+			C.gris("Temps de jeu : " + this.tempsTexte() + ". Sorts lancés : " + this.nbCommandes + "."),
+			C.gris("Barème : " + XP_QUETE + " XP par étape (" + XP_VICTOIRE + " pour le rapport final), " + XP_QUETE_SECONDAIRE + " par quête secondaire, " +
+				XP_SORT_APPRIS + " par sort appris, " + XP_PREMIER_USAGE + " la première fois qu'on s'en sert, " + XP_NOUVEAU_LIEU + " par lieu découvert.")].join("\n");
+	}
 	var pr = this.progression();
 	var principales = 0, i;
 	for (i = 0; i < QUETES_PRINCIPALES.length; i++){ if (this.quests[QUETES_PRINCIPALES[i].id]) principales++; }
@@ -634,6 +644,14 @@ function lieuxAVoir(etat, chapitre){
 		if (etat.visited[lieu.id] || lieu === Home) return;
 		var parent = lieu.parents[0];
 		var voisin = parent && etat.visited[parent.id] && (parent.children.indexOf(lieu) > -1);
+		var machine = typeof racineDe === "function" ? racineDe(lieu) : null;
+		if (machine === lieu){
+			// Une machine du réseau : on y entre par ssh, une fois le réseau découvert.
+			if (etat.has("reseauCartographie")) proches.push("la machine " + lieu.room_name + C.gris(" (ssh " + lieu.room_name + ")"));
+			else caches++;
+			return;
+		}
+		if (machine && voisin){ proches.push(machine.racineHote + ":" + Shell.cheminAffiche(lieu)); return; }
 		if (voisin) proches.push(lieu.room_name + C.gris(" (dans " + parent.room_name + ")"));
 		else caches++;
 	});
@@ -695,11 +713,23 @@ GameState.prototype.texteDuCertificat = function(){
 		"=================================================================";
 };
 
+/*
+ * Le code ne change pas d'une lecture à l'autre : le nombre de sorts et le temps sont relevés
+ * au moment où le score a bougé pour la dernière fois.
+ */
+GameState.prototype.compteursFiges = function(chapitre, score, commandes, minutes){
+	this.codesFiges = this.codesFiges || {};
+	var f = this.codesFiges[chapitre];
+	if (!f || f.score !== score) f = this.codesFiges[chapitre] = { score: score, commandes: commandes, minutes: minutes };
+	return f;
+};
+
 GameState.prototype.codeDuCertificat = function(){
+	var f = this.compteursFiges(2, this.xpNet(2), this.nbCommandes, Math.round((this.tempsMs - (this.debutChapitre2 || 0)) / 60000));
 	return fabriquerCode({
 		prenom: String(this.nom || JOUEUR).replace(/\|/g, "/"),
 		score: this.xpNet(2), max: this.xpMax2(), note: this.note(2),
-		commandes: this.nbCommandes, minutes: Math.round((this.tempsMs - (this.debutChapitre2 || 0)) / 60000),
+		commandes: f.commandes, minutes: f.minutes,
 		indices: this.nbIndices(2), chapitre: 2,
 		date: this.dateVictoire2 || dateDuJour(), graine: PROFIL.graine
 	});
@@ -728,10 +758,11 @@ GameState.prototype.complete = function(id){
 	var principale = id.charAt(0) === "m" || id.indexOf("c_") === 0;
 	var points = principale ? (id === "m_boss" || id === "c_rapport" ? XP_VICTOIRE : XP_QUETE) : XP_QUETE_SECONDAIRE;
 	if (chapitreDeQuete(id) === 2) this.xp2 += points;
-	else this.xp += points;
+	else if (!this.has("chapitre1Saute")) this.xp += points;
+	else points = 0;
 	if (principale) this.chronos[id] = this.tempsMs;
 	jouerSon(id === "m_boss" || id === "c_rapport" ? "victoire" : "quete");
-	say(C.jaune("★ " + (principale ? "Quête accomplie" : "Quête secondaire accomplie") + " : " + quete.titre) + C.gris("  +" + points + " XP"));
+	say(C.jaune("★ " + (principale ? "Quête accomplie" : "Quête secondaire accomplie") + " : " + quete.titre) + (points ? C.gris("  +" + points + " XP") : ""));
 };
 
 GameState.prototype.nbSecondaires = function(){
@@ -794,7 +825,7 @@ GameState.prototype.journal = function(detail){
 				lignes.push(C.gris("      Indice : " + q2.indice));
 			}
 		}
-		if (!enCours2) lignes.push("  " + C.vert("Terminé. Le CertificatCyber t'attend dans le coffre."));
+		if (!enCours2) lignes.push("  " + C.vert("Terminé. Ton CertificatCyber t'attend dans ta Maison : cat ~/CertificatCyber"));
 		var faites2 = QUETES_SECONDAIRES_2.filter(function(q){ return this.quests[q.id]; }, this).length;
 		lignes.push(C.gras("  Quêtes secondaires du chapitre 2") + " (" + faites2 + " sur " + QUETES_SECONDAIRES_2.length + ")");
 		for (var d = 0; d < QUETES_SECONDAIRES_2.length; d++){
@@ -806,7 +837,7 @@ GameState.prototype.journal = function(detail){
 	}
 	lignes.push("");
 	var pr = this.progression();
-	lignes.push(C.cyan("Niveau " + pr.niveau + " : " + pr.titre) + C.gris("   " + pr.xp + " XP sur " + pr.max + " (détail : xp)"));
+	if (!this.has("chapitre1Saute")) lignes.push(C.cyan("Niveau " + pr.niveau + " : " + pr.titre) + C.gris("   " + pr.xp + " XP sur " + pr.max + " (détail : xp)"));
 	lignes.push(C.gris("Sorts appris : " + this.knownSpells().length + " sur " + tousLesSorts().length + ". Sorts lancés : " + this.nbCommandes + "."));
 	return lignes.join("\n");
 };
@@ -859,10 +890,11 @@ GameState.prototype.texteDuDiplome = function(){
 
 /* Le code qui résume la partie : le formateur le vérifie sur la page de classement. */
 GameState.prototype.codeDuDiplome = function(){
+	var f = this.compteursFiges(1, this.xpNet(), this.nbCommandes, Math.round(this.tempsMs / 60000));
 	return fabriquerCode({
 		prenom: String(this.nom || JOUEUR).replace(/\|/g, "/"),
 		score: this.xpNet(), max: this.xpMax(), note: this.note(),
-		commandes: this.nbCommandes, minutes: Math.round(this.tempsMs / 60000),
+		commandes: f.commandes, minutes: f.minutes,
 		indices: this.nbIndices(), chapitre: PROFIL.chapitre || 1,
 		date: this.dateVictoire || dateDuJour(), graine: PROFIL.graine
 	});
@@ -1353,7 +1385,7 @@ GameState.prototype.save = function(){
 			env: this.env, alias: this.alias, paquets: this.paquets, cron: this.cron,
 			indices: this.indices, malus: this.malus, dateVictoire: this.dateVictoire,
 			xp2: this.xp2, malus2: this.malus2, cles: this.clesGenerees, pub: this.clePublique, priv: this.clePrivee,
-			grillee: this.cleGrillee, debut2: this.debutChapitre2, dateVictoire2: this.dateVictoire2,
+			grillee: this.cleGrillee, debut2: this.debutChapitre2, dateVictoire2: this.dateVictoire2, codesFiges: this.codesFiges || {},
 			succes: this.succes, chronos: this.chronos, reseau: this.reseau,
 			ici: current_room.path(),
 			avant: Shell.lieu_precedent ? Shell.lieu_precedent.path() : null,
@@ -1431,6 +1463,7 @@ GameState.prototype.load = function(){
 		this.cleGrillee = donnees.grillee || null;
 		this.debutChapitre2 = donnees.debut2 === undefined ? null : donnees.debut2;
 		this.dateVictoire2 = donnees.dateVictoire2 || null;
+		this.codesFiges = donnees.codesFiges || {};
 		this.succes = donnees.succes || {};
 		if (donnees.reseau) this.reseau = donnees.reseau;
 		this.chronos = donnees.chronos || {};
@@ -1456,20 +1489,40 @@ GameState.prototype.load = function(){
 	}
 };
 
-/* Les parties mises de côté par logout, rangées par identifiant (le prénom sans accent). */
+/*
+ * Les parties mises de côté par logout : une liste, car deux joueurs peuvent porter le même
+ * prénom sur un ordinateur partagé. Chaque entrée garde un résumé (niveau, note, date) pour que
+ * le joueur reconnaisse la sienne. Au-delà de 90 jours, une partie mise de côté est oubliée.
+ */
 var CLE_SESSIONS = "terminus-cybersup-sessions";
+var DUREE_SESSIONS_MS = 90 * 24 * 3600 * 1000;
 
 function lireSessions(){
-	try { return JSON.parse(window.localStorage.getItem(CLE_SESSIONS)) || {}; }
-	catch (e){ return {}; }
+	var liste;
+	try { liste = JSON.parse(window.localStorage.getItem(CLE_SESSIONS)); }
+	catch (e){ liste = null; }
+	if (!liste) return [];
+	// Ancien format : un objet { identifiant: partie }.
+	if (!Array.isArray(liste)) liste = Object.keys(liste).map(function(k){ var x = liste[k]; x.id = x.id || k; return x; });
+	var maintenant = Date.now();
+	return liste.filter(function(x){ return x && x.profil && (!x.date || maintenant - x.date < DUREE_SESSIONS_MS); });
+}
+
+function ecrireSessions(liste){
+	window.localStorage.setItem(CLE_SESSIONS, JSON.stringify(liste));
 }
 
 function mettreSessionDeCote(){
 	try {
 		state.save();
-		var sessions = lireSessions();
-		sessions[JOUEUR] = { profil: window.localStorage.getItem(CLE_PROFIL), sauvegarde: window.localStorage.getItem(CLE_SAUVEGARDE) };
-		window.localStorage.setItem(CLE_SESSIONS, JSON.stringify(sessions));
+		var liste = lireSessions();
+		liste.push({
+			id: JOUEUR, prenom: PROFIL.prenom || JOUEUR, date: Date.now(),
+			chapitre: state.chapitreEnCours(), niveau: NIVEAUX[state.niveau() - 1].titre,
+			note: state.noteTexte(state.chapitreEnCours()),
+			profil: window.localStorage.getItem(CLE_PROFIL), sauvegarde: window.localStorage.getItem(CLE_SAUVEGARDE)
+		});
+		ecrireSessions(liste);
 		window.localStorage.removeItem(CLE_SAUVEGARDE);
 		window.localStorage.removeItem(CLE_PROFIL);
 		Shell.sauvegardeBloquee = true;
@@ -1479,18 +1532,27 @@ function mettreSessionDeCote(){
 	}
 }
 
-/* Un prénom déjà vu sur cet ordinateur : on lui rend sa partie. */
-function reprendreSession(prenom){
+/* Les parties mises de côté sous ce prénom (sans tenir compte des accents ni des majuscules). */
+function sessionsDuPrenom(prenom){
 	var id = identifiantDepuisPrenom(prenom);
-	var sessions = lireSessions();
-	var session = id && sessions[id];
-	if (!session || !session.profil) return false;
+	if (!id) return [];
+	return lireSessions().filter(function(x){ return x.id === id; });
+}
+
+function decrireSession(x){
+	var d = x.date ? new Date(x.date) : null;
+	var quand = d ? deuxChiffres(d.getDate()) + "/" + deuxChiffres(d.getMonth() + 1) + " à " + deuxChiffres(d.getHours()) + "h" + deuxChiffres(d.getMinutes()) : "date inconnue";
+	return x.prenom + ", chapitre " + (x.chapitre || 1) + (x.niveau ? ", niveau " + x.niveau : "") + (x.note ? ", " + x.note : "") + ", mise de côté le " + quand;
+}
+
+/* Rend sa partie à un joueur : elle redevient la partie active de cet ordinateur. */
+function reprendreSession(session){
 	try {
+		var liste = lireSessions();
 		window.localStorage.setItem(CLE_PROFIL, session.profil);
 		if (session.sauvegarde) window.localStorage.setItem(CLE_SAUVEGARDE, session.sauvegarde);
 		else window.localStorage.removeItem(CLE_SAUVEGARDE);
-		delete sessions[id];
-		window.localStorage.setItem(CLE_SESSIONS, JSON.stringify(sessions));
+		ecrireSessions(liste.filter(function(x){ return !(x.id === session.id && x.date === session.date && x.profil === session.profil); }));
 		Shell.sauvegardeBloquee = true;
 		return true;
 	} catch (e){
