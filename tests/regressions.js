@@ -90,6 +90,7 @@ verifier(j6.taper("ls ~/Cybersup/SalleServeurs").indexOf("BoiteDeDepot") === -1,
 var st7 = {};
 var j7 = nouveauMonde(st7, 17);
 j7.taper("chapitre 2", "oui");
+j7.taper("ssh citadelle");
 j7.lire("SalleServeurs.children = SalleServeurs.children.filter(function(l){ return l !== BoiteDeDepot && l !== Coffre; }); state.save()");
 var j7bis = nouveauMonde(st7);
 var ls7 = j7bis.taper("ls ~/Cybersup/SalleServeurs");
@@ -100,6 +101,7 @@ contient(ls7, "Coffre", "une ancienne sauvegarde retrouve le Coffre");
 function jusquAuCaveau(graine){
 	var j = nouveauMonde({}, graine);
 	j.taper("chapitre 2", "oui");
+	j.taper("ssh citadelle");
 	["cd Crypte", "less Archiviste", "cd bin", "sha256sum -c SHA256SUMS", "grep charge= gardien | cut -d= -f2 | base64 -d", "cd ../Caveau", "less Inscription"]
 		.forEach(function(c){ j.taper(c); });
 	return j;
@@ -108,6 +110,7 @@ function jusquAuCaveau(graine){
 // --- Verrous du chapitre 2 : la porte n'apparaît qu'après l'intégrité et le message ---
 var jv = nouveauMonde({}, 25);
 jv.taper("chapitre 2", "oui");
+jv.taper("ssh citadelle");
 jv.taper("cd Crypte"); jv.taper("less Archiviste"); jv.taper("cd Caveau");
 verifier(jv.taper("ls -a").indexOf(".porte") === -1, "pas de porte avant d'avoir décodé le message");
 jv.taper("cd ../bin");
@@ -117,6 +120,7 @@ contient(jv.taper("sha256sum -c SHA256SUMS"), "gardien: ÉCHEC", "vérification 
 verifier(jv.lire("Caveau.hasItem(PorteDerobee)"), "la porte apparaît une fois les deux étapes faites");
 var jr = nouveauMonde({}, 26);
 jr.taper("chapitre 2", "oui");
+jr.taper("ssh citadelle");
 jr.taper("cd Crypte");
 contient(jr.taper("quetes"), "détail : quetes 1", "le journal replie le chapitre 1 pendant la Crypte");
 contient(jr.taper("quetes 1"), "Apprendre un premier sort", "quetes 1 déplie le chapitre 1");
@@ -141,6 +145,7 @@ verifier((s10.match(/escalier/g) || []).length === 1, "l'escalier n'est annoncé
 var st11 = {};
 var j11 = nouveauMonde(st11, 21);
 j11.taper("chapitre 2", "oui");
+j11.taper("ssh citadelle");
 j11.lire("state.applyState('ecouteCoupee'); state.set('ecouteCoupee'); AuthorizedKeys.cmd_text.less = CLE_LAURENT + '\\n'; verifierMonde();");
 j11.taper("cd ~/Cybersup/SalleServeurs");
 j11.taper("less ConsignesDuCoffre");
@@ -164,6 +169,7 @@ contient(j11bis.taper("ssh coffre"), "Bienvenue sur coffre", "la clé remplacée
 // Clé privée déposée puis publique grillée, puis nouvelle paire : la boîte ne bloque plus le dépôt.
 var j12 = nouveauMonde({}, 22);
 j12.taper("chapitre 2", "oui");
+j12.taper("ssh citadelle");
 j12.lire("state.set('ecouteCoupee'); AuthorizedKeys.cmd_text.less = CLE_LAURENT + '\\n'; verifierMonde();");
 j12.taper("cd ~/Cybersup/SalleServeurs");
 j12.taper("less ConsignesDuCoffre");
@@ -192,12 +198,55 @@ s = jd.taper("indice", "oui");
 contient(s, "Il te manque le sort ps", "le palier payant signale un sort inconnu");
 contient(s, "Formateur", "et dit qui l'enseigne");
 
+// --- Comportements Linux exacts : fins de ligne, redirections, SUID ---
+var jl = nouveauMonde({}, 29);
+jl.lire("tousLesSorts().forEach(function(x){ state.spells[x] = true; })");
+contient(jl.taper("echo Bonjour | sha256sum"), "8dc2a6966f1be1644ec6b1f7223f47e53de5ad05e1c976736d948e7977a13dd3", "sha256sum de echo Bonjour, comme sous Linux");
+contient(jl.taper("echo -n Bonjour | sha256sum"), "9172e8eec99f144f72eca9a568759580edadb2cfd154857f07e657569493bc44", "echo -n n'ajoute pas de retour à la ligne");
+jl.taper("echo Bonjour > f");
+verifier(jl.taper("sha256sum f").split(" ")[0] === jl.taper("cat f | sha256sum").split(" ")[0], "sha256sum f et cat f | sha256sum concordent");
+contient(jl.taper("base64 f"), "Qm9uam91cgo=", "base64 d'un objet");
+contient(jl.taper("cat f | base64"), "Qm9uam91cgo=", "base64 par un tuyau");
+contient(jl.taper("echo -n Bonjour | base64"), "Qm9uam91cg==", "base64 de echo -n");
+jl.taper("echo -n Bonjour > g");
+contient(jl.taper("base64 g"), "Qm9uam91cg==", "echo -n > objet garde l'absence de retour à la ligne");
+jl.taper("echo salut 1> h");
+verifier(jl.taper("cat h").indexOf("salut") === 0 && jl.taper("cat h").indexOf("1") === -1, "1> redirige la sortie normale");
+s = jl.taper("ls Nexiste 2>&1 > k");
+contient(s, "aucun lieu", "2>&1 > k : les erreurs restent à l'écran (ordre de bash)");
+verifier(jl.taper("cat k").indexOf("aucun lieu") === -1, "2>&1 > k : k est vide");
+jl.taper("ls Nexiste > k2 2>&1");
+contient(jl.taper("cat k2"), "aucun lieu", "> k2 2>&1 : tout va dans k2");
+jl.taper("echo x &> l");
+contient(jl.taper("cat l"), "x", "&> redirige les deux sorties");
+verifier(jl.taper("echo vers erreurs >&2 2>/dev/null").indexOf("vers erreurs") > -1, ">&2 puis 2>/dev/null : l'ordre compte");
+verifier(jl.lire("current_room.getNode('&2')") === null, ">&2 ne crée pas d'objet nommé &2");
+var jb = nouveauMonde({}, 30);
+jb.taper("chapitre 2", "oui");
+jb.taper("ssh citadelle");
+["cd Crypte", "less Archiviste", "cd bin", "sha256sum -c SHA256SUMS", "grep charge= gardien | cut -d= -f2 | base64 -d"].forEach(function(c){ jb.taper(c); });
+contient(jb.taper("cat passwd"), "ELF", "passwd est un binaire, pas un script");
+contient(jb.taper("bash passwd"), "binaire", "bash ne lance pas un binaire");
+jb.taper("cd ../Caveau");
+jb.taper("find . -perm -4000 2>/dev/null");
+contient(jb.taper("./.porte"), "La porte pivote", "la porte dérobée est un binaire SUID qui s'exécute");
+jb.taper("cd Racine");
+jb.taper("less ../../Radio");
+var vrai = jb.lire("Racine.procs.filter(function(p){ return p.noyau; })[0].pid");
+contient(jb.taper("sudo kill -9 " + vrai), "thread du noyau", "un vrai kworker ignore les signaux");
+verifier(jb.lire("Racine.procs.length") === 7, "le vrai kworker est toujours là");
+contient(jb.taper("ps"), "[kworker/", "ps affiche les threads du noyau entre crochets");
+
 // --- La mission cyber raconte l'histoire du renfort ---
 var j13 = nouveauMonde({}, 23);
 contient(j13.taper("chapitre"), "mission cyber", "chapitre propose la mission cyber en début de partie");
 var s13 = j13.taper("chapitre 2", "oui");
 contient(s13, "MISSION CYBER", "le récit de la mission cyber");
 contient(s13, "renfort", "le joueur arrive en renfort");
+verifier(j13.lire("current_room") === j13.lire("WarRoom"), "le renfort commence dans la WarRoom");
+contient(j13.taper("less CheffeDeQuart"), "ssh citadelle", "Grace fait le briefing et envoie à la Citadelle");
+contient(j13.taper("cat ~/OrdreDeMission"), "ORDRE DE MISSION", "l'ordre de mission est dans la Maison");
+contient(j13.taper("ssh citadelle"), "Bienvenue sur citadelle", "le renfort monte à la Citadelle par ssh");
 contient(j13.taper("less Laurent"), "le renfort", "Laurent accueille le renfort");
 verifier(j13.taper("less Laurent").indexOf("tout cela, c'était ton examen") === -1, "Laurent ne dit pas au renfort qu'il l'a battu");
 contient(j13.taper("cat ~/Cybersup/TableauAffichage"), "Félicitations à la promo", "le tableau félicite la promo, pas le renfort");
@@ -205,6 +254,7 @@ contient(j13.taper("chapitre 1"), "renfort", "le chapitre 1 est raconté comme p
 var st14 = {};
 var j14 = nouveauMonde(st14, 24);
 j14.taper("chapitre 2", "oui");
+j14.taper("ssh citadelle");
 contient(nouveauMonde(st14).taper("less Laurent"), "le renfort", "le texte du renfort survit au rechargement");
 
 console.log(verifications + " vérifications, " + echecs + " échec" + (echecs > 1 ? "s" : ""));

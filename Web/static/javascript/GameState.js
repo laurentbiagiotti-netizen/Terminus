@@ -1262,6 +1262,8 @@ function photographierObjet(item){
 	if (item.archive) o.a = item.archive;
 	if (item.acquis) o.q = 1;
 	if (item.protege) o.g = 1;
+	if (item.sansFinDeLigne) o.sf = 1;
+	if (item.binaire) o.b = item.binaire;
 	return o;
 }
 
@@ -1292,6 +1294,8 @@ function restaurerObjet(item, o){
 	if (o.a) item.archive = o.a;
 	item.acquis = !!o.q;
 	item.protege = !!o.g;
+	item.sansFinDeLigne = !!o.sf;
+	if (o.b) item.binaire = o.b;
 	return item;
 }
 

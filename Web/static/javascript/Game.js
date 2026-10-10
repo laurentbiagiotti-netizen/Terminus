@@ -118,9 +118,11 @@ function demanderPrenom(){
 
 /* Deux convocations possibles : l'épreuve de première année, ou la mission cyber pour ceux qui connaissent les bases. */
 function demanderParcours(){
-	term.echo("Deux convocations t'attendent. Laquelle est la tienne ?\n\n" +
-		"  " + C.vert("1") + "  L'épreuve de première année : tu découvres le terminal Linux. (chapitre 1, puis chapitre 2)\n" +
-		"  " + C.vert("2") + "  La mission cyber : tu connais déjà les bases, on t'appelle en renfort. (chapitre 2 directement)\n");
+	term.echo("Dans ta boîte aux lettres, deux enveloppes portent ton nom. Une seule est pour toi.\n\n" +
+		"  " + C.vert("1") + "  Une convocation à l'épreuve pratique de première année.\n" +
+		"     Tu découvres le terminal Linux : c'est le début de l'histoire. " + C.gris("(chapitre 1, puis chapitre 2)") + "\n" +
+		"  " + C.vert("2") + "  Un ordre de mission de la WarRoom : renfort demandé d'urgence.\n" +
+		"     Tu connais déjà les bases du terminal, on a besoin de toi tout de suite. " + C.gris("(chapitre 2 directement)") + "\n");
 	term.demander("Tape 1 ou 2 : ", false, function(reponse){
 		var choix = String(reponse).trim();
 		if (choix !== "1" && choix !== "2"){

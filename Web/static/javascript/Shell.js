@@ -154,16 +154,26 @@ Shell.decouper = function(ligne){
 			i++;
 			continue;
 		}
-		// 2> et 2>> redirigent les erreurs ; 2>&1 les mêle à la sortie normale.
-		if (c === "2" && mot === null && ligne.charAt(i + 1) === ">"){
-			if (ligne.substring(i, i + 4) === "2>&1"){ jetons.push({ t: "op", v: "2>&1" }); i += 4; continue; }
-			if (ligne.charAt(i + 2) === ">"){ jetons.push({ t: "op", v: "2>>" }); i += 3; }
-			else { jetons.push({ t: "op", v: "2>" }); i += 2; }
+		// Redirections avec un numéro de sortie : 1 (la sortie normale) ou 2 (les erreurs).
+		// 1> 1>> 2> 2>> 2>&1 1>&2, comme sous bash.
+		if ((c === "1" || c === "2") && mot === null && ligne.charAt(i + 1) === ">"){
+			var fd = c, suite = ligne.substring(i + 2, i + 4);
+			if (suite.charAt(0) === ">"){ jetons.push({ t: "op", v: fd === "1" ? ">>" : "2>>" }); i += 3; }
+			else if (suite === "&1" || suite === "&2"){ jetons.push({ t: "op", v: fd + ">&" + suite.charAt(1) }); i += 4; }
+			else { jetons.push({ t: "op", v: fd === "1" ? ">" : "2>" }); i += 2; }
+			continue;
+		}
+		// &> et &>> : la sortie normale et les erreurs au même endroit.
+		if (c === "&" && ligne.charAt(i + 1) === ">"){
+			finir();
+			if (ligne.charAt(i + 2) === ">"){ jetons.push({ t: "op", v: "&>>" }); i += 3; }
+			else { jetons.push({ t: "op", v: "&>" }); i += 2; }
 			continue;
 		}
 		if (c === ">"){
 			finir();
 			if (ligne.charAt(i + 1) === ">"){ jetons.push({ t: "op", v: ">>" }); i += 2; }
+			else if (ligne.substring(i + 1, i + 3) === "&2" || ligne.substring(i + 1, i + 3) === "&1"){ jetons.push({ t: "op", v: "1>&" + ligne.charAt(i + 2) }); i += 3; }
 			else { jetons.push({ t: "op", v: ">" }); i++; }
 			continue;
 		}
@@ -1094,6 +1104,8 @@ Shell.sorts.cp = function(args, io){
 	copie.person = item.person;
 	if (item.lien) copie.lien = item.lien;
 	if (item.archive) copie.archive = JSON.parse(JSON.stringify(item.archive));
+	if (item.binaire) copie.binaire = item.binaire;
+	copie.sansFinDeLigne = !!item.sansFinDeLigne;
 	cible.addItem(copie);
 	GameEvents.fire({ type: "cp", source: item, copy: copie, room: cible });
 	return (item.allows("cp") && item.cmd_text["cp"]) ? item.cmd_text["cp"] :
@@ -1425,6 +1437,11 @@ Shell.sorts.kill = function(args, io){
 				C.gris("(Ce processus appartient à " + proc.owner + ". On n'arrête que ses propres processus, à moins d'avoir les pouvoirs de root.)"));
 			continue;
 		}
+		if (proc.noyau){
+			messages.push("kill : (" + pid + ") : rien ne se passe. " + proc.name + " est un thread du noyau : il ignore les signaux.\n" +
+				C.gris("(Grace, à la radio : « Pas celui-là. Le vrai noyau ne se tue pas. Cherche qui écoute sur le port suspect : ss. »)"));
+			continue;
+		}
 		if (proc.sig9 && !force){
 			messages.push(proc.ignoreText || ("Le processus " + pid + " (" + proc.name + ") reçoit ton signal TERM et l'ignore. Il faudra être moins poli : kill -9."));
 			continue;
@@ -1639,6 +1656,16 @@ Shell.lancerScript = function(chemin, io, direct){
 	var script = Shell.suivre(r.node, "bash");
 	if (script instanceof Room) throw new ShellError("bash : " + chemin + " : c'est un lieu, pas un script");
 	if (script.person) throw new ShellError(script.itemname + " n'est pas un script, et n'apprécie pas qu'on essaie de l'exécuter.");
+	// Un binaire se lance directement (./nom) ; bash ne sait pas le lire.
+	if (script.binaire){
+		if (!direct) throw new ShellError("bash : " + chemin + " : impossible d'exécuter un fichier binaire\n" +
+			C.gris("(C'est un programme compilé, pas un script : on le lance avec ./" + script.itemname + ".)"));
+		if (!(io.sudo ? script.mode.indexOf("x") > -1 || script.mode.indexOf("s") > -1 : Shell.bit(script, "x", null))){
+			throw new ShellError("bash : " + chemin + " : Permission non accordée");
+		}
+		GameEvents.fire({ type: "script", item: script, room: r.dir, direct: true, binaire: true });
+		return script.binaire.sortie;
+	}
 	if (!Shell.bit(script, "r", io)) throw new ShellError("bash : " + chemin + " : Permission non accordée");
 	if (direct && !(io.sudo ? script.mode.indexOf("x") > -1 : Shell.bit(script, "x", null))){
 		throw new ShellError("bash : " + chemin + " : Permission non accordée\n" +
@@ -1674,7 +1701,7 @@ Shell.lancerScript = function(chemin, io, direct){
 };
 
 /* Ecrit dans un objet (redirections > et >>). */
-Shell.ecrire = function(cible, texte, ajout){
+Shell.ecrire = function(cible, texte, ajout, sansFin){
 	// Le trou noir du système : tout ce qu'on y écrit disparaît.
 	if (cible === "/dev/null"){
 		GameEvents.fire({ type: "devnull" });
@@ -1686,6 +1713,7 @@ Shell.ecrire = function(cible, texte, ajout){
 		Shell.nomValide(r.name, "écriture");
 		var item = new Item(r.name, texte);
 		item.owner = JOUEUR;
+		item.sansFinDeLigne = !!sansFin;
 		r.dir.addItem(item);
 		GameEvents.fire({ type: "write", item: item, room: r.dir, append: ajout, text: texte, created: true, previous: "" });
 		return;
@@ -1695,49 +1723,56 @@ Shell.ecrire = function(cible, texte, ajout){
 		throw new ShellError("Impossible d'écrire dans « " + r.name + " » : Permission non accordée");
 	}
 	var ancien = r.node.getText();
-	r.node.setText(ajout ? (ancien === "" ? texte : ancien.replace(/\n$/, "") + "\n" + texte) : texte);
+	r.node.setText(ajout ? (ancien === "" ? texte : ancien.replace(/\n$/, "") + (r.node.sansFinDeLigne ? "" : "\n") + texte) : texte);
+	r.node.sansFinDeLigne = !!sansFin;
 	GameEvents.fire({ type: "write", item: r.node, room: r.dir, append: ajout, text: texte, created: false, previous: ancien });
 };
 
 /* Lance un tuyau : sort1 | sort2 | sort3 [> objet]. Renvoie vrai si tout s'est bien passe. */
+/*
+ * Lance un tuyau : sort1 | sort2 | sort3, avec ses redirections. Renvoie vrai si tout s'est bien passé.
+ *
+ * Chaque sort a deux sorties : la 1 (normale) et la 2 (les erreurs). Par défaut, la 1 va dans le
+ * tuyau (ou à l'écran pour le dernier sort) et la 2 à l'écran. Les redirections se lisent de
+ * gauche à droite, comme sous bash : « 2>&1 > f » laisse les erreurs à l'écran, « > f 2>&1 »
+ * envoie tout dans f.
+ */
+var OPERATEURS_FICHIER = { ">": [1], ">>": [1], "2>": [2], "2>>": [2], "&>": [1, 2], "&>>": [1, 2] };
+
 Shell.tuyau = function(jetons){
 	var segments = [[]];
 	for (var i = 0; i < jetons.length; i++){
 		if (jetons[i].t === "op" && jetons[i].v === "|") segments.push([]);
 		else segments[segments.length - 1].push(jetons[i]);
 	}
-	var stdin = null;
+	var stdin = null, stdinSansFin = false;
 	var noms = [];
-	var redirection = null;
 	var echec = false;
+	var sortieFinale = "", finaleALEcran = false;
 	try {
 		for (var s = 0; s < segments.length; s++){
 			var argv = [];
 			var seg = segments[s];
-			var versErreurs = null;   // { op: "2>" ou "2>>", cible } : où vont les messages d'erreur de ce sort
-			var meler = false;        // 2>&1 : les erreurs rejoignent la sortie normale
+			var dernier = s === segments.length - 1;
+			var sorties = { 1: dernier ? { t: "ecran" } : { t: "tuyau" }, 2: { t: "ecran" } };
 			for (var k = 0; k < seg.length; k++){
-				if (seg[k].t === "op" && seg[k].v === "2>&1"){
-					meler = true;
-				} else if (seg[k].t === "op"){
-					if (!seg[k + 1] || seg[k + 1].t !== "mot"){
-						throw new ShellError("Après " + seg[k].v + " il faut le nom de l'objet dans lequel écrire (ou /dev/null pour tout jeter).");
-					}
-					if (seg[k].v === "2>" || seg[k].v === "2>>"){
-						versErreurs = { op: seg[k].v, cible: seg[k + 1].v };
-						k++;
-						continue;
-					}
-					if (s !== segments.length - 1){
-						throw new ShellError("Une redirection (" + seg[k].v + ") ne peut se trouver qu'à la fin de la ligne.");
-					}
-					redirection = { op: seg[k].v, cible: seg[k + 1].v };
-					k++;
-				} else if (seg[k].joker){
-					argv = argv.concat(Shell.developper(seg[k].v));
-				} else {
-					argv.push(seg[k].v);
+				var jeton = seg[k];
+				if (jeton.t !== "op"){
+					if (jeton.joker) argv = argv.concat(Shell.developper(jeton.v));
+					else argv.push(jeton.v);
+					continue;
 				}
+				if (jeton.v === "2>&1"){ sorties[2] = sorties[1]; continue; }
+				if (jeton.v === "1>&2"){ sorties[1] = sorties[2]; continue; }
+				if (jeton.v === "1>&1" || jeton.v === "2>&2") continue;
+				var fds = OPERATEURS_FICHIER[jeton.v];
+				if (!fds) throw new ShellError("Redirection inconnue : " + jeton.v);
+				if (!seg[k + 1] || seg[k + 1].t !== "mot"){
+					throw new ShellError("Après " + jeton.v + " il faut le nom de l'objet dans lequel écrire (ou /dev/null pour tout jeter).");
+				}
+				var fichier = { t: "fichier", cible: seg[k + 1].v, ajout: jeton.v.slice(-2) === ">>" };
+				for (var f = 0; f < fds.length; f++) sorties[fds[f]] = fichier;
+				k++;
 			}
 			if (argv.length === 0) throw new ShellError("Il manque un sort " + (s === 0 ? "avant" : "après") + " le tuyau |.");
 			// Un alias remplace le premier mot par le texte qu'on lui a associe.
@@ -1751,8 +1786,7 @@ Shell.tuyau = function(jetons){
 				Shell.definirVariable(argv[0], "");
 				return true;
 			}
-			var dernier = s === segments.length - 1;
-			var io = { stdin: stdin, tty: dernier && redirection === null && !meler, sudo: false, erreurs: [] };
+			var io = { stdin: stdin, stdinSansFin: stdinSansFin, tty: sorties[1].t === "ecran", sudo: false, erreurs: [] };
 			io.err = (function(liste){ return function(message){ liste.push(message); }; })(io.erreurs);
 			var nom = argv[0], args = argv.slice(1);
 			if (nom === "sudo"){
@@ -1768,46 +1802,60 @@ Shell.tuyau = function(jetons){
 			}
 			noms.push(nom);
 			var sortie;
-			if (versErreurs === null && !meler){
+			// Une erreur part par la sortie 2, là où elle pointe ; le tuyau continue, comme sous bash.
+			try {
 				sortie = Shell.appeler(nom, args, io);
-			} else {
-				// Les erreurs de ce sort sont redirigées : une erreur fatale ne s'affiche pas, elle part avec les autres.
-				try {
-					sortie = Shell.appeler(nom, args, io);
-				} catch (e){
-					if (!(e instanceof ShellError)) throw e;
-					io.erreurs.push(e.message);
-					sortie = "";
-					echec = true;
-				}
+			} catch (e){
+				if (!(e instanceof ShellError)) throw e;
+				io.erreurs.push(e.message);
+				sortie = "";
+				echec = true;
+				if (sorties[2].t === "ecran") jouerSon("erreur");
 			}
-			stdin = (sortie === undefined || sortie === null) ? "" : String(sortie);
-			if (!io.tty) stdin = sansAnsi(stdin);
-			if (io.erreurs.length > 0){
-				var erreurs = io.erreurs.map(sansAnsi).join("\n");
-				if (meler){
-					stdin = erreurs + (stdin !== "" ? "\n" + stdin : "");
-				} else if (versErreurs !== null){
-					Shell.ecrire(versErreurs.cible, erreurs, versErreurs.op === "2>>");
+			var texte = (sortie === undefined || sortie === null) ? "" : String(sortie);
+			if (!io.tty) texte = sansAnsi(texte);
+			var sansFin = nom === "echo" && args[0] === "-n";
+			var erreurs = io.erreurs.length ? io.erreurs.join("\n") : null;
+
+			// On range chaque morceau là où pointe sa sortie : écran, tuyau ou objet.
+			var versTuyau = [], versFichiers = [];
+			function ranger(cible, morceau, estErreur){
+				if (cible.t === "ecran"){
+					if (estErreur) term.echo(morceau);
+					else { sortieFinale = morceau; finaleALEcran = true; }
+				} else if (cible.t === "tuyau"){
+					versTuyau.push(estErreur ? sansAnsi(morceau) : morceau);
 				} else {
-					term.echo(io.erreurs.join("\n"));
+					var deja = versFichiers.filter(function(v){ return v.cible === cible; })[0];
+					if (deja) deja.morceaux.push(sansAnsi(morceau));
+					else versFichiers.push({ cible: cible, morceaux: [sansAnsi(morceau)], sansFin: !estErreur && sansFin });
 				}
-			} else if (versErreurs !== null && versErreurs.op === "2>" && versErreurs.cible !== "/dev/null"){
-				// Comme sous Linux, 2> crée (ou vide) l'objet même s'il n'y a eu aucune erreur.
-				Shell.ecrire(versErreurs.cible, "", false);
 			}
+			if (erreurs !== null) ranger(sorties[2], erreurs, true);
+			ranger(sorties[1], texte, false);
+			// Un objet visé par une redirection est créé (ou vidé) même s'il n'y a rien à y écrire.
+			[1, 2].forEach(function(n){
+				var c = sorties[n];
+				if (c.t === "fichier" && !versFichiers.some(function(v){ return v.cible === c; })) versFichiers.push({ cible: c, morceaux: [], sansFin: false });
+			});
+			versFichiers.forEach(function(v){
+				var contenu = v.morceaux.filter(function(m){ return m !== ""; }).join("\n");
+				if (contenu === "" && v.cible.ajout) return;
+				Shell.ecrire(v.cible.cible, contenu, v.cible.ajout, v.sansFin && !v.cible.ajout);
+			});
+			stdin = versTuyau.filter(function(m){ return m !== ""; }).join("\n");
+			stdinSansFin = sansFin && sorties[1].t === "tuyau";
 			GameEvents.fire({ type: "stderr", name: nom, room: current_room, count: io.erreurs.length,
-				destination: meler ? "&1" : (versErreurs ? versErreurs.cible : null), args: args, sudo: io.sudo });
+				destination: sorties[2].t === "ecran" ? null : (sorties[2] === sorties[1] || sorties[2].t === "tuyau" ? "&1" : sorties[2].cible),
+				args: args, sudo: io.sudo });
 		}
-		if (redirection !== null){
-			Shell.ecrire(redirection.cible, stdin, redirection.op === ">>");
-		} else {
-			if (stdin !== "") term.echo(stdin);
+		if (finaleALEcran){
+			if (sortieFinale !== "") term.echo(sortieFinale);
 			if (noms[noms.length - 1] === "echo"){
-				GameEvents.fire({ type: "echo", text: sansAnsi(stdin), room: current_room });
+				GameEvents.fire({ type: "echo", text: sansAnsi(sortieFinale), room: current_room });
 			}
 		}
-		if (noms.length > 1) GameEvents.fire({ type: "pipeline", names: noms, room: current_room, output: sansAnsi(stdin) });
+		if (noms.length > 1) GameEvents.fire({ type: "pipeline", names: noms, room: current_room, output: sansAnsi(finaleALEcran ? sortieFinale : stdin) });
 		return !echec;
 	} catch (e){
 		if (e instanceof ShellError){

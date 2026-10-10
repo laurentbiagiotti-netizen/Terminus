@@ -359,7 +359,7 @@ bulletin
 
 Notions : empreintes (`sha256sum`, `sha256sum -c`), encodage (`base64`, `base64 -d`), bit SUID (`ls -l`, `find -perm -4000`, `chmod u-s`), sortie d'erreur (`2>`, `2>/dev/null`), ports en écoute (`ss -tlnp`), édition de fichiers (`nano`), clés SSH (`ssh-keygen`, clé publique et clé privée, `authorized_keys`).
 
-Le chapitre s'ouvre après la victoire : Laurent ajoute un P.S. et une trappe apparaît dans la Citadelle. Il a sa propre note sur 20 et son propre certificat, avec un code de vérification. Un groupe qui ne fait que ce chapitre (une séance de trois heures sur la sécurité) choisit la mission cyber au démarrage, juste après le prénom (ou tape `chapitre 2` avant d'avoir franchi la première étape). Dans l'histoire, le joueur arrive en renfort : les B1 ont battu le Sorcier Noir le matin même, et Laurent l'accueille dans la Citadelle. Le chapitre 1 est rejoué en silence et n'est pas noté pour lui. Une fois le chapitre 1 entamé, la mission cyber n'est plus proposée : il faut battre le Sorcier Noir, ou recommencer une partie.
+Le chapitre s'ouvre après la victoire : Laurent ajoute un P.S. et une trappe apparaît dans la Citadelle. Il a sa propre note sur 20 et son propre certificat, avec un code de vérification. Un groupe qui ne fait que ce chapitre (une séance de trois heures sur la sécurité) choisit la mission cyber au démarrage, juste après le prénom (ou tape `chapitre 2` avant d'avoir franchi la première étape). Dans l'histoire, le joueur reçoit un ordre de mission de la WarRoom : les B1 ont battu le Sorcier Noir le matin même, mais un intrus bien réel est entré pendant la correction. Il commence dans la WarRoom, où Grace fait le briefing (`less CheffeDeQuart`), monte à la Citadelle avec `ssh citadelle`, et Laurent l'y accueille avant de lui ouvrir la Crypte. Le chapitre 1 est rejoué en silence et n'est pas noté pour lui. Une fois le chapitre 1 entamé, la mission cyber n'est plus proposée : il faut battre le Sorcier Noir, ou recommencer une partie.
 
 Au chapitre 2, chaque notion est un verrou : la `.porte` n'apparaît dans le Caveau qu'une fois le programme trafiqué repéré avec `sha256sum -c` et le message décodé avec `base64 -d`, et elle ne s'ouvre qu'à qui l'a trouvée avec `find -perm -4000`.
 
@@ -392,7 +392,7 @@ cd Racine
 less ManuelDeNano
 ```
 
-`find` se plaint de chaque niche fermée : ces plaintes passent par la sortie d'erreur, la numéro 2. Elles ne passent donc pas dans un tuyau (`find ... | grep porte` les affiche quand même), et `2>/dev/null` les fait disparaître. `passwd` a lui aussi le bit SUID, et c'est normal : le piège est de ne pas savoir distinguer les deux.
+`find` se plaint de chaque niche fermée : ces plaintes passent par la sortie d'erreur, la numéro 2. Elles ne passent donc pas dans un tuyau (`find ... | grep porte` les affiche quand même), et `2>/dev/null` les fait disparaître. `passwd` a lui aussi le bit SUID, et c'est normal : le piège est de ne pas savoir distinguer les deux. Les deux sont des programmes compilés (`cat` n'affiche que du charabia qui commence par ELF) : Linux ignore le bit SUID sur les scripts, il ne compte que sur les binaires.
 
 L'écoute et la clé :
 
@@ -409,7 +409,7 @@ sudo chmod u-s .porte
 ls -l .porte
 ```
 
-Sept processus s'appellent `kworker/...` : `ps` ne dit pas lequel est le bon. `sudo ss -tlnp` montre que le port 6666 est tenu par l'un d'eux, avec son PID. Il ignore TERM : il faut `-9`. Tuer un vrai kworker n'a pas de conséquence, le système le relance et Grace râle.
+Sept processus s'appellent `[kworker/...]` : `ps` ne dit pas lequel est le bon, car le Corbeau a copié le nom des threads du noyau, crochets compris. `sudo ss -tlnp` montre que le port 6666 est tenu par l'un d'eux, avec son PID. Il ignore TERM : il faut `-9`. Un vrai thread du noyau ignore les signaux : `kill` ne lui fait rien, et Grace le fait remarquer.
 
 Dans `nano`, on place le curseur sur la ligne qui finit par `corbeau@nid`, Ctrl+K pour la couper, Ctrl+X puis O pour enregistrer. Un joueur qui retire aussi la clé de Laurent est prévenu par la radio : la copie `authorized_keys.orig` permet de réparer (`sudo cp`).
 

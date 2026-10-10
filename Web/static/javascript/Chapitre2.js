@@ -45,6 +45,16 @@ var SHA256_K = [
 	0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 ];
 
+/*
+ * Le contenu exact d'un texte, octet pour octet. Sous Linux, un fichier texte et ce qui sort
+ * d'echo finissent par un retour à la ligne ; echo -n est l'exception. On le rajoute donc
+ * ici pour que sha256sum et base64 donnent les mêmes résultats qu'un vrai terminal.
+ */
+function contenuExact(texte, sansFin){
+	if (sansFin || texte === "" || texte.charAt(texte.length - 1) === "\n") return texte;
+	return texte + "\n";
+}
+
 /* Le vrai SHA-256 : le résultat est le même que celui de sha256sum sous Linux. */
 function sha256(texte){
 	var octets = versOctetsUtf8(texte);
@@ -221,7 +231,7 @@ Shell.sorts.sha256sum = function(args, io){
 	if (!verifier){
 		if (objets.length === 0){
 			if (io.stdin === null) throw new ShellError("sha256sum : de quoi veux-tu l'empreinte ? Utilisation : sha256sum OBJET");
-			return sha256(io.stdin) + "  -";
+			return sha256(contenuExact(io.stdin, io.stdinSansFin)) + "  -";
 		}
 		var lignes = [];
 		for (var k = 0; k < objets.length; k++){
@@ -233,7 +243,7 @@ Shell.sorts.sha256sum = function(args, io){
 				io.err(e.message);
 				continue;
 			}
-			lignes.push(sha256(trouve.item.getText()) + "  " + objets[k]);
+			lignes.push(sha256(contenuExact(trouve.item.getText(), trouve.item.sansFinDeLigne)) + "  " + objets[k]);
 			GameEvents.fire({ type: "sha256sum", item: trouve.item, room: trouve.room });
 		}
 		return lignes.join("\n");
@@ -263,7 +273,7 @@ Shell.sorts.sha256sum = function(args, io){
 			echecs.push(nom);
 			continue;
 		}
-		if (sha256(objet.item.getText()) === m[1].toLowerCase()){
+		if (sha256(contenuExact(objet.item.getText(), objet.item.sansFinDeLigne)) === m[1].toLowerCase()){
 			resultats.push(nom + ": OK");
 		} else {
 			resultats.push((io.tty ? C.rouge(nom + ": ÉCHEC") : nom + ": ÉCHEC"));
@@ -287,13 +297,16 @@ Shell.sorts.base64 = function(args, io){
 		else if (args[i].charAt(0) === "-") throw new ShellError("base64 : option inconnue « " + args[i] + " ». Celle qui existe ici : -d (décoder)");
 		else objets.push(args[i]);
 	}
-	var texte;
+	var texte, sansFin;
 	if (objets.length === 0){
+		sansFin = io.stdinSansFin;
 		if (io.stdin === null) throw new ShellError("base64 : que faut-il encoder ? Utilisation : echo texte | base64, ou base64 OBJET (et -d pour décoder)");
 		texte = io.stdin;
 	} else {
 		if (objets.length > 1) throw new ShellError("base64 : un seul objet à la fois.");
-		texte = Shell.objetLisible(objets[0], io, "base64").item.getText();
+		var objetLu = Shell.objetLisible(objets[0], io, "base64").item;
+		texte = objetLu.getText();
+		sansFin = objetLu.sansFinDeLigne;
 	}
 	if (decoder){
 		var clair = decoderBase64(texte);
@@ -303,8 +316,7 @@ Shell.sorts.base64 = function(args, io){
 		GameEvents.fire({ type: "base64", decode: true, text: clair, room: current_room });
 		return clair.replace(/\n$/, "");
 	}
-	// Comme echo ajoute un retour à la ligne, le vrai base64 l'encode aussi.
-	var encode = encoderBase64(io.stdin !== null && objets.length === 0 ? texte + "\n" : texte);
+	var encode = encoderBase64(contenuExact(texte, sansFin));
 	GameEvents.fire({ type: "base64", decode: false, text: texte, room: current_room });
 	return encode;
 };
@@ -562,11 +574,31 @@ var TEXTE_GARDIEN_TRAFIQUE =
 function programme(nom, texte, mode){
 	return new Item(nom, texte, "item_radspellbook.gif").droits(mode || "rwxr-xr-x", "root");
 }
+/*
+ * Un vrai programme compilé (un binaire ELF) : illisible avec cat, et le seul genre de fichier
+ * pour lequel Linux respecte le bit SUID (il l'ignore sur les scripts).
+ */
+function texteBinaire(sel, longueur){
+	var signes = "@^#~&*%$!ÿþ¤§¶ÐØßæ.:;=+<>?";
+	var texte = "\u007fELF\u0002\u0001\u0001";
+	for (var i = 0; i < longueur; i++){
+		texte += signes.charAt(Math.floor(alea(sel + ":" + i) * signes.length));
+		if (i % 64 === 63) texte += "\n";
+	}
+	return texte;
+}
+function programmeBinaire(nom, sel, mode, sortie){
+	var item = new Item(nom, texteBinaire(sel, 190), "item_radspellbook.gif").droits(mode, "root");
+	item.binaire = { sortie: sortie };
+	return item;
+}
+
 var Portier = programme("portier", TEXTE_PORTIER);
 var Veilleur = programme("veilleur", TEXTE_VEILLEUR);
 var Gardien = programme("gardien", TEXTE_GARDIEN_TRAFIQUE);
-var ProgrammePasswd = programme("passwd", "#!/bin/sh\n# passwd : change le mot de passe de l'utilisateur qui le lance\n" +
-	"# Il doit écrire dans /etc/shadow, que seul root peut modifier : d'où son bit SUID, tout à fait normal.\n", "rwsr-xr-x");
+var ProgrammePasswd = programmeBinaire("passwd", "binaire-passwd", "rwsr-xr-x",
+	"passwd : ce programme change le mot de passe de celui qui le lance. Pour ça, il doit écrire dans /etc/shadow, \
+que seul root peut modifier : d'où son bit SUID, tout à fait normal. (Ici, utilise plutôt le sort passwd.)");
 var Sha256Sums = new Item("SHA256SUMS",
 	sha256(TEXTE_GARDIEN_ORIGINAL) + "  gardien\n" +
 	sha256(ProgrammePasswd.getText()) + "  passwd\n" +
@@ -594,7 +626,8 @@ for (var numeroNiche = 1; numeroNiche <= 6; numeroNiche++){
 var Inscription = new Item("Inscription",
 	"Gravé dans la pierre, d'une écriture appliquée :\n\n\
 « Certains programmes s'exécutent avec les droits de leur PROPRIÉTAIRE, et non de celui qui les lance. \
-On les reconnaît à la lettre s à la place du x du propriétaire : -rwsr-xr-x. C'est le bit SUID.\n\
+On les reconnaît à la lettre s à la place du x du propriétaire : -rwsr-xr-x. C'est le bit SUID. \
+Linux ne le respecte que sur les programmes compilés (les binaires), jamais sur les scripts.\n\
 passwd en a besoin, et c'est normal. Mais un programme SUID qui appartient à root et que personne n'a installé, \
 c'est une porte dérobée : n'importe qui le lance devient root le temps de son exécution.\n\n\
 Pour les trouver tous : find . -perm -4000\n\
@@ -605,10 +638,8 @@ la numéro 2. 2>/dev/null les envoie dans le trou noir du système ; 2>erreurs.t
 Caveau.addItem(Inscription);
 Caveau.addItem(new Item("Lanterne", "Une lanterne froide. Personne ne l'a allumée depuis longtemps.", "item_trinket.gif").droits("rw-r--r--", "root"));
 Caveau.addItem(new Item("Coffret", "Un coffret vide. Quelqu'un a gratté le mot « croa » sur le couvercle.", "item_box.gif").droits("rw-r--r--", "root"));
-var PorteDerobee = new Item(".porte",
-	"# porte dérobée, posée par le Corbeau\n" +
-	"echo \"La porte pivote sans un bruit.\"\n",
-	"item_portal.gif").droits("rwsr-xr-x", "root");
+var PorteDerobee = programmeBinaire(".porte", "binaire-porte", "rwsr-xr-x", "La porte pivote sans un bruit.");
+PorteDerobee.picturename = "./static/img/item_portal.gif";
 /* La .porte n'apparaît dans le Caveau qu'une fois le programme trafiqué repéré ET le message décodé (voir verifierChapitre2). */
 
 var Racine = lieuDuChapitre2(new Room("Racine",
@@ -628,7 +659,8 @@ Racine.addItem(ManuelDeNano);
 
 /* Les processus de la Racine : un seul n'a rien à faire là, et il se déguise. */
 var PIDS_RACINE = tirerPids("racine", 7, 100, 980);
-var NOMS_KWORKERS = ["kworker/0:0", "kworker/0:1", "kworker/1:0", "kworker/1:1", "kworker/1:2", "kworker/2:0", "kworker/2:1"];
+/* Entre crochets : des threads du noyau, comme ps les affiche. Le Corbeau a copié leur nom, crochets compris. */
+var NOMS_KWORKERS = ["[kworker/0:0]", "[kworker/0:1]", "[kworker/1:0]", "[kworker/1:1]", "[kworker/1:2]", "[kworker/2:0]", "[kworker/2:1]"];
 var INDEX_CORBEAU = aleaEntier("kworker-corbeau", 0, 6);
 for (var numeroProc = 0; numeroProc < 7; numeroProc++){
 	if (numeroProc === INDEX_CORBEAU){
@@ -638,8 +670,7 @@ for (var numeroProc = 0; numeroProc < 7; numeroProc++){
 			killText: "Le faux kworker s'effondre. Quelque part dans l'école, une connexion se coupe net."
 		});
 	} else {
-		Racine.addProc(PIDS_RACINE[numeroProc], NOMS_KWORKERS[numeroProc], "root", { cpu: 0.1,
-			killText: "Tu viens d'arrêter un vrai processus du noyau. Le système le relance aussitôt, mais Grace soupire dans la radio : « Pas celui-là. Vérifie avec ss avant de tirer. »" });
+		Racine.addProc(PIDS_RACINE[numeroProc], NOMS_KWORKERS[numeroProc], "root", { cpu: 0.1, noyau: true });
 	}
 }
 function procCorbeau(){
@@ -1086,13 +1117,29 @@ var TEXTE_MISSION_CYBER =
 	"qui n'était autre que Laurent, le directeur pédagogique, déguisé pour l'occasion.\n\n" +
 	"Mais pendant la correction, les sondes de la WarRoom ont vu passer du trafic qui n'était pas prévu. Grace a demandé du renfort, " +
 	"et c'est toi qu'on a appelé, parce que tu connais déjà les bases du terminal.\n\n" +
-	"Tu arrives par ssh dans la Citadelle. Laurent t'y attend : ";
+	"Tu arrives à Cybersup, dans la WarRoom, où les voyants clignotent encore. Grace, la cheffe de quart, t'attend pour le briefing : ";
+
+/* L'ordre de mission, posé dans la Maison du renfort. */
+var OrdreDeMission = new Item("OrdreDeMission",
+	"CYBERSUP · WARROOM · ORDRE DE MISSION\n\n" +
+	"Objet : renfort demandé d'urgence.\n\n" +
+	"Trafic anormal détecté sous la Citadelle (machine citadelle) après l'épreuve pratique des B1.\n" +
+	"Se présenter à la WarRoom de Cybersup (cd ~/Cybersup/WarRoom), puis se connecter à la machine : ssh citadelle.\n" +
+	"Droits sudo accordés pour la durée de la mission.\n\n" +
+	"Signé : Grace, cheffe de quart.", "item_manuscript.gif");
 
 /* Pour le mode mission cyber, le monde raconte que d'autres ont passé l'épreuve. */
 function adapterAuRenfort(){
 	Laurent.addCmdText("less", TEXTE_LAURENT_RENFORT);
-	CheffeDeQuart.addCmdText("less", "« Le renfort ! Parfait. L'exercice de crise des M2 est fini, le Sorcier Noir a été battu par les première année, \
-mais mes sondes voient encore du trafic sous la Citadelle. Ça, ce n'est pas un exercice. Je te parle à la radio, en bas, dans la Crypte. »");
+	CheffeDeQuart.addCmdText("less", "« Le renfort ! Parfait, merci d'être venu si vite. Je te résume.\n\n\
+Ce matin, les première année ont passé leur épreuve pratique dans Terminus, le monde d'entraînement de l'école. \
+Le méchant de l'épreuve, le Sorcier Noir, c'était Laurent, notre directeur pédagogique, et ils l'ont battu. \
+Pendant ce temps, mes M2 faisaient un exercice de crise ici. Tout était prévu, tout était sous contrôle.\n\n\
+Sauf ça : depuis la correction, mes sondes voient du trafic sous la Citadelle, la machine de l'épreuve, sur un port que personne n'utilise. \
+Ce n'est pas un exercice. Quelqu'un est vraiment entré.\n\n\
+Laurent est resté là-haut, dans la Citadelle. Connecte-toi à la machine : ssh citadelle. Il t'expliquera le reste, \
+et moi je te suivrai à la radio. Ton compte a les droits sudo pour la mission. »");
+	CheffeDeQuart.teaches = [];
 	TableauAffichage.setText(TEXTE_TABLEAU + "\n\nRÉSULTATS DE L'ÉPREUVE PRATIQUE DES B1 : le Sorcier Noir est vaincu. Félicitations à la promo.");
 }
 
@@ -1141,9 +1188,15 @@ function commencerChapitre2(){
 	PROFIL.chapitre = 2;
 	enregistrerProfil();
 	adapterAuRenfort();
-	montrerImage(Citadelle.room_pic, Citadelle.room_name);
+	// Le renfort commence à la WarRoom de Cybersup, et monte à la Citadelle par ssh.
+	Shell.pile_ssh = [];
+	enterRoom(WarRoom);
+	Shell.lieu_precedent = null;
+	state.gainsDuTour = [];
+	poser(Home, OrdreDeMission);
+	montrerImage(WarRoom.room_pic, WarRoom.room_name);
 	term.effacer();
-	term.echo(C.vert(C.gras("CHAPITRE 2 : LA CRYPTE")) + "\n\n" + TEXTE_MISSION_CYBER + C.vert("less Laurent") + "\n\n" +
+	term.echo(C.vert(C.gras("CHAPITRE 2 : LA CRYPTE")) + "\n\n" + TEXTE_MISSION_CYBER + C.vert("less CheffeDeQuart") + "\n\n" +
 		C.gris("Ce chapitre a sa propre note sur 20. Tape quetes pour le journal, indice si tu bloques, xp pour ta note."));
 	return true;
 }
