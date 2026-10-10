@@ -1,27 +1,37 @@
-<!DOCTYPE HTML>
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html lang="fr">
   <head>
     <meta charset="utf-8" />
-    <meta name="author" content="Shawn Conrad, Michele Pratusevich, michele.pratusevich@gmail.com"/>
-    <title>Terminus</title>
-    <!-- Scripts -->
-    <script type="text/javascript" src="./static/javascript/jquery-1.9.1.min.js" ></script>
-    <!--<script type="text/javascript" src="./static/javascript/jquery.terminal-0.5.min.js"></script> -->
-    <!-- // <script type="text/javascript" src="./static/javascript/jquery.terminal-0.6.3.min.js"></script> -->
-    <script type="text/javascript" src="./static/javascript/jquery.terminal-0.6.3.js"></script>
-    <script type="text/javascript" src="./static/javascript/EventTarget.js"></script>
-    <script type="text/javascript" src="./static/javascript/Room.js"></script>
-    <script type="text/javascript" src="./static/javascript/Item.js"></script>
-    <script type="text/javascript" src="./static/javascript/GameObjects.js"></script>
-    <script type="text/javascript" src="./static/javascript/Level.js"></script>
-    <script type="text/javascript" src="./static/javascript/GameState.js"></script>
-    <script type="text/javascript" src="./static/javascript/Game.js"></script> <!-- Execute last -->
-    <!-- CSS -->
-    <link href="./static/css/jquery.terminal.css" rel="stylesheet"/>
-    <link href="./static/css/terminus.css" rel="stylesheet"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Shawn Conrad, Michele Pratusevich (jeu d'origine) ; édition Cybersup : Laurent Biagiotti" />
+    <meta name="description" content="Terminus, édition Cybersup : un jeu d'aventure pour apprendre le terminal Linux." />
+    <title>Terminus, édition Cybersup</title>
+    <link href="./static/css/terminus.css" rel="stylesheet" />
   </head>
-<body>
-<div id="term"></div>
-<div id="pics"><img id="scene"></img></div>
-</body>
+  <body>
+    <main id="jeu">
+      <section id="term" aria-label="Terminal">
+        <div id="sortie" aria-live="polite"></div>
+        <form id="ligne" autocomplete="off">
+          <label id="invite" for="saisie">$ </label>
+          <input id="saisie" type="text" autocomplete="off" autocapitalize="off" autocorrect="off"
+                 spellcheck="false" aria-label="Tape un sort ici" />
+        </form>
+      </section>
+      <aside id="pics">
+        <img id="scene" src="./static/img/titlescreen_cybersup.gif" alt="" />
+        <p id="legende"></p>
+      </aside>
+    </main>
+    <!-- Scripts -->
+    <script src="./static/javascript/EventTarget.js"></script>
+    <script src="./static/javascript/Item.js"></script>
+    <script src="./static/javascript/Room.js"></script>
+    <script src="./static/javascript/Terminal.js"></script>
+    <script src="./static/javascript/Manuel.js"></script>
+    <script src="./static/javascript/Shell.js"></script>
+    <script src="./static/javascript/GameObjects.js"></script>
+    <script src="./static/javascript/GameState.js"></script>
+    <script src="./static/javascript/Game.js"></script> <!-- Execute last -->
+  </body>
 </html>
