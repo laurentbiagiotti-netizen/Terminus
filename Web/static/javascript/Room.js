@@ -191,10 +191,15 @@ Room.prototype.droits = function(mode, owner){
 };
 
 /* Affiche une image dans le panneau de droite. */
+/* Dans la version en un seul fichier, les images sont embarquées (IMAGES_EMBARQUEES) au lieu d'être lues dans static/img. */
+function sourceImage(src){
+	return (typeof IMAGES_EMBARQUEES !== "undefined" && IMAGES_EMBARQUEES[src]) || src;
+}
+
 function montrerImage(src, legende){
 	if (typeof document === "undefined") return;
 	var scene = document.getElementById("scene");
-	if (scene) scene.setAttribute("src", src);
+	if (scene) scene.setAttribute("src", sourceImage(src));
 	var texte = document.getElementById("legende");
 	if (texte) texte.textContent = legende || "";
 }

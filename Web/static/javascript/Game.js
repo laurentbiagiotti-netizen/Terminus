@@ -88,7 +88,10 @@ function demarrer(){
 
 	montrerImage("./static/img/titlescreen_cybersup.gif", "");
 	if (!PROFIL.prenom){
-		demanderPrenom();
+		intro(function(){
+			demanderPrenom();
+			document.getElementById("saisie").focus();
+		});
 	} else {
 		accueillir();
 	}
@@ -100,8 +103,9 @@ function demarrer(){
 /* Premier lancement : le prénom remplace « apprenti » partout sur le système. */
 function demanderPrenom(){
 	term.echo(C.vert(C.gras("TERMINUS")) + C.gris("  édition Cybersup") + "\n\n" +
-		"Un terminal s'allume. Quelque part, un serveur attend un nouvel utilisateur.\n");
-	term.demander("Avant de commencer, quel est ton prénom ? ", false, function(reponse){
+		"Un terminal s'allume. Quelque part, un serveur attend un nouvel utilisateur.\n" +
+		C.gris("Connecte-toi avec ton prénom : il deviendra ton identifiant sur le système.") + "\n");
+	term.demander("terminus login: ", false, function(reponse){
 		var refus = prenomRefuse(reponse);
 		if (refus){
 			term.echo(C.jaune(refus));
