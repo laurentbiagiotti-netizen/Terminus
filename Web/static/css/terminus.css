@@ -61,18 +61,20 @@ html, body{
 #etat-niveau{ font-weight: 700; }
 #etat-barre{
     flex: 1 1 auto;
-    min-width: 40px;
-    height: 10px;
+    min-width: 60px;
+    height: 12px;
+    display: grid;
+    grid-template-columns: repeat(20, 1fr);
+    gap: 2px;
+    padding: 2px;
     border: 2px solid #ffffff;
     background: #000000;
 }
-#etat-plein{
-    display: block;
-    height: 100%;
-    width: 0;
-    background: var(--vert);
-    transition: width 0.4s ease;
-}
+#etat-barre .case{ background: #161616; }
+#etat-barre .case.pleine{ background: var(--vert); }
+#etat-barre .case.demie{ background: linear-gradient(to right, var(--vert) 50%, #161616 50%); }
+#etat-barre .case.allumee{ animation: case-allumee 600ms steps(3) 1; }
+@keyframes case-allumee{ 0%{ background: #ffffff; } }
 #etat-xp{ color: var(--texte); }
 #scene{
     width: 100%;
@@ -458,11 +460,98 @@ body.crt #scene, body.crt .intro-titre{
 @keyframes radio-arrivee{ 0%, 50%{ border-color: #ffffff; } 25%, 75%{ border-color: var(--jaune); } }
 #etat.etat-alerte{ color: var(--jaune); }
 #etat.etat-alerte #etat-barre{ border-color: var(--jaune); }
-#etat.etat-alerte #etat-plein{ background: var(--jaune); }
+#etat.etat-alerte #etat-barre .case.pleine{ background: var(--jaune); }
+#etat.etat-alerte #etat-barre .case.demie{ background: linear-gradient(to right, var(--jaune) 50%, #161616 50%); }
 @media (prefers-reduced-motion: reduce){
     .radio-voyant, .radio-nouveau{ animation: none; }
 }
 @media (max-width: 820px){
     #radio{ margin-bottom: 6px; padding: 4px 10px; gap: 2px; font-size: 0.75rem; }
     .radio-texte{ -webkit-line-clamp: 1; }
+}
+
+/* Les annonces du jeu dans le terminal */
+#sortie .evt{
+    margin: 4px 0;
+    padding: 2px 0 2px 10px;
+    border-left: 3px solid currentColor;
+}
+#sortie .evt-quete{ color: var(--jaune); background: linear-gradient(to right, rgba(240, 199, 94, 0.10), transparent 70%); }
+#sortie .evt-sort{ color: var(--vert-clair); background: linear-gradient(to right, rgba(78, 216, 122, 0.08), transparent 70%); }
+#sortie .evt-succes{ color: var(--magenta); background: linear-gradient(to right, rgba(213, 140, 255, 0.10), transparent 70%); }
+#sortie .evt-niveau{ color: var(--cyan); background: linear-gradient(to right, rgba(95, 215, 215, 0.12), transparent 70%); font-weight: 700; }
+#sortie .evt-radio{ color: var(--texte); border-left-color: var(--jaune); }
+#sortie .gain{ font-size: 0.85em; }
+
+/* Les bannières du panneau de l'image */
+#pics{ position: relative; }
+.banniere{
+    position: absolute;
+    bottom: calc(44px + var(--rang, 0) * 62px);
+    right: 16px;
+    z-index: 5;
+    display: grid;
+    gap: 2px;
+    max-width: min(320px, calc(100% - 32px));
+    padding: 8px 14px;
+    background: #000000;
+    border: 2px solid currentColor;
+    box-shadow: 4px 4px 0 currentColor;
+    animation: banniere-entree 260ms steps(4) both;
+    transition: bottom 200ms steps(3);
+}
+.banniere-titre{ font-weight: 700; font-size: 0.8rem; }
+.banniere-detail{ color: #ffffff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banniere-quete{ color: var(--jaune); }
+.banniere-sort{ color: var(--vert-clair); }
+.banniere-succes{ color: var(--magenta); }
+.banniere-niveau{ color: var(--cyan); }
+.banniere-niveau .banniere-detail{ font-size: 1.15rem; font-weight: 700; white-space: normal; }
+.banniere-sortie{ animation: banniere-sortie 300ms steps(3) both; }
+@keyframes banniere-entree{ from{ transform: translateX(110%); } to{ transform: translateX(0); } }
+@keyframes banniere-sortie{ to{ transform: translateX(110%); opacity: 0; } }
+
+/* Le voile de pixels qui dévoile une nouvelle image */
+#voile-scene{ position: absolute; pointer-events: none; image-rendering: pixelated; }
+#voile-scene[hidden]{ display: none; }
+
+/* L'écran de victoire */
+#victoire{
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.88);
+    cursor: pointer;
+    animation: victoire-fond 300ms ease-out both;
+}
+.victoire-cadre{
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    width: min(440px, 100%);
+    padding: 28px 24px;
+    text-align: center;
+    background: #000000;
+    border: 4px double #ffffff;
+    box-shadow: 0 0 0 6px #000000, 0 0 0 8px var(--vert);
+    animation: victoire-cadre 520ms steps(6) both;
+}
+.victoire-cadre img{ width: 180px; image-rendering: pixelated; }
+.victoire-commande{ margin: 0; color: var(--gris); font-size: 0.9rem; }
+.victoire-commande code{ color: var(--vert-clair); font: inherit; }
+.victoire-titre{ margin: 0; color: #ffffff; font-size: 1.25rem; font-weight: 700; }
+.victoire-note{ margin: 0; color: var(--vert-clair); font-size: 3rem; font-weight: 700; line-height: 1; text-shadow: 0 0 12px rgba(78, 216, 122, 0.6); }
+.victoire-mention{ margin: 0; color: var(--texte); }
+.victoire-suite{ margin: 8px 0 0; color: var(--gris); font-size: 0.85rem; }
+@keyframes victoire-fond{ from{ opacity: 0; } }
+@keyframes victoire-cadre{ from{ transform: scale(0.2); opacity: 0; } }
+@media (prefers-reduced-motion: reduce){
+    .banniere, .banniere-sortie, #victoire, .victoire-cadre, #etat-barre .case.allumee{ animation: none; }
+}
+@media (max-width: 820px){
+    .banniere{ bottom: calc(26px + var(--rang, 0) * 50px); right: 10px; padding: 5px 10px; }
 }

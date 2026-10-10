@@ -48,6 +48,154 @@ jouerSon = function(nom){
 };
 
 /* Met à jour le bandeau d'expérience au-dessus de l'image. */
+/* ------------------------------------------------------------------ */
+/* Les effets : bannières, transition des images, écran de victoire    */
+/* ------------------------------------------------------------------ */
+
+var calmeDemande = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* Une bannière en haut du panneau de l'image, le temps de savourer une quête, un succès, un niveau. */
+var bannieres = [];
+function banniere(genre, texte){
+	var panneau = document.getElementById("pics");
+	if (!panneau) return;
+	var titres = { quete: "Quête accomplie", sort: "Nouveau sort", succes: "Succès débloqué", niveau: "Niveau supérieur" };
+	var detail = texte.replace(/^[★✦◆▲]\s*/, "").replace(/^(Quête secondaire accomplie|Quête accomplie|Nouveau sort appris|Succès débloqué)\s*:\s*/, "")
+		.replace(/\s+\+\d+ XP$/, "").replace(/\s*\(.*$/, "").replace(/\. Tape succes.*$/, "");
+	if (genre === "sort") detail = detail.split(" ")[0];
+	var b = document.createElement("div");
+	b.className = "banniere banniere-" + genre;
+	b.setAttribute("role", "status");
+	var t = document.createElement("span"); t.className = "banniere-titre";
+	t.textContent = /secondaire/.test(texte) ? "Quête secondaire" : titres[genre];
+	var d = document.createElement("span"); d.className = "banniere-detail"; d.textContent = detail;
+	b.appendChild(t); b.appendChild(d);
+	panneau.appendChild(b);
+	bannieres.push(b);
+	// Les bannières s'empilent ; au-delà de trois, les plus anciennes s'effacent.
+	while (bannieres.length > (window.innerWidth < 820 ? 1 : 3)){ var vieille = bannieres.shift(); if (vieille.parentNode) vieille.parentNode.removeChild(vieille); }
+	bannieres.forEach(function(x, i){ x.style.setProperty("--rang", String(bannieres.length - 1 - i)); });
+	setTimeout(function(){
+		b.classList.add("banniere-sortie");
+		setTimeout(function(){
+			if (b.parentNode) b.parentNode.removeChild(b);
+			bannieres = bannieres.filter(function(x){ return x !== b; });
+		}, calmeDemande ? 0 : 300);
+	}, genre === "niveau" ? 4200 : 2800);
+}
+
+/* Quand l'image du panneau change, la nouvelle se dévoile par blocs de pixels, très vite. */
+var montrerImageSansEffet = montrerImage;
+montrerImage = function(src, legende){
+	var scene = document.getElementById("scene");
+	var avant = scene ? scene.getAttribute("src") : null;
+	montrerImageSansEffet(src, legende);
+	if (!scene || calmeDemande || avant === scene.getAttribute("src") || scene.hidden) return;
+	var panneau = document.getElementById("pics");
+	var voile = document.getElementById("voile-scene");
+	if (!voile){
+		voile = document.createElement("canvas");
+		voile.id = "voile-scene";
+		voile.setAttribute("aria-hidden", "true");
+		panneau.appendChild(voile);
+	}
+	var r = scene.getBoundingClientRect(), rp = panneau.getBoundingClientRect();
+	if (!r.width || !r.height) return;
+	voile.style.left = (r.left - rp.left) + "px";
+	voile.style.top = (r.top - rp.top) + "px";
+	voile.width = Math.round(r.width);
+	voile.height = Math.round(r.height);
+	voile.style.width = r.width + "px";
+	voile.style.height = r.height + "px";
+	var ctx = voile.getContext("2d");
+	ctx.fillStyle = "#000000";
+	ctx.fillRect(0, 0, voile.width, voile.height);
+	voile.hidden = false;
+	var taille = Math.max(8, Math.round(voile.width / 16)), blocs = [];
+	for (var y = 0; y < voile.height; y += taille) for (var x = 0; x < voile.width; x += taille) blocs.push([x, y]);
+	for (var i = blocs.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var t = blocs[i]; blocs[i] = blocs[j]; blocs[j] = t; }
+	var parImage = Math.ceil(blocs.length / 10), position = 0, jeton = {};
+	voile.jeton = jeton;
+	(function etape(){
+		if (voile.jeton !== jeton) return;
+		for (var k = 0; k < parImage && position < blocs.length; k++, position++) ctx.clearRect(blocs[position][0], blocs[position][1], taille, taille);
+		if (position < blocs.length) requestAnimationFrame(etape);
+		else voile.hidden = true;
+	})();
+};
+
+/* La fin d'un chapitre : un écran de victoire, puis on retourne au jeu. */
+function ecranDeVictoire(chapitre){
+	var fond = document.createElement("div");
+	fond.id = "victoire";
+	fond.setAttribute("role", "dialog");
+	fond.setAttribute("aria-label", "Chapitre terminé");
+	var cadre = document.createElement("div");
+	cadre.className = "victoire-cadre";
+	var image = document.createElement("img");
+	image.src = sourceImage(chapitre === 2 ? "./static/img/item_locker.gif" : "./static/img/item_grad.gif");
+	image.alt = "";
+	var titre = document.createElement("p");
+	titre.className = "victoire-titre";
+	titre.textContent = chapitre === 2 ? "Incident clos" : "Le Sorcier Noir est vaincu";
+	var note = document.createElement("p");
+	note.className = "victoire-note";
+	note.textContent = state.noteTexte(chapitre === 2 ? 2 : undefined);
+	var mention = document.createElement("p");
+	mention.className = "victoire-mention";
+	mention.textContent = state.mention(chapitre === 2 ? 2 : undefined);
+	var commande = document.createElement("p");
+	commande.className = "victoire-commande";
+	commande.appendChild(document.createTextNode(chapitre === 2 ? "Ton certificat : " : "Ton diplôme : "));
+	var code = document.createElement("code");
+	code.textContent = chapitre === 2 ? "cat ~/CertificatCyber" : "cat Diplome";
+	commande.appendChild(code);
+	var suite = document.createElement("p");
+	suite.className = "victoire-suite";
+	suite.textContent = "Appuie sur Entrée pour continuer";
+	[image, titre, note, mention, commande, suite].forEach(function(e){ cadre.appendChild(e); });
+	fond.appendChild(cadre);
+	document.body.appendChild(fond);
+	function fermer(e){
+		if (e && e.type === "keydown"){ e.preventDefault(); e.stopPropagation(); }
+		document.removeEventListener("keydown", fermer, true);
+		if (fond.parentNode) fond.parentNode.removeChild(fond);
+		document.getElementById("saisie").focus();
+	}
+	setTimeout(function(){
+		document.addEventListener("keydown", fermer, true);
+		fond.addEventListener("click", fermer);
+	}, 500);
+}
+var completerSansFete = GameState.prototype.complete;
+GameState.prototype.complete = function(id){
+	var deja = this.quests[id];
+	completerSansFete.call(this, id);
+	if (!deja && (id === "m_boss" || id === "c_rapport") && !Shell.sauvegardeBloquee && !this.has("rejeuEnCours")){
+		setTimeout(function(){ ecranDeVictoire(id === "c_rapport" ? 2 : 1); }, 700);
+	}
+};
+
+/* La barre d'état : vingt cases, une par point de la note sur 20. */
+function remplirBarre(note){
+	var barre = document.getElementById("etat-barre");
+	if (!barre) return;
+	if (barre.children.length !== 20){
+		barre.textContent = "";
+		for (var i = 0; i < 20; i++){ var c = document.createElement("span"); c.className = "case"; barre.appendChild(c); }
+	}
+	for (var k = 0; k < 20; k++){
+		var cls = "case" + (k + 1 <= note ? " pleine" : (k + 0.5 <= note ? " demie" : ""));
+		var c = barre.children[k];
+		if (c.getAttribute("data-etat") !== cls){
+			var allume = c.hasAttribute("data-etat") && cls !== "case";
+			c.setAttribute("data-etat", cls);
+			c.className = cls + (allume ? " allumee" : "");
+		}
+	}
+	barre.setAttribute("aria-label", "Note : " + String(note).replace(".", ",") + " sur 20");
+}
+
 function majEtat(){
 	var niveau = document.getElementById("etat-niveau");
 	if (!niveau) return;
@@ -59,13 +207,13 @@ function majEtat(){
 	if (state.chapitreEnCours() === 2){
 		var max2 = state.xpMax2();
 		niveau.textContent = state.quests["c_rapport"] ? "Chapitre 2 · incident clos" : "Chapitre 2 · incident en cours";
-		document.getElementById("etat-plein").style.width = Math.round(Math.min(1, state.xp2 / max2) * 100) + "%";
+		remplirBarre(state.note(2));
 		document.getElementById("etat-xp").textContent = state.xpNet(2) + " XP · " + state.noteTexte(2) + (state.malus2 ? " (indices -" + state.malus2 + ")" : "");
 		document.getElementById("etat").title = "Note du chapitre 2. Tape xp pour le détail.";
 		return;
 	}
 	niveau.textContent = "Niveau " + pr.niveau + " · " + pr.titre;
-	document.getElementById("etat-plein").style.width = Math.round(pr.part * 100) + "%";
+	remplirBarre(state.has("chapitre1Saute") ? 0 : state.note());
 	document.getElementById("etat-xp").textContent = pr.xp + " XP · " + state.noteTexte() + (state.malus ? " (indices -" + state.malus + ")" : "");
 	document.getElementById("etat").title = pr.suivant ?
 		"Encore " + (pr.plafond - pr.xp) + " XP avant le niveau « " + pr.suivant + " ». Tape xp pour le détail." :
@@ -127,6 +275,7 @@ function demarrer(){
 		touches: document.getElementById("touches")
 	});
 	term.onCommande = Shell.executer;
+	term.onEvenement = banniere;
 	term.onCompletion = Shell.completer;
 	term.historique = Shell.historique.slice();
 	term.positionHistorique = term.historique.length;

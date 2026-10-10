@@ -259,10 +259,23 @@ Terminal.prototype.definirInvite = function(texte){
 	if (!this.question) this.invite.innerHTML = ansiVersHTML(texte);
 };
 
+/* Les annonces du jeu (quête, sort, succès, niveau, radio) ont leur propre allure. */
+var GENRES_DE_BLOC = [
+	[/^★/, "evt evt-quete", "quete"], [/^✦/, "evt evt-sort", "sort"], [/^◆/, "evt evt-succes", "succes"],
+	[/^▲/, "evt evt-niveau", "niveau"], [/^\+\d+ XP/, "gain", null], [/^La radio grésille/, "evt evt-radio", null]
+];
+
 Terminal.prototype.echo = function(texte){
 	if (texte === undefined || texte === null) return;
 	var bloc = document.createElement("div");
 	bloc.className = "bloc";
+	var brut = String(texte).replace(/\x1b\[[0-9;]*m/g, "");
+	for (var g = 0; g < GENRES_DE_BLOC.length; g++){
+		if (!GENRES_DE_BLOC[g][0].test(brut)) continue;
+		bloc.className += " " + GENRES_DE_BLOC[g][1];
+		if (GENRES_DE_BLOC[g][2] && this.onEvenement) this.onEvenement(GENRES_DE_BLOC[g][2], brut);
+		break;
+	}
 	bloc.innerHTML = ansiVersHTML(String(texte)) || "&nbsp;";
 	this.sortie.appendChild(bloc);
 	this.defiler();

@@ -1122,11 +1122,13 @@ function commencerChapitre2(){
 	var alias = state.alias;
 	state.alias = {};   // les alias du joueur ne doivent pas détourner la relecture
 	var ok = false;
+	state.flags.rejeuEnCours = true;   // pas de fanfare pendant la relecture silencieuse
 	try {
 		ok = sauterChapitre1();
 	} catch (e){
 		ok = false;
 	}
+	delete state.flags.rejeuEnCours;
 	state.alias = alias;
 	Shell.narration = [];
 	if (!ok){
