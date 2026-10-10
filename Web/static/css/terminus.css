@@ -12,6 +12,7 @@
     --cyan: #5fd7d7;
     --gris: #8a8a8a;
     --trait: #2b2b2b;
+    color-scheme: dark;
     --police: "JetBrains Mono", "Fira Code", "DejaVu Sans Mono", Menlo, Consolas, "Liberation Mono", monospace;
 }
 *{ box-sizing: border-box; }
@@ -26,8 +27,7 @@ html, body{
 }
 #jeu{
     display: flex;
-    height: 100vh;
-    height: 100dvh;
+    height: 100%;
 }
 #term{
     flex: 1 1 56%;
