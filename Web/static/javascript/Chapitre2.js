@@ -633,7 +633,7 @@ c'est une porte dérobée : n'importe qui le lance devient root le temps de son 
 Pour les trouver tous : find . -perm -4000\n\
 (-4000 veut dire : le bit SUID est posé. On écrit aussi -perm -u=s.)\n\n\
 Et si find se plaint de chaque niche fermée, fais-le taire : ses plaintes sortent par la sortie d'erreur, \
-la numéro 2. 2>/dev/null les envoie dans le trou noir du système ; 2>erreurs.txt les garde dans un objet. »",
+la numéro 2. 2>/dev/null les envoie dans le trou noir du système ; 2>~/erreurs.txt les garde dans un objet, chez toi : ici, c'est le domaine de root, tu n'as pas le droit d'y écrire. »",
 	"item_sign.gif").revele("s_c_silence", "s_c_trace");
 Caveau.addItem(Inscription);
 Caveau.addItem(new Item("Lanterne", "Une lanterne froide. Personne ne l'a allumée depuis longtemps.", "item_trinket.gif").droits("rw-r--r--", "root"));

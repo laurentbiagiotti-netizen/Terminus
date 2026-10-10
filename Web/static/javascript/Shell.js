@@ -336,6 +336,15 @@ Shell.chercherDepuis = function(depart, chemin, io, cmd){
 	return { dir: lieu, name: dernier, node: noeud };
 };
 
+/* Créer quelque chose dans un lieu demande le droit w sur ce lieu, comme sous Linux. */
+Shell.verifierEcriture = function(lieu, io, cmd, nom){
+	if (!Shell.bit(lieu, "w", io)){
+		throw new ShellError(cmd + " : impossible de créer « " + nom + " » : Permission non accordée\n" +
+			C.gris("(" + lieu.room_name + " appartient à " + lieu.owner + " et n'accorde pas le droit w : on ne peut rien y créer. " +
+			"Écris plutôt chez toi, par exemple ~/" + nom + ".)"));
+	}
+};
+
 Shell.nomValide = function(nom, cmd){
 	if (nom === "" || nom === "." || nom === ".."){
 		throw new ShellError(cmd + " : « " + nom + " » n'est pas un nom utilisable");
@@ -888,6 +897,10 @@ Shell.sorts.mv = function(args, io){
 			messages.push("mv : « " + item.itemname + " » est déjà là.");
 			continue;
 		}
+		if (!Shell.bit(cible, "w", io) && !item.allows("mv")){
+			messages.push("mv : impossible de déposer « " + item.itemname + " » dans " + cible.room_name + " : Permission non accordée");
+			continue;
+		}
 		var occupant = cible.getNode(nouveauNom);
 		if (occupant instanceof Room){
 			messages.push("mv : « " + nouveauNom + " » est un lieu : impossible de le remplacer par un objet.");
@@ -1098,6 +1111,7 @@ Shell.sorts.cp = function(args, io){
 	else { cible = dest.dir; nom = dest.name; }
 	if (cible.getNode(nom) !== null) throw new ShellError("cp : il y a déjà quelque chose qui s'appelle « " + nom + " » dans " + cible.room_name + ".");
 	Shell.nomValide(nom, "cp");
+	Shell.verifierEcriture(cible, io, "cp", nom);
 	var copie = new Item(nom, item.getText());
 	copie.picturename = item.picturename;
 	copie.owner = io.sudo ? "root" : JOUEUR;
@@ -1123,6 +1137,7 @@ Shell.sorts.mkdir = function(args, io){
 			continue;
 		}
 		Shell.nomValide(r.name, "mkdir");
+		Shell.verifierEcriture(r.dir, io, "mkdir", r.name);
 		var lieu = new Room(r.name, "Un lieu que tu as créé de tes mains.");
 		lieu.owner = JOUEUR;
 		lieu.mode = "rwxr-xr-x";
@@ -1140,6 +1155,7 @@ Shell.sorts.touch = function(args, io){
 		var r = Shell.chercher(args[i], io, "touch");
 		if (r.node !== null) continue; // sous Linux, touch sur un objet existant met juste sa date a jour
 		Shell.nomValide(r.name, "touch");
+		Shell.verifierEcriture(r.dir, io, "touch", r.name);
 		var item = new Item(r.name, "");
 		item.owner = JOUEUR;
 		r.dir.addItem(item);
@@ -1711,6 +1727,7 @@ Shell.ecrire = function(cible, texte, ajout, sansFin){
 	if (r.node instanceof Room) throw new ShellError("Impossible d'écrire dans « " + r.name + " » : c'est un lieu.");
 	if (r.node === null){
 		Shell.nomValide(r.name, "écriture");
+		Shell.verifierEcriture(r.dir, null, "écriture", r.name);
 		var item = new Item(r.name, texte);
 		item.owner = JOUEUR;
 		item.sansFinDeLigne = !!sansFin;

@@ -620,10 +620,11 @@ contient(s, "Permission non accordée", "les erreurs ne passent pas dans le tuya
 contient(s, ".porte", "find -perm -4000");
 verifier(u("find . -perm -4000 2>/dev/null").indexOf("Permission") === -1, "2>/dev/null fait taire les erreurs");
 contient(u("find . -perm /u=s 2>&1 | grep -c Permission"), "6", "2>&1 mêle les erreurs à la sortie");
-u("find . -name Lanterne 2> plaintes");
-contient(u("cat plaintes"), "Niche1", "2> écrit les erreurs dans un objet");
-u("find . -name Lanterne 2>> plaintes");
-contient(u("wc -l plaintes"), "12", "2>> ajoute à la suite");
+contient(u("echo test > ici.txt"), "Permission non accordée", "on ne crée rien dans le domaine de root");
+u("find . -name Lanterne 2> ~/plaintes");
+contient(u("cat ~/plaintes"), "Niche1", "2> écrit les erreurs dans un objet");
+u("find . -name Lanterne 2>> ~/plaintes");
+contient(u("wc -l ~/plaintes"), "12", "2>> ajoute à la suite");
 contient(u("ls -l .porte"), "-rwsr-xr-x", "ls -l montre le bit SUID");
 contient(u("cd Racine"), "aucun lieu", "la Racine n'existe pas avant la porte");
 contient(u("./.porte"), "Pendant une fraction de seconde", "la porte dérobée s'exécute");

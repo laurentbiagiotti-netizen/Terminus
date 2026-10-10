@@ -6,7 +6,10 @@ Trois repères utiles en salle :
 
 - un joueur bloqué tape `quetes` : le journal donne l'étape en cours et un indice ;
 - un joueur qui veut savoir où il en est tape `xp` (niveau, note sur 20, ce qui reste à gagner) ou `bulletin` (relevé par blocs de compétences) ;
-- un joueur perdu tape `cd` pour rentrer à la Maison, puis `cd -` pour revenir d'où il vient.
+- un joueur perdu tape `cd` pour rentrer à la Maison, puis `cd -` pour revenir d'où il vient ;
+- un joueur bloqué tape `indice` : deux paliers payants par étape (30 puis 60 XP retirés de la note, pas du niveau), et des remarques gratuites quand quelque chose coince (rouages creux, alias qui masque un sort, clé SSH grillée ou effacée).
+
+Au premier lancement, le jeu demande le prénom (il devient l'identifiant sur le système et le nom sur le diplôme), puis propose deux enveloppes : la convocation à l'épreuve de première année (chapitre 1, la solution ci-dessous) ou l'ordre de mission de la WarRoom (chapitre 2 directement, voir la partie 7).
 
 Chaque partie est différente. Au premier lancement, le jeu tire une graine au hasard qui fixe le mot de passe sudo, le meilleur client de la taverne, l'adresse de l'attaquant, le nombre de sweats du BDE et les numéros de processus. Dans les blocs ci-dessous, ces valeurs sont écrites entre chevrons :
 
@@ -18,7 +21,7 @@ Chaque partie est différente. Au premier lancement, le jeu tire une graine au h
 | `<sweats>` | `grep -c sweat Inventaire` au BDE |
 | `<pid:nom>` | colonne PID de `ps`, sur la ligne du processus `nom` |
 
-Recopier la solution du voisin ne marche donc pas : il faut refaire chaque recherche. Le diplôme final porte un code de vérification qui résume la partie (prénom, score, note, temps, indices utilisés) : voir la page de classement.
+Recopier la solution du voisin ne marche donc pas : il faut refaire chaque recherche. Le diplôme final porte un code de vérification qui résume la partie (prénom, score, note, temps, indices utilisés). La page de classement le décode, refuse les codes retouchés ou incohérents et signale un même code envoyé par deux personnes. Ce code reste indicatif : le jeu tourne dans le navigateur et son code est public.
 
 ## Le barème
 
@@ -30,7 +33,7 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
 | Première utilisation d'un sort (52) | 5 |
 | Lieu découvert (44) | 5 |
 
-Le total possible est de 3820 XP. La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
+Le total possible est de 3820 XP au chapitre 1. Le chapitre 2 a son propre barème, sur le même principe : 1455 XP, notés sur 20 à part. La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
 
 Ordres de grandeur : un parcours réduit au strict nécessaire (une quarantaine de commandes, impossible sans connaître la solution) donne 10 sur 20. La solution ci-dessous, dernier chapitre compris, donne 20 sur 20. Les derniers points se gagnent en visitant chaque lieu et en lançant chaque sort au moins une fois : `xp` liste ceux qui n'ont jamais servi.
 
@@ -154,7 +157,7 @@ cut -d: -f1 Registre | sort | uniq -c | sort -n
 echo <client>
 ```
 
-Le nom écrit dans le LivreDOr figurera sur le diplôme final. Un joueur qui écrit `echo MonNom > LivreDOr` écrase le livre : le tavernier le rétablit en râlant, c'est voulu. Le Registre a trois colonnes séparées par des deux-points, d'où le `cut`. `<client>` est le nom qui arrive en dernier, avec le plus de passages.
+Le diplôme porte le prénom saisi au démarrage ; le nom écrit dans le LivreDOr ne sert que si aucun prénom n'a été donné. Un joueur qui écrit `echo MonNom > LivreDOr` écrase le livre : le tavernier le rétablit en râlant, c'est voulu. Le Registre a trois colonnes séparées par des deux-points, d'où le `cut`. `<client>` est le nom qui arrive en dernier, avec le plus de passages.
 
 L'Atelier et la Ferme :
 
@@ -385,7 +388,7 @@ cd ../Caveau
 less Inscription
 find . -perm -4000
 find .. -perm -4000 2>/dev/null
-find . -perm -4000 2> erreurs.txt
+find . -perm -4000 2> ~/erreurs.txt
 ls -la
 ./.porte
 cd Racine
