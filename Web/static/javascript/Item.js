@@ -12,8 +12,7 @@ function identifiantMonde(prefixe, nom){
 	return World.compteurs[cle] === 1 ? cle : cle + "#" + World.compteurs[cle];
 }
 
-/* Nom sous lequel le systeme connait le joueur (voir le sort whoami). */
-var JOUEUR = "apprenti";
+/* JOUEUR, l'identifiant du joueur sur le systeme, est defini dans Partie.js. */
 
 function Item(name, text, picname){
 	this.itemname = name;

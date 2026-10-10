@@ -23,6 +23,16 @@ var jeu = nouveauMonde(stockage);
 var t = jeu.taper;
 var s;
 
+// Valeurs propres à cette partie : elles changent avec la graine.
+var MDP = jeu.lire("MOT_DE_PASSE_SUDO");
+var CLIENT = jeu.lire("MEILLEUR_CLIENT");
+var AUTRE_CLIENT = jeu.lire("HABITUES[1]");
+var ADRESSE = jeu.lire("ADRESSE_ATTAQUANT");
+var CHRONIQUE = "chronique_" + jeu.lire("FICHIER_SECRET") + ".log";
+var PC = jeu.lire("PIDS_COURS.join(' ')").split(" ");
+var PD = jeu.lire("PIDS_DEMONS.join(' ')").split(" ");
+var BOUCLIER2 = String(+PD[0] + 1000);
+
 // --- Maison ---
 verifier(jeu.lire("state.xp") === 0, "on commence à 0 XP");
 s = t("ls");
@@ -188,11 +198,11 @@ contient(t("cut -d: -f1 Registre | head -n 2"), "\n", "cut garde la première co
 verifier(t("cut -d: -f1 Registre").indexOf(":") === -1, "cut retire les autres colonnes");
 contient(t("cut -d: -f1,3 Registre | head -n 1"), ":", "cut -f1,3");
 s = t("cut -d: -f1 Registre | sort | uniq -c | sort -n");
-contient(s, "14 Bertille", "le tuyau trie et compte");
+contient(s, "14 " + CLIENT, "le tuyau trie et compte");
 contient(t("cat Registre | wc -l"), "55", "wc -l dans un tuyau");
-contient(t("cut -d: -f1 Registre | sort | uniq -c | sort -n | tail -n 1"), "Bertille", "tuyau à cinq étages");
-contient(t("echo Grognar"), "Recompte", "mauvaise réponse");
-contient(t("echo Bertille"), "vrai nom à voix haute", "bonne réponse");
+contient(t("cut -d: -f1 Registre | sort | uniq -c | sort -n | tail -n 1"), CLIENT, "tuyau à cinq étages");
+contient(t("echo " + AUTRE_CLIENT), "Recompte", "mauvaise réponse");
+contient(t("echo " + CLIENT), "vrai nom à voix haute", "bonne réponse");
 contient(t("echo notes > MonCarnet; cat MonCarnet"), "notes", "créer un objet par redirection");
 contient(t("ls -l MonCarnet"), "apprenti", "l'objet créé appartient au joueur");
 contient(t("mv MonCarnet Carnet && ls"), "Carnet", "renommer");
@@ -266,13 +276,13 @@ contient(t("sudo less Certificat"), "ne connais pas encore", "sudo inconnu");
 contient(t("less Instructions"), "Nouveau sort appris : sudo", "sudo");
 t("cd ArchivesDuNoyau");
 s = t("grep motdepasse= *");
-contient(s, "motdepasse=P1ngouin", "le mot de passe est trouvé");
-contient(s, "chronique_T.log:", "grep indique le fichier");
+contient(s, "motdepasse=" + MDP, "le mot de passe est trouvé");
+contient(s, CHRONIQUE + ":", "grep indique le fichier");
 verifier(jeu.lire("state.quests.m_mdp") === true, "quête du mot de passe");
-contient(t("grep -r -c motdepasse ."), "chronique_T.log:1", "grep -r -c");
+contient(t("grep -r -c motdepasse ."), CHRONIQUE + ":1", "grep -r -c");
 t("cd ..");
 contient(t("sudo less Certificat", "mauvais"), "Désolé, essaie encore", "mauvais mot de passe");
-contient(t("sudo less Certificat", "P1ngouin"), "La Citadelle t'est ouverte", "le certificat est lu");
+contient(t("sudo less Certificat", MDP), "La Citadelle t'est ouverte", "le certificat est lu");
 contient(t("whoami"), "ne connais pas encore", "whoami inconnu sans Cybersup");
 contient(t("sudo cd Citadelle"), "commande introuvable", "sudo cd n'existe pas");
 contient(t("sudo rm CaverneDesTrolls"), "aucun lieu ni objet", "chemin relatif");
@@ -305,12 +315,12 @@ contient(s, "SOURCE DE L'ATTAQUE", "l'écran mural suit l'avancée dans Terminus
 contient(s, "chaumière rebâtie", "l'écran mural reflète les quêtes");
 contient(s, "Dernière position connue dans Terminus : Citadelle", "l'écran mural suit le joueur");
 contient(t("less MainCourante"), "En attente d'une nouvelle recrue", "la main courante");
-contient(t("grep ECHEC auth.log | cut -d\" \" -f4 | sort | uniq -c | sort -n | tail -n 1"), "10.0.66.6", "l'enquête trouve l'adresse");
+contient(t("grep ECHEC auth.log | cut -d\" \" -f4 | sort | uniq -c | sort -n | tail -n 1"), ADRESSE, "l'enquête trouve l'adresse");
 contient(t("echo 10.0.92.8"), "quelques échecs", "mauvaise adresse");
-s = t("echo 10.0.66.6");
+s = t("echo " + ADRESSE);
 contient(s, "citadelle", "l'adresse mène à la citadelle");
 contient(s, "Identifier l'attaquant", "quête de la war room");
-contient(t("tail -n 1 auth.log"), "SUCCES laurent 10.0.66.6", "l'intrus est entré avec le compte de Laurent");
+contient(t("tail -n 1 auth.log"), "SUCCES laurent " + ADRESSE, "l'intrus est entré avec le compte de Laurent");
 // Le BDE
 t("cd ../BDE");
 contient(t("less PresidenteDuBDE"), "Ada", "la présidente du BDE");
@@ -352,11 +362,11 @@ t("sudo apt install sl");
 contient(t("sl"), "Tchou tchou", "sl après installation");
 s = t("ps");
 contient(s, "sortilege_infini", "ps liste les processus");
-contient(t("ps | grep golem"), "4243", "ps | grep");
+contient(t("ps | grep golem"), PC[1], "ps | grep");
 contient(t("kill 1"), "init", "on ne tue pas init");
-contient(t("kill 4242"), "s'arrête net", "kill");
-contient(t("kill 4243"), "moins poli", "kill ignoré");
-contient(t("kill -9 4243"), "Arrêter les processus fous", "kill -9");
+contient(t("kill " + PC[0]), "s'arrête net", "kill");
+contient(t("kill " + PC[1]), "moins poli", "kill ignoré");
+contient(t("kill -9 " + PC[1]), "Arrêter les processus fous", "kill -9");
 contient(t("whoami"), "apprenti", "whoami");
 contient(t("sudo whoami"), "root", "sudo whoami");
 contient(t("less EtudianteCurieuse"), "Nouveau sort appris : find", "find");
@@ -416,17 +426,17 @@ verifier(jeu.lire("current_room.room_name") === "Citadelle", "ssh mène à la ci
 contient(t("pwd"), "FichiersDuNoyau/Citadelle", "pwd après ssh");
 s = t("ps");
 contient(s, "demon_bouclier", "ps dans la citadelle");
-contient(t("kill 66"), "Opération non permise", "les démons ne sont pas à nous");
-s = t("sudo kill 66");
+contient(t("kill " + PD[0]), "Opération non permise", "les démons ne sont pas à nous");
+s = t("sudo kill " + PD[0]);
 contient(s, "vole en éclats", "sudo kill");
 contient(s, "se reforme", "le bouclier renaît");
-contient(t("ps | grep bouclier"), "1066", "le bouclier a un nouveau PID");
-contient(t("sudo kill 404"), "l'ignore en ricanant", "l'illusion ignore TERM");
-t("sudo kill -9 404 666");
+contient(t("ps | grep bouclier"), BOUCLIER2, "le bouclier a un nouveau PID");
+contient(t("sudo kill " + PD[1]), "l'ignore en ricanant", "l'illusion ignore TERM");
+t("sudo kill -9 " + PD[1] + " " + PD[2]);
 verifier(jeu.lire("state.has('demonsMorts')") === false, "les démons ne sont pas tous morts tant que le bouclier renaît");
 contient(t("sudo crontab -u sorcier -l"), "relancer demon_bouclier", "la crontab du sorcier");
 contient(t("sudo crontab -u sorcier -r"), "Ma crontab", "retirer la crontab");
-contient(t("sudo kill 1066"), "Abattre les trois démons", "les démons tombent");
+contient(t("sudo kill " + BOUCLIER2), "Abattre les trois démons", "les démons tombent");
 contient(t("less SorcierNoir"), "phylactère", "le sorcier parle du phylactère");
 contient(t("echo Laurent"), "Il faut l'avoir LU", "un nom deviné ne suffit pas");
 contient(t("ls -la"), ".Phylactere", "ls -la montre le phylactère");
@@ -503,6 +513,51 @@ verifier(jeu3.lire("state.xp") === jeu.lire("state.xp"), "l'expérience est sauv
 verifier(jeu3.lire("state.alias.ll") === "ls -l", "les alias sont sauvegardés");
 verifier(jeu3.lire("state.cron.sorcier.length") === 0, "la crontab retirée le reste");
 contient(jeu3.taper("echo $CRI"), "Banzai", "les variables sont sauvegardées");
+
+// --- Le code de vérification du diplôme ---
+var code = jeu.lire("state.codeDuDiplome()");
+var lu = jeu.lire("lireCode(" + JSON.stringify(code) + ")");
+verifier(lu && lu.valide === true, "le code du diplôme se relit");
+verifier(lu && lu.note === 20 && lu.score === jeu.lire("state.xpMax()"), "le code porte la note et le score");
+var charge = jeu.lire("depuisBase64Url(" + JSON.stringify(code.split(".")[0]) + ")");
+var triche = jeu.lire("versBase64Url(" + JSON.stringify(charge.split("|").map(function(c, i){ return i === 2 ? "9999" : c; }).join("|")) + ")") + "." + code.split(".")[1];
+verifier(jeu.lire("lireCode(" + JSON.stringify(triche) + ").valide") === false, "un code retouché est détecté");
+contient(t("cat ~/PrairieNord/MontagnesEst/Grotte/CouloirSombre/SalleHumide/.Tunnel/ChambreDePierre/Portail/PlaceDuVillage/PontBrise/Clairiere/SentierSinistre/CaverneDesTrolls/Toboggan/FichiersDuNoyau/Citadelle/Diplome"), code, "le code figure sur le diplôme");
+
+// --- Les indices payants ---
+var jeu6 = nouveauMonde({}, 6);
+contient(jeu6.taper("indice", "non"), "Indice gratuit", "indice rappelle l'indice gratuit");
+verifier(jeu6.lire("state.malus") === 0, "refuser l'indice ne coûte rien");
+contient(jeu6.taper("indice", "oui"), "Indice 2", "indice payant");
+contient(jeu6.taper("indice", "oui"), "less Professeur", "le dernier palier donne la solution");
+contient(jeu6.taper("indice"), "déjà tous les indices", "plus rien à acheter");
+verifier(jeu6.lire("state.malus") === 90 && jeu6.lire("state.nbIndices()") === 2, "le malus est compté");
+contient(jeu6.taper("xp"), "Indices payants : 2", "xp montre les indices");
+
+// --- Le prénom remplace « apprenti » ---
+var stockage4 = {};
+var jeu4 = nouveauMonde(stockage4, 99);
+verifier(jeu4.lire("prenomRefuse('')") !== null, "prénom vide refusé");
+verifier(jeu4.lire("prenomRefuse('42')") !== null, "prénom sans lettre refusé");
+contient(String(jeu4.lire("prenomRefuse('Laurent')")), "déjà pris", "Laurent est réservé");
+verifier(jeu4.lire("prenomRefuse('Léa-Marie')") === null, "prénom composé accepté");
+verifier(jeu4.lire("adopterPrenom('Léa-Marie')") === "leamarie", "identifiant sans accent ni tiret");
+jeu4.lire("['whoami','id','cat','echo'].forEach(function(x){ state.spells[x] = true; })");
+contient(jeu4.taper("whoami"), "leamarie", "whoami donne le prénom");
+contient(jeu4.taper("echo $USER"), "leamarie", "$USER suit le prénom");
+contient(jeu4.taper("id"), "uid=1000(leamarie)", "id suit le prénom");
+contient(jeu4.taper("ls -la"), "leamarie", "les objets du joueur changent de propriétaire");
+verifier(jeu4.taper("ls -la").indexOf("apprenti") === -1, "plus aucun objet à apprenti");
+verifier(jeu4.lire("SalleDeCours.procs.every(function(p){ return p.owner === 'leamarie'; })"), "les processus du cours changent de propriétaire");
+contient(jeu4.taper("cat ~/Cybersup/CarteEtudiante"), "Léa-Marie", "le prénom sur la carte étudiante");
+jeu4.taper("echo bonjour > Mot");
+var jeu5 = nouveauMonde(stockage4);
+verifier(jeu5.lire("JOUEUR") === "leamarie", "le prénom est retenu au rechargement");
+verifier(jeu5.lire("state.nom") === "Léa-Marie", "le nom affiché est retenu");
+contient(jeu5.taper("ls -l ~/Mot"), "leamarie", "l'objet fabriqué reste au joueur");
+verifier(jeu5.lire("MOT_DE_PASSE_SUDO") === jeu4.lire("MOT_DE_PASSE_SUDO"), "la graine est retenue au rechargement");
+jeu5.lire("state.reset()");
+verifier(!stockage4["terminus-cybersup-profil"], "recommencer oublie le prénom et la graine");
 
 console.log(verifications + " vérifications, " + echecs + " échec" + (echecs > 1 ? "s" : ""));
 process.exit(echecs ? 1 : 0);

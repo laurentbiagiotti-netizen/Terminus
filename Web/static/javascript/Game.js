@@ -22,7 +22,7 @@ function majEtat(){
 	var pr = state.progression();
 	niveau.textContent = "Niveau " + pr.niveau + " · " + pr.titre;
 	document.getElementById("etat-plein").style.width = Math.round(pr.part * 100) + "%";
-	document.getElementById("etat-xp").textContent = pr.xp + " XP · " + state.noteTexte();
+	document.getElementById("etat-xp").textContent = pr.xp + " XP · " + state.noteTexte() + (state.malus ? " (indices -" + state.malus + ")" : "");
 	document.getElementById("etat").title = pr.suivant ?
 		"Encore " + (pr.plafond - pr.xp) + " XP avant le niveau « " + pr.suivant + " ». Tape xp pour le détail." :
 		"Niveau maximal. Tape xp pour le détail.";
@@ -46,17 +46,46 @@ function demarrer(){
 	Shell.narration = [];
 
 	montrerImage("./static/img/titlescreen_cybersup.gif", "");
+	if (!PROFIL.prenom){
+		demanderPrenom();
+	} else {
+		accueillir();
+	}
+	state.dernierInstant = Date.now();
+	majEtat();
+	document.getElementById("saisie").focus();
+}
+
+/* Premier lancement : le prénom remplace « apprenti » partout sur le système. */
+function demanderPrenom(){
+	term.echo(C.vert(C.gras("TERMINUS")) + C.gris("  édition Cybersup") + "\n\n" +
+		"Un terminal s'allume. Quelque part, un serveur attend un nouvel utilisateur.\n");
+	term.demander("Avant de commencer, quel est ton prénom ? ", false, function(reponse){
+		var refus = prenomRefuse(reponse);
+		if (refus){
+			term.echo(C.jaune(refus));
+			demanderPrenom();
+			return;
+		}
+		var identifiant = adopterPrenom(reponse);
+		term.echo("\nEnchanté, " + C.gras(PROFIL.prenom) + ". Sur ce système, tu seras " + C.vert(identifiant) +
+			C.gris(" (c'est ce que répondra le sort whoami)") + ".\n");
+		state.save();
+		accueillir();
+		term.definirInvite(Shell.invite());
+		majEtat();
+	});
+}
+
+function accueillir(){
 	if (partieRestauree){
 		term.echo(C.vert(C.gras("TERMINUS")) + C.gris("  édition Cybersup") + "\n\n" +
-			"Ta partie a été retrouvée : tu es dans " + current_room.toString() + ".\n" +
+			"Content de te revoir, " + PROFIL.prenom + ". Ta partie a été retrouvée : tu es dans " + current_room.toString() + ".\n" +
 			C.gris("Tape ls pour regarder autour de toi, quetes pour ton journal, xp pour ta note, recommencer pour repartir de zéro.") + "\n");
 	} else {
 		term.echo(MESSAGE_ACCUEIL);
 	}
 	term.definirInvite(Shell.invite());
-	state.dernierInstant = Date.now();
-	majEtat();
-	document.getElementById("saisie").focus();
 }
 
 if (document.readyState === "loading"){

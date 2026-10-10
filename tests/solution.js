@@ -15,13 +15,29 @@ texte.split("\n").forEach(function(ligne){
 	if (dansBloc && ligne.trim() !== "") commandes.push(ligne);
 });
 
-var jeu = nouveauMonde({});
-commandes.forEach(function(commande){
+var graine = +(process.argv.filter(function(a){ return /^[0-9]+$/.test(a); })[0]) || undefined;
+var jeu = nouveauMonde({}, graine);
+
+// Les valeurs propres à la partie sont écrites <entre chevrons> dans la solution :
+// on les remplace au moment de jouer, comme le ferait un joueur qui a fait la recherche.
+function remplir(commande){
+	return commande
+		.replace(/<motdepasse>/g, jeu.lire("MOT_DE_PASSE_SUDO"))
+		.replace(/<client>/g, jeu.lire("MEILLEUR_CLIENT"))
+		.replace(/<adresse>/g, jeu.lire("ADRESSE_ATTAQUANT"))
+		.replace(/<sweats>/g, jeu.lire("NB_SWEATS"))
+		.replace(/<pid:([a-z_]+)>/g, function(tout, nom){
+			return String(jeu.lire("(current_room.procs || []).filter(function(p){ return p.name === " + JSON.stringify(nom) + "; }).map(function(p){ return p.pid; })[0]"));
+		});
+}
+
+commandes.forEach(function(brute){
+	var commande = remplir(brute);
 	if (commande === "passwd"){
 		// passwd pose deux questions : le nouveau mot de passe, puis sa confirmation.
 		jeu.taper(commande, ["Une phrase bien longue 42", "Une phrase bien longue 42"]);
 	} else {
-		jeu.taper(commande, commande.indexOf("sudo") === 0 ? "P1ngouin" : undefined);
+		jeu.taper(commande, commande.indexOf("sudo") === 0 ? jeu.lire("MOT_DE_PASSE_SUDO") : undefined);
 	}
 });
 

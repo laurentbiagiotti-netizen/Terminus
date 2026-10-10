@@ -8,12 +8,18 @@ var vm = require("vm");
 
 var bavard = process.argv.indexOf("-v") > -1;
 var dossier = path.join(__dirname, "..", "Web", "static", "javascript");
-var fichiers = ["EventTarget.js", "Item.js", "Room.js", "Manuel.js", "Shell.js", "SortsAvances.js", "GameObjects.js", "GameState.js"];
+var fichiers = ["EventTarget.js", "Partie.js", "Item.js", "Room.js", "Manuel.js", "Shell.js", "SortsAvances.js", "GameObjects.js", "GameState.js"];
 
-function nouveauMonde(stockage){
+function nouveauMonde(stockage, graine){
+	stockage = stockage || {};
+	// Une graine fixe par défaut : les tests sont reproductibles. Les valeurs propres à
+	// la partie (mot de passe, adresses, PID...) se lisent ensuite avec jeu.lire().
+	if (!stockage["terminus-cybersup-profil"]){
+		stockage["terminus-cybersup-profil"] = JSON.stringify({ graine: graine || 4242, prenom: null, chapitre: 1 });
+	}
 	var ecran = [];
 	var bac = {
-		console: console,
+		console: console, btoa: btoa, atob: atob,
 		window: {
 			localStorage: {
 				getItem: function(k){ return stockage.hasOwnProperty(k) ? stockage[k] : null; },

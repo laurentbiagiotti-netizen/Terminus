@@ -32,8 +32,22 @@ function ShellError(message, code){
 	this.code = code || 1;
 }
 
-var MOT_DE_PASSE_SUDO = "P1ngouin";
+/* Le mot de passe sudo change d'une partie à l'autre (voir Partie.js). */
+var MOT_DE_PASSE_SUDO = aleaChoix("motdepasse", ["P1ngouin", "C4stor", "H1bou", "R3nard", "L1nx", "F4ucon", "M4nchot", "C0rbeau", "Bl41reau", "Hér1sson"]) +
+	aleaEntier("motdepasse-chiffres", 10, 99);
 var PID_BASH = 1337;
+
+/* Des numéros de processus propres à chaque partie : il faut les lire avec ps, pas les recopier. */
+function tirerPids(sel, nombre, min, max){
+	var pids = [];
+	var essai = 0;
+	while (pids.length < nombre && essai < 500){
+		var pid = aleaEntier(sel + ":" + essai, min, max);
+		essai++;
+		if (pid !== PID_BASH && pids.indexOf(pid) === -1) pids.push(pid);
+	}
+	return pids;
+}
 
 var Shell = {
 	sorts: {},
@@ -68,7 +82,7 @@ function say(texte){
 }
 
 /* Sorts toujours disponibles : ce sont des commandes du jeu, pas de Linux. */
-var SORTS_DU_JEU = ["quetes", "xp", "score", "bulletin", "recommencer", "sorts", "aide"];
+var SORTS_DU_JEU = ["quetes", "indice", "xp", "score", "bulletin", "recommencer", "sorts", "aide"];
 
 /* Vraies commandes Linux absentes de ce monde : on le dit gentiment. */
 var COMMANDES_REELLES = ["vi", "vim", "nano", "emacs", "apt-get", "yum", "dnf", "pacman", "scp",
@@ -1285,6 +1299,7 @@ Shell.sorts.help = function(args, io){
 	lignes.push("");
 	lignes.push("Pour le détail d'un sort : " + C.vert("man SORT") + " (par exemple man ls).");
 	lignes.push("Ton journal de quêtes : " + C.vert("quetes") + ". Ton expérience et ta note : " + C.vert("xp") + ". Ton relevé de compétences : " + C.vert("bulletin") + ".");
+	lignes.push("Bloqué ? " + C.vert("indice") + " donne un coup de pouce, de plus en plus précis (les paliers payants coûtent des points sur la note).");
 	lignes.push("Repartir de zéro : " + C.vert("recommencer") + ".");
 	lignes.push(C.gris("Astuces : la touche Tab complète les noms, la flèche du haut rappelle tes derniers sorts."));
 	return lignes.join("\n");

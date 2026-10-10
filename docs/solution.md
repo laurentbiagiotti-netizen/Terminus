@@ -1,12 +1,24 @@
 # Solution complète (à ne pas montrer aux joueurs)
 
-Ce document déroule la partie dans un ordre direct, quêtes secondaires comprises. Chaque bloc peut être copié tel quel dans le jeu. Le test `tests/solution.js` rejoue exactement ces blocs et vérifie qu'ils mènent au bout.
+Ce document déroule la partie dans un ordre direct, quêtes secondaires comprises. Chaque bloc peut être copié dans le jeu. Le test `tests/solution.js` rejoue exactement ces blocs et vérifie qu'ils mènent au bout.
 
 Trois repères utiles en salle :
 
 - un joueur bloqué tape `quetes` : le journal donne l'étape en cours et un indice ;
 - un joueur qui veut savoir où il en est tape `xp` (niveau, note sur 20, ce qui reste à gagner) ou `bulletin` (relevé par blocs de compétences) ;
 - un joueur perdu tape `cd` pour rentrer à la Maison, puis `cd -` pour revenir d'où il vient.
+
+Chaque partie est différente. Au premier lancement, le jeu tire une graine au hasard qui fixe le mot de passe sudo, le meilleur client de la taverne, l'adresse de l'attaquant, le nombre de sweats du BDE et les numéros de processus. Dans les blocs ci-dessous, ces valeurs sont écrites entre chevrons :
+
+| Repère | Où le trouver dans le jeu |
+| --- | --- |
+| `<motdepasse>` | `grep motdepasse= *` dans les ArchivesDuNoyau |
+| `<client>` | dernière ligne de `cut -d: -f1 Registre \| sort \| uniq -c \| sort -n` |
+| `<adresse>` | dernière ligne du tuyau sur `auth.log` dans la WarRoom |
+| `<sweats>` | `grep -c sweat Inventaire` au BDE |
+| `<pid:nom>` | colonne PID de `ps`, sur la ligne du processus `nom` |
+
+Recopier la solution du voisin ne marche donc pas : il faut refaire chaque recherche. Le diplôme final porte un code de vérification qui résume la partie (prénom, score, note, temps, indices utilisés) : voir la page de classement.
 
 ## Le barème
 
@@ -139,10 +151,10 @@ echo $USER lance $CRI
 echo MonNom >> LivreDOr
 less Tavernier
 cut -d: -f1 Registre | sort | uniq -c | sort -n
-echo Bertille
+echo <client>
 ```
 
-Le nom écrit dans le LivreDOr figurera sur le diplôme final. Un joueur qui écrit `echo MonNom > LivreDOr` écrase le livre : le tavernier le rétablit en râlant, c'est voulu. Le Registre a trois colonnes séparées par des deux-points, d'où le `cut`.
+Le nom écrit dans le LivreDOr figurera sur le diplôme final. Un joueur qui écrit `echo MonNom > LivreDOr` écrase le livre : le tavernier le rétablit en râlant, c'est voulu. Le Registre a trois colonnes séparées par des deux-points, d'où le `cut`. `<client>` est le nom qui arrive en dernier, avec le plus de passages.
 
 L'Atelier et la Ferme :
 
@@ -198,7 +210,7 @@ cd Citadelle
 less SorcierNoir
 ```
 
-Le mot de passe sudo est `P1ngouin`. Il est demandé une seule fois, en saisie masquée. La dernière commande fait un premier passage dans la Citadelle : c'est ce qui permettra d'y revenir par `ssh`.
+Le mot de passe sudo `<motdepasse>` est celui que `grep motdepasse= *` a trouvé dans les ArchivesDuNoyau. Il est demandé une seule fois, en saisie masquée. La dernière commande fait un premier passage dans la Citadelle : c'est ce qui permettra d'y revenir par `ssh`.
 
 ## 5. Cybersup
 
@@ -221,15 +233,15 @@ cat EcranMural
 less Voyants
 less MainCourante
 grep ECHEC auth.log | cut -d" " -f4 | sort | uniq -c | sort -n
-echo 10.0.66.6
+echo <adresse>
 cd ../BDE
 less PresidenteDuBDE
 grep -c sweat Inventaire
-echo 28
+echo <sweats>
 mv Autocollant ~
 ```
 
-L'enquête de la WarRoom est le travail de base d'un analyste : dans `auth.log` (heure, résultat, compte visé, adresse), isoler les échecs, garder la colonne des adresses, compter. L'adresse trouvée, 10.0.66.6, est celle de la machine `citadelle`, et la dernière ligne du journal montre que l'intrus est entré avec le compte de Laurent. L'EcranMural, les Voyants et la CarteEtudiante changent au fil de la partie.
+L'enquête de la WarRoom est le travail de base d'un analyste : dans `auth.log` (heure, résultat, compte visé, adresse), isoler les échecs, garder la colonne des adresses, compter. L'adresse trouvée (`<adresse>`, la dernière ligne du tuyau) est celle de la machine `citadelle`, et la dernière ligne du journal montre que l'intrus est entré avec le compte de Laurent. L'EcranMural, les Voyants et la CarteEtudiante changent au fil de la partie.
 
 Les salles techniques :
 
@@ -242,8 +254,8 @@ cd SalleDeCours
 less Formateur
 ps
 top
-kill 4242
-kill -9 4243
+kill <pid:sortilege_infini>
+kill -9 <pid:golem_tetu>
 whoami
 less Affiche
 sudo apt install cowsay
@@ -274,7 +286,7 @@ Les campus de Lille et de Marseille n'ont pas de porte : `cd CampusLille` est re
 
 `passwd` refuse les mots de passe de moins de 12 caractères, sans majuscule, sans minuscule ou sans chiffre, et ceux qui contiennent un mot trop courant. Rien n'est enregistré. `apt install` exige `sudo`, obtenu au chapitre 4. Le rapport d'incident extrait de l'archive explique la mécanique du bouclier du Sorcier.
 
-Le BureauDeLaurent est fermé (`drwx------ laurent`). `chmod` y est refusé, puisque le joueur n'en est pas propriétaire, et `sudo cd` n'existe pas. Mais `sudo ls BureauDeLaurent` et `sudo cat BureauDeLaurent/Agenda` fonctionnent, et l'agenda vend la mèche avant l'heure. `sudo chown apprenti BureauDeLaurent` suivi d'un `chmod` ouvre aussi la porte.
+Le BureauDeLaurent est fermé (`drwx------ laurent`). `chmod` y est refusé, puisque le joueur n'en est pas propriétaire, et `sudo cd` n'existe pas. Mais `sudo ls BureauDeLaurent` et `sudo cat BureauDeLaurent/Agenda` fonctionnent, et l'agenda vend la mèche avant l'heure. `sudo chown $USER BureauDeLaurent` suivi d'un `chmod` ouvre aussi la porte.
 
 ## 6. Le combat final
 
@@ -283,12 +295,12 @@ Notions réutilisées : `ssh`, `ps`, `sudo kill`, `kill -9`, `crontab`, `ls -a`,
 ```
 ssh citadelle
 ps
-sudo kill 66
+sudo kill <pid:demon_bouclier>
 sudo crontab -u sorcier -l
 sudo crontab -u sorcier -r
-sudo kill 1066
-sudo kill -9 404
-sudo kill 666
+sudo kill <pid:demon_bouclier>
+sudo kill -9 <pid:demon_illusion>
+sudo kill <pid:demon_corruption>
 less SorcierNoir
 ls -a
 sudo cat .Phylactere | grep vrai_nom

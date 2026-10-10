@@ -15,7 +15,8 @@
  * connaît qu'une poignée de paquets.
  */
 
-var UTILISATEURS = { "root": 0, "apprenti": 1000, "laurent": 1001, "sorcier": 666, "terminus": 999 };
+var UTILISATEURS = { "root": 0, "laurent": 1001, "sorcier": 666, "terminus": 999 };
+UTILISATEURS[JOUEUR] = 1000;
 var VARIABLES_SYSTEME = ["USER", "LOGNAME", "HOME", "PWD", "SHELL", "HOSTNAME", "PATH", "LANG"];
 
 /* ------------------------------------------------------------------ */
@@ -625,7 +626,7 @@ var HOTES = {
 	"cybersup": { ip: "10.0.92.1", arrivee: function(){ return Cybersup; } },
 	"lille": { ip: "10.0.59.1", ouvert: true, arrivee: function(){ return CampusLille; } },
 	"marseille": { ip: "10.0.13.1", ouvert: true, arrivee: function(){ return CampusMarseille; } },
-	"citadelle": { ip: "10.0.66.6", arrivee: function(){ return Citadelle; } }
+	"citadelle": { ip: ADRESSE_ATTAQUANT, arrivee: function(){ return Citadelle; } }
 };
 
 function trouverHote(nom){
@@ -804,6 +805,10 @@ Shell.sorts.xp = function(args, io){
 	return state.tableauXP();
 };
 Shell.sorts.score = Shell.sorts.xp;
+
+Shell.sorts.indice = function(args, io){
+	return state.demanderIndice();
+};
 
 Shell.sorts.bulletin = function(args, io){
 	return state.texteDuBulletin();

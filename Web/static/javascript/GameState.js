@@ -125,6 +125,56 @@ var QUETES_SECONDAIRES = [
 	{ id: "s_chaussette", titre: "Retrouver la chaussette gauche", secrete: true }
 ];
 
+/*
+ * Indices payants, deux paliers par étape de la quête principale (le premier
+ * palier, gratuit, est l'indice du journal). Chaque palier coûte des points sur
+ * la note finale, pas sur l'expérience : le niveau reste mérité, la note dit
+ * combien d'aide il a fallu.
+ */
+var COUT_INDICES = [30, 60];
+
+var INDICES_DETAILLES = {
+	m_mv: [
+		"Va dans ~/ForetOuest/AcademieDesSorts/Cours et lis le Professeur avec less.",
+		"cd ~/ForetOuest/AcademieDesSorts/Cours puis less Professeur."],
+	m_rocher: [
+		"Le Rocher de la SalleHumide doit aller ailleurs. Il y a un PetitTrou juste à côté, et tu connais un sort qui déplace les objets.",
+		"Dans ~/PrairieNord/MontagnesEst/Grotte/CouloirSombre/SalleHumide : mv Rocher PetitTrou"],
+	m_tunnel: [
+		"ls ne montre pas les noms qui commencent par un point. Une option de ls les montre tous (voir man ls).",
+		"Dans la SalleHumide : ls -a, puis cd .Tunnel"],
+	m_portail: [
+		"Le Portail refuse d'être franchi : regarde ses droits avec ls -l. Il lui manque le droit d'exécution, qui permet de traverser un lieu.",
+		"Dans la ChambreDePierre : chmod +x Portail puis cd Portail"],
+	m_marche: [
+		"Au Marche de la PlaceDuVillage, lis tous les parchemins qui commencent par Sort.",
+		"cd Marche puis less SortRm et less SortMkdir"],
+	m_pont: [
+		"Le PontBrise attend une Planche. Le sort touch crée un objet vide qui porte le nom que tu veux.",
+		"Dans ~/Village/PontBrise (ou par le chemin complet) : touch Planche"],
+	m_ronces: [
+		"Les Ronces sont un objet, et le Marché t'a appris à faire disparaître un objet.",
+		"Dans le SentierSinistre, après la Clairiere : rm Ronces"],
+	m_trolls: [
+		"Le TrollMoche ne t'appartient pas, mais on peut le déplacer : mv vers le lieu parent, qui s'écrit ..",
+		"Dans la CaverneDesTrolls : mv TrollMoche .."],
+	m_mdp: [
+		"Les Instructions demandent de trouver une ligne motdepasse= parmi des dizaines de chroniques. grep cherche un mot dans plusieurs fichiers à la fois, et * les désigne tous.",
+		"cd ArchivesDuNoyau puis grep motdepasse= *"],
+	m_certificat: [
+		"Le Certificat appartient à root (ls -l). sudo lance un sort avec les droits de root, et demande le mot de passe trouvé dans les archives.",
+		"Dans les FichiersDuNoyau : sudo less Certificat, puis le mot de passe."],
+	m_demons: [
+		"ps liste les démons et leur PID, sudo kill les arrête, kill -9 vient à bout des têtus. Le bouclier renaît tant qu'une tâche planifiée du sorcier le relance : regarde sa crontab.",
+		"Dans la Citadelle : ps, sudo crontab -u sorcier -r, puis sudo kill (ou sudo kill -9) sur chaque PID affiché par ps."],
+	m_nom: [
+		"ls -a révèle un .Phylactere. Il est protégé : il faut sudo pour le lire, et grep pour trouver la ligne qui compte.",
+		"Dans la Citadelle : sudo cat .Phylactere | grep vrai_nom"],
+	m_boss: [
+		"Le sort echo fait parler à voix haute. Prononce le vrai nom que le phylactère t'a révélé.",
+		"Dans la Citadelle : echo suivi du nom lu dans le phylactère."]
+};
+
 function GameState(){
 	//game starts at home unless loaded from a save
 	this.currentRoom = Home;
@@ -143,6 +193,9 @@ function GameState(){
 	this.gainsDuTour = [];     // petits gains à annoncer à la fin de la ligne en cours
 	this.niveauAnnonce = 1;
 	this.tempsMs = 0;          // temps de jeu, mesuré de sort en sort
+	this.indices = {};         // paliers d'indices payants pris, par étape de quête
+	this.malus = 0;            // points retirés de la note par les indices
+	this.dateVictoire = null;
 	this.dernierInstant = null;
 	// Personnalisation du terminal
 	this.env = {};
@@ -255,8 +308,62 @@ GameState.prototype.progression = function(){
 };
 
 /* La note sur 20, au demi-point près. */
+/* L'expérience qui compte pour la note : celle gagnée, moins le prix des indices. */
+GameState.prototype.xpNet = function(){
+	return Math.max(0, this.xp - this.malus);
+};
+
+GameState.prototype.nbIndices = function(){
+	var n = 0;
+	for (var id in this.indices){
+		if (this.indices.hasOwnProperty(id)) n += this.indices[id];
+	}
+	return n;
+};
+
 GameState.prototype.note = function(){
-	return Math.round(Math.min(1, this.xp / this.xpMax()) * 40) / 2;
+	return Math.round(Math.min(1, this.xpNet() / this.xpMax()) * 40) / 2;
+};
+
+/* L'étape de la quête principale en cours, ou null si tout est fait. */
+GameState.prototype.queteEnCours = function(){
+	for (var i = 0; i < QUETES_PRINCIPALES.length; i++){
+		if (!this.quests[QUETES_PRINCIPALES[i].id]) return QUETES_PRINCIPALES[i];
+	}
+	return null;
+};
+
+/* Le sort indice : rappelle l'indice gratuit, puis propose le palier suivant contre des points. */
+GameState.prototype.demanderIndice = function(){
+	var q = this.queteEnCours();
+	if (!q) return "Il n'y a plus d'étape en cours : la quête principale est terminée. Tape xp pour voir ce qui reste à gagner.";
+	var details = INDICES_DETAILLES[q.id] || [];
+	var pris = this.indices[q.id] || 0;
+	var lignes = [C.jaune("Étape en cours : " + q.titre), C.gris("Indice gratuit : ") + q.indice];
+	for (var i = 0; i < pris && i < details.length; i++){
+		lignes.push(C.gris("Indice " + (i + 2) + " (déjà payé) : ") + details[i]);
+	}
+	if (pris >= details.length){
+		lignes.push(C.gris("Tu as déjà tous les indices de cette étape."));
+		return lignes.join("\n");
+	}
+	var cout = COUT_INDICES[pris];
+	var etat = this;
+	say(lignes.join("\n"));
+	term.demander("Un indice " + (pris === 0 ? "plus précis" : "qui donne la solution") + " coûte " + cout +
+		" XP sur ta note. Tape oui pour le lire : ", false, function(reponse){
+		if (String(reponse).trim().toLowerCase() !== "oui"){
+			term.echo("Bien. Cherche encore un peu, tu y es presque.");
+			return;
+		}
+		etat.indices[q.id] = pris + 1;
+		etat.malus += cout;
+		term.echo(C.cyan("Indice " + (pris + 2) + " : ") + details[pris] + "\n" + C.gris("-" + cout + " XP sur la note. Note maximale encore possible : " +
+			String(Math.round(Math.min(1, (etat.xpMax() - etat.malus) / etat.xpMax()) * 40) / 2).replace(".", ",") + " / 20."));
+		etat.save();
+		if (typeof majEtat === "function") majEtat();
+	});
+	return "";
 };
 
 GameState.prototype.noteTexte = function(){
@@ -378,6 +485,10 @@ GameState.prototype.tableauXP = function(){
 		ligne("Lieux découverts", visites, lieux.length - 1, visites * XP_NOUVEAU_LIEU),
 		""
 	];
+	if (this.malus > 0){
+		lignes.push(C.jaune("Indices payants : " + this.nbIndices() + ", soit -" + this.malus + " XP sur la note (" + this.xpNet() + " XP retenus)."));
+		lignes.push("");
+	}
 	if (oublies.length > 0) lignes.push("Sorts appris mais jamais lancés : " + oublies.join(", "));
 	lignes.push(C.gris("Temps de jeu : " + this.tempsTexte() + ". Sorts lancés : " + this.nbCommandes + "."));
 	lignes.push(C.gris("Barème : " + XP_QUETE + " XP par étape de la quête principale (" + XP_VICTOIRE + " pour la dernière), " +
@@ -430,6 +541,7 @@ GameState.prototype.journal = function(){
 			enCours = true;
 			lignes.push("  " + C.jaune("[ ] " + q.titre));
 			lignes.push(C.gris("      Indice : " + q.indice));
+			lignes.push(C.gris("      Toujours bloqué ? Le sort indice en donne de plus précis, contre quelques points."));
 		}
 	}
 	if (!enCours) lignes.push("  " + C.vert("Terminée. Le monde reste ouvert : il te reste peut-être des choses à découvrir."));
@@ -465,7 +577,7 @@ GameState.prototype.texteDuDiplome = function(){
 		"  promo B1 de Cybersup, pour avoir vaincu le Sorcier Noir\n" +
 		"  lors de l'épreuve pratique de Terminus, armé d'un simple terminal.\n" +
 		"\n" +
-		"  SCORE FINAL         : " + this.xp + " XP sur " + pr.max + "\n" +
+		"  SCORE FINAL         : " + this.xpNet() + " XP sur " + pr.max + "\n" +
 		"  NOTE                : " + this.noteTexte() + "\n" +
 		"  Mention             : " + this.mention() + "\n" +
 		"  Niveau atteint      : " + pr.niveau + " sur " + NIVEAUX.length + ", " + pr.titre + "\n" +
@@ -476,12 +588,32 @@ GameState.prototype.texteDuDiplome = function(){
 		"  Quêtes secondaires  : " + this.nbSecondaires() + " sur " + QUETES_SECONDAIRES.length + "\n" +
 		"  Sorts lancés        : " + this.nbCommandes + "\n" +
 		"  Temps de jeu        : " + this.tempsTexte() + "\n" +
+		"  Indices payants     : " + (this.malus ? this.nbIndices() + " (-" + this.malus + " XP sur la note)" : "aucun") + "\n" +
 		"\n" +
 		"  Signé : Laurent, Directeur Pédagogique de Cybersup\n" +
 		"          (et Sorcier Noir à ses heures)\n" +
+		"=================================================================\n" +
+		"  Code de vérification, à remettre au formateur :\n" +
+		"  " + this.codeDuDiplome() + "\n" +
 		"=================================================================" +
 		(this.nom ? "" : "\n(Pour faire figurer ton nom sur le diplôme, va signer le LivreDOr de la Taverne.)") +
 		(complet ? "" : "\n(La note peut encore monter : le diplôme se met à jour tout seul. Tape xp pour voir où il reste des points à prendre.)");
+};
+
+function dateDuJour(){
+	var d = new Date();
+	return d.getFullYear() + "-" + deuxChiffres(d.getMonth() + 1) + "-" + deuxChiffres(d.getDate());
+}
+
+/* Le code qui résume la partie : le formateur le vérifie sur la page de classement. */
+GameState.prototype.codeDuDiplome = function(){
+	return fabriquerCode({
+		prenom: String(this.nom || JOUEUR).replace(/\|/g, "/"),
+		score: this.xpNet(), max: this.xpMax(), note: this.note(),
+		commandes: this.nbCommandes, minutes: Math.round(this.tempsMs / 60000),
+		indices: this.nbIndices(), chapitre: PROFIL.chapitre || 1,
+		date: this.dateVictoire || dateDuJour(), graine: PROFIL.graine
+	});
 };
 
 /* ---------------- evenements de l'histoire ---------------- */
@@ -692,6 +824,7 @@ Tu n'oserais tout de même pas le dire à voix haute ? »");
     		this.complete("m_nom");
     		break;
     	case "victoire":
+    		if (!this.dateVictoire) this.dateVictoire = dateDuJour();
     		Citadelle.removeItem(SorcierNoir);
     		poser(Citadelle, Laurent);
     		poser(Citadelle, Diplome);
@@ -743,7 +876,7 @@ Tu connais cette barbe. C'est le vieil homme des MontagnesEst.\n\n\
     	case "fin":
     		var bilan = this.progression();
     		say(C.vert(C.gras("FIN")) + "\n\n" +
-    			C.gras("SCORE FINAL : " + this.xp + " XP sur " + bilan.max) + "\n" +
+    			C.gras("SCORE FINAL : " + this.xpNet() + " XP sur " + bilan.max) + (this.malus ? C.gris("  (" + this.xp + " gagnés, -" + this.malus + " d'indices)") : "") + "\n" +
     			C.gras("NOTE : " + this.noteTexte()) + "   Mention : " + this.mention() + "\n" +
     			"Niveau " + bilan.niveau + " sur " + NIVEAUX.length + " : " + bilan.titre + "\n\n" +
     			"Sorts appris : " + this.knownSpells().length + " sur " + ORDRE_DES_SORTS.length +
@@ -752,6 +885,7 @@ Tu connais cette barbe. C'est le vieil homme des MontagnesEst.\n\n\
     			(this.xp >= bilan.max ?
     				"Score parfait : il ne reste rien à découvrir. Chapeau.\n" :
     				"Le monde reste ouvert, et ta note peut encore monter : « xp » montre où il reste des points, « quetes » ce qu'il reste à faire. Le BureauDeLaurent, à Cybersup, t'attend aussi.\n") +
+    			"Ton code de vérification est sur ton Diplome (cat Diplome) : remets-le à ton formateur.\n" +
     			"Et maintenant, ouvre un vrai terminal. Tout ce que tu sais y fonctionne.");
     		break;
 		default:
@@ -857,6 +991,7 @@ GameState.prototype.save = function(){
 			nb: this.nbCommandes, nom: this.nom, lieu: this.dernierLieu,
 			xp: this.xp, usages: this.usages, visites: this.visited, niveau: this.niveauAnnonce, temps: this.tempsMs,
 			env: this.env, alias: this.alias, paquets: this.paquets, cron: this.cron,
+			indices: this.indices, malus: this.malus, dateVictoire: this.dateVictoire,
 			ici: current_room.path(),
 			avant: Shell.lieu_precedent ? Shell.lieu_precedent.path() : null,
 			ssh: Shell.pile_ssh.map(function(lieu){ return lieu.path(); }),
@@ -915,6 +1050,9 @@ GameState.prototype.load = function(){
 		this.env = donnees.env || {};
 		this.alias = donnees.alias || {};
 		this.paquets = donnees.paquets || {};
+		this.indices = donnees.indices || {};
+		this.malus = donnees.malus || 0;
+		this.dateVictoire = donnees.dateVictoire || null;
 		if (donnees.cron) this.cron = donnees.cron;
 		Shell.pile_ssh = (donnees.ssh || []).map(lieuParChemin);
 		this.currentRoom = lieuParChemin(donnees.ici || "~");
@@ -940,5 +1078,75 @@ GameState.prototype.load = function(){
 GameState.prototype.reset = function(){
 	try {
 		window.localStorage.removeItem(CLE_SAUVEGARDE);
+		// Nouvelle partie : nouvelle graine, et le prénom sera redemandé.
+		window.localStorage.removeItem(CLE_PROFIL);
 	} catch (e){}
 };
+
+/* ------------------------------------------------------------------ */
+/* Le prénom du joueur                                                 */
+/* ------------------------------------------------------------------ */
+
+var IDENTIFIANTS_RESERVES = {
+	"root": "root, c'est l'administrateur. Tu le deviendras peut-être, mais il faut le mériter.",
+	"laurent": "Laurent ? Ce nom est déjà pris sur ce système. Et crois-moi, tu ne voudrais pas être à sa place à la fin de l'histoire.",
+	"sorcier": "Le Sorcier a déjà un compte ici, et il n'aime pas qu'on le lui emprunte.",
+	"terminus": "terminus, c'est le nom du système lui-même. Choisis quelque chose de plus humain.",
+	"apprenti": "Trop modeste. Donne ton vrai prénom."
+};
+
+/* Renvoie un message d'erreur si le prénom ne convient pas, sinon null. */
+function prenomRefuse(prenom){
+	var texte = String(prenom || "").trim();
+	if (texte === "") return "Il me faut au moins un prénom.";
+	var id = identifiantDepuisPrenom(texte);
+	if (id === "") return "Un prénom qui commence par une lettre, s'il te plaît : il servira d'identifiant sur le système.";
+	if (IDENTIFIANTS_RESERVES.hasOwnProperty(id)) return IDENTIFIANTS_RESERVES[id];
+	return null;
+}
+
+/* Parcourt tout ce qui existe dans le monde, y compris ce que le joueur a fabriqué. */
+function pourChaqueNoeud(fonction){
+	var vus = [];
+	function visiter(lieu){
+		if (!lieu || vus.indexOf(lieu) > -1) return;
+		vus.push(lieu);
+		fonction(lieu);
+		for (var i = 0; i < lieu.items.length; i++) fonction(lieu.items[i]);
+		for (var j = 0; j < lieu.children.length; j++) visiter(lieu.children[j]);
+	}
+	for (var id in World.rooms){
+		if (World.rooms.hasOwnProperty(id)) visiter(World.rooms[id]);
+	}
+	for (var k in World.items){
+		if (World.items.hasOwnProperty(k)) fonction(World.items[k]);
+	}
+}
+
+/*
+ * Le joueur devient « prenom » sur le système : tout ce qui appartenait à
+ * l'ancien identifiant (apprenti au départ) change de propriétaire, ses
+ * processus aussi, et le prénom figure sur la carte étudiante et le diplôme.
+ */
+function adopterPrenom(prenom){
+	var texte = String(prenom).trim().replace(/\s+/g, " ").substring(0, 30);
+	var ancien = JOUEUR;
+	var nouveau = identifiantDepuisPrenom(texte);
+	pourChaqueNoeud(function(noeud){
+		if (noeud.owner === ancien) noeud.owner = nouveau;
+		if (noeud.procs){
+			for (var i = 0; i < noeud.procs.length; i++){
+				if (noeud.procs[i].owner === ancien) noeud.procs[i].owner = nouveau;
+			}
+		}
+	});
+	if (typeof UTILISATEURS !== "undefined"){
+		delete UTILISATEURS[ancien];
+		UTILISATEURS[nouveau] = 1000;
+	}
+	JOUEUR = nouveau;
+	PROFIL.prenom = texte;
+	enregistrerProfil();
+	state.nom = texte;
+	return nouveau;
+}

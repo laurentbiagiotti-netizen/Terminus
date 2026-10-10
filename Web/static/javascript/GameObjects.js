@@ -22,7 +22,6 @@ Hasard.prototype.entier = function(n){ return Math.floor(this.suivant() * n); };
 Hasard.prototype.choix = function(liste){ return liste[this.entier(liste.length)]; };
 function deuxChiffres(n){ return n < 10 ? "0" + n : "" + n; }
 
-
 //---------------NIVEAU 1---------------------
 //HOME
 var Home = new Room("Maison",
@@ -769,8 +768,10 @@ Lis-le avec sudo, et le chemin s'ouvrira.",
 KernelFiles.addItem(Instructions);
 
 var MoreKernelFiles = new Room("ArchivesDuNoyau", "Il y a tellement de chroniques ici !");
+/* La chronique qui contient le mot de passe change d'une partie à l'autre. */
+var FICHIER_SECRET = aleaChoix("chronique", ["L", "M", "Q", "R", "S", "T", "U", "V", "W"]);
 (function(){
-    var h = new Hasard(2026);
+    var h = new Hasard(graineDe("chroniques"));
     var utilisateurs = ["troll", "elfe", "artisane", "fermier", "marchand", "poney", "barde", "bibliothecaire", "rat", "invite"];
     var gabarits = [
         function(){ return "sshd[" + (2000 + h.entier(900)) + "]: Échec du mot de passe pour " + h.choix(utilisateurs) + " depuis 10.0." + h.entier(9) + "." + (2 + h.entier(250)); },
@@ -788,7 +789,7 @@ var MoreKernelFiles = new Room("ArchivesDuNoyau", "Il y a tellement de chronique
         var lignes = [];
         var jour = 1 + f * 3, heure = 0, minute = 0;
         var combien = 150 + h.entier(60);
-        var ligneSecrete = suffixes[f] === "T" ? 40 + h.entier(80) : -1;
+        var ligneSecrete = suffixes[f] === FICHIER_SECRET ? 40 + h.entier(80) : -1;
         for (var n = 0; n < combien; n++){
             minute += 1 + h.entier(17);
             if (minute > 59){ minute -= 60; heure++; }
@@ -908,10 +909,20 @@ var TEXTE_LIVRE_DOR =
 « Très bon accueil, j'y ai corrigé quarante copies d'une traite. » L.";
 var LivreDOr = new Item("LivreDOr", TEXTE_LIVRE_DOR, "item_romancenovel.gif").droits("rw-rw-rw-");
 Taverne.addItem(LivreDOr);
-var MEILLEUR_CLIENT = "Bertille";
+/* Le meilleur client change d'une partie à l'autre : les comptes sont redistribués entre les habitués. */
+var HABITUES = ["Bertille", "Grognar", "Elwyn", "Thibault", "Mirabelle", "Oswin", "Hildegarde"];
+(function(){
+    for (var i = HABITUES.length - 1; i > 0; i--){
+        var j = Math.floor(alea("habitues:" + i) * (i + 1));
+        var tmp = HABITUES[i]; HABITUES[i] = HABITUES[j]; HABITUES[j] = tmp;
+    }
+})();
+var MEILLEUR_CLIENT = HABITUES[0];
 var Registre = (function(){
-    var h = new Hasard(13);
-    var comptes = { "Bertille": 14, "Grognar": 11, "Elwyn": 9, "Thibault": 7, "Mirabelle": 6, "Oswin": 4, "Hildegarde": 3, "Grep": 1 };
+    var h = new Hasard(graineDe("registre"));
+    var comptes = { "Grep": 1 };
+    var nombres = [14, 11, 9, 7, 6, 4, 3];
+    for (var c = 0; c < HABITUES.length; c++) comptes[HABITUES[c]] = nombres[c];
     var boissons = [["hydromel", 3], ["cervoise", 2], ["tisane", 1], ["vin_chaud", 4]];
     var lignes = [];
     for (var nom in comptes){
@@ -1054,11 +1065,12 @@ Sous Linux, un programme s'installe en une ligne, depuis un dépôt de paquets :
 Installer modifie le système : il faut donc les pouvoirs de root (sudo).\n\
 Premier défi du club : installe cowsay, puis fais dire quelque chose à la vache.",
     "item_sign.gif").enseigne("apt").revele("s_apt"));
-SalleDeCours.addProc(4242, "sortilege_infini", JOUEUR, {
+var PIDS_COURS = tirerPids("cours", 2, 2000, 8999);
+SalleDeCours.addProc(PIDS_COURS[0], "sortilege_infini", JOUEUR, {
     cpu: 97.3,
     killText: "Le sortilege_infini s'arrête net. Le ventilateur de la salle pousse un soupir de soulagement."
 });
-SalleDeCours.addProc(4243, "golem_tetu", JOUEUR, {
+SalleDeCours.addProc(PIDS_COURS[1], "golem_tetu", JOUEUR, {
     cpu: 61.8,
     sig9: true,
     ignoreText: "Le golem_tetu reçoit ton signal TERM, le regarde, et continue comme si de rien n'était. Il faudra être moins poli : kill -9.",
@@ -1092,7 +1104,7 @@ Baie2.addItem(new Item("inventaire.txt",
     "disque-01  ok\ndisque-02  ok\ndisque-03  gratte un peu\ndisque-04  ok"));
 var Sauvegardes = new Room(".sauvegardes", "Un recoin caché de la baie, plein de vieilles sauvegardes.", "item_workstation.gif");
 var Flag = new Item("flag.txt",
-    "FLAG{qui_cherche_trouve}\n\n\
+    "FLAG{qui_cherche_trouve_" + aleaEntier("drapeau", 4096, 65535).toString(16) + "}\n\n\
 Bravo ! Tu viens de capturer ton premier drapeau.\n\
 Récompense : le sort « tree », qui dessine d'un coup la carte de tout ce qui t'entoure.",
     "item_trinket.gif").enseigne("tree");
@@ -1159,7 +1171,7 @@ SalleReseau.addItem(new Item("hotes.txt",
 10.0.92.1    cybersup     le campus de Puteaux\n\
 10.0.59.1    lille        le campus de Lille\n\
 10.0.13.1    marseille    le campus de Marseille\n\
-10.0.66.6    citadelle    accès restreint"));
+" + completerDroite(ADRESSE_ATTAQUANT, 13) + "citadelle    accès restreint"));
 Baie3.addItem(new Item(".bash_history",
     "ls\ncd Baie2\nls\nls -a\ncd .sauvegardes\ncat flag.txt\nwhoami\nsudo rm -rf /\n# oups",
     "none.gif"));
@@ -1214,9 +1226,9 @@ WarRoom.addItem(new Item("MainCourante",
 09:55  Idée de Grace : envoyer quelqu'un dont le compte n'est pas encore connu de l'intrus. Une nouvelle recrue.\n\
 10:00  En attente d'une nouvelle recrue.",
     "item_manuscript.gif"));
-var ADRESSE_ATTAQUANT = "10.0.66.6";
+// ADRESSE_ATTAQUANT est tirée dans Partie.js, avec les autres valeurs propres à la partie.
 var JournalAuth = (function(){
-    var h = new Hasard(9264);
+    var h = new Hasard(graineDe("journal"));
     var legitimes = [["grace", "10.0.92.14"], ["ada", "10.0.92.27"], ["dennis", "10.0.92.31"], ["evi", "10.0.92.8"],
         ["linus", "10.0.59.3"], ["radia", "10.0.13.8"], ["margaret", "10.0.92.40"], ["vint", "10.0.92.5"]];
     var cibles = ["root", "admin", "laurent", "root", "test", "laurent", "invite", "root"];
@@ -1247,7 +1259,7 @@ et des cartons de sweats empilés jusqu'au plafond.",
     "loc_market.gif");
 var NB_SWEATS = 0;
 var Inventaire = (function(){
-    var h = new Hasard(4096);
+    var h = new Hasard(graineDe("inventaire"));
     var articles = ["sweat", "sweat", "tshirt", "tshirt", "mug", "casquette", "autocollant", "gourde"];
     var tailles = ["S", "M", "L", "XL"];
     var couleurs = ["noir", "blanc", "orange", "marine"];
@@ -1389,14 +1401,15 @@ SorcierNoir.addCmdText("mv", "Le Sorcier Noir ne bouge pas d'un pouce. « On ne 
 SorcierNoir.addCmdText("cp", "« Un seul de moi te pose déjà bien assez de problèmes, tu ne trouves pas ? »");
 Citadelle.addItem(SorcierNoir);
 var TEXTE_BOUCLIER_BRISE = "Le bouclier arcanique vole en éclats dans un bruit de verre brisé.";
-Citadelle.addProc(66, "demon_bouclier", "sorcier", { cpu: 66.6, killText: TEXTE_BOUCLIER_BRISE });
-Citadelle.addProc(404, "demon_illusion", "sorcier", {
+var PIDS_DEMONS = tirerPids("demons", 3, 100, 999);
+Citadelle.addProc(PIDS_DEMONS[0], "demon_bouclier", "sorcier", { cpu: 66.6, killText: TEXTE_BOUCLIER_BRISE });
+Citadelle.addProc(PIDS_DEMONS[1], "demon_illusion", "sorcier", {
     cpu: 40.4,
     sig9: true,
     ignoreText: "Le démon d'illusion reçoit ton signal TERM... et l'ignore en ricanant. Certains processus ne comprennent que la manière forte : kill -9.",
     killText: "L'illusion se déchire comme un vieux rideau."
 });
-Citadelle.addProc(666, "demon_corruption", "sorcier", {
+Citadelle.addProc(PIDS_DEMONS[2], "demon_corruption", "sorcier", {
     cpu: 88.8,
     killText: "La corruption se résorbe en sifflant, comme une bouilloire qu'on retire du feu."
 });
@@ -1627,7 +1640,7 @@ function texteEcranMural(){
     }
     var fini = state.has("victoire");
     var citadelle = "position inconnue";
-    if (state.quests["s_soc"] || state.has("certificatLu")) citadelle = "SOURCE DE L'ATTAQUE (10.0.66.6)";
+    if (state.quests["s_soc"] || state.has("certificatLu")) citadelle = "SOURCE DE L'ATTAQUE (" + ADRESSE_ATTAQUANT + ")";
     if (state.has("demonsMorts")) citadelle = "défenses tombées";
     if (fini) citadelle = "reprise";
     return "ÉCRAN MURAL · supervision de Terminus, le simulateur\n\n" +
@@ -1764,7 +1777,7 @@ Elle ressort une feuille de secours du tiroir (ce n'est manifestement pas la pre
             say(r.ajoute);
         }
         if (signature !== ""){
-            state.nom = signature.replace(/^[«"'\s]+|[»"'\s]+$/g, "").substring(0, 30);
+            if (!PROFIL.prenom) state.nom = signature.replace(/^[«"'\s]+|[»"'\s]+$/g, "").substring(0, 30);
             state.complete(r.quete);
         }
     }
