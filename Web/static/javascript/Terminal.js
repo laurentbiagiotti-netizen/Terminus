@@ -72,6 +72,20 @@ function Terminal(elements){
 		self.valider();
 	});
 	this.saisie.addEventListener("keydown", function(e){ self.touche(e); });
+	// Taper n'importe ou sur la page ecrit dans le terminal, meme sans avoir clique dedans.
+	document.addEventListener("keydown", function(e){
+		if (document.activeElement === self.saisie) return;
+		if (e.ctrlKey || e.metaKey || e.altKey) return;
+		var cible = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : "";
+		if (cible === "input" || cible === "textarea" || cible === "select" || cible === "button") return;
+		if (e.key.length === 1 || e.key === "Backspace" || e.key === "ArrowUp" || e.key === "Tab" || e.key === "Enter"){
+			self.saisie.focus();
+			if (e.key === "ArrowUp" || e.key === "Tab" || e.key === "Enter"){
+				e.preventDefault();
+				if (e.key === "Enter") self.valider(); else self.touche(e);
+			}
+		}
+	});
 	// Un clic n'importe ou dans le terminal redonne la main au champ de saisie,
 	// sauf si le joueur est en train de selectionner du texte pour le copier.
 	this.conteneur.addEventListener("mouseup", function(){
