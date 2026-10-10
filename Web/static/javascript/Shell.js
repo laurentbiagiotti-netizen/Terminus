@@ -39,7 +39,25 @@ var Shell = {
 	sorts: {},
 	historique: [],
 	narration: [],
-	lieu_precedent: null
+	lieu_precedent: null,
+	pile_ssh: [],            // lieux d'où l'on est parti en ssh (exit y ramène)
+	profondeur_script: 0,
+	variable_developpee: false
+};
+
+/* Valeur d'une variable d'environnement ($USER, $HOME, $PWD...). */
+Shell.variable = function(nom){
+	if (nom === "PWD") return current_room.path();
+	if (nom === "USER" || nom === "LOGNAME") return JOUEUR;
+	if (nom === "HOSTNAME") return Shell.hote();
+	return state.env.hasOwnProperty(nom) ? state.env[nom] : "";
+};
+
+/* Nom de la machine sur laquelle se trouve le joueur. */
+Shell.hote = function(){
+	if (typeof Cybersup !== "undefined" && joueurDans(Cybersup)) return "cybersup";
+	if (typeof Citadelle !== "undefined" && joueurDans(Citadelle)) return "citadelle";
+	return "terminus";
 };
 
 /* Texte d'ambiance affiche apres la sortie du sort en cours. */
@@ -48,15 +66,15 @@ function say(texte){
 }
 
 /* Sorts toujours disponibles : ce sont des commandes du jeu, pas de Linux. */
-var SORTS_DU_JEU = ["quetes", "recommencer", "sorts", "aide"];
+var SORTS_DU_JEU = ["quetes", "xp", "score", "recommencer", "sorts", "aide"];
 
 /* Vraies commandes Linux absentes de ce monde : on le dit gentiment. */
-var COMMANDES_REELLES = ["vi", "vim", "nano", "emacs", "apt", "apt-get", "yum", "dnf", "pacman", "ssh", "scp",
-	"ping", "curl", "wget", "git", "python", "python3", "bash", "zsh", "sh", "top", "htop", "df", "du", "tar",
-	"zip", "unzip", "gzip", "ln", "chown", "chgrp", "su", "passwd", "awk", "sed", "cut", "tr", "diff", "more",
-	"which", "whereis", "locate", "alias", "export", "env", "date", "cal", "uname", "id", "who", "w", "free",
+var COMMANDES_REELLES = ["vi", "vim", "nano", "emacs", "apt-get", "yum", "dnf", "pacman", "scp",
+	"curl", "wget", "git", "python", "python3", "zsh", "sh", "htop", "zip", "unzip", "gzip", "chgrp", "su", "awk", "sed", "tr", "more",
+	"which", "whereis", "locate", "cal", "uname", "who", "w", "free",
 	"mount", "systemctl", "service", "ip", "ifconfig", "netstat", "ss", "nmap", "make", "gcc", "node", "docker",
-	"reboot", "shutdown", "killall", "pkill", "xargs", "tee", "file", "stat", "basename", "dirname", "sleep"];
+	"reboot", "shutdown", "killall", "pkill", "xargs", "tee", "file", "stat", "basename", "dirname", "sleep",
+	"htop", "traceroute", "dig", "nslookup", "useradd", "groups", "umask", "watch", "jobs", "fg", "bg", "nohup"];
 
 /* ------------------------------------------------------------------ */
 /* Decoupage de la ligne                                               */
@@ -68,6 +86,17 @@ Shell.decouper = function(ligne){
 	var mot = null;
 	function commencer(){ if (mot === null) mot = { t: "mot", v: "", joker: false }; }
 	function finir(){ if (mot !== null){ jetons.push(mot); mot = null; } }
+	// $NOM ou ${NOM} : remplace par la valeur de la variable. Renvoie vrai si c'en était une.
+	function variable(){
+		var reste = ligne.substring(i + 1);
+		var m = /^([A-Za-z_][A-Za-z0-9_]*)/.exec(reste) || /^\{([A-Za-z_][A-Za-z0-9_]*)\}/.exec(reste);
+		if (!m) return false;
+		commencer();
+		mot.v += Shell.variable(m[1]);
+		Shell.variable_developpee = true;
+		i += 1 + m[0].length;
+		return true;
+	}
 	while (i < n){
 		var c = ligne.charAt(i);
 		if (c === " " || c === "\t"){ finir(); i++; continue; }
@@ -76,6 +105,8 @@ Shell.decouper = function(ligne){
 			commencer();
 			i++;
 			while (i < n && ligne.charAt(i) !== guillemet){
+				// Entre guillemets doubles les variables sont lues ; entre apostrophes, rien n'est interprété.
+				if (guillemet === "\"" && ligne.charAt(i) === "$" && variable()) continue;
 				if (guillemet === "\"" && ligne.charAt(i) === "\\" && i + 1 < n) i++;
 				mot.v += ligne.charAt(i);
 				i++;
@@ -85,6 +116,7 @@ Shell.decouper = function(ligne){
 			continue;
 		}
 		if (c === "\\" && i + 1 < n){ commencer(); mot.v += ligne.charAt(i + 1); i += 2; continue; }
+		if (c === "$" && variable()) continue;
 		if (c === "|"){
 			finir();
 			if (ligne.charAt(i + 1) === "|") throw new ShellError("L'opérateur || n'a pas cours dans ce monde. Utilise | (tuyau), ; ou &&.");
@@ -180,11 +212,30 @@ Shell.verifierTraversee = function(lieu, io, cmd){
 	}
 };
 
+/* Si c'est un lien symbolique, renvoie ce vers quoi il pointe (ou leve une erreur s'il est brise). */
+Shell.suivre = function(noeud, cmd){
+	var garde = 0;
+	while (noeud instanceof Item && noeud.lien && garde++ < 8){
+		var cible = null;
+		try {
+			cible = Shell.chercherDepuis(Home, noeud.lien, { sudo: false }, cmd).node;
+		} catch (e){
+			if (!(e instanceof ShellError)) throw e;
+		}
+		if (cible === null){
+			throw new ShellError((cmd ? cmd + " : " : "") + noeud.itemname + " : lien brisé (" + noeud.lien + " n'existe plus ou n'est plus accessible)");
+		}
+		noeud = cible;
+	}
+	return noeud;
+};
+
 Shell.pas = function(lieu, nom, io, cmd){
 	if (nom === ".") return lieu;
 	if (nom === "..") return lieu.parents[0] || lieu;
 	var suivant = lieu.getNode(nom);
 	if (suivant === null) throw new ShellError(Shell.introuvable(cmd, nom, lieu));
+	suivant = Shell.suivre(suivant, cmd);
 	if (!(suivant instanceof Room)) throw new ShellError((cmd ? cmd + " : " : "") + nom + " : ce n'est pas un lieu");
 	Shell.verifierTraversee(suivant, io, cmd);
 	return suivant;
@@ -195,12 +246,16 @@ Shell.pas = function(lieu, nom, io, cmd){
  * { dir: le lieu qui contient la cible, name: son nom, node: la cible ou null }.
  */
 Shell.chercher = function(chemin, io, cmd){
+	return Shell.chercherDepuis(current_room, chemin, io, cmd);
+};
+
+Shell.chercherDepuis = function(depart, chemin, io, cmd){
 	if (chemin === "") throw new ShellError((cmd ? cmd + " : " : "") + "chemin vide");
 	if (chemin.charAt(0) === "/"){
 		throw new ShellError((cmd ? cmd + " : " : "") + "dans ce monde, tous les chemins partent de ta Maison.\n" +
 			"Écris ~ pour la désigner (par exemple ~/ForetOuest) plutôt que de commencer par / .");
 	}
-	var lieu = current_room;
+	var lieu = depart;
 	var morceaux = chemin.split("/");
 	if (morceaux[0] === "~"){
 		lieu = Home;
@@ -290,6 +345,12 @@ var enterRoom = function(new_room){
 	var ancien = current_room;
 	current_room = new_room;
 	state.setCurrentRoom(current_room);
+	// On compte aussi comme découverts les lieux traversés pour arriver jusqu'ici.
+	var traverse = new_room, garde = 0;
+	while (traverse && garde++ < 100){
+		state.visiter(traverse);
+		traverse = traverse.parents[0];
+	}
 	GameEvents.fire({ type: "enter", room: new_room, from: ancien });
 };
 
@@ -311,6 +372,7 @@ Shell.sorts.cd = function(args, io){
 	}
 	var r = Shell.chercher(args[0], io, "cd");
 	if (r.node === null) throw new ShellError(Shell.introuvable("cd", r.name, r.dir));
+	r.node = Shell.suivre(r.node, "cd");
 	if (!(r.node instanceof Room)){
 		throw new ShellError("cd : " + r.name + " : ce n'est pas un lieu. Pour regarder un objet ou parler à quelqu'un : less " + r.name);
 	}
@@ -322,9 +384,14 @@ Shell.sorts.cd = function(args, io){
 
 Shell.ligneLongue = function(noeud, nom, io){
 	var estLieu = noeud instanceof Room;
-	var taille = estLieu ? (noeud.children.length + noeud.items.length) : noeud.getText().length;
 	var affiche = nom || noeud.toString();
+	if (!estLieu && noeud.lien){
+		return "lrwxrwxrwx  " + completerDroite(noeud.owner, 9) + " " + completerGauche(noeud.lien.length, 6) + "  " +
+			(io.tty ? C.cyan(affiche) : affiche) + " -> " + noeud.lien;
+	}
+	var taille = estLieu ? (noeud.children.length + noeud.items.length) : noeud.getText().length;
 	if (estLieu) affiche = io.tty ? C.bleu(affiche + "/") : affiche + "/";
+	else if (io.tty && !noeud.person && noeud.mode.indexOf("x") > -1) affiche = C.vert(affiche);
 	return (estLieu ? "d" : "-") + noeud.mode + "  " + completerDroite(noeud.owner, 9) + " " +
 		completerGauche(taille, 6) + "  " + affiche;
 };
@@ -362,7 +429,11 @@ Shell.listerLieu = function(lieu, opts, io){
 	if (lieux.length === 0 && !opts.a) lignes.push(C.gris("  (aucun)"));
 	if (objets.length > 0){
 		lignes.push(C.gras("Objets :"));
-		for (i = 0; i < objets.length; i++) lignes.push("  " + objets[i].itemname);
+		for (i = 0; i < objets.length; i++){
+			if (objets[i].lien) lignes.push("  " + C.cyan(objets[i].itemname + "@") + C.gris("  (raccourci vers " + objets[i].lien + ")"));
+			else if (objets[i].mode.indexOf("x") > -1 && !objets[i].person) lignes.push("  " + C.vert(objets[i].itemname + "*"));
+			else lignes.push("  " + objets[i].itemname);
+		}
 	}
 	return lignes.join("\n");
 };
@@ -375,8 +446,10 @@ Shell.sorts.ls = function(args, io){
 	for (var i = 0; i < cibles.length; i++){
 		var r = Shell.chercher(cibles[i], io, "ls");
 		if (r.node === null) throw new ShellError(Shell.introuvable("ls", r.name, r.dir));
-		if (r.node instanceof Room){
-			var lieu = r.node;
+		// ls LIEN montre le lieu vise ; ls -l LIEN montre le lien lui-meme, comme sous Linux.
+		var vise = (r.node instanceof Item && r.node.lien && !p.opts.l) ? Shell.suivre(r.node, "ls") : r.node;
+		if (vise instanceof Room){
+			var lieu = vise;
 			if (!Shell.bit(lieu, "r", io)){
 				throw new ShellError("ls : impossible d'ouvrir le lieu « " + lieu.room_name + " » : Permission non accordée" +
 					(lieu.deny_text ? "\n" + C.gris(lieu.deny_text) : ""));
@@ -407,6 +480,7 @@ Shell.sorts.pwd = function(args, io){
 Shell.objetLisible = function(chemin, io, cmd){
 	var r = Shell.chercher(chemin, io, cmd);
 	if (r.node === null) throw new ShellError(Shell.introuvable(cmd, r.name, r.dir));
+	r.node = Shell.suivre(r.node, cmd);
 	if (r.node instanceof Room){
 		throw new ShellError(cmd + " : " + r.name + " : c'est un lieu (un répertoire). On y entre avec cd, on le regarde avec ls.");
 	}
@@ -717,7 +791,7 @@ Shell.sorts.mv = function(args, io){
 	var p = lireOptions(args, "fivn", "mv");
 	var a = p.reste;
 	if (a.length < 2) throw new ShellError("mv : il faut dire quoi déplacer, puis où. Utilisation : mv OBJET DESTINATION");
-	var dest = Shell.chercher(a[a.length - 1], io, "mv");
+	var dest = Shell.versLieu(Shell.chercher(a[a.length - 1], io, "mv"));
 	var sources = a.slice(0, -1);
 	var versLieu = dest.node instanceof Room;
 	if (!versLieu && sources.length > 1){
@@ -741,7 +815,11 @@ Shell.sorts.mv = function(args, io){
 			continue;
 		}
 		var item = r.node;
-		if (!(item.allows("mv") || item.owner === JOUEUR)){
+		if (item.protege){
+			messages.push("mv : ce monde tient trop à « " + item.itemname + " » pour le laisser bouger.");
+			continue;
+		}
+		if (!(item.allows("mv") || (item.owner === JOUEUR && !item.acquis))){
 			messages.push(item.cmd_text["mv"] || (item.person ?
 				"On ne déplace pas " + item.itemname + " comme un meuble." :
 				"mv : impossible de déplacer « " + item.itemname + " » : cet objet ne t'appartient pas."));
@@ -772,6 +850,19 @@ Shell.sorts.mv = function(args, io){
 	return messages.join("\n");
 };
 
+/* Si la destination est un raccourci vers un lieu, on vise le lieu lui-meme. */
+Shell.versLieu = function(r){
+	if (r.node instanceof Item && r.node.lien){
+		try {
+			var vise = Shell.suivre(r.node, "");
+			if (vise instanceof Room) return { dir: vise.parents[0] || vise, name: vise.room_name, node: vise };
+		} catch (e){
+			if (!(e instanceof ShellError)) throw e;
+		}
+	}
+	return r;
+};
+
 /* Le lieu courant est-il ce lieu, ou un lieu contenu dedans ? */
 function joueurDans(lieu){
 	var l = current_room, garde = 0;
@@ -784,7 +875,7 @@ function joueurDans(lieu){
 
 Shell.supprimerLieu = function(r, cmd, recursif, io){
 	var lieu = r.node;
-	if (lieu.owner !== JOUEUR){
+	if (lieu.owner !== JOUEUR || lieu.id){
 		return cmd + " : impossible de supprimer « " + lieu.room_name + " » : ce lieu ne t'appartient pas.";
 	}
 	if (joueurDans(lieu)){
@@ -825,7 +916,11 @@ Shell.sorts.rm = function(args, io){
 		}
 		var item = r.node;
 		var parSudo = io.sudo && item.allows("sudo-rm");
-		if (!(item.allows("rm") || item.owner === JOUEUR || parSudo)){
+		if (item.protege){
+			messages.push("rm : ce monde tient trop à « " + item.itemname + " » pour le laisser disparaître.");
+			continue;
+		}
+		if (!(item.allows("rm") || (item.owner === JOUEUR && !item.acquis) || parSudo)){
 			if (item.cmd_text["rm"]) messages.push(item.cmd_text["rm"]);
 			else if (item.person) messages.push("Faire disparaître " + item.itemname + " ? Tu n'es pas ce genre de mage.");
 			else if (io.sudo) messages.push("Même avec les pleins pouvoirs, ce monde tient trop à « " + item.itemname + " » pour le laisser disparaître.");
@@ -867,7 +962,7 @@ Shell.sorts.cp = function(args, io){
 	if (item.person && !item.allows("cp")){
 		throw new ShellError(item.cmd_text["cp"] || "On ne duplique pas les gens ! " + item.itemname + " te regarde de travers.");
 	}
-	var dest = Shell.chercher(p.reste[1], io, "cp");
+	var dest = Shell.versLieu(Shell.chercher(p.reste[1], io, "cp"));
 	var cible, nom;
 	if (dest.node instanceof Room){ cible = dest.node; nom = item.itemname; }
 	else if (dest.node !== null) throw new ShellError("cp : « " + dest.name + " » existe déjà, et je refuse de l'écraser.");
@@ -878,6 +973,8 @@ Shell.sorts.cp = function(args, io){
 	copie.picturename = item.picturename;
 	copie.owner = JOUEUR;
 	copie.person = item.person;
+	if (item.lien) copie.lien = item.lien;
+	if (item.archive) copie.archive = JSON.parse(JSON.stringify(item.archive));
 	cible.addItem(copie);
 	GameEvents.fire({ type: "cp", source: item, copy: copie, room: cible });
 	return (item.allows("cp") && item.cmd_text["cp"]) ? item.cmd_text["cp"] :
@@ -1168,6 +1265,12 @@ Shell.sorts.clear = function(args, io){
 };
 
 Shell.sorts.exit = function(args, io){
+	if (Shell.pile_ssh.length > 0){
+		var retour = Shell.pile_ssh.pop();
+		var quittee = Shell.hote();
+		enterRoom(retour);
+		return "Connexion à " + quittee + " fermée.\nTu es de retour dans " + current_room.toString() + ".";
+	}
 	return "On ne quitte pas Terminus si facilement. Ferme simplement l'onglet : ta partie est sauvegardée, tu la retrouveras en revenant.";
 };
 
@@ -1179,7 +1282,7 @@ Shell.sorts.help = function(args, io){
 	}
 	lignes.push("");
 	lignes.push("Pour le détail d'un sort : " + C.vert("man SORT") + " (par exemple man ls).");
-	lignes.push("Ton journal de quêtes : " + C.vert("quetes") + ". Repartir de zéro : " + C.vert("recommencer") + ".");
+	lignes.push("Ton journal de quêtes : " + C.vert("quetes") + ". Ton expérience et ta note : " + C.vert("xp") + ". Repartir de zéro : " + C.vert("recommencer") + ".");
 	lignes.push(C.gris("Astuces : la touche Tab complète les noms, la flèche du haut rappelle tes derniers sorts."));
 	return lignes.join("\n");
 };
@@ -1263,14 +1366,81 @@ Shell.sortInconnu = function(nom){
 };
 
 Shell.appeler = function(nom, args, io){
-	if (nom.indexOf("/") > -1){
-		throw new ShellError(nom + " : ce n'est pas un sort que l'on peut lancer.");
+	if (nom.indexOf("/") > -1) return Shell.lancerScript(nom, io, true);
+	if (!Shell.sorts.hasOwnProperty(nom)){
+		if (state.paquets[nom] && Shell.paquets[nom] && Shell.paquets[nom].lancer) return Shell.paquets[nom].lancer(args, io);
+		throw new ShellError(Shell.sortInconnu(nom));
 	}
-	if (!Shell.sorts.hasOwnProperty(nom)) throw new ShellError(Shell.sortInconnu(nom));
 	if (SORTS_DU_JEU.indexOf(nom) === -1 && !state.knows(nom)){
 		throw new ShellError("Tu ne connais pas encore le sort « " + nom + " ». Quelqu'un, quelque part en ce monde, pourra te l'enseigner.");
 	}
-	return Shell.sorts[nom](args, io);
+	// Presque toutes les commandes Linux acceptent --help : un aide-memoire sans passer par man.
+	if (args.indexOf("--help") > -1 && MANUEL[nom]){
+		GameEvents.fire({ type: "aide", spell: nom });
+		return C.gras(nom) + " : " + MANUEL[nom].titre + "\n\n" + MANUEL[nom].page;
+	}
+	var sortie = Shell.sorts[nom](args, io);
+	if (MANUEL[nom]) state.premierUsage(nom);
+	return sortie;
+};
+
+/* Fait tourner une fonction en recuperant ce qu'elle aurait affiche a l'ecran. */
+Shell.capturer = function(fonction){
+	var vraiEcho = term.echo;
+	var tampon = [];
+	term.echo = function(texte){ tampon.push(String(texte)); };
+	try {
+		fonction();
+	} finally {
+		term.echo = vraiEcho;
+	}
+	return tampon.join("\n");
+};
+
+/* Un script est un objet dont chaque ligne est un sort. ./script demande le droit x. */
+Shell.lancerScript = function(chemin, io, direct){
+	if (!state.knows("bash")){
+		throw new ShellError(direct ?
+			chemin + " : tu ne sais pas encore lancer un script. Quelqu'un qui automatise son travail pourra te l'apprendre." :
+			"Tu ne connais pas encore le sort « bash ». Quelqu'un, quelque part en ce monde, pourra te l'enseigner.");
+	}
+	var r = Shell.chercher(chemin, io, "bash");
+	if (r.node === null) throw new ShellError("bash : " + chemin + " : aucun objet de ce nom");
+	var script = Shell.suivre(r.node, "bash");
+	if (script instanceof Room) throw new ShellError("bash : " + chemin + " : c'est un lieu, pas un script");
+	if (script.person) throw new ShellError(script.itemname + " n'est pas un script, et n'apprécie pas qu'on essaie de l'exécuter.");
+	if (!Shell.bit(script, "r", io)) throw new ShellError("bash : " + chemin + " : Permission non accordée");
+	if (direct && !(io.sudo ? script.mode.indexOf("x") > -1 : Shell.bit(script, "x", null))){
+		throw new ShellError("bash : " + chemin + " : Permission non accordée\n" +
+			C.gris("(Cet objet n'a pas le droit x, celui d'être exécuté : regarde avec ls -l. Donne-le-lui avec chmod +x " + script.itemname +
+			", ou lance-le sans ce droit avec bash " + script.itemname + ".)"));
+	}
+	if (Shell.profondeur_script >= 3) throw new ShellError("bash : trop de scripts emboîtés, j'arrête là avant la boucle infinie.");
+	var lignes = lignesDe(script.getText());
+	if (lignes.length > 60) throw new ShellError("bash : " + chemin + " : ce n'est pas un script, c'est un roman. (Plus de 60 lignes.)");
+	Shell.profondeur_script++;
+	var sortie;
+	try {
+		sortie = Shell.capturer(function(){
+			for (var i = 0; i < lignes.length; i++){
+				var ligne = lignes[i].trim();
+				if (ligne === "" || ligne.charAt(0) === "#") continue; // les lignes en # sont des commentaires
+				var jetons;
+				try {
+					jetons = Shell.decouper(ligne);
+				} catch (e){
+					if (e instanceof ShellError){ term.echo(script.itemname + " : ligne " + (i + 1) + " : " + e.message); continue; }
+					throw e;
+				}
+				Shell.lancer(jetons);
+			}
+		});
+	} finally {
+		Shell.profondeur_script--;
+	}
+	state.premierUsage("bash");
+	GameEvents.fire({ type: "script", item: script, room: r.dir, direct: !!direct });
+	return sortie;
 };
 
 /* Ecrit dans un objet (redirections > et >>). */
@@ -1325,6 +1495,17 @@ Shell.tuyau = function(jetons){
 				}
 			}
 			if (argv.length === 0) throw new ShellError("Il manque un sort " + (s === 0 ? "avant" : "après") + " le tuyau |.");
+			// Un alias remplace le premier mot par le texte qu'on lui a associe.
+			if (state.alias.hasOwnProperty(argv[0])){
+				var remplacement = Shell.decouper(state.alias[argv[0]]).filter(function(j){ return j.t === "mot"; }).map(function(j){ return j.v; });
+				argv = remplacement.concat(argv.slice(1));
+				if (argv.length === 0) throw new ShellError("Cet alias est vide.");
+			}
+			// NOM=valeur, tout seul sur la ligne, range une valeur dans une variable.
+			if (argv.length === 1 && segments.length === 1 && /^[A-Za-z_][A-Za-z0-9_]*=/.test(argv[0])){
+				Shell.definirVariable(argv[0], "");
+				return true;
+			}
 			var dernier = s === segments.length - 1;
 			var io = { stdin: stdin, tty: dernier && redirection === null, sudo: false };
 			var nom = argv[0], args = argv.slice(1);
@@ -1335,6 +1516,7 @@ Shell.tuyau = function(jetons){
 				if (args.length === 0) throw new ShellError("sudo : quel sort veux-tu lancer avec les pleins pouvoirs ? Utilisation : sudo SORT");
 				if (!state.has("sudoOK")) throw new ShellError("sudo : mot de passe requis.");
 				io.sudo = true;
+				state.premierUsage("sudo");
 				nom = args[0];
 				args = args.slice(1);
 			}
@@ -1384,10 +1566,16 @@ Shell.lancer = function(jetons){
 
 /* Apres chaque ligne : le monde reagit, puis on affiche l'ambiance et on sauvegarde. */
 Shell.fin = function(){
+	if (Shell.variable_developpee){
+		Shell.variable_developpee = false;
+		GameEvents.fire({ type: "variable", line: Shell.historique[Shell.historique.length - 1] || "" });
+	}
 	verifierMonde();
+	state.bilanXP();
 	while (Shell.narration.length){
 		term.echo(Shell.narration.shift());
 	}
+	if (typeof majEtat === "function") majEtat();
 	term.definirInvite(Shell.invite());
 	state.save();
 };
@@ -1396,14 +1584,22 @@ Shell.invite = function(){
 	var chemin = current_room.path();
 	var morceaux = chemin.split("/");
 	if (morceaux.length > 3) chemin = "…/" + morceaux.slice(-2).join("/");
-	return C.vert(JOUEUR + "@terminus") + ":" + C.bleu(chemin) + "$ ";
+	return C.vert(JOUEUR + "@" + Shell.hote()) + ":" + C.bleu(chemin) + "$ ";
 };
 
 /* Point d'entree : appele par Game.js pour chaque ligne validee. */
 Shell.executer = function(ligne){
 	if (ligne.trim() === "") return;
+	// !! rejoue le sort precedent (sudo !! est un grand classique).
+	if (ligne.indexOf("!!") > -1){
+		if (Shell.historique.length === 0){ term.echo("!! : aucun sort précédent à relancer."); return; }
+		ligne = ligne.split("!!").join(Shell.historique[Shell.historique.length - 1]);
+		term.echo(C.gris(ligne));
+		GameEvents.fire({ type: "bangbang" });
+	}
 	Shell.historique.push(ligne);
 	state.nbCommandes++;
+	Shell.variable_developpee = false;
 	var jetons;
 	try {
 		jetons = Shell.decouper(ligne);
@@ -1455,6 +1651,9 @@ Shell.completer = function(avant){
 	var base = "";
 	if (premierMot && mot.indexOf("/") === -1){
 		var sorts = state.knownSpells().concat(SORTS_DU_JEU);
+		for (var nomAlias in state.alias){
+			if (state.alias.hasOwnProperty(nomAlias) && sorts.indexOf(nomAlias) === -1) sorts.push(nomAlias);
+		}
 		for (var i = 0; i < sorts.length; i++){
 			if (sorts[i].indexOf(mot) === 0) candidats.push(sorts[i] + " ");
 		}
@@ -1479,7 +1678,13 @@ Shell.completer = function(avant){
 		}
 		for (k = 0; k < lieu.items.length; k++){
 			var nomObjet = lieu.items[k].itemname;
-			if (nomObjet.indexOf(motif) === 0 && (motif.charAt(0) === "." || nomObjet.charAt(0) !== ".")) candidats.push(nomObjet + " ");
+			if (nomObjet.indexOf(motif) === 0 && (motif.charAt(0) === "." || nomObjet.charAt(0) !== ".")){
+				var versLieu = false;
+				if (lieu.items[k].lien){
+					try { versLieu = Shell.suivre(lieu.items[k], "") instanceof Room; } catch (e){ versLieu = false; }
+				}
+				candidats.push(nomObjet + (versLieu ? "/" : " "));
+			}
 		}
 	}
 	if (candidats.length === 0) return null;

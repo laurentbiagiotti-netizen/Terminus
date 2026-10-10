@@ -11,8 +11,22 @@ var MESSAGE_ACCUEIL =
 	"Va dans un autre lieu avec " + C.vert("cd LIEU") + ".\n" +
 	"Reviens sur tes pas avec " + C.vert("cd ..") + ".\n" +
 	"Examine un objet ou parle à quelqu'un avec " + C.vert("less OBJET") + ".\n\n" +
-	"Si tu ne sais plus où tu es, tape " + C.vert("pwd") + ". Si tu ne sais plus quoi faire, tape " + C.vert("quetes") + ".\n\n" +
+	"Si tu ne sais plus où tu es, tape " + C.vert("pwd") + ". Si tu ne sais plus quoi faire, tape " + C.vert("quetes") + ".\n" +
+	"Chaque sort appris, chaque lieu découvert et chaque quête rapportent de l'expérience : tape " + C.vert("xp") + " pour voir ta note.\n\n" +
 	"Vas-y, explore. Nous espérons que ce que tu trouveras te plaira. Commence par taper ls.\n";
+
+/* Met à jour le bandeau d'expérience au-dessus de l'image. */
+function majEtat(){
+	var niveau = document.getElementById("etat-niveau");
+	if (!niveau) return;
+	var pr = state.progression();
+	niveau.textContent = "Niveau " + pr.niveau + " · " + pr.titre;
+	document.getElementById("etat-plein").style.width = Math.round(pr.part * 100) + "%";
+	document.getElementById("etat-xp").textContent = pr.xp + " XP · " + state.noteTexte();
+	document.getElementById("etat").title = pr.suivant ?
+		"Encore " + (pr.plafond - pr.xp) + " XP avant le niveau « " + pr.suivant + " ». Tape xp pour le détail." :
+		"Niveau maximal. Tape xp pour le détail.";
+}
 
 function demarrer(){
 	term = new Terminal({
@@ -35,11 +49,13 @@ function demarrer(){
 	if (partieRestauree){
 		term.echo(C.vert(C.gras("TERMINUS")) + C.gris("  édition Cybersup") + "\n\n" +
 			"Ta partie a été retrouvée : tu es dans " + current_room.toString() + ".\n" +
-			C.gris("Tape ls pour regarder autour de toi, quetes pour ton journal, recommencer pour repartir de zéro.") + "\n");
+			C.gris("Tape ls pour regarder autour de toi, quetes pour ton journal, xp pour ta note, recommencer pour repartir de zéro.") + "\n");
 	} else {
 		term.echo(MESSAGE_ACCUEIL);
 	}
 	term.definirInvite(Shell.invite());
+	state.dernierInstant = Date.now();
+	majEtat();
 	document.getElementById("saisie").focus();
 }
 

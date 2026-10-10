@@ -193,6 +193,47 @@ var GrandParchemin = (function(){
     return new Item("GrandParchemin", lignes.join("\n"), "item_manuscript.gif");
 })();
 Scriptorium.addItem(GrandParchemin);
+Scriptorium.addItem(new Item("ApprentiCopiste",
+    "L'apprenti copiste se tord les mains. « Le maître m'a fait recopier le règlement ce matin, puis encore ce soir. \
+Les deux copies devraient être identiques, mais j'ai un doute : quelqu'un a touché à mon pupitre pendant le dîner. \
+Quarante lignes à comparer une à une... à moins de connaître diff.\n\
+\n\
+  diff COPIE1 COPIE2     n'affiche que les lignes qui diffèrent\n\
+\n\
+Si diff ne répond rien, c'est que les deux textes sont identiques. \
+Tu veux bien comparer CopieDuMatin et CopieDuSoir pour moi ? »",
+    "item_student.gif").personnage().enseigne("diff").revele("s_diff"));
+var CopieDuMatin, CopieDuSoir;
+(function(){
+    var articles = [
+        "le silence est de rigueur au Scriptorium.",
+        "on ne court pas dans les couloirs, sauf en cas de retard.",
+        "les mannequins de la SalleEntrainement ne sortent pas de l'Académie.",
+        "tout sort appris doit être essayé au moins une fois.",
+        "les parchemins se rangent par ordre alphabétique.",
+        "il est interdit de lancer rm sur le déjeuner d'un camarade.",
+        "les baguettes restent au vestiaire pendant les examens.",
+        "on salue le professeur, même quand on n'a rien compris.",
+        "les fenêtres se ferment avant la nuit, à cause des chauves-souris.",
+        "nul ne modifie le règlement sans l'accord du conseil."
+    ];
+    var matin = [], soir = [];
+    for (var n = 1; n <= 40; n++){
+        var ligne = "Article " + n + " : " + articles[(n * 7) % articles.length];
+        if (n === 17){
+            matin.push("Article 17 : les parchemins se rendent avant minuit.");
+            soir.push("Article 17 : les parchemins se rendent quand on veut.");
+        } else {
+            matin.push(ligne);
+            soir.push(ligne);
+        }
+    }
+    soir.push("Article 41 : le réfectoire sert du dessert deux fois par jour.");
+    CopieDuMatin = new Item("CopieDuMatin", "RÈGLEMENT DE L'ACADÉMIE\n" + matin.join("\n"), "item_manuscript.gif");
+    CopieDuSoir = new Item("CopieDuSoir", "RÈGLEMENT DE L'ACADÉMIE\n" + soir.join("\n"), "item_manuscript.gif");
+})();
+Scriptorium.addItem(CopieDuMatin);
+Scriptorium.addItem(CopieDuSoir);
 
 //NORTHERN MEADOW
 var NorthernMeadow = new Room("PrairieNord",
@@ -228,11 +269,13 @@ EasternMountains.addItem(new Item("VieuxManuscrits",
 Pour le détail d'un sort, tape « man » suivi de son nom. Par exemple, pour le sort mv : \
 man mv\n\
 \n\
-Trois secrets de vieux mage :\n\
+Quatre secrets de vieux mage :\n\
   1. Certaines choses de ce monde sont cachées : leur nom commence par un point. \
 « ls » ne les montre pas, mais « ls -a » (a comme all, tout) les révèle.\n\
-  2. La flèche du haut rappelle tes derniers sorts, et « history » en affiche la liste complète.\n\
-  3. « ls -l » (l comme long) donne le détail de chaque chose : ses droits et son propriétaire.",
+  2. La flèche du haut rappelle tes derniers sorts, « history » en affiche la liste complète, \
+et « !! » relance le tout dernier tel quel.\n\
+  3. « ls -l » (l comme long) donne le détail de chaque chose : ses droits et son propriétaire.\n\
+  4. Presque tous les sorts acceptent « --help » : « ls --help » te donne son aide-mémoire sans même me déranger.",
     "item_manuscript.gif").enseigne("history"));
 var MotDuVieilHomme = new Item("MotSurLeRocher",
     "Le vieil homme n'est plus là. Sur son rocher, un mot tracé au stylo rouge :\n\
@@ -386,7 +429,8 @@ var Marketplace = new Room("Marche",
 var Vendor = new Item("Marchand",
     "« B'jour toi. » Le marchand te sourit d'un air déplaisant, \
 dévoilant une bouche pleine de dents en or. « Alors ? Qu'est-ce que tu cherches ? \
-J'ai là deux parchemins de sorts, à lire sur place. »",
+J'ai là cinq parchemins de sorts, à lire sur place. SortRm et SortMkdir te seront vite indispensables. \
+Les trois autres, c'est du confort. Mais un mage qui néglige son confort ne fait pas de vieux os. »",
     "item_merchant.gif").personnage();
 Vendor.addCmdText("rm",
     "« Ha ! Ce sort-là ne marche pas sur tout, tu sais. J'ai peut-être oublié \
@@ -403,6 +447,28 @@ var MkdirSpell = new Item("SortMkdir",
 qui n'existait pas. Son contraire, “rmdir”, efface un lieu vide. Un peu capricieux, tout ça... » marmonne le Marchand.",
     "item_manuscript.gif").enseigne("mkdir", "rmdir");
 Marketplace.addItem(MkdirSpell);
+Marketplace.addItem(new Item("SortAlias",
+    "« Le sort des paresseux, ricane le Marchand. Tape alias ll='ls -l', et désormais ll fera le travail de ls -l. \
+alias, tout seul, te rappelle les tiens ; unalias ll l'oublie. Ne néglige pas les apostrophes : \
+elles gardent le sort et ses options en un seul morceau.\n\
+Les vrais mages ont des dizaines d'alias. C'est pour ça qu'on ne comprend jamais ce qu'ils tapent. »",
+    "item_manuscript.gif").enseigne("alias", "unalias").revele("s_alias"));
+Marketplace.addItem(new Item("SortExport",
+    "« Une variable, c'est une boîte avec une étiquette. export CRI=Banzai la remplit, echo $CRI la lit, \
+env les montre toutes. Pas d'espace autour du signe égal, les boîtes sont susceptibles.\n\
+Le système en remplit quelques-unes pour toi : $USER, c'est ton nom ; $HOME, ta Maison ; $PWD, l'endroit où tu te tiens. » \
+Le Marchand baisse la voix. « Entre nous : $PWD, combiné au parchemin SortLn, ça fait des raccourcis en or. »",
+    "item_manuscript.gif").enseigne("export", "env").revele("s_variables"));
+Marketplace.addItem(new Item("SortLn",
+    "« Fatigué de retaper des chemins longs comme un jour sans pain ? ln -s CIBLE NOM trace un raccourci, \
+ce que les mages appellent un lien symbolique. La recette qui marche à tous les coups : \
+rends-toi à l'endroit qui t'intéresse, puis tape\n\
+\n\
+  ln -s $PWD ~/NomDuRaccourci\n\
+\n\
+$PWD, c'est le chemin complet du lieu où tu te tiens. Désormais « cd ~/NomDuRaccourci » t'y ramènera de n'importe où. \
+Le raccourci n'est qu'une flèche : l'effacer avec rm n'abîme pas ce qu'elle montre. Et ls -l te dit où elle pointe. »",
+    "item_manuscript.gif").enseigne("ln").revele("s_lien"));
 
 //LIBRARY
 var Library = new Room("Bibliotheque",
@@ -546,6 +612,20 @@ Tu ne sais même pas fabriquer des choses ? Pff. Quel assistant. Dis simplement 
 Allez, fabrique-moi un Rouage ! Avec la majuscule, je suis pointilleuse. Puis reviens me voir. »",
     "item_artisan.gif").personnage().enseigne("touch").revele("s_rouages");
 ArtisanShop.addItem(Artisan);
+ArtisanShop.addItem(new Item("Horloges",
+    "Des dizaines d'horloges, et pas deux qui soient d'accord. Sous la plus grosse, une petite plaque de cuivre :\n\
+« La seule qui ait raison est celle de la machine. Demande-lui : date\n\
+Et pour n'avoir que l'heure : date +%H:%M »",
+    "loc_artisanshop.gif").enseigne("date"));
+var RemonterScript = new Item("remonter.sh",
+    "#!/bin/bash\n\
+# remonter.sh : remonte le DragonMecanique, cran par cran\n\
+echo Clic...\n\
+echo Clac...\n\
+echo Clic...\n\
+echo Le DragonMecanique ronronne et crache une petite étincelle.",
+    "item_gear.gif").droits("rw-r--r--", JOUEUR);
+RemonterScript.protege = true;
 
 //FARM
 var Farm = new Room("Ferme",
@@ -769,9 +849,12 @@ Taverne.addItem(new Item("Barde",
 \n\
 Un chevron, j'écrase. Deux chevrons, j'ajoute. Répète-le trois fois avant de dormir.\n\
 \n\
+echo sait aussi lire les variables, ces boîtes à étiquette dont parle le Marchand : \
+echo $USER fait résonner ton nom, echo $PWD l'endroit où tu te tiens.\n\
+\n\
 Tiens, signe donc le LivreDOr de la taverne : ajoute ton nom à la fin. À la FIN, hein. \
 Le tavernier tient beaucoup aux signatures des autres. »",
-    "item_barde.gif").personnage().enseigne("echo").revele("s_livredor"));
+    "item_barde.gif").personnage().enseigne("echo").revele("s_livredor", "s_variables"));
 var TEXTE_LIVRE_DOR =
     "LIVRE D'OR de la Taverne du Pingouin Manchot\n\
 « Le meilleur hydromel de Terminus. » Elwyn\n\
@@ -785,9 +868,13 @@ var MEILLEUR_CLIENT = "Bertille";
 var Registre = (function(){
     var h = new Hasard(13);
     var comptes = { "Bertille": 14, "Grognar": 11, "Elwyn": 9, "Thibault": 7, "Mirabelle": 6, "Oswin": 4, "Hildegarde": 3, "Grep": 1 };
+    var boissons = [["hydromel", 3], ["cervoise", 2], ["tisane", 1], ["vin_chaud", 4]];
     var lignes = [];
     for (var nom in comptes){
-        for (var k = 0; k < comptes[nom]; k++) lignes.push(nom);
+        for (var k = 0; k < comptes[nom]; k++){
+            var boisson = h.choix(boissons);
+            lignes.push(nom + ":" + boisson[0] + ":" + boisson[1]);
+        }
     }
     for (var i = lignes.length - 1; i > 0; i--){
         var j = h.entier(i + 1);
@@ -798,18 +885,20 @@ var Registre = (function(){
 Taverne.addItem(Registre);
 var Tavernier = new Item("Tavernier",
     "« Qu'est-ce que ce sera ? ... Ah, tu veux te rendre utile. Regarde mon Registre : une ligne par chope \
-servie, avec le nom du client. Je veux savoir qui est mon meilleur client, et je n'ai pas que ça à faire de compter.\n\
+servie, avec le nom du client, la boisson et le prix, séparés par des deux-points. \
+Je veux savoir qui est mon meilleur client, et je n'ai pas que ça à faire de compter.\n\
 \n\
-Le secret, c'est le tuyau : la barre verticale | envoie ce qu'affiche un sort directement dans le sort suivant.\n\
+Le secret, c'est le tuyau : la barre verticale | envoie ce qu'affiche un sort directement dans le sort suivant. \
+On construit la réponse un morceau après l'autre :\n\
 \n\
-  sort Registre                        trie les lignes\n\
-  sort Registre | uniq                 fusionne les lignes identiques qui se suivent\n\
-  sort Registre | uniq -c              pareil, en comptant chaque nom\n\
-  sort Registre | uniq -c | sort -n    range les comptes du plus petit au plus grand\n\
-  cat Registre | wc -l                 compte toutes les chopes servies\n\
+  cut -d: -f1 Registre                             ne garde que la première colonne, les noms\n\
+  cut -d: -f1 Registre | sort                      les trie\n\
+  cut -d: -f1 Registre | sort | uniq -c            compte chaque nom (uniq fusionne les lignes identiques qui se suivent)\n\
+  cut -d: -f1 Registre | sort | uniq -c | sort -n  range les comptes du plus petit au plus grand\n\
+  cat Registre | wc -l                             compte toutes les chopes servies\n\
 \n\
 Quand tu sauras qui c'est, crie-moi son nom : echo NOM. Si tu ne sais pas crier, demande au barde. »",
-    "item_tavernier.gif").personnage().enseigne("sort", "uniq").revele("s_client");
+    "item_tavernier.gif").personnage().enseigne("sort", "uniq", "cut").revele("s_client");
 Taverne.addItem(Tavernier);
 
 //CYBERSUP (remplace le MIT du jeu d'origine : ps, kill, whoami, find)
@@ -831,6 +920,20 @@ Cybersup.addItem(new Item("Pancarte",
     De retour quand quelqu'un l'aura réussi. »\n\n\
 La porte est fermée à clé. Un ls -l te dirait qui a le droit d'entrer.",
     "item_sign.gif"));
+Cybersup.addItem(new Item("RSSI",
+    "« Halte ! Responsable de la sécurité des systèmes d'information. RSSI, pour les intimes. \
+Personne ne va plus loin sans trois vérifications.\n\
+\n\
+Un : qui es-tu ? Le sort id te le dira : ton numéro d'utilisateur, ton groupe, et tous les groupes auxquels tu appartiens. \
+Le numéro 0, c'est root.\n\
+\n\
+Deux : ton mot de passe. Change-le avec passwd, et choisis-le sérieusement : douze caractères au moins, \
+des majuscules, des minuscules, des chiffres. Une phrase entière fait très bien l'affaire. \
+Et n'utilise jamais ici un mot de passe qui te sert ailleurs : un mot de passe, c'est comme une brosse à dents, ça ne se partage pas.\n\
+\n\
+Trois : à qui appartient quoi ? ls -l te le montre, deuxième colonne. Seul root peut donner une chose à quelqu'un d'autre : \
+sudo chown NOM CHOSE. Tu n'as pas encore sudo ? Alors ce n'est pas encore ton problème. »",
+    "item_professor.gif").personnage().enseigne("id", "passwd", "chown").revele("s_passwd"));
 
 var SalleDeCours = new Room("SalleDeCours",
     "Une salle de cours moderne : des rangées d'écrans, un tableau couvert de numéros, \
@@ -841,6 +944,7 @@ SalleDeCours.addItem(new Item("Formateur",
 un programme en train de tourner. Chacun porte un numéro unique, son PID, et appartient à celui qui l'a lancé.\n\
 \n\
   ps             liste les processus en cours\n\
+  top            les mêmes, classés du plus gourmand au plus sage\n\
   kill PID       demande poliment au processus de s'arrêter (signal TERM)\n\
   kill -9 PID    l'arrête sans lui demander son avis (signal KILL), à réserver aux têtus\n\
   whoami         te rappelle sous quel nom le système te connaît\n\
@@ -850,11 +954,25 @@ peut y toucher.\n\
 \n\
 Travaux pratiques : un élève a lancé ici un sortilege_infini qui tourne en boucle, et un golem_tetu \
 qui n'écoute rien. Je les ai mis à ton nom, cadeau. Débarrasse-m'en. »",
-    "item_TA.gif").personnage().enseigne("ps", "kill", "whoami").revele("s_processus"));
+    "item_TA.gif").personnage().enseigne("ps", "top", "kill", "whoami").revele("s_processus"));
+SalleDeCours.addItem(new Item("Affiche",
+    "AFFICHE DU CLUB LINUX\n\
+\n\
+Sous Linux, un programme s'installe en une ligne, depuis un dépôt de paquets :\n\
+\n\
+  apt list                   ce qui est disponible\n\
+  sudo apt update            rafraîchir la liste des paquets\n\
+  sudo apt install cowsay    installer le paquet cowsay\n\
+\n\
+Installer modifie le système : il faut donc les pouvoirs de root (sudo).\n\
+Premier défi du club : installe cowsay, puis fais dire quelque chose à la vache.",
+    "item_sign.gif").enseigne("apt").revele("s_apt"));
 SalleDeCours.addProc(4242, "sortilege_infini", JOUEUR, {
+    cpu: 97.3,
     killText: "Le sortilege_infini s'arrête net. Le ventilateur de la salle pousse un soupir de soulagement."
 });
 SalleDeCours.addProc(4243, "golem_tetu", JOUEUR, {
+    cpu: 61.8,
     sig9: true,
     ignoreText: "Le golem_tetu reçoit ton signal TERM, le regarde, et continue comme si de rien n'était. Il faudra être moins poli : kill -9.",
     killText: "Le golem_tetu n'a pas le temps de protester : le signal KILL ne se discute pas."
@@ -892,7 +1010,65 @@ Bravo ! Tu viens de capturer ton premier drapeau.\n\
 Récompense : le sort « tree », qui dessine d'un coup la carte de tout ce qui t'entoure.",
     "item_trinket.gif").enseigne("tree");
 Sauvegardes.addItem(Flag);
-Sauvegardes.addItem(new Item("sauvegarde-lundi.tar", "(un amas d'octets illisibles)"));
+var ArchiveLundi = new Item("sauvegarde-lundi.tar",
+    "(Une archive tar : ses octets ne se lisent pas tels quels. tar -tf la liste, tar -xf l'extrait.)");
+ArchiveLundi.archive = [
+    { n: "rapport-incident.txt", x: "RAPPORT D'INCIDENT n° 42\n\n\
+Symptôme : un processus tué avec kill réapparaissait dans la minute, sous un nouveau PID.\n\
+Cause : une ligne dans la crontab de son propriétaire le relançait toutes les minutes.\n\
+Remède : lire la crontab du propriétaire (sudo crontab -u NOM -l), la retirer (sudo crontab -u NOM -r), \
+et seulement ensuite tuer le processus.\n\
+Morale : quand quelque chose renaît tout seul, on ne s'acharne pas dessus. On cherche qui le relance." },
+    { n: "planning.txt", x: "lundi     sauvegarde complète\nmardi     sauvegarde des changements\nmercredi  sauvegarde des changements\n\
+jeudi     test de restauration (une sauvegarde jamais testée n'est pas une sauvegarde)\nvendredi  sauvegarde complète" },
+    { n: "recette-hydromel.txt", x: "Du miel, de l'eau, de la patience. Beaucoup de patience.\n(Fichier rangé ici par erreur. Ou pas.)" }
+];
+Sauvegardes.addItem(ArchiveLundi);
+SalleServeurs.addItem(new Item("Administratrice",
+    "« Ah, de l'aide ! Voilà ce qu'une administratrice vérifie tous les matins.\n\
+\n\
+La place. Un disque plein, et plus rien ne marche.\n\
+  df -h              le remplissage de chaque disque\n\
+  du -sh LIEU        le poids total d'un lieu\n\
+  du * | sort -n     tout ce qu'il y a ici, le plus lourd en dernier\n\
+\n\
+Les sauvegardes. Une archive tar range plusieurs objets en un seul.\n\
+  tar -tf ARCHIVE              liste ce qu'elle contient\n\
+  tar -xf ARCHIVE              en extrait tout, à l'endroit où tu te trouves\n\
+  tar -cf ARCHIVE OBJETS...    en crée une\n\
+\n\
+Les tâches planifiées. Le démon cron relance des commandes à heure fixe, d'après la liste de chaque utilisateur : sa crontab.\n\
+  crontab -l                   affiche la tienne\n\
+  sudo crontab -u NOM -l       affiche celle d'un autre (il faut être root)\n\
+  sudo crontab -u NOM -r       la retire entièrement\n\
+\n\
+Un exercice ? Il y a dans une des baies une cachette de sauvegardes. Extrais sauvegarde-lundi.tar \
+et lis le rapport d'incident qu'elle contient : il te servira un jour, crois-moi. »",
+    "item_artisan.gif").personnage().enseigne("df", "du", "tar", "crontab").revele("s_archive"));
+
+var SalleReseau = new Room("SalleReseau",
+    "Des câbles de toutes les couleurs courent le long des murs jusqu'à une armoire qui clignote. \
+Un administrateur réseau y est à moitié enfoui.",
+    "item_workstation.gif");
+SalleReseau.addItem(new Item("AdminReseau",
+    "Une voix sort de l'armoire. « Le réseau, c'est simple : des machines qui portent un nom et qui se parlent.\n\
+\n\
+  hostname        le nom de la machine où tu es (regarde ton invite, juste après l'arobase)\n\
+  ping MACHINE    lui envoie de petits paquets pour vérifier qu'elle répond\n\
+  ssh MACHINE     ouvre un terminal sur cette machine, comme si tu étais assis devant\n\
+  exit            referme la connexion et te ramène d'où tu viens\n\
+\n\
+La liste des machines est dans hotes.txt. Tu ne peux te connecter que là où tu as un compte : \
+ici, les machines où tu as déjà mis les pieds.\n\
+\n\
+Essaie : ping terminus, puis ssh terminus. Regarde ton invite changer. Puis exit, et te revoilà ici. \
+C'est le moyen de transport le plus rapide de ce monde. »",
+    "item_citizen1.gif").personnage().enseigne("hostname", "ping", "ssh").revele("s_ssh"));
+SalleReseau.addItem(new Item("hotes.txt",
+    "# Les machines du réseau. Sous Linux, ce fichier s'appelle /etc/hosts.\n\
+10.0.0.1     terminus     la Maison et tout le pays\n\
+10.0.42.1    cybersup     l'école\n\
+10.0.66.6    citadelle    accès restreint"));
 Baie3.addItem(new Item(".bash_history",
     "ls\ncd Baie2\nls\nls -a\ncd .sauvegardes\ncat flag.txt\nwhoami\nsudo rm -rf /\n# oups",
     "none.gif"));
@@ -951,7 +1127,8 @@ var SorcierNoir = new Item("SorcierNoir",
 Félicitations, tu sais lire un fichier journal. »\n\
 Il pianote sur son terminal, et l'air se trouble autour de lui. « Regarde donc ce qui tourne ici avec ps. \
 Trois démons veillent sur moi : un bouclier, une illusion, une corruption. Ce sont MES processus, pas les tiens. \
-Tant qu'ils tournent, aucun de tes sorts ne m'atteindra. »\n\
+Tant qu'ils tournent, aucun de tes sorts ne m'atteindra. Et n'espère pas en finir d'un simple kill : \
+mon bouclier renaît chaque minute. C'est écrit dans ma crontab. »\n\
 (Dans le monde des machines, un démon est un processus qui tourne en arrière-plan. \
 Le Sorcier a le sens de la formule.)",
     "item_sorciernoir.gif").personnage();
@@ -959,15 +1136,16 @@ SorcierNoir.addCmdText("rm", "Ton sort ricoche sur le Sorcier Noir sans même fr
 SorcierNoir.addCmdText("mv", "Le Sorcier Noir ne bouge pas d'un pouce. « On ne déplace pas un sorcier, on le vainc. Ou on essaie. »");
 SorcierNoir.addCmdText("cp", "« Un seul de moi te pose déjà bien assez de problèmes, tu ne trouves pas ? »");
 Citadelle.addItem(SorcierNoir);
-Citadelle.addProc(66, "demon_bouclier", "sorcier", {
-    killText: "Le bouclier arcanique vole en éclats dans un bruit de verre brisé."
-});
+var TEXTE_BOUCLIER_BRISE = "Le bouclier arcanique vole en éclats dans un bruit de verre brisé.";
+Citadelle.addProc(66, "demon_bouclier", "sorcier", { cpu: 66.6, killText: TEXTE_BOUCLIER_BRISE });
 Citadelle.addProc(404, "demon_illusion", "sorcier", {
+    cpu: 40.4,
     sig9: true,
     ignoreText: "Le démon d'illusion reçoit ton signal TERM... et l'ignore en ricanant. Certains processus ne comprennent que la manière forte : kill -9.",
     killText: "L'illusion se déchire comme un vieux rideau."
 });
 Citadelle.addProc(666, "demon_corruption", "sorcier", {
+    cpu: 88.8,
     killText: "La corruption se résorbe en sifflant, comme une bouilloire qu'on retire du feu."
 });
 var Phylactere = (function(){
@@ -1005,6 +1183,8 @@ var Phylactere = (function(){
     return new Item(".Phylactere", lignes.join("\n"), "item_trinket.gif");
 })();
 Phylactere.droits("---------", "sorcier");
+Phylactere.protege = true;
+Certificate.protege = true;
 Citadelle.addItem(Phylactere);
 var VRAI_NOM = "laurent";
 
@@ -1093,6 +1273,7 @@ link_rooms(KernelFiles, MoreKernelFiles);
 link_rooms(Home, Cybersup);
 link_rooms(Cybersup, SalleDeCours);
 link_rooms(Cybersup, SalleServeurs);
+link_rooms(Cybersup, SalleReseau);
 link_rooms(Cybersup, BureauDeLaurent);
 link_rooms(SalleServeurs, Baie1);
 link_rooms(SalleServeurs, Baie2);
@@ -1206,7 +1387,7 @@ GameEvents.addListener("echo", function(e){
     if (e.room === Taverne && state.seen["s_client"] && !state.quests["s_client"]){
         if (memeMot(e.text, MEILLEUR_CLIENT)){
             state.applyState("clientTrouve");
-        } else if (Registre.getText().split("\n").some(function(nom){ return memeMot(e.text, nom); })){
+        } else if (Registre.getText().split("\n").some(function(ligne){ return memeMot(e.text, ligne.split(":")[0]); })){
             say("Le tavernier secoue la tête. « " + e.text.trim() + " ? Non. Recompte. »");
         }
     }
@@ -1241,6 +1422,71 @@ Il sort une copie de sous le comptoir en grommelant, recolle les pages et y ajou
         state.nom = signature.replace(/^[«"'\s]+|[»"'\s]+$/g, "").substring(0, 30);
         state.complete("s_livredor");
     }
+});
+
+/* Le bouclier du Sorcier renaît tant que sa crontab le relance. */
+GameEvents.addListener("kill", function(e){
+    if (e.room !== Citadelle || e.proc.name !== "demon_bouclier") return;
+    var relance = (state.cron["sorcier"] || []).some(function(ligne){ return ligne.indexOf("demon_bouclier") > -1; });
+    if (!relance) return;
+    var pid = e.proc.pid + 1000;
+    Citadelle.addProc(pid, "demon_bouclier", "sorcier", { cpu: 66.6, killText: TEXTE_BOUCLIER_BRISE });
+    say("À peine brisé, le bouclier se reforme sous un nouveau numéro (PID " + pid + "). Le Sorcier Noir ricane : \
+« Je te l'avais dit. Ma crontab le relance chaque minute. Tu peux le tuer jusqu'à demain. »");
+});
+GameEvents.addListener("crontab", function(e){
+    if (e.user === "sorcier" && !state.has("cronRetiree")){
+        state.set("cronRetiree");
+        say("Le Sorcier Noir sursaute. « Ma crontab ! Qui t'a appris ça ? » Plus rien ne relancera ses démons.");
+    }
+});
+
+/* Les quêtes de la deuxième vague de sorts. */
+GameEvents.addListener("diff", function(e){
+    var lesDeux = (e.a === CopieDuMatin && e.b === CopieDuSoir) || (e.a === CopieDuSoir && e.b === CopieDuMatin);
+    if (lesDeux && e.different && !state.has("copieDemasquee")){
+        state.set("copieDemasquee");
+        say("L'apprenti copiste s'étrangle. « “Quand on veut” ? Et un article 41 sur le dessert ? Ce n'est pas mon écriture ! \
+Quelqu'un a falsifié la copie du soir. Sans toi, le règlement changeait dès demain. »");
+        state.complete("s_diff");
+    }
+});
+GameEvents.addListener("variable", function(e){
+    // La quête demande de la faire « résonner » : il faut donc un echo.
+    if (/(^|[|;&]\s*)echo(\s|$)/.test(e.line)) state.complete("s_variables");
+});
+GameEvents.addListener("alias", function(e){
+    state.complete("s_alias");
+});
+GameEvents.addListener("ln", function(e){
+    if (e.target instanceof Room) state.complete("s_lien");
+});
+GameEvents.addListener("script", function(e){
+    if (e.item !== RemonterScript || state.has("dragonRemonte")) return;
+    if (!e.direct){
+        say(C.gris("(Le script a tourné : bash n'a besoin que du droit de le lire. Mais l'Artisane fait la moue : elle voulait du travail soigné, ./remonter.sh, ce qui demande le droit x.)"));
+        return;
+    }
+    state.set("dragonRemonte");
+    ClockworkDragon.addCmdText("less", "Le dragon mécanique, remonté à bloc, enchaîne les loopings entre les horloges. \
+De temps en temps il crache une étincelle, l'air très content de lui.");
+    say("Le DragonMecanique s'ébroue, déploie ses ailes de laiton et décolle. L'Artisane siffle d'admiration : \
+« Un script qui a le droit x et qu'on lance par son chemin. Du travail soigné. »");
+    state.complete("s_script");
+});
+GameEvents.addListener("passwd", function(e){
+    if (!e.ok) return;
+    if (!state.quests["s_passwd"]) say("Le RSSI hoche la tête, presque ému. « Long, varié, et rien qu'à toi. Si seulement tout le monde faisait pareil. »");
+    state.complete("s_passwd");
+});
+GameEvents.addListener("tar", function(e){
+    if (e.mode === "x" && e.item === ArchiveLundi) state.complete("s_archive");
+});
+GameEvents.addListener("ssh", function(e){
+    state.complete("s_ssh");
+});
+GameEvents.addListener("apt", function(e){
+    state.complete("s_apt");
 });
 
 /* Arriver quelque part (même en sautant des étapes avec un long chemin). */

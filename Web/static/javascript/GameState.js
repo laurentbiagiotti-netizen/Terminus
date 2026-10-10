@@ -26,7 +26,29 @@
  */
 
 var CLE_SAUVEGARDE = "terminus-cybersup";
-var VERSION_SAUVEGARDE = 1;
+var VERSION_SAUVEGARDE = 2;
+
+/* Barème de l'expérience. */
+var XP_SORT_APPRIS = 10;      // apprendre un sort
+var XP_PREMIER_USAGE = 5;     // s'en servir pour la première fois
+var XP_NOUVEAU_LIEU = 5;      // entrer dans un lieu pour la première fois
+var XP_QUETE = 100;           // une étape de la quête principale
+var XP_VICTOIRE = 300;        // vaincre le Sorcier Noir
+var XP_QUETE_SECONDAIRE = 50; // une quête secondaire
+
+/* Les niveaux : la part de l'expérience totale qu'il faut avoir atteinte. */
+var NIVEAUX = [
+	{ part: 0,    titre: "Touriste du terminal" },
+	{ part: 0.02, titre: "Novice" },
+	{ part: 0.06, titre: "Apprenti" },
+	{ part: 0.12, titre: "Initié" },
+	{ part: 0.20, titre: "Adepte" },
+	{ part: 0.30, titre: "Mage" },
+	{ part: 0.42, titre: "Grand Mage" },
+	{ part: 0.56, titre: "Archimage" },
+	{ part: 0.72, titre: "Administrateur" },
+	{ part: 0.88, titre: "Root" }
+];
 
 var QUETES_PRINCIPALES = [
 	{ id: "m_mv", titre: "Apprendre un premier sort à l'Académie",
@@ -50,7 +72,7 @@ var QUETES_PRINCIPALES = [
 	{ id: "m_certificat", titre: "Lire le Certificat",
 	  indice: "Dans les FichiersDuNoyau : sudo less Certificat" },
 	{ id: "m_demons", titre: "Abattre les trois démons du Sorcier Noir",
-	  indice: "Ses démons sont des processus. À Cybersup (depuis la Maison), on apprend à les lister et à les arrêter. Ceux des autres demandent sudo, et les têtus demandent -9." },
+	  indice: "Ses démons sont des processus. À Cybersup (depuis la Maison), le Formateur apprend à les lister et à les arrêter : ceux des autres demandent sudo, les têtus demandent -9. Et si l'un d'eux renaît sans cesse, l'Administratrice de la SalleServeurs sait ce qui relance un processus à heure fixe." },
 	{ id: "m_nom", titre: "Découvrir le vrai nom du Sorcier Noir",
 	  indice: "Il est caché dans la Citadelle (ls -a) et protégé (sudo). Le fichier est long : grep." },
 	{ id: "m_boss", titre: "Vaincre le Sorcier Noir",
@@ -70,6 +92,15 @@ var QUETES_SECONDAIRES = [
 	{ id: "s_processus", titre: "Arrêter les processus fous de la SalleDeCours" },
 	{ id: "s_ctf", titre: "Capturer le drapeau de la SalleServeurs" },
 	{ id: "s_hideux", titre: "Débarrasser la caverne du TrollAbsolumentHideux" },
+	{ id: "s_diff", titre: "Démasquer la copie falsifiée du règlement" },
+	{ id: "s_variables", titre: "Faire résonner une variable" },
+	{ id: "s_alias", titre: "Se créer un alias" },
+	{ id: "s_lien", titre: "Tracer un raccourci vers un lieu" },
+	{ id: "s_script", titre: "Remonter le DragonMecanique avec un script" },
+	{ id: "s_passwd", titre: "Choisir un mot de passe digne de ce nom" },
+	{ id: "s_archive", titre: "Extraire la sauvegarde de la SalleServeurs" },
+	{ id: "s_ssh", titre: "Voyager par ssh" },
+	{ id: "s_apt", titre: "Installer un paquet" },
 	{ id: "s_chaussette", titre: "Retrouver la chaussette gauche", secrete: true }
 ];
 
@@ -83,6 +114,34 @@ function GameState(){
 	this.nbCommandes = 0;
 	this.nom = null;
 	this.chargee = false;
+	// Expérience
+	this.xp = 0;
+	this.usages = {};          // sorts déjà utilisés au moins une fois
+	this.visited = {};         // lieux déjà visités
+	this.gainsDuTour = [];     // petits gains à annoncer à la fin de la ligne en cours
+	this.niveauAnnonce = 1;
+	this.tempsMs = 0;          // temps de jeu, mesuré de sort en sort
+	this.dernierInstant = null;
+	// Personnalisation du terminal
+	this.env = {};
+	this.alias = {};
+	this.paquets = {};
+	// Tâches planifiées de chaque utilisateur (voir le sort crontab)
+	this.cron = {
+		"sorcier": [
+			"* * * * *     /citadelle/bin/relancer demon_bouclier",
+			"0 3 * * *     /citadelle/bin/arroser_les_ronces",
+			"30 7 * * 1    /citadelle/bin/nourrir_les_trolls"
+		],
+		"root": [
+			"0 4 * * *     /usr/bin/sauvegarder /Bibliotheque",
+			"*/5 * * * *   /usr/bin/remonter DragonMecanique"
+		],
+		"laurent": [
+			"0 8 * * 5     /home/laurent/corriger_les_copies"
+		]
+	};
+	if (Home.id) this.visited[Home.id] = true;
 	for (var i = 0; i < SORTS_DE_DEPART.length; i++) this.spells[SORTS_DE_DEPART[i]] = true;
 };
 
@@ -111,8 +170,164 @@ GameState.prototype.knownSpells = function(){
 GameState.prototype.learn = function(sort){
 	if (this.spells[sort]) return;
 	this.spells[sort] = true;
-	say(C.vert("✦ Nouveau sort appris : " + sort) + " (" + MANUEL[sort].resume + "). Détail : man " + sort);
+	this.xp += XP_SORT_APPRIS;
+	say(C.vert("✦ Nouveau sort appris : " + sort) + " (" + MANUEL[sort].resume + "). Détail : man " + sort + C.gris("  +" + XP_SORT_APPRIS + " XP"));
 	GameEvents.fire({ type: "learn", spell: sort });
+};
+
+/* ---------------- experience ---------------- */
+
+GameState.prototype.gagner = function(points, raison){
+	this.xp += points;
+	this.gainsDuTour.push({ points: points, raison: raison });
+};
+
+GameState.prototype.premierUsage = function(sort){
+	if (this.usages[sort]) return;
+	this.usages[sort] = true;
+	this.gagner(XP_PREMIER_USAGE, "premier " + sort);
+};
+
+GameState.prototype.visiter = function(lieu){
+	if (!lieu.id || this.visited[lieu.id]) return;
+	this.visited[lieu.id] = true;
+	this.gagner(XP_NOUVEAU_LIEU, "nouveau lieu");
+};
+
+/* Lieux dans lesquels on peut réellement entrer (pas la Boite ni la Cage). */
+function lieuxVisitables(){
+	var lieux = [];
+	for (var id in World.rooms){
+		if (World.rooms.hasOwnProperty(id) && !World.rooms[id].atteignable) lieux.push(World.rooms[id]);
+	}
+	return lieux;
+}
+
+GameState.prototype.xpMax = function(){
+	return (ORDRE_DES_SORTS.length - SORTS_DE_DEPART.length) * XP_SORT_APPRIS +
+		ORDRE_DES_SORTS.length * XP_PREMIER_USAGE +
+		(lieuxVisitables().length - 1) * XP_NOUVEAU_LIEU +
+		(QUETES_PRINCIPALES.length - 1) * XP_QUETE + XP_VICTOIRE +
+		QUETES_SECONDAIRES.length * XP_QUETE_SECONDAIRE;
+};
+
+GameState.prototype.niveau = function(){
+	var max = this.xpMax(), n = 1;
+	for (var i = 0; i < NIVEAUX.length; i++){
+		if (this.xp >= Math.round(NIVEAUX[i].part * max)) n = i + 1;
+	}
+	return n;
+};
+
+/* Où en est-on dans le niveau en cours ? */
+GameState.prototype.progression = function(){
+	var max = this.xpMax(), n = this.niveau();
+	var plancher = Math.round(NIVEAUX[n - 1].part * max);
+	var plafond = n < NIVEAUX.length ? Math.round(NIVEAUX[n].part * max) : max;
+	return {
+		niveau: n, titre: NIVEAUX[n - 1].titre,
+		suivant: n < NIVEAUX.length ? NIVEAUX[n].titre : null,
+		plancher: plancher, plafond: plafond, xp: this.xp, max: max,
+		part: plafond > plancher ? Math.min(1, (this.xp - plancher) / (plafond - plancher)) : 1
+	};
+};
+
+/* La note sur 20, au demi-point près. */
+GameState.prototype.note = function(){
+	return Math.round(Math.min(1, this.xp / this.xpMax()) * 40) / 2;
+};
+
+GameState.prototype.noteTexte = function(){
+	return String(this.note()).replace(".", ",") + " / 20";
+};
+
+GameState.prototype.mention = function(){
+	var n = this.note();
+	if (n >= 18) return "Félicitations du jury";
+	if (n >= 16) return "Très bien";
+	if (n >= 14) return "Bien";
+	if (n >= 12) return "Assez bien";
+	if (n >= 10) return "Passable";
+	return "Admis de justesse (mais root quand même)";
+};
+
+GameState.prototype.tempsTexte = function(){
+	var minutes = Math.round(this.tempsMs / 60000);
+	if (minutes < 60) return minutes + " min";
+	return Math.floor(minutes / 60) + " h " + deuxChiffres(minutes % 60);
+};
+
+/* Mesure le temps de jeu : on ne compte pas les longues pauses. */
+GameState.prototype.chronometrer = function(){
+	var maintenant = Date.now();
+	if (this.dernierInstant !== null) this.tempsMs += Math.min(maintenant - this.dernierInstant, 120000);
+	this.dernierInstant = maintenant;
+};
+
+/* Appelée à la fin de chaque ligne : annonce les petits gains et les montées de niveau. */
+GameState.prototype.bilanXP = function(){
+	this.chronometrer();
+	if (this.gainsDuTour.length > 0){
+		var total = 0, raisons = [];
+		for (var i = 0; i < this.gainsDuTour.length; i++){
+			total += this.gainsDuTour[i].points;
+			if (raisons.indexOf(this.gainsDuTour[i].raison) === -1) raisons.push(this.gainsDuTour[i].raison);
+		}
+		say(C.gris("+" + total + " XP (" + raisons.join(", ") + ")"));
+		this.gainsDuTour = [];
+	}
+	var n = this.niveau();
+	if (n > this.niveauAnnonce){
+		this.niveauAnnonce = n;
+		say(C.cyan("▲ Niveau " + n + " : " + NIVEAUX[n - 1].titre + " !") +
+			(n === NIVEAUX.length ? " Il n'y a plus rien au-dessus." : ""));
+	}
+};
+
+function barre(part, largeur){
+	var pleines = Math.round(part * largeur);
+	return "[" + new Array(pleines + 1).join("#") + new Array(largeur - pleines + 1).join(".") + "]";
+}
+
+GameState.prototype.tableauXP = function(){
+	var pr = this.progression();
+	var principales = 0, i;
+	for (i = 0; i < QUETES_PRINCIPALES.length; i++){ if (this.quests[QUETES_PRINCIPALES[i].id]) principales++; }
+	var secondaires = this.nbSecondaires();
+	var appris = this.knownSpells().length - SORTS_DE_DEPART.length;
+	var utilises = 0, oublies = [];
+	for (i = 0; i < ORDRE_DES_SORTS.length; i++){
+		if (this.usages[ORDRE_DES_SORTS[i]]) utilises++;
+		else if (this.spells[ORDRE_DES_SORTS[i]]) oublies.push(ORDRE_DES_SORTS[i]);
+	}
+	var lieux = lieuxVisitables(), visites = 0;
+	for (i = 0; i < lieux.length; i++){ if (this.visited[lieux[i].id] && lieux[i] !== Home) visites++; }
+	var xpPrincipales = principales * XP_QUETE + (this.quests["m_boss"] ? XP_VICTOIRE - XP_QUETE : 0);
+	function ligne(nom, fait, total, points){
+		return "  " + completerDroite(nom, 22) + completerGauche(fait + " / " + total, 8) + completerGauche(points + " XP", 8);
+	}
+	var lignes = [
+		C.gras("EXPÉRIENCE"),
+		"",
+		C.cyan("Niveau " + pr.niveau + " : " + pr.titre) + "   " + barre(pr.part, 24) + "   " +
+			(pr.suivant ? (pr.plafond - pr.xp) + " XP avant « " + pr.suivant + " »" : "niveau maximal"),
+		"Total : " + C.gras(pr.xp + " XP") + " sur " + pr.max + " possibles.   Note " +
+			(this.has("victoire") ? "finale" : "provisoire") + " : " + C.gras(this.noteTexte()),
+		"",
+		C.gras("D'où viennent tes XP"),
+		ligne("Quêtes principales", principales, QUETES_PRINCIPALES.length, xpPrincipales),
+		ligne("Quêtes secondaires", secondaires, QUETES_SECONDAIRES.length, secondaires * XP_QUETE_SECONDAIRE),
+		ligne("Sorts appris", appris, ORDRE_DES_SORTS.length - SORTS_DE_DEPART.length, appris * XP_SORT_APPRIS),
+		ligne("Premières utilisations", utilises, ORDRE_DES_SORTS.length, utilises * XP_PREMIER_USAGE),
+		ligne("Lieux découverts", visites, lieux.length - 1, visites * XP_NOUVEAU_LIEU),
+		""
+	];
+	if (oublies.length > 0) lignes.push("Sorts appris mais jamais lancés : " + oublies.join(", "));
+	lignes.push(C.gris("Temps de jeu : " + this.tempsTexte() + ". Sorts lancés : " + this.nbCommandes + "."));
+	lignes.push(C.gris("Barème : " + XP_QUETE + " XP par étape de la quête principale (" + XP_VICTOIRE + " pour la dernière), " +
+		XP_QUETE_SECONDAIRE + " par quête secondaire, " + XP_SORT_APPRIS + " par sort appris, " +
+		XP_PREMIER_USAGE + " la première fois qu'on s'en sert, " + XP_NOUVEAU_LIEU + " par lieu découvert."));
+	return lignes.join("\n");
 };
 
 /* ---------------- quetes ---------------- */
@@ -135,7 +350,9 @@ GameState.prototype.complete = function(id){
 	this.seen[id] = true;
 	var quete = trouverQuete(id);
 	var principale = id.charAt(0) === "m";
-	say(C.jaune("★ " + (principale ? "Quête accomplie" : "Quête secondaire accomplie") + " : " + quete.titre));
+	var points = principale ? (id === "m_boss" ? XP_VICTOIRE : XP_QUETE) : XP_QUETE_SECONDAIRE;
+	this.xp += points;
+	say(C.jaune("★ " + (principale ? "Quête accomplie" : "Quête secondaire accomplie") + " : " + quete.titre) + C.gris("  +" + points + " XP"));
 };
 
 GameState.prototype.nbSecondaires = function(){
@@ -173,18 +390,15 @@ GameState.prototype.journal = function(){
 		lignes.push(C.gris("  ... et " + inconnues + " autre" + (inconnues > 1 ? "s" : "") + " à découvrir en parlant aux habitants et en fouillant partout."));
 	}
 	lignes.push("");
+	var pr = this.progression();
+	lignes.push(C.cyan("Niveau " + pr.niveau + " : " + pr.titre) + C.gris("   " + pr.xp + " XP sur " + pr.max + " (détail : xp)"));
 	lignes.push(C.gris("Sorts appris : " + this.knownSpells().length + " sur " + ORDRE_DES_SORTS.length + ". Sorts lancés : " + this.nbCommandes + "."));
 	return lignes.join("\n");
 };
 
 GameState.prototype.texteDuDiplome = function(){
-	var n = this.nbSecondaires();
-	var total = QUETES_SECONDAIRES.length;
-	var mention = "Passable (mais root quand même)";
-	if (n >= total) mention = "Félicitations du jury";
-	else if (n >= 10) mention = "Très bien";
-	else if (n >= 7) mention = "Bien";
-	else if (n >= 4) mention = "Assez bien";
+	var pr = this.progression();
+	var complet = this.xp >= pr.max;
 	return "" +
 		"=====================================================\n" +
 		"            DIPLÔME DE MAGE DU TERMINAL\n" +
@@ -195,16 +409,21 @@ GameState.prototype.texteDuDiplome = function(){
 		"  pour avoir vaincu le Sorcier Noir lors de l'examen\n" +
 		"  de Terminus, armé d'un simple terminal.\n" +
 		"\n" +
+		"  SCORE FINAL         : " + this.xp + " XP sur " + pr.max + "\n" +
+		"  NOTE                : " + this.noteTexte() + "\n" +
+		"  Mention             : " + this.mention() + "\n" +
+		"  Niveau atteint      : " + pr.niveau + " sur " + NIVEAUX.length + ", " + pr.titre + "\n" +
+		"\n" +
 		"  Sorts maîtrisés     : " + this.knownSpells().length + " sur " + ORDRE_DES_SORTS.length + "\n" +
-		"  Quêtes secondaires  : " + n + " sur " + total + "\n" +
+		"  Quêtes secondaires  : " + this.nbSecondaires() + " sur " + QUETES_SECONDAIRES.length + "\n" +
 		"  Sorts lancés        : " + this.nbCommandes + "\n" +
-		"  Mention             : " + mention + "\n" +
+		"  Temps de jeu        : " + this.tempsTexte() + "\n" +
 		"\n" +
 		"  Signé : Laurent, Directeur Pédagogique de Cybersup\n" +
 		"          (et Sorcier Noir à ses heures)\n" +
 		"=====================================================" +
 		(this.nom ? "" : "\n(Pour faire figurer ton nom sur le diplôme, va signer le LivreDOr de la Taverne.)") +
-		(n < total ? "\n(La mention s'améliore avec les quêtes secondaires : tape quetes.)" : "");
+		(complet ? "" : "\n(La note peut encore monter : le diplôme se met à jour tout seul. Tape xp pour voir où il reste des points à prendre.)");
 };
 
 /* ---------------- evenements de l'histoire ---------------- */
@@ -275,9 +494,16 @@ Appelle-les rouage1, rouage2, rouage3, rouage4 et rouage5, s'il te plaît. »");
     		say("L'Artisane jette un œil à ton Rouage. Elle a manifestement autre chose à te demander.");
     		break;
     	case "FiveGearsCopied":
-    		Artisan.addCmdText("less", "« Ha, déjà fini ? Tu apprends vite, on dirait. Eh bien, \
-merci pour le coup de main. Un conseil d'artisane : quand tu voudras faire le ménage, \
-“rm rouage*” efface tout ce qui commence par rouage. Mais pas ici, hein. J'en ai besoin. »");
+    		Artisan.addCmdText("less", "« Ha, déjà fini ? Tu apprends vite, on dirait. Tiens, pour la peine, je te donne mon script remonter.sh : \
+il remonte le DragonMecanique à ma place. Un script, c'est une liste de sorts rangée dans un objet. \
+On le lance en l'appelant par son chemin : ./remonter.sh (le ./ veut dire « celui qui est ici »).\n\
+Seulement voilà : il lui manque le droit d'être exécuté, le fameux x. Regarde-le avec ls -l, arrange ça avec chmod, et lance-le. \
+Si tu es pressé, bash remonter.sh marche aussi, mais ce n'est pas du travail soigné.\n\
+Et quand tu voudras faire le ménage : “rm rouage*” efface tout ce qui commence par rouage. Mais pas ici, hein. J'en ai besoin. »");
+    		Artisan.teaches = ["touch", "cp", "bash"];
+    		Artisan.reveals = ["s_rouages", "s_script"];
+    		poser(ArtisanShop, RemonterScript);
+    		say("L'Artisane pose un petit objet sur l'établi : remonter.sh. Elle a encore quelque chose à te dire.");
     		this.complete("s_rouages");
     		break;
     	case "CornCopied":
@@ -418,10 +644,17 @@ Tu connais cette barbe. C'est le vieil homme des MontagnesEst.\n\n\
     		say(C.gris("(Laurent a visiblement des choses à te dire : less Laurent. Ton Diplome est posé à côté.)"));
     		break;
     	case "fin":
-    		say(C.vert("FIN") + "\n\nTu as terminé Terminus en " + this.nbCommandes + " sorts lancés, avec " +
-    			this.knownSpells().length + " sorts appris sur " + ORDRE_DES_SORTS.length + " et " +
-    			this.nbSecondaires() + " quêtes secondaires sur " + QUETES_SECONDAIRES.length + ".\n" +
-    			"Le monde reste ouvert : le BureauDeLaurent, à Cybersup, t'attend, et « quetes » te dira ce qu'il te reste à découvrir.\n" +
+    		var bilan = this.progression();
+    		say(C.vert(C.gras("FIN")) + "\n\n" +
+    			C.gras("SCORE FINAL : " + this.xp + " XP sur " + bilan.max) + "\n" +
+    			C.gras("NOTE : " + this.noteTexte()) + "   Mention : " + this.mention() + "\n" +
+    			"Niveau " + bilan.niveau + " sur " + NIVEAUX.length + " : " + bilan.titre + "\n\n" +
+    			"Sorts appris : " + this.knownSpells().length + " sur " + ORDRE_DES_SORTS.length +
+    			". Quêtes secondaires : " + this.nbSecondaires() + " sur " + QUETES_SECONDAIRES.length +
+    			". Sorts lancés : " + this.nbCommandes + ". Temps de jeu : " + this.tempsTexte() + ".\n\n" +
+    			(this.xp >= bilan.max ?
+    				"Score parfait : il ne reste rien à découvrir. Chapeau.\n" :
+    				"Le monde reste ouvert, et ta note peut encore monter : « xp » montre où il reste des points, « quetes » ce qu'il reste à faire. Le BureauDeLaurent, à Cybersup, t'attend aussi.\n") +
     			"Et maintenant, ouvre un vrai terminal. Tout ce que tu sais y fonctionne.");
     		break;
 		default:
@@ -446,6 +679,10 @@ function photographierObjet(item){
 		v: item.valid_cmds.slice(), m: item.mode, o: item.owner, pe: item.person,
 		t: item.teaches.slice(), r: item.reveals.slice(), x: gardeTexte ? 1 : 0
 	};
+	if (item.lien) o.l = item.lien;
+	if (item.archive) o.a = item.archive;
+	if (item.acquis) o.q = 1;
+	if (item.protege) o.g = 1;
 	return o;
 }
 
@@ -472,6 +709,10 @@ function restaurerObjet(item, o){
 	item.person = !!o.pe;
 	item.teaches = (o.t || []).slice();
 	item.reveals = (o.r || []).slice();
+	item.lien = o.l || undefined;
+	if (o.a) item.archive = o.a;
+	item.acquis = !!o.q;
+	item.protege = !!o.g;
 	return item;
 }
 
@@ -517,8 +758,11 @@ GameState.prototype.save = function(){
 			v: VERSION_SAUVEGARDE,
 			flags: this.flags, spells: this.spells, quests: this.quests, seen: this.seen,
 			nb: this.nbCommandes, nom: this.nom,
+			xp: this.xp, usages: this.usages, visites: this.visited, niveau: this.niveauAnnonce, temps: this.tempsMs,
+			env: this.env, alias: this.alias, paquets: this.paquets, cron: this.cron,
 			ici: current_room.path(),
 			avant: Shell.lieu_precedent ? Shell.lieu_precedent.path() : null,
+			ssh: Shell.pile_ssh.map(function(lieu){ return lieu.path(); }),
 			historique: Shell.historique.slice(-100),
 			lieux: {}, objets: {}
 		};
@@ -565,6 +809,16 @@ GameState.prototype.load = function(){
 		this.seen = donnees.seen || {};
 		this.nbCommandes = donnees.nb || 0;
 		this.nom = donnees.nom || null;
+		this.xp = donnees.xp || 0;
+		this.usages = donnees.usages || {};
+		this.visited = donnees.visites || {};
+		this.niveauAnnonce = donnees.niveau || 1;
+		this.tempsMs = donnees.temps || 0;
+		this.env = donnees.env || {};
+		this.alias = donnees.alias || {};
+		this.paquets = donnees.paquets || {};
+		if (donnees.cron) this.cron = donnees.cron;
+		Shell.pile_ssh = (donnees.ssh || []).map(lieuParChemin);
 		this.currentRoom = lieuParChemin(donnees.ici || "~");
 		Shell.lieu_precedent = donnees.avant ? lieuParChemin(donnees.avant) : null;
 		Shell.historique = donnees.historique || [];

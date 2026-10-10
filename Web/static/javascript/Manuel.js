@@ -11,10 +11,13 @@
 /* Ordre d'affichage dans help. */
 var ORDRE_DES_SORTS = [
 	"ls", "cd", "pwd", "less", "help", "man", "clear", "exit",
-	"mv", "cat", "head", "tail", "wc", "history",
-	"chmod", "rm", "mkdir", "rmdir", "touch", "cp",
-	"grep", "echo", "sort", "uniq",
-	"ps", "kill", "whoami", "find", "tree", "sudo"
+	"mv", "cat", "head", "tail", "wc", "diff", "history",
+	"chmod", "rm", "mkdir", "rmdir", "touch", "cp", "bash", "date",
+	"grep", "echo", "export", "env", "alias", "unalias", "ln",
+	"sort", "uniq", "cut",
+	"ps", "kill", "top", "whoami", "id", "passwd", "chown",
+	"find", "tree", "df", "du", "tar", "crontab",
+	"hostname", "ping", "ssh", "apt", "cowsay", "sudo"
 ];
 
 /* Sorts connus des le depart. */
@@ -151,7 +154,8 @@ var MANUEL = {
 "Utilise « history » pour afficher la liste des sorts que tu as lancés.\n" +
 "La flèche du haut les rappelle un par un.\n\n" +
 "  history\n" +
-"  history | grep mv     retrouve tous tes sorts de déplacement"
+"  history | grep mv     retrouve tous tes sorts de déplacement\n" +
+"  !!                    relance le dernier sort tel quel"
 },
 "chmod": {
 	resume: "changer les droits d'un lieu ou d'un objet",
@@ -322,6 +326,251 @@ var MANUEL = {
 "  sudo less Certificat\n" +
 "  sudo kill 66\n\n" +
 "Le mot de passe est demandé la première fois. Un grand pouvoir implique de\n" +
-"relire sa ligne avant d'appuyer sur Entrée."
+"relire sa ligne avant d'appuyer sur Entrée.\n\n" +
+"Astuce : « sudo !! » relance le sort précédent avec les pleins pouvoirs."
+},
+"diff": {
+	resume: "comparer deux textes ligne à ligne",
+	titre: "DIFFérences",
+	page:
+"Utilise « diff » pour savoir en quoi deux textes diffèrent.\n\n" +
+"  diff OBJET1 OBJET2\n" +
+"  diff -q OBJET1 OBJET2     dit seulement s'ils diffèrent\n\n" +
+"Lire la réponse :\n" +
+"  17c17      la ligne 17 a changé (c : changed)\n" +
+"  < ...      ce qu'elle disait dans le premier objet\n" +
+"  > ...      ce qu'elle dit dans le second\n" +
+"  5a6        une ligne ajoutée (a : added) ; 8d7 : une ligne supprimée (d : deleted)\n\n" +
+"Si diff ne répond rien, les deux textes sont identiques."
+},
+"bash": {
+	resume: "lancer un script, une liste de sorts écrite dans un objet",
+	titre: "le terminal lui-même (Bourne Again SHell)",
+	page:
+"Un script est un objet dont chaque ligne est un sort. On le lance de deux façons :\n\n" +
+"  bash SCRIPT        bash lit l'objet et lance ses lignes, une à une\n" +
+"  ./SCRIPT           lance l'objet directement, s'il a le droit x (chmod +x SCRIPT)\n\n" +
+"Le ./ veut dire « l'objet qui est ici ». Dans un script, une ligne qui\n" +
+"commence par # est un commentaire : bash l'ignore. La toute première ligne,\n" +
+"#!/bin/bash, indique quel programme doit lire la suite.\n\n" +
+"Pour écrire ton propre script :\n" +
+"  echo \"echo Bonjour\" > salut.sh\n" +
+"  echo \"ls -l\" >> salut.sh\n" +
+"  chmod +x salut.sh\n" +
+"  ./salut.sh"
+},
+"date": {
+	resume: "connaître la date et l'heure",
+	titre: "la date",
+	page:
+"Utilise « date » pour afficher la date et l'heure de la machine.\n\n" +
+"  date\n" +
+"  date +%H:%M        seulement l'heure et les minutes\n" +
+"  date +%F           la date au format année-mois-jour"
+},
+"export": {
+	resume: "ranger une valeur dans une variable",
+	titre: "exporter une variable",
+	page:
+"Une variable est une boîte avec une étiquette. On la remplit, puis on la\n" +
+"relit en écrivant son nom précédé d'un dollar.\n\n" +
+"  export CRI=Banzai       range « Banzai » dans la variable CRI\n" +
+"  echo $CRI               affiche Banzai\n" +
+"  echo \"Mon cri : $CRI\"   entre guillemets doubles, la variable est lue\n" +
+"  echo 'Mon cri : $CRI'   entre apostrophes, rien n'est interprété\n\n" +
+"Pas d'espace autour du signe égal. Le système tient lui-même à jour\n" +
+"quelques variables : $USER (toi), $HOME (ta Maison), $PWD (où tu es)."
+},
+"env": {
+	resume: "voir toutes les variables",
+	titre: "l'ENVironnement",
+	page:
+"Utilise « env » pour afficher toutes les variables d'environnement,\n" +
+"celles du système comme les tiennes.\n\n" +
+"  env\n" +
+"  env | grep USER"
+},
+"alias": {
+	resume: "donner un petit nom à un sort",
+	titre: "un surnom",
+	page:
+"Utilise « alias » pour abréger un sort que tu tapes souvent.\n\n" +
+"  alias ll='ls -l'      désormais, ll lance ls -l\n" +
+"  alias                 liste tes alias\n" +
+"  unalias ll            l'oublie\n\n" +
+"Les apostrophes gardent le sort et ses options en un seul morceau. Sous\n" +
+"Linux, on range ses alias dans le fichier caché ~/.bashrc pour les\n" +
+"retrouver à chaque ouverture du terminal."
+},
+"unalias": {
+	resume: "oublier un alias",
+	titre: "retirer un surnom",
+	page: "Utilise « unalias NOM » pour supprimer un alias créé avec alias."
+},
+"ln": {
+	resume: "créer un raccourci vers un lieu ou un objet",
+	titre: "LiNk (lien symbolique)",
+	page:
+"Utilise « ln -s » pour créer un raccourci, qu'on appelle un lien symbolique.\n\n" +
+"  ln -s CIBLE NOM\n" +
+"  ln -s ~/PrairieNord/MontagnesEst ~/Montagnes\n\n" +
+"Ensuite, « cd ~/Montagnes » t'emmène directement là-bas. ls -l montre les\n" +
+"liens avec un l en premier signe et une flèche vers leur cible.\n" +
+"Supprimer un lien (rm) n'abîme pas la cible. Si la cible disparaît, le lien\n" +
+"reste là, brisé."
+},
+"cut": {
+	resume: "ne garder que certaines colonnes d'un texte",
+	titre: "découper",
+	page:
+"Utilise « cut » pour extraire une colonne dans des lignes dont les champs\n" +
+"sont séparés par un même signe.\n\n" +
+"  cut -d: -f1 OBJET         le 1er champ, les champs étant séparés par « : »\n" +
+"  cut -d: -f1,3 OBJET       le 1er et le 3e\n" +
+"  cut -d, -f2- OBJET        du 2e jusqu'au dernier, séparés par des virgules\n" +
+"  cut -c1-10 OBJET          les 10 premiers caractères de chaque ligne\n\n" +
+"Il brille dans un tuyau : cut -d: -f1 Registre | sort | uniq -c"
+},
+"top": {
+	resume: "voir les processus les plus gourmands",
+	titre: "le haut du classement",
+	page:
+"Utilise « top » pour voir quels processus consomment le plus, les plus\n" +
+"gourmands en haut. Sous Linux il se rafraîchit en continu et se quitte\n" +
+"avec la touche q.\n\n" +
+"  top"
+},
+"id": {
+	resume: "voir son numéro d'utilisateur et ses groupes",
+	titre: "IDentité",
+	page:
+"Utilise « id » pour savoir comment le système te voit : ton numéro\n" +
+"d'utilisateur (uid), ton groupe principal (gid) et tous tes groupes.\n\n" +
+"  id\n" +
+"  id NOM         la même chose pour quelqu'un d'autre\n\n" +
+"L'utilisateur numéro 0, c'est root. Appartenir au groupe sudo donne le\n" +
+"droit d'emprunter ses pouvoirs."
+},
+"passwd": {
+	resume: "changer son mot de passe",
+	titre: "PASSWorD",
+	page:
+"Utilise « passwd » pour changer ton mot de passe. Rien ne s'affiche\n" +
+"pendant la frappe : c'est normal, et c'est voulu.\n\n" +
+"  passwd\n\n" +
+"Un bon mot de passe est long (12 caractères au moins), mélange majuscules,\n" +
+"minuscules et chiffres, et ne sert qu'à un seul endroit. Une phrase entière\n" +
+"fait très bien l'affaire."
+},
+"chown": {
+	resume: "changer le propriétaire d'un lieu ou d'un objet",
+	titre: "CHange OWNer (changer de propriétaire)",
+	page:
+"Utilise « chown » pour donner un lieu ou un objet à un autre utilisateur.\n" +
+"Seul root en a le droit.\n\n" +
+"  sudo chown NOM CIBLE\n\n" +
+"ls -l montre le propriétaire dans la deuxième colonne. chmod règle ce que\n" +
+"chacun a le droit de faire, chown règle à qui la chose appartient."
+},
+"df": {
+	resume: "voir la place restante sur les disques",
+	titre: "Disk Free (place libre)",
+	page:
+"Utilise « df » pour voir le remplissage de chaque disque de la machine.\n\n" +
+"  df\n" +
+"  df -h       en unités lisibles (K, M, G) plutôt qu'en blocs\n\n" +
+"Un disque plein à 100 % est une des pannes les plus fréquentes qui soient."
+},
+"du": {
+	resume: "mesurer le poids d'un lieu ou d'un objet",
+	titre: "Disk Usage (place occupée)",
+	page:
+"Utilise « du » pour savoir ce qui prend de la place.\n\n" +
+"  du LIEU           le poids de chaque sous-lieu, puis le total\n" +
+"  du -s LIEU        seulement le total\n" +
+"  du -a LIEU        en détaillant aussi chaque objet\n" +
+"  du -h LIEU        en unités lisibles\n" +
+"  du * | sort -n    classe tout ce qu'il y a ici, le plus lourd en dernier\n\n" +
+"Dans ce monde, le poids d'un objet est son nombre de caractères."
+},
+"tar": {
+	resume: "ranger des objets dans une archive, ou les en sortir",
+	titre: "Tape ARchive (archive)",
+	page:
+"Utilise « tar » pour regrouper plusieurs objets en un seul, ou pour ouvrir\n" +
+"une archive.\n\n" +
+"  tar -tf ARCHIVE              liste son contenu (t : table)\n" +
+"  tar -xf ARCHIVE              extrait tout, ici (x : extract)\n" +
+"  tar -cf ARCHIVE OBJETS...    crée une archive (c : create)\n" +
+"  tar -xvf ARCHIVE             v : détaille ce qu'il fait\n\n" +
+"Le f veut dire « file » : le nom de l'archive le suit toujours.\n" +
+"Les archives servent aux sauvegardes et aux transferts."
+},
+"crontab": {
+	resume: "voir ou retirer les tâches planifiées",
+	titre: "la table de cron",
+	page:
+"Sous Linux, le démon cron relance des commandes à heures fixes. Chaque\n" +
+"utilisateur a sa liste de tâches, sa crontab.\n\n" +
+"  crontab -l                    affiche ta crontab\n" +
+"  crontab -r                    la retire entièrement\n" +
+"  sudo crontab -u NOM -l        affiche celle d'un autre\n" +
+"  sudo crontab -u NOM -r        retire celle d'un autre\n\n" +
+"Lire une ligne :\n" +
+"  30 7 * * 1   commande\n" +
+"  minute, heure, jour du mois, mois, jour de la semaine. Ici : tous les\n" +
+"  lundis à 7 h 30. Une étoile veut dire « à chaque fois ».\n\n" +
+"Un processus qui renaît sitôt tué ? Cherche qui le relance."
+},
+"hostname": {
+	resume: "connaître le nom de la machine",
+	titre: "le nom d'hôte",
+	page:
+"Utilise « hostname » pour afficher le nom de la machine sur laquelle tu\n" +
+"te trouves. C'est aussi ce qu'indique ton invite, juste après l'arobase :\n" +
+"apprenti@terminus\n\n" +
+"  hostname"
+},
+"ping": {
+	resume: "vérifier qu'une machine répond",
+	titre: "le sonar",
+	page:
+"Utilise « ping » pour envoyer de petits paquets à une machine et écouter\n" +
+"si elle répond, et en combien de temps.\n\n" +
+"  ping MACHINE\n" +
+"  ping -c 2 MACHINE      seulement 2 paquets\n\n" +
+"100 % de paquets perdus : la machine est éteinte, injoignable, ou protégée\n" +
+"par un pare-feu."
+},
+"ssh": {
+	resume: "ouvrir un terminal sur une autre machine",
+	titre: "Secure SHell (terminal à distance)",
+	page:
+"Utilise « ssh » pour te connecter à une autre machine, comme si tu étais\n" +
+"assis devant. Tout ce qui passe par ssh est chiffré.\n\n" +
+"  ssh MACHINE\n" +
+"  ssh NOM@MACHINE     en se présentant sous un autre nom\n" +
+"  exit                referme la connexion et te ramène d'où tu viens\n\n" +
+"Il faut y avoir un compte : ici, les machines où tu es déjà allé."
+},
+"apt": {
+	resume: "installer de nouveaux programmes",
+	titre: "le gestionnaire de paquets",
+	page:
+"Sous Linux, les programmes s'installent depuis des dépôts, sous forme de\n" +
+"paquets. apt est le gestionnaire de paquets de Debian et d'Ubuntu.\n\n" +
+"  apt list                    voir les paquets disponibles\n" +
+"  sudo apt update             mettre à jour la liste des paquets\n" +
+"  sudo apt install PAQUET     installer un paquet\n\n" +
+"Installer modifie le système : il faut donc sudo."
+},
+"cowsay": {
+	resume: "faire parler une vache",
+	titre: "la vache qui dit",
+	page:
+"Indispensable à tout administrateur sérieux.\n\n" +
+"  cowsay Bonjour\n" +
+"  echo $USER | cowsay\n" +
+"  ls | cowsay"
 }
 };

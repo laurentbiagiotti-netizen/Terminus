@@ -8,7 +8,7 @@ var vm = require("vm");
 
 var bavard = process.argv.indexOf("-v") > -1;
 var dossier = path.join(__dirname, "..", "Web", "static", "javascript");
-var fichiers = ["EventTarget.js", "Item.js", "Room.js", "Manuel.js", "Shell.js", "GameObjects.js", "GameState.js"];
+var fichiers = ["EventTarget.js", "Item.js", "Room.js", "Manuel.js", "Shell.js", "SortsAvances.js", "GameObjects.js", "GameState.js"];
 
 function nouveauMonde(stockage){
 	var ecran = [];
@@ -40,7 +40,9 @@ function nouveauMonde(stockage){
 		bac: bac,
 		taper: function(ligne, reponse){
 			ecran.length = 0;
-			if (reponse !== undefined) vm.runInContext("reponses.push(" + JSON.stringify(reponse) + ")", bac);
+			// reponse : ce que le joueur répondra aux questions posées (une chaîne, ou un tableau s'il y en a plusieurs)
+			var liste = reponse === undefined ? [] : [].concat(reponse);
+			vm.runInContext("reponses = " + JSON.stringify(liste), bac);
 			vm.runInContext("Shell.executer(" + JSON.stringify(ligne) + ")", bac);
 			var sortie = ecran.join("\n").replace(/\x1b\[[0-9;]*m/g, "");
 			if (bavard) console.log("\n$ " + ligne + "\n" + sortie);
