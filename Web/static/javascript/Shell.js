@@ -69,6 +69,8 @@ Shell.variable = function(nom){
 
 /* Nom de la machine sur laquelle se trouve le joueur. */
 Shell.hote = function(){
+	var racine = typeof racineDe === "function" ? racineDe(current_room) : null;
+	if (racine) return racine.racineHote;
 	if (typeof Coffre !== "undefined" && joueurDans(Coffre)) return "coffre";
 	if (typeof CampusLille !== "undefined" && joueurDans(CampusLille)) return "lille";
 	if (typeof CampusMarseille !== "undefined" && joueurDans(CampusMarseille)) return "marseille";
@@ -83,7 +85,7 @@ function say(texte){
 }
 
 /* Sorts toujours disponibles : ce sont des commandes du jeu, pas de Linux. */
-var SORTS_DU_JEU = ["quetes", "indice", "chapitre", "xp", "score", "bulletin", "succes", "chrono", "son", "recommencer", "sorts", "aide"];
+var SORTS_DU_JEU = ["quetes", "indice", "chapitre", "xp", "score", "bulletin", "succes", "chrono", "son", "recommencer", "logout", "sorts", "aide"];
 
 /* Vraies commandes Linux absentes de ce monde : on le dit gentiment. */
 var COMMANDES_REELLES = ["vi", "vim", "nano", "emacs", "apt-get", "yum", "dnf", "pacman", "scp",
@@ -308,7 +310,12 @@ Shell.chercher = function(chemin, io, cmd){
 
 Shell.chercherDepuis = function(depart, chemin, io, cmd){
 	if (chemin === "") throw new ShellError((cmd ? cmd + " : " : "") + "chemin vide");
-	if (chemin.charAt(0) === "/"){
+	var racineHote = chemin.charAt(0) === "/" && typeof racineDe === "function" ? racineDe(depart) : null;
+	if (racineHote){
+		// Sur une machine du réseau de l'école, / est la racine de cette machine.
+		depart = racineHote;
+		chemin = chemin.replace(/^\/+/, "") || ".";
+	} else if (chemin.charAt(0) === "/"){
 		throw new ShellError((cmd ? cmd + " : " : "") + "dans ce monde, tous les chemins partent de ta Maison.\n" +
 			"Écris ~ pour la désigner (par exemple ~/ForetOuest) plutôt que de commencer par / .");
 	}
@@ -535,7 +542,7 @@ Shell.sorts.ls = function(args, io){
 
 Shell.sorts.pwd = function(args, io){
 	montrerImage(current_room.room_pic, current_room.room_name);
-	return current_room.path();
+	return Shell.cheminAffiche(current_room);
 };
 
 /* ------------------------------------------------------------------ */
@@ -881,6 +888,10 @@ Shell.sorts.mv = function(args, io){
 			continue;
 		}
 		var item = r.node;
+		if (item.immuable){
+			messages.push("mv : impossible de déplacer « " + item.itemname + " » : Opération non permise" + C.gris("  (attribut immuable : lsattr, puis sudo chattr -i)"));
+			continue;
+		}
 		if (item.protege){
 			messages.push("mv : ce monde tient trop à « " + item.itemname + " » pour le laisser bouger.");
 			continue;
@@ -1012,6 +1023,10 @@ Shell.sorts.rm = function(args, io){
 		}
 		var item = r.node;
 		var parSudo = io.sudo && item.allows("sudo-rm");
+		if (item.immuable){
+			messages.push("rm : impossible de supprimer « " + item.itemname + " » : Opération non permise" + C.gris("  (attribut immuable : lsattr, puis sudo chattr -i)"));
+			continue;
+		}
 		if (item.protege){
 			messages.push("rm : ce monde tient trop à « " + item.itemname + " » pour le laisser disparaître.");
 			continue;
@@ -1097,6 +1112,7 @@ Shell.sorts.cp = function(args, io){
 		// Comme sous Linux, cp remplace le contenu d'un objet existant, si on a le droit d'y écrire.
 		var existant = dest.node, dossier = dest.dir;
 		if (existant === item) throw new ShellError("cp : « " + item.itemname + " » et « " + dest.name + " » sont le même objet");
+		if (existant.immuable) Shell.verifierImmuable(existant, "cp");
 		if (!Shell.bit(existant, "w", io)){
 			throw new ShellError("cp : impossible d'écraser « " + dest.name + " » : Permission non accordée");
 		}
@@ -1235,6 +1251,7 @@ Shell.sorts.chmod = function(args, io){
 			throw new ShellError("chmod : modification des droits de « " + r.node.toString() + " » : Opération non permise\n" +
 				C.gris("(Seul le propriétaire d'une chose peut changer ses droits, et ici c'est " + r.node.owner + ". ls -l te montre qui possède quoi.)"));
 		}
+		if (r.node.immuable) Shell.verifierImmuable(r.node, "chmod");
 		r.node.mode = appliquerMode(r.node.mode, expression, "chmod");
 		GameEvents.fire({ type: "chmod", node: r.node, room: r.dir });
 	}
@@ -1295,7 +1312,7 @@ Shell.sorts.find = function(args, io){
 	var departs = [], i = 0;
 	while (i < args.length && args[i].charAt(0) !== "-"){ departs.push(args[i]); i++; }
 	if (departs.length === 0) departs = ["."];
-	var nom = null, type = null, perm = null, utilisateur = null;
+	var nom = null, type = null, perm = null, utilisateur = null, age = null, plusRecentQue = null;
 	for (; i < args.length; i++){
 		if (args[i] === "-name" || args[i] === "-iname"){
 			if (args[i + 1] === undefined) throw new ShellError("find : " + args[i] + " attend un nom, par exemple : find . -name \"flag*\"");
@@ -1304,6 +1321,16 @@ Shell.sorts.find = function(args, io){
 			i++;
 		} else if (args[i] === "-perm"){
 			perm = lirePerm(args[i + 1]);
+			i++;
+		} else if (args[i] === "-mtime"){
+			var mm = /^([+-]?)(\d+)$/.exec(args[i + 1] || "");
+			if (!mm) throw new ShellError("find : -mtime attend un nombre de jours, par exemple -mtime -1 (modifié il y a moins d'un jour)");
+			age = { signe: mm[1], jours: parseInt(mm[2], 10) };
+			i++;
+		} else if (args[i] === "-newer"){
+			var reference = Shell.chercher(args[i + 1] || "", io, "find");
+			if (!(reference.node instanceof Item)) throw new ShellError("find : -newer attend un objet qui existe");
+			plusRecentQue = reference.node;
 			i++;
 		} else if (args[i] === "-user"){
 			if (args[i + 1] === undefined) throw new ShellError("find : -user attend un nom d'utilisateur, par exemple : find . -user root");
@@ -1314,7 +1341,7 @@ Shell.sorts.find = function(args, io){
 			type = args[i + 1];
 			i++;
 		} else {
-			throw new ShellError("find : critère inconnu « " + args[i] + " ». Ceux qui existent ici : -name NOM, -iname NOM, -type d, -type f, -user NOM, -perm DROITS");
+			throw new ShellError("find : critère inconnu « " + args[i] + " ». Ceux qui existent ici : -name NOM, -iname NOM, -type d, -type f, -user NOM, -perm DROITS, -mtime N, -newer OBJET");
 		}
 	}
 	var lignes = [];
@@ -1323,6 +1350,15 @@ Shell.sorts.find = function(args, io){
 		if (type === "f" && estLieu) return false;
 		if (utilisateur !== null && (!noeud || noeud.owner !== utilisateur)) return false;
 		if (perm !== null && (!noeud || !perm(modeEnNombre(noeud.mode)))) return false;
+		if (age !== null || plusRecentQue !== null){
+			if (!noeud || estLieu) return false;
+			var a = noeud.age === undefined ? 40 : noeud.age;
+			if (age !== null && !(age.signe === "-" ? a < age.jours : (age.signe === "+" ? a > age.jours : a === age.jours))) return false;
+			if (plusRecentQue !== null){
+				var ar = plusRecentQue.age === undefined ? 40 : plusRecentQue.age;
+				if (!(a < ar || (a === ar && (noeud.heure || "09:00") > (plusRecentQue.heure || "09:00")))) return false;
+			}
+		}
 		return nom === null || nom.test(nomNoeud);
 	}
 	function parcourir(lieu, chemin, profondeur){
@@ -1409,7 +1445,7 @@ Shell.sorts.ps = function(args, io){
 		lignes.push(completerGauche(pid, 5) + " " + completerDroite(proprio, 12) + nom);
 	}
 	ligne(1, "root", "init");
-	var procs = current_room.procs.slice().sort(function(a, b){ return a.pid - b.pid; });
+	var procs = Shell.procsDeLHote().map(function(e){ return e.proc; }).sort(function(a, b){ return a.pid - b.pid; });
 	var bashAffiche = false;
 	for (var i = 0; i < procs.length; i++){
 		if (!bashAffiche && procs[i].pid > PID_BASH){ ligne(PID_BASH, JOUEUR, "bash"); bashAffiche = true; }
@@ -1443,7 +1479,9 @@ Shell.sorts.kill = function(args, io){
 			messages.push("Tuer bash, c'est fermer ton propre terminal. Ton grimoire se referme d'un coup sec sur tes doigts, puis se rouvre. Mauvaise idée.");
 			continue;
 		}
-		var proc = current_room.getProc(pid);
+		var trouve = Shell.procsDeLHote().filter(function(e){ return e.proc.pid === pid; })[0];
+		var proc = trouve ? trouve.proc : null;
+		var salle = trouve ? trouve.lieu : current_room;
 		if (proc === null){
 			messages.push("kill : (" + pid + ") : Aucun processus de ce type");
 			continue;
@@ -1462,9 +1500,9 @@ Shell.sorts.kill = function(args, io){
 			messages.push(proc.ignoreText || ("Le processus " + pid + " (" + proc.name + ") reçoit ton signal TERM et l'ignore. Il faudra être moins poli : kill -9."));
 			continue;
 		}
-		current_room.procs.splice(current_room.procs.indexOf(proc), 1);
+		salle.procs.splice(salle.procs.indexOf(proc), 1);
 		messages.push(proc.killText || ("Processus " + pid + " (" + proc.name + ") terminé."));
-		GameEvents.fire({ type: "kill", proc: proc, room: current_room, force: force });
+		GameEvents.fire({ type: "kill", proc: proc, room: salle, force: force });
 	}
 	return messages.join("\n");
 };
@@ -1501,6 +1539,30 @@ Shell.sorts.exit = function(args, io){
 	return "On ne quitte pas Terminus si facilement. Ferme simplement l'onglet : ta partie est sauvegardée, tu la retrouveras en revenant.";
 };
 
+/*
+ * logout : dans une connexion ssh, la ferme (comme exit). Sur la machine de départ, ferme
+ * la session du joueur : sa partie est mise de côté sur cet ordinateur, et le joueur suivant
+ * commence la sienne. En redonnant le même prénom, on retrouve sa partie.
+ */
+Shell.sorts.logout = function(args, io){
+	if (Shell.pile_ssh.length > 0) return Shell.sorts.exit(args, io);
+	if (!io.tty) throw new ShellError("logout : il faut un écran, pas de tuyau.");
+	var qui = PROFIL.prenom || JOUEUR;
+	term.demander("Fermer la session de " + qui + " ? Ta partie sera mise de côté sur cet ordinateur. Tape oui pour confirmer : ", false, function(reponse){
+		if (String(reponse).trim().toLowerCase() !== "oui"){
+			term.echo("La session reste ouverte.");
+			return;
+		}
+		if (!mettreSessionDeCote()){
+			term.echo(C.jaune("Impossible d'enregistrer ta partie sur cet ordinateur (stockage indisponible) : la session reste ouverte."));
+			return;
+		}
+		term.echo("Session fermée. À bientôt, " + qui + " : pour reprendre, redonne simplement ton prénom au démarrage.");
+		window.location.reload();
+	});
+	return "";
+};
+
 Shell.sorts.help = function(args, io){
 	var connus = state.knownSpells();
 	var lignes = [C.gras("Tes sorts (" + connus.length + " sur " + tousLesSorts().length + ") :")];
@@ -1512,7 +1574,7 @@ Shell.sorts.help = function(args, io){
 	lignes.push("Ton journal de quêtes : " + C.vert("quetes") + ". Ton expérience et ta note : " + C.vert("xp") + ". Ton relevé de compétences : " + C.vert("bulletin") + ".");
 	lignes.push("Bloqué ? " + C.vert("indice") + " donne un coup de pouce, de plus en plus précis (les paliers payants coûtent des points sur la note).");
 	lignes.push("Tes succès : " + C.vert("succes") + ". Ton temps de jeu, étape par étape : " + C.vert("chrono") + ". Les chapitres : " + C.vert("chapitre") + ". Le son : " + C.vert("son") + ".");
-	lignes.push("Repartir de zéro : " + C.vert("recommencer") + ".");
+	lignes.push("Laisser la place au joueur suivant (ta partie est gardée) : " + C.vert("logout") + ". Repartir de zéro : " + C.vert("recommencer") + ".");
 	lignes.push(C.gris("Astuces : la touche Tab complète les noms, la flèche du haut rappelle tes derniers sorts."));
 	return lignes.join("\n");
 };
@@ -1621,6 +1683,11 @@ Shell.ouApprendre = function(sort){
 			if (lieu.items[i].teaches.indexOf(sort) === -1) continue;
 			var parent = lieu.parents[0];
 			if (lieu.chapitre === 2 && !state.has("crypteOuverte")) return "Il s'apprend au chapitre 2, sous la Citadelle.";
+			if (lieu === current_room) return lieu.items[i].itemname + " est juste ici et peut te l'apprendre : " +
+				(lieu.items[i].person ? "parle-lui" : "lis-le") + " avec cat " + lieu.items[i].itemname + " (cat est connu dès le départ).";
+			var machine = typeof racineDe === "function" ? racineDe(lieu) : null;
+			if (machine) return "Il s'apprend " + (lieu.items[i].person ? "auprès de " : "en lisant ") + lieu.items[i].itemname +
+				", sur la machine " + machine.racineHote + " (ssh " + machine.racineHote + ")" + (lieu === machine ? "" : ", dans " + Shell.cheminAffiche(lieu)) + ".";
 			return "Il s'apprend " + (lieu.items[i].person ? "auprès de " : "en lisant ") + lieu.items[i].itemname +
 				", dans " + lieu.room_name + (parent && parent !== Home ? " (du côté de " + parent.room_name + ")" : "") + ".";
 		}
@@ -1735,6 +1802,7 @@ Shell.ecrire = function(cible, texte, ajout, sansFin){
 		GameEvents.fire({ type: "write", item: item, room: r.dir, append: ajout, text: texte, created: true, previous: "" });
 		return;
 	}
+	if (r.node.immuable) Shell.verifierImmuable(r.node, "écriture");
 	// Comme sous Linux, c'est le terminal (et non sudo) qui ouvre le fichier : pas de passe-droit ici.
 	if (!Shell.bit(r.node, "w", null)){
 		throw new ShellError("Impossible d'écrire dans « " + r.name + " » : Permission non accordée");
@@ -1922,7 +1990,7 @@ Shell.fin = function(){
 };
 
 Shell.invite = function(){
-	var chemin = current_room.path();
+	var chemin = Shell.cheminAffiche(current_room);
 	var morceaux = chemin.split("/");
 	if (morceaux.length > 3) chemin = "…/" + morceaux.slice(-2).join("/");
 	return C.vert(JOUEUR + "@" + Shell.hote()) + ":" + C.bleu(chemin) + "$ ";

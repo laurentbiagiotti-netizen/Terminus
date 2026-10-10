@@ -126,6 +126,7 @@ Terminal.prototype.inserer = function(texte){
  * enregistrer(texte) est appelé à chaque Ctrl+O (ou en quittant avec O).
  */
 Terminal.prototype.editer = function(options, enregistrer){
+	if (options.mode === "vim") return this.editerVim(options, enregistrer);
 	var self = this;
 	var fond = document.createElement("div");
 	fond.id = "editeur";
@@ -168,6 +169,7 @@ Terminal.prototype.editer = function(options, enregistrer){
 	function fermer(){
 		document.body.removeChild(fond);
 		self.saisie.focus();
+		if (options.quitter) options.quitter({ commandes: {} });
 	}
 	function quitter(){
 		if (!modifie || options.lectureSeule){ fermer(); return; }
@@ -319,9 +321,354 @@ Terminal.prototype.touche = function(e){
 	} else if (e.key === "l" && e.ctrlKey){
 		e.preventDefault();
 		this.effacer();
+	} else if (e.key === "d" && e.ctrlKey && this.saisie.value === "" && !this.question){
+		// Ctrl+D sur une ligne vide : fin de session, comme dans un vrai terminal.
+		e.preventDefault();
+		this.echo(this.texteInvite + "logout");
+		this.onCommande("logout");
+		this.defiler();
 	} else if (e.key === "c" && e.ctrlKey && this.saisie.selectionStart === this.saisie.selectionEnd){
 		e.preventDefault();
 		this.echo(this.texteInvite + this.saisie.value + "^C");
 		this.saisie.value = "";
 	}
+};
+
+/*
+ * Un petit vim : modes normal, insertion, commande (:) et recherche (/).
+ * enregistrer(texte, info) est appelé à chaque :w ; options.quitter(info) à la sortie.
+ * info.commandes note les commandes utilisées (pour les leçons du labo).
+ */
+Terminal.prototype.editerVim = function(options, enregistrer){
+	var self = this;
+	var lignes = options.texte === "" ? [""] : options.texte.replace(/\n$/, "").split("\n");
+	var l = 0, c = 0, mode = "normal", attente = "", nombre = "", ligneCommande = "";
+	var registre = null, annulations = [], modifie = false, derniere = null, message = "";
+	var commandes = {}, enregistre = false;
+
+	var fond = document.createElement("div");
+	fond.id = "editeur";
+	fond.className = "vim";
+	fond.setAttribute("role", "dialog");
+	fond.setAttribute("aria-modal", "true");
+	fond.setAttribute("aria-label", "Éditeur vim");
+	var zone = document.createElement("div");
+	zone.className = "vim-texte";
+	var statut = document.createElement("div");
+	statut.className = "vim-statut";
+	var capture = document.createElement("textarea");
+	capture.className = "vim-capture";
+	capture.setAttribute("autocapitalize", "off");
+	capture.setAttribute("autocorrect", "off");
+	capture.setAttribute("aria-label", "Saisie de vim");
+	capture.spellcheck = false;
+	var pied = document.createElement("div");
+	pied.className = "editeur-pied";
+	[["Échap", function(){ touche("Escape"); }], ["i", function(){ touche("i"); }], ["x", function(){ touche("x"); }], ["dd", function(){ touche("d"); touche("d"); }],
+		["u", function(){ touche("u"); }], [":w", function(){ commandeDirecte("w"); }], [":wq", function(){ commandeDirecte("wq"); }], [":q!", function(){ commandeDirecte("q!"); }]].forEach(function(b){
+		var bouton = document.createElement("button");
+		bouton.type = "button";
+		bouton.textContent = b[0];
+		bouton.addEventListener("mousedown", function(e){ e.preventDefault(); });
+		bouton.addEventListener("click", function(e){ e.preventDefault(); b[1](); dessiner(); capture.focus(); });
+		pied.appendChild(bouton);
+	});
+
+	function note(cmd){ commandes[cmd] = true; }
+	function memoriser(){
+		annulations.push({ lignes: lignes.slice(), l: l, c: c });
+		if (annulations.length > 100) annulations.shift();
+	}
+	function borner(){
+		if (l < 0) l = 0;
+		if (l > lignes.length - 1) l = lignes.length - 1;
+		var max = mode === "insertion" ? lignes[l].length : Math.max(0, lignes[l].length - 1);
+		if (c > max) c = max;
+		if (c < 0) c = 0;
+	}
+	function changer(){ modifie = true; }
+
+	function dessiner(){
+		borner();
+		zone.innerHTML = "";
+		var hauteur = Math.max(lignes.length, 20);
+		for (var i = 0; i < hauteur; i++){
+			var div = document.createElement("div");
+			div.className = "vim-ligne";
+			if (i >= lignes.length){
+				div.textContent = "~";
+				div.classList.add("vim-vide");
+			} else if (i === l){
+				var t = lignes[i];
+				var avant = document.createTextNode(t.substring(0, c));
+				var curseur = document.createElement("span");
+				curseur.className = mode === "insertion" ? "vim-curseur vim-insertion" : "vim-curseur";
+				curseur.textContent = t.charAt(c) || " ";
+				var apres = document.createTextNode(t.substring(c + 1));
+				div.appendChild(avant); div.appendChild(curseur); div.appendChild(apres);
+			} else {
+				div.textContent = lignes[i] === "" ? " " : lignes[i];
+			}
+			zone.appendChild(div);
+		}
+		var gauche = mode === "commande" ? ":" + ligneCommande : (mode === "recherche" ? "/" + ligneCommande :
+			(message || (mode === "insertion" ? "-- INSERTION --" : "")));
+		statut.textContent = "";
+		var g = document.createElement("span"); g.textContent = gauche;
+		var d = document.createElement("span"); d.className = "vim-position";
+		d.textContent = (options.titre || "") + (modifie ? " [+]" : "") + (options.lectureSeule ? " [RO]" : "") + "   " + (l + 1) + "," + (c + 1);
+		statut.appendChild(g); statut.appendChild(d);
+		var courant = zone.children[l];
+		if (courant && courant.scrollIntoView) courant.scrollIntoView({ block: "nearest" });
+	}
+
+	function fermer(){
+		if (fond.parentNode) document.body.removeChild(fond);
+		self.saisie.focus();
+		if (options.quitter) options.quitter({ commandes: commandes, enregistre: enregistre });
+	}
+	function ecrire(){
+		if (options.lectureSeule){ message = "E45: 'readonly' option is set (add ! to override)"; enregistrer(lignes.join("\n"), { commandes: commandes }); return false; }
+		enregistrer(lignes.join("\n"), { commandes: commandes });
+		modifie = false;
+		enregistre = true;
+		message = "\"" + (options.titre || "") + "\" " + lignes.length + "L écrites";
+		return true;
+	}
+	function commandeDirecte(cmd){ ligneCommande = cmd; executerCommande(); }
+	function executerCommande(){
+		var cmd = ligneCommande.trim();
+		mode = "normal";
+		ligneCommande = "";
+		message = "";
+		var m;
+		if (cmd === "w"){ note(":w"); ecrire(); return; }
+		if (cmd === "wq" || cmd === "x"){ note(":wq"); if (ecrire()) fermer(); return; }
+		if (cmd === "q"){
+			note(":q");
+			if (modifie){ message = "E37: No write since last change (add ! to override)"; return; }
+			fermer();
+			return;
+		}
+		if (cmd === "q!"){ note(":q!"); if (modifie) note(":q!modifie"); fermer(); return; }
+		if (/^\d+$/.test(cmd)){ l = parseInt(cmd, 10) - 1; c = 0; note(":N"); return; }
+		if ((m = /^(%?)s\/((?:\\\/|[^\/])*)\/((?:\\\/|[^\/])*)\/?(g?)$/.exec(cmd))){
+			var re;
+			try { re = new RegExp(m[2], m[4] ? "g" : ""); } catch (e){ message = "E486: Pattern not found: " + m[2]; return; }
+			memoriser();
+			var trouve = false;
+			var debut = m[1] ? 0 : l, fin = m[1] ? lignes.length - 1 : l;
+			for (var i = debut; i <= fin; i++){
+				if (re.test(lignes[i])){ trouve = true; re.lastIndex = 0; lignes[i] = lignes[i].replace(re, m[3]); }
+				re.lastIndex = 0;
+			}
+			if (!trouve){ annulations.pop(); message = "E486: Pattern not found: " + m[2]; return; }
+			note(m[1] ? ":%s" : ":s");
+			changer();
+			return;
+		}
+		message = "E492: Not an editor command: " + cmd;
+	}
+	function chercher(sens){
+		if (!derniere) return;
+		var re = new RegExp(derniere.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+		for (var k = 1; k <= lignes.length; k++){
+			var i = ((l + sens * k) % lignes.length + lignes.length) % lignes.length;
+			var position = lignes[i].search(re);
+			if (position > -1){ l = i; c = position; return; }
+		}
+		if (re.test(lignes[l])){ c = lignes[l].search(re); return; }
+		message = "E486: Pattern not found: " + derniere;
+	}
+	function motSuivant(){
+		var t = lignes[l];
+		var i = c;
+		while (i < t.length && /\S/.test(t.charAt(i))) i++;
+		while (i < t.length && /\s/.test(t.charAt(i))) i++;
+		if (i >= t.length && l < lignes.length - 1){ l++; c = 0; return; }
+		c = i;
+	}
+	function finDuMot(t, depuis){
+		var i = depuis;
+		while (i < t.length && /\S/.test(t.charAt(i))) i++;
+		return i;
+	}
+
+	function normal(cle){
+		message = "";
+		if (attente === "r"){
+			attente = "";
+			if (cle.length !== 1 || lignes[l] === "") return;
+			memoriser();
+			lignes[l] = lignes[l].substring(0, c) + cle + lignes[l].substring(c + 1);
+			note("r"); changer();
+			return;
+		}
+		if (/^[1-9]$/.test(cle) || (cle === "0" && nombre !== "")){ nombre += cle; return; }
+		var n = nombre === "" ? 1 : parseInt(nombre, 10);
+		var avecNombre = nombre !== "";
+		nombre = "";
+		var seq = attente + cle;
+		var i;
+		switch (seq){
+			case "h": case "ArrowLeft": c -= n; note("h"); return;
+			case "l": case "ArrowRight": c += n; note("l"); return;
+			case "j": case "ArrowDown": l += n; note("j"); return;
+			case "k": case "ArrowUp": l -= n; note("k"); return;
+			case "0": c = 0; note("0"); return;
+			case "$": c = lignes[l].length; note("$"); return;
+			case "^": c = lignes[l].search(/\S/); note("^"); return;
+			case "w": for (i = 0; i < n; i++) motSuivant(); note("w"); return;
+			case "b":
+				for (i = 0; i < n; i++){
+					if (c === 0 && l > 0){ l--; c = lignes[l].length; }
+					var t = lignes[l], j = Math.max(0, c - 1);
+					while (j > 0 && /\s/.test(t.charAt(j))) j--;
+					while (j > 0 && /\S/.test(t.charAt(j - 1))) j--;
+					c = j;
+				}
+				note("b");
+				return;
+			case "e": c = Math.max(0, finDuMot(lignes[l], c + 1) - 1); note("e"); return;
+			case "G": l = avecNombre ? n - 1 : lignes.length - 1; c = 0; note("G"); return;
+			case "g": attente = "g"; return;
+			case "gg": attente = ""; l = avecNombre ? n - 1 : 0; c = 0; note("gg"); return;
+			case "x":
+				if (lignes[l] === "") return;
+				memoriser();
+				registre = { texte: lignes[l].substring(c, c + n), ligne: false };
+				lignes[l] = lignes[l].substring(0, c) + lignes[l].substring(c + n);
+				note("x"); changer(); return;
+			case "d": case "c": case "y": attente = cle; nombre = avecNombre ? String(n) : ""; return;
+			case "dd":
+				attente = ""; memoriser();
+				registre = { lignes: lignes.splice(l, n), ligne: true };
+				if (lignes.length === 0) lignes = [""];
+				note("dd"); changer(); return;
+			case "yy":
+				attente = ""; registre = { lignes: lignes.slice(l, l + n), ligne: true }; note("yy"); message = n + " ligne(s) copiée(s)"; return;
+			case "dw": case "de": case "cw": case "ce":
+				attente = ""; memoriser();
+				var fin = c;
+				for (i = 0; i < n; i++){
+					fin = finDuMot(lignes[l], fin);
+					if (seq === "dw") while (fin < lignes[l].length && /\s/.test(lignes[l].charAt(fin))) fin++;
+					else if (i < n - 1) while (fin < lignes[l].length && /\s/.test(lignes[l].charAt(fin))) fin++;
+				}
+				registre = { texte: lignes[l].substring(c, fin), ligne: false };
+				lignes[l] = lignes[l].substring(0, c) + lignes[l].substring(fin);
+				note(seq); changer();
+				if (seq.charAt(0) === "c") mode = "insertion";
+				return;
+			case "d$": case "D": case "c$": case "C":
+				attente = ""; memoriser();
+				registre = { texte: lignes[l].substring(c), ligne: false };
+				lignes[l] = lignes[l].substring(0, c);
+				note(seq === "D" || seq === "d$" ? "D" : "C"); changer();
+				if (seq === "c$" || seq === "C") mode = "insertion";
+				return;
+			case "p": case "P":
+				if (!registre) return;
+				memoriser();
+				if (registre.ligne){
+					var position = cle === "p" ? l + 1 : l;
+					Array.prototype.splice.apply(lignes, [position, 0].concat(registre.lignes));
+					l = position; c = 0;
+				} else {
+					var o = cle === "p" && lignes[l] !== "" ? c + 1 : c;
+					lignes[l] = lignes[l].substring(0, o) + registre.texte + lignes[l].substring(o);
+					c = o + registre.texte.length - 1;
+				}
+				note("p"); changer(); return;
+			case "r": attente = "r"; return;
+			case "u":
+				if (!annulations.length){ message = "Already at oldest change"; return; }
+				var etat = annulations.pop();
+				lignes = etat.lignes; l = etat.l; c = etat.c;
+				note("u"); modifie = true; return;
+			case "i": mode = "insertion"; note("i"); memoriser(); return;
+			case "a": mode = "insertion"; c = Math.min(c + 1, lignes[l].length); note("a"); memoriser(); return;
+			case "A": mode = "insertion"; c = lignes[l].length; note("A"); memoriser(); return;
+			case "I": mode = "insertion"; c = Math.max(0, lignes[l].search(/\S/)); note("I"); memoriser(); return;
+			case "o": memoriser(); lignes.splice(l + 1, 0, ""); l++; c = 0; mode = "insertion"; note("o"); changer(); return;
+			case "O": memoriser(); lignes.splice(l, 0, ""); c = 0; mode = "insertion"; note("O"); changer(); return;
+			case ":": mode = "commande"; ligneCommande = ""; return;
+			case "/": mode = "recherche"; ligneCommande = ""; note("/"); return;
+			case "n": chercher(1); note("n"); return;
+			case "N": chercher(-1); note("N"); return;
+			case "Escape": attente = ""; return;
+		}
+		attente = "";
+	}
+
+	function insertion(cle){
+		if (cle === "Escape"){ mode = "normal"; c = Math.max(0, c - 1); return; }
+		if (cle === "Enter"){
+			var reste = lignes[l].substring(c);
+			lignes[l] = lignes[l].substring(0, c);
+			lignes.splice(l + 1, 0, reste);
+			l++; c = 0; changer(); return;
+		}
+		if (cle === "Backspace"){
+			if (c > 0){ lignes[l] = lignes[l].substring(0, c - 1) + lignes[l].substring(c); c--; changer(); }
+			else if (l > 0){ c = lignes[l - 1].length; lignes[l - 1] += lignes[l]; lignes.splice(l, 1); l--; changer(); }
+			return;
+		}
+		if (cle === "ArrowLeft"){ c--; return; }
+		if (cle === "ArrowRight"){ c++; return; }
+		if (cle === "ArrowUp"){ l--; return; }
+		if (cle === "ArrowDown"){ l++; return; }
+		if (cle === "Tab") cle = "\t";
+		if (cle.length !== 1 && cle !== "\t") return;
+		lignes[l] = lignes[l].substring(0, c) + cle + lignes[l].substring(c);
+		c++; changer();
+	}
+
+	function ligneDeCommande(cle){
+		if (cle === "Escape"){ mode = "normal"; ligneCommande = ""; return; }
+		if (cle === "Enter"){
+			if (mode === "recherche"){ mode = "normal"; derniere = ligneCommande; ligneCommande = ""; chercher(1); return; }
+			executerCommande();
+			return;
+		}
+		if (cle === "Backspace"){
+			if (ligneCommande === ""){ mode = "normal"; return; }
+			ligneCommande = ligneCommande.slice(0, -1);
+			return;
+		}
+		if (cle.length === 1) ligneCommande += cle;
+	}
+
+	function touche(cle){
+		if (mode === "insertion") insertion(cle);
+		else if (mode === "commande" || mode === "recherche") ligneDeCommande(cle);
+		else normal(cle);
+	}
+
+	capture.addEventListener("keydown", function(e){
+		if (e.key === "Unidentified" || e.key === "Process") return; // clavier de téléphone : on passe par l'événement input
+		if (e.ctrlKey && e.key.toLowerCase() === "c"){ e.preventDefault(); touche("Escape"); dessiner(); return; }
+		if (e.ctrlKey || e.metaKey) return;
+		if (e.key.length === 1 || ["Escape", "Enter", "Backspace", "Tab", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].indexOf(e.key) > -1){
+			e.preventDefault();
+			touche(e.key);
+			if (fond.parentNode) dessiner();
+		}
+	});
+	capture.addEventListener("input", function(){
+		var texte = capture.value;
+		capture.value = "";
+		for (var i = 0; i < texte.length; i++) touche(texte.charAt(i) === "\n" ? "Enter" : texte.charAt(i));
+		if (fond.parentNode) dessiner();
+	});
+	zone.addEventListener("mousedown", function(e){ e.preventDefault(); capture.focus(); });
+
+	fond.appendChild(zone);
+	fond.appendChild(statut);
+	fond.appendChild(capture);
+	fond.appendChild(pied);
+	document.body.appendChild(fond);
+	message = "\"" + (options.titre || "") + "\" " + lignes.length + "L" + (options.lectureSeule ? " [lecture seule]" : "") + "   (i pour écrire, Échap puis :wq pour enregistrer et quitter)";
+	dessiner();
+	capture.focus();
 };

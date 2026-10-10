@@ -10,8 +10,8 @@
 
 /* Ordre d'affichage dans help. */
 var ORDRE_DES_SORTS = [
-	"ls", "cd", "pwd", "less", "help", "man", "clear", "exit",
-	"mv", "cat", "head", "tail", "wc", "diff", "history",
+	"ls", "cd", "pwd", "cat", "less", "help", "man", "clear", "exit",
+	"mv", "head", "tail", "wc", "diff", "history",
 	"chmod", "rm", "mkdir", "rmdir", "touch", "cp", "bash", "date",
 	"grep", "echo", "export", "env", "alias", "unalias", "ln",
 	"sort", "uniq", "cut",
@@ -21,7 +21,7 @@ var ORDRE_DES_SORTS = [
 ];
 
 /* Sorts connus des le depart. */
-var SORTS_DE_DEPART = ["ls", "cd", "pwd", "less", "help", "man", "clear", "exit"];
+var SORTS_DE_DEPART = ["ls", "cd", "pwd", "cat", "less", "help", "man", "clear", "exit"];
 
 var MANUEL = {
 "ls": {
@@ -95,7 +95,10 @@ var MANUEL = {
 "exit": {
 	resume: "quitter le terminal",
 	titre: "sortir",
-	page: "Sous Linux, « exit » ferme le terminal. Ici, on ne quitte pas Terminus si facilement."
+	page: "Sous Linux, « exit » ferme le terminal. Dans une connexion ssh, exit (ou logout, ou Ctrl+D)\n" +
+"ferme la connexion et te ramène sur la machine d'où tu venais.\n\n" +
+"Pour laisser la place au joueur suivant sur un ordinateur partagé : logout, depuis ta machine de départ.\n" +
+"Ta partie est mise de côté ; tu la retrouves en redonnant ton prénom au démarrage."
 },
 "mv": {
 	resume: "déplacer ou renommer un objet",

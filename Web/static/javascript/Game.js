@@ -10,7 +10,7 @@ var MESSAGE_ACCUEIL =
 	"Regarde autour de toi avec le sort " + C.vert("ls") + ".\n" +
 	"Va dans un autre lieu avec " + C.vert("cd LIEU") + ".\n" +
 	"Reviens sur tes pas avec " + C.vert("cd ..") + ".\n" +
-	"Examine un objet ou parle à quelqu'un avec " + C.vert("less OBJET") + ".\n\n" +
+	"Examine un objet ou parle à quelqu'un avec " + C.vert("cat OBJET") + ". Pour un long texte, " + C.vert("less OBJET") + " le fait défiler page par page.\n\n" +
 	"Si tu ne sais plus où tu es, tape " + C.vert("pwd") + ". Si tu ne sais plus quoi faire, tape " + C.vert("quetes") + ".\n" +
 	"Chaque sort appris, chaque lieu découvert et chaque quête rapportent de l'expérience : tape " + C.vert("xp") + " pour voir ta note.\n\n" +
 	"Vas-y, explore. Nous espérons que ce que tu trouveras te plaira. Commence par taper ls.\n";
@@ -106,6 +106,11 @@ function demanderPrenom(){
 		if (refus){
 			term.echo(C.jaune(refus));
 			demanderPrenom();
+			return;
+		}
+		if (reprendreSession(reponse)){
+			term.echo("\nUne partie à ce prénom était mise de côté sur cet ordinateur. On la reprend...");
+			window.location.reload();
 			return;
 		}
 		var identifiant = adopterPrenom(reponse);

@@ -26,7 +26,10 @@ var sorts = ["ls", "cd", "pwd", "less", "help", "man", "clear", "exit", "mv", "c
 	"chmod", "rm", "mkdir", "rmdir", "touch", "cp", "bash", "date", "grep", "echo", "export", "env", "alias", "unalias", "ln",
 	"sort", "uniq", "cut", "ps", "kill", "top", "whoami", "id", "chown", "find", "tree", "df", "du", "tar", "crontab",
 	"hostname", "ping", "ssh", "apt", "cowsay", "sudo", "quetes", "xp", "sl", "vim", "./remonter.sh", "ll", "", "!!",
-	"sha256sum", "base64", "nano", "ss", "ssh-keygen", "indice", "chapitre", "succes", "chrono", "son", "bulletin", "./.porte"];
+	"sha256sum", "base64", "nano", "ss", "ssh-keygen", "indice", "chapitre", "succes", "chrono", "son", "bulletin", "./.porte",
+	"strings", "file", "xxd", "md5sum", "sha1sum", "stat", "chattr", "lsattr", "gzip", "gunzip", "zcat", "sed", "awk", "tr", "rev", "tee",
+	"which", "uname", "dmesg", "journalctl", "last", "who", "lsof", "pgrep", "pkill", "systemctl", "userdel", "usermod", "groups", "visudo",
+	"ip", "traceroute", "dig", "nmap", "nc", "curl", "ufw", "scp", "ssh-copy-id", "gpg", "vi", "logout"];
 var options = ["-a", "-l", "-la", "-r", "-rf", "-n", "-n 3", "-9", "-s", "-c", "-i", "-v", "-u", "-d:", "-f1", "-f", "-x", "-tf", "-xf", "-cf",
 	"--help", "-", "--", "-z", "-c", "-d", "-tlnp", "-perm -4000", "-perm /u=s", "-perm", "-user root", "2>/dev/null", "2>err", "2>>err", "2>&1", "u-s", "4755", "+t", "-1", "-0", "-99999", "+x", "-x", "755", "000", "u+rwx", "o-r", "a=", "999", "-name", "-type", "d", "f", "-L", "-u sorcier"];
 var noms = [".", "..", "~", "/", "*", "?", ".*", "~/", "../..", "./.", "//", "a/b/c", "~/Village", "Marche", "Boite", "Cage", "Portail",
@@ -36,7 +39,11 @@ var noms = [".", "..", "~", "/", "*", "?", ".*", "~/", "../..", "./.", "//", "a/
 	"citadelle", "apprenti", "root", "sorcier", "66", "404", "1", "1337", "0", "-5", "abc", "é", "$USER", "$PWD", "${HOME}", "$", "$$",
 	"A=b", "ll='ls -l'", "z=", "=x", "\"deux mots\"", "'apostrophe'", "\"", "'", "\\", "[", "(", "a(b", "*.log", "motdepasse=", "vrai_nom",
 	"cowsay", "tree", "install", "update", "list", "<b>", "Crypte", "bin", "Caveau", "Racine", ".ssh", ".ssh/authorized_keys", "SHA256SUMS",
-	"gardien", ".porte", "BoiteDeDepot", "coffre", "~/.ssh/id_ed25519", "~/.ssh/id_ed25519.pub", "Corbeau", "CertificatCyber", "/dev/null", "2", "oui", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"];
+	"gardien", ".porte", "BoiteDeDepot", "coffre", "~/.ssh/id_ed25519", "~/.ssh/id_ed25519.pub", "Corbeau", "CertificatCyber", "/dev/null", "2", "oui",
+	"labo", "web", "mail", "dns", "parefeu", "badgeuse", "imprimante", "poste-47", "/etc/passwd", "/var/log", "/tmp", "/", "/etc/bind/ecole.zone",
+	"10.0.92.0/24", "10.0.92.60", "http://web/", "http://web/robots.txt", "sauvegarde:/preuves/", "web:/tmp", "auth.log.2.gz", "notes.gpg", "maj.php",
+	"'s/a/b/g'", "'/a/,/b/p'", "'2,3p'", "'$3 == 0'", "'{ print $1, $3 }'", "'A-Za-z' 'N-ZA-Mn-za-m'", "-F:", "-i :6666", "-x", "+short", "-I", "-o",
+	"status", "stop", "disable --now", "list-units", "maj-auto", "sshd", "enable", "deny from", "delete 1", "-L", "-U", "corbeau", "maintenance", "-u sshd", "-d", "-c", "-k", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"];
 var liaisons = [" | ", " > ", " >> ", " ; ", " && ", " |", "| ", " || ", ">", " & "];
 
 function ligneAleatoire(){
@@ -79,7 +86,7 @@ for (var i = 0; i < combien; i++){
 		if (jeu.lire("state.xp > state.xpMax()")) plantages.push({ ligne: ligne, erreur: "XP au-dessus du maximum" });
 		if (jeu.lire("state.xp2 > state.xpMax2()")) plantages.push({ ligne: ligne, erreur: "XP du chapitre 2 au-dessus du maximum" });
 	} catch (e){
-		plantages.push({ ligne: ligne, erreur: (e && e.stack ? e.stack.split("\n").slice(0, 4).join("\n") : String(e)) });
+		plantages.push({ ligne: ligne, erreur: String(e && e.message) + "\n" + (e && e.stack ? e.stack.split("\n").slice(0, 6).join("\n") : String(e)) });
 		jeu = nouveauMonde({});
 	}
 }

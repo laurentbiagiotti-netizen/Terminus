@@ -327,8 +327,9 @@ Shell.sorts.hostname = function(args, io){
 
 Shell.sorts.top = function(args, io){
 	var procs = [{ pid: 1, owner: "root", name: "init", cpu: 0.1 }, { pid: PID_BASH, owner: JOUEUR, name: "bash", cpu: 0.3 }];
-	for (var i = 0; i < current_room.procs.length; i++){
-		var p = current_room.procs[i];
+	var visibles = Shell.procsDeLHote().map(function(e){ return e.proc; });
+	for (var i = 0; i < visibles.length; i++){
+		var p = visibles[i];
 		procs.push({ pid: p.pid, owner: p.owner, name: p.name, cpu: p.cpu !== undefined ? p.cpu : 20 + (p.pid % 61) });
 	}
 	procs.push({ pid: 9000 + (state.nbCommandes % 900), owner: io.sudo ? "root" : JOUEUR, name: "top", cpu: 0.7 });
@@ -366,7 +367,7 @@ function tailleLisible(kilo){
 
 Shell.sorts.df = function(args, io){
 	var p = lireOptions(args, "hTk", "df");
-	var disques = DISQUES[Shell.hote()];
+	var disques = DISQUES[Shell.hote()] || [["/dev/sda1", 31457280, 9437184, "/"], ["tmpfs", 1048576, 2048, "/tmp"]];
 	var lignes = [completerDroite("Sys. de fichiers", 18) + completerGauche(p.opts.h ? "Taille" : "blocs de 1K", 12) +
 		completerGauche("Utilisé", 11) + completerGauche("Dispo", 11) + completerGauche("Uti%", 6) + " Monté sur"];
 	for (var i = 0; i < disques.length; i++){
@@ -448,6 +449,7 @@ Shell.sorts.chown = function(args, io){
 		if (r.node instanceof Item && r.node.person){
 			throw new ShellError("chown : on ne devient pas propriétaire des gens. " + r.node.itemname + " te regarde d'un drôle d'air.");
 		}
+		if (r.node.immuable) Shell.verifierImmuable(r.node, "chown");
 		r.node.owner = nom;
 		// Un objet du monde qu'on s'approprie ne devient pas pour autant supprimable.
 		if (r.node.id) r.node.acquis = true;

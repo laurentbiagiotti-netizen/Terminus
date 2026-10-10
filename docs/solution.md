@@ -20,6 +20,10 @@ Chaque partie est différente. Au premier lancement, le jeu tire une graine au h
 | `<adresse>` | dernière ligne du tuyau sur `auth.log` dans la WarRoom |
 | `<sweats>` | `grep -c sweat Inventaire` au BDE |
 | `<pid:nom>` | colonne PID de `ps`, sur la ligne du processus `nom` |
+| `<pid-ecoute>` | chapitre 2 : `sudo ss -tlnp` dans la Racine, PID du processus qui écoute sur le port 6666 |
+| `<poste>` | chapitre 2 : `who` sur le labo, adresse d'où vient la session du Corbeau |
+
+Au chapitre 2, l'heure de la première connexion du Corbeau, la phrase de passe de ses notes et l'adresse de son poste changent aussi d'une partie à l'autre.
 
 Recopier la solution du voisin ne marche donc pas : il faut refaire chaque recherche. Le diplôme final porte un code de vérification qui résume la partie (prénom, score, note, temps, indices utilisés). La page de classement le décode, refuse les codes retouchés ou incohérents et signale un même code envoyé par deux personnes. Ce code reste indicatif : le jeu tourne dans le navigateur et son code est public.
 
@@ -36,6 +40,15 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
   6. [Le combat final](#6-le-combat-final)
   - [Pour aller chercher 20 sur 20](#pour-aller-chercher-20-sur-20)
 - [Chapitre 2 : la Crypte](#chapitre-2--la-crypte-la-mission-cyber)
+  7. [La Crypte](#7-la-crypte)
+  8. [Les journaux de la Citadelle](#8-les-journaux-de-la-citadelle)
+  9. [Le réseau de l'école et le labo de TP](#9-le-réseau-de-lécole-et-le-labo-de-tp)
+  10. [Les leçons de vim](#10-les-leçons-de-vim)
+  11. [Le site web, la messagerie, le DNS, le pare-feu](#11-le-site-web-la-messagerie-le-dns-le-pare-feu)
+  12. [L'imprimante et la badgeuse](#12-limprimante-et-la-badgeuse)
+  13. [Les comptes de la Citadelle](#13-les-comptes-de-la-citadelle)
+  14. [Les preuves et les notes chiffrées](#14-les-preuves-et-les-notes-chiffrées)
+  15. [Le Corbeau et le rapport d'incident](#15-le-corbeau-et-le-rapport-dincident)
 
 ## Le barème
 
@@ -43,11 +56,11 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
 | --- | --- |
 | Étape de la quête principale (13) | 100 chacune, 300 pour la victoire finale |
 | Quête secondaire (28, dont 2 secrètes) | 50 |
-| Sort appris (44, les 8 premiers sont connus au départ) | 10 |
+| Sort appris (44, les 9 premiers sont connus au départ, dont cat) | 10 |
 | Première utilisation d'un sort (52) | 5 |
 | Lieu découvert (44) | 5 |
 
-Le total possible est de 3820 XP au chapitre 1. Le chapitre 2 a son propre barème, sur le même principe : 1455 XP, notés sur 20 à part. La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
+Le total possible est de 3810 XP au chapitre 1. Le chapitre 2 a son propre barème, sur le même principe : 5030 XP (22 étapes, 34 quêtes secondaires dont 14 autour de vim, 46 sorts, 55 lieux), notés sur 20 à part. La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
 
 Ordres de grandeur : un parcours réduit au strict nécessaire (une quarantaine de commandes, impossible sans connaître la solution) donne 10 sur 20. La solution ci-dessous, dernier chapitre compris, donne 20 sur 20. Les derniers points se gagnent en visitant chaque lieu et en lançant chaque sort au moins une fois : `xp` liste ceux qui n'ont jamais servi.
 
@@ -374,15 +387,19 @@ xp
 bulletin
 ```
 
-À ce stade le compteur affiche 3820 XP sur 3820, niveau 10 (Root), 20 sur 20, félicitations du jury, et les six blocs du bulletin sont acquis.
+À ce stade le compteur affiche 3810 XP sur 3810, niveau 10 (Root), 20 sur 20, félicitations du jury, et les six blocs du bulletin sont acquis.
 
 ## Chapitre 2 : la Crypte (la mission cyber)
 
-Notions : empreintes (`sha256sum`, `sha256sum -c`), encodage (`base64`, `base64 -d`), bit SUID (`ls -l`, `find -perm -4000`, `chmod u-s`), sortie d'erreur (`2>`, `2>/dev/null`), ports en écoute (`ss -tlnp`), édition de fichiers (`nano`), clés SSH (`ssh-keygen`, clé publique et clé privée, `authorized_keys`).
+Notions : empreintes (`sha256sum`, `sha256sum -c`), encodage (`base64`, `base64 -d`), bit SUID (`ls -l`, `find -perm -4000`, `chmod u-s`), sortie d'erreur (`2>`, `2>/dev/null`), ports en écoute (`ss -tlnp`), édition de fichiers (`nano`), clés SSH (`ssh-keygen`, clé publique et clé privée, `authorized_keys`). Puis, sur tout le réseau de l'école : journaux compressés (`zcat`, `journalctl`, `last`, `who`), cartographie (`ip`, `nmap`, `nc`, `dig`, `traceroute`), processus et services (`pgrep`, `pkill`, `lsof`, `systemctl`), attribut immuable (`lsattr`, `chattr`), filtres de texte (`sed`, `awk`, `tr`, `rev`, `tee`), comptes et droits (`userdel`, `usermod`, `groups`, `visudo`), pare-feu (`ufw`), copie de preuves (`ssh-copy-id`, `scp`, `md5sum`, `sha1sum`), analyse de fichiers (`file`, `xxd`, `strings`, `stat`), chiffrement (`gpg`) et l'éditeur des serveurs, `vim`, avec ses leçons.
+
+L'enquête suit 22 étapes : la Crypte (7 étapes, comme avant), les journaux de la Citadelle, la cartographie du réseau, le labo de TP (session et service), le site web, la messagerie, le DNS, le pare-feu, les comptes et sudo, la clé, le coffre, les preuves, les notes chiffrées, le Corbeau, puis le rapport d'incident rédigé dans vim. La radio de Grace annonce toujours l'étape suivante.
 
 Le chapitre s'ouvre après la victoire : Laurent ajoute un P.S. et une trappe apparaît dans la Citadelle. Il a sa propre note sur 20 et son propre certificat, avec un code de vérification. Un groupe qui ne fait que ce chapitre (une séance de trois heures sur la sécurité) choisit la mission cyber au démarrage, juste après le prénom (ou tape `chapitre 2` avant d'avoir franchi la première étape). Dans l'histoire, le joueur reçoit un ordre de mission de la WarRoom : les B1 ont battu le Sorcier Noir le matin même, mais un intrus bien réel est entré pendant la correction. Il commence dans la WarRoom, où Grace fait le briefing (`less CheffeDeQuart`), monte à la Citadelle avec `ssh citadelle`, et Laurent l'y accueille avant de lui ouvrir la Crypte. Le chapitre 1 est rejoué en silence et n'est pas noté pour lui. Une fois le chapitre 1 entamé, la mission cyber n'est plus proposée : il faut battre le Sorcier Noir, ou recommencer une partie.
 
 Au chapitre 2, chaque notion est un verrou : la `.porte` n'apparaît dans le Caveau qu'une fois le programme trafiqué repéré avec `sha256sum -c` et le message décodé avec `base64 -d`, et elle ne s'ouvre qu'à qui l'a trouvée avec `find -perm -4000`.
+
+### 7. La Crypte
 
 L'intégrité et le message caché :
 
@@ -423,6 +440,7 @@ less ../../Radio
 ss -tlnp
 sudo ss -tlnp
 sudo kill -9 <pid-ecoute>
+less FicheReflexe
 sudo cat .ssh/authorized_keys
 sudo nano .ssh/authorized_keys
 cd ..
@@ -434,7 +452,16 @@ Sept processus s'appellent `[kworker/...]` : `ps` ne dit pas lequel est le bon, 
 
 Dans `nano`, on place le curseur sur la ligne qui finit par `corbeau@nid`, Ctrl+K pour la couper, Ctrl+X puis O pour enregistrer. Un joueur qui retire aussi la clé de Laurent est prévenu par la radio : la copie `authorized_keys.orig` permet de réparer (`sudo cp`).
 
-Le coffre et le Corbeau :
+Le Graffiti du Caveau est écrit à l'envers, et la porte dérobée garde dans ses octets une phrase en ROT13 qui servira plus tard :
+
+```
+less Graffiti
+rev Graffiti
+xxd .porte | head -n 2
+strings .porte | grep phrase
+```
+
+L'accès au coffre (le Corbeau ne s'y montrera qu'à la toute fin) :
 
 ```
 cd ~/Cybersup/SalleServeurs
@@ -445,10 +472,254 @@ cp ~/.ssh/id_ed25519.pub BoiteDeDepot
 cd BoiteDeDepot
 cd ..
 ssh coffre
-less Corbeau
-cat CertificatCyber
+exit
 ```
 
 `ssh-keygen` demande deux fois une phrase de passe (le test répond la même chose deux fois ; une phrase non vide rapporte une quête secondaire). Déposer la clé privée (`id_ed25519`) au lieu de la publique est le piège pédagogique du chapitre : Evi la détruit, la paire est grillée, et il faut en refaire une.
 
-À ce stade le chapitre 2 affiche 1455 XP sur 1455, soit 20 sur 20.
+### 8. Les journaux de la Citadelle
+
+Une fois l'écoute coupée, la Citadelle montre ses dossiers système : `etc`, `var/log` et `tmp`. Les journaux de la veille sont compressés : `zcat` les lit sans les décompresser. La ligne `Accepted` donne l'heure de la première connexion du Corbeau (à noter pour le rapport) et l'adresse d'où il venait : le labo de TP.
+
+```
+ssh citadelle
+cd var
+cd log
+less CarnetDuVeilleur
+ls -l
+cat auth.log
+zcat auth.log.1.gz
+zcat auth.log.2.gz | grep Accepted
+sudo journalctl -u sshd
+last
+echo brouillon > ~/essai.txt
+gzip ~/essai.txt
+gunzip ~/essai.txt.gz
+exit
+```
+
+### 9. Le réseau de l'école et le labo de TP
+
+Le MementoReseau de Vint apparaît dans la SalleReseau. `nmap` sur le réseau de l'école fait connaître toutes les machines : on peut ensuite s'y connecter par leur nom.
+
+```
+cd ~/Cybersup/SalleReseau
+less MementoReseau
+ip a
+ip r
+uname -a
+which nmap
+nmap 10.0.92.0/24
+ssh labo
+uname -a
+less TableauDuLabo
+who
+last
+pgrep -l -u corbeau
+sudo lsof -p <pid:maj-auto>
+sudo pkill -u corbeau
+who
+sudo systemctl list-units
+sudo systemctl status maj-auto
+sudo systemctl disable --now maj-auto
+groups corbeau
+sudo usermod -L corbeau
+cd etc
+cat passwd
+cd ../var
+cd log
+cat syslog
+cd /tmp
+ls -l
+file vacances.jpg
+zcat vacances.jpg
+```
+
+`who` montre la session du Corbeau, ouverte depuis la nuit, et l'adresse de son poste (le repère `<poste>`). `pkill -u corbeau` coupe tous ses processus, mais le service `maj-auto` revient tout seul (`Restart=always`) : il faut `systemctl disable --now`, qui l'arrête et l'empêche de redémarrer. La « photo de vacances » est en réalité une archive gzip : `file` le dit, `zcat` la lit.
+
+### 10. Les leçons de vim
+
+Sur le labo, le dossier `/home/etudiant/vimtuteur` contient cinq leçons inspirées du tutoriel officiel de vim. Chacune est une quête secondaire ; chaque leçon se fait en ouvrant le fichier avec `vim`, en suivant la consigne écrite dedans, puis en enregistrant avec `:wq`.
+
+```
+cd /home
+cd etudiant
+cd vimtuteur
+less TuteurVim
+vim lecon1.txt
+vim lecon2.txt
+vim lecon3.txt
+vim lecon4.txt
+vim lecon5.txt
+vim brouillon.txt
+exit
+```
+
+Les touches, leçon par leçon :
+
+| Leçon | Ce qu'on fait dans vim |
+| --- | --- |
+| 1 | `j` pour descendre jusqu'à la ligne `--->`, `l` pour avancer, `x` sur chaque lettre en trop (vvache, saauta, paar, luune), puis `:wq` |
+| 2 | sur la première ligne `--->`, se placer sur « dans », `i`, taper « mots » et une espace, Échap ; sur la deuxième, `A`, taper « de nulle part. », Échap ; `:wq` |
+| 3 | sur le deuxième « le » puis sur le deuxième « protège », `dw` ; sur la ligne « Cette ligne ne sert à rien », `dd` ; `u` annule, `dd` refait ; `:wq` |
+| 4 | sur la ligne « 2) deuxième », `dd`, puis `p` sur la ligne « 1) première » ; sur le « o » d'attoque, `ra` ; sur « ouvert », `cw`, taper « fermé », Échap ; `:wq` |
+| 5 | `/erreur` puis `n` pour voir les suivantes ; `:%s/erreur/succès/g` ; `G` pour la dernière ligne, remplacer « ? Remplace ce point d'interrogation par un point. » par « . » (par exemple avec `x` et `D`, ou `cw`) ; `:wq` |
+| brouillon.txt | `i`, taper n'importe quoi, Échap, puis `:q!` : on sort sans rien enregistrer |
+
+Sortir de vim pour la première fois rapporte aussi une quête secondaire. Sur téléphone, les boutons en bas de l'éditeur envoient Échap, `i`, `x`, `dd`, `u`, `:w`, `:wq` et `:q!`.
+
+### 11. Le site web, la messagerie, le DNS, le pare-feu
+
+```
+ssh web
+uname -a
+less LISEZMOI
+curl http://web/
+curl -I http://web/
+curl http://web/robots.txt
+cd /var
+cd log
+cat access.log
+find /var/www -mtime -1
+cd ../www
+cat index.html
+cd uploads
+stat maj.php
+sudo rm maj.php
+lsattr
+sudo chattr -i maj.php
+sudo rm maj.php
+cd /etc
+cat httpd.conf
+exit
+ssh mail
+uname -a
+less AideMemoireMail
+nc mail 25
+cd /var
+cd log
+awk '{ print $1, $4 }' mail.log
+cd ../spool
+sed -n '/^--- pièce jointe/,/^--- fin/p' message-0042.eml | grep -v '^---' | base64 -d
+cd /etc
+exit
+ssh dns
+less NotesDNS
+dig maj.cybersup.lan
+dig -x <poste>
+cd etc
+cd bind
+sudo vim ecole.zone
+dig +short maj.cybersup.lan
+exit
+ssh parefeu
+less ConsignesParefeu
+traceroute web
+sudo ufw status numbered
+sudo ufw deny from <poste>
+sudo ufw enable
+sudo ufw status numbered
+cd etc
+cd ../var
+cd log
+cat ufw.log
+exit
+```
+
+La page piégée du site a l'attribut immuable : même root ne peut pas la supprimer avant `chattr -i`. La pièce jointe du mail est encodée en base64 entre deux lignes repères : `sed -n '/début/,/fin/p'` garde l'intervalle, `grep -v` retire les repères. Dans `vim ecole.zone`, on descend sur la ligne qui commence par `maj` (par exemple `/maj` puis Entrée), `dd`, puis `:wq`.
+
+### 12. L'imprimante et la badgeuse
+
+```
+ssh imprimante
+nc imprimante 9100
+cd spool
+cat job-017.txt
+exit
+ssh badgeuse
+less NoteDuGardien
+cd journaux
+awk '$3 == "B-047" && $2 < "06:00"' badges.log
+exit
+```
+
+### 13. Les comptes de la Citadelle
+
+```
+ssh citadelle
+cd etc
+less ProcedureComptes
+awk -F: '$3 == 0 { print $1 }' passwd
+sudo userdel maintenance
+groups corbeau
+sudo cat sudoers
+sudo visudo
+sudo cat sudoers
+exit
+```
+
+`visudo` ouvre vim (ou nano pour qui ne connaît pas encore vim). On se place sur la ligne qui commence par `corbeau`, `dd`, puis `:wq`. `visudo` vérifie la syntaxe avant d'enregistrer : une ligne cassée est refusée.
+
+### 14. Les preuves et les notes chiffrées
+
+La ProcedurePreuves apparaît dans la SalleServeurs. La preuve est le fichier que le faux kworker gardait ouvert : `/tmp/.cache/notes.gpg` sur la Citadelle. On la copie sur la sauvegarde avant d'y toucher, et on note son empreinte au registre.
+
+```
+cd ~/Cybersup/SalleServeurs
+less ProcedurePreuves
+ssh-copy-id sauvegarde
+ssh citadelle
+cd tmp
+cd .cache
+ls -l
+md5sum notes.gpg
+sha1sum notes.gpg
+sha256sum notes.gpg
+scp notes.gpg sauvegarde:/preuves/
+exit
+ssh sauvegarde
+cd preuves
+sha256sum notes.gpg | tee -a registre.txt
+cd ../archives
+ls -l
+exit
+ssh citadelle
+cd Crypte
+cd Caveau
+strings .porte | grep phrase | cut -d= -f3 | tr 'A-Za-z' 'N-ZA-Mn-za-m'
+cd ../..
+cd tmp
+cd .cache
+gpg -d notes.gpg
+exit
+echo mes notes > ~/secret.txt
+gpg -c ~/secret.txt
+```
+
+`gpg -d` demande la phrase de passe : c'est le résultat du tuyau sur `strings` (ROT13 défait par `tr`). Le carnet du Corbeau résume toute l'intrusion et donne rendez-vous au coffre. Le Corbeau ne s'y montre qu'une fois toutes les étapes précédentes faites ; sinon, Grace dit à la radio ce qu'il reste.
+
+### 15. Le Corbeau et le rapport d'incident
+
+```
+ssh coffre
+less Corbeau
+exit
+ssh poste-47
+uname -a
+sudo dmesg
+cd home
+cd stagiaire
+cat a-faire.txt
+cd /tmp
+cat rapport-pour-laurent.txt
+exit
+cd ~
+less ModeleRapport
+cp ModeleRapport rapport.txt
+vim rapport.txt
+cat CertificatCyber
+```
+
+Dans `vim rapport.txt`, pour chacune des quatre lignes à compléter : s'y placer (`j`), `A`, taper la réponse, Échap. Puis `:wq`. Les réponses : l'adresse du poste (vue avec `who` sur le labo, ou dans les notes du Corbeau), le compte caché (`maintenance`), le port de la porte dérobée (6666) et l'heure de la première connexion (ligne `Accepted` de `auth.log.2.gz`). Si une réponse manque, le rapport n'est pas accepté. Le rapport écrit avec un autre éditeur est refusé : Laurent veut vim.
+
+À ce stade le chapitre 2 affiche 5030 XP sur 5030, soit 20 sur 20, et le CertificatCyber porte son code de vérification.

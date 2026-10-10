@@ -23,7 +23,7 @@ python3 -m http.server 8000
 
 Le jeu est alors disponible sur `http://localhost:8000`.
 
-Au premier lancement, le jeu demande ton prénom : il devient ton identifiant sur le système (`whoami`, l'invite, les propriétaires des fichiers, le diplôme). Il propose ensuite deux convocations : l'épreuve de première année (chapitre 1, pour découvrir le terminal), ou la mission cyber (chapitre 2 directement, pour qui connaît déjà les bases : on arrive en renfort après l'épreuve des B1). La partie est sauvegardée automatiquement dans le navigateur. La commande `recommencer` repart de zéro, avec une nouvelle partie.
+Au premier lancement, le jeu demande ton prénom : il devient ton identifiant sur le système (`whoami`, l'invite, les propriétaires des fichiers, le diplôme). Il propose ensuite deux convocations : l'épreuve de première année (chapitre 1, pour découvrir le terminal), ou la mission cyber (chapitre 2 directement, pour qui connaît déjà les bases : on arrive en renfort après l'épreuve des B1). La partie est sauvegardée automatiquement dans le navigateur. Sur un ordinateur partagé, `logout` (ou Ctrl+D) ferme la session : la partie est mise de côté, le joueur suivant commence la sienne, et on retrouve la sienne en redonnant son prénom. La commande `recommencer` repart de zéro, avec une nouvelle partie.
 
 ## Ce que cette édition ajoute
 
@@ -57,7 +57,16 @@ Au premier lancement, le jeu demande ton prénom : il devient ton identifiant su
 | Sortie d'erreur | `2>` `2>>` `2>&1` `/dev/null` | le Caveau (chapitre 2) |
 | Ports en écoute | `ss -tlnp` | la Racine (chapitre 2) |
 | Éditer un fichier | `nano` (Ctrl+O, Ctrl+X, Ctrl+K) | la Racine (chapitre 2) |
-| Clés SSH | `ssh-keygen`, clé publique et clé privée, `authorized_keys` | la SalleServeurs (chapitre 2) |
+| Clés SSH | `ssh-keygen`, clé publique et clé privée, `authorized_keys`, `ssh-copy-id` | la SalleServeurs (chapitre 2) |
+| Journaux et sessions | `zcat` `gzip` `gunzip` `journalctl` `last` `who` | la Citadelle, le labo (chapitre 2) |
+| Cartographie du réseau | `ip` `nmap` `nc` `dig` `traceroute` `uname` `which` `dmesg` | le réseau de l'école (chapitre 2) |
+| Processus et services | `pgrep` `pkill` `lsof` `systemctl` | le labo (chapitre 2) |
+| Fichiers suspects | `file` `xxd` `strings` `stat` `lsattr` `chattr` `curl` | le serveur web, la Racine (chapitre 2) |
+| Filtres de texte | `sed` `awk` `tr` `rev` `tee` | la messagerie, la badgeuse (chapitre 2) |
+| Comptes et droits | `userdel` `usermod` `groups` `visudo` | la Citadelle, le labo (chapitre 2) |
+| Pare-feu | `ufw` | le pare-feu (chapitre 2) |
+| Preuves et chiffrement | `scp` `md5sum` `sha1sum` `gpg` | la sauvegarde (chapitre 2) |
+| L'éditeur des serveurs | `vim` : modes, `x` `i` `A` `dw` `dd` `u` `p` `r` `cw` `/` `:%s` `G` `:wq` `:q!`, cinq leçons inspirées de vimtutor | le labo (chapitre 2) |
 
 **Un terminal plus proche d'un vrai** : invite `apprenti@terminus:~/Chemin$` qui change de machine avec `ssh`, chemins relatifs et depuis `~`, `cd -`, complétion avec Tab, historique avec les flèches, guillemets et apostrophes, variables, enchaînements `;` et `&&`, messages d'erreur à la manière de Linux, indices quand une majuscule manque.
 
@@ -67,13 +76,13 @@ Au premier lancement, le jeu demande ton prénom : il devient ton identifiant su
 
 **L'école dans le jeu** : le campus de Puteaux (accueil, feuille d'émargement, carte étudiante, tableau d'affichage, BDE et sa boutique, war room avec ses voyants et son écran mural qui suit la progression du joueur), les campus de Lille et de Marseille accessibles uniquement par `ssh`, une enquête d'analyste dans les journaux de connexion, le CTF de l'école. Après la victoire, les habitants de Terminus tombent le masque : ce sont d'anciens élèves et des intervenants. Hormis Laurent, tous les personnages sont inventés.
 
-**De l'expérience et une note** : chaque sort appris, chaque sort utilisé pour la première fois, chaque lieu découvert et chaque quête rapportent des XP (3820 au total au chapitre 1). Dix niveaux calqués sur le cursus (Candidat, Admis, B1, B2, B3, M1, M2, Alternant confirmé, Diplômé, Root), une barre de progression toujours visible, et une note sur 20 avec mention sur le diplôme final. La commande `xp` détaille d'où viennent les points et ce qu'il reste à gagner.
+**De l'expérience et une note** : chaque sort appris, chaque sort utilisé pour la première fois, chaque lieu découvert et chaque quête rapportent des XP (3810 au total au chapitre 1). Dix niveaux calqués sur le cursus (Candidat, Admis, B1, B2, B3, M1, M2, Alternant confirmé, Diplômé, Root), une barre de progression toujours visible, et une note sur 20 avec mention sur le diplôme final. La commande `xp` détaille d'où viennent les points et ce qu'il reste à gagner.
 
 **Un bulletin** (`bulletin`) : les 52 sorts regroupés en six blocs de compétences, BC 01 à BC 06, chacun noté sur 20 et marqué « acquis » quand tous ses sorts ont été appris puis utilisés. Le relevé figure sur le diplôme.
 
-**Un journal de quêtes** (`quetes`) avec 13 étapes principales et 28 quêtes secondaires au chapitre 1, 9 étapes et 5 quêtes secondaires au chapitre 2.
+**Un journal de quêtes** (`quetes`) avec 13 étapes principales et 28 quêtes secondaires au chapitre 1, 22 étapes et 34 quêtes secondaires (dont 14 autour de vim) au chapitre 2.
 
-**Un deuxième chapitre, la Crypte** : après la victoire, une trappe s'ouvre sous la Citadelle. Quelqu'un est vraiment entré pendant l'examen : un programme trafiqué, un message caché en base64, une porte dérobée SUID, un faux processus noyau qui écoute sur un port, une clé SSH de trop dans les clés autorisées de root. Le chapitre se termine dans le coffre de l'école, où l'intrus attend. Il a sa propre note sur 20 et son propre certificat.
+**Un deuxième chapitre, la Crypte** : après la victoire, une trappe s'ouvre sous la Citadelle. Quelqu'un est vraiment entré pendant l'examen : un programme trafiqué, un message caché en base64, une porte dérobée SUID, un faux processus noyau qui écoute sur un port, une clé SSH de trop dans les clés autorisées de root. L'enquête remonte ensuite le réseau de l'école par `ssh`, de machine en machine, chacune avec sa vraie arborescence Linux (`/etc`, `/var/log`, `/tmp`, `/home`) : le labo de TP par où l'intrus est entré, le serveur web et sa page piégée, la messagerie et son mail piégé, le DNS falsifié, le pare-feu à réactiver, la sauvegarde où mettre les preuves à l'abri, et même l'imprimante et la badgeuse. On démasque l'intrus dans le coffre de l'école, puis on rédige le rapport d'incident dans `vim`. Le chapitre compte 46 sorts, 55 lieux et 22 étapes, avec sa propre note sur 20 et son propre certificat.
 
 **Des parties toutes différentes** : une graine tirée au premier lancement fixe le mot de passe sudo, l'adresse de l'attaquant, le meilleur client de la taverne, le nombre de sweats du BDE et les numéros de processus. Recopier la solution du voisin ne marche pas.
 
@@ -85,7 +94,7 @@ Au premier lancement, le jeu demande ton prénom : il devient ton identifiant su
 
 Le déroulé complet, avec la solution de chaque étape et le barème, se trouve dans [docs/solution.md](docs/solution.md).
 
-Repères pour la notation : finir la quête principale au plus court donne 10 sur 20 ; la solution complète donne 20 sur 20. Le diplôme final (`cat Diplome` dans la Citadelle) et le certificat du chapitre 2 (`cat CertificatCyber` dans le coffre) affichent le prénom du joueur, son score, sa note, sa mention, son temps de jeu, les indices payants utilisés, et un **code de vérification**. Ce code résume la partie et porte une somme de contrôle : une page de classement le décode, repère un code retouché et classe la promo, chapitre par chapitre.
+Repères pour la notation : finir la quête principale au plus court donne 10 sur 20 ; la solution complète donne 20 sur 20. Le diplôme final (`cat Diplome` dans la Citadelle) et le certificat du chapitre 2 (`cat CertificatCyber` dans la Maison, après le rapport d'incident) affichent le prénom du joueur, son score, sa note, sa mention, son temps de jeu, les indices payants utilisés, et un **code de vérification**. Ce code résume la partie et porte une somme de contrôle : une page de classement le décode, repère un code retouché et classe la promo, chapitre par chapitre.
 
 **Séances séparées** : pour une séance de trois heures consacrée à la sécurité, les étudiants choisissent la mission cyber au démarrage (ou tapent `chapitre 2` avant d'avoir franchi la première étape). Dans l'histoire, ils reçoivent un ordre de mission : les B1 ont battu le Sorcier Noir le matin même, un intrus bien réel est entré pendant la correction, et Grace les attend à la WarRoom pour le briefing avant de les envoyer à la Citadelle par `ssh`. Le chapitre 1 n'est pas noté pour eux.
 
@@ -104,6 +113,8 @@ Le code est du JavaScript sans dépendance ni étape de construction.
 | `Web/static/javascript/SortsAvances.js` | variables, alias, liens, scripts, archives, réseau, système, paquets |
 | `Web/static/javascript/Manuel.js` | les pages de `man` et l'ordre des sorts |
 | `Web/static/javascript/Chapitre2.js` | le chapitre 2 : SHA-256, base64, `nano`, `ss`, `ssh-keygen`, la Crypte et le coffre, le saut de chapitre |
+| `Web/static/javascript/CommandesCyber.js` | les commandes du réseau et de l'analyse (sed, awk, nmap, systemctl, gpg...) et l'éditeur `vim` côté shell |
+| `Web/static/javascript/Reseau.js` | les machines du réseau de l'école, les quêtes et les leçons de vim du chapitre 2 |
 | `Web/static/javascript/Partie.js` | le prénom, la graine de la partie et le code de vérification du diplôme |
 | `Web/static/javascript/GameState.js` | événements de l'histoire, quêtes, expérience et barème, indices, succès, chrono, sauvegarde |
 | `Web/static/javascript/Terminal.js` | l'affichage et la saisie |

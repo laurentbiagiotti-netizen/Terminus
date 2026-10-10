@@ -209,6 +209,38 @@ html, body{
 }
 .editeur-pied button[hidden]{ display: none; }
 
+/* vim */
+#editeur.vim .vim-texte{
+    flex: 1 1 auto;
+    overflow: auto;
+    padding: 8px 16px;
+    white-space: pre;
+    color: #ffffff;
+}
+.vim-ligne{ min-height: 1.45em; }
+.vim-vide{ color: var(--bleu); }
+.vim-curseur{ background: var(--texte); color: #000000; }
+.vim-curseur.vim-insertion{ background: transparent; color: #ffffff; box-shadow: inset 2px 0 0 var(--vert-clair); }
+.vim-statut{
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 2px 16px;
+    min-height: 1.45em;
+    color: var(--texte);
+    border-top: 1px solid var(--trait);
+    white-space: pre;
+    overflow: hidden;
+}
+.vim-position{ color: var(--gris); }
+.vim-capture{
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
 /* Sur un écran étroit, l'image passe au-dessus du terminal. */
 @media (max-width: 820px){
     html, body{ font-size: 14px; }

@@ -186,7 +186,7 @@ contient(jf.taper("ls-l"), "ls -l", "ls-l");
 contient(jf.taper("cd ForêtOuest"), "sans accents", "accents");
 jf.lire("state.spells.echo = true");
 contient(jf.taper("echo Le Sorcier s'appelle Laurent"), "guillemets doubles", "l'apostrophe est expliquée");
-contient(jf.taper("cat Convocation"), "Scriptorium", "un sort inconnu dit où l'apprendre");
+contient(jf.taper("head Convocation"), "Scriptorium", "un sort inconnu dit où l'apprendre");
 contient(jf.taper("cp a b"), "Artisane", "cp s'apprend auprès de l'Artisane");
 contient(jf.taper("sha256sum x"), "chapitre 2", "les sorts du chapitre 2 renvoient au chapitre 2");
 // Indices qui regardent la partie

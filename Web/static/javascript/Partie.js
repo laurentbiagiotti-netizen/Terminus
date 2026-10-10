@@ -137,3 +137,8 @@ function lireCode(code){
 
 /* Adresse de la machine d'où part l'attaque (journaux du SOC, hotes.txt, ssh). */
 var ADRESSE_ATTAQUANT = "10.0.66." + aleaEntier("attaquant", 2, 254);
+
+function dateDuJour(){
+	var d = new Date();
+	return d.getFullYear() + "-" + String(100 + d.getMonth() + 1).substring(1) + "-" + String(100 + d.getDate()).substring(1);
+}

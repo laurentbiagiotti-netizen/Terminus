@@ -152,7 +152,7 @@ Tu n'as pas assez écouté pour retenir quels objets refusent de bouger. \
 Tant pis : l'expérimentation, ça a toujours été ton style. Mais prudence !",
     "item_professor.gif").personnage().enseigne("mv"));
 
-//SCRIPTORIUM (nouveau : cat, head, tail, wc)
+//SCRIPTORIUM (nouveau : head, tail, wc)
 var Scriptorium = new Room("Scriptorium",
     "Des rangées de pupitres, une odeur d'encre et de vieux parchemin. \
 Un copiste lève à peine les yeux de son ouvrage.",
@@ -161,7 +161,7 @@ Scriptorium.addItem(new Item("Copiste",
     "Le copiste soupire sans lâcher sa plume. « Encore un débutant qui déroule tout un parchemin \
 avec less pour n'en lire que la première ligne... Écoute bien, je ne le répéterai pas :\n\
 \n\
-  cat PARCHEMIN          affiche tout, d'une traite\n\
+  cat PARCHEMIN          affiche tout, d'une traite (celui-là, tu le connais déjà)\n\
   head PARCHEMIN         seulement les 10 premières lignes\n\
   tail PARCHEMIN         seulement les 10 dernières\n\
   head -n 3 PARCHEMIN    les 3 premières (pareil avec tail)\n\
@@ -170,7 +170,7 @@ avec less pour n'en lire que la première ligne... Écoute bien, je ne le répé
 Tu veux t'exercer ? Le GrandParchemin est là, sur le pupitre. Dis-moi combien de lignes il compte, \
 puis lis-moi son début et sa fin. Et sans le dérouler en entier, je te prie : \
 il y en a pour la journée. »",
-    "item_librarian.gif").personnage().enseigne("cat", "head", "tail", "wc").revele("s_parchemin"));
+    "item_librarian.gif").personnage().enseigne("head", "tail", "wc").revele("s_parchemin"));
 var GrandParchemin = (function(){
     var h = new Hasard(118);
     var regles = [

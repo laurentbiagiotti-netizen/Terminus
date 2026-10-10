@@ -334,7 +334,7 @@ Shell.sorts.nano = function(args, io){
 	if (item && item.person) throw new ShellError(item.itemname + " n'est pas un texte. On ne réécrit pas les gens, on leur parle : less " + item.itemname);
 	if (item && !Shell.bit(item, "r", io)) throw new ShellError("nano : " + r.name + " : Permission non accordée");
 	if (item === null) Shell.nomValide(r.name, "nano");
-	var lecteurSeul = item ? !Shell.bit(item, "w", io) : !Shell.bit(r.dir, "w", io);
+	var lecteurSeul = item ? (!Shell.bit(item, "w", io) || !!item.immuable) : !Shell.bit(r.dir, "w", io);
 	var sudo = !!io.sudo, lieu = r.dir, nom = r.name, cible = item;
 	term.editer({
 		titre: nom + (lecteurSeul ? "  [lecture seule]" : ""),
@@ -366,7 +366,7 @@ Shell.sorts.nano = function(args, io){
 /* --- ss --- */
 var PID_SSHD = 412;
 var PORT_CORBEAU = 6666;
-var ADRESSE_POSTE_CORBEAU = "10.0.92." + aleaEntier("poste-corbeau", 30, 199);
+var ADRESSE_POSTE_CORBEAU = "10.0.92." + aleaEntier("poste-corbeau", 100, 189);
 
 function prisesDe(hote){
 	var prises = [{ etat: "LISTEN", local: "0.0.0.0:22", service: "ssh", pair: "0.0.0.0:*", proc: "sshd", pid: PID_SSHD, owner: "root" }];
@@ -731,10 +731,12 @@ Tout ce qu'un vrai attaquant aurait fait. Je n'ai rien cassé, promis. Je voulai
 Je sais, je sais : la bonne méthode, c'était d'aller voir Laurent et de lui dire « votre Citadelle a un trou ». \
 Ça s'appelle la divulgation responsable, et c'est ce qui sépare les gentils des autres. \
 Tu crois qu'il va me renvoyer ? »\n\n\
-La radio grésille dans ta poche. C'est Laurent : « Frances, tu commences en B1 à la rentrée. Et tu rédiges le rapport d'incident. \
-Toi, la recrue : ton certificat est sur la table. Joli travail. »",
+La radio grésille dans ta poche. C'est Laurent : « Frances, tu commences en B1 à la rentrée. Et tu m'aideras à tout remettre d'aplomb. \
+Toi, la recrue : il me reste une chose à te demander, la plus importante dans notre métier. Le rapport d'incident. \
+Le modèle t'attend dans ta Maison : copie-le (cp ~/ModeleRapport ~/rapport.txt), remplis-le avec vim (vim ~/rapport.txt), \
+et ton certificat t'attendra à côté. »",
 	"item_student.gif").personnage();
-Coffre.addItem(Corbeau);
+/* Le Corbeau n'attend dans le coffre qu'une fois ses notes déchiffrées (voir Reseau.js). */
 Coffre.addItem(new Item("SujetsDExamen", "Une pile de sujets sous scellés. Frances jure qu'elle ne les a pas ouverts. Les scellés lui donnent raison.", "item_manuscript.gif").droits("rw-------", "root"));
 var CertificatCyber = new Item("CertificatCyber", "", "item_manuscript.gif");
 
@@ -772,63 +774,8 @@ HOTES["coffre"] = { ip: "10.0.92.250", arrivee: function(){ return Coffre; },
 /* Quêtes, indices et barème du chapitre                               */
 /* ------------------------------------------------------------------ */
 
-var QUETES_CHAPITRE2 = [
-	{ id: "c_crypte", titre: "Descendre dans la Crypte",
-	  indice: "Après ta victoire, Laurent a ajouté un P.S. : relis-le (less Laurent, dans la Citadelle). La trappe est dans la Citadelle." },
-	{ id: "c_integrite", titre: "Repérer le programme trafiqué",
-	  indice: "L'Archiviste de la Crypte explique comment vérifier les empreintes du dossier bin." },
-	{ id: "c_message", titre: "Décoder le message du Corbeau",
-	  indice: "Le programme trafiqué transporte une charge qui ne ressemble à rien. Ce n'est pas du chiffrement, juste un emballage." },
-	{ id: "c_suid", titre: "Trouver la porte dérobée",
-	  indice: "Le message parle du Caveau et d'un bit. L'Inscription du Caveau explique lequel, et comment le chercher." },
-	{ id: "c_racine", titre: "Entrer dans la Racine",
-	  indice: "Une porte dérobée, c'est un programme : il s'exécute." },
-	{ id: "c_ecoute", titre: "Couper l'écoute du Corbeau",
-	  indice: "Grace, à la radio, voit du trafic sur un port inhabituel. Un sort montre quel processus écoute sur quel port." },
-	{ id: "c_cle", titre: "Retirer la clé du Corbeau",
-	  indice: "Le Corbeau a laissé sa clé dans les clés autorisées de root, dans le dossier caché de la Racine. Le ManuelDeNano explique comment modifier un fichier." },
-	{ id: "c_coffre", titre: "Obtenir un accès au coffre",
-	  indice: "Les ConsignesDuCoffre sont dans la SalleServeurs de Cybersup." },
-	{ id: "c_corbeau", titre: "Démasquer le Corbeau",
-	  indice: "Le Corbeau t'attend dans le coffre de l'école : ssh coffre." }
-];
-
-var QUETES_SECONDAIRES_2 = [
-	{ id: "s_c_base64", titre: "Emballer ton prénom en base64" },
-	{ id: "s_c_silence", titre: "Faire taire les plaintes de find" },
-	{ id: "s_c_trace", titre: "Garder une trace des erreurs dans un objet" },
-	{ id: "s_c_suidfix", titre: "Retirer le bit SUID de la porte dérobée" },
-	{ id: "s_c_passphrase", titre: "Protéger ta clé privée par une phrase de passe" }
-];
-
+/* Les quêtes, les indices et la radio du chapitre sont définis dans Reseau.js, qui étend ce chapitre au réseau de l'école. */
 var INDICES_CHAPITRE2 = {};
-INDICES_CHAPITRE2.c_crypte = [
-	"La trappe mène à un lieu nommé Crypte, juste sous la Citadelle.",
-	"cd ~/PrairieNord/MontagnesEst/Grotte/CouloirSombre/SalleHumide/.Tunnel/ChambreDePierre/Portail/PlaceDuVillage/PontBrise/Clairiere/SentierSinistre/CaverneDesTrolls/Toboggan/FichiersDuNoyau/Citadelle/Crypte (ou ssh citadelle, puis cd Crypte)"];
-INDICES_CHAPITRE2.c_integrite = [
-	"La liste SHA256SUMS contient les empreintes d'origine. sha256sum -c la relit et compare chaque programme.",
-	"cd bin puis sha256sum -c SHA256SUMS"];
-INDICES_CHAPITRE2.c_message = [
-	"Lis le programme qui a répondu ÉCHEC : sa dernière ligne commence par charge=. Ce qui suit est du base64.",
-	"Dans bin : grep charge= gardien | cut -d= -f2 | base64 -d"];
-INDICES_CHAPITRE2.c_suid = [
-	"Le bit SUID se cherche avec find et le critère -perm -4000, depuis le Caveau.",
-	"cd ../Caveau puis find . -perm -4000 2>/dev/null"];
-INDICES_CHAPITRE2.c_racine = [
-	"La porte s'appelle .porte. On lance un programme qui est là où l'on se trouve avec ./NOM.",
-	"Dans le Caveau : ./.porte puis cd Racine"];
-INDICES_CHAPITRE2.c_ecoute = [
-	"ss -tlnp montre les ports en écoute et le PID du processus. Les processus de root ne s'affichent qu'avec sudo.",
-	"Dans la Racine : sudo ss -tlnp, repère le PID sur le port " + PORT_CORBEAU + ", puis sudo kill -9 PID"];
-INDICES_CHAPITRE2.c_cle = [
-	"Le fichier est .ssh/authorized_keys, dans la Racine. Il appartient à root : sudo nano. La ligne à retirer finit par corbeau@nid.",
-	"Dans la Racine : sudo nano .ssh/authorized_keys, place le curseur sur la ligne corbeau@nid, Ctrl+K, puis Ctrl+X et O pour enregistrer."];
-INDICES_CHAPITRE2.c_coffre = [
-	"ssh-keygen fabrique ta paire de clés dans ~/.ssh. Seule la clé publique (.pub) se donne.",
-	"ssh-keygen, puis cp ~/.ssh/id_ed25519.pub ~/Cybersup/SalleServeurs/BoiteDeDepot"];
-INDICES_CHAPITRE2.c_corbeau = [
-	"Le coffre est une machine : on s'y connecte avec ssh, depuis n'importe où.",
-	"ssh coffre puis less Corbeau"];
 
 /* ------------------------------------------------------------------ */
 /* Le monde réagit                                                     */
@@ -840,6 +787,7 @@ function cleCorbeauRetiree(){
 }
 
 function texteRadio(){
+	if (typeof texteRadioReseau === "function"){ var t = texteRadioReseau(); if (t) return t; }
 	if (state.quests["c_corbeau"]) return "La radio grésille. « Grace, terminé. Frances rédige son rapport, et le SOC est enfin calme. Beau boulot, la recrue. »";
 	if (state.quests["c_coffre"]) return "La radio grésille. « Evi a installé ta clé. Le trafic vient d'un poste de l'école, " + ADRESSE_POSTE_CORBEAU + ". Le Corbeau est chez nous, dans le coffre. Va le voir : ssh coffre. »";
 	if (state.quests["c_cle"]) return "La radio grésille. « Plus de clé du Corbeau, plus de porte, plus d'écoute. Il reste à savoir QUI c'est. Les connexions venaient de l'intérieur de l'école. \
@@ -913,11 +861,15 @@ Cette paire est grillée : quelqu'un d'autre a pu la voir. Refais une paire avec
 Il y a une copie de secours juste à côté, authorized_keys.orig. »");
 	}
 	if (state.has("victoireCyber")) CertificatCyber.cmd_text["less"] = state.texteDuCertificat();
+	if (typeof verifierReseau === "function") verifierReseau();
 }
 
 /* Les événements de l'histoire du chapitre (appelés par GameState.applyState). */
 function etatChapitre2(nom){
 	switch (nom){
+		default:
+			if (typeof etatReseau === "function") etatReseau(nom);
+			break;
 		case "crypteOuverte":
 			relier(Citadelle, Crypte);
 			break;
@@ -953,10 +905,10 @@ Essaie : ssh coffre. »");
 			break;
 		case "victoireCyber":
 			if (!state.dateVictoire2) state.dateVictoire2 = dateDuJour();
-			poser(Coffre, CertificatCyber);
+			state.complete("c_rapport");
+			poser(Home, CertificatCyber);
 			CertificatCyber.cmd_text["less"] = state.texteDuCertificat();
-			state.complete("c_corbeau");
-			say(C.gris("(Ton CertificatCyber est posé sur la table : cat CertificatCyber. Il porte la note du chapitre 2 et son code de vérification.)"));
+			say(C.gris("(Ton CertificatCyber est posé dans ta Maison : cat ~/CertificatCyber. Il porte la note du chapitre 2 et son code de vérification.)"));
 			break;
 	}
 }
@@ -1027,7 +979,7 @@ GameEvents.addListener("keygen", function(e){
 });
 
 GameEvents.addListener("read", function(e){
-	if (e.item === Corbeau && !state.has("victoireCyber")) state.applyState("victoireCyber");
+	if (e.item === Corbeau) state.complete("c_corbeau");
 	if (e.item === Laurent && state.has("crypteOuverte") && !state.has("psLu")){
 		state.set("psLu");
 	}
@@ -1235,4 +1187,4 @@ Shell.sorts.chapitre = function(args, io){
 	return "";
 };
 
-World.fige = true;
+/* World.fige est posé à la fin de Reseau.js, une fois le réseau construit. */
