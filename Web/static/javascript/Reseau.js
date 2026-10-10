@@ -1065,4 +1065,17 @@ GameEvents.addListener("write", function(e){
 Whitfield.enseigne("md5sum", "sha1sum");
 Whitfield.revele("s_c_empreintes", "s_c_xxd");
 
+/* Les illustrations de Cybersup, de la Crypte et des dossiers système (outils/dessiner_lieux.py). */
+[[Cybersup, "loc_cybersup.gif"], [SalleReseau, "loc_sallereseau.gif"], [SalleServeurs, "loc_salleserveurs.gif"], [Baie1, "loc_baie.gif"],
+ [Baie2, "loc_baie.gif"], [Baie3, "loc_baie.gif"], [BDE, "loc_bde.gif"], [BureauDeLaurent, "loc_bureau.gif"], [CampusLille, "loc_lille.gif"],
+ [CampusMarseille, "loc_marseille.gif"], [Coffre, "loc_coffre.gif"], [Crypte, "loc_crypte.gif"], [DossierBin, "loc_bin.gif"],
+ [Caveau, "loc_caveau.gif"], [Racine, "loc_racine.gif"]].forEach(function(x){ x[0].room_pic = "./static/img/" + x[1]; });
+Object.keys(World.rooms).forEach(function(id){
+	var n = World.rooms[id];
+	if (n.chapitre !== 2 || (n.room_pic.indexOf("loc_darkroom") === -1 && n.room_pic.indexOf("loc_library") === -1)) return;
+	if (n.room_name === "etc" || n.room_name === "bind") n.room_pic = "./static/img/loc_etc.gif";
+	else if (n.room_name === "log" || n.room_name === "journaux") n.room_pic = "./static/img/loc_journaux.gif";
+	else if (n.room_name === "tmp" || n.room_name === ".cache") n.room_pic = "./static/img/loc_tmp.gif";
+});
+
 World.fige = true;

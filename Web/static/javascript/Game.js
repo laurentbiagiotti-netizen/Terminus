@@ -167,6 +167,55 @@ function ecranDeVictoire(chapitre){
 		fond.addEventListener("click", fermer);
 	}, 500);
 }
+/* Le Corbeau démasqué : l'oiseau se brouille, et derrière lui apparaît la personne. */
+function revelationDuCorbeau(){
+	var fond = document.createElement("div");
+	fond.id = "revelation";
+	fond.setAttribute("role", "dialog");
+	fond.setAttribute("aria-label", "Le Corbeau démasqué");
+	var scene = document.createElement("div");
+	scene.className = "revelation-scene";
+	var image = document.createElement("img");
+	image.src = sourceImage("./static/img/item_corbeau.gif");
+	image.alt = "";
+	var nom = document.createElement("p");
+	nom.className = "revelation-nom";
+	nom.textContent = "Le Corbeau";
+	var vrai = document.createElement("p");
+	vrai.className = "revelation-vrai";
+	vrai.textContent = "Frances, la stagiaire de Laurent";
+	var suite = document.createElement("p");
+	suite.className = "revelation-suite";
+	suite.textContent = "Corbeau démasqué. Appuie sur Entrée pour l'écouter.";
+	[image, nom, vrai, suite].forEach(function(e){ scene.appendChild(e); });
+	fond.appendChild(scene);
+	document.body.appendChild(fond);
+	var minuteurs = [];
+	function finale(){
+		minuteurs.forEach(clearTimeout);
+		fond.classList.remove("revelation-brouille");
+		fond.classList.add("revelation-demasque", "revelation-fin");
+		image.src = sourceImage(Corbeau.picturename || "./static/img/item_student.gif");
+	}
+	function fermer(e){
+		if (e && e.type === "keydown"){ e.preventDefault(); e.stopPropagation(); }
+		if (!fond.classList.contains("revelation-fin")){ finale(); return; }
+		document.removeEventListener("keydown", fermer, true);
+		if (fond.parentNode) fond.parentNode.removeChild(fond);
+		document.getElementById("saisie").focus();
+	}
+	document.addEventListener("keydown", fermer, true);
+	fond.addEventListener("click", fermer);
+	if (calmeDemande){ finale(); return; }
+	minuteurs.push(setTimeout(function(){ fond.classList.add("revelation-brouille"); }, 1600));
+	minuteurs.push(setTimeout(function(){
+		image.src = sourceImage(Corbeau.picturename || "./static/img/item_student.gif");
+		fond.classList.add("revelation-demasque");
+	}, 2300));
+	minuteurs.push(setTimeout(function(){ fond.classList.remove("revelation-brouille"); }, 2700));
+	minuteurs.push(setTimeout(function(){ fond.classList.add("revelation-fin"); }, 3300));
+}
+
 var completerSansFete = GameState.prototype.complete;
 GameState.prototype.complete = function(id){
 	var deja = this.quests[id];
@@ -174,6 +223,7 @@ GameState.prototype.complete = function(id){
 	if (!deja && (id === "m_boss" || id === "c_rapport") && !Shell.sauvegardeBloquee && !this.has("rejeuEnCours")){
 		setTimeout(function(){ ecranDeVictoire(id === "c_rapport" ? 2 : 1); }, 700);
 	}
+	if (!deja && id === "c_corbeau" && !Shell.sauvegardeBloquee) revelationDuCorbeau();
 };
 
 /* La barre d'état : vingt cases, une par point de la note sur 20. */

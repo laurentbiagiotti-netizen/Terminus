@@ -555,3 +555,51 @@ body.crt #scene, body.crt .intro-titre{
 @media (max-width: 820px){
     .banniere{ bottom: calc(26px + var(--rang, 0) * 50px); right: 10px; padding: 5px 10px; }
 }
+
+/* Le nom de celui qui parle, en tête de réplique */
+#sortie .etiquette{
+    display: inline-block;
+    margin: 6px 0 4px;
+    padding: 0 8px;
+    color: #000000;
+    background: #ffffff;
+    font-weight: 700;
+    box-shadow: 3px 3px 0 var(--vert);
+}
+
+/* Le Corbeau démasqué */
+#revelation{
+    position: fixed;
+    inset: 0;
+    z-index: 56;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: #000000;
+    cursor: pointer;
+}
+.revelation-scene{
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    text-align: center;
+    animation: revelation-entree 900ms steps(9) both;
+}
+.revelation-scene img{ width: min(300px, 70vw, 50vh); image-rendering: pixelated; }
+.revelation-nom{ margin: 0; color: #ffffff; font-size: 1.6rem; font-weight: 700; letter-spacing: 0.08em; }
+.revelation-vrai{ margin: 0; color: var(--vert-clair); font-size: 1.15rem; visibility: hidden; }
+.revelation-suite{ margin: 6px 0 0; color: var(--gris); font-size: 0.9rem; visibility: hidden; }
+.revelation-demasque .revelation-nom{ text-decoration: line-through; text-decoration-color: var(--rouge); color: var(--gris); }
+.revelation-demasque .revelation-vrai, .revelation-fin .revelation-suite{ visibility: visible; }
+.revelation-brouille .revelation-scene img{ animation: revelation-brouille 90ms steps(2) infinite; }
+.revelation-brouille .revelation-nom{ animation: revelation-brouille 120ms steps(2) infinite; }
+@keyframes revelation-entree{ from{ opacity: 0; filter: brightness(3); } }
+@keyframes revelation-brouille{
+    0%  { transform: translate(-6px, 2px); clip-path: inset(10% 0 40% 0); filter: brightness(2); }
+    50% { transform: translate(5px, -3px); clip-path: inset(45% 0 5% 0); }
+    100%{ transform: translate(0, 0); clip-path: inset(0 0 0 0); }
+}
+@media (prefers-reduced-motion: reduce){
+    .revelation-scene, .revelation-brouille .revelation-scene img, .revelation-brouille .revelation-nom{ animation: none; }
+}

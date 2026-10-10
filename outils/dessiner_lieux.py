@@ -218,3 +218,252 @@ def enveloppe(nom, mission):
 
 enveloppe("item_convocation.gif", False)
 enveloppe("item_mission.gif", True)
+
+# ------------------------------------------------------------------
+# Cybersup, la Crypte et les dossiers système
+# ------------------------------------------------------------------
+
+def texte_centre(d, y, t, c=B):
+    w = d.textlength(t)
+    d.text(((W - w) / 2, y), t, fill=c)
+
+def cybersup():
+    im, d = toile()
+    # les tours de La Défense, au loin
+    for x, h in [(6, 70), (22, 96), (138, 84), (156, 60)]:
+        d.rectangle([x, 150-h, x+12, 150], outline=B)
+        for y in range(150-h+4, 148, 6): d.line([(x+3, y), (x+9, y)], fill=B)
+    boite(d, 40, 40, 136, 150, B, N, 2)
+    d.rectangle([40, 40, 136, 54], fill=B); texte_centre(d, 43, "CYBERSUP", N)
+    for r in range(4):
+        for k in range(4):
+            x, y = 48 + k*21, 62 + r*16
+            d.rectangle([x, y, x+14, y+10], outline=B)
+            if (r + k) % 3 == 0: d.rectangle([x+2, y+2, x+12, y+8], fill=V)
+    boite(d, 76, 126, 100, 150, B, N, 1); d.line([(88, 126), (88, 150)], fill=B)
+    sol(d, 152)
+    return im
+
+def sallereseau():
+    im, d = toile()
+    boite(d, 34, 10, 142, 150, B, N, 2)
+    for r in range(6):
+        y = 18 + r*22
+        boite(d, 40, y, 136, y+12, B, N, 1)
+        for k in range(10):
+            x = 44 + k*9
+            d.rectangle([x, y+4, x+4, y+8], fill=V if (r*3 + k) % 4 == 0 else B)
+    random.seed(3)
+    for _ in range(9):
+        x0, x1 = random.randint(44, 132), random.randint(44, 132)
+        y0 = random.choice([30, 52, 74, 96, 118])
+        d.arc([min(x0, x1), y0-4, max(x0, x1)+6, y0+18], 0, 180, fill=random.choice([B, V]), width=1)
+    return im
+
+def salleserveurs():
+    im, d = toile()
+    d.polygon([(0, 150), (70, 96), (106, 96), (176, 150)], outline=B)
+    for k in range(0, 5):
+        x0 = 6 + k*14; h = 100 - k*14; y0 = 150 - h - (k*6)
+        d.rectangle([x0, y0, x0+12, y0+h], outline=B)
+        for y in range(y0+4, y0+h-2, 6): d.point((x0+4, y), fill=V if (y // 6 + k) % 3 == 0 else B)
+        x1 = 176 - 18 - k*14
+        d.rectangle([x1, y0, x1+12, y0+h], outline=B)
+        for y in range(y0+4, y0+h-2, 6): d.point((x1+8, y), fill=V if (y // 6 + k) % 2 == 0 else B)
+    d.rectangle([76, 60, 100, 96], outline=B); d.line([(88, 60), (88, 96)], fill=B)
+    return im
+
+def baie():
+    im, d = toile()
+    boite(d, 50, 8, 126, 156, B, N, 2)
+    for r in range(9):
+        y = 14 + r*15
+        boite(d, 56, y, 120, y+11, B, N, 1)
+        d.rectangle([60, y+4, 63, y+7], fill=V if r % 3 != 1 else B)
+        d.rectangle([66, y+4, 69, y+7], fill=B)
+        for x in range(76, 116, 4): d.point((x, y+5), fill=B)
+    return im
+
+def bde():
+    im, d = toile()
+    d.rectangle([10, 14, 166, 30], fill=B); texte_centre(d, 17, "BUREAU DES ELEVES", N)
+    d.line([(20, 44), (156, 44)], fill=B, width=2)
+    for k, x in enumerate([24, 58, 92, 126]):
+        c = V if k % 2 == 0 else B
+        d.line([(x+14, 44), (x+14, 50)], fill=B)
+        d.polygon([(x, 54), (x+28, 54), (x+32, 72), (x+26, 70), (x+26, 96), (x+2, 96), (x+2, 70), (x-4, 72)], fill=c)
+        d.text((x+5, 66), "BDE", fill=N)
+    d.rectangle([24, 120, 152, 138], outline=B, width=2); d.rectangle([20, 112, 30, 140], fill=B); d.rectangle([146, 112, 156, 140], fill=B)
+    sol(d, 150)
+    return im
+
+def bureau():
+    im, d = toile()
+    boite(d, 120, 10, 166, 100, B, N, 2)
+    for y in (32, 56, 80):
+        d.line([(122, y), (164, y)], fill=B)
+        for x in range(126, 160, 6): d.rectangle([x, y-16, x+3, y-1], fill=V if (x + y) % 4 == 0 else B)
+    table(d, 8, 112, 104)
+    d.polygon([(30, 104), (70, 104), (66, 86), (34, 86)], fill=B); d.rectangle([36, 88, 64, 102], fill=N)
+    d.line([(40, 92), (56, 92)], fill=V); d.line([(40, 96), (50, 96)], fill=V)
+    d.rectangle([72, 90, 112, 103], fill=B); d.text((74, 91), "Laurent", fill=N)
+    d.rectangle([12, 92, 22, 103], outline=B); d.arc([18, 94, 26, 100], 270, 90, fill=B)
+    d.ellipse([8, 60, 30, 84], fill=V); d.rectangle([14, 84, 24, 103], fill=B)
+    sol(d, 150)
+    return im
+
+def lille():
+    im, d = toile()
+    d.rectangle([74, 40, 102, 150], outline=B, width=2)
+    d.polygon([(70, 40), (88, 8), (106, 40)], fill=B)
+    d.ellipse([80, 50, 96, 66], outline=B); d.line([(88, 58), (88, 52)], fill=V); d.line([(88, 58), (92, 58)], fill=V)
+    for y in range(76, 146, 14): d.rectangle([84, y, 92, y+8], outline=B)
+    for x0 in (10, 120):
+        for k in range(3):
+            x = x0 + k*16
+            d.polygon([(x, 150), (x, 110), (x+8, 98), (x+16, 110), (x+16, 150)], outline=B)
+    sol(d, 152)
+    return im
+
+def marseille():
+    im, d = toile()
+    d.ellipse([124, 14, 156, 46], outline=V, width=2)
+    d.rectangle([20, 40, 34, 118], outline=B, width=2); d.polygon([(16, 40), (27, 26), (38, 40)], fill=B)
+    for y in range(48, 116, 12): d.line([(20, y), (34, y)], fill=B)
+    for k in range(4): d.line([(0, 122 + k*8), (W, 122 + k*8)], fill=V if k % 2 == 0 else B)
+    for x in (58, 104):
+        d.polygon([(x, 116), (x+40, 116), (x+34, 124), (x+6, 124)], fill=B)
+        d.line([(x+20, 116), (x+20, 80)], fill=B); d.polygon([(x+21, 82), (x+36, 112), (x+21, 112)], fill=B)
+    return im
+
+def coffre():
+    im, d = toile()
+    d.ellipse([28, 10, 148, 130], outline=B, width=3)
+    d.ellipse([40, 22, 136, 118], outline=B, width=1)
+    d.ellipse([78, 60, 98, 80], fill=V)
+    for a in range(0, 360, 45):
+        import math
+        x = 88 + 30 * math.cos(math.radians(a)); y = 70 + 30 * math.sin(math.radians(a))
+        d.line([(88, 70), (x, y)], fill=B, width=2)
+    d.rectangle([138, 60, 146, 80], fill=B)
+    d.rectangle([70, 136, 106, 140], fill=B); d.rectangle([74, 118, 102, 136], outline=B); d.line([(74, 140), (70, 156)], fill=B); d.line([(102, 140), (106, 156)], fill=B)
+    return im
+
+def crypte():
+    im, d = toile()
+    for k in range(3):
+        m = 14 + k*22
+        d.arc([m, 6 + k*18, W-m, 120 + k*10], 180, 360, fill=B, width=2)
+        d.line([(m, 63 + k*14), (m, 160)], fill=B, width=2); d.line([(W-m, 63 + k*14), (W-m, 160)], fill=B, width=2)
+    for k in range(7):
+        y = 104 + k*8; x0 = 70 - k*6; x1 = 106 + k*6
+        d.rectangle([x0, y, x1, y+3], fill=B)
+    for x in (40, 136):
+        d.rectangle([x-2, 70, x+2, 84], fill=B); d.polygon([(x-5, 70), (x, 56), (x+5, 70)], fill=V)
+    return im
+
+def binaires():
+    im, d = toile()
+    for r, y in enumerate([36, 86, 136]):
+        d.rectangle([10, y, 166, y+3], fill=B)
+    noms = ["gardien", "portier", "veilleur", "passwd"]
+    for k, nom in enumerate(noms):
+        x = 14 + k*40; y = 6 if k < 2 else 56
+        y = [8, 8, 58, 58][k]; x = [16, 92, 16, 92][k]
+        boite(d, x, y, x+68, y+28, B, N, 1)
+        d.text((x+6, y+8), nom, fill=V if nom == "gardien" else B)
+        if nom == "gardien": d.text((x+58, y+8), "!", fill=V)
+    boite(d, 16, 108, 160, 134, B, N, 1); d.text((22, 116), "SHA256SUMS", fill=B)
+    return im
+
+def caveau():
+    im, d = toile()
+    d.arc([0, 10, W, 130], 180, 360, fill=B, width=2)
+    for k in range(6):
+        x = 8 + k*28
+        d.rectangle([x, 70, x+20, 120], outline=B)
+        d.arc([x, 60, x+20, 80], 180, 360, fill=B)
+        d.line([(x+4, 76), (x+16, 116)], fill=B); d.line([(x+16, 76), (x+4, 116)], fill=B)
+    # une porte que personne n'a construite, à peine visible
+    for y in range(126, 158, 4): d.point((80, y), fill=V); d.point((96, y), fill=V)
+    for x in range(80, 98, 4): d.point((x, 126), fill=V)
+    sol(d, 160)
+    return im
+
+def racine():
+    im, d = toile()
+    random.seed(11)
+    for _ in range(9):
+        x = random.randint(6, 170); y = 0
+        for _ in range(8):
+            nx = x + random.randint(-8, 8); ny = y + random.randint(8, 16)
+            d.line([(x, y), (nx, ny)], fill=B, width=2); x, y = nx, ny
+    for k in range(7):
+        x, y = 20 + k*21, 110 + (k % 2) * 16
+        d.ellipse([x, y, x+8, y+6], fill=V if k == 4 else B)
+        d.line([(x+2, y), (x-1, y-4)], fill=B); d.line([(x+6, y), (x+9, y-4)], fill=B)
+    d.text((60, 146), "[kworker]", fill=B)
+    return im
+
+def etc_():
+    im, d = toile()
+    boite(d, 40, 10, 136, 156, B, N, 2)
+    for k, nom in enumerate(["passwd", "shadow", "group", "sudoers"]):
+        y = 18 + k*34
+        boite(d, 46, y, 130, y+28, B, N, 1)
+        d.rectangle([80, y+18, 96, y+22], fill=B)
+        d.text((54, y+4), nom, fill=V if nom == "sudoers" else B)
+    return im
+
+def journaux():
+    im, d = toile()
+    for k in range(5):
+        x, y = 14 + k*8, 120 - k*20
+        boite(d, x, y, x+120, y+30, B, N, 1)
+        for l in range(3): d.line([(x+6, y+7+l*7), (x+100-l*13, y+7+l*7)], fill=V if (k == 2 and l == 1) else B)
+    d.rectangle([20, 140, 74, 148], fill=N); d.text((22, 139), "auth.log", fill=V)
+    return im
+
+def tmp_():
+    im, d = toile()
+    random.seed(5)
+    for _ in range(14):
+        x, y = random.randint(10, 150), random.randint(70, 140)
+        d.polygon([(x, y), (x+14, y-3), (x+18, y+8), (x+4, y+12)], outline=B)
+    d.polygon([(66, 60), (110, 60), (104, 120), (72, 120)], outline=B, width=2)
+    d.line([(62, 60), (114, 60)], fill=B, width=2)
+    d.text((76, 40), "/tmp", fill=V)
+    sol(d, 150)
+    return im
+
+for nom, f in [("loc_cybersup.gif", cybersup), ("loc_sallereseau.gif", sallereseau), ("loc_salleserveurs.gif", salleserveurs), ("loc_baie.gif", baie),
+               ("loc_bde.gif", bde), ("loc_bureau.gif", bureau), ("loc_lille.gif", lille), ("loc_marseille.gif", marseille), ("loc_coffre.gif", coffre),
+               ("loc_crypte.gif", crypte), ("loc_bin.gif", binaires), ("loc_caveau.gif", caveau), ("loc_racine.gif", racine),
+               ("loc_etc.gif", etc_), ("loc_journaux.gif", journaux), ("loc_tmp.gif", tmp_)]:
+    finir(nom, f())
+print("ok 2")
+
+# --- le Corbeau, pour la scène où on le démasque ---
+def corbeau():
+    from PIL import ImageFilter, ImageChops
+    im, d = toile()
+    # un corbeau noir, perché de profil sur une branche : une silhouette pleine, puis creusée pour n'en garder que le trait
+    masque = Image.new('L', (W, H), 0); m = ImageDraw.Draw(masque)
+    m.polygon([(60, 70), (84, 56), (112, 60), (126, 78), (122, 100), (100, 116), (74, 118), (52, 108), (40, 92)], fill=255)
+    m.polygon([(52, 100), (14, 138), (26, 140), (12, 152), (48, 134), (76, 116)], fill=255)
+    m.ellipse([100, 28, 142, 64], fill=255)
+    m.polygon([(134, 36), (168, 46), (136, 54)], fill=255)
+    interieur = masque.filter(ImageFilter.MinFilter(5))
+    trait = ImageChops.subtract(masque, interieur)
+    d.bitmap((0, 0), trait, fill=B)
+    for k in range(5):
+        d.line([(64 + k*9, 76 + k*2), (44 + k*11, 108 + k)], fill=B)
+    d.line([(136, 45), (160, 46)], fill=B)
+    d.ellipse([122, 38, 129, 45], fill=V)
+    d.line([(4, 132), (172, 122)], fill=B, width=3)
+    d.line([(132, 124), (150, 110)], fill=B, width=2)
+    d.line([(88, 116), (86, 129)], fill=B, width=2); d.line([(100, 114), (102, 127)], fill=B, width=2)
+    return im
+
+finir("item_corbeau.gif", corbeau())
+print("ok 3")

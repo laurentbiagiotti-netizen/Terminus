@@ -1157,7 +1157,7 @@ function commencerChapitre2(){
 	poser(Home, OrdreDeMission);
 	montrerImage(WarRoom.room_pic, WarRoom.room_name);
 	term.effacer();
-	term.echo(C.vert(C.gras("CHAPITRE 2 : LA CRYPTE")) + "\n\n" + TEXTE_MISSION_CYBER + C.vert("less CheffeDeQuart") + "\n\n" +
+	term.echo(C.vert(C.gras("CHAPITRE 2 : LA CRYPTE")) + "\n\n" + TEXTE_MISSION_CYBER + C.vert("cat CheffeDeQuart") + "\n\n" +
 		C.gris("Ce chapitre a sa propre note sur 20. Tape quetes pour le journal, indice si tu bloques, xp pour ta note."));
 	return true;
 }

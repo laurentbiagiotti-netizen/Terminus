@@ -16,7 +16,7 @@
 var ANSI_CLASSES = {
 	"1": "gras", "2": "pale", "3": "italique",
 	"31": "rouge", "32": "vert", "33": "jaune", "34": "bleu",
-	"35": "magenta", "36": "cyan", "90": "gris"
+	"35": "magenta", "36": "cyan", "90": "gris", "7": "etiquette"
 };
 
 function echapperHTML(texte){

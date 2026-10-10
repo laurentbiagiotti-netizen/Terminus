@@ -19,7 +19,7 @@ var C = (function(){
 	}
 	return {
 		gras: couleur("1"), rouge: couleur("31"), vert: couleur("32"), jaune: couleur("33"),
-		bleu: couleur("1;34"), magenta: couleur("35"), cyan: couleur("36"), gris: couleur("90")
+		bleu: couleur("1;34"), magenta: couleur("35"), cyan: couleur("36"), gris: couleur("90"), etiquette: couleur("7")
 	};
 })();
 
@@ -600,6 +600,12 @@ Shell.apresLecture = function(trouve, texte, cmd, io){
 
 var PAGE_LESS = 28;
 
+/* Quand on parle à quelqu'un, son nom s'affiche en tête de réplique, comme dans un jeu de rôle. */
+Shell.etiquette = function(trouve, io){
+	if (!trouve || !trouve.item.person || !io.tty) return "";
+	return C.etiquette(trouve.item.itemname) + "\n";
+};
+
 Shell.sorts.less = function(args, io){
 	var p = lireOptions(args, "N", "less");
 	var texte, trouve = null;
@@ -616,11 +622,11 @@ Shell.sorts.less = function(args, io){
 	if (io.tty && lignes.length > PAGE_LESS + 12){
 		affiche = lignes.slice(0, PAGE_LESS).join("\n");
 		if (trouve) Shell.apresLecture(trouve, affiche, "less", io);
-		return affiche + "\n" + C.gris("-- Fin de la première page. Ce texte compte " + lignes.length +
+		return Shell.etiquette(trouve, io) + affiche + "\n" + C.gris("-- Fin de la première page. Ce texte compte " + lignes.length +
 			" lignes : c'est trop pour tout dérouler ici.\n-- cat affiche tout d'un coup ; les mages préfèrent lire par morceaux (head, tail) ou chercher un mot (grep).");
 	}
 	if (trouve) Shell.apresLecture(trouve, affiche, "less", io);
-	return affiche === "" ? C.gris("(vide)") : affiche;
+	return affiche === "" ? C.gris("(vide)") : Shell.etiquette(trouve, io) + affiche;
 };
 
 Shell.sorts.cat = function(args, io){
@@ -637,6 +643,7 @@ Shell.sorts.cat = function(args, io){
 		textes.push(texte.replace(/\n$/, ""));
 	}
 	var tout = textes.join("\n");
+	if (p.reste.length === 1 && !p.opts.n) tout = Shell.etiquette(Shell.objetLisible(p.reste[0], io, "cat"), io) + tout;
 	if (p.opts.n){
 		var lignes = lignesDe(tout);
 		for (var k = 0; k < lignes.length; k++) lignes[k] = completerGauche(k + 1, 6) + "  " + lignes[k];
