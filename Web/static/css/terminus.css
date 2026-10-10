@@ -131,6 +131,79 @@ html, body{
 .gras.rouge{ color: var(--rouge); }
 ::selection{ background: var(--vert); color: #000000; }
 
+/* La barre de touches : seulement sur les écrans tactiles. */
+#touches{
+    display: none;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+#touches button, .editeur-pied button{
+    font: inherit;
+    font-size: 0.9rem;
+    min-width: 2.6em;
+    padding: 6px 8px;
+    color: var(--texte);
+    background: #111111;
+    border: 1px solid var(--trait);
+    border-radius: 4px;
+    cursor: pointer;
+}
+#touches button:active, .editeur-pied button:active{ background: var(--vert); color: #000000; }
+@media (pointer: coarse){
+    #touches{ display: flex; }
+}
+
+/* nano */
+#editeur{
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    background: var(--fond);
+    color: var(--texte);
+}
+.editeur-entete{
+    background: var(--texte);
+    color: #000000;
+    text-align: center;
+    padding: 2px 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#editeur textarea{
+    flex: 1 1 auto;
+    width: 100%;
+    resize: none;
+    background: var(--fond);
+    color: #ffffff;
+    border: 0;
+    outline: 0;
+    padding: 10px 16px;
+    font: inherit;
+    line-height: 1.45;
+    white-space: pre;
+    overflow-wrap: normal;
+    overflow: auto;
+    caret-color: var(--vert-clair);
+}
+.editeur-message{
+    min-height: 1.45em;
+    padding: 0 16px;
+    color: var(--jaune);
+    text-align: center;
+}
+.editeur-pied{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 16px 12px;
+    border-top: 1px solid var(--trait);
+}
+.editeur-pied button[hidden]{ display: none; }
+
 /* Sur un écran étroit, l'image passe au-dessus du terminal. */
 @media (max-width: 820px){
     html, body{ font-size: 14px; }

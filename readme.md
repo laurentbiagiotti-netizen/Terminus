@@ -23,11 +23,11 @@ python3 -m http.server 8000
 
 Le jeu est alors disponible sur `http://localhost:8000`.
 
-La partie est sauvegardée automatiquement dans le navigateur. La commande `recommencer` repart de zéro.
+Au premier lancement, le jeu demande ton prénom : il devient ton identifiant sur le système (`whoami`, l'invite, les propriétaires des fichiers, le diplôme). La partie est sauvegardée automatiquement dans le navigateur. La commande `recommencer` repart de zéro, avec une nouvelle partie.
 
 ## Ce que cette édition ajoute
 
-**38 sorts de plus** (52 au lieu de 14) :
+**43 sorts de plus** (57 au lieu de 14) :
 
 | Notion | Sorts | Où on l'apprend |
 | --- | --- | --- |
@@ -52,6 +52,12 @@ La partie est sauvegardée automatiquement dans le navigateur. La commande `reco
 | Réseau | `hostname` `ping` `ssh` `exit` | Cybersup |
 | Paquets | `apt` (et `cowsay`) | Cybersup |
 | Administration | `sudo` avec un vrai mot de passe, `date` | les Fichiers du Noyau, l'Atelier |
+| Empreintes et encodage | `sha256sum` `sha256sum -c` `base64` `base64 -d` | la Crypte (chapitre 2) |
+| Bit SUID | `ls -l`, `find -perm -4000`, `chmod u-s`, `chmod 4755` | le Caveau (chapitre 2) |
+| Sortie d'erreur | `2>` `2>>` `2>&1` `/dev/null` | le Caveau (chapitre 2) |
+| Ports en écoute | `ss -tlnp` | la Racine (chapitre 2) |
+| Éditer un fichier | `nano` (Ctrl+O, Ctrl+X, Ctrl+K) | la Racine (chapitre 2) |
+| Clés SSH | `ssh-keygen`, clé publique et clé privée, `authorized_keys` | la SalleServeurs (chapitre 2) |
 
 **Un terminal plus proche d'un vrai** : invite `apprenti@terminus:~/Chemin$` qui change de machine avec `ssh`, chemins relatifs et depuis `~`, `cd -`, complétion avec Tab, historique avec les flèches, guillemets et apostrophes, variables, enchaînements `;` et `&&`, messages d'erreur à la manière de Linux, indices quand une majuscule manque.
 
@@ -65,13 +71,23 @@ La partie est sauvegardée automatiquement dans le navigateur. La commande `reco
 
 **Un bulletin** (`bulletin`) : les 52 sorts regroupés en six blocs de compétences, BC 01 à BC 06, chacun noté sur 20 et marqué « acquis » quand tous ses sorts ont été appris puis utilisés. Le relevé figure sur le diplôme.
 
-**Un journal de quêtes** (`quetes`) avec 13 étapes principales et 27 quêtes secondaires.
+**Un journal de quêtes** (`quetes`) avec 13 étapes principales et 27 quêtes secondaires au chapitre 1, 9 étapes et 5 quêtes secondaires au chapitre 2.
+
+**Un deuxième chapitre, la Crypte** : après la victoire, une trappe s'ouvre sous la Citadelle. Quelqu'un est vraiment entré pendant l'examen : un programme trafiqué, un message caché en base64, une porte dérobée SUID, un faux processus noyau qui écoute sur un port, une clé SSH de trop dans les clés autorisées de root. Le chapitre se termine dans le coffre de l'école, où l'intrus attend. Il a sa propre note sur 20 et son propre certificat.
+
+**Des parties toutes différentes** : une graine tirée au premier lancement fixe le mot de passe sudo, l'adresse de l'attaquant, le meilleur client de la taverne, le nombre de sweats du BDE et les numéros de processus. Recopier la solution du voisin ne marche pas.
+
+**Des indices payants** (`indice`) : deux paliers par étape, de plus en plus précis, qui coûtent 30 puis 60 XP sur la note (pas sur le niveau).
+
+**Des succès** (`succes`), **un chrono façon speedrun** (`chrono`, temps de passage à chaque étape), **des sons 8 bits** (`son`, coupés par défaut) et **une barre de touches** sur téléphone (Tab, ↑, `|`, `~`, `/`, `>`, `*`...).
 
 ## Pour les formateurs
 
 Le déroulé complet, avec la solution de chaque étape et le barème, se trouve dans [docs/solution.md](docs/solution.md).
 
-Repères pour la notation : finir la quête principale au plus court donne 10 sur 20 ; la solution complète donne 20 sur 20. Le diplôme final (`cat Diplome` dans la Citadelle) affiche le nom du joueur, son score, sa note, sa mention et son temps de jeu : une capture d'écran suffit pour relever les résultats d'un groupe. Le nom est celui que le joueur a écrit dans le LivreDOr de la Taverne.
+Repères pour la notation : finir la quête principale au plus court donne 10 sur 20 ; la solution complète donne 20 sur 20. Le diplôme final (`cat Diplome` dans la Citadelle) et le certificat du chapitre 2 (`cat CertificatCyber` dans le coffre) affichent le prénom du joueur, son score, sa note, sa mention, son temps de jeu, les indices payants utilisés, et un **code de vérification**. Ce code résume la partie et porte une somme de contrôle : une page de classement le décode, repère un code retouché et classe la promo, chapitre par chapitre.
+
+**Séances séparées** : pour une séance de trois heures consacrée à la sécurité, les étudiants tapent `chapitre 2` dès le début. Le chapitre 1 est rejoué en silence, marqué comme non joué (pas de note pour lui), et ils commencent directement dans la Citadelle.
 
 ## Développement
 
@@ -83,12 +99,14 @@ Le code est du JavaScript sans dépendance ni étape de construction.
 | `Web/static/javascript/Shell.js` | l'interpréteur et les sorts de base |
 | `Web/static/javascript/SortsAvances.js` | variables, alias, liens, scripts, archives, réseau, système, paquets |
 | `Web/static/javascript/Manuel.js` | les pages de `man` et l'ordre des sorts |
-| `Web/static/javascript/GameState.js` | événements de l'histoire, quêtes, expérience et barème, sauvegarde |
+| `Web/static/javascript/Chapitre2.js` | le chapitre 2 : SHA-256, base64, `nano`, `ss`, `ssh-keygen`, la Crypte et le coffre, le saut de chapitre |
+| `Web/static/javascript/Partie.js` | le prénom, la graine de la partie et le code de vérification du diplôme |
+| `Web/static/javascript/GameState.js` | événements de l'histoire, quêtes, expérience et barème, indices, succès, chrono, sauvegarde |
 | `Web/static/javascript/Terminal.js` | l'affichage et la saisie |
 | `Web/static/javascript/Room.js`, `Item.js` | les lieux (répertoires) et les objets (fichiers) |
 | `tools/dessiner_images.py` | génère les illustrations ajoutées |
-| `tests/parcours.js` | joue une partie complète et vérifie chaque étape (plus de 300 vérifications) |
-| `tests/solution.js` | rejoue les commandes de `docs/solution.md` et vérifie qu'elles mènent à 20 sur 20 |
+| `tests/parcours.js` | joue une partie complète et vérifie chaque étape (près de 500 vérifications, chapitre 2 compris) |
+| `tests/solution.js` | rejoue les commandes de `docs/solution.md` et vérifie qu'elles mènent à 20 sur 20 aux deux chapitres |
 | `tests/robustesse.js` | envoie 20 000 lignes aléatoires à l'interpréteur et vérifie qu'aucune ne le fait planter |
 
 Lancer les tests après toute modification :

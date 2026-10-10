@@ -86,6 +86,23 @@ function Terminal(elements){
 			}
 		}
 	});
+	// La barre de touches pour téléphone : les caractères difficiles à trouver sur un clavier tactile.
+	if (elements.touches){
+		var boutons = elements.touches.querySelectorAll("button");
+		for (var b = 0; b < boutons.length; b++){
+			boutons[b].addEventListener("mousedown", function(e){ e.preventDefault(); });
+			boutons[b].addEventListener("click", function(e){
+				e.preventDefault();
+				var bouton = e.currentTarget;
+				if (bouton.getAttribute("data-touche")){
+					self.saisie.focus();
+					self.touche({ key: bouton.getAttribute("data-touche"), preventDefault: function(){} });
+				} else {
+					self.inserer(bouton.getAttribute("data-texte"));
+				}
+			});
+		}
+	}
 	// Un clic n'importe ou dans le terminal redonne la main au champ de saisie,
 	// sauf si le joueur est en train de selectionner du texte pour le copier.
 	this.conteneur.addEventListener("mouseup", function(){
@@ -93,6 +110,126 @@ function Terminal(elements){
 		if (selection === "") self.saisie.focus();
 	});
 }
+
+/* Insère du texte à la place du curseur, comme si on l'avait tapé. */
+Terminal.prototype.inserer = function(texte){
+	var champ = this.saisie;
+	var debut = champ.selectionStart === null ? champ.value.length : champ.selectionStart;
+	var fin = champ.selectionEnd === null ? debut : champ.selectionEnd;
+	champ.value = champ.value.substring(0, debut) + texte + champ.value.substring(fin);
+	champ.selectionStart = champ.selectionEnd = debut + texte.length;
+	champ.focus();
+};
+
+/*
+ * Un petit nano : un éditeur plein écran au-dessus du terminal.
+ * enregistrer(texte) est appelé à chaque Ctrl+O (ou en quittant avec O).
+ */
+Terminal.prototype.editer = function(options, enregistrer){
+	var self = this;
+	var fond = document.createElement("div");
+	fond.id = "editeur";
+	fond.setAttribute("role", "dialog");
+	fond.setAttribute("aria-label", "Éditeur nano");
+	var entete = document.createElement("div");
+	entete.className = "editeur-entete";
+	entete.textContent = "GNU nano · " + options.titre;
+	var zone = document.createElement("textarea");
+	zone.value = options.texte;
+	zone.spellcheck = false;
+	zone.setAttribute("autocapitalize", "off");
+	zone.setAttribute("autocorrect", "off");
+	var message = document.createElement("div");
+	message.className = "editeur-message";
+	var pied = document.createElement("div");
+	pied.className = "editeur-pied";
+	function bouton(texte, action){
+		var b = document.createElement("button");
+		b.type = "button";
+		b.textContent = texte;
+		b.addEventListener("mousedown", function(e){ e.preventDefault(); });
+		b.addEventListener("click", function(e){ e.preventDefault(); action(); });
+		pied.appendChild(b);
+		return b;
+	}
+	var modifie = false, confirmation = false;
+	function dire(texte){ message.textContent = texte; }
+	function enregistrerMaintenant(){
+		if (options.lectureSeule){
+			dire("[ Impossible d'écrire : lecture seule. Quitte avec Ctrl+X ]");
+			enregistrer(zone.value);
+			return;
+		}
+		enregistrer(zone.value);
+		modifie = false;
+		var n = zone.value.split("\n").length;
+		dire("[ " + n + " ligne" + (n > 1 ? "s" : "") + " écrite" + (n > 1 ? "s" : "") + " ]");
+	}
+	function fermer(){
+		document.body.removeChild(fond);
+		self.saisie.focus();
+	}
+	function quitter(){
+		if (!modifie || options.lectureSeule){ fermer(); return; }
+		confirmation = true;
+		dire("Enregistrer le tampon modifié ?   O : oui   N : non   Ctrl+C : annuler");
+		boutonsConfirmation(true);
+	}
+	function couperLigne(){
+		var texte = zone.value, position = zone.selectionStart;
+		var debut = texte.lastIndexOf("\n", position - 1) + 1;
+		var fin = texte.indexOf("\n", position);
+		fin = fin === -1 ? texte.length : fin + 1;
+		zone.value = texte.substring(0, debut) + texte.substring(fin);
+		zone.selectionStart = zone.selectionEnd = Math.min(debut, zone.value.length);
+		modifie = true;
+		dire("[ Ligne coupée ]");
+	}
+	function repondre(oui){
+		confirmation = false;
+		boutonsConfirmation(false);
+		if (oui) enregistrerMaintenant();
+		fermer();
+	}
+	var boutonsNormaux = [
+		bouton("^O Enregistrer", enregistrerMaintenant),
+		bouton("^K Couper la ligne", couperLigne),
+		bouton("^X Quitter", quitter)
+	];
+	var boutonsOuiNon = [
+		bouton("O Oui", function(){ repondre(true); }),
+		bouton("N Non", function(){ repondre(false); }),
+		bouton("^C Annuler", function(){ confirmation = false; boutonsConfirmation(false); dire(""); zone.focus(); })
+	];
+	function boutonsConfirmation(actifs){
+		boutonsNormaux.forEach(function(b){ b.hidden = actifs; });
+		boutonsOuiNon.forEach(function(b){ b.hidden = !actifs; });
+	}
+	boutonsConfirmation(false);
+	zone.addEventListener("input", function(){ modifie = true; });
+	zone.addEventListener("keydown", function(e){
+		var touche = e.key.toLowerCase();
+		if (confirmation){
+			e.preventDefault();
+			if (touche === "o" || touche === "y") repondre(true);
+			else if (touche === "n") repondre(false);
+			else if ((e.ctrlKey && touche === "c") || touche === "escape"){ confirmation = false; boutonsConfirmation(false); dire(""); }
+			return;
+		}
+		if (!e.ctrlKey) return;
+		if (touche === "o" || touche === "s"){ e.preventDefault(); enregistrerMaintenant(); }
+		else if (touche === "x"){ e.preventDefault(); quitter(); }
+		else if (touche === "k"){ e.preventDefault(); couperLigne(); }
+	});
+	fond.appendChild(entete);
+	fond.appendChild(zone);
+	fond.appendChild(message);
+	fond.appendChild(pied);
+	document.body.appendChild(fond);
+	dire(options.lectureSeule ? "[ Lecture seule : cet objet ne t'appartient pas ]" : "[ " + options.texte.split("\n").length + " lignes lues ]");
+	zone.focus();
+	zone.selectionStart = zone.selectionEnd = 0;
+};
 
 Terminal.prototype.definirInvite = function(texte){
 	this.texteInvite = texte;

@@ -15,11 +15,51 @@ var MESSAGE_ACCUEIL =
 	"Chaque sort appris, chaque lieu découvert et chaque quête rapportent de l'expérience : tape " + C.vert("xp") + " pour voir ta note.\n\n" +
 	"Vas-y, explore. Nous espérons que ce que tu trouveras te plaira. Commence par taper ls.\n";
 
+/* Des bips 8 bits, coupés par défaut (sort son). */
+var contexteAudio = null;
+var MELODIES = {
+	sort: [[660, 0.06], [990, 0.09]],
+	quete: [[523, 0.08], [659, 0.08], [784, 0.14]],
+	niveau: [[392, 0.07], [523, 0.07], [659, 0.07], [784, 0.07], [1047, 0.2]],
+	succes: [[880, 0.07], [1175, 0.07], [1760, 0.16]],
+	victoire: [[523, 0.12], [523, 0.12], [523, 0.12], [698, 0.36], [880, 0.12], [784, 0.12], [1047, 0.5]],
+	erreur: [[150, 0.08]]
+};
+jouerSon = function(nom){
+	if (!PROFIL.son || !MELODIES[nom]) return;
+	try {
+		if (!contexteAudio) contexteAudio = new (window.AudioContext || window.webkitAudioContext)();
+		var t = contexteAudio.currentTime;
+		MELODIES[nom].forEach(function(note){
+			var osc = contexteAudio.createOscillator(), volume = contexteAudio.createGain();
+			osc.type = "square";
+			osc.frequency.value = note[0];
+			volume.gain.setValueAtTime(nom === "erreur" ? 0.03 : 0.05, t);
+			volume.gain.exponentialRampToValueAtTime(0.0001, t + note[1]);
+			osc.connect(volume);
+			volume.connect(contexteAudio.destination);
+			osc.start(t);
+			osc.stop(t + note[1]);
+			t += note[1] * 0.9;
+		});
+	} catch (e){
+		// Pas de son disponible : tant pis, le jeu continue.
+	}
+};
+
 /* Met à jour le bandeau d'expérience au-dessus de l'image. */
 function majEtat(){
 	var niveau = document.getElementById("etat-niveau");
 	if (!niveau) return;
 	var pr = state.progression();
+	if (state.chapitreEnCours() === 2){
+		var max2 = state.xpMax2();
+		niveau.textContent = "Chapitre 2 · la Crypte";
+		document.getElementById("etat-plein").style.width = Math.round(Math.min(1, state.xp2 / max2) * 100) + "%";
+		document.getElementById("etat-xp").textContent = state.xpNet(2) + " XP · " + state.noteTexte(2) + (state.malus2 ? " (indices -" + state.malus2 + ")" : "");
+		document.getElementById("etat").title = "Note du chapitre 2. Tape xp pour le détail.";
+		return;
+	}
 	niveau.textContent = "Niveau " + pr.niveau + " · " + pr.titre;
 	document.getElementById("etat-plein").style.width = Math.round(pr.part * 100) + "%";
 	document.getElementById("etat-xp").textContent = pr.xp + " XP · " + state.noteTexte() + (state.malus ? " (indices -" + state.malus + ")" : "");
@@ -34,7 +74,8 @@ function demarrer(){
 		sortie: document.getElementById("sortie"),
 		saisie: document.getElementById("saisie"),
 		invite: document.getElementById("invite"),
-		formulaire: document.getElementById("ligne")
+		formulaire: document.getElementById("ligne"),
+		touches: document.getElementById("touches")
 	});
 	term.onCommande = Shell.executer;
 	term.onCompletion = Shell.completer;

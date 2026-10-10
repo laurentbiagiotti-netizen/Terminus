@@ -19,27 +19,8 @@ var graine = +(process.argv.filter(function(a){ return /^[0-9]+$/.test(a); })[0]
 var jeu = nouveauMonde({}, graine);
 
 // Les valeurs propres à la partie sont écrites <entre chevrons> dans la solution :
-// on les remplace au moment de jouer, comme le ferait un joueur qui a fait la recherche.
-function remplir(commande){
-	return commande
-		.replace(/<motdepasse>/g, jeu.lire("MOT_DE_PASSE_SUDO"))
-		.replace(/<client>/g, jeu.lire("MEILLEUR_CLIENT"))
-		.replace(/<adresse>/g, jeu.lire("ADRESSE_ATTAQUANT"))
-		.replace(/<sweats>/g, jeu.lire("NB_SWEATS"))
-		.replace(/<pid:([a-z_]+)>/g, function(tout, nom){
-			return String(jeu.lire("(current_room.procs || []).filter(function(p){ return p.name === " + JSON.stringify(nom) + "; }).map(function(p){ return p.pid; })[0]"));
-		});
-}
-
-commandes.forEach(function(brute){
-	var commande = remplir(brute);
-	if (commande === "passwd"){
-		// passwd pose deux questions : le nouveau mot de passe, puis sa confirmation.
-		jeu.taper(commande, ["Une phrase bien longue 42", "Une phrase bien longue 42"]);
-	} else {
-		jeu.taper(commande, commande.indexOf("sudo") === 0 ? jeu.lire("MOT_DE_PASSE_SUDO") : undefined);
-	}
-});
+// jouerSolution les remplace au moment de jouer, comme le ferait un joueur qui a fait la recherche.
+commandes.forEach(function(commande){ jeu.jouerSolution(commande); });
 
 var problemes = [];
 if (!jeu.lire("state.has('fin')")) problemes.push("la partie n'atteint pas le Paradis (dernier lieu : " + jeu.lire("current_room.room_name") + ")");
@@ -47,15 +28,23 @@ var principales = jeu.lire("QUETES_PRINCIPALES.filter(function(q){ return !state
 var secondaires = jeu.lire("QUETES_SECONDAIRES.filter(function(q){ return !state.quests[q.id] && !q.secrete; }).map(function(q){ return q.titre; }).join(' ; ')");
 if (principales) problemes.push("quêtes principales manquantes : " + principales);
 if (secondaires) problemes.push("quêtes secondaires manquantes : " + secondaires);
+if (!jeu.lire("state.quests.c_corbeau")) problemes.push("le chapitre 2 n'est pas terminé (dernier lieu : " + jeu.lire("current_room.room_name") + ")");
+var principales2 = jeu.lire("QUETES_CHAPITRE2.concat(QUETES_SECONDAIRES_2).filter(function(q){ return !state.quests[q.id]; }).map(function(q){ return q.titre; }).join(' ; ')");
+if (principales2) problemes.push("quêtes du chapitre 2 manquantes : " + principales2);
+if (jeu.lire("state.xp2") !== jeu.lire("state.xpMax2()")){
+	problemes.push("le chapitre 2 n'atteint pas le score maximal : " + jeu.lire("state.xp2") + " sur " + jeu.lire("state.xpMax2()") + ". Sorts jamais lancés : [" +
+		jeu.lire("ORDRE_DES_SORTS_2.filter(function(x){ return !state.usages[x]; }).join(', ')") + "] ; lieux jamais visités : [" +
+		jeu.lire("lieuxVisitables(2).filter(function(l){ return !state.visited[l.id]; }).map(function(l){ return l.room_name; }).join(', ')") + "]");
+}
 if (jeu.lire("state.xp") !== jeu.lire("state.xpMax()")){
 	problemes.push("la solution n'atteint pas le score maximal. Sorts jamais lancés : [" +
 		jeu.lire("ORDRE_DES_SORTS.filter(function(x){ return !state.usages[x]; }).join(', ')") + "] ; lieux jamais visités : [" +
 		jeu.lire("lieuxVisitables().filter(function(l){ return !state.visited[l.id]; }).map(function(l){ return l.room_name; }).join(', ')") + "]");
 }
-var sorts = jeu.lire("state.knownSpells().length + ' sur ' + ORDRE_DES_SORTS.length");
+var sorts = jeu.lire("state.knownSpells().length + ' sur ' + tousLesSorts().length");
 
 console.log(commandes.length + " commandes jouées, " + sorts + " sorts appris, " +
-	jeu.lire("state.xp + ' XP sur ' + state.xpMax() + ', note ' + state.noteTexte()") + ".");
+	jeu.lire("state.xp + ' XP sur ' + state.xpMax() + ', note ' + state.noteTexte() + ' ; chapitre 2 : ' + state.xp2 + ' XP sur ' + state.xpMax2() + ', note ' + state.noteTexte(2)") + ".");
 if (problemes.length){
 	console.log("ÉCHEC :\n  " + problemes.join("\n  "));
 	process.exit(1);

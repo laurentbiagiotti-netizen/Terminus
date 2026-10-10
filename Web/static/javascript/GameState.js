@@ -196,6 +196,18 @@ function GameState(){
 	this.indices = {};         // paliers d'indices payants pris, par étape de quête
 	this.malus = 0;            // points retirés de la note par les indices
 	this.dateVictoire = null;
+	// Chapitre 2
+	this.xp2 = 0;
+	this.malus2 = 0;
+	this.clesGenerees = 0;     // combien de paires de clés SSH le joueur a fabriquées
+	this.clePublique = null;   // sa clé publique actuelle
+	this.clePrivee = null;     // la clé privée qui allait avec la clé publique installée sur le coffre
+	this.cleGrillee = null;    // une clé publique dont la clé privée a été donnée à quelqu'un
+	this.debutChapitre2 = null;
+	this.dateVictoire2 = null;
+	// Succès et chronomètre
+	this.succes = {};          // succès débloqués
+	this.chronos = {};         // temps de jeu au moment où chaque étape a été franchie
 	this.dernierInstant = null;
 	// Personnalisation du terminal
 	this.env = {};
@@ -234,10 +246,29 @@ GameState.prototype.knows = function(sort){
 	return this.spells[sort] === true;
 };
 
+function tousLesSorts(){
+	return typeof ORDRE_DES_SORTS_2 === "undefined" ? ORDRE_DES_SORTS : ORDRE_DES_SORTS.concat(ORDRE_DES_SORTS_2);
+}
+
+/* À quel chapitre appartient un sort, un lieu, une quête ? */
+function chapitreDuSort(sort){
+	return typeof ORDRE_DES_SORTS_2 !== "undefined" && ORDRE_DES_SORTS_2.indexOf(sort) > -1 ? 2 : 1;
+}
+function chapitreDeQuete(id){
+	return /^(c_|s_c_)/.test(id) ? 2 : 1;
+}
+
+GameState.prototype.nbSortsChapitre1 = function(){
+	var n = 0;
+	for (var i = 0; i < ORDRE_DES_SORTS.length; i++){ if (this.spells[ORDRE_DES_SORTS[i]]) n++; }
+	return n;
+};
+
 GameState.prototype.knownSpells = function(){
 	var connus = [];
-	for (var i = 0; i < ORDRE_DES_SORTS.length; i++){
-		if (this.spells[ORDRE_DES_SORTS[i]]) connus.push(ORDRE_DES_SORTS[i]);
+	var tous = tousLesSorts();
+	for (var i = 0; i < tous.length; i++){
+		if (this.spells[tous[i]]) connus.push(tous[i]);
 	}
 	return connus;
 };
@@ -245,38 +276,54 @@ GameState.prototype.knownSpells = function(){
 GameState.prototype.learn = function(sort){
 	if (this.spells[sort]) return;
 	this.spells[sort] = true;
-	this.xp += XP_SORT_APPRIS;
+	if (chapitreDuSort(sort) === 2) this.xp2 += XP_SORT_APPRIS;
+	else this.xp += XP_SORT_APPRIS;
+	jouerSon("sort");
 	say(C.vert("✦ Nouveau sort appris : " + sort) + " (" + MANUEL[sort].resume + "). Détail : man " + sort + C.gris("  +" + XP_SORT_APPRIS + " XP"));
 	GameEvents.fire({ type: "learn", spell: sort });
 };
 
 /* ---------------- experience ---------------- */
 
-GameState.prototype.gagner = function(points, raison){
-	this.xp += points;
+GameState.prototype.gagner = function(points, raison, chapitre){
+	if (chapitre === 2) this.xp2 += points;
+	else this.xp += points;
 	this.gainsDuTour.push({ points: points, raison: raison });
 };
 
 GameState.prototype.premierUsage = function(sort){
 	if (this.usages[sort]) return;
 	this.usages[sort] = true;
-	this.gagner(XP_PREMIER_USAGE, "premier " + sort);
+	this.gagner(XP_PREMIER_USAGE, "premier " + sort, chapitreDuSort(sort));
 };
 
 GameState.prototype.visiter = function(lieu){
 	if (!lieu.id || this.visited[lieu.id]) return;
 	this.visited[lieu.id] = true;
-	this.gagner(XP_NOUVEAU_LIEU, "nouveau lieu");
+	if (lieu.horsBareme) return;
+	this.gagner(XP_NOUVEAU_LIEU, "nouveau lieu", lieu.chapitre === 2 ? 2 : 1);
 };
 
-/* Lieux dans lesquels on peut réellement entrer (pas la Boite ni la Cage). */
-function lieuxVisitables(){
+/* Lieux dans lesquels on peut réellement entrer (pas la Boite ni la Cage), chapitre par chapitre. */
+function lieuxVisitables(chapitre){
 	var lieux = [];
 	for (var id in World.rooms){
-		if (World.rooms.hasOwnProperty(id) && !World.rooms[id].atteignable) lieux.push(World.rooms[id]);
+		if (!World.rooms.hasOwnProperty(id)) continue;
+		var lieu = World.rooms[id];
+		if (lieu.atteignable || lieu.horsBareme || (lieu.chapitre || 1) !== (chapitre || 1)) continue;
+		lieux.push(lieu);
 	}
 	return lieux;
 }
+
+/* Le barème du chapitre 2 : il a sa propre note. */
+GameState.prototype.xpMax2 = function(){
+	if (typeof QUETES_CHAPITRE2 === "undefined") return 1;
+	return ORDRE_DES_SORTS_2.length * (XP_SORT_APPRIS + XP_PREMIER_USAGE) +
+		lieuxVisitables(2).length * XP_NOUVEAU_LIEU +
+		(QUETES_CHAPITRE2.length - 1) * XP_QUETE + XP_VICTOIRE +
+		QUETES_SECONDAIRES_2.length * XP_QUETE_SECONDAIRE;
+};
 
 GameState.prototype.xpMax = function(){
 	return (ORDRE_DES_SORTS.length - SORTS_DE_DEPART.length) * XP_SORT_APPRIS +
@@ -309,20 +356,27 @@ GameState.prototype.progression = function(){
 
 /* La note sur 20, au demi-point près. */
 /* L'expérience qui compte pour la note : celle gagnée, moins le prix des indices. */
-GameState.prototype.xpNet = function(){
+GameState.prototype.xpNet = function(chapitre){
+	if (chapitre === 2) return Math.max(0, this.xp2 - this.malus2);
 	return Math.max(0, this.xp - this.malus);
 };
 
-GameState.prototype.nbIndices = function(){
+GameState.prototype.nbIndices = function(chapitre){
 	var n = 0;
 	for (var id in this.indices){
-		if (this.indices.hasOwnProperty(id)) n += this.indices[id];
+		if (this.indices.hasOwnProperty(id) && chapitreDeQuete(id) === (chapitre || 1)) n += this.indices[id];
 	}
 	return n;
 };
 
-GameState.prototype.note = function(){
-	return Math.round(Math.min(1, this.xpNet() / this.xpMax()) * 40) / 2;
+GameState.prototype.note = function(chapitre){
+	var max = chapitre === 2 ? this.xpMax2() : this.xpMax();
+	return Math.round(Math.min(1, this.xpNet(chapitre) / max) * 40) / 2;
+};
+
+/* Le chapitre que le joueur est en train de jouer. */
+GameState.prototype.chapitreEnCours = function(){
+	return this.has("crypteOuverte") && this.has("victoire") ? 2 : 1;
 };
 
 /* L'étape de la quête principale en cours, ou null si tout est fait. */
@@ -330,14 +384,22 @@ GameState.prototype.queteEnCours = function(){
 	for (var i = 0; i < QUETES_PRINCIPALES.length; i++){
 		if (!this.quests[QUETES_PRINCIPALES[i].id]) return QUETES_PRINCIPALES[i];
 	}
+	if (this.has("crypteOuverte") && typeof QUETES_CHAPITRE2 !== "undefined"){
+		for (var j = 0; j < QUETES_CHAPITRE2.length; j++){
+			if (!this.quests[QUETES_CHAPITRE2[j].id]) return QUETES_CHAPITRE2[j];
+		}
+	}
 	return null;
 };
 
 /* Le sort indice : rappelle l'indice gratuit, puis propose le palier suivant contre des points. */
 GameState.prototype.demanderIndice = function(){
 	var q = this.queteEnCours();
-	if (!q) return "Il n'y a plus d'étape en cours : la quête principale est terminée. Tape xp pour voir ce qui reste à gagner.";
-	var details = INDICES_DETAILLES[q.id] || [];
+	if (!q){
+		if (this.has("victoire") && !this.has("crypteOuverte")) return "La quête principale est terminée. Relis Laurent, dans la Citadelle : son P.S. ouvre la suite.";
+		return "Il n'y a plus d'étape en cours : la quête principale est terminée. Tape xp pour voir ce qui reste à gagner.";
+	}
+	var details = INDICES_DETAILLES[q.id] || (typeof INDICES_CHAPITRE2 !== "undefined" && INDICES_CHAPITRE2[q.id]) || [];
 	var pris = this.indices[q.id] || 0;
 	var lignes = [C.jaune("Étape en cours : " + q.titre), C.gris("Indice gratuit : ") + q.indice];
 	for (var i = 0; i < pris && i < details.length; i++){
@@ -357,21 +419,25 @@ GameState.prototype.demanderIndice = function(){
 			return;
 		}
 		etat.indices[q.id] = pris + 1;
-		etat.malus += cout;
-		term.echo(C.cyan("Indice " + (pris + 2) + " : ") + details[pris] + "\n" + C.gris("-" + cout + " XP sur la note. Note maximale encore possible : " +
-			String(Math.round(Math.min(1, (etat.xpMax() - etat.malus) / etat.xpMax()) * 40) / 2).replace(".", ",") + " / 20."));
+		var chapitre = chapitreDeQuete(q.id);
+		if (chapitre === 2) etat.malus2 += cout;
+		else etat.malus += cout;
+		var max = chapitre === 2 ? etat.xpMax2() : etat.xpMax();
+		var deja = chapitre === 2 ? etat.malus2 : etat.malus;
+		term.echo(C.cyan("Indice " + (pris + 2) + " : ") + details[pris] + "\n" + C.gris("-" + cout + " XP sur la note" + (chapitre === 2 ? " du chapitre 2" : "") + ". Note maximale encore possible : " +
+			String(Math.round(Math.min(1, (max - deja) / max) * 40) / 2).replace(".", ",") + " / 20."));
 		etat.save();
 		if (typeof majEtat === "function") majEtat();
 	});
 	return "";
 };
 
-GameState.prototype.noteTexte = function(){
-	return String(this.note()).replace(".", ",") + " / 20";
+GameState.prototype.noteTexte = function(chapitre){
+	return String(this.note(chapitre)).replace(".", ",") + " / 20";
 };
 
-GameState.prototype.mention = function(){
-	var n = this.note();
+GameState.prototype.mention = function(chapitre){
+	var n = this.note(chapitre);
 	if (n >= 18) return "Félicitations du jury";
 	if (n >= 16) return "Très bien";
 	if (n >= 14) return "Bien";
@@ -442,6 +508,7 @@ GameState.prototype.bilanXP = function(){
 	var n = this.niveau();
 	if (n > this.niveauAnnonce){
 		this.niveauAnnonce = n;
+		jouerSon("niveau");
 		say(C.cyan("▲ Niveau " + n + " : " + NIVEAUX[n - 1].titre + " !") +
 			(n === NIVEAUX.length ? " Il n'y a plus rien au-dessus." : ""));
 	}
@@ -457,7 +524,7 @@ GameState.prototype.tableauXP = function(){
 	var principales = 0, i;
 	for (i = 0; i < QUETES_PRINCIPALES.length; i++){ if (this.quests[QUETES_PRINCIPALES[i].id]) principales++; }
 	var secondaires = this.nbSecondaires();
-	var appris = this.knownSpells().length - SORTS_DE_DEPART.length;
+	var appris = this.nbSortsChapitre1() - SORTS_DE_DEPART.length;
 	var utilises = 0, oublies = [];
 	for (i = 0; i < ORDRE_DES_SORTS.length; i++){
 		if (this.usages[ORDRE_DES_SORTS[i]]) utilises++;
@@ -490,6 +557,7 @@ GameState.prototype.tableauXP = function(){
 		lignes.push("");
 	}
 	if (oublies.length > 0) lignes.push("Sorts appris mais jamais lancés : " + oublies.join(", "));
+	if (this.has("crypteOuverte") && typeof QUETES_CHAPITRE2 !== "undefined") lignes.push("", this.tableauXP2(), "");
 	lignes.push(C.gris("Temps de jeu : " + this.tempsTexte() + ". Sorts lancés : " + this.nbCommandes + "."));
 	lignes.push(C.gris("Barème : " + XP_QUETE + " XP par étape de la quête principale (" + XP_VICTOIRE + " pour la dernière), " +
 		XP_QUETE_SECONDAIRE + " par quête secondaire, " + XP_SORT_APPRIS + " par sort appris, " +
@@ -497,10 +565,71 @@ GameState.prototype.tableauXP = function(){
 	return lignes.join("\n");
 };
 
+GameState.prototype.tableauXP2 = function(){
+	var principales = QUETES_CHAPITRE2.filter(function(q){ return this.quests[q.id]; }, this).length;
+	var secondaires = QUETES_SECONDAIRES_2.filter(function(q){ return this.quests[q.id]; }, this).length;
+	var appris = ORDRE_DES_SORTS_2.filter(function(x){ return this.spells[x]; }, this).length;
+	var utilises = ORDRE_DES_SORTS_2.filter(function(x){ return this.usages[x]; }, this).length;
+	var lieux = lieuxVisitables(2), visites = lieux.filter(function(l){ return this.visited[l.id]; }, this).length;
+	function ligne(nom, fait, total){
+		return "  " + completerDroite(nom, 22) + completerGauche(fait + " / " + total, 8);
+	}
+	var lignes = [
+		C.gras("CHAPITRE 2 : LA CRYPTE") + "   " + C.gras(this.xpNet(2) + " XP") + " sur " + this.xpMax2() + "   Note : " + C.gras(this.noteTexte(2)),
+		ligne("Quêtes principales", principales, QUETES_CHAPITRE2.length),
+		ligne("Quêtes secondaires", secondaires, QUETES_SECONDAIRES_2.length),
+		ligne("Sorts appris", appris, ORDRE_DES_SORTS_2.length),
+		ligne("Premières utilisations", utilises, ORDRE_DES_SORTS_2.length),
+		ligne("Lieux découverts", visites, lieux.length)
+	];
+	if (this.malus2 > 0) lignes.push(C.jaune("  Indices payants : " + this.nbIndices(2) + ", soit -" + this.malus2 + " XP sur la note du chapitre."));
+	return lignes.join("\n");
+};
+
+GameState.prototype.texteDuCertificat = function(){
+	var minutes = Math.round((this.tempsMs - (this.debutChapitre2 || 0)) / 60000);
+	return "" +
+		"=================================================================\n" +
+		"         CYBERSUP · CERTIFICAT DE DÉFENSE DU SYSTÈME\n" +
+		"=================================================================\n" +
+		"\n" +
+		"  Décerné à : " + (this.nom || JOUEUR) + "\n" +
+		"\n" +
+		"  pour avoir repéré un programme trafiqué, décodé un message caché,\n" +
+		"  trouvé et désarmé une porte SUID, coupé une écoute réseau,\n" +
+		"  révoqué une clé SSH et démasqué l'intrus, le tout en terminal.\n" +
+		"\n" +
+		"  SCORE DU CHAPITRE 2  : " + this.xpNet(2) + " XP sur " + this.xpMax2() + "\n" +
+		"  NOTE                 : " + this.noteTexte(2) + "\n" +
+		"  Mention              : " + this.mention(2) + "\n" +
+		"  Sorts de sécurité    : " + ORDRE_DES_SORTS_2.filter(function(x){ return this.usages[x]; }, this).join(", ") + "\n" +
+		"  Quêtes secondaires   : " + QUETES_SECONDAIRES_2.filter(function(q){ return this.quests[q.id]; }, this).length + " sur " + QUETES_SECONDAIRES_2.length + "\n" +
+		"  Temps du chapitre    : " + (minutes < 60 ? minutes + " min" : Math.floor(minutes / 60) + " h " + deuxChiffres(minutes % 60)) + "\n" +
+		"  Indices payants      : " + (this.malus2 ? this.nbIndices(2) + " (-" + this.malus2 + " XP sur la note)" : "aucun") + "\n" +
+		"\n" +
+		"  Signé : Laurent, Directeur Pédagogique de Cybersup\n" +
+		"          et Grace, cheffe de quart de la WarRoom\n" +
+		"=================================================================\n" +
+		"  Code de vérification, à remettre au formateur :\n" +
+		"  " + this.codeDuCertificat() + "\n" +
+		"=================================================================";
+};
+
+GameState.prototype.codeDuCertificat = function(){
+	return fabriquerCode({
+		prenom: String(this.nom || JOUEUR).replace(/\|/g, "/"),
+		score: this.xpNet(2), max: this.xpMax2(), note: this.note(2),
+		commandes: this.nbCommandes, minutes: Math.round((this.tempsMs - (this.debutChapitre2 || 0)) / 60000),
+		indices: this.nbIndices(2), chapitre: 2,
+		date: this.dateVictoire2 || dateDuJour(), graine: PROFIL.graine
+	});
+};
+
 /* ---------------- quetes ---------------- */
 
 function trouverQuete(id){
 	var toutes = QUETES_PRINCIPALES.concat(QUETES_SECONDAIRES);
+	if (typeof QUETES_CHAPITRE2 !== "undefined") toutes = toutes.concat(QUETES_CHAPITRE2, QUETES_SECONDAIRES_2);
 	for (var i = 0; i < toutes.length; i++){
 		if (toutes[i].id === id) return toutes[i];
 	}
@@ -516,9 +645,12 @@ GameState.prototype.complete = function(id){
 	this.quests[id] = true;
 	this.seen[id] = true;
 	var quete = trouverQuete(id);
-	var principale = id.charAt(0) === "m";
-	var points = principale ? (id === "m_boss" ? XP_VICTOIRE : XP_QUETE) : XP_QUETE_SECONDAIRE;
-	this.xp += points;
+	var principale = id.charAt(0) === "m" || id.indexOf("c_") === 0;
+	var points = principale ? (id === "m_boss" || id === "c_corbeau" ? XP_VICTOIRE : XP_QUETE) : XP_QUETE_SECONDAIRE;
+	if (chapitreDeQuete(id) === 2) this.xp2 += points;
+	else this.xp += points;
+	if (principale) this.chronos[id] = this.tempsMs;
+	jouerSon(id === "m_boss" || id === "c_corbeau" ? "victoire" : "quete");
 	say(C.jaune("★ " + (principale ? "Quête accomplie" : "Quête secondaire accomplie") + " : " + quete.titre) + C.gris("  +" + points + " XP"));
 };
 
@@ -557,14 +689,47 @@ GameState.prototype.journal = function(){
 	if (inconnues > 0){
 		lignes.push(C.gris("  ... et " + inconnues + " autre" + (inconnues > 1 ? "s" : "") + " à découvrir en parlant aux habitants et en fouillant partout."));
 	}
+	if (this.has("crypteOuverte") && typeof QUETES_CHAPITRE2 !== "undefined"){
+		lignes.push("");
+		lignes.push(C.gras("Chapitre 2 : la Crypte"));
+		var enCours2 = false;
+		for (var c = 0; c < QUETES_CHAPITRE2.length; c++){
+			var q2 = QUETES_CHAPITRE2[c];
+			if (this.quests[q2.id]){
+				lignes.push("  " + C.vert("[x]") + " " + q2.titre);
+			} else if (!enCours2){
+				enCours2 = true;
+				lignes.push("  " + C.jaune("[ ] " + q2.titre));
+				lignes.push(C.gris("      Indice : " + q2.indice));
+			}
+		}
+		if (!enCours2) lignes.push("  " + C.vert("Terminé. Le CertificatCyber t'attend dans le coffre."));
+		var faites2 = QUETES_SECONDAIRES_2.filter(function(q){ return this.quests[q.id]; }, this).length;
+		lignes.push(C.gras("  Quêtes secondaires du chapitre 2") + " (" + faites2 + " sur " + QUETES_SECONDAIRES_2.length + ")");
+		for (var d = 0; d < QUETES_SECONDAIRES_2.length; d++){
+			var s2 = QUETES_SECONDAIRES_2[d];
+			if (this.quests[s2.id]) lignes.push("    " + C.vert("[x]") + " " + s2.titre);
+			else if (this.seen[s2.id]) lignes.push("    [ ] " + s2.titre);
+		}
+		lignes.push(C.cyan("  Note du chapitre 2 : " + this.noteTexte(2)) + C.gris("   " + this.xpNet(2) + " XP sur " + this.xpMax2()));
+	}
 	lignes.push("");
 	var pr = this.progression();
 	lignes.push(C.cyan("Niveau " + pr.niveau + " : " + pr.titre) + C.gris("   " + pr.xp + " XP sur " + pr.max + " (détail : xp)"));
-	lignes.push(C.gris("Sorts appris : " + this.knownSpells().length + " sur " + ORDRE_DES_SORTS.length + ". Sorts lancés : " + this.nbCommandes + "."));
+	lignes.push(C.gris("Sorts appris : " + this.knownSpells().length + " sur " + tousLesSorts().length + ". Sorts lancés : " + this.nbCommandes + "."));
 	return lignes.join("\n");
 };
 
 GameState.prototype.texteDuDiplome = function(){
+	if (this.has("chapitre1Saute")){
+		return "=================================================================\n" +
+			"            CYBERSUP · DIPLÔME DE MAGE DU TERMINAL\n" +
+			"=================================================================\n\n" +
+			"  Chapitre 1 non passé : accès direct au chapitre 2.\n" +
+			"  Pas de note pour ce chapitre. Celle du chapitre 2 figurera sur\n" +
+			"  le CertificatCyber, à gagner sous la Citadelle (cd Crypte).\n\n" +
+			"=================================================================";
+	}
 	var pr = this.progression();
 	var complet = this.xp >= pr.max;
 	return "" +
@@ -584,7 +749,7 @@ GameState.prototype.texteDuDiplome = function(){
 		"\n" +
 		"  Relevé de compétences\n" + this.bulletin().join("\n") + "\n" +
 		"\n" +
-		"  Sorts maîtrisés     : " + this.knownSpells().length + " sur " + ORDRE_DES_SORTS.length + "\n" +
+		"  Sorts maîtrisés     : " + this.nbSortsChapitre1() + " sur " + ORDRE_DES_SORTS.length + "\n" +
 		"  Quêtes secondaires  : " + this.nbSecondaires() + " sur " + QUETES_SECONDAIRES.length + "\n" +
 		"  Sorts lancés        : " + this.nbCommandes + "\n" +
 		"  Temps de jeu        : " + this.tempsTexte() + "\n" +
@@ -879,7 +1044,7 @@ Tu connais cette barbe. C'est le vieil homme des MontagnesEst.\n\n\
     			C.gras("SCORE FINAL : " + this.xpNet() + " XP sur " + bilan.max) + (this.malus ? C.gris("  (" + this.xp + " gagnés, -" + this.malus + " d'indices)") : "") + "\n" +
     			C.gras("NOTE : " + this.noteTexte()) + "   Mention : " + this.mention() + "\n" +
     			"Niveau " + bilan.niveau + " sur " + NIVEAUX.length + " : " + bilan.titre + "\n\n" +
-    			"Sorts appris : " + this.knownSpells().length + " sur " + ORDRE_DES_SORTS.length +
+    			"Sorts appris : " + this.nbSortsChapitre1() + " sur " + ORDRE_DES_SORTS.length +
     			". Quêtes secondaires : " + this.nbSecondaires() + " sur " + QUETES_SECONDAIRES.length +
     			". Sorts lancés : " + this.nbCommandes + ". Temps de jeu : " + this.tempsTexte() + ".\n\n" +
     			(this.xp >= bilan.max ?
@@ -889,8 +1054,102 @@ Tu connais cette barbe. C'est le vieil homme des MontagnesEst.\n\n\
     			"Et maintenant, ouvre un vrai terminal. Tout ce que tu sais y fonctionne.");
     		break;
 		default:
+			if (typeof etatChapitre2 === "function") etatChapitre2(param_name);
 			break;
 	};
+};
+
+/* ---------------- succès ---------------- */
+
+var SUCCES = [
+	{ id: "premiers_pas", titre: "Premiers pas", detail: "lancer 10 sorts",
+	  test: function(e){ return e.nbCommandes >= 10; } },
+	{ id: "plombier", titre: "Plombier", detail: "enchaîner au moins 4 sorts dans un seul tuyau",
+	  test: function(e){ return e.has("tuyau4"); } },
+	{ id: "trou_noir", titre: "Trou noir", detail: "envoyer quelque chose dans /dev/null",
+	  test: function(e){ return e.has("trouNoir"); } },
+	{ id: "fouineur", titre: "Fouineur", detail: "trouver les deux quêtes secrètes du chapitre 1",
+	  test: function(e){ return e.quests["s_chaussette"] && e.quests["s_annales"]; } },
+	{ id: "sans_filet", titre: "Sans filet", detail: "vaincre le Sorcier Noir sans indice payant",
+	  test: function(e){ return e.has("victoire") && !e.has("chapitre1Saute") && e.malus === 0; } },
+	{ id: "eclair", titre: "Éclair", detail: "vaincre le Sorcier Noir en moins d'une heure de jeu",
+	  test: function(e){ return e.has("victoire") && !e.has("chapitre1Saute") && e.chronos["m_boss"] !== undefined && e.chronos["m_boss"] < 3600000; } },
+	{ id: "econome", titre: "Économe", detail: "vaincre le Sorcier Noir en moins de 250 sorts lancés",
+	  test: function(e){ return e.has("victoire") && !e.has("chapitre1Saute") && e.has("victoirePeuDeSorts"); } },
+	{ id: "root", titre: "Root", detail: "atteindre le dernier niveau",
+	  test: function(e){ return e.niveau() === NIVEAUX.length; } },
+	{ id: "perfection", titre: "Perfection", detail: "20 / 20 au chapitre 1",
+	  test: function(e){ return !e.has("chapitre1Saute") && e.note() === 20; } },
+	{ id: "noctambule", titre: "Noctambule", detail: "jouer entre minuit et cinq heures du matin",
+	  test: function(e){ return e.has("nuit"); } },
+	{ id: "cles_en_main", titre: "Clés en main", detail: "terminer le chapitre 2",
+	  test: function(e){ return !!e.quests["c_corbeau"]; } },
+	{ id: "parano", titre: "Parano (au bon sens du terme)", detail: "protéger sa clé par une phrase de passe sans jamais confier sa clé privée",
+	  test: function(e){ return !!e.quests["c_coffre"] && !!e.quests["s_c_passphrase"] && !e.cleGrillee; } },
+	{ id: "sans_filet_2", titre: "Sans filet, le retour", detail: "terminer le chapitre 2 sans indice payant",
+	  test: function(e){ return !!e.quests["c_corbeau"] && e.malus2 === 0; } },
+	{ id: "speedrun", titre: "Speedrun", detail: "terminer les deux chapitres en moins de deux heures de jeu",
+	  test: function(e){ return !!e.quests["c_corbeau"] && !e.has("chapitre1Saute") && e.chronos["c_corbeau"] < 7200000; } }
+];
+
+/* Appelée après chaque ligne : annonce les succès qui viennent d'être débloqués. */
+GameState.prototype.verifierSucces = function(){
+	var heure = new Date().getHours();
+	if (heure >= 0 && heure < 5) this.set("nuit");
+	if (this.has("victoire") && !this.has("victoireNotee")){
+		this.set("victoireNotee");
+		if (this.nbCommandes < 250) this.set("victoirePeuDeSorts");
+	}
+	for (var i = 0; i < SUCCES.length; i++){
+		var s = SUCCES[i];
+		if (this.succes[s.id] || !s.test(this)) continue;
+		this.succes[s.id] = true;
+		jouerSon("succes");
+		say(C.magenta("◆ Succès débloqué : " + s.titre) + C.gris(" (" + s.detail + "). Tape succes pour la liste."));
+	}
+};
+
+GameState.prototype.texteDesSucces = function(){
+	var n = 0, lignes = [];
+	for (var i = 0; i < SUCCES.length; i++){
+		var s = SUCCES[i];
+		if (this.succes[s.id]) n++;
+		lignes.push("  " + (this.succes[s.id] ? C.magenta("◆ " + completerDroite(s.titre, 30)) : C.gris("◇ " + completerDroite(s.titre, 30))) +
+			(this.succes[s.id] ? s.detail : C.gris(s.detail)));
+	}
+	return C.gras("SUCCÈS") + " (" + n + " sur " + SUCCES.length + ")\n\n" + lignes.join("\n");
+};
+
+function dureeTexte(ms){
+	var secondes = Math.floor(ms / 1000);
+	var h = Math.floor(secondes / 3600), m = Math.floor(secondes / 60) % 60, sec = secondes % 60;
+	return (h > 0 ? h + ":" + deuxChiffres(m) : String(m)) + ":" + deuxChiffres(sec);
+}
+
+/* Le chronomètre : temps de jeu et temps de passage à chaque étape, façon speedrun. */
+GameState.prototype.texteDuChrono = function(){
+	var lignes = [C.gras("CHRONO") + "   temps de jeu : " + C.gras(dureeTexte(this.tempsMs)) + C.gris("  (les pauses de plus de deux minutes ne comptent pas)"), ""];
+	var listes = [{ titre: "Chapitre 1", quetes: QUETES_PRINCIPALES, depart: 0 }];
+	if (typeof QUETES_CHAPITRE2 !== "undefined" && this.has("crypteOuverte")){
+		listes.push({ titre: "Chapitre 2", quetes: QUETES_CHAPITRE2, depart: this.debutChapitre2 || 0 });
+	}
+	for (var l = 0; l < listes.length; l++){
+		lignes.push(C.gras(listes[l].titre));
+		var precedent = listes[l].depart;
+		for (var i = 0; i < listes[l].quetes.length; i++){
+			var q = listes[l].quetes[i];
+			var t = this.chronos[q.id];
+			if (t === undefined){
+				lignes.push(C.gris("  " + completerDroite(q.titre, 46) + "   --:--"));
+				continue;
+			}
+			lignes.push("  " + completerDroite(q.titre, 46) + completerGauche(dureeTexte(t), 8) + C.gris("  (+" + dureeTexte(Math.max(0, t - precedent)) + ")"));
+			precedent = t;
+		}
+		lignes.push("");
+	}
+	lignes.push(C.gris("Pour un speedrun : recommencer, puis viser les succès Éclair et Speedrun (tape succes)."));
+	return lignes.join("\n");
 };
 
 /* ---------------- sauvegarde ---------------- */
@@ -992,6 +1251,9 @@ GameState.prototype.save = function(){
 			xp: this.xp, usages: this.usages, visites: this.visited, niveau: this.niveauAnnonce, temps: this.tempsMs,
 			env: this.env, alias: this.alias, paquets: this.paquets, cron: this.cron,
 			indices: this.indices, malus: this.malus, dateVictoire: this.dateVictoire,
+			xp2: this.xp2, malus2: this.malus2, cles: this.clesGenerees, pub: this.clePublique, priv: this.clePrivee,
+			grillee: this.cleGrillee, debut2: this.debutChapitre2, dateVictoire2: this.dateVictoire2,
+			succes: this.succes, chronos: this.chronos,
 			ici: current_room.path(),
 			avant: Shell.lieu_precedent ? Shell.lieu_precedent.path() : null,
 			ssh: Shell.pile_ssh.map(function(lieu){ return lieu.path(); }),
@@ -1053,6 +1315,16 @@ GameState.prototype.load = function(){
 		this.indices = donnees.indices || {};
 		this.malus = donnees.malus || 0;
 		this.dateVictoire = donnees.dateVictoire || null;
+		this.xp2 = donnees.xp2 || 0;
+		this.malus2 = donnees.malus2 || 0;
+		this.clesGenerees = donnees.cles || 0;
+		this.clePublique = donnees.pub || null;
+		this.clePrivee = donnees.priv || null;
+		this.cleGrillee = donnees.grillee || null;
+		this.debutChapitre2 = donnees.debut2 === undefined ? null : donnees.debut2;
+		this.dateVictoire2 = donnees.dateVictoire2 || null;
+		this.succes = donnees.succes || {};
+		this.chronos = donnees.chronos || {};
 		if (donnees.cron) this.cron = donnees.cron;
 		Shell.pile_ssh = (donnees.ssh || []).map(lieuParChemin);
 		this.currentRoom = lieuParChemin(donnees.ici || "~");

@@ -8,7 +8,7 @@ var vm = require("vm");
 
 var bavard = process.argv.indexOf("-v") > -1;
 var dossier = path.join(__dirname, "..", "Web", "static", "javascript");
-var fichiers = ["EventTarget.js", "Partie.js", "Item.js", "Room.js", "Manuel.js", "Shell.js", "SortsAvances.js", "GameObjects.js", "GameState.js"];
+var fichiers = ["EventTarget.js", "Partie.js", "Item.js", "Room.js", "Manuel.js", "Shell.js", "SortsAvances.js", "GameObjects.js", "Chapitre2.js", "GameState.js"];
 
 function nouveauMonde(stockage, graine){
 	stockage = stockage || {};
@@ -38,7 +38,10 @@ function nouveauMonde(stockage, graine){
 	vm.runInContext(
 		"var reponses = [];" +
 		"var term = { echo: function(t){ ecran.push(String(t)); }, effacer: function(){}, definirInvite: function(){}," +
-		"  demander: function(texte, masque, rappel){ ecran.push(texte); rappel(reponses.length ? reponses.shift() : ''); } };" +
+		"  demander: function(texte, masque, rappel){ ecran.push(texte); rappel(reponses.length ? reponses.shift() : ''); }," +
+		// nano : l'éditeur applique la transformation choisie par le test (ou quitte sans rien changer).
+		"  editer: function(options, rappel){ ecran.push('[nano ' + options.titre + ']'); var f = transformation; transformation = null; rappel(f ? f(options.texte) : null); } };" +
+		"var transformation = null;" +
 		"var state = new GameState(); var partieRestauree = state.load(); var current_room = state.getCurrentRoom();" +
 		"verifierMonde(); Shell.narration = [];",
 		Object.assign(bac, { ecran: ecran }));
@@ -54,7 +57,34 @@ function nouveauMonde(stockage, graine){
 			if (bavard) console.log("\n$ " + ligne + "\n" + sortie);
 			return sortie;
 		},
-		lire: function(expression){ return vm.runInContext(expression, bac); }
+		lire: function(expression){ return vm.runInContext(expression, bac); },
+		// Remplace les <repères> de docs/solution.md par les valeurs de cette partie.
+		remplir: function(commande){
+			var lire = function(e){ return vm.runInContext(e, bac); };
+			return commande
+				.replace(/<motdepasse>/g, lire("MOT_DE_PASSE_SUDO"))
+				.replace(/<client>/g, lire("MEILLEUR_CLIENT"))
+				.replace(/<adresse>/g, lire("ADRESSE_ATTAQUANT"))
+				.replace(/<sweats>/g, lire("NB_SWEATS"))
+				.replace(/<pid-ecoute>/g, function(){ var p = lire("procCorbeau()"); return p ? String(p.pid) : "0"; })
+				.replace(/<pid:([a-z_]+)>/g, function(tout, nom){
+					return String(lire("(current_room.procs || []).filter(function(p){ return p.name === " + JSON.stringify(nom) + "; }).map(function(p){ return p.pid; })[0]"));
+				});
+		},
+		// Joue une ligne de la solution comme le ferait un joueur : repères remplis, questions répondues.
+		jouerSolution: function(brute){
+			var commande = this.remplir(brute);
+			var mdp = vm.runInContext("MOT_DE_PASSE_SUDO", bac);
+			if (commande === "passwd") return this.taper(commande, ["Une phrase bien longue 42", "Une phrase bien longue 42"]);
+			if (commande === "ssh-keygen") return this.taper(commande, ["Une phrase de passe", "Une phrase de passe"]);
+			if (/nano .*authorized_keys/.test(commande)){
+				// Dans nano : couper la ligne du Corbeau, enregistrer, quitter.
+				this.editer("function(t){ return t.split('\\n').filter(function(l){ return l.indexOf('corbeau@nid') === -1; }).join('\\n'); }");
+			}
+			return this.taper(commande, commande.indexOf("sudo") === 0 ? mdp : undefined);
+		},
+		// Prépare ce que fera le joueur dans nano : une fonction (texte d'origine) -> nouveau texte, en JavaScript.
+		editer: function(sourceFonction){ vm.runInContext("transformation = " + sourceFonction, bac); }
 	};
 }
 

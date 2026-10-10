@@ -12,6 +12,9 @@
 
 var CLE_PROFIL = "terminus-cybersup-profil";
 
+/* Les petits sons du jeu : remplacés par de vrais bips dans Game.js (navigateur seulement). */
+function jouerSon(nom){}
+
 var PROFIL = (function(){
 	var profil = null;
 	try {

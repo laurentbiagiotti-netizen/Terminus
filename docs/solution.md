@@ -343,10 +343,85 @@ tree
 mkdir Essai
 rmdir Essai
 unalias ll
-sudo chown apprenti Panneau
+sudo chown $USER Panneau
 clear
 xp
 bulletin
 ```
 
 À ce stade le compteur affiche 3770 XP sur 3770, niveau 10 (Root), 20 sur 20, félicitations du jury, et les six blocs du bulletin sont acquis.
+
+## 7. Chapitre 2 : la Crypte
+
+Notions : empreintes (`sha256sum`, `sha256sum -c`), encodage (`base64`, `base64 -d`), bit SUID (`ls -l`, `find -perm -4000`, `chmod u-s`), sortie d'erreur (`2>`, `2>/dev/null`), ports en écoute (`ss -tlnp`), édition de fichiers (`nano`), clés SSH (`ssh-keygen`, clé publique et clé privée, `authorized_keys`).
+
+Le chapitre s'ouvre après la victoire : Laurent ajoute un P.S. et une trappe apparaît dans la Citadelle. Il a sa propre note sur 20 et son propre certificat, avec un code de vérification. Un groupe qui ne fait que ce chapitre (une séance de trois heures sur la sécurité) tape `chapitre 2` dès le début de la partie : le chapitre 1 est rejoué en silence, marqué comme non joué, et le joueur se retrouve dans la Citadelle.
+
+L'intégrité et le message caché :
+
+```
+ssh citadelle
+cd Crypte
+less Archiviste
+less Radio
+cd bin
+ls -l
+sha256sum -c SHA256SUMS
+cat gardien
+grep charge= gardien | cut -d= -f2 | base64 -d
+echo $USER | base64
+```
+
+La porte dérobée :
+
+```
+cd ../Caveau
+less Inscription
+find . -perm -4000
+find .. -perm -4000 2>/dev/null
+find . -perm -4000 2> erreurs.txt
+ls -la
+./.porte
+cd Racine
+less ManuelDeNano
+```
+
+`find` se plaint de chaque niche fermée : ces plaintes passent par la sortie d'erreur, la numéro 2. Elles ne passent donc pas dans un tuyau (`find ... | grep porte` les affiche quand même), et `2>/dev/null` les fait disparaître. `passwd` a lui aussi le bit SUID, et c'est normal : le piège est de ne pas savoir distinguer les deux.
+
+L'écoute et la clé :
+
+```
+ps
+less ../../Radio
+ss -tlnp
+sudo ss -tlnp
+sudo kill -9 <pid-ecoute>
+sudo cat .ssh/authorized_keys
+sudo nano .ssh/authorized_keys
+cd ..
+sudo chmod u-s .porte
+ls -l .porte
+```
+
+Sept processus s'appellent `kworker/...` : `ps` ne dit pas lequel est le bon. `sudo ss -tlnp` montre que le port 6666 est tenu par l'un d'eux, avec son PID. Il ignore TERM : il faut `-9`. Tuer un vrai kworker n'a pas de conséquence, le système le relance et Grace râle.
+
+Dans `nano`, on place le curseur sur la ligne qui finit par `corbeau@nid`, Ctrl+K pour la couper, Ctrl+X puis O pour enregistrer. Un joueur qui retire aussi la clé de Laurent est prévenu par la radio : la copie `authorized_keys.orig` permet de réparer (`sudo cp`).
+
+Le coffre et le Corbeau :
+
+```
+cd ~/Cybersup/SalleServeurs
+less ConsignesDuCoffre
+ssh-keygen
+ls -la ~/.ssh
+cp ~/.ssh/id_ed25519.pub BoiteDeDepot
+cd BoiteDeDepot
+cd ..
+ssh coffre
+less Corbeau
+cat CertificatCyber
+```
+
+`ssh-keygen` demande deux fois une phrase de passe (le test répond la même chose deux fois ; une phrase non vide rapporte une quête secondaire). Déposer la clé privée (`id_ed25519`) au lieu de la publique est le piège pédagogique du chapitre : Evi la détruit, la paire est grillée, et il faut en refaire une.
+
+À ce stade le chapitre 2 affiche 1455 XP sur 1455, soit 20 sur 20.

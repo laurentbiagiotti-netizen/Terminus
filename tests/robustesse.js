@@ -25,16 +25,18 @@ fs.readFileSync(path.join(__dirname, "..", "docs", "solution.md"), "utf8").split
 var sorts = ["ls", "cd", "pwd", "less", "help", "man", "clear", "exit", "mv", "cat", "head", "tail", "wc", "diff", "history",
 	"chmod", "rm", "mkdir", "rmdir", "touch", "cp", "bash", "date", "grep", "echo", "export", "env", "alias", "unalias", "ln",
 	"sort", "uniq", "cut", "ps", "kill", "top", "whoami", "id", "chown", "find", "tree", "df", "du", "tar", "crontab",
-	"hostname", "ping", "ssh", "apt", "cowsay", "sudo", "quetes", "xp", "sl", "vim", "./remonter.sh", "ll", "", "!!"];
+	"hostname", "ping", "ssh", "apt", "cowsay", "sudo", "quetes", "xp", "sl", "vim", "./remonter.sh", "ll", "", "!!",
+	"sha256sum", "base64", "nano", "ss", "ssh-keygen", "indice", "chapitre", "succes", "chrono", "son", "bulletin", "./.porte"];
 var options = ["-a", "-l", "-la", "-r", "-rf", "-n", "-n 3", "-9", "-s", "-c", "-i", "-v", "-u", "-d:", "-f1", "-f", "-x", "-tf", "-xf", "-cf",
-	"--help", "-", "--", "-z", "-1", "-0", "-99999", "+x", "-x", "755", "000", "u+rwx", "o-r", "a=", "999", "-name", "-type", "d", "f", "-L", "-u sorcier"];
+	"--help", "-", "--", "-z", "-c", "-d", "-tlnp", "-perm -4000", "-perm /u=s", "-perm", "-user root", "2>/dev/null", "2>err", "2>>err", "2>&1", "u-s", "4755", "+t", "-1", "-0", "-99999", "+x", "-x", "755", "000", "u+rwx", "o-r", "a=", "999", "-name", "-type", "d", "f", "-L", "-u sorcier"];
 var noms = [".", "..", "~", "/", "*", "?", ".*", "~/", "../..", "./.", "//", "a/b/c", "~/Village", "Marche", "Boite", "Cage", "Portail",
 	"Rocher", "Stele", "Certificat", ".Phylactere", "SorcierNoir", "Laurent", "Diplome", "LivreDOr", "Registre", "remonter.sh",
 	"Mannequin*", "rouage*", "x", "X", "Truc", ".cache", "nouveau", "copie", "Chaumiere", "Planche", "Rouage", "EpiDeMais", "TrollMoche",
 	"~/Cybersup", "~/Cybersup/BureauDeLaurent", "BureauDeLaurent/Agenda", "sauvegarde-lundi.tar", "archive.tar", "terminus", "cybersup",
 	"citadelle", "apprenti", "root", "sorcier", "66", "404", "1", "1337", "0", "-5", "abc", "é", "$USER", "$PWD", "${HOME}", "$", "$$",
 	"A=b", "ll='ls -l'", "z=", "=x", "\"deux mots\"", "'apostrophe'", "\"", "'", "\\", "[", "(", "a(b", "*.log", "motdepasse=", "vrai_nom",
-	"cowsay", "tree", "install", "update", "list", "<b>", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"];
+	"cowsay", "tree", "install", "update", "list", "<b>", "Crypte", "bin", "Caveau", "Racine", ".ssh", ".ssh/authorized_keys", "SHA256SUMS",
+	"gardien", ".porte", "BoiteDeDepot", "coffre", "~/.ssh/id_ed25519", "~/.ssh/id_ed25519.pub", "Corbeau", "CertificatCyber", "/dev/null", "2", "oui", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"];
 var liaisons = [" | ", " > ", " >> ", " ; ", " && ", " |", "| ", " || ", ">", " & "];
 
 function ligneAleatoire(){
@@ -61,14 +63,13 @@ for (var i = 0; i < combien; i++){
 		if ((i / 400) % 2 === 1){
 			var jusque = Math.floor(hasard() * solution.length);
 			for (var s = 0; s <= jusque; s++){
-				jeu.taper(solution[s], solution[s] === "passwd" ? ["Une phrase bien longue 42", "Une phrase bien longue 42"] :
-					(solution[s].indexOf("sudo") === 0 ? "P1ngouin" : undefined));
+				jeu.jouerSolution(solution[s]);
 			}
 		}
 	}
 	var ligne = ligneAleatoire();
 	try {
-		jeu.taper(ligne, ["P1ngouin", "x", "x"]);
+		jeu.taper(ligne, [jeu.lire("MOT_DE_PASSE_SUDO"), "oui", "x", "x"]);
 		lignesJouees++;
 		// La sauvegarde doit toujours pouvoir être relue.
 		if (i % 97 === 0){
@@ -76,6 +77,7 @@ for (var i = 0; i < combien; i++){
 			jeu.lire("(function(){ var s = {}; window.localStorage.setItem = function(k, v){ s[k] = v; }; state.save(); return JSON.stringify(s); })()");
 		}
 		if (jeu.lire("state.xp > state.xpMax()")) plantages.push({ ligne: ligne, erreur: "XP au-dessus du maximum" });
+		if (jeu.lire("state.xp2 > state.xpMax2()")) plantages.push({ ligne: ligne, erreur: "XP du chapitre 2 au-dessus du maximum" });
 	} catch (e){
 		plantages.push({ ligne: ligne, erreur: (e && e.stack ? e.stack.split("\n").slice(0, 4).join("\n") : String(e)) });
 		jeu = nouveauMonde({});

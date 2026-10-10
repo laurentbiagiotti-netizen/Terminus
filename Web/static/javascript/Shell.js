@@ -69,6 +69,7 @@ Shell.variable = function(nom){
 
 /* Nom de la machine sur laquelle se trouve le joueur. */
 Shell.hote = function(){
+	if (typeof Coffre !== "undefined" && joueurDans(Coffre)) return "coffre";
 	if (typeof CampusLille !== "undefined" && joueurDans(CampusLille)) return "lille";
 	if (typeof CampusMarseille !== "undefined" && joueurDans(CampusMarseille)) return "marseille";
 	if (typeof Cybersup !== "undefined" && joueurDans(Cybersup)) return "cybersup";
@@ -82,7 +83,7 @@ function say(texte){
 }
 
 /* Sorts toujours disponibles : ce sont des commandes du jeu, pas de Linux. */
-var SORTS_DU_JEU = ["quetes", "indice", "xp", "score", "bulletin", "recommencer", "sorts", "aide"];
+var SORTS_DU_JEU = ["quetes", "indice", "chapitre", "xp", "score", "bulletin", "succes", "chrono", "son", "recommencer", "sorts", "aide"];
 
 /* Vraies commandes Linux absentes de ce monde : on le dit gentiment. */
 var COMMANDES_REELLES = ["vi", "vim", "nano", "emacs", "apt-get", "yum", "dnf", "pacman", "scp",
@@ -138,6 +139,13 @@ Shell.decouper = function(ligne){
 			if (ligne.charAt(i + 1) === "|") throw new ShellError("L'opérateur || n'a pas cours dans ce monde. Utilise | (tuyau), ; ou &&.");
 			jetons.push({ t: "op", v: "|" });
 			i++;
+			continue;
+		}
+		// 2> et 2>> redirigent les erreurs ; 2>&1 les mêle à la sortie normale.
+		if (c === "2" && mot === null && ligne.charAt(i + 1) === ">"){
+			if (ligne.substring(i, i + 4) === "2>&1"){ jetons.push({ t: "op", v: "2>&1" }); i += 4; continue; }
+			if (ligne.charAt(i + 2) === ">"){ jetons.push({ t: "op", v: "2>>" }); i += 3; }
+			else { jetons.push({ t: "op", v: "2>" }); i += 2; }
 			continue;
 		}
 		if (c === ">"){
@@ -201,7 +209,8 @@ Shell.bit = function(noeud, lettre, io){
 	if (io && io.sudo) return true;
 	var rang = "rwx".indexOf(lettre);
 	var base = noeud.owner === JOUEUR ? 0 : 6;
-	return noeud.mode.charAt(base + rang) !== "-";
+	var lettreMode = noeud.mode.charAt(base + rang);
+	return lettreMode !== "-" && lettreMode !== "S" && lettreMode !== "T";
 };
 
 Shell.introuvable = function(cmd, nom, lieu){
@@ -731,7 +740,8 @@ Shell.sorts.grep = function(args, io){
 		}
 	}
 	GameEvents.fire({ type: "grep", pattern: motif, count: sortie.length });
-	return erreurs.concat(sortie).join("\n");
+	for (var e = 0; e < erreurs.length; e++) io.err(erreurs[e]);
+	return sortie.join("\n");
 };
 
 Shell.sorts.sort = function(args, io){
@@ -981,13 +991,26 @@ Shell.sorts.cp = function(args, io){
 	var dest = Shell.versLieu(Shell.chercher(p.reste[1], io, "cp"));
 	var cible, nom;
 	if (dest.node instanceof Room){ cible = dest.node; nom = item.itemname; }
-	else if (dest.node !== null) throw new ShellError("cp : « " + dest.name + " » existe déjà, et je refuse de l'écraser.");
+	else if (dest.node !== null){
+		// Comme sous Linux, cp remplace le contenu d'un objet existant, si on a le droit d'y écrire.
+		var existant = dest.node;
+		if (existant.person || existant.lien || existant === item){
+			throw new ShellError("cp : « " + dest.name + " » existe déjà, et je refuse de l'écraser.");
+		}
+		if (!Shell.bit(existant, "w", io)){
+			throw new ShellError("cp : impossible d'écraser « " + dest.name + " » : Permission non accordée");
+		}
+		var ancien = existant.getText();
+		existant.setText(item.getText());
+		GameEvents.fire({ type: "write", item: existant, room: dest.dir, append: false, text: item.getText(), created: false, previous: ancien });
+		return "« " + dest.name + " » a été remplacé par une copie de " + item.itemname + ".";
+	}
 	else { cible = dest.dir; nom = dest.name; }
 	if (cible.getNode(nom) !== null) throw new ShellError("cp : il y a déjà quelque chose qui s'appelle « " + nom + " » dans " + cible.room_name + ".");
 	Shell.nomValide(nom, "cp");
 	var copie = new Item(nom, item.getText());
 	copie.picturename = item.picturename;
-	copie.owner = JOUEUR;
+	copie.owner = io.sudo ? "root" : JOUEUR;
 	copie.person = item.person;
 	if (item.lien) copie.lien = item.lien;
 	if (item.archive) copie.archive = JSON.parse(JSON.stringify(item.archive));
@@ -1037,10 +1060,17 @@ Shell.sorts.touch = function(args, io){
 
 function appliquerMode(ancien, expression, cmd){
 	var bits = [];
-	for (var i = 0; i < 9; i++) bits.push(ancien.charAt(i) !== "-");
-	if (/^[0-7]{3}$/.test(expression)){
+	for (var i = 0; i < 9; i++) bits.push(ancien.charAt(i) !== "-" && ancien.charAt(i) !== "S" && ancien.charAt(i) !== "T");
+	// Les bits spéciaux : s à la place du x du propriétaire (SUID), t à la place du x des autres (sticky).
+	var suid = /[sS]/.test(ancien.charAt(2));
+	var sticky = /[tT]/.test(ancien.charAt(8));
+	if (/^[0-7]?[0-7]{3}$/.test(expression)){
+		var special = expression.length === 4 ? parseInt(expression.charAt(0), 10) : 0;
+		var chiffres = expression.substring(expression.length - 3);
+		suid = (special & 4) !== 0;
+		sticky = (special & 1) !== 0;
 		for (var d = 0; d < 3; d++){
-			var chiffre = parseInt(expression.charAt(d), 10);
+			var chiffre = parseInt(chiffres.charAt(d), 10);
 			bits[d * 3] = (chiffre & 4) !== 0;
 			bits[d * 3 + 1] = (chiffre & 2) !== 0;
 			bits[d * 3 + 2] = (chiffre & 1) !== 0;
@@ -1048,23 +1078,35 @@ function appliquerMode(ancien, expression, cmd){
 	} else {
 		var clauses = expression.split(",");
 		for (var c = 0; c < clauses.length; c++){
-			var m = /^([ugoa]*)([+\-=])([rwx]*)$/.exec(clauses[c]);
+			var m = /^([ugoa]*)([+\-=])([rwxst]*)$/.exec(clauses[c]);
 			if (!m){
 				throw new ShellError(cmd + " : je ne comprends pas les droits « " + expression + " ».\n" +
-					"Exemples : chmod +x LIEU, chmod u+rw OBJET, chmod 755 LIEU");
+					"Exemples : chmod +x LIEU, chmod u+rw OBJET, chmod 755 LIEU, chmod u-s OBJET");
 			}
 			var qui = m[1] === "" || m[1].indexOf("a") > -1 ? "ugo" : m[1];
 			for (var q = 0; q < qui.length; q++){
 				var base = "ugo".indexOf(qui.charAt(q)) * 3;
-				if (m[2] === "="){ bits[base] = bits[base + 1] = bits[base + 2] = false; }
+				if (m[2] === "="){
+					bits[base] = bits[base + 1] = bits[base + 2] = false;
+					if (qui.charAt(q) === "u") suid = false;
+					if (qui.charAt(q) === "o") sticky = false;
+				}
 				for (var l = 0; l < m[3].length; l++){
-					bits[base + "rwx".indexOf(m[3].charAt(l))] = m[2] !== "-";
+					var lettre = m[3].charAt(l);
+					if (lettre === "s"){ if (qui.charAt(q) === "u") suid = m[2] !== "-"; continue; }
+					if (lettre === "t"){ if (qui.charAt(q) === "o" || m[1] === "") sticky = m[2] !== "-"; continue; }
+					bits[base + "rwx".indexOf(lettre)] = m[2] !== "-";
 				}
 			}
 		}
 	}
 	var mode = "";
-	for (var b = 0; b < 9; b++) mode += bits[b] ? "rwx".charAt(b % 3) : "-";
+	for (var b = 0; b < 9; b++){
+		var lettreMode = bits[b] ? "rwx".charAt(b % 3) : "-";
+		if (b === 2 && suid) lettreMode = bits[b] ? "s" : "S";
+		if (b === 8 && sticky) lettreMode = bits[b] ? "t" : "T";
+		mode += lettreMode;
+	}
 	return mode;
 }
 
@@ -1095,43 +1137,98 @@ Shell.sorts.chmod = function(args, io){
 /* Chercher                                                            */
 /* ------------------------------------------------------------------ */
 
+/* "rwsr-xr-x" devient 04755 : les droits sous forme de nombre, bits spéciaux compris. */
+function modeEnNombre(mode){
+	var n = 0;
+	for (var i = 0; i < 9; i++){
+		var c = mode.charAt(i);
+		if (c !== "-" && c !== "S" && c !== "T") n |= 1 << (8 - i);
+	}
+	if (/[sS]/.test(mode.charAt(2))) n |= 2048;
+	if (/[sS]/.test(mode.charAt(5))) n |= 1024;
+	if (/[tT]/.test(mode.charAt(8))) n |= 512;
+	return n;
+}
+
+/* -perm -4000 (tous ces bits), -perm /4000 (au moins un), -perm 755 (exactement), -perm -u=s. */
+function lirePerm(texte){
+	if (texte === undefined){
+		throw new ShellError("find : -perm attend des droits, par exemple : find . -perm -4000 (les objets SUID)");
+	}
+	var prefixe = /^[-\/]/.test(texte) ? texte.charAt(0) : "";
+	var corps = texte.substring(prefixe.length);
+	var voulu;
+	if (/^[0-7]{1,4}$/.test(corps)){
+		voulu = parseInt(corps, 8);
+	} else {
+		voulu = 0;
+		var clauses = corps.split(",");
+		for (var c = 0; c < clauses.length; c++){
+			var m = /^([ugoa]*)=([rwxst]+)$/.exec(clauses[c]);
+			if (!m) throw new ShellError("find : droits « " + texte + " » incompris. Exemples : -perm -4000, -perm /u=s, -perm 755");
+			var qui = m[1] === "" || m[1].indexOf("a") > -1 ? "ugo" : m[1];
+			for (var q = 0; q < qui.length; q++){
+				var decalage = (2 - "ugo".indexOf(qui.charAt(q))) * 3;
+				for (var l = 0; l < m[2].length; l++){
+					var lettre = m[2].charAt(l);
+					if (lettre === "s") voulu |= qui.charAt(q) === "u" ? 2048 : (qui.charAt(q) === "g" ? 1024 : 0);
+					else if (lettre === "t") voulu |= 512;
+					else voulu |= (4 >> "rwx".indexOf(lettre)) << decalage;
+				}
+			}
+		}
+	}
+	if (prefixe === "-") return function(n){ return (n & voulu) === voulu; };
+	if (prefixe === "/") return function(n){ return voulu === 0 || (n & voulu) !== 0; };
+	return function(n){ return n === voulu; };
+}
+
 Shell.sorts.find = function(args, io){
 	var departs = [], i = 0;
 	while (i < args.length && args[i].charAt(0) !== "-"){ departs.push(args[i]); i++; }
 	if (departs.length === 0) departs = ["."];
-	var nom = null, type = null;
+	var nom = null, type = null, perm = null, utilisateur = null;
 	for (; i < args.length; i++){
 		if (args[i] === "-name" || args[i] === "-iname"){
 			if (args[i + 1] === undefined) throw new ShellError("find : " + args[i] + " attend un nom, par exemple : find . -name \"flag*\"");
 			var source = jokerVersRegExp(args[i + 1]).source;
 			nom = new RegExp(source, args[i] === "-iname" ? "i" : "");
 			i++;
+		} else if (args[i] === "-perm"){
+			perm = lirePerm(args[i + 1]);
+			i++;
+		} else if (args[i] === "-user"){
+			if (args[i + 1] === undefined) throw new ShellError("find : -user attend un nom d'utilisateur, par exemple : find . -user root");
+			utilisateur = args[i + 1];
+			i++;
 		} else if (args[i] === "-type"){
 			if (args[i + 1] !== "d" && args[i + 1] !== "f") throw new ShellError("find : -type attend d (les lieux) ou f (les objets)");
 			type = args[i + 1];
 			i++;
 		} else {
-			throw new ShellError("find : critère inconnu « " + args[i] + " ». Ceux qui existent ici : -name NOM, -iname NOM, -type d, -type f");
+			throw new ShellError("find : critère inconnu « " + args[i] + " ». Ceux qui existent ici : -name NOM, -iname NOM, -type d, -type f, -user NOM, -perm DROITS");
 		}
 	}
 	var lignes = [];
-	function garder(nomNoeud, estLieu){
+	function garder(nomNoeud, estLieu, noeud){
 		if (type === "d" && !estLieu) return false;
 		if (type === "f" && estLieu) return false;
+		if (utilisateur !== null && (!noeud || noeud.owner !== utilisateur)) return false;
+		if (perm !== null && (!noeud || !perm(modeEnNombre(noeud.mode)))) return false;
 		return nom === null || nom.test(nomNoeud);
 	}
 	function parcourir(lieu, chemin, profondeur){
 		if (profondeur > 40) return;
 		for (var k = 0; k < lieu.items.length; k++){
-			if (garder(lieu.items[k].itemname, false)) lignes.push(chemin + "/" + lieu.items[k].itemname);
+			if (garder(lieu.items[k].itemname, false, lieu.items[k])) lignes.push(chemin + "/" + lieu.items[k].itemname);
 		}
 		for (var j = 0; j < lieu.children.length; j++){
 			var enfant = lieu.children[j];
 			var sousChemin = chemin + "/" + enfant.room_name;
-			if (garder(enfant.room_name, true)) lignes.push(io.tty ? C.bleu(sousChemin) : sousChemin);
+			if (garder(enfant.room_name, true, enfant)) lignes.push(io.tty ? C.bleu(sousChemin) : sousChemin);
 			if (!Shell.peutFouiller(enfant)) continue;
 			if (!Shell.bit(enfant, "x", io) || !Shell.bit(enfant, "r", io)){
-				lignes.push("find : « " + sousChemin + " » : Permission non accordée");
+				io.err("find : « " + sousChemin + " » : Permission non accordée");
 				continue;
 			}
 			parcourir(enfant, sousChemin, profondeur + 1);
@@ -1143,13 +1240,14 @@ Shell.sorts.find = function(args, io){
 		var racine = departs[d].replace(/\/+$/, "") || departs[d];
 		if (r.node instanceof Room){
 			if (!Shell.bit(r.node, "r", io)) throw new ShellError("find : « " + racine + " » : Permission non accordée");
-			if (garder(r.node === current_room && racine === "." ? "." : r.node.room_name, true)) lignes.push(io.tty ? C.bleu(racine) : racine);
+			if (garder(r.node === current_room && racine === "." ? "." : r.node.room_name, true, r.node)) lignes.push(io.tty ? C.bleu(racine) : racine);
 			parcourir(r.node, racine, 0);
-		} else if (garder(r.node.itemname, false)){
+		} else if (garder(r.node.itemname, false, r.node)){
 			lignes.push(racine);
 		}
 	}
-	GameEvents.fire({ type: "find", count: lignes.length });
+	GameEvents.fire({ type: "find", count: lignes.length, output: sansAnsi(lignes.join("\n")),
+		suid: args.some(function(a, n){ return args[n - 1] === "-perm" && /4000|u=s/.test(a); }) });
 	return lignes.join("\n");
 };
 
@@ -1292,7 +1390,7 @@ Shell.sorts.exit = function(args, io){
 
 Shell.sorts.help = function(args, io){
 	var connus = state.knownSpells();
-	var lignes = [C.gras("Tes sorts (" + connus.length + " sur " + ORDRE_DES_SORTS.length + ") :")];
+	var lignes = [C.gras("Tes sorts (" + connus.length + " sur " + tousLesSorts().length + ") :")];
 	for (var i = 0; i < connus.length; i++){
 		lignes.push("  " + C.vert(completerDroite(connus[i], 9)) + MANUEL[connus[i]].resume);
 	}
@@ -1300,6 +1398,7 @@ Shell.sorts.help = function(args, io){
 	lignes.push("Pour le détail d'un sort : " + C.vert("man SORT") + " (par exemple man ls).");
 	lignes.push("Ton journal de quêtes : " + C.vert("quetes") + ". Ton expérience et ta note : " + C.vert("xp") + ". Ton relevé de compétences : " + C.vert("bulletin") + ".");
 	lignes.push("Bloqué ? " + C.vert("indice") + " donne un coup de pouce, de plus en plus précis (les paliers payants coûtent des points sur la note).");
+	lignes.push("Tes succès : " + C.vert("succes") + ". Ton temps de jeu, étape par étape : " + C.vert("chrono") + ". Les chapitres : " + C.vert("chapitre") + ". Le son : " + C.vert("son") + ".");
 	lignes.push("Repartir de zéro : " + C.vert("recommencer") + ".");
 	lignes.push(C.gris("Astuces : la touche Tab complète les noms, la flèche du haut rappelle tes derniers sorts."));
 	return lignes.join("\n");
@@ -1463,6 +1562,11 @@ Shell.lancerScript = function(chemin, io, direct){
 
 /* Ecrit dans un objet (redirections > et >>). */
 Shell.ecrire = function(cible, texte, ajout){
+	// Le trou noir du système : tout ce qu'on y écrit disparaît.
+	if (cible === "/dev/null"){
+		GameEvents.fire({ type: "devnull" });
+		return;
+	}
 	var r = Shell.chercher(cible, { sudo: false }, "écriture");
 	if (r.node instanceof Room) throw new ShellError("Impossible d'écrire dans « " + r.name + " » : c'est un lieu.");
 	if (r.node === null){
@@ -1492,14 +1596,24 @@ Shell.tuyau = function(jetons){
 	var stdin = null;
 	var noms = [];
 	var redirection = null;
+	var echec = false;
 	try {
 		for (var s = 0; s < segments.length; s++){
 			var argv = [];
 			var seg = segments[s];
+			var versErreurs = null;   // { op: "2>" ou "2>>", cible } : où vont les messages d'erreur de ce sort
+			var meler = false;        // 2>&1 : les erreurs rejoignent la sortie normale
 			for (var k = 0; k < seg.length; k++){
-				if (seg[k].t === "op"){
+				if (seg[k].t === "op" && seg[k].v === "2>&1"){
+					meler = true;
+				} else if (seg[k].t === "op"){
 					if (!seg[k + 1] || seg[k + 1].t !== "mot"){
-						throw new ShellError("Après " + seg[k].v + " il faut le nom de l'objet dans lequel écrire.");
+						throw new ShellError("Après " + seg[k].v + " il faut le nom de l'objet dans lequel écrire (ou /dev/null pour tout jeter).");
+					}
+					if (seg[k].v === "2>" || seg[k].v === "2>>"){
+						versErreurs = { op: seg[k].v, cible: seg[k + 1].v };
+						k++;
+						continue;
 					}
 					if (s !== segments.length - 1){
 						throw new ShellError("Une redirection (" + seg[k].v + ") ne peut se trouver qu'à la fin de la ligne.");
@@ -1525,7 +1639,8 @@ Shell.tuyau = function(jetons){
 				return true;
 			}
 			var dernier = s === segments.length - 1;
-			var io = { stdin: stdin, tty: dernier && redirection === null, sudo: false };
+			var io = { stdin: stdin, tty: dernier && redirection === null && !meler, sudo: false, erreurs: [] };
+			io.err = (function(liste){ return function(message){ liste.push(message); }; })(io.erreurs);
 			var nom = argv[0], args = argv.slice(1);
 			if (nom === "sudo"){
 				if (!state.knows("sudo")){
@@ -1539,9 +1654,37 @@ Shell.tuyau = function(jetons){
 				args = args.slice(1);
 			}
 			noms.push(nom);
-			var sortie = Shell.appeler(nom, args, io);
+			var sortie;
+			if (versErreurs === null && !meler){
+				sortie = Shell.appeler(nom, args, io);
+			} else {
+				// Les erreurs de ce sort sont redirigées : une erreur fatale ne s'affiche pas, elle part avec les autres.
+				try {
+					sortie = Shell.appeler(nom, args, io);
+				} catch (e){
+					if (!(e instanceof ShellError)) throw e;
+					io.erreurs.push(e.message);
+					sortie = "";
+					echec = true;
+				}
+			}
 			stdin = (sortie === undefined || sortie === null) ? "" : String(sortie);
 			if (!io.tty) stdin = sansAnsi(stdin);
+			if (io.erreurs.length > 0){
+				var erreurs = io.erreurs.map(sansAnsi).join("\n");
+				if (meler){
+					stdin = erreurs + (stdin !== "" ? "\n" + stdin : "");
+				} else if (versErreurs !== null){
+					Shell.ecrire(versErreurs.cible, erreurs, versErreurs.op === "2>>");
+				} else {
+					term.echo(io.erreurs.join("\n"));
+				}
+			} else if (versErreurs !== null && versErreurs.op === "2>" && versErreurs.cible !== "/dev/null"){
+				// Comme sous Linux, 2> crée (ou vide) l'objet même s'il n'y a eu aucune erreur.
+				Shell.ecrire(versErreurs.cible, "", false);
+			}
+			GameEvents.fire({ type: "stderr", name: nom, room: current_room, count: io.erreurs.length,
+				destination: meler ? "&1" : (versErreurs ? versErreurs.cible : null), args: args, sudo: io.sudo });
 		}
 		if (redirection !== null){
 			Shell.ecrire(redirection.cible, stdin, redirection.op === ">>");
@@ -1552,10 +1695,11 @@ Shell.tuyau = function(jetons){
 			}
 		}
 		if (noms.length > 1) GameEvents.fire({ type: "pipeline", names: noms, room: current_room, output: sansAnsi(stdin) });
-		return true;
+		return !echec;
 	} catch (e){
 		if (e instanceof ShellError){
 			term.echo(e.message);
+			jouerSon("erreur");
 			return false;
 		}
 		throw e;
@@ -1589,6 +1733,7 @@ Shell.fin = function(){
 		GameEvents.fire({ type: "variable", line: Shell.historique[Shell.historique.length - 1] || "" });
 	}
 	verifierMonde();
+	state.verifierSucces();
 	state.bilanXP();
 	while (Shell.narration.length){
 		term.echo(Shell.narration.shift());

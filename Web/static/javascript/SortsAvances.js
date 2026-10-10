@@ -680,7 +680,9 @@ Shell.sorts.ssh = function(args, io){
 	}
 	if (hote === Shell.hote()) throw new ShellError("Tu es déjà sur " + hote + " : regarde ton invite, juste après l'arobase.");
 	var arrivee = HOTES[hote].arrivee();
-	if (!state.visited[arrivee.id] && !HOTES[hote].ouvert){
+	var refus = HOTES[hote].refus ? HOTES[hote].refus() : null;
+	if (refus) throw new ShellError(refus);
+	if (!HOTES[hote].refus && !state.visited[arrivee.id] && !HOTES[hote].ouvert){
 		throw new ShellError(JOUEUR + "@" + hote + " : Permission denied (publickey).\n" +
 			C.gris("(Tu n'as pas encore de compte sur cette machine. Il faut d'abord s'y rendre à pied, au moins une fois.)"));
 	}
@@ -805,6 +807,22 @@ Shell.sorts.xp = function(args, io){
 	return state.tableauXP();
 };
 Shell.sorts.score = Shell.sorts.xp;
+
+Shell.sorts.succes = function(args, io){
+	return state.texteDesSucces();
+};
+
+Shell.sorts.chrono = function(args, io){
+	return state.texteDuChrono();
+};
+
+Shell.sorts.son = function(args, io){
+	var voulu = args[0] === "on" || args[0] === "oui" ? true : (args[0] === "off" || args[0] === "non" ? false : !PROFIL.son);
+	PROFIL.son = voulu;
+	enregistrerProfil();
+	if (voulu) jouerSon("quete");
+	return voulu ? "Son activé : petits bips 8 bits pour les sorts, les quêtes et les succès. (son off pour couper)" : "Son coupé. (son on pour le remettre)";
+};
 
 Shell.sorts.indice = function(args, io){
 	return state.demanderIndice();
