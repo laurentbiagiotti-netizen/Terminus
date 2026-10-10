@@ -23,7 +23,7 @@ python3 -m http.server 8000
 
 Le jeu est alors disponible sur `http://localhost:8000`.
 
-Au premier lancement, le jeu demande ton prénom : il devient ton identifiant sur le système (`whoami`, l'invite, les propriétaires des fichiers, le diplôme). La partie est sauvegardée automatiquement dans le navigateur. La commande `recommencer` repart de zéro, avec une nouvelle partie.
+Au premier lancement, le jeu demande ton prénom : il devient ton identifiant sur le système (`whoami`, l'invite, les propriétaires des fichiers, le diplôme). Il propose ensuite deux convocations : l'épreuve de première année (chapitre 1, pour découvrir le terminal), ou la mission cyber (chapitre 2 directement, pour qui connaît déjà les bases : on arrive en renfort après l'épreuve des B1). La partie est sauvegardée automatiquement dans le navigateur. La commande `recommencer` repart de zéro, avec une nouvelle partie.
 
 ## Ce que cette édition ajoute
 
@@ -67,11 +67,11 @@ Au premier lancement, le jeu demande ton prénom : il devient ton identifiant su
 
 **L'école dans le jeu** : le campus de Puteaux (accueil, feuille d'émargement, carte étudiante, tableau d'affichage, BDE et sa boutique, war room avec ses voyants et son écran mural qui suit la progression du joueur), les campus de Lille et de Marseille accessibles uniquement par `ssh`, une enquête d'analyste dans les journaux de connexion, le CTF de l'école. Après la victoire, les habitants de Terminus tombent le masque : ce sont d'anciens élèves et des intervenants. Hormis Laurent, tous les personnages sont inventés.
 
-**De l'expérience et une note** : chaque sort appris, chaque sort utilisé pour la première fois, chaque lieu découvert et chaque quête rapportent des XP (3770 au total). Dix niveaux calqués sur le cursus (Candidat, Admis, B1, B2, B3, M1, M2, Alternant confirmé, Diplômé, Root), une barre de progression toujours visible, et une note sur 20 avec mention sur le diplôme final. La commande `xp` détaille d'où viennent les points et ce qu'il reste à gagner.
+**De l'expérience et une note** : chaque sort appris, chaque sort utilisé pour la première fois, chaque lieu découvert et chaque quête rapportent des XP (3820 au total au chapitre 1). Dix niveaux calqués sur le cursus (Candidat, Admis, B1, B2, B3, M1, M2, Alternant confirmé, Diplômé, Root), une barre de progression toujours visible, et une note sur 20 avec mention sur le diplôme final. La commande `xp` détaille d'où viennent les points et ce qu'il reste à gagner.
 
 **Un bulletin** (`bulletin`) : les 52 sorts regroupés en six blocs de compétences, BC 01 à BC 06, chacun noté sur 20 et marqué « acquis » quand tous ses sorts ont été appris puis utilisés. Le relevé figure sur le diplôme.
 
-**Un journal de quêtes** (`quetes`) avec 13 étapes principales et 27 quêtes secondaires au chapitre 1, 9 étapes et 5 quêtes secondaires au chapitre 2.
+**Un journal de quêtes** (`quetes`) avec 13 étapes principales et 28 quêtes secondaires au chapitre 1, 9 étapes et 5 quêtes secondaires au chapitre 2.
 
 **Un deuxième chapitre, la Crypte** : après la victoire, une trappe s'ouvre sous la Citadelle. Quelqu'un est vraiment entré pendant l'examen : un programme trafiqué, un message caché en base64, une porte dérobée SUID, un faux processus noyau qui écoute sur un port, une clé SSH de trop dans les clés autorisées de root. Le chapitre se termine dans le coffre de l'école, où l'intrus attend. Il a sa propre note sur 20 et son propre certificat.
 
@@ -87,7 +87,11 @@ Le déroulé complet, avec la solution de chaque étape et le barème, se trouve
 
 Repères pour la notation : finir la quête principale au plus court donne 10 sur 20 ; la solution complète donne 20 sur 20. Le diplôme final (`cat Diplome` dans la Citadelle) et le certificat du chapitre 2 (`cat CertificatCyber` dans le coffre) affichent le prénom du joueur, son score, sa note, sa mention, son temps de jeu, les indices payants utilisés, et un **code de vérification**. Ce code résume la partie et porte une somme de contrôle : une page de classement le décode, repère un code retouché et classe la promo, chapitre par chapitre.
 
-**Séances séparées** : pour une séance de trois heures consacrée à la sécurité, les étudiants tapent `chapitre 2` dès le début. Le chapitre 1 est rejoué en silence, marqué comme non joué (pas de note pour lui), et ils commencent directement dans la Citadelle.
+**Séances séparées** : pour une séance de trois heures consacrée à la sécurité, les étudiants choisissent la mission cyber au démarrage (ou tapent `chapitre 2` avant d'avoir franchi la première étape). Dans l'histoire, ils sont appelés en renfort : les B1 ont battu le Sorcier Noir le matin même, et un intrus bien réel est entré pendant la correction. Le chapitre 1 n'est pas noté pour eux.
+
+**Des aides pour les débutants** : un sort inconnu dit où il s'apprend, `cd..` et `ls-l` sont repérés (il manque une espace), les accents aussi (`ForêtOuest`), et l'apostrophe de `echo Le Sorcier s'appelle Laurent` est expliquée. `indice` signale aussi ce qui coince sans qu'on le voie : des rouages creux, un alias qui masque un sort, une clé SSH grillée ou effacée, et les sorts qui manquent pour suivre l'indice.
+
+**Le vrai comportement de `cp` et `mv`** : ils écrasent sans prévenir, comme sous Linux, et une quête piège à l'Atelier le fait découvrir avant d'apprendre `cp -i`.
 
 ## Développement
 
@@ -107,6 +111,7 @@ Le code est du JavaScript sans dépendance ni étape de construction.
 | `tools/dessiner_images.py` | génère les illustrations ajoutées |
 | `tests/parcours.js` | joue une partie complète et vérifie chaque étape (près de 500 vérifications, chapitre 2 compris) |
 | `tests/solution.js` | rejoue les commandes de `docs/solution.md` et vérifie qu'elles mènent à 20 sur 20 aux deux chapitres |
+| `tests/regressions.js` | rejoue chaque bug trouvé lors de l'audit, pour qu'il ne revienne pas |
 | `tests/robustesse.js` | envoie 20 000 lignes aléatoires à l'interpréteur et vérifie qu'aucune ne le fait planter |
 
 Lancer les tests après toute modification :

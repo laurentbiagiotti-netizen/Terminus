@@ -25,12 +25,12 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
 | Action | XP |
 | --- | --- |
 | Étape de la quête principale (13) | 100 chacune, 300 pour la victoire finale |
-| Quête secondaire (27, dont 2 secrètes) | 50 |
+| Quête secondaire (28, dont 2 secrètes) | 50 |
 | Sort appris (44, les 8 premiers sont connus au départ) | 10 |
 | Première utilisation d'un sort (52) | 5 |
 | Lieu découvert (44) | 5 |
 
-Le total possible est de 3770 XP. La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
+Le total possible est de 3820 XP. La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
 
 Ordres de grandeur : un parcours réduit au strict nécessaire (une quarantaine de commandes, impossible sans connaître la solution) donne 10 sur 20. La solution ci-dessous, dernier chapitre compris, donne 20 sur 20. Les derniers points se gagnent en visitant chaque lieu et en lançant chaque sort au moins une fois : `xp` liste ceux qui n'ont jamais servi.
 
@@ -172,6 +172,8 @@ less Artisane
 ls -l remonter.sh
 chmod +x remonter.sh
 ./remonter.sh
+less ApprentieHorlogere
+cp -i BrouillonDePlan PlanDuDragon
 less Horloges
 date
 cd ~/Village/SentierRocailleux
@@ -182,6 +184,8 @@ cp EpiDeMais AutreEpiDeMais
 ```
 
 Le script `remonter.sh` n'a pas le droit `x` : `./remonter.sh` échoue tant que `chmod +x` n'est pas passé. `bash remonter.sh` fonctionne sans ce droit, mais la quête demande le lancement direct. Les rouages et l'épi doivent être de vraies copies : un `touch rouage1` est refusé par l'Artisane.
+
+L'ApprentieHorlogere tend un piège volontaire : elle demande `cp BrouillonDePlan PlanDuDragon`, alors que PlanDuDragon existe déjà. Comme sous Linux, `cp` écrase sans prévenir, et l'Artisane réagit. Il faut remettre la sauvegarde cachée (`cp .PlanDuDragon.bak PlanDuDragon`), puis refaire la copie avec `cp -i` et répondre non. Un joueur qui utilise `cp -i` d'emblée (ou qui regarde avec `ls` avant) gagne la quête sans rien casser. `mv` écrase de la même façon, et `mv -i` demande aussi.
 
 ## 4. Du pont aux Fichiers du Noyau
 
@@ -349,13 +353,15 @@ xp
 bulletin
 ```
 
-À ce stade le compteur affiche 3770 XP sur 3770, niveau 10 (Root), 20 sur 20, félicitations du jury, et les six blocs du bulletin sont acquis.
+À ce stade le compteur affiche 3820 XP sur 3820, niveau 10 (Root), 20 sur 20, félicitations du jury, et les six blocs du bulletin sont acquis.
 
 ## 7. Chapitre 2 : la Crypte
 
 Notions : empreintes (`sha256sum`, `sha256sum -c`), encodage (`base64`, `base64 -d`), bit SUID (`ls -l`, `find -perm -4000`, `chmod u-s`), sortie d'erreur (`2>`, `2>/dev/null`), ports en écoute (`ss -tlnp`), édition de fichiers (`nano`), clés SSH (`ssh-keygen`, clé publique et clé privée, `authorized_keys`).
 
-Le chapitre s'ouvre après la victoire : Laurent ajoute un P.S. et une trappe apparaît dans la Citadelle. Il a sa propre note sur 20 et son propre certificat, avec un code de vérification. Un groupe qui ne fait que ce chapitre (une séance de trois heures sur la sécurité) tape `chapitre 2` dès le début de la partie : le chapitre 1 est rejoué en silence, marqué comme non joué, et le joueur se retrouve dans la Citadelle.
+Le chapitre s'ouvre après la victoire : Laurent ajoute un P.S. et une trappe apparaît dans la Citadelle. Il a sa propre note sur 20 et son propre certificat, avec un code de vérification. Un groupe qui ne fait que ce chapitre (une séance de trois heures sur la sécurité) choisit la mission cyber au démarrage, juste après le prénom (ou tape `chapitre 2` avant d'avoir franchi la première étape). Dans l'histoire, le joueur arrive en renfort : les B1 ont battu le Sorcier Noir le matin même, et Laurent l'accueille dans la Citadelle. Le chapitre 1 est rejoué en silence et n'est pas noté pour lui. Une fois le chapitre 1 entamé, la mission cyber n'est plus proposée : il faut battre le Sorcier Noir, ou recommencer une partie.
+
+Au chapitre 2, chaque notion est un verrou : la `.porte` n'apparaît dans le Caveau qu'une fois le programme trafiqué repéré avec `sha256sum -c` et le message décodé avec `base64 -d`, et elle ne s'ouvre qu'à qui l'a trouvée avec `find -perm -4000`.
 
 L'intégrité et le message caché :
 

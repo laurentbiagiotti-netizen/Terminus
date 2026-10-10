@@ -229,6 +229,26 @@ s = t("./remonter.sh");
 contient(s, "ronronne", "le script tourne");
 contient(s, "Remonter le DragonMecanique", "quête du script");
 contient(t("rm remonter.sh"), "tient trop", "le script est protégé");
+// Le piège de l'écrasement
+contient(t("less ApprentieHorlogere"), "cp BrouillonDePlan PlanDuDragon", "l'apprentie tend le piège");
+s = t("cp BrouillonDePlan PlanDuDragon");
+contient(s, "Son ancien contenu est perdu", "cp écrase sans prévenir");
+contient(s, "ÉCRASÉ", "l'Artisane réagit");
+contient(t("cat PlanDuDragon"), "Brouillon", "le plan est bien écrasé");
+contient(t("cp -n .PlanDuDragon.bak PlanDuDragon"), "", "cp -n n'écrase pas");
+contient(t("cat PlanDuDragon"), "Brouillon", "cp -n a laissé le brouillon");
+t("cp .PlanDuDragon.bak PlanDuDragon");
+contient(t("cat PlanDuDragon"), "Trois ans de travail", "la sauvegarde est remise");
+contient(t("cp -i BrouillonDePlan PlanDuDragon", "o"), "Son ancien contenu est perdu", "cp -i et oui : on écrase");
+t("cp .PlanDuDragon.bak PlanDuDragon");
+s = t("cp -i BrouillonDePlan PlanDuDragon", "n");
+contient(s, "n'a pas été touché", "cp -i et non : rien ne change");
+contient(s, "Copier sans rien écraser", "la quête de l'écrasement");
+t("touch vieux; touch neuf");
+contient(t("mv neuf vieux"), "existait déjà", "mv écrase aussi");
+t("touch neuf");
+contient(t("mv -i neuf vieux", "n"), "n'a pas été touché", "mv -i demande");
+t("rm neuf vieux");
 t("echo \"echo Bonjour $USER\" > salut.sh");
 t("echo pwd >> salut.sh");
 contient(t("bash salut.sh"), "Bonjour apprenti", "écrire et lancer son propre script");
@@ -476,7 +496,7 @@ contient(t("cat ~/Cybersup/WarRoom/EcranMural"), "reprise", "l'écran mural apr�
 contient(t("cat ~/Cybersup/TableauAffichage"), "une seule copie rendue", "les résultats sont affichés");
 contient(t("cat ~/Cybersup/CarteEtudiante"), "Niveau", "la carte étudiante affiche le niveau");
 s = t("quetes");
-contient(s, "27 accomplies sur 27", "journal complet");
+contient(s, "28 accomplies sur 28", "journal complet");
 verifier(s.split("Chapitre 2")[0].indexOf("[ ]") === -1, "plus aucune quête ouverte au chapitre 1");
 contient(s, "Chapitre 2 : la Crypte", "le chapitre 2 s'ouvre après la victoire");
 

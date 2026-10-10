@@ -100,6 +100,7 @@ var QUETES_SECONDAIRES = [
 	{ id: "s_parchemin", titre: "Mesurer le GrandParchemin avec head, tail et wc" },
 	{ id: "s_enquete", titre: "Relever les mentions du SorcierNoir pour la bibliothécaire" },
 	{ id: "s_rouages", titre: "Fabriquer les rouages de l'Artisane" },
+	{ id: "s_ecrasement", titre: "Copier sans rien écraser" },
 	{ id: "s_mais", titre: "Sauver la récolte du Fermier" },
 	{ id: "s_chaumiere", titre: "Rebâtir une Chaumiere pour l'homme en pleurs" },
 	{ id: "s_livredor", titre: "Signer le LivreDOr de la Taverne" },
@@ -376,7 +377,8 @@ GameState.prototype.note = function(chapitre){
 
 /* Le chapitre que le joueur est en train de jouer. */
 GameState.prototype.chapitreEnCours = function(){
-	return this.has("crypteOuverte") && this.has("victoire") ? 2 : 1;
+	// On bascule au chapitre 2 en entrant dans la Crypte (ou d'emblée pour la mission cyber).
+	return this.has("chapitre1Saute") || this.quests["c_crypte"] ? 2 : 1;
 };
 
 /* L'étape de la quête principale en cours, ou null si tout est fait. */
@@ -392,6 +394,52 @@ GameState.prototype.queteEnCours = function(){
 	return null;
 };
 
+/*
+ * Ce qui peut coincer un joueur sans qu'il le voie : indice le signale gratuitement,
+ * quelle que soit l'étape en cours.
+ */
+GameState.prototype.diagnostics = function(){
+	var constats = [];
+	// Des rouages creux, faits avec touch au lieu de cp.
+	var noms = ["rouage1", "rouage2", "rouage3", "rouage4", "rouage5"];
+	var creux = noms.filter(function(n){ var r = ArtisanShop.getItemFromName(n); return r !== -1 && r.getText() === ""; });
+	if (!this.has("FiveGearsCopied") && creux.length > 0){
+		constats.push("Tes rouages " + creux.join(", ") + " sont creux : touch fabrique un objet vide. Efface-les (rm rouage*) et refais-les avec cp Rouage rouage1, et ainsi de suite.");
+	}
+	// Un alias qui porte le nom d'un vrai sort le remplace.
+	for (var nomAlias in this.alias){
+		if (this.alias.hasOwnProperty(nomAlias) && (tousLesSorts().indexOf(nomAlias) > -1)){
+			constats.push("Ton alias « " + nomAlias + " » remplace le vrai sort " + nomAlias + " (il lance « " + this.alias[nomAlias] + " »). Pour le retirer : unalias " + nomAlias);
+		}
+	}
+	if (typeof AuthorizedKeys !== "undefined" && this.has("crypteOuverte")){
+		if (AuthorizedKeys.getText().indexOf(CLE_LAURENT) === -1){
+			constats.push("La clé de Laurent a disparu des clés autorisées de root. Une copie de secours existe : sudo cp .ssh/authorized_keys.orig .ssh/authorized_keys (dans la Racine).");
+		}
+		if (this.clePublique && this.clePublique === this.cleGrillee){
+			constats.push("Ta paire de clés SSH est grillée (tu as confié la clé privée) : refais-en une avec ssh-keygen, puis dépose la nouvelle clé publique.");
+		}
+		var dossier = Home.getChildFromName(".ssh");
+		if (this.has("cleInstallee") && (dossier === -1 || dossier.getItemFromName("id_ed25519") === -1)){
+			constats.push("Ta clé privée n'est plus dans ~/.ssh : le coffre ne te reconnaît plus. ssh-keygen, puis dépose la nouvelle clé publique dans la BoiteDeDepot.");
+		}
+	}
+	return constats;
+};
+
+/* Les sorts cités dans un texte que le joueur ne connaît pas encore, avec l'endroit où les apprendre. */
+GameState.prototype.sortsManquants = function(texte){
+	var manquants = [], etat = this;
+	// Des sorts qui sont aussi des mots français courants : on ne les repère pas dans une phrase.
+	var ambigus = ["du", "sort", "top", "date", "id", "env", "tree", "cut"];
+	tousLesSorts().forEach(function(sort){
+		if (ambigus.indexOf(sort) > -1) return;
+		var re = new RegExp("(^|[\\s(:,])" + sort.replace(/[-]/g, "\\-") + "(?=$|[\\s,.)])");
+		if (!etat.knows(sort) && re.test(texte)) manquants.push("Il te manque le sort " + sort + ". " + Shell.ouApprendre(sort));
+	});
+	return manquants;
+};
+
 /* Le sort indice : rappelle l'indice gratuit, puis propose le palier suivant contre des points. */
 GameState.prototype.demanderIndice = function(){
 	var q = this.queteEnCours();
@@ -402,9 +450,13 @@ GameState.prototype.demanderIndice = function(){
 	var details = INDICES_DETAILLES[q.id] || (typeof INDICES_CHAPITRE2 !== "undefined" && INDICES_CHAPITRE2[q.id]) || [];
 	var pris = this.indices[q.id] || 0;
 	var lignes = [C.jaune("Étape en cours : " + q.titre), C.gris("Indice gratuit : ") + q.indice];
+	var constats = this.diagnostics();
+	for (var c = 0; c < constats.length; c++) lignes.push(C.cyan("À noter : ") + constats[c]);
 	for (var i = 0; i < pris && i < details.length; i++){
 		lignes.push(C.gris("Indice " + (i + 2) + " (déjà payé) : ") + details[i]);
 	}
+	var manquantsDeja = pris > 0 ? this.sortsManquants(details.slice(0, pris).join(" ")) : [];
+	for (var m = 0; m < manquantsDeja.length; m++) lignes.push(C.cyan("À noter : ") + manquantsDeja[m]);
 	if (pris >= details.length){
 		lignes.push(C.gris("Tu as déjà tous les indices de cette étape."));
 		return lignes.join("\n");
@@ -424,7 +476,9 @@ GameState.prototype.demanderIndice = function(){
 		else etat.malus += cout;
 		var max = chapitre === 2 ? etat.xpMax2() : etat.xpMax();
 		var deja = chapitre === 2 ? etat.malus2 : etat.malus;
-		term.echo(C.cyan("Indice " + (pris + 2) + " : ") + details[pris] + "\n" + C.gris("-" + cout + " XP sur la note" + (chapitre === 2 ? " du chapitre 2" : "") + ". Note maximale encore possible : " +
+		var manquants = etat.sortsManquants(details[pris]);
+		term.echo(C.cyan("Indice " + (pris + 2) + " : ") + details[pris] + "\n" +
+			(manquants.length ? manquants.map(function(t){ return C.cyan("À noter : ") + t; }).join("\n") + "\n" : "") + C.gris("-" + cout + " XP sur la note" + (chapitre === 2 ? " du chapitre 2" : "") + ". Note maximale encore possible : " +
 			String(Math.round(Math.min(1, (max - deja) / max) * 40) / 2).replace(".", ",") + " / 20."));
 		etat.save();
 		if (typeof majEtat === "function") majEtat();
@@ -541,8 +595,9 @@ GameState.prototype.tableauXP = function(){
 		"",
 		C.cyan("Niveau " + pr.niveau + " : " + pr.titre) + "   " + barre(pr.part, 24) + "   " +
 			(pr.suivant ? (pr.plafond - pr.xp) + " XP avant « " + pr.suivant + " »" : "niveau maximal"),
-		"Total : " + C.gras(pr.xp + " XP") + " sur " + pr.max + " possibles.   Note " +
-			(this.has("victoire") ? "finale" : "provisoire") + " : " + C.gras(this.noteTexte()),
+		"Total : " + C.gras(pr.xp + " XP") + " sur " + pr.max + " possibles.   " + (this.has("chapitre1Saute") ?
+			C.gris("Pas de note : chapitre 1 non joué (mission cyber).") :
+			"Note " + (this.has("victoire") ? "finale" : "provisoire") + " : " + C.gras(this.noteTexte())),
 		"",
 		C.gras("D'où viennent tes XP"),
 		ligne("Quêtes principales", principales, QUETES_PRINCIPALES.length, xpPrincipales),
@@ -557,6 +612,8 @@ GameState.prototype.tableauXP = function(){
 		lignes.push("");
 	}
 	if (oublies.length > 0) lignes.push("Sorts appris mais jamais lancés : " + oublies.join(", "));
+	var aVoir = lieuxAVoir(this, 1);
+	if (aVoir.lignes) lignes.push(aVoir.lignes);
 	if (this.has("crypteOuverte") && typeof QUETES_CHAPITRE2 !== "undefined") lignes.push("", this.tableauXP2(), "");
 	lignes.push(C.gris("Temps de jeu : " + this.tempsTexte() + ". Sorts lancés : " + this.nbCommandes + "."));
 	lignes.push(C.gris("Barème : " + XP_QUETE + " XP par étape de la quête principale (" + XP_VICTOIRE + " pour la dernière), " +
@@ -564,6 +621,25 @@ GameState.prototype.tableauXP = function(){
 		XP_PREMIER_USAGE + " la première fois qu'on s'en sert, " + XP_NOUVEAU_LIEU + " par lieu découvert."));
 	return lignes.join("\n");
 };
+
+/*
+ * Les lieux pas encore visités qu'on peut deviner : ceux qui touchent un lieu déjà visité.
+ * Les autres restent une surprise, on dit seulement combien il en reste.
+ */
+function lieuxAVoir(etat, chapitre){
+	var proches = [], caches = 0;
+	lieuxVisitables(chapitre).forEach(function(lieu){
+		if (etat.visited[lieu.id] || lieu === Home) return;
+		var parent = lieu.parents[0];
+		var voisin = parent && etat.visited[parent.id] && (parent.children.indexOf(lieu) > -1);
+		if (voisin) proches.push(lieu.room_name + C.gris(" (dans " + parent.room_name + ")"));
+		else caches++;
+	});
+	var texte = "";
+	if (proches.length) texte = "Lieux pas encore visités, à côté de lieux connus : " + proches.join(", ");
+	if (caches) texte += (texte ? "\n" : "") + C.gris("Et " + caches + " lieu" + (caches > 1 ? "x" : "") + " encore " + (caches > 1 ? "cachés" : "caché") + " plus loin.");
+	return { lignes: texte };
+}
 
 GameState.prototype.tableauXP2 = function(){
 	var principales = QUETES_CHAPITRE2.filter(function(q){ return this.quests[q.id]; }, this).length;
@@ -582,6 +658,8 @@ GameState.prototype.tableauXP2 = function(){
 		ligne("Premières utilisations", utilises, ORDRE_DES_SORTS_2.length),
 		ligne("Lieux découverts", visites, lieux.length)
 	];
+	var aVoir = lieuxAVoir(this, 2);
+	if (aVoir.lignes) lignes.push("  " + aVoir.lignes.replace(/\n/g, "\n  "));
 	if (this.malus2 > 0) lignes.push(C.jaune("  Indices payants : " + this.nbIndices(2) + ", soit -" + this.malus2 + " XP sur la note du chapitre."));
 	return lignes.join("\n");
 };
@@ -610,7 +688,7 @@ GameState.prototype.texteDuCertificat = function(){
 		"  Signé : Laurent, Directeur Pédagogique de Cybersup\n" +
 		"          et Grace, cheffe de quart de la WarRoom\n" +
 		"=================================================================\n" +
-		"  Code de vérification, à remettre au formateur :\n" +
+		"  Code de vérification (indicatif), à remettre au formateur :\n" +
 		"  " + this.codeDuCertificat() + "\n" +
 		"=================================================================";
 };
@@ -662,10 +740,18 @@ GameState.prototype.nbSecondaires = function(){
 	return n;
 };
 
-GameState.prototype.journal = function(){
-	var lignes = [C.gras("JOURNAL DE QUÊTES"), "", C.gras("Quête principale")];
+GameState.prototype.journal = function(detail){
+	var lignes = [C.gras("JOURNAL DE QUÊTES"), ""];
+	// Pendant la Crypte, le chapitre 1 se replie sur une ligne (quetes 1 le déplie).
+	var replie = this.chapitreEnCours() === 2 && detail !== "1";
+	if (replie){
+		lignes.push(C.gras("Chapitre 1 : Terminus") + "   " + (this.has("chapitre1Saute") ? C.gris("non joué (mission cyber)") :
+			C.vert("terminé") + C.gris(", quêtes secondaires " + this.nbSecondaires() + " sur " + QUETES_SECONDAIRES.length)) +
+			C.gris("   (détail : quetes 1)"));
+	}
+	lignes.push(C.gras("Quête principale"));
 	var enCours = false;
-	for (var i = 0; i < QUETES_PRINCIPALES.length; i++){
+	for (var i = 0; i < QUETES_PRINCIPALES.length && !replie; i++){
 		var q = QUETES_PRINCIPALES[i];
 		if (this.quests[q.id]){
 			lignes.push("  " + C.vert("[x]") + " " + q.titre);
@@ -676,11 +762,14 @@ GameState.prototype.journal = function(){
 			lignes.push(C.gris("      Toujours bloqué ? Le sort indice en donne de plus précis, contre quelques points."));
 		}
 	}
-	if (!enCours) lignes.push("  " + C.vert("Terminée. Le monde reste ouvert : il te reste peut-être des choses à découvrir."));
-	lignes.push("");
-	lignes.push(C.gras("Quêtes secondaires") + " (" + this.nbSecondaires() + " accomplies sur " + QUETES_SECONDAIRES.length + ")");
+	if (replie) lignes.pop();
+	if (!enCours && !replie) lignes.push("  " + C.vert("Terminée. Le monde reste ouvert : il te reste peut-être des choses à découvrir."));
+	if (!replie){
+		lignes.push("");
+		lignes.push(C.gras("Quêtes secondaires") + " (" + this.nbSecondaires() + " accomplie" + (this.nbSecondaires() > 1 ? "s" : "") + " sur " + QUETES_SECONDAIRES.length + ")");
+	}
 	var inconnues = 0;
-	for (var j = 0; j < QUETES_SECONDAIRES.length; j++){
+	for (var j = 0; j < QUETES_SECONDAIRES.length && !replie; j++){
 		var s = QUETES_SECONDAIRES[j];
 		if (this.quests[s.id]) lignes.push("  " + C.vert("[x]") + " " + s.titre);
 		else if (this.seen[s.id]) lignes.push("  [ ] " + s.titre);
@@ -758,7 +847,7 @@ GameState.prototype.texteDuDiplome = function(){
 		"  Signé : Laurent, Directeur Pédagogique de Cybersup\n" +
 		"          (et Sorcier Noir à ses heures)\n" +
 		"=================================================================\n" +
-		"  Code de vérification, à remettre au formateur :\n" +
+		"  Code de vérification (indicatif), à remettre au formateur :\n" +
 		"  " + this.codeDuDiplome() + "\n" +
 		"=================================================================" +
 		(this.nom ? "" : "\n(Pour faire figurer ton nom sur le diplôme, va signer le LivreDOr de la Taverne.)") +
@@ -1243,6 +1332,8 @@ function lieuParChemin(chemin){
 }
 
 GameState.prototype.save = function(){
+	// Après un passage de chapitre raté, la page va se recharger sur l'ancienne sauvegarde : on n'y touche plus.
+	if (Shell.sauvegardeBloquee) return;
 	try {
 		var donnees = {
 			v: VERSION_SAUVEGARDE,

@@ -95,18 +95,23 @@ html, body{
     overflow-wrap: anywhere;
     margin: 0 0 2px;
 }
+/* Une invite trop longue (un long prénom, un chemin profond, une question) passe à la ligne
+   et le champ de saisie garde toujours au moins 10 caractères de large. */
 #ligne{
     display: flex;
+    flex-wrap: wrap;
     align-items: baseline;
     margin: 0;
 }
 #invite{
-    white-space: pre;
-    flex: 0 0 auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    flex: 0 1 auto;
+    max-width: 100%;
 }
 #saisie{
-    flex: 1 1 auto;
-    min-width: 0;
+    flex: 1 1 10ch;
+    min-width: 10ch;
     background: transparent;
     border: 0;
     outline: 0;
@@ -207,6 +212,8 @@ html, body{
 /* Sur un écran étroit, l'image passe au-dessus du terminal. */
 @media (max-width: 820px){
     html, body{ font-size: 14px; }
+    /* En dessous de 16 px, iOS zoome à chaque fois qu'on touche le champ. */
+    #saisie, #editeur textarea{ font-size: 16px; }
     #jeu{ flex-direction: column-reverse; }
     #pics{
         flex: 0 0 auto;

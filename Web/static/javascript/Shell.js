@@ -119,6 +119,7 @@ Shell.decouper = function(ligne){
 		if (c === " " || c === "\t"){ finir(); i++; continue; }
 		if (c === "\"" || c === "'"){
 			var guillemet = c;
+			var ouverture = i;
 			commencer();
 			i++;
 			while (i < n && ligne.charAt(i) !== guillemet){
@@ -128,7 +129,19 @@ Shell.decouper = function(ligne){
 				mot.v += ligne.charAt(i);
 				i++;
 			}
-			if (i >= n) throw new ShellError("Il manque un guillemet fermant : " + guillemet);
+			if (i >= n){
+				// L'apostrophe d'un mot français (s'appelle, l'épée) ouvre une citation que rien ne ferme.
+				if (guillemet === "'" && /[A-Za-zÀ-ÿ]/.test(ligne.charAt(ouverture - 1) || "")){
+					var debutMot = ligne.lastIndexOf(" ", ouverture) + 1;
+					var finMot = ligne.indexOf(" ", ouverture);
+					var motFautif = ligne.substring(debutMot, finMot === -1 ? n : finMot);
+					throw new ShellError("Il manque un guillemet fermant : '\n" +
+						C.gris("(Pour le terminal, l'apostrophe de « " + motFautif + " » ouvre une citation que rien ne referme. " +
+						"Entoure toute la phrase de guillemets doubles, par exemple : echo \"" + ligne.replace(/^\s*\S+\s+/, "").replace(/"/g, "") + "\", " +
+						"ou protège l'apostrophe avec une barre oblique inverse : " + motFautif.replace("'", "\\'") + ")"));
+				}
+				throw new ShellError("Il manque un guillemet fermant : " + guillemet);
+			}
 			i++;
 			continue;
 		}
@@ -213,11 +226,20 @@ Shell.bit = function(noeud, lettre, io){
 	return lettreMode !== "-" && lettreMode !== "S" && lettreMode !== "T";
 };
 
+function sansAccents(texte){
+	return texte.normalize ? texte.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : texte;
+}
+
 Shell.introuvable = function(cmd, nom, lieu){
 	var message = (cmd ? cmd + " : " : "") + "« " + nom + " » : aucun lieu ni objet de ce nom ici";
 	var proche = lieu ? lieu.getNodeIgnoringCase(nom) : null;
 	if (proche){
 		message += "\n" + C.gris("(Sous Linux, majuscules et minuscules comptent : il existe « " + proche.toString() + " ».)");
+	} else if (lieu && sansAccents(nom) !== nom){
+		var sansAccent = lieu.getNodeIgnoringCase(sansAccents(nom));
+		if (sansAccent){
+			message += "\n" + C.gris("(Les noms de ce monde s'écrivent sans accents, comme souvent sous Linux : « " + sansAccent.toString() + " ».)");
+		}
 	}
 	return message;
 };
@@ -815,6 +837,7 @@ Shell.sorts.echo = function(args, io){
 
 Shell.sorts.mv = function(args, io){
 	var p = lireOptions(args, "fivn", "mv");
+	var reponses = [];
 	var a = p.reste;
 	if (a.length < 2) throw new ShellError("mv : il faut dire quoi déplacer, puis où. Utilisation : mv OBJET DESTINATION");
 	var dest = Shell.versLieu(Shell.chercher(a[a.length - 1], io, "mv"));
@@ -823,9 +846,7 @@ Shell.sorts.mv = function(args, io){
 	if (!versLieu && sources.length > 1){
 		throw new ShellError("mv : pour déplacer plusieurs objets d'un coup, la destination doit être un lieu qui existe.");
 	}
-	if (!versLieu && dest.node !== null){
-		throw new ShellError("mv : « " + dest.name + " » existe déjà, et je refuse de l'écraser.");
-	}
+
 	var messages = [];
 	for (var i = 0; i < sources.length; i++){
 		var r;
@@ -858,22 +879,48 @@ Shell.sorts.mv = function(args, io){
 			continue;
 		}
 		var occupant = cible.getNode(nouveauNom);
-		if (occupant !== null && occupant !== item){
-			messages.push("mv : il y a déjà quelque chose qui s'appelle « " + nouveauNom + " » dans " + cible.room_name + ".");
+		if (occupant instanceof Room){
+			messages.push("mv : « " + nouveauNom + " » est un lieu : impossible de le remplacer par un objet.");
 			continue;
 		}
 		if (!versLieu) Shell.nomValide(nouveauNom, "mv");
-		var ancienNom = item.itemname;
-		r.dir.removeItem(item);
-		item.itemname = nouveauNom;
-		cible.addItem(item);
-		if (item.allows("mv") && item.cmd_text["mv"]) messages.push(item.cmd_text["mv"]);
-		else if (cible === r.dir) messages.push("Tu as renommé " + ancienNom + " en " + nouveauNom + ".");
-		else messages.push("Tu as déplacé " + ancienNom + " vers " + cible.room_name + "." +
-			(nouveauNom !== ancienNom ? " Il s'appelle désormais " + nouveauNom + "." : ""));
-		GameEvents.fire({ type: "mv", item: item, from: r.dir, to: cible, oldName: ancienNom });
+		var deplacer = (function(item, depart, cible, nouveauNom, occupant){
+			return function(){
+				var ancienNom = item.itemname;
+				var lignes = [];
+				if (occupant !== null && occupant !== item){
+					cible.removeItem(occupant);
+					GameEvents.fire({ type: "rm", item: occupant, room: cible, ecrase: true });
+					lignes.push("« " + nouveauNom + " » existait déjà : il a été remplacé, son ancien contenu est perdu." +
+						(p.opts.i ? "" : C.gris(" (mv écrase sans prévenir. mv -i demande d'abord.)")));
+				}
+				depart.removeItem(item);
+				item.itemname = nouveauNom;
+				cible.addItem(item);
+				if (item.allows("mv") && item.cmd_text["mv"]) lignes.unshift(item.cmd_text["mv"]);
+				else if (cible === depart) lignes.unshift("Tu as renommé " + ancienNom + " en " + nouveauNom + ".");
+				else lignes.unshift("Tu as déplacé " + ancienNom + " vers " + cible.room_name + "." +
+					(nouveauNom !== ancienNom ? " Il s'appelle désormais " + nouveauNom + "." : ""));
+				GameEvents.fire({ type: "mv", item: item, from: depart, to: cible, oldName: ancienNom });
+				return lignes.join("\n");
+			};
+		})(item, r.dir, cible, nouveauNom, occupant);
+		if (occupant !== null && occupant !== item){
+			if (!Shell.bit(occupant, "w", io) && !io.sudo && occupant.owner !== JOUEUR){
+				messages.push("mv : impossible d'écraser « " + nouveauNom + " » : Permission non accordée");
+				continue;
+			}
+			try {
+				messages.push(Shell.ecraser("mv", occupant, p.opts, deplacer));
+			} catch (e){
+				if (e instanceof ShellError){ messages.push(e.message); continue; }
+				throw e;
+			}
+			continue;
+		}
+		messages.push(deplacer());
 	}
-	return messages.join("\n");
+	return messages.filter(function(m){ return m !== ""; }).join("\n");
 };
 
 /* Si la destination est un raccourci vers un lieu, on vise le lieu lui-meme. */
@@ -977,8 +1024,36 @@ Shell.sorts.rmdir = function(args, io){
 	return messages.join("\n");
 };
 
+/*
+ * Écraser un objet existant, comme le font cp et mv sous Linux : sans prévenir.
+ * -i demande d'abord (interactive), -n n'écrase jamais (no-clobber).
+ * faire() réalise l'écrasement et renvoie le message à afficher.
+ */
+Shell.ecraser = function(cmd, existant, opts, faire){
+	if (existant.person || existant.lien || existant.protege){
+		throw new ShellError(cmd + " : « " + existant.itemname + " » existe déjà, et ce monde refuse qu'on l'écrase.");
+	}
+	if (opts.n){
+		GameEvents.fire({ type: "ecrasementEvite", item: existant, nom: existant.itemname, cmd: cmd });
+		return "";
+	}
+	if (opts.i && !opts.f){
+		term.demander(cmd + " : écraser « " + existant.itemname + " » ? (o/n) ", false, function(reponse){
+			if (/^\s*[oOyY]/.test(reponse)){
+				term.echo(faire());
+			} else {
+				term.echo("« " + existant.itemname + " » n'a pas été touché.");
+				GameEvents.fire({ type: "ecrasementEvite", item: existant, nom: existant.itemname, cmd: cmd });
+			}
+			Shell.fin();
+		});
+		return "";
+	}
+	return faire();
+};
+
 Shell.sorts.cp = function(args, io){
-	var p = lireOptions(args, "rRfivp", "cp");
+	var p = lireOptions(args, "rRfivpn", "cp");
 	if (p.reste.length !== 2) throw new ShellError("cp : il faut un original et un nom pour la copie. Utilisation : cp OBJET COPIE");
 	var src = Shell.chercher(p.reste[0], io, "cp");
 	if (src.node === null) throw new ShellError(Shell.introuvable("cp", src.name, src.dir));
@@ -990,20 +1065,25 @@ Shell.sorts.cp = function(args, io){
 	}
 	var dest = Shell.versLieu(Shell.chercher(p.reste[1], io, "cp"));
 	var cible, nom;
+	// cp OBJET LIEU : si le lieu contient déjà un objet de ce nom, c'est lui qu'on remplace.
+	if (dest.node instanceof Room && dest.node.getNode(item.itemname) instanceof Item){
+		dest = { dir: dest.node, name: item.itemname, node: dest.node.getNode(item.itemname) };
+	}
 	if (dest.node instanceof Room){ cible = dest.node; nom = item.itemname; }
 	else if (dest.node !== null){
 		// Comme sous Linux, cp remplace le contenu d'un objet existant, si on a le droit d'y écrire.
-		var existant = dest.node;
-		if (existant.person || existant.lien || existant === item){
-			throw new ShellError("cp : « " + dest.name + " » existe déjà, et je refuse de l'écraser.");
-		}
+		var existant = dest.node, dossier = dest.dir;
+		if (existant === item) throw new ShellError("cp : « " + item.itemname + " » et « " + dest.name + " » sont le même objet");
 		if (!Shell.bit(existant, "w", io)){
 			throw new ShellError("cp : impossible d'écraser « " + dest.name + " » : Permission non accordée");
 		}
-		var ancien = existant.getText();
-		existant.setText(item.getText());
-		GameEvents.fire({ type: "write", item: existant, room: dest.dir, append: false, text: item.getText(), created: false, previous: ancien });
-		return "« " + dest.name + " » a été remplacé par une copie de " + item.itemname + ".";
+		return Shell.ecraser("cp", existant, p.opts, function(){
+			var ancien = existant.getText();
+			existant.setText(item.getText());
+			GameEvents.fire({ type: "write", item: existant, room: dossier, append: false, text: item.getText(), created: false, previous: ancien, ecrase: true });
+			return "« " + existant.itemname + " » a été remplacé par une copie de " + item.itemname + ". Son ancien contenu est perdu." +
+				(p.opts.i ? "" : C.gris("\n(cp écrase sans prévenir. cp -i demande d'abord.)"));
+		});
 	}
 	else { cible = dest.dir; nom = dest.name; }
 	if (cible.getNode(nom) !== null) throw new ShellError("cp : il y a déjà quelque chose qui s'appelle « " + nom + " » dans " + cible.room_name + ".");
@@ -1427,7 +1507,7 @@ Shell.sorts.man = function(args, io){
 };
 
 Shell.sorts.quetes = function(args, io){
-	return state.journal();
+	return state.journal(args[0]);
 };
 
 Shell.sorts.recommencer = function(args, io){
@@ -1464,6 +1544,12 @@ function distanceUn(a, b){
 }
 
 Shell.sortInconnu = function(nom){
+	// cd.. ou ls-l : il manque l'espace entre le sort et la suite.
+	var colle = /^([a-z][a-z0-9-]*?)(\.\.?|-[A-Za-z0-9-]*|~.*|\.\/.*|\/.*)$/.exec(nom);
+	if (colle && (Shell.sorts.hasOwnProperty(colle[1]) || SORTS_DU_JEU.indexOf(colle[1]) > -1) && !Shell.sorts.hasOwnProperty(nom)){
+		return nom + " : sort inconnu. Il manque une espace entre le sort et la suite : " + colle[1] + " " + colle[2] + "\n" +
+			C.gris("(Le terminal sépare les mots avec des espaces : sans elle, il cherche un sort qui s'appellerait « " + nom + " ».)");
+	}
 	var ici = current_room.getNode(nom);
 	if (ici instanceof Room) return "« " + nom + " » est un lieu, pas un sort. Pour y aller : cd " + nom;
 	if (ici !== null) return "« " + nom + " » n'est pas un sort. Pour regarder un objet ou parler à quelqu'un : less " + nom;
@@ -1482,6 +1568,33 @@ Shell.sortInconnu = function(nom){
 	return nom + " : sort inconnu. Tape help pour revoir tes sorts.";
 };
 
+/* Les sorts que personne n'enseigne dès le départ : ils s'apprennent en cours d'histoire. */
+var SORTS_APPRIS_EN_ROUTE = {
+	"cp": "Il s'apprend auprès de l'Artisane, à l'Atelier du village, quand on lui apporte un Rouage.",
+	"bash": "Il s'apprend auprès de l'Artisane, à l'Atelier du village, une fois ses rouages copiés.",
+	"cowsay": "Ce n'est pas un sort mais un paquet : il s'installe avec sudo apt install cowsay (l'Affiche de la SalleDeCours explique apt).",
+	"ss": "Il s'apprend au chapitre 2, en écoutant la Radio de la Crypte une fois arrivé dans la Racine.",
+	"ssh-keygen": "Il s'apprend au chapitre 2, avec les ConsignesDuCoffre qu'Evi pose dans la SalleServeurs de Cybersup.",
+	"tree": "Il s'apprend dans un drapeau caché de la SalleServeurs de Cybersup, ou en cadeau à la fin du chapitre 1."
+};
+
+/* Où apprendre un sort : on cherche dans le monde l'objet ou le personnage qui l'enseigne. */
+Shell.ouApprendre = function(sort){
+	if (SORTS_APPRIS_EN_ROUTE[sort]) return SORTS_APPRIS_EN_ROUTE[sort];
+	for (var id in World.rooms){
+		if (!World.rooms.hasOwnProperty(id)) continue;
+		var lieu = World.rooms[id];
+		for (var i = 0; i < lieu.items.length; i++){
+			if (lieu.items[i].teaches.indexOf(sort) === -1) continue;
+			var parent = lieu.parents[0];
+			if (lieu.chapitre === 2 && !state.has("crypteOuverte")) return "Il s'apprend au chapitre 2, sous la Citadelle.";
+			return "Il s'apprend " + (lieu.items[i].person ? "auprès de " : "en lisant ") + lieu.items[i].itemname +
+				", dans " + lieu.room_name + (parent && parent !== Home ? " (du côté de " + parent.room_name + ")" : "") + ".";
+		}
+	}
+	return "Quelqu'un, quelque part en ce monde, pourra te l'enseigner.";
+};
+
 Shell.appeler = function(nom, args, io){
 	if (nom.indexOf("/") > -1) return Shell.lancerScript(nom, io, true);
 	if (!Shell.sorts.hasOwnProperty(nom)){
@@ -1489,7 +1602,7 @@ Shell.appeler = function(nom, args, io){
 		throw new ShellError(Shell.sortInconnu(nom));
 	}
 	if (SORTS_DU_JEU.indexOf(nom) === -1 && !state.knows(nom)){
-		throw new ShellError("Tu ne connais pas encore le sort « " + nom + " ». Quelqu'un, quelque part en ce monde, pourra te l'enseigner.");
+		throw new ShellError("Tu ne connais pas encore le sort « " + nom + " ». " + Shell.ouApprendre(nom));
 	}
 	// Presque toutes les commandes Linux acceptent --help : un aide-memoire sans passer par man.
 	if (args.indexOf("--help") > -1 && MANUEL[nom]){
@@ -1519,7 +1632,7 @@ Shell.lancerScript = function(chemin, io, direct){
 	if (!state.knows("bash")){
 		throw new ShellError(direct ?
 			chemin + " : tu ne sais pas encore lancer un script. Quelqu'un qui automatise son travail pourra te l'apprendre." :
-			"Tu ne connais pas encore le sort « bash ». Quelqu'un, quelque part en ce monde, pourra te l'enseigner.");
+			"Tu ne connais pas encore le sort « bash ». " + Shell.ouApprendre("bash"));
 	}
 	var r = Shell.chercher(chemin, io, "bash");
 	if (r.node === null) throw new ShellError("bash : " + chemin + " : aucun objet de ce nom");

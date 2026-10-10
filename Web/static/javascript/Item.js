@@ -33,6 +33,8 @@ function Item(name, text, picname){
 
 Item.prototype.addCmdText = function(cmd, text) {
 	this.cmd_text[cmd] = text;
+	// Un dialogue qui change en cours de partie doit être sauvegardé tel quel.
+	if (cmd === "less" && World.fige) this.modifie = true;
 };
 
 Item.prototype.addValidCmd = function(cmd){

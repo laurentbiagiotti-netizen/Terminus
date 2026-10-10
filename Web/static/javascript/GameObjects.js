@@ -670,6 +670,23 @@ echo Le DragonMecanique ronronne et crache une petite étincelle.",
     "item_gear.gif").droits("rw-r--r--", JOUEUR);
 RemonterScript.protege = true;
 
+/* La quête piège de l'écrasement : cp remplace sans prévenir un objet qui existe déjà. */
+var TEXTE_PLAN_DRAGON = "PLAN DU DRAGON MÉCANIQUE, original, exemplaire unique\n\n" +
+"       __/^^^\\__\n" +
+"   ___/  o   o  \\___      ressort principal : 48 spires\n" +
+"  <___   \\___/   ___>     rouages : 5 (copies conformes)\n" +
+"      \\_________/         clé de remontage : dans le dos\n\n" +
+"Trois ans de travail. Ne pas perdre.";
+var PlanDuDragon = new Item("PlanDuDragon", TEXTE_PLAN_DRAGON, "item_manuscript.gif").droits("rw-rw-rw-", "terminus");
+var SauvegardePlan = new Item(".PlanDuDragon.bak", TEXTE_PLAN_DRAGON, "item_manuscript.gif").droits("rw-r--r--", "terminus");
+var BrouillonDePlan = new Item("BrouillonDePlan", "Brouillon. Un dragon gribouillé, avec trois pattes et une flèche « à refaire ».", "item_manuscript.gif");
+var Apprentie = new Item("ApprentieHorlogere",
+    "Une apprentie en tablier de cuir lève le nez de son établi. « Tu sais copier des objets ? Moi pas encore. \
+La maîtresse m'a demandé de ranger mon brouillon sous le nom PlanDuDragon : cp BrouillonDePlan PlanDuDragon. \
+Tu veux bien le faire pour moi ? Elle a ajouté un truc du genre « attention », mais je n'écoutais plus. »",
+    "item_student.gif").personnage().revele("s_ecrasement");
+[PlanDuDragon, SauvegardePlan, BrouillonDePlan, Apprentie].forEach(function(o){ ArtisanShop.addItem(o); });
+
 //FARM
 var Farm = new Room("Ferme",
     "Il y avait une ferme ici, autrefois. Aujourd'hui les champs sont brûlés et brunis.",
@@ -1580,6 +1597,13 @@ function verifierMonde(){
     une("ouvrirPortail", Shell.bit(Portal, "x", null));
     une("rmLargeBoulder", !RockyPath.hasItem(LargeBoulder));
     une("touchGear", ArtisanShop.getItemFromName("Rouage") !== -1);
+    // Un Rouage recréé avec touch après coup est vide : l'Artisane le façonne, comme le premier.
+    var rouageModele = ArtisanShop.getItemFromName("Rouage");
+    if (state.has("touchGear") && rouageModele !== -1 && rouageModele.getText() === ""){
+        rouageModele.setText("C'est un rouage, tout neuf.");
+        rouageModele.changePicName("item_gear.gif");
+        say("L'Artisane prend ton nouveau Rouage, lui donne trois coups de lime, et te le rend. « Voilà un vrai rouage. Copie celui-là. »");
+    }
     // Les rouages et l'épi doivent être de vraies copies (cp), pas des objets vides créés avec touch.
     var cinqRouages = ["rouage1", "rouage2", "rouage3", "rouage4", "rouage5"];
     if (state.has("touchGear") && aTous(ArtisanShop, cinqRouages)){
@@ -1589,10 +1613,14 @@ function verifierMonde(){
             return r.getText() !== "" && (modele === -1 || r.getText() === modele.getText());
         });
         une("FiveGearsCopied", vraiesCopies);
+        if (vraiesCopies) state.flags["rouagesVides"] = false;
         if (!vraiesCopies && !state.has("rouagesVides")){
             state.set("rouagesVides");
             say("L'Artisane soupèse tes rouages. « Ceux-là sont creux ! Je veux des COPIES de mon Rouage : cp Rouage rouage1, et ainsi de suite. Efface les faux avec rm. »");
         }
+    } else if (state.has("rouagesVides") && !state.has("FiveGearsCopied")){
+        // Le joueur a fait le ménage : l'Artisane pourra redire ce qui ne va pas à la prochaine série.
+        state.flags["rouagesVides"] = false;
     }
     var autreEpi = Farm.getItemFromName("AutreEpiDeMais");
     une("CornCopied", autreEpi !== -1 && autreEpi.getText() === EarOfCorn.getText());
@@ -1672,6 +1700,42 @@ Ce sont les mêmes voyants qui servent de minuteur pendant les examens. Vert : o
 }
 
 /* Indices quand le joueur est presque dans le vrai. */
+/* Le PlanDuDragon est-il intact, à sa place ? */
+function planIntact(){
+    var plan = ArtisanShop.getItemFromName("PlanDuDragon");
+    return plan !== -1 && plan.getText() === TEXTE_PLAN_DRAGON;
+}
+function planEcrase(){
+    if (state.has("planEcrase") || planIntact()) return;
+    state.set("planEcrase");
+    say(C.rouge("L'Artisane pousse un cri.") + " « Mon PlanDuDragon ! Tu l'as ÉCRASÉ ! Trois ans de travail remplacés par un gribouillis !\n\
+...\n\
+Bon. Respire. C'est ma faute, j'aurais dû prévenir : cp ne demande jamais rien. Si la copie porte le nom d'un objet \
+qui existe, l'ancien contenu disparaît. Sous Linux, c'est pareil, et il n'y a pas de corbeille pour le récupérer.\n\
+Heureusement, je garde toujours une copie cachée. Cherche-la (ls -a) et remets-la en place : cp .PlanDuDragon.bak PlanDuDragon\n\
+Ensuite, refais ce que t'a demandé la petite, mais avec cp -i : il demande avant d'écraser. Et cette fois, réponds non. »");
+    Apprentie.addCmdText("less", "L'apprentie se cache derrière son établi. « J'ai cru entendre “attention” ! La maîtresse dit qu'il faut remettre \
+la sauvegarde (cp .PlanDuDragon.bak PlanDuDragon), puis réessayer avec cp -i, et répondre non quand il demande. »");
+}
+GameEvents.addListener("write", function(e){
+    if (e.room === ArtisanShop && e.item.itemname === "PlanDuDragon") planEcrase();
+});
+GameEvents.addListener("rm", function(e){
+    if (e.room === ArtisanShop && e.item.itemname === "PlanDuDragon") planEcrase();
+});
+GameEvents.addListener("mv", function(e){
+    if ((e.from === ArtisanShop && e.oldName === "PlanDuDragon") || (e.to === ArtisanShop && e.item.itemname === "PlanDuDragon")) planEcrase();
+});
+GameEvents.addListener("ecrasementEvite", function(e){
+    if (e.nom !== "PlanDuDragon" || !planIntact() || ArtisanShop.getItemFromName("PlanDuDragon") !== e.item) return;
+    say("L'Artisane hoche la tête. « Voilà. cp -i t'a demandé, tu as vu que PlanDuDragon existait, tu as dit non. " +
+        (state.has("planEcrase") ? "Tu viens d'apprendre la leçon la plus chère du terminal, et ça ne t'a coûté qu'une sauvegarde." :
+        "Et tu n'as même pas eu besoin de casser quoi que ce soit pour comprendre. Bravo.") +
+        " Range le brouillon sous un autre nom, la petite s'en remettra. »");
+    Apprentie.addCmdText("less", "L'apprentie range son brouillon dans un tiroir. « Merci ! Et désormais, j'écris cp -i. La maîtresse dit que c'est un alias très populaire. »");
+    state.complete("s_ecrasement");
+});
+
 GameEvents.addListener("touch", function(e){
     var nom = e.item.itemname;
     if (e.room === BrokenBridge && nom !== "Planche" && nom.toLowerCase() === "planche"){

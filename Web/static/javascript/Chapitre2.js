@@ -607,10 +607,9 @@ Caveau.addItem(new Item("Lanterne", "Une lanterne froide. Personne ne l'a allum�
 Caveau.addItem(new Item("Coffret", "Un coffret vide. Quelqu'un a gratté le mot « croa » sur le couvercle.", "item_box.gif").droits("rw-r--r--", "root"));
 var PorteDerobee = new Item(".porte",
 	"# porte dérobée, posée par le Corbeau\n" +
-	"echo \"La porte pivote sans un bruit. Pendant une fraction de seconde, tu es root.\"\n" +
-	"echo \"Derrière, un escalier descend vers la Racine.\"\n",
+	"echo \"La porte pivote sans un bruit.\"\n",
 	"item_portal.gif").droits("rwsr-xr-x", "root");
-Caveau.addItem(PorteDerobee);
+/* La .porte n'apparaît dans le Caveau qu'une fois le programme trafiqué repéré ET le message décodé (voir verifierChapitre2). */
 
 var Racine = lieuDuChapitre2(new Room("Racine",
 	"La Racine : le domaine de root, tout en bas de l'arbre. Des processus bourdonnent dans l'ombre comme des abeilles. \
@@ -711,8 +710,7 @@ var CertificatCyber = new Item("CertificatCyber", "", "item_manuscript.gif");
 link_rooms(Crypte, DossierBin);
 link_rooms(Crypte, Caveau);
 NICHES.forEach(function(n){ link_rooms(Caveau, n); });
-link_rooms(SalleServeurs, BoiteDeDepot);
-link_rooms(SalleServeurs, Coffre);
+/* BoiteDeDepot et Coffre n'apparaissent dans la SalleServeurs qu'à l'ouverture de la Crypte (voir verifierChapitre2). */
 
 /* Le P.S. de Laurent, et le nouveau réseau. */
 Laurent.cmd_text["less"] += "\n\n" +
@@ -828,6 +826,10 @@ function verifierChapitre2(){
 	}
 	une("crypteOuverte", state.has("victoire"));
 	if (!state.has("crypteOuverte")) return;
+	// Aussi pour les sauvegardes faites avant le chapitre 2 : la SalleServeurs y est restaurée sans ces lieux.
+	if (SalleServeurs.children.indexOf(BoiteDeDepot) === -1) relier(SalleServeurs, BoiteDeDepot);
+	if (SalleServeurs.children.indexOf(Coffre) === -1) relier(SalleServeurs, Coffre);
+	une("porteApparue", !!state.quests["c_integrite"] && !!state.quests["c_message"]);
 	une("racineOuverte", state.has("porteOuverte"));
 	une("cleCorbeauRetiree", state.has("ecouteCoupee") && cleCorbeauRetiree());
 	if (state.has("cleCorbeauRetiree") && !SalleServeurs.hasItem(ConsignesDuCoffre)) poser(SalleServeurs, ConsignesDuCoffre);
@@ -847,17 +849,31 @@ function verifierChapitre2(){
 Cette paire est grillée : quelqu'un d'autre a pu la voir. Refais une paire avec ssh-keygen, et donne-moi la PUBLIQUE, celle qui finit par .pub. »");
 			continue;
 		}
-		if (state.has("cleInstallee") || !state.clePublique || texte.trim() !== state.clePublique.trim()) continue;
+		if (texte.indexOf("ssh-ed25519") !== 0) continue;
+		// Evi récupère tout ce qui ressemble à une clé publique : la boîte ne garde rien.
+		BoiteDeDepot.removeItem(depot);
+		i--;
+		if (!state.clePublique || texte.trim() !== state.clePublique.trim()){
+			say("Evi examine la clé déposée. « Celle-là ne correspond pas à ta clé actuelle, celle de ~/.ssh. Dépose ~/.ssh/id_ed25519.pub. »");
+			continue;
+		}
 		if (state.clePublique === state.cleGrillee){
-			if (!state.has("refusGrillee")){
-				state.set("refusGrillee");
-				say("Evi secoue la tête. « Non : c'est la moitié publique de la paire dont tu m'as donné la clé privée. Elle est grillée. ssh-keygen, et on recommence. »");
-			}
+			say("Evi secoue la tête et jette la clé. « Non : c'est la moitié publique de la paire dont tu m'as donné la clé privée. Elle est grillée. ssh-keygen, et on recommence. »");
 			continue;
 		}
 		var dossier = Home.getChildFromName(".ssh");
 		var privee = dossier !== -1 ? dossier.getItemFromName("id_ed25519") : -1;
-		state.clePrivee = privee !== -1 ? privee.getText() : null;
+		var textePrivee = privee !== -1 ? privee.getText() : null;
+		if (state.has("cleInstallee")){
+			if (textePrivee !== state.clePrivee){
+				state.clePrivee = textePrivee;
+				say("Evi récupère ta nouvelle clé publique. « Je remplace l'ancienne sur le coffre par celle-ci. C'est fait : ssh coffre. »");
+			} else {
+				say("Evi te rend un sourire. « Celle-là, je l'ai déjà. Tu peux te connecter : ssh coffre. »");
+			}
+			continue;
+		}
+		state.clePrivee = textePrivee;
 		state.applyState("cleInstallee");
 	}
 	if (state.has("ecouteCoupee") && !state.has("cleCorbeauRetiree") && AuthorizedKeys.getText().indexOf(CLE_LAURENT) === -1 && !state.has("laurentDehors")){
@@ -874,6 +890,11 @@ function etatChapitre2(nom){
 		case "crypteOuverte":
 			relier(Citadelle, Crypte);
 			break;
+		case "porteApparue":
+			poser(Caveau, PorteDerobee);
+			say("Quelque part sous tes pieds, dans le Caveau, une pierre pivote avec un grincement. Le Corbeau ne mentait pas : une porte vient d'apparaître. \
+Elle se cache bien, pourtant : il faudra la chercher.");
+			break;
 		case "racineOuverte":
 			relier(Caveau, Racine);
 			break;
@@ -882,11 +903,19 @@ function etatChapitre2(nom){
 			state.complete("c_cle");
 			break;
 		case "suidRetire":
-			say("La .porte n'a plus son bit SUID : ce n'est plus qu'un script sans pouvoir. Une porte dérobée de moins.");
+			say("La .porte n'a plus son bit SUID : elle ne donne plus les droits de root à personne. Une porte dérobée de moins.");
 			state.complete("s_c_suidfix");
+			if (!state.has("porteOuverte")){
+				// Le joueur a désarmé la porte avant de la franchir : on le laisse descendre quand même.
+				state.complete("c_suid");
+				state.set("porteOuverte");
+				state.applyState("racineOuverte");
+				say("Whitfield, l'archiviste, descend l'escalier en agitant un trousseau. « Bien vu, mais il faut quand même aller voir \
+ce que le Corbeau cachait dessous. Je t'ouvre l'escalier de service : la Racine est juste là. »");
+			}
 			break;
 		case "cleInstallee":
-			say("Evi récupère ta clé publique dans la BoiteDeDepot. « Parfait, c'est bien la .pub. Je l'ajoute aux clés autorisées du coffre... voilà. \
+			say("Evi récupère ta clé publique dans la BoiteDeDepot. « Parfait, c'est bien la .pub, et c'est bien la tienne. Je l'ajoute aux clés autorisées du coffre... voilà. \
 Essaie : ssh coffre. »");
 			HOTES["coffre"].ouvert = true;
 			state.complete("c_coffre");
@@ -930,12 +959,16 @@ GameEvents.addListener("stderr", function(e){
 
 GameEvents.addListener("script", function(e){
 	if (e.item === PorteDerobee && e.direct && !state.has("porteOuverte")){
+		if (!state.quests["c_suid"]){
+			say("La .porte refuse de bouger. Des lettres apparaissent sur le bois : « Prouve que tu sais trouver les portes comme moi : find . -perm -4000 »");
+			return;
+		}
 		if (PorteDerobee.mode.charAt(2) !== "s"){
 			say("La porte tourne sur ses gonds... et ne mène nulle part : sans son bit SUID, elle n'a plus les droits de root. Tant mieux, d'ailleurs.");
 			return;
 		}
 		state.set("porteOuverte");
-		say("Un escalier apparaît derrière la .porte. Il descend vers la Racine.");
+		say("Pendant une fraction de seconde, tu es root. Un escalier apparaît derrière la .porte : il descend vers la Racine.");
 	}
 });
 
@@ -1030,49 +1063,121 @@ function sauterChapitre1(){
 	} finally {
 		term.demander = vraiDemander;
 	}
+	if (!state.has("victoire")) return false;
 	// Le chapitre 1 est considéré comme fait : aucune de ses étapes ne reste ouverte.
 	for (var q = 0; q < QUETES_PRINCIPALES.length; q++) state.quests[QUETES_PRINCIPALES[q].id] = true;
 	state.niveauAnnonce = state.niveau();
-	return state.has("victoire");
+	return true;
+}
+
+/* Le texte de Laurent quand le joueur arrive en renfort, sans avoir passé l'épreuve de première année. */
+var TEXTE_LAURENT_RENFORT =
+	"« Ah, te voilà, le renfort. Je suis Laurent, directeur pédagogique de Cybersup. Ne fais pas attention à la cape noire \
+posée sur la chaise : ce matin, je jouais le Sorcier Noir pour l'épreuve pratique des première année. Ils ont traversé tout Terminus \
+avec un simple terminal, et ils m'ont battu. Le monde est resté ouvert : si tu veux revoir les sorts de base, ses habitants sont toujours là.\n\n\
+Le problème, c'est ce que Grace a vu pendant la correction : du trafic sous la Citadelle, sur un port que personne n'utilise. \
+Quelqu'un est vraiment entré pendant l'examen, et ça, ce n'était pas au programme. Personne ici ne sait encore qui, ni comment.\n\n\
+Une trappe vient de s'ouvrir dans le sol : cd Crypte. L'Archiviste t'attend en bas, et Grace reste en ligne à la radio. \
+Ton compte a les droits sudo pour la mission. Une seule règle : avec sudo, on relit sa ligne avant d'appuyer sur Entrée. »";
+
+var TEXTE_MISSION_CYBER =
+	"MISSION CYBER\n\n" +
+	"Tu n'es pas là pour l'épreuve de première année : elle s'est jouée ce matin. Les B1 ont traversé Terminus et vaincu le Sorcier Noir, " +
+	"qui n'était autre que Laurent, le directeur pédagogique, déguisé pour l'occasion.\n\n" +
+	"Mais pendant la correction, les sondes de la WarRoom ont vu passer du trafic qui n'était pas prévu. Grace a demandé du renfort, " +
+	"et c'est toi qu'on a appelé, parce que tu connais déjà les bases du terminal.\n\n" +
+	"Tu arrives par ssh dans la Citadelle. Laurent t'y attend : ";
+
+/* Pour le mode mission cyber, le monde raconte que d'autres ont passé l'épreuve. */
+function adapterAuRenfort(){
+	Laurent.addCmdText("less", TEXTE_LAURENT_RENFORT);
+	CheffeDeQuart.addCmdText("less", "« Le renfort ! Parfait. L'exercice de crise des M2 est fini, le Sorcier Noir a été battu par les première année, \
+mais mes sondes voient encore du trafic sous la Citadelle. Ça, ce n'est pas un exercice. Je te parle à la radio, en bas, dans la Crypte. »");
+	TableauAffichage.setText(TEXTE_TABLEAU + "\n\nRÉSULTATS DE L'ÉPREUVE PRATIQUE DES B1 : le Sorcier Noir est vaincu. Félicitations à la promo.");
+}
+
+/* Le chapitre 2 se choisit au tout début d'une partie : avant d'avoir franchi la moindre étape. */
+function chapitre2Possible(){
+	return !state.has("victoire") && !QUETES_PRINCIPALES.some(function(q){ return state.quests[q.id]; });
+}
+
+/*
+ * Rejoue le chapitre 1 en silence et place le joueur dans la Citadelle, en renfort.
+ * Si le passage n'aboutit pas, la partie est remise comme avant. Renvoie vrai si c'est fait.
+ */
+function commencerChapitre2(){
+	var avant = null;
+	try {
+		state.save();
+		avant = window.localStorage.getItem(CLE_SAUVEGARDE);
+	} catch (e){
+		avant = null;
+	}
+	var alias = state.alias;
+	state.alias = {};   // les alias du joueur ne doivent pas détourner la relecture
+	var ok = false;
+	try {
+		ok = sauterChapitre1();
+	} catch (e){
+		ok = false;
+	}
+	state.alias = alias;
+	Shell.narration = [];
+	if (!ok){
+		// Rien ne doit rester du passage raté : on remet la sauvegarde d'avant et on recharge la page.
+		Shell.sauvegardeBloquee = true;
+		try {
+			if (avant !== null) window.localStorage.setItem(CLE_SAUVEGARDE, avant);
+			else window.localStorage.removeItem(CLE_SAUVEGARDE);
+		} catch (e){}
+		term.echo(C.rouge("Le passage à la mission cyber n'a pas abouti.") + " Ta partie est remise comme avant.\n" +
+			C.gris("Pour la mission cyber, pars d'une partie neuve : recommencer, puis choisis le parcours 2."));
+		window.location.reload();
+		return false;
+	}
+	state.set("chapitre1Saute");
+	state.malus = 0;
+	state.indices = {};
+	PROFIL.chapitre = 2;
+	enregistrerProfil();
+	adapterAuRenfort();
+	montrerImage(Citadelle.room_pic, Citadelle.room_name);
+	term.effacer();
+	term.echo(C.vert(C.gras("CHAPITRE 2 : LA CRYPTE")) + "\n\n" + TEXTE_MISSION_CYBER + C.vert("less Laurent") + "\n\n" +
+		C.gris("Ce chapitre a sa propre note sur 20. Tape quetes pour le journal, indice si tu bloques, xp pour ta note."));
+	return true;
 }
 
 Shell.sorts.chapitre = function(args, io){
 	var demande = args[0];
 	if (demande === undefined){
 		return C.gras("LES CHAPITRES") + "\n\n" +
-			"  1. Terminus      " + (state.has("victoire") ? (state.has("chapitre1Saute") ? C.gris("passé (accès direct au chapitre 2)") : C.vert("terminé")) : C.jaune("en cours")) +
-			"   Linux de base, jusqu'au Sorcier Noir. Note sur le Diplome.\n" +
+			"  1. Terminus      " + (state.has("victoire") ? (state.has("chapitre1Saute") ? C.gris("non joué (mission cyber)") : C.vert("terminé")) : C.jaune("en cours")) +
+			"   L'épreuve de première année : Linux de base, jusqu'au Sorcier Noir. Note sur le Diplome.\n" +
 			"  2. La Crypte     " + (state.quests["c_corbeau"] ? C.vert("terminé") : (state.has("crypteOuverte") ? C.jaune("ouvert") : C.gris("fermé"))) +
-			"   Sécurité : empreintes, base64, SUID, ports, clés SSH. Note sur le CertificatCyber.\n\n" +
-			C.gris("Pour commencer directement au chapitre 2 (séance de cybersécurité) : chapitre 2");
+			"   La mission cyber : empreintes, base64, SUID, ports, clés SSH. Note sur le CertificatCyber.\n\n" +
+			C.gris(chapitre2Possible() ?
+				"Le chapitre 2 s'ouvre en battant le Sorcier Noir. Si tu connais déjà les bases, tu peux aussi partir tout de suite en mission cyber : chapitre 2" :
+				(state.has("crypteOuverte") ? "La Crypte est sous la Citadelle : ssh citadelle, puis cd Crypte." :
+				"Le chapitre 2 s'ouvre quand tu auras battu le Sorcier Noir."));
 	}
-	if (demande === "1") return "Le chapitre 1 commence dans ta Maison : cd, puis ls.";
+	if (demande === "1") return state.has("chapitre1Saute") ?
+		"Tu es venu en renfort pour la mission cyber : le chapitre 1, ce sont les première année qui l'ont passé ce matin. Le monde de Terminus reste ouvert si tu veux le visiter." :
+		"Le chapitre 1 commence dans ta Maison : cd, puis ls.";
 	if (demande !== "2") throw new ShellError("chapitre : il n'y a que les chapitres 1 et 2. Tape chapitre pour la liste.");
 	if (state.has("crypteOuverte")){
 		return "Le chapitre 2 est déjà ouvert : la Crypte est sous la Citadelle. Depuis n'importe où : ssh citadelle, puis cd Crypte.";
 	}
-	term.demander("Passer directement au chapitre 2 ? Le chapitre 1 sera marqué comme non joué (pas de note pour lui). Tape oui pour confirmer : ", false, function(reponse){
+	if (!chapitre2Possible()){
+		return "Tu as commencé l'épreuve de première année : le chapitre 2 s'ouvrira quand tu auras battu le Sorcier Noir.\n" +
+			C.gris("(La mission cyber se choisit au tout début d'une partie. Pour repartir de zéro et la choisir : recommencer.)");
+	}
+	term.demander("Partir en mission cyber ? On t'appelle en renfort : l'épreuve de première année (chapitre 1) ne sera pas notée pour toi. Tape oui pour confirmer : ", false, function(reponse){
 		if (String(reponse).trim().toLowerCase() !== "oui"){
-			term.echo("Bien. Le chapitre 1 t'attend.");
+			term.echo("Bien. L'épreuve de première année t'attend.");
 			return;
 		}
-		state.set("chapitre1Saute");
-		PROFIL.chapitre = 2;
-		enregistrerProfil();
-		var ok = sauterChapitre1();
-		Shell.narration = [];
-		if (!ok){
-			term.echo(C.rouge("Le passage automatique a échoué. Recommence une partie (recommencer), ou joue le chapitre 1."));
-			return;
-		}
-		state.malus = 0;
-		state.indices = {};
-		term.effacer();
-		term.echo(C.vert(C.gras("CHAPITRE 2 : LA CRYPTE")) + "\n\n" +
-			"Le Sorcier Noir est vaincu (c'était Laurent, le directeur pédagogique : tout Terminus était un examen).\n" +
-			"Tu es dans la Citadelle, à côté de lui. Il a encore quelque chose à te dire : " + C.vert("less Laurent") + ".\n\n" +
-			C.gris("Ce chapitre a sa propre note sur 20. Tape quetes pour le journal, indice si tu bloques, xp pour ta note."));
-		Shell.fin();
+		if (commencerChapitre2()) Shell.fin();
 	});
 	return "";
 };

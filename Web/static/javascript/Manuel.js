@@ -106,7 +106,9 @@ var MANUEL = {
 "  mv OBJET NOUVEAUNOM      renomme OBJET\n" +
 "  mv A B C LIEU            déplace plusieurs objets d'un coup\n" +
 "  mv Mannequin* Boite      l'étoile remplace n'importe quelle suite de lettres\n" +
-"  mv Cage/Objet .          le point désigne « ici »\n\n" +
+"  mv Cage/Objet .          le point désigne « ici »\n" +
+"  mv -i OBJET NOM          demande avant d'écraser un NOM qui existe déjà\n\n" +
+"Comme cp, mv écrase sans prévenir un objet qui porte déjà le nouveau nom.\n" +
 "Tous les objets ne se laissent pas déplacer : seulement ceux qui t'appartiennent,\n" +
 "et quelques autres."
 },
@@ -213,7 +215,11 @@ var MANUEL = {
 "Utilise « cp » pour dupliquer un objet.\n\n" +
 "  cp OBJET COPIE       crée COPIE, identique à OBJET\n" +
 "  cp OBJET LIEU        dépose une copie dans LIEU\n" +
-"  cp OBJET ../COPIE    la copie peut atterrir ailleurs"
+"  cp OBJET ../COPIE    la copie peut atterrir ailleurs\n" +
+"  cp -i OBJET COPIE    demande avant d'écraser une COPIE qui existe déjà\n" +
+"  cp -n OBJET COPIE    n'écrase jamais\n\n" +
+"Attention : si COPIE existe déjà, cp la remplace sans prévenir, et son ancien\n" +
+"contenu est perdu pour de bon. Il n'y a pas de corbeille dans un terminal."
 },
 "grep": {
 	resume: "chercher un mot dans un texte",

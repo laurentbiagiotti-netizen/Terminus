@@ -112,6 +112,26 @@ function demanderPrenom(){
 		term.echo("\nEnchanté, " + C.gras(PROFIL.prenom) + ". Sur ce système, tu seras " + C.vert(identifiant) +
 			C.gris(" (c'est ce que répondra le sort whoami)") + ".\n");
 		state.save();
+		demanderParcours();
+	});
+}
+
+/* Deux convocations possibles : l'épreuve de première année, ou la mission cyber pour ceux qui connaissent les bases. */
+function demanderParcours(){
+	term.echo("Deux convocations t'attendent. Laquelle est la tienne ?\n\n" +
+		"  " + C.vert("1") + "  L'épreuve de première année : tu découvres le terminal Linux. (chapitre 1, puis chapitre 2)\n" +
+		"  " + C.vert("2") + "  La mission cyber : tu connais déjà les bases, on t'appelle en renfort. (chapitre 2 directement)\n");
+	term.demander("Tape 1 ou 2 : ", false, function(reponse){
+		var choix = String(reponse).trim();
+		if (choix !== "1" && choix !== "2"){
+			term.echo(C.jaune("Réponds 1 ou 2. En cas de doute, choisis 1 : c'est le début de l'histoire."));
+			demanderParcours();
+			return;
+		}
+		if (choix === "2" && commencerChapitre2()){
+			Shell.fin();
+			return;
+		}
 		accueillir();
 		term.definirInvite(Shell.invite());
 		majEtat();
