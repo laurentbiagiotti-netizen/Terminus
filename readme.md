@@ -88,6 +88,8 @@ Au premier lancement, le jeu demande ton prénom : il devient ton identifiant su
 
 **Des indices payants** (`indice`) : deux paliers par étape, de plus en plus précis, qui coûtent 30 puis 60 XP sur la note (pas sur le niveau).
 
+**Une allure de vrai terminal** : un écran de démarrage (le serveur démarre, l'écran s'allume, l'illustration se reconstruit en pixels, puis `terminus login:`), deux enveloppes à choisir au début, le mode vieil écran activé par défaut (`crt off` pour un affichage net), l'image de chaque lieu dès l'arrivée, une carte des lieux visités (`carte`, et aussi après `tree`), des illustrations pour chaque machine du réseau, et au chapitre 2 un bandeau radio du SOC et une barre d'état en alerte jusqu'au rapport d'incident.
+
 **Des succès** (`succes`), **un chrono façon speedrun** (`chrono`, temps de passage à chaque étape), **des sons 8 bits** (`son`, coupés par défaut) et **une barre de touches** sur téléphone (Tab, ↑, `|`, `~`, `/`, `>`, `*`...).
 
 ## Pour les formateurs

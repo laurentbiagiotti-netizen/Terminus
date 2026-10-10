@@ -200,6 +200,9 @@ function montrerImage(src, legende){
 	if (typeof document === "undefined") return;
 	var scene = document.getElementById("scene");
 	if (scene) scene.setAttribute("src", sourceImage(src));
+	var carte = document.getElementById("carte");
+	if (carte) carte.parentNode.removeChild(carte);
+	if (scene) scene.hidden = false;
 	var texte = document.getElementById("legende");
 	if (texte) texte.textContent = legende || "";
 }

@@ -383,5 +383,19 @@ var a11 = nouveauMonde({}, 41);
 jouerJusqua(a11, "less TuteurVim");
 contient(a11.taper("vi lecon1.txt"), "[vim", "vi est l'autre nom de vim");
 
+// Design : la carte des lieux visités et le mode vieil écran
+var d1 = nouveauMonde({}, 51);
+d1.taper("cd ForetOuest");
+s = d1.taper("carte");
+contient(s, "ForetOuest  ◀ tu es ici", "la carte montre où l'on est");
+contient(s, "? (", "la carte annonce les lieux pas encore visités sans les nommer");
+verifier(d1.lire("PROFIL.crt") !== false, "le mode vieil écran est activé par défaut");
+contient(d1.taper("crt off"), "coupé", "crt off");
+verifier(d1.lire("PROFIL.crt") === false, "crt off est retenu");
+contient(d1.taper("crt on"), "activé", "crt on");
+var d2 = nouveauMonde({}, 52);
+jouerJusqua(d2, "nmap 10.0.92.0/24");
+contient(d2.taper("carte"), "Le réseau de l'école", "la carte ajoute le réseau une fois découvert");
+
 console.log(verifications + " vérifications, " + echecs + " échec" + (echecs > 1 ? "s" : ""));
 process.exit(echecs ? 1 : 0);

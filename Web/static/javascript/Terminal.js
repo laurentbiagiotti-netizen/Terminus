@@ -268,6 +268,19 @@ Terminal.prototype.echo = function(texte){
 	this.defiler();
 };
 
+/* Ajoute un élément déjà construit (des boutons, une image) dans la sortie du terminal. */
+Terminal.prototype.ajouterElement = function(element){
+	this.sortie.appendChild(element);
+	this.defiler();
+};
+
+/* Répond à la question en cours comme si le joueur l'avait tapée (un clic sur un choix). */
+Terminal.prototype.repondre = function(texte){
+	if (!this.question) return;
+	this.saisie.value = texte;
+	this.valider();
+};
+
 Terminal.prototype.effacer = function(){
 	this.sortie.innerHTML = "";
 };

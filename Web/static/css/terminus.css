@@ -259,7 +259,9 @@ html, body{
         padding: 8px 16px 4px;
     }
     #etat{ margin-bottom: 6px; gap: 8px; font-size: 0.8rem; }
-    #scene{ width: auto; height: calc(100% - 4.2em); max-height: none; }
+    #pics{ justify-content: flex-start; }
+    #scene{ width: 100%; height: auto; flex: 1 1 0; min-height: 0; max-height: none; object-fit: contain; }
+    #carte{ flex: 1 1 0; min-height: 0; max-height: none; font-size: 0.72rem; }
     #legende{ margin-top: 4px; }
     #term{ flex: 1 1 auto; padding: 12px 16px 20px; }
 }
@@ -348,4 +350,119 @@ html, body{
 }
 @media (prefers-reduced-motion: reduce){
     .intro-titre-visible .intro-scene, .intro-sortie, .intro-invite::after{ animation: none; }
+}
+
+/* Le mode « vieil écran » (crt on, activé par défaut) */
+body.crt::after{
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    pointer-events: none;
+    background:
+        repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 2px, rgba(0, 0, 0, 0.28) 3px, rgba(0, 0, 0, 0) 4px),
+        radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.55) 100%);
+}
+body.crt #sortie, body.crt #ligne, body.crt .intro-journal, body.crt .intro-invite, body.crt #etat, body.crt .vim-texte, body.crt .vim-statut{
+    text-shadow: 0 0 1px currentColor, 0 0 6px rgba(78, 216, 122, 0.35);
+}
+body.crt #scene, body.crt .intro-titre{
+    filter: drop-shadow(0 0 4px rgba(78, 216, 122, 0.35));
+}
+@media print{
+    body.crt::after{ display: none; }
+}
+
+/* Les deux enveloppes du premier lancement */
+.enveloppes{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin: 6px 0 14px;
+}
+.enveloppe{
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    column-gap: 14px;
+    align-items: center;
+    flex: 1 1 260px;
+    max-width: 360px;
+    padding: 12px 14px;
+    font: inherit;
+    text-align: left;
+    color: var(--texte);
+    background: var(--fond);
+    border: 2px solid var(--blanc-papier, #f2f2f2);
+    cursor: pointer;
+}
+.enveloppe img{
+    grid-row: 1 / span 2;
+    width: 90px;
+    image-rendering: pixelated;
+}
+.enveloppe-titre{ color: #ffffff; font-weight: 700; }
+.enveloppe-texte{ color: var(--gris); font-size: 0.9rem; }
+.enveloppe:hover, .enveloppe:focus-visible{ border-color: var(--vert-clair); outline: none; }
+.enveloppe:hover .enveloppe-titre, .enveloppe:focus-visible .enveloppe-titre{ color: var(--vert-clair); }
+.enveloppes-choisi .enveloppe{ cursor: default; opacity: 0.35; border-color: var(--trait); }
+.enveloppes-choisi .enveloppe-choisie{ opacity: 1; border-color: var(--vert); }
+
+/* La carte des lieux visités, dans le panneau de droite */
+#carte{
+    width: 100%;
+    max-width: 624px;
+    max-height: calc(100% - 5.5em);
+    margin: 0;
+    padding: 14px 16px;
+    overflow: auto;
+    font: inherit;
+    font-size: 0.82rem;
+    line-height: 1.35;
+    color: var(--texte);
+    border: 2px solid #f2f2f2;
+    white-space: pre;
+}
+
+/* Chapitre 2 : la salle de crise */
+#radio{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    max-width: 624px;
+    margin: 0 0 12px;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    border: 2px solid var(--jaune);
+    background: #000000;
+}
+#radio[hidden]{ display: none; }
+.radio-entete{ display: flex; align-items: center; gap: 8px; color: var(--jaune); font-weight: 700; }
+.radio-qui{ color: var(--gris); font-weight: 400; }
+.radio-texte{
+    color: var(--texte);
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.radio-voyant{
+    width: 8px;
+    height: 8px;
+    background: var(--jaune);
+    animation: radio-voyant 1.2s steps(1) infinite;
+}
+.radio-nouveau{ animation: radio-arrivee 700ms steps(4) 1; }
+@keyframes radio-voyant{ 50%{ opacity: 0.2; } }
+@keyframes radio-arrivee{ 0%, 50%{ border-color: #ffffff; } 25%, 75%{ border-color: var(--jaune); } }
+#etat.etat-alerte{ color: var(--jaune); }
+#etat.etat-alerte #etat-barre{ border-color: var(--jaune); }
+#etat.etat-alerte #etat-plein{ background: var(--jaune); }
+@media (prefers-reduced-motion: reduce){
+    .radio-voyant, .radio-nouveau{ animation: none; }
+}
+@media (max-width: 820px){
+    #radio{ margin-bottom: 6px; padding: 4px 10px; gap: 2px; font-size: 0.75rem; }
+    .radio-texte{ -webkit-line-clamp: 1; }
 }

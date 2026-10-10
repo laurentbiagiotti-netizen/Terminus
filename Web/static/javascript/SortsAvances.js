@@ -835,10 +835,62 @@ Shell.sorts.son = function(args, io){
 	return voulu ? "Son activé : petits bips 8 bits pour les sorts, les quêtes et les succès. (son off pour couper)" : "Son coupé. (son on pour le remettre)";
 };
 
+/* Le mode « vieil écran » : lignes de balayage et léger halo, comme un moniteur à tube. Activé par défaut. */
+Shell.sorts.crt = function(args, io){
+	var voulu = args[0] === "on" || args[0] === "oui" ? true : (args[0] === "off" || args[0] === "non" ? false : PROFIL.crt === false);
+	PROFIL.crt = voulu;
+	enregistrerProfil();
+	if (typeof appliquerCrt === "function") appliquerCrt();
+	return voulu ? "Mode vieil écran activé : lignes de balayage et halo vert. (crt off pour un affichage net)" :
+		"Mode vieil écran coupé : affichage net. (crt on pour le remettre)";
+};
+
 Shell.sorts.indice = function(args, io){
 	return state.demanderIndice();
 };
 
 Shell.sorts.bulletin = function(args, io){
 	return state.texteDuBulletin();
+};
+
+/*
+ * La carte : les lieux visités, en arbre (comme tree), avec « tu es ici ».
+ * Un lieu pas encore visité mais voisin d'un lieu connu apparaît en « ? ».
+ * Au chapitre 2, les machines du réseau de l'école s'ajoutent une fois le réseau découvert.
+ */
+function texteCarte(){
+	var mission = state.has("chapitre1Saute");
+	var lignes = [];
+	function cache(lieu){ return lieu.horsBareme || lieu.room_name.charAt(0) === "."; }
+	function connu(lieu){ return !!state.visited[lieu.id]; }
+	function nom(lieu){
+		var n = lieu.racineHote ? lieu.racineHote : lieu.room_name;
+		return lieu === current_room ? C.vert(C.gras(n + "  ◀ tu es ici")) : (lieu.racineHote ? C.cyan(n) : n);
+	}
+	function branche(lieu, prefixe, dernier, profondeur){
+		lignes.push(prefixe + (profondeur ? (dernier ? "└── " : "├── ") : "") + nom(lieu));
+		var enfants = lieu.children.filter(function(e){ return !e.racineHote && (connu(e) || !cache(e)); });
+		var visibles = enfants.filter(connu), inconnus = enfants.length - visibles.length;
+		var suite = prefixe + (profondeur ? (dernier ? "    " : "│   ") : "");
+		visibles.forEach(function(e, i){ branche(e, suite, i === visibles.length - 1 && !inconnus, profondeur + 1); });
+		if (inconnus) lignes.push(suite + "└── " + C.gris(inconnus === 1 ? "? (un lieu pas encore visité)" : "? (" + inconnus + " lieux pas encore visités)"));
+	}
+	if (mission && typeof Citadelle !== "undefined" && connu(Citadelle)) branche(Citadelle, "", true, 0);
+	else branche(Home, "", true, 0);
+	if (typeof HOTES !== "undefined" && state.has("reseauCartographie")){
+		lignes.push("", C.gras("Le réseau de l'école") + C.gris("  (ssh MACHINE)"));
+		Object.keys(HOTES).forEach(function(h){
+			var racine = HOTES[h].arrivee ? HOTES[h].arrivee() : null;
+			if (!racine || !racine.racineHote) return;
+			if (connu(racine)) branche(racine, "", true, 0);
+			else lignes.push(C.gris(h + "  (jamais visitée)"));
+		});
+	}
+	return lignes.join("\n");
+}
+
+Shell.sorts.carte = function(args, io){
+	var texte = C.gras("CARTE DES LIEUX VISITÉS") + "\n\n" + texteCarte();
+	if (io.tty && typeof montrerCarte === "function" && montrerCarte(texte)) return C.gris("(La carte remplace l'image jusqu'à ton prochain déplacement. carte pour la revoir.)");
+	return texte;
 };

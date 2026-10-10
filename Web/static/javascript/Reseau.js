@@ -246,7 +246,7 @@ GameEvents.addListener("read", function(e){
 /* ------------------------------------------------------------------ */
 
 /* --- web : le site vitrine de l'école --- */
-var Web = machine("web", "Le serveur du site de l'école. Les pages que voient les futurs étudiants sortent d'ici.");
+var Web = machine("web", "Le serveur du site de l'école. Les pages que voient les futurs étudiants sortent d'ici.", "loc_web.gif");
 var WebEtc = dossier(Web, "etc", "La configuration du serveur web.");
 var WebVar = dossier(Web, "var", "Les données du serveur.");
 var WebLog = dossier(WebVar, "log", "Les journaux du serveur web.", { image: "loc_library.gif" });
@@ -277,7 +277,7 @@ fichier(WebLog, "access.log",
 	"10.0.92.1 - - [" + dateDuJour() + " 09:15] \"GET /robots.txt HTTP/1.1\" 200\n", { image: "item_manuscript.gif" });
 
 /* --- mail : la messagerie --- */
-var Mail = machine("mail", "Le serveur de messagerie de l'école. Des milliers de messages par jour, et parfois un piège.");
+var Mail = machine("mail", "Le serveur de messagerie de l'école. Des milliers de messages par jour, et parfois un piège.", "loc_mail.gif");
 var MailEtc = dossier(Mail, "etc", "La configuration de la messagerie.");
 var MailVar = dossier(Mail, "var", "Les données de la messagerie.");
 var MailLog = dossier(MailVar, "log", "Les journaux de la messagerie.", { image: "loc_library.gif" });
@@ -306,7 +306,7 @@ fichier(MailLog, "mail.log",
 	"09:02 mail postfix: from=<grace@cybersup.lan> to=<soc@cybersup.lan> status=sent\n", { image: "item_manuscript.gif" });
 
 /* --- dns --- */
-var Dns = machine("dns", "Le serveur DNS de l'école : il traduit les noms en adresses. Le falsifier, c'est détourner tout le monde.");
+var Dns = machine("dns", "Le serveur DNS de l'école : il traduit les noms en adresses. Le falsifier, c'est détourner tout le monde.", "loc_dns.gif");
 var DnsEtc = dossier(Dns, "etc", "La configuration du DNS.");
 var DnsBind = dossier(DnsEtc, "bind", "Les fichiers de zone : un nom, une adresse, une ligne.");
 fichier(Dns, "NotesDNS",
@@ -332,7 +332,7 @@ var ZONE_LEGITIME = [["cybersup", "10.0.92.1"], ["web", "10.0.92.10"], ["mail", 
 	["dns", "10.0.92.53"], ["labo", IP_LABO], ["poste-47", ADRESSE_POSTE_CORBEAU], ["sauvegarde", "10.0.92.200"], ["coffre", "10.0.92.250"], ["parefeu", "10.0.92.254"]];
 
 /* --- labo : la salle de TP, par où le Corbeau est entré --- */
-var Labo = machine("labo", "La machine du labo de TP. Les étudiants s'y connectent pour s'entraîner. Le Corbeau aussi, cette nuit.");
+var Labo = machine("labo", "La machine du labo de TP. Les étudiants s'y connectent pour s'entraîner. Le Corbeau aussi, cette nuit.", "loc_labo.gif");
 var LaboEtc = dossier(Labo, "etc", "La configuration du labo.");
 var LaboVar = dossier(Labo, "var", "Les données du labo.");
 var LaboLog = dossier(LaboVar, "log", "Les journaux du labo.", { image: "loc_library.gif" });
@@ -416,7 +416,7 @@ fichier(VimTuteur, "TuteurVim",
 	{ enseigne: ["vim"], revele: ["s_v_quitter", "s_v_x", "s_v_i", "s_v_A", "s_v_dw", "s_v_dd", "s_v_u", "s_v_p", "s_v_r", "s_v_cw", "s_v_recherche", "s_v_substitution", "s_v_G", "s_v_quitter_force"], image: "item_professor.gif" });
 
 /* --- parefeu --- */
-var Parefeu = machine("parefeu", "Le pare-feu de l'école : tout ce qui entre et sort du réseau passe par lui.", "loc_portalroom.gif");
+var Parefeu = machine("parefeu", "Le pare-feu de l'école : tout ce qui entre et sort du réseau passe par lui.", "loc_parefeu.gif");
 var ParefeuEtc = dossier(Parefeu, "etc", "La configuration du pare-feu.");
 var ParefeuVar = dossier(Parefeu, "var", "Les données du pare-feu.");
 var ParefeuLog = dossier(ParefeuVar, "log", "Les journaux du pare-feu.", { image: "loc_library.gif" });
@@ -428,20 +428,20 @@ fichier(Parefeu, "ConsignesParefeu",
 var ParefeuUfwLog = fichier(ParefeuLog, "ufw.log", "(vide : le pare-feu est désactivé depuis une mise à jour, la semaine dernière. Oups.)", { image: "item_manuscript.gif" });
 
 /* --- sauvegarde --- */
-var Sauvegarde = machine("sauvegarde", "Le serveur de sauvegarde : il garde des copies de tout, et maintenant les preuves de l'enquête.");
+var Sauvegarde = machine("sauvegarde", "Le serveur de sauvegarde : il garde des copies de tout, et maintenant les preuves de l'enquête.", "loc_sauvegarde.gif");
 var SauvegardePreuves = dossier(Sauvegarde, "preuves", "Le dossier des preuves de l'incident. Ce qui entre ici ne doit plus jamais être modifié.", { mode: "rwxrwxrwt", image: "loc_backroom.gif" });
 var SauvegardeArchives = dossier(Sauvegarde, "archives", "Les sauvegardes de la nuit.");
 fichier(SauvegardeArchives, "nuit.tar.gz", "", { gzip: { nom: "nuit.tar", contenu: "(la sauvegarde complète de la nuit dernière)" }, age: 1 });
 var RegistrePreuves = fichier(SauvegardePreuves, "registre.txt", "REGISTRE DES PREUVES (empreinte SHA-256, puis nom du fichier)\n", { mode: "rw-rw-rw-" });
 
 /* --- imprimante et badgeuse --- */
-var Imprimante = machine("imprimante", "L'imprimante du couloir. Elle aussi a une adresse sur le réseau, et une mémoire.", "item_workstation.gif");
+var Imprimante = machine("imprimante", "L'imprimante du couloir. Elle aussi a une adresse sur le réseau, et une mémoire.", "loc_imprimante.gif");
 var ImprimanteSpool = dossier(Imprimante, "spool", "Les documents en attente d'impression.");
 fichier(ImprimanteSpool, "job-017.txt",
 	"Document oublié dans la file d'impression, envoyé à 02:55 depuis " + ADRESSE_POSTE_CORBEAU + " :\n\n" +
 	"« Liste de choses à rendre avant de partir : la clé USB du labo, le badge B-047, et les excuses que je dois à Laurent. »",
 	{ age: 0, heure: "02:55", revele: ["s_c_imprimante"], image: "item_manuscript.gif" });
-var Badgeuse = machine("badgeuse", "La badgeuse de l'entrée. Elle note qui entre, à quelle heure, et par quelle porte.", "item_locker.gif");
+var Badgeuse = machine("badgeuse", "La badgeuse de l'entrée. Elle note qui entre, à quelle heure, et par quelle porte.", "loc_badgeuse.gif");
 var BadgeuseJournaux = dossier(Badgeuse, "journaux", "Les journaux des badges.");
 fichier(BadgeuseJournaux, "badges.log", (function(){
 	var t = "";
@@ -460,7 +460,7 @@ fichier(Badgeuse, "NoteDuGardien",
 	{ revele: ["s_c_badgeuse"], image: "item_sign.gif" });
 
 /* --- le poste d'où venaient les connexions --- */
-var Poste = machine("poste-47", "Un poste de travail ordinaire. Un sweat du BDE est posé sur le dossier de la chaise.", "loc_classroom.gif");
+var Poste = machine("poste-47", "Un poste de travail ordinaire. Un sweat du BDE est posé sur le dossier de la chaise.", "loc_poste.gif");
 var PosteHome = dossier(Poste, "home", "Les dossiers personnels.");
 var PosteStagiaire = dossier(PosteHome, "stagiaire", "Le dossier de la stagiaire.", { owner: "stagiaire" });
 var PosteTmp = dossier(Poste, "tmp", "Le dossier temporaire.", { mode: "rwxrwxrwt" });

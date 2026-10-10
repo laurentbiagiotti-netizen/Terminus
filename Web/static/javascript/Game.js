@@ -52,9 +52,13 @@ function majEtat(){
 	var niveau = document.getElementById("etat-niveau");
 	if (!niveau) return;
 	var pr = state.progression();
+	var etat = document.getElementById("etat");
+	var radio = document.getElementById("radio");
+	if (radio && radio.hidden && state.chapitreEnCours() === 2 && typeof texteRadio === "function") radioSOC(texteRadio());
+	etat.classList.toggle("etat-alerte", state.chapitreEnCours() === 2 && !state.quests["c_rapport"]);
 	if (state.chapitreEnCours() === 2){
 		var max2 = state.xpMax2();
-		niveau.textContent = "Chapitre 2 · la Crypte";
+		niveau.textContent = state.quests["c_rapport"] ? "Chapitre 2 · incident clos" : "Chapitre 2 · incident en cours";
 		document.getElementById("etat-plein").style.width = Math.round(Math.min(1, state.xp2 / max2) * 100) + "%";
 		document.getElementById("etat-xp").textContent = state.xpNet(2) + " XP · " + state.noteTexte(2) + (state.malus2 ? " (indices -" + state.malus2 + ")" : "");
 		document.getElementById("etat").title = "Note du chapitre 2. Tape xp pour le détail.";
@@ -68,7 +72,52 @@ function majEtat(){
 		"Niveau maximal. Tape xp pour le détail.";
 }
 
+/*
+ * Au chapitre 2, la salle de crise : les messages radio de Grace, d'Evi et de Laurent
+ * s'affichent aussi dans un bandeau, comme sur un écran du SOC.
+ */
+function radioSOC(texte){
+	if (typeof document === "undefined" || state.chapitreEnCours() !== 2) return;
+	var brut = String(texte).replace(/\x1b\[[0-9;]*m/g, "");
+	var m = /(La radio grésille[.,]?|Evi, à la radio|Grace, à la radio)\s*(.*)$/.exec(brut.replace(/\n/g, " "));
+	if (!m) return;
+	var qui = /Evi/.test(brut) ? "Evi" : (/C'est Laurent|Laurent :/.test(brut) ? "Laurent" : "Grace");
+	var message = m[2].replace(/^C'est (Grace|Evi|Laurent)\s*:\s*/, "").replace(/^:\s*/, "").trim();
+	var radio = document.getElementById("radio");
+	if (!radio) return;
+	var d = new Date();
+	radio.querySelector(".radio-qui").textContent = qui + ", " + (d.getHours() < 10 ? "0" : "") + d.getHours() + ":" + (d.getMinutes() < 10 ? "0" : "") + d.getMinutes();
+	radio.querySelector(".radio-texte").textContent = message;
+	radio.hidden = false;
+	radio.classList.remove("radio-nouveau");
+	void radio.offsetWidth;
+	radio.classList.add("radio-nouveau");
+}
+
+/* La carte prend la place de l'image dans le panneau de droite (sur un écran assez large). */
+function montrerCarte(texte){
+	var panneau = document.getElementById("pics"), scene = document.getElementById("scene");
+	if (!panneau || !scene) return false;
+	var carte = document.getElementById("carte");
+	if (!carte){
+		carte = document.createElement("pre");
+		carte.id = "carte";
+		carte.setAttribute("aria-label", "Carte des lieux visités");
+		panneau.insertBefore(carte, scene);
+	}
+	carte.innerHTML = ansiVersHTML(texte);
+	scene.hidden = true;
+	document.getElementById("legende").textContent = "";
+	return true;
+}
+
+/* Le mode vieil écran est activé par défaut ; crt off le coupe. */
+function appliquerCrt(){
+	document.body.classList.toggle("crt", PROFIL.crt !== false);
+}
+
 function demarrer(){
+	appliquerCrt();
 	term = new Terminal({
 		conteneur: document.getElementById("term"),
 		sortie: document.getElementById("sortie"),
@@ -95,6 +144,8 @@ function demarrer(){
 	} else {
 		accueillir();
 	}
+	// La radio du SOC reprend là où l'enquête en est.
+	if (state.chapitreEnCours() === 2 && typeof texteRadio === "function" && state.has("crypteOuverte")) radioSOC(texteRadio());
 	state.dernierInstant = Date.now();
 	majEtat();
 	document.getElementById("saisie").focus();
@@ -156,15 +207,48 @@ function proposerReprise(prenom, anciennes){
 	});
 }
 
+/* Les deux enveloppes, à choisir au clavier (1 ou 2) ou d'un clic. */
+function enveloppes(){
+	var boite = document.createElement("div");
+	boite.className = "enveloppes";
+	[["1", "item_convocation.gif", "Convocation", "L'épreuve pratique de première année : tu découvres le terminal Linux. Chapitre 1, puis chapitre 2."],
+	 ["2", "item_mission.gif", "Ordre de mission", "La WarRoom demande un renfort d'urgence, pour qui connaît déjà les bases. Chapitre 2 directement."]].forEach(function(e){
+		var bouton = document.createElement("button");
+		bouton.type = "button";
+		bouton.className = "enveloppe";
+		var image = document.createElement("img");
+		image.src = sourceImage("./static/img/" + e[1]);
+		image.alt = "";
+		var titre = document.createElement("span");
+		titre.className = "enveloppe-titre";
+		titre.textContent = e[0] + "  " + e[2];
+		var texte = document.createElement("span");
+		texte.className = "enveloppe-texte";
+		texte.textContent = e[3];
+		bouton.appendChild(image);
+		bouton.appendChild(titre);
+		bouton.appendChild(texte);
+		bouton.addEventListener("click", function(){
+			if (!term.question) return;
+			boite.classList.add("enveloppes-choisi");
+			bouton.classList.add("enveloppe-choisie");
+			term.repondre(e[0]);
+		});
+		boite.appendChild(bouton);
+	});
+	return boite;
+}
+
 /* Deux convocations possibles : l'épreuve de première année, ou la mission cyber pour ceux qui connaissent les bases. */
 function demanderParcours(){
-	term.echo("Dans ta boîte aux lettres, deux enveloppes portent ton nom. Une seule est pour toi.\n\n" +
-		"  " + C.vert("1") + "  Une convocation à l'épreuve pratique de première année.\n" +
-		"     Tu découvres le terminal Linux : c'est le début de l'histoire. " + C.gris("(chapitre 1, puis chapitre 2)") + "\n" +
-		"  " + C.vert("2") + "  Un ordre de mission de la WarRoom : renfort demandé d'urgence.\n" +
-		"     Tu connais déjà les bases du terminal, on a besoin de toi tout de suite. " + C.gris("(chapitre 2 directement)") + "\n");
-	term.demander("Tape 1 ou 2 : ", false, function(reponse){
+	term.echo("Dans ta boîte aux lettres, deux enveloppes portent ton nom. Une seule est pour toi.");
+	term.ajouterElement(enveloppes());
+	term.demander("Tape 1 ou 2 (ou choisis une enveloppe) : ", false, function(reponse){
 		var choix = String(reponse).trim();
+		Array.prototype.forEach.call(document.querySelectorAll(".enveloppes"), function(b){
+			b.classList.add("enveloppes-choisi");
+			Array.prototype.forEach.call(b.querySelectorAll(".enveloppe"), function(e, i){ if (String(i + 1) === choix) e.classList.add("enveloppe-choisie"); e.disabled = true; });
+		});
 		if (choix !== "1" && choix !== "2"){
 			term.echo(C.jaune("Réponds 1 ou 2. En cas de doute, choisis 1 : c'est le début de l'histoire."));
 			demanderParcours();

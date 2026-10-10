@@ -82,10 +82,11 @@ Shell.hote = function(){
 /* Texte d'ambiance affiche apres la sortie du sort en cours. */
 function say(texte){
 	Shell.narration.push(texte);
+	if (typeof radioSOC === "function") radioSOC(texte);
 }
 
 /* Sorts toujours disponibles : ce sont des commandes du jeu, pas de Linux. */
-var SORTS_DU_JEU = ["quetes", "indice", "chapitre", "xp", "score", "bulletin", "succes", "chrono", "son", "recommencer", "logout", "sorts", "aide"];
+var SORTS_DU_JEU = ["quetes", "indice", "chapitre", "xp", "score", "bulletin", "succes", "chrono", "son", "crt", "carte", "recommencer", "logout", "sorts", "aide"];
 
 /* Vraies commandes Linux absentes de ce monde : on le dit gentiment. */
 var COMMANDES_REELLES = ["vi", "vim", "nano", "emacs", "apt-get", "yum", "dnf", "pacman", "scp",
@@ -424,7 +425,7 @@ function completerGauche(texte, largeur){
 /* ------------------------------------------------------------------ */
 
 var enterRoom = function(new_room){
-	montrerImage("./static/img/none.gif", ""); //Always show blank image when moving into a room
+	montrerImage(new_room.room_pic, new_room.room_name); // l'image du lieu s'affiche dès l'arrivée
 	if (new_room !== current_room) Shell.lieu_precedent = current_room;
 	var ancien = current_room;
 	current_room = new_room;
@@ -1455,6 +1456,9 @@ Shell.sorts.tree = function(args, io){
 	dessiner(r.node, "", 0);
 	lignes.push("");
 	lignes.push(nLieux + " lieu" + (nLieux > 1 ? "x" : "") + ", " + nObjets + " objet" + (nObjets > 1 ? "s" : ""));
+	// La carte de tous les lieux visités s'affiche aussi dans le panneau de droite.
+	if (io.tty && typeof montrerCarte === "function" && typeof texteCarte === "function" &&
+		montrerCarte(C.gras("CARTE DES LIEUX VISITÉS") + "\n\n" + texteCarte())) lignes.push(C.gris("(La carte de tous tes lieux visités remplace l'image jusqu'à ton prochain déplacement. carte pour la revoir.)"));
 	return lignes.join("\n");
 };
 
@@ -1610,7 +1614,7 @@ Shell.sorts.help = function(args, io){
 	lignes.push("Pour le détail d'un sort : " + C.vert("man SORT") + " (par exemple man ls).");
 	lignes.push("Ton journal de quêtes : " + C.vert("quetes") + ". Ton expérience et ta note : " + C.vert("xp") + ". Ton relevé de compétences : " + C.vert("bulletin") + ".");
 	lignes.push("Bloqué ? " + C.vert("indice") + " donne un coup de pouce, de plus en plus précis (les paliers payants coûtent des points sur la note).");
-	lignes.push("Tes succès : " + C.vert("succes") + ". Ton temps de jeu, étape par étape : " + C.vert("chrono") + ". Les chapitres : " + C.vert("chapitre") + ". Le son : " + C.vert("son") + ".");
+	lignes.push("Tes succès : " + C.vert("succes") + ". Ton temps de jeu, étape par étape : " + C.vert("chrono") + ". Les chapitres : " + C.vert("chapitre") + ". Le son : " + C.vert("son") + ". La carte des lieux visités : " + C.vert("carte") + ". Le vieil écran : " + C.vert("crt on") + " ou " + C.vert("crt off") + ".");
 	lignes.push("Laisser la place au joueur suivant (ta partie est gardée) : " + C.vert("logout") + ". Repartir de zéro : " + C.vert("recommencer") + ".");
 	lignes.push(C.gris("Astuces : la touche Tab complète les noms, la flèche du haut rappelle tes derniers sorts."));
 	return lignes.join("\n");
