@@ -287,6 +287,11 @@ verifier(l2.lire("verifierMotDePasse('thomas', 'secret1')") === true, "bon mot d
 verifier(l2.lire("verifierMotDePasse('thomas', 'secret2')") === false, "mauvais mot de passe refusé");
 contient(l2.taper("logout"), "Session fermée", "logout ferme la session");
 verifier(!stL["terminus-cybersup-actif"], "plus de compte connecté après logout");
+var stE = {};
+var e1 = nouveauMonde(stE, 46);
+e1.lire("adopterPrenom('Zoe'); creerCompte('Zoe', 'zoe123')");
+contient(e1.taper("exit"), "logout", "exit sur la machine de départ fait un logout");
+verifier(!stE["terminus-cybersup-actif"], "exit ferme la session du compte");
 var l3 = nouveauMonde(stL, 43);
 verifier(l3.lire("COMPTE_ACTIF") === null && !l3.lire("PROFIL.prenom"), "après logout, l'écran de connexion repart de zéro");
 verifier(l3.lire("lireComptes().thomas.prenom") === "Thomas", "le compte de Thomas existe toujours");

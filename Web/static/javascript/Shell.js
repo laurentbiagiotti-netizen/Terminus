@@ -1575,6 +1575,8 @@ Shell.sorts.exit = function(args, io){
 		enterRoom(retour);
 		return "Connexion à " + quittee + " fermée.\nTu es de retour dans " + current_room.toString() + ".";
 	}
+	// Comme dans un vrai shell de connexion : exit sur la machine de départ ferme la session (logout).
+	if (typeof COMPTE_ACTIF !== "undefined" && COMPTE_ACTIF) return Shell.sorts.logout(args, io);
 	return "On ne quitte pas Terminus si facilement. Ferme simplement l'onglet : ta partie est sauvegardée, tu la retrouveras en revenant.";
 };
 
@@ -1595,7 +1597,7 @@ Shell.sorts.logout = function(args, io){
 	if (!io.tty) throw new ShellError("logout : il faut un écran, pas de tuyau.");
 	if (!COMPTE_ACTIF) return "logout : pas de session ouverte ici.";
 	if (!fermerSession()) throw new ShellError("logout : impossible d'enregistrer ta partie sur cet ordinateur (stockage indisponible). La session reste ouverte.");
-	term.echo("Session fermée. À bientôt, " + (PROFIL.prenom || JOUEUR) + ".");
+	term.echo("logout\n" + C.gris("Session fermée. Ta partie est enregistrée dans ton compte. À bientôt, " + (PROFIL.prenom || JOUEUR) + "."));
 	window.location.reload();
 	return "";
 };

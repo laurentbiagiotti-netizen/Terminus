@@ -98,8 +98,8 @@ var MANUEL = {
 	titre: "sortir",
 	page: "Sous Linux, « exit » ferme le terminal. Dans une connexion ssh, exit (ou logout, ou Ctrl+D)\n" +
 "ferme la connexion et te ramène sur la machine d'où tu venais.\n\n" +
-"Pour laisser la place au joueur suivant sur un ordinateur partagé : logout, depuis ta machine de départ.\n" +
-"Ta partie est mise de côté ; tu la retrouves en redonnant ton prénom au démarrage."
+"Sur ta machine de départ, exit (comme logout) ferme ta session : ta partie reste dans ton compte,\n" +
+"et l'écran revient à « terminus login: ». Tu la retrouves avec ton identifiant et ton mot de passe."
 },
 "mv": {
 	resume: "déplacer ou renommer un objet",
