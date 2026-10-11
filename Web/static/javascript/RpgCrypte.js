@@ -222,7 +222,7 @@ function sansAccent(t){ return String(t || "").toLowerCase().normalize("NFD").re
 /* badges : la collection de badges, et la leçon de chacun. Une commande du jeu, pas de Linux. */
 function texteBadges(quel){
 	var filtre = sansAccent(quel);
-	var lignes = [C.gras("TES BADGES DE COMPÉTENCE") + C.gris("  (commande du jeu : chaque badge garde la leçon de l'étape)")];
+	var lignes = [C.gras("TES BADGES DE COMPÉTENCE") + C.gris(" · commande du jeu : chaque badge garde la leçon de l'étape")];
 	var tous = [];
 	if (state.has("panneOuverte") && typeof RELIQUES !== "undefined") Object.keys(RELIQUES).forEach(function(id){
 		tous.push({ id: id, chap: "reseau", nom: COMPETENCES[id], image: RELIQUES[id], couche: COUCHES_DU_BADGE[id] || "", lecon: A_RETENIR[id] || "" });
@@ -242,10 +242,10 @@ function texteBadges(quel){
 		var liste = choisis.filter(function(b){ return b.chap === c[0]; });
 		if (!liste.length) return;
 		var gagnes = liste.filter(function(b){ return state.quests[b.id]; }).length;
-		lignes.push("", C.gras(c[1]) + C.gris("  " + gagnes + " sur " + liste.length));
+		lignes.push("", C.gras(c[1]) + C.gris(" · " + gagnes + " sur " + liste.length));
 		liste.forEach(function(b){
 			if (!state.quests[b.id]){ lignes.push("  " + C.gris("░ " + b.nom + " : à gagner")); return; }
-			lignes.push("  " + C.jaune("✦ " + b.nom) + C.gris("  " + b.image + (b.couche ? ", " + b.couche : "")), "    " + b.lecon);
+			lignes.push("  " + C.jaune("✦ " + b.nom) + C.gris(" · " + b.image + (b.couche ? " · " + b.couche : "")), "    " + b.lecon);
 		});
 	});
 	if (!tous.length) lignes.push("", "Pas encore de badge : ils se gagnent dans les chapitres sur le réseau et la cybersécurité, une réparation ou une porte fermée à la fois.");
