@@ -163,8 +163,7 @@ function verifierRpgCrypte(){
 		if (!state.quests[id] || r.trophees[id]) return;
 		r.trophees[id] = true;
 		if (state.has("rejeuEnCours")) return;
-		say(C.jaune("✦ Trophée de chasse : " + TROPHEES_CRYPTE[id][0] + ".") + C.gris(" (traque, commande du jeu, pour voir ton tableau)"));
-		say(C.cyan("À retenir : ") + TROPHEES_CRYPTE[id][1]);
+		say(C.jaune("✦ Badge gagné : " + TROPHEES_CRYPTE[id][0] + ".") + C.gris(" (badges pour relire la leçon)"));
 	});
 }
 var VERIFIER_MONDE_AVANT_CHASSE = verifierMonde;
@@ -186,7 +185,7 @@ function texteTraque(){
 		if (total > 1 || !ok) lignes.push("      " + (ok ? C.vert : C.gris)(faites + " sur " + total + (total > 1 ? " portes fermées" : (ok ? " fait" : " à faire"))));
 	});
 	var t = Object.keys(TROPHEES_CRYPTE).filter(function(id){ return state.quests[id]; });
-	lignes.push("", C.gras("TROPHÉES : " + t.length + " sur " + Object.keys(TROPHEES_CRYPTE).length));
+	lignes.push("", C.gras("BADGES : " + t.length + " sur " + Object.keys(TROPHEES_CRYPTE).length) + C.gris("  (badges : les leçons)"));
 	t.forEach(function(id){ lignes.push("  " + C.jaune("✦ ") + TROPHEES_CRYPTE[id][0]); });
 	if (!t.length) lignes.push(C.gris("  Chaque étape franchie en rapporte un."));
 	return lignes.join("\n");
@@ -199,3 +198,34 @@ Shell.sorts.traque = function(args, io){
 	return texte;
 };
 if (SORTS_DU_JEU.indexOf("traque") === -1) SORTS_DU_JEU.push("traque");
+
+/* badges : la collection de badges, et la leçon de chacun. Une commande du jeu, pas de Linux. */
+function texteBadges(quel){
+	var lignes = [C.gras("TES BADGES") + C.gris("  (commande du jeu : chaque badge garde la leçon de l'étape)")];
+	function section(titre, liste){
+		var gagnes = liste.filter(function(b){ return state.quests[b.id]; }).length;
+		lignes.push("", C.gras(titre) + C.gris("  " + gagnes + " sur " + liste.length));
+		liste.forEach(function(b){
+			if (!state.quests[b.id]){ lignes.push("  " + C.gris("░ ??? : une étape à franchir")); return; }
+			lignes.push("  " + C.jaune("✦ " + b.nom) + (b.etage ? C.gris("  " + b.etage) : ""), "    " + b.lecon);
+		});
+	}
+	if ((!quel || quel === "2") && state.has("panneOuverte") && typeof RELIQUES !== "undefined"){
+		section("CHAPITRE 2 : LA PANNE", Object.keys(RELIQUES).map(function(id){
+			return { id: id, nom: RELIQUES[id], etage: (typeof ETAGE_OSI !== "undefined" && ETAGE_OSI[id]) || (id === "r_osi" ? "les sept étages" : ""), lecon: A_RETENIR[id] || "" };
+		}));
+	}
+	if ((!quel || quel === "3") && state.has("crypteOuverte")){
+		section("CHAPITRE 3 : LA CHASSE AU CORBEAU", Object.keys(TROPHEES_CRYPTE).map(function(id){
+			return { id: id, nom: TROPHEES_CRYPTE[id][0], lecon: TROPHEES_CRYPTE[id][1] };
+		}));
+	}
+	if (lignes.length === 1) lignes.push("", "Pas encore de badge : ils se gagnent aux chapitres 2 et 3, une réparation ou une porte fermée à la fois.");
+	return lignes.join("\n");
+}
+Shell.sorts.badges = function(args, io){ return texteBadges(args[0]); };
+if (SORTS_DU_JEU.indexOf("badges") === -1) SORTS_DU_JEU.push("badges");
+if (typeof COMMANDES_DU_JEU !== "undefined") COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 4, 0, ["badges", "tes badges, et la leçon de chacun (badges 2, badges 3)"]);
+if (typeof MANUEL_DU_JEU !== "undefined") MANUEL_DU_JEU.badges = "badges n'est PAS une commande Linux : c'est une commande du jeu, comme quetes ou xp.\n" +
+	"Chaque étape franchie aux chapitres 2 et 3 rapporte un badge. badges les liste, avec la leçon de chacun :\n" +
+	"c'est ton aide-mémoire, à relire avant une évaluation.\n\n  badges      tous tes badges\n  badges 2    ceux de la panne (le modèle OSI, étage par étage)\n  badges 3    ceux de la chasse au Corbeau";

@@ -1067,7 +1067,7 @@ Tu n'as jamais réparé de réseau ? Aucun souci, je t'explique tout en chemin. 
 Un message, sur un réseau, c'est une tour de sept étages. En bas le câble, en haut le web. Chaque étage compte sur celui du dessous : \
 si l'étage 1 est cassé, les six autres tombent avec lui. Tous les réseaux du monde se dépannent comme ça, en partant du bas.\n\n\
 L'affiche de Vint est punaisée sur l'armoire, là : cat ModeleOSI. Lis-la avant tout. Je te dirai à chaque étape à quel étage on travaille.\n\n\
-Chaque sort que tu lances t'apprend quelque chose et éclaire un bout de la carte. Chaque réparation te rapporte une relique : il y en a douze à gagner. \
+Chaque sort que tu lances t'apprend quelque chose et éclaire un bout de la carte. Chaque réparation te rapporte un badge : il y en a douze à gagner, et badges relit ce qu'ils t'ont appris. \
 Ma SacocheDeRadia est ouverte sur le comptoir, avec d'autres sorts de terrain, et le Poste cache un GrimoireDesAnciens dans son tiroir.\n\n\
 Le Lexique, sur l'armoire, donne pour chaque image le vrai mot du métier. Et tape schema quand tu veux : ce n'est pas une commande Linux, \
 c'est une commande du jeu (comme quetes ou xp) qui dessine la tour OSI du Poste et la carte du royaume. Je reste en ligne au talkie-walkie. »";
@@ -1087,7 +1087,7 @@ et le Miroir des Noms, hostnamectl, sur quelle machine tu es. »";
 		case "r_lille": return debut + ETAGE_OSI.r_lille + ". " + NOTIONS.r_lille + "\n\n" + TALKIE.r_lille + " Le CahierDuRouteur dit par où doit passer la liaison avec Lille. »";
 		case "r_telnet": return debut + ETAGE_OSI.r_telnet + ". " + NOTIONS.r_telnet + "\n\n" + TALKIE.r_telnet + " »";
 		case "r_fin": return debut + "Lien, adresse, route, noms, DHCP, configuration permanente, serveur web, horloge, pare-feu, routage, et un telnet en moins : \
-tu as remonté les sept étages du modèle OSI, du câble jusqu'au web, et rapporté les douze reliques. \
+tu as remonté les sept étages du modèle OSI, du câble jusqu'au web, et gagné les douze badges. \
 C'est exactement comme ça qu'on dépanne un vrai réseau, ici ou ailleurs : les images s'oublient, les mots du métier restent. \
 Ton CertificatReseau t'attend dans ta Maison. Vint rentre lundi : il va être jaloux.\n\n\
 Ah, et Grace, de la WarRoom, m'a demandé de te passer un message. Ses sondes voient du trafic bizarre sous la Citadelle, sur un port que personne n'utilise. \
@@ -1180,7 +1180,7 @@ function texteSchema(){
 	]).filter(function(l){ return l !== null; });
 	if (typeof reliquesObtenues === "function"){
 		var r = reliquesObtenues(), total = Object.keys(RELIQUES).length;
-		lignes.push("", C.gras("RELIQUES : " + r.length + " sur " + total));
+		lignes.push("", C.gras("BADGES : " + r.length + " sur " + total) + C.gris("  (badges : les leçons)"));
 		r.forEach(function(nom){ lignes.push("  " + C.jaune("✦ ") + nom); });
 		if (!r.length) lignes.push(C.gris("  Chaque réparation en rapporte une."));
 	}
@@ -1249,13 +1249,17 @@ function verifierPanne(){
 		if (!state.quests[id] || p.retenus[id]) return;
 		p.retenus[id] = true;
 		if (state.has("rejeuEnCours")) return;
-		if (typeof RELIQUES !== "undefined" && RELIQUES[id]) say(C.jaune("✦ Relique obtenue : " + RELIQUES[id] + ".") + C.gris(" (schema pour voir ta collection)"));
-		say(C.cyan("À retenir" + (ETAGE_OSI[id] ? ", " + ETAGE_OSI[id].replace(/^É/, "é") : "") + " : ") + A_RETENIR[id]);
+		// Une seule ligne dans le terminal : le badge. La leçon se relit avec badges.
+		if (typeof RELIQUES !== "undefined" && RELIQUES[id]) say(C.jaune("✦ Badge gagné : " + RELIQUES[id] + ".") + C.gris(" (badges pour relire la leçon)"));
 	});
 	// Radia annonce la suite au talkie-walkie, à chaque étape franchie.
 	var suivante = prochaineEtapePanne();
 	if (state.quests["r_batiment"] && suivante && p.annonce !== suivante.id){
-		if (p.annonce !== null && TALKIE[suivante.id] && !state.has("rejeuEnCours")) say("Radia, au talkie-walkie : « " + talkiePour(suivante.id) + " »");
+		if (p.annonce !== null && TALKIE[suivante.id] && !state.has("rejeuEnCours")){
+			// La consigne complète s'affiche dans le talkie-walkie, à côté du terminal ; ici, juste un signal.
+			if (typeof radioSOC === "function") radioSOC("Radia, au talkie-walkie : « " + talkiePour(suivante.id) + " »");
+			say(C.gris("(Nouveau message de Radia : regarde le talkie-walkie.)"));
+		}
 		p.annonce = suivante.id;
 	}
 	if (state.has("victoireReseau")) CertificatReseau.cmd_text["less"] = state.texteDuCertificatReseau();

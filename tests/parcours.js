@@ -894,7 +894,7 @@ verifier(v("ip link").indexOf("Œil du Réseau") === -1, "l'image ne revient pas
 contient(v("ip link set eth0 up"), "Operation not permitted", "ip link set demande sudo");
 contient(v("ping 10.0.93.254"), "pas accessible", "sans adresse, rien ne part");
 contient(v("sudo ip route add default via 10.0.93.254"), "invalid gateway", "pas de passerelle hors de son réseau");
-contient(v("sudo ip link set eth0 up"), "Relique obtenue : la Rune du Lien", "chaque réparation rapporte une relique");
+contient(v("sudo ip link set eth0 up"), "Badge gagné : la Rune du Lien", "chaque réparation rapporte un badge");
 verifier(jeu10.lire("state.quests.r_lien") === true, "r_lien");
 contient(v("sudo dhclient eth0"), "No DHCPOFFERS", "le DHCP ne répond pas");
 contient(v("sudo ip addr add 10.0.93.20 dev eth0"), "/32", "une adresse sans masque est signalée");

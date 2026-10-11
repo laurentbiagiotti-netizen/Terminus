@@ -285,7 +285,7 @@ Terminal.prototype.definirInvite = function(texte){
 
 /* Les annonces du jeu (quête, sort, succès, niveau, radio) ont leur propre allure. */
 var GENRES_DE_BLOC = [
-	[/^★/, "evt evt-quete", "quete"], [/^✦ Nouveau sort/, "evt evt-sort", "sort"], [/^✦ Relique obtenue/, "evt evt-quete", "relique"], [/^✦/, "evt evt-sort", null], [/^◆/, "evt evt-succes", "succes"],
+	[/^★/, "evt evt-quete", "quete"], [/^✦ Nouveau sort/, "evt evt-sort", "sort"], [/^✦ Badge gagné/, "evt evt-quete", "relique"], [/^✦/, "evt evt-sort", null], [/^◆/, "evt evt-succes", "succes"],
 	[/^▲/, "evt evt-niveau", "niveau"], [/^\+\d+ XP/, "gain", null], [/^La radio grésille/, "evt evt-radio", null]
 ];
 

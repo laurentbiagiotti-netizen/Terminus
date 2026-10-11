@@ -59,8 +59,8 @@ var bannieres = [];
 function banniere(genre, texte){
 	var panneau = document.getElementById("pics");
 	if (!panneau) return;
-	var titres = { quete: "Quête accomplie", sort: "Nouveau sort", succes: "Succès débloqué", niveau: "Niveau supérieur", relique: "Relique obtenue" };
-	var detail = texte.replace(/^[★✦◆▲]\s*/, "").replace(/^(Quête secondaire accomplie|Quête accomplie|Nouveau sort appris|Succès débloqué|Relique obtenue)\s*:\s*/, "")
+	var titres = { quete: "Quête accomplie", sort: "Nouveau sort", succes: "Succès débloqué", niveau: "Niveau supérieur", relique: "Badge gagné" };
+	var detail = texte.replace(/^[★✦◆▲]\s*/, "").replace(/^(Quête secondaire accomplie|Quête accomplie|Nouveau sort appris|Succès débloqué|Badge gagné)\s*:\s*/, "")
 		.replace(/\s+\+\d+ XP$/, "").replace(/\s*\(.*$/, "").replace(/\. Tape succes.*$/, "");
 	if (genre === "sort") detail = detail.split(" ")[0].replace(/,$/, "") + (/, /.test(detail) ? " · " + detail.split(", ").slice(1).join(", ") : "");
 	if (genre === "relique") detail = detail.replace(/\.$/, "");
