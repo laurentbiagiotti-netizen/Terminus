@@ -471,3 +471,10 @@ def corbeau():
 if __name__ == "__main__":
     finir("item_corbeau.gif", corbeau())
     print("ok 3")
+
+
+if __name__ == "__main__":
+    # Les lieux des chapitres 2 et 3 ont été redessinés dans le style épais du chapitre 1 : dessiner_fantasy.py a le dernier mot.
+    import dessiner_fantasy
+    for _nom, _dessin in dessiner_fantasy.DESSINS.items():
+        finir(_nom, _dessin())

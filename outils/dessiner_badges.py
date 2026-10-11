@@ -19,6 +19,8 @@ BADGES = [
     ('r_osi', 'OSI', 'or'), ('r_lien', 'ETH', 'bronze'), ('r_ip', 'IP', 'bronze'), ('r_passerelle', 'GW', 'bronze'),
     ('r_dns', 'DNS', 'argent'), ('r_dhcp', 'DHCP', 'argent'), ('r_netplan', 'YAML', 'argent'), ('r_web', ':80', 'bronze'),
     ('r_https', 'TLS', 'argent'), ('r_smtp', 'FW', 'argent'), ('r_lille', 'RTE', 'argent'), ('r_telnet', 'SSH', 'or'),
+    ('r_wifi', 'RF', 'bronze'), ('r_ssid', 'SSID', 'or'), ('r_plan', '/26', 'argent'), ('r_forward', 'FWD', 'argent'),
+    ('r_zone', 'ZONE', 'argent'), ('r_prise', 'PORT', 'bronze'), ('r_debit', 'MB/S', 'argent'),
     ('platine_reseau', 'NET', 'platine'),
     # chapitre 3 : la chasse au Corbeau
     ('c_crypte', '?', 'bronze'), ('c_integrite', 'SHA', 'bronze'), ('c_message', 'B64', 'bronze'), ('c_suid', 'SUID', 'argent'),

@@ -458,8 +458,9 @@ contient(q1.taper("ping -c 1 10.0.92.53"), "1 reçus", "avec la passerelle, le c
 q1.taper("sudo ip link set eth0 down");
 contient(q1.taper("ping -c 1 10.0.92.53"), "pas accessible", "carte éteinte : plus rien ne passe");
 var q2 = nouveauMonde({}, 64);
-jouerJusqua(q2, "sudo systemctl disable --now telnet.socket");
+jouerJusqua(q2, "sudo systemctl disable --now synchro-videos");
 q2.taper("exit");
+q2.taper("cd ~/Cybersup/BatimentB/Poste");
 q2.taper("sudo timedatectl set-ntp false");
 q2.taper("cd ~/Cybersup/BatimentB");
 contient(q2.taper("cat Radia"), "horloge du poste", "Radia refuse de signer si une réparation a été défaite");

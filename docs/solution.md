@@ -40,22 +40,23 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
   6. [Le combat final](#6-le-combat-final)
   - [Pour aller chercher 20 sur 20](#pour-aller-chercher-20-sur-20)
 - [Chapitre 2 : la panne](#chapitre-2--la-panne-le-réseau-de-lécole)
-  7. [Le lien, l'adresse et la route](#7-le-lien-ladresse-et-la-route)
+  7. [Le modèle OSI, puis le lien, l'adresse et la route](#7-le-modèle-osi-puis-le-lien-ladresse-et-la-route)
   8. [Les noms](#8-les-noms)
   9. [Le DHCP du routeur, et une configuration qui tient](#9-le-dhcp-du-routeur-et-une-configuration-qui-tient)
   10. [L'intranet et l'horloge du poste](#10-lintranet-et-lhorloge-du-poste)
   11. [Les mails, Lille et le telnet](#11-les-mails-lille-et-le-telnet)
-  12. [Le compte rendu](#12-le-compte-rendu)
+  12. [L'Annexe : le Wi-Fi de la cafétéria](#12-lannexe--le-wi-fi-de-la-cafétéria)
+  13. [Le compte rendu](#13-le-compte-rendu)
 - [Chapitre 3 : la Crypte](#chapitre-3--la-crypte-la-mission-cyber)
-  13. [La Crypte](#13-la-crypte)
-  14. [Les journaux de la Citadelle](#14-les-journaux-de-la-citadelle)
-  15. [Le réseau de l'école et le labo de TP](#15-le-réseau-de-lécole-et-le-labo-de-tp)
-  16. [Les leçons de vim](#16-les-leçons-de-vim)
-  17. [Le site web, la messagerie, le DNS, le pare-feu](#17-le-site-web-la-messagerie-le-dns-le-pare-feu)
-  18. [L'imprimante et la badgeuse](#18-limprimante-et-la-badgeuse)
-  19. [Les comptes de la Citadelle](#19-les-comptes-de-la-citadelle)
-  20. [Les preuves et les notes chiffrées](#20-les-preuves-et-les-notes-chiffrées)
-  21. [Le Corbeau et le rapport d'incident](#21-le-corbeau-et-le-rapport-dincident)
+  14. [La Crypte](#14-la-crypte)
+  15. [Les journaux de la Citadelle](#15-les-journaux-de-la-citadelle)
+  16. [Le réseau de l'école et le labo de TP](#16-le-réseau-de-lécole-et-le-labo-de-tp)
+  17. [Les leçons de vim](#17-les-leçons-de-vim)
+  18. [Le site web, la messagerie, le DNS, le pare-feu](#18-le-site-web-la-messagerie-le-dns-le-pare-feu)
+  19. [L'imprimante et la badgeuse](#19-limprimante-et-la-badgeuse)
+  20. [Les comptes de la Citadelle](#20-les-comptes-de-la-citadelle)
+  21. [Les preuves et les notes chiffrées](#21-les-preuves-et-les-notes-chiffrées)
+  22. [Le Corbeau et le rapport d'incident](#22-le-corbeau-et-le-rapport-dincident)
 
 ## Le barème
 
@@ -67,7 +68,7 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
 | Première utilisation d'un sort (52) | 5 |
 | Lieu découvert (44) | 5 |
 
-Le total possible est de 3860 XP au chapitre 1. Les deux autres chapitres ont chacun leur barème, sur le même principe, et leur note sur 20 à part : 3825 XP pour la panne (14 étapes, 32 quêtes secondaires, 35 sorts, 20 lieux), 5625 XP pour la Crypte (22 étapes, 45 quêtes secondaires dont 14 autour de vim, 49 sorts, 48 lieux). La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
+Le total possible est de 3860 XP au chapitre 1. Les deux autres chapitres ont chacun leur barème, sur le même principe, et leur note sur 20 à part : 5540 XP pour la panne (22 étapes, 45 quêtes secondaires, 50 sorts, 28 lieux), 5625 XP pour la Crypte (22 étapes, 45 quêtes secondaires dont 14 autour de vim, 49 sorts, 48 lieux). La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
 
 Ordres de grandeur : un parcours réduit au strict nécessaire (une quarantaine de commandes, impossible sans connaître la solution) donne 10 sur 20. La solution ci-dessous, dernier chapitre compris, donne 20 sur 20. Les derniers points se gagnent en visitant chaque lieu et en lançant chaque sort au moins une fois : `xp` liste ceux qui n'ont jamais servi.
 
@@ -404,11 +405,11 @@ bulletin
 
 ## Chapitre 2 : la panne (le réseau de l'école)
 
-Notions : le modèle OSI, la clé de tout le chapitre (sept étages : Physique, Liaison, Réseau, Transport, Session, Présentation, Application ; on dépanne de bas en haut). Le lien (`ip link`, `ethtool`), l'adresse (`ip addr`, `dhclient`), la route (`ip route`, `ping`), les noms (`/etc/resolv.conf`, `dig`, `host`, `nslookup`, `resolvectl`, `/etc/hosts`), le DHCP et les services (`systemctl`, `journalctl`, `ss`), la configuration permanente (`netplan`, `nmcli`, `reboot`), le web (`curl`, `wget`), l'horloge et les certificats (`timedatectl`, `openssl`), les ports et le pare-feu (`nc`, `telnet`, `iptables`), le routage (`traceroute`, `mtr`) et l'écoute du réseau (`tcpdump`). En bonus, les sorts des anciens (`ifconfig`, `route`, `arp`, `netstat`) et la sacoche de Radia (`arping`, `tracepath`, `getent`, `uptime`, `iperf3`, `nft`).
+Notions : le modèle OSI, la clé de tout le chapitre (sept étages : Physique, Liaison, Réseau, Transport, Session, Présentation, Application ; on dépanne de bas en haut). Le lien (`ip link`, `ethtool`), l'adresse (`ip addr`, `dhclient`), la route (`ip route`, `ping`), les noms (`/etc/resolv.conf`, `dig`, `host`, `nslookup`, `resolvectl`, `/etc/hosts`), le DHCP et les services (`systemctl`, `journalctl`, `ss`), la configuration permanente (`netplan`, `nmcli`, `reboot`), le web (`curl`, `wget`), l'horloge et les certificats (`timedatectl`, `openssl`), les ports et le pare-feu (`nc`, `telnet`, `iptables`), le routage (`traceroute`, `mtr`) et l'écoute du réseau (`tcpdump`). En bonus, les sorts des anciens (`ifconfig`, `route`, `arp`, `netstat`) et la sacoche de Radia (`arping`, `tracepath`, `getent`, `uptime`, `iperf3`, `nft`). À l'Annexe : le Wi-Fi (`rfkill`, `iw`, `nmcli`), le plan d'adressage (`ipcalc`), le routage du noyau (`sysctl`), la zone DNS (`named-checkzone`), le switch (`lldpctl`) et le débit (`iftop`, `nethogs`, `vnstat`, `conntrack`), plus la boîte à outils de Vint (`arp-scan`, `fping`, `whois`, `chronyc`, `smbclient`).
 
 Pendant l'épreuve des B1, le stagiaire de Vint (l'administrateur réseau, en vacances) a « essayé des trucs » : le poste de l'accueil du bâtiment B a sa carte éteinte et un DNS mal recopié, le serveur DHCP du routeur est arrêté, apache2 a pris le port 80 de nginx sur l'intranet, une règle iptables avale les mails du bâtiment, la route vers Lille a disparu, et un vieux telnet traîne sur le routeur. La pile de la carte mère du poste est à plat, en plus : son horloge repart de 2001.
 
-Le chapitre s'ouvre après la victoire sur le Sorcier Noir : le P.S. de Laurent envoie au BatimentB de Cybersup, où Radia (M1 réseau, campus de Marseille) attend la recrue. Il suit 14 étapes, a sa propre note sur 20 et son propre certificat (CertificatReseau), avec un code de vérification. Radia annonce l'étape suivante au talkie-walkie après chaque réparation. Un groupe qui ne fait que ce chapitre (une séance sur le réseau Linux) choisit le ticket d'incident au démarrage (ou tape `chapitre 2` avant d'avoir franchi la première étape) : il arrive directement au BatimentB, avec les droits sudo, et le chapitre 1 est rejoué en silence sans être noté.
+Le chapitre s'ouvre après la victoire sur le Sorcier Noir : le P.S. de Laurent envoie au BatimentB de Cybersup, où Radia (M1 réseau, campus de Marseille) attend la recrue. Il suit 22 étapes (14 au bâtiment B, puis 8 à l'Annexe), a sa propre note sur 20 et son propre certificat (CertificatReseau), avec un code de vérification. Radia annonce l'étape suivante au talkie-walkie après chaque réparation. Un groupe qui ne fait que ce chapitre (une séance sur le réseau Linux) choisit le ticket d'incident au démarrage (ou tape `chapitre 2` avant d'avoir franchi la première étape) : il arrive directement au BatimentB, avec les droits sudo, et le chapitre 1 est rejoué en silence sans être noté.
 
 Le Poste de l'accueil est une vraie machine : on s'assoit devant (`cd Poste`), son invite devient `poste-b`, et `/` désigne sa racine. Le routeur et l'intranet ne s'administrent que depuis ce poste, par `ssh`. Les valeurs de ce chapitre sont les mêmes dans toutes les parties.
 
@@ -581,7 +582,99 @@ tracepath lille
 2. `traceroute lille` passe par le parefeu, puis plus rien : la route vers Lille (10.0.59.0/24, par lille-gw) a été supprimée. On la remet sur le routeur.
 3. Le port 23 du routeur est un telnet. `tcpdump -A port 23` montre le script du prestataire envoyer son mot de passe en clair toutes les cinq minutes. On ferme le socket.
 
-### 12. Le compte rendu
+### 12. L'Annexe : le Wi-Fi de la cafétéria
+
+Le bâtiment B tient, mais le stagiaire est passé à l'Annexe aussi : la radio du portable de la cafétéria est coupée (mode avion), un faux point d'accès imite le Wi-Fi de l'école, la plage du DHCP de la borne sort de son réseau (`10.0.94.0/26`), la borne ne fait plus passer les paquets (`ip_forward` à 0), la zone DNS de l'Annexe a une faute de frappe (`10.0.94.300`), le port de l'écran est éteint sur le switch, et l'écran retélécharge ses vidéos en boucle. Le mot de passe du Wi-Fi est sur l'AfficheWifi (il change d'une partie à l'autre : `<wifi>`), comme l'adresse MAC du faux point d'accès (`<bssid>`, donnée par le scan).
+
+```
+cd ~/Cybersup/Annexe
+cat Gaspard
+cat AfficheWifi
+cat CarnetDeLAnnexe
+cat BoiteAOutils
+cd Portable
+cat PostIt
+ip link
+sudo ip link set wlan0 up
+rfkill list
+sudo rfkill unblock wifi
+ip link
+iw dev
+sudo iw dev wlan0 scan
+nmcli device wifi list
+cat ~/Cybersup/Annexe/BoitierSousLaTable
+echo <bssid> > ~/jumeau.txt
+whois cybersup-free.net
+nmcli device wifi connect Cybersup-Etudiants password <wifi>
+iw dev wlan0 link
+sudo dhclient wlan0
+ipcalc 10.0.94.0/26
+cd ~/Cybersup/BatimentB/Poste
+ssh borne
+cat NoticeDeLaBorne
+systemctl status isc-dhcp-server
+sudo journalctl -u isc-dhcp-server
+cd etc/dhcp
+cat dhcpd.conf
+sudo nano dhcpd.conf
+sudo systemctl restart isc-dhcp-server
+sysctl net.ipv4.ip_forward
+sudo sysctl -w net.ipv4.ip_forward=1
+cd /etc
+sudo nano sysctl.conf
+sudo sysctl -p
+chronyc sources
+vnstat
+exit
+cd ~/Cybersup/Annexe/Portable
+sudo dhclient wlan0
+ping -c 1 10.0.94.1
+ping -c 1 intranet
+sudo arp-scan -l
+dig affichage
+cd ~/Cybersup/BatimentB/Poste
+ssh routeur
+cd /etc/bind
+cat MemoZone
+systemctl status named
+sudo named-checkzone annexe.cybersup.lan annexe.zone
+sudo nano annexe.zone
+sudo named-checkzone annexe.cybersup.lan annexe.zone
+sudo systemctl reload named
+exit
+smbclient -L //intranet -N
+cd ~/Cybersup/Annexe/Portable
+dig +short affichage.annexe
+ping -c 1 affichage
+ssh switch
+cat CarnetDuSwitch
+ip link
+sudo ip link set port7 up
+lldpctl
+exit
+fping -a -g 10.0.94.0/26
+iperf3 -c intranet
+ssh borne
+sudo iftop
+sudo conntrack -L
+exit
+ssh affichage
+sudo nethogs
+systemctl status synchro-videos
+sudo systemctl disable --now synchro-videos
+exit
+iperf3 -c intranet
+```
+
+1. `rfkill list` montre « Soft blocked: yes » : la radio Wi-Fi est coupée par logiciel. `rfkill unblock wifi` la rallume.
+2. Le scan montre deux réseaux. `Cybersup-Free`, ouvert et au signal le plus fort, est un faux point d'accès (un boîtier scotché sous une table, dont le domaine a été créé la veille : `whois`). On se connecte au vrai, protégé par WPA2, avec le mot de passe de l'affiche.
+3. Associé, mais sans adresse : sur la borne, `isc-dhcp-server` refuse de démarrer, car la plage `10.0.94.100` à `10.0.94.150` sort du réseau `10.0.94.0/26` (`ipcalc` : de `.1` à `.62`). On la remet dans le réseau (`range 10.0.94.10 10.0.94.50;`), on redémarre le service, et le portable obtient `10.0.94.10`.
+4. Le portable parle à la borne, pas au-delà : `net.ipv4.ip_forward` vaut 0. `sysctl -w` le remet à 1 tout de suite, la ligne décommentée dans `/etc/sysctl.conf` (puis `sysctl -p`) le rend permanent.
+5. `named-checkzone` trouve la faute de la zone de l'Annexe, sur le routeur ; on corrige, on vérifie, on recharge `named`.
+6. Sur le switch, `port7` (l'écran) est éteint. `port8`, la prise du couloir, reste coupée exprès : l'allumer compte comme une panne.
+7. L'écran rallumé, le Wi-Fi tombe à 3 Mbit/s : `iftop` sur la borne montre `affichage`, `nethogs` sur l'écran montre `synchro-videos`, un service qui se relance tout seul. `disable --now` l'arrête et l'empêche de revenir.
+
+### 13. Le compte rendu
 
 ```
 cd ~/Cybersup/BatimentB
@@ -603,7 +696,7 @@ Le chapitre s'ouvre quand le réseau est réparé : Radia transmet le message de
 
 Au chapitre 3, chaque notion est un verrou : la `.porte` n'apparaît dans le Caveau qu'une fois le programme trafiqué repéré avec `sha256sum -c` et le message décodé avec `base64 -d`, et elle ne s'ouvre qu'à qui l'a trouvée avec `find -perm -4000`.
 
-### 13. La Crypte
+### 14. La Crypte
 
 L'intégrité et le message caché :
 
@@ -685,7 +778,7 @@ exit
 
 `ssh-keygen` demande deux fois une phrase de passe (le test répond la même chose deux fois ; une phrase non vide rapporte une quête secondaire). Déposer la clé privée (`id_ed25519`) au lieu de la publique est le piège pédagogique du chapitre : Evi la détruit, la paire est grillée, et il faut en refaire une.
 
-### 14. Les journaux de la Citadelle
+### 15. Les journaux de la Citadelle
 
 Au chapitre 3, la Citadelle a aussi ses dossiers système : `etc`, `var/log` et `tmp` (les chemins absolus comme `/etc/passwd` y marchent). Les journaux de la veille sont compressés : `zcat` les lit sans les décompresser. La ligne `Accepted` donne l'heure de la première connexion du Corbeau (à noter pour le rapport) et l'adresse d'où il venait : le labo de TP.
 
@@ -709,7 +802,7 @@ gunzip ~/essai.txt.gz
 exit
 ```
 
-### 15. Le réseau de l'école et le labo de TP
+### 16. Le réseau de l'école et le labo de TP
 
 Le MementoReseau de Vint apparaît dans la SalleReseau. `nmap` sur le réseau de l'école fait connaître toutes les machines : on peut ensuite s'y connecter par leur nom.
 
@@ -749,7 +842,7 @@ zcat vacances.jpg
 
 `who` montre la session du Corbeau, ouverte depuis la nuit, et l'adresse de son poste (le repère `<poste>`). `pkill -u corbeau` coupe tous ses processus, mais le service `maj-auto` revient tout seul (`Restart=always`) : il faut `systemctl disable --now`, qui l'arrête et l'empêche de redémarrer. La « photo de vacances » est en réalité une archive gzip : `file` le dit, `zcat` la lit.
 
-### 16. Les leçons de vim
+### 17. Les leçons de vim
 
 Sur le labo, le dossier `/home/etudiant/vimtuteur` contient cinq leçons inspirées du tutoriel officiel de vim. Chacune est une quête secondaire ; chaque leçon se fait en ouvrant le fichier avec `vim`, en suivant la consigne écrite dedans, puis en enregistrant avec `:wq`.
 
@@ -780,7 +873,7 @@ Les touches, leçon par leçon :
 
 Sortir de vim pour la première fois rapporte aussi une quête secondaire. Une leçon abîmée se recommence : `rm leconN.txt`, et le tuteur en remet une copie neuve. `vi` est l'autre nom de `vim`, et `ZZ` enregistre et quitte comme `:wq`. Sur téléphone, les boutons en bas de l'éditeur envoient Échap, `i`, `x`, `dd`, `u`, `:w`, `:wq` et `:q!`.
 
-### 17. Le site web, la messagerie, le DNS, le pare-feu
+### 18. Le site web, la messagerie, le DNS, le pare-feu
 
 ```
 ssh web
@@ -844,7 +937,7 @@ exit
 
 La page piégée du site a l'attribut immuable : même root ne peut pas la supprimer avant `chattr -i`. La pièce jointe du mail est encodée en base64 entre deux lignes repères : `sed -n '/début/,/fin/p'` garde l'intervalle, `grep -v` retire les repères. `dig -x` sur l'adresse de `maj` répond `poste-47` : un simple poste de travail se fait passer pour le serveur des mises à jour. Dans `vim ecole.zone`, on descend sur la ligne qui commence par `maj` (par exemple `/maj` puis Entrée), `dd`, puis `:wq`. Si on retire une autre ligne par erreur, la radio dit laquelle remettre. Au pare-feu, le poste doit être empêché de TRAVERSER le pare-feu pour joindre les serveurs : c'est `ufw route deny` (une règle FWD). `ufw deny from` tout court ne protège que le pare-feu lui-même, et Grace le fait remarquer. Les règles se lisent dans l'ordre : un `allow` pour le poste placé avant le `deny` le laisse passer (`sudo ufw route insert 1 deny from ...` met la règle en tête). Bloquer l'adresse du labo est une erreur que Grace signale : le Corbeau n'a fait que le traverser.
 
-### 18. L'imprimante et la badgeuse
+### 19. L'imprimante et la badgeuse
 
 ```
 ssh imprimante
@@ -859,7 +952,7 @@ awk '$3 == "B-047" && $2 < "06:00"' badges.log
 exit
 ```
 
-### 19. Les comptes de la Citadelle
+### 20. Les comptes de la Citadelle
 
 ```
 ssh citadelle
@@ -882,7 +975,7 @@ exit
 
 Le Corbeau a le droit sudo de deux façons : par le groupe `sudo` (`groups corbeau`) et par une ligne à son nom dans sudoers. `gpasswd -d corbeau sudo` le sort du groupe (sur les systèmes récents, `usermod -rG sudo corbeau` aussi). `visudo` ouvre sudoers dans vim (ou nano pour qui ne connaît pas encore vim) : on se place sur la ligne qui commence par `corbeau`, `dd`, puis `:wq`. `visudo` vérifie la syntaxe avant d'enregistrer : une ligne cassée est refusée. Modifier sudoers directement (`sudo nano /etc/sudoers`) ne valide pas l'étape, et Evi le fait remarquer ; retirer aussi les lignes de root ou du groupe sudo non plus.
 
-### 20. Les preuves et les notes chiffrées
+### 21. Les preuves et les notes chiffrées
 
 La ProcedurePreuves apparaît dans la SalleServeurs. La preuve est le fichier que le faux kworker gardait ouvert : `/tmp/.cache/notes.gpg` sur la Citadelle. On la copie sur la sauvegarde avant d'y toucher, et on note son empreinte au registre.
 
@@ -920,7 +1013,7 @@ gpg -c ~/secret.txt
 
 `gpg -d` demande la phrase de passe : c'est le résultat du tuyau sur `strings` (ROT13 défait par `tr`). `gpg -d notes.gpg > carnet.txt` écrit le texte clair dans un fichier. Si le joueur modifie `notes.gpg` avant de l'avoir copié, Grace refuse la preuve et remet l'original en place : une preuve se copie et s'empreinte avant qu'on y touche. Le carnet du Corbeau résume toute l'intrusion et donne rendez-vous au coffre. Le Corbeau ne s'y montre qu'une fois toutes les étapes précédentes faites ; sinon, Grace dit à la radio ce qu'il reste.
 
-### 21. Le Corbeau et le rapport d'incident
+### 22. Le Corbeau et le rapport d'incident
 
 ```
 ssh coffre

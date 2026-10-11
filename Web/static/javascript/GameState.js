@@ -843,7 +843,9 @@ GameState.prototype.texteDuCertificatReseau = function(){
 		"  pour avoir remis en route le réseau de l'école, couche par couche :\n" +
 		"  le lien, l'adresse, la route, les noms, le DHCP, la configuration\n" +
 		"  permanente, le serveur web, l'horloge, le pare-feu et le routage,\n" +
-		"  et fermé un telnet oublié, le tout en terminal.\n" +
+		"  fermé un telnet oublié, puis rendu son Wi-Fi à l'Annexe (radio,\n" +
+		"  faux point d'accès, DHCP, routage, DNS, switch et débit),\n" +
+		"  le tout en terminal.\n" +
 		"\n" +
 		"  SCORE DU CHAPITRE 2  : " + this.xpNet(3) + " XP sur " + this.xpMax3() + "\n" +
 		"  NOTE                 : " + this.noteTexte(3) + "\n" +

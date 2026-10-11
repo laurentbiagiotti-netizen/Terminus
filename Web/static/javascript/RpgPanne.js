@@ -48,7 +48,22 @@ var SORTS_RPG = {
 	getent:      { nom: "le Traducteur Commun",      image: "Tu traduis un nom exactement comme le font les programmes : les raccourcis, puis l'Oracle." },
 	uptime:      { nom: "l'Horloge d'Éveil",              image: "L'horloge dit depuis quand la machine est éveillée, et combien elle travaille." },
 	iperf3:      { nom: "la Course des Messagers", image: "Tes messagers courent jusqu'à un serveur et reviennent : tu mesures le débit du chemin." },
-	nft:         { nom: "la Nouvelle Herse",       image: "La loi du pare-feu, écrite dans la langue moderne du noyau (nftables)." }
+	nft:         { nom: "la Nouvelle Herse",       image: "La loi du pare-feu, écrite dans la langue moderne du noyau (nftables)." },
+	rfkill:      { nom: "le Sceau des Ondes",      image: "Tu brises ou poses le sceau qui fait taire les radios de la machine." },
+	iw:          { nom: "l'Oreille des Ondes",     image: "Tu entends les bornes qui chantent leur nom dans l'air, et leur force." },
+	ipcalc:      { nom: "l'Abaque",                image: "L'abaque compte les maisons d'une rue : la première, la dernière, et combien entre les deux." },
+	sysctl:      { nom: "les Leviers du Noyau",    image: "Tu actionnes un levier au cœur de la machine : faire passer les messagers, ou non." },
+	"named-checkzone": { nom: "le Correcteur du Registre", image: "Tu relis le registre des noms ligne à ligne, avant que l'Oracle ne le refuse." },
+	lldpctl:     { nom: "le Fil d'Identité",       image: "Chaque câble te souffle le nom de celui qui est au bout." },
+	iftop:       { nom: "la Vigie du Débit",       image: "Du haut de la tour, tu vois qui fait passer le plus de messagers." },
+	nethogs:     { nom: "le Glouton Démasqué",     image: "Sur une machine, tu montres du doigt le programme qui dévore tout." },
+	vnstat:      { nom: "le Compteur des Marées",  image: "Jour après jour, le compteur note la marée des messagers." },
+	conntrack:   { nom: "le Registre des Passages", image: "Chaque conversation qui traverse la tour y est notée, de qui à qui." },
+	"arp-scan":  { nom: "l'Appel de la Rue",       image: "Tu appelles toute la rue d'un coup : chaque maison répond avec son identité." },
+	fping:       { nom: "l'Écho Multiple",         image: "Cent échos lancés à la fois : qui est éveillé, qui dort." },
+	whois:       { nom: "le Registre des Domaines", image: "Le grand registre dit qui possède un nom, et depuis quand." },
+	chronyc:     { nom: "les Sources du Temps",    image: "Tu vois à quelles horloges la machine se fie." },
+	smbclient:   { nom: "la Porte des Partages",   image: "Tu frappes à la porte des dossiers partagés d'un serveur." }
 };
 
 /* L'étage du modèle OSI où travaille chaque sort du chapitre. */
@@ -58,7 +73,10 @@ var ETAGES_DU_SORT = {
 	resolvectl: "étage 7", systemctl: "les services", journalctl: "les journaux", ss: "étage 4", iptables: "étages 3 et 4", tcpdump: "étages 2 à 7",
 	traceroute: "étage 3", mtr: "étage 3", openssl: "étage 6", timedatectl: "pour l'étage 6", nc: "étage 4", telnet: "étage 7, en clair",
 	ping: "étage 3", ssh: "étages 5 à 7, chiffrés", ifconfig: "étages 2 et 3", route: "étage 3", arp: "étage 2", netstat: "étage 4",
-	arping: "étage 2", tracepath: "étage 3", getent: "étage 7", iperf3: "étage 4", nft: "étages 3 et 4"
+	arping: "étage 2", tracepath: "étage 3", getent: "étage 7", iperf3: "étage 4", nft: "étages 3 et 4",
+	rfkill: "étage 1", iw: "étages 1 et 2", ipcalc: "étage 3", sysctl: "étage 3", "named-checkzone": "étage 7", lldpctl: "étage 2",
+	iftop: "étages 3 et 4", nethogs: "étages 4 et 7", vnstat: "étage 1 à 3", conntrack: "étages 3 et 4", "arp-scan": "étage 2",
+	fping: "étage 3", whois: "étage 7", chronyc: "étage 7", smbclient: "étage 7"
 };
 
 /* Les lieux de la carte du royaume. Le poste est connu dès le départ ; le reste est dans la brume. */
@@ -69,7 +87,10 @@ var LIEUX_RPG = {
 	intranet: { nom: "la Bibliothèque",        vrai: "intranet" },
 	mail:     { nom: "la Volière",             vrai: "mail" },
 	parefeu:  { nom: "la Muraille",            vrai: "parefeu" },
-	lille:    { nom: "le Comptoir du Nord",    vrai: "lille" }
+	lille:    { nom: "le Comptoir du Nord",    vrai: "lille" },
+	borne:    { nom: "la Tour des Ondes",      vrai: "borne" },
+	switch:   { nom: "le Carrefour des Prises", vrai: "switch" },
+	affichage: { nom: "le Grand Tableau",      vrai: "affichage" }
 };
 
 /* La relique que rapporte chaque réparation. */
@@ -85,7 +106,14 @@ var RELIQUES = {
 	r_https:      "le Sablier Juste",
 	r_smtp:       "la Plume de la Volière",
 	r_lille:      "le Fil du Nord",
-	r_telnet:     "le Verrou du Silence"
+	r_telnet:     "le Verrou du Silence",
+	r_wifi:       "le Sceau des Ondes brisé",
+	r_ssid:       "le Vrai Blason des Ondes",
+	r_plan:       "l'Abaque de l'Annexe",
+	r_forward:    "le Levier du Passage",
+	r_zone:       "le Registre Corrigé",
+	r_prise:      "la Prise Retrouvée",
+	r_debit:      "le Glouton Repu"
 };
 
 function nomRpg(sort, chapitre){
@@ -121,6 +149,9 @@ function lieuxDecouverts(nom, args, hote){
 		if (/CahierDuRouteur/.test(texte)) lieux.push("parefeu", "lille");
 		if (/MemoDNS|resolv\.conf/.test(texte)) lieux.push("dns");
 		if (/NoteDeVint/.test(texte)) lieux.push("intranet");
+		if (/CarnetDeLAnnexe|NoticeDeLaBorne/.test(texte)) lieux.push("borne");
+		if (/NoticeDeLaBorne|CarnetDuSwitch/.test(texte)) lieux.push("switch");
+		if (/CarnetDuSwitch/.test(texte)) lieux.push("affichage");
 		return lieux;
 	}
 	if (!SORTS_RPG[nom]) return lieux;
@@ -131,6 +162,9 @@ function lieuxDecouverts(nom, args, hote){
 	if (/\bmail\b|\bMX\b|10\.0\.92\.11\b/.test(texte)) lieux.push("mail");
 	if (["traceroute", "mtr", "iptables", "tracepath", "nft"].indexOf(nom) > -1 || /parefeu|10\.0\.92\.254\b/.test(texte)) lieux.push("parefeu");
 	if (/lille|10\.0\.59\.|10\.0\.92\.248\b/.test(texte)) lieux.push("lille");
+	if (hote === "borne" || hote === "portable" || /\bborne\b|10\.0\.94\.1\b|10\.0\.92\.94\b/.test(texte)) lieux.push("borne");
+	if (hote === "switch" || /\bswitch\b|10\.0\.94\.2\b|10\.0\.94\.0\//.test(texte)) lieux.push("switch");
+	if (hote === "affichage" || /affichage|10\.0\.94\.40\b/.test(texte)) lieux.push("affichage");
 	return lieux;
 }
 

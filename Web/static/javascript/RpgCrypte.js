@@ -213,6 +213,8 @@ var COMPETENCES = {
 	r_osi: "Modèle OSI", r_lien: "Lien physique", r_ip: "Adressage IP", r_passerelle: "Passerelle par défaut",
 	r_dns: "Résolution DNS", r_dhcp: "Service DHCP", r_netplan: "Configuration permanente", r_web: "Ports et services",
 	r_https: "Certificats et horloge", r_smtp: "Filtrage iptables", r_lille: "Routage statique", r_telnet: "Protocoles chiffrés",
+	r_wifi: "Radio Wi-Fi", r_ssid: "Faux point d'accès", r_plan: "Plan d'adressage", r_forward: "Routage du noyau",
+	r_zone: "Zone DNS", r_prise: "Ports du switch", r_debit: "Analyse du débit",
 	c_crypte: "Méthode d'enquête", c_integrite: "Intégrité des fichiers", c_message: "Encodage base64", c_suid: "Bit SUID",
 	c_racine: "Élévation de privilèges", c_ecoute: "Ports en écoute", c_journaux: "Analyse de journaux", c_carto: "Cartographie réseau",
 	c_labo: "Sessions utilisateur", c_service: "Persistance et services", c_web: "Attribut immuable", c_mail: "Hameçonnage",
@@ -223,13 +225,15 @@ var COMPETENCES = {
 var COUCHES_DU_BADGE = {
 	r_osi: "les sept couches", r_lien: "couches Physique et Liaison", r_ip: "couche Réseau", r_passerelle: "couche Réseau",
 	r_dns: "couche Application", r_dhcp: "couche Application", r_netplan: "couches Physique à Réseau", r_web: "couches Transport et Application",
-	r_https: "couche Présentation", r_smtp: "couche Transport", r_lille: "couche Réseau", r_telnet: "couches Session à Application"
+	r_https: "couche Présentation", r_smtp: "couche Transport", r_lille: "couche Réseau", r_telnet: "couches Session à Application",
+	r_wifi: "couche Physique", r_ssid: "couche Liaison", r_plan: "couche Réseau", r_forward: "couche Réseau",
+	r_zone: "couche Application", r_prise: "couches Physique et Liaison", r_debit: "couches Transport et Application"
 };
 COMPETENCES.platine_reseau = "Maître du réseau";
 COMPETENCES.platine_cyber = "Chasseur de Corbeau";
 /* Le rang de chaque badge, comme sur un tableau de trophées : bronze, argent, or, et platine pour un chapitre complet. */
 var RANGS_DES_BADGES = {
-	r_osi: "or", r_dns: "argent", r_dhcp: "argent", r_netplan: "argent", r_https: "argent", r_smtp: "argent", r_lille: "argent", r_telnet: "or",
+	r_osi: "or", r_ssid: "or", r_plan: "argent", r_forward: "argent", r_zone: "argent", r_debit: "argent", r_dns: "argent", r_dhcp: "argent", r_netplan: "argent", r_https: "argent", r_smtp: "argent", r_lille: "argent", r_telnet: "or",
 	c_suid: "argent", c_racine: "or", c_ecoute: "argent", c_journaux: "argent", c_carto: "argent", c_service: "argent", c_compte: "argent",
 	c_sudo: "argent", c_cle: "argent", c_preuves: "argent", c_gpg: "or", c_corbeau: "or", platine_reseau: "platine", platine_cyber: "platine"
 };

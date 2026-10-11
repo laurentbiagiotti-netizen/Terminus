@@ -11,6 +11,7 @@
  * (systemctl, journalctl), la configuration permanente (netplan), puis les services :
  * le serveur web (ss, systemctl), l'horloge (timedatectl, openssl), le pare-feu (iptables),
  * le routage vers Lille (traceroute, ip route) et un telnet oublié (tcpdump).
+ * Puis, second acte (Annexe.js) : le Wi-Fi de l'Annexe, sa borne, son switch et son écran.
  *
  * Numérotation : ce chapitre est le deuxième pour le joueur. Dans le code, il porte le
  * numéro 3 (le 2 est la Crypte, écrite avant lui) : quêtes r_ et s_r_, xp3, note(3).
@@ -83,23 +84,24 @@ BatimentB.addItem(Radia);
 
 /* Le lexique de Radia : chaque notion du chapitre en deux phrases, pour qui n'a jamais touché un réseau. */
 var Lexique = new Item("Lexique",
-	"LE LEXIQUE DE RADIA (scotché sur l'armoire, pour les B1)\n" +
-	"À gauche l'image du royaume, à droite le vrai mot du métier. Retiens les deux.\n\n" +
-	"La tour des sept étages  Le modèle OSI : Physique, Liaison, Réseau, Transport, Session, Présentation, Application (cat ModeleOSI).\n" +
-	"Les messagers      Paquets. Les petits morceaux de données qui voyagent sur le réseau.\n" +
-	"La porte du poste  Carte réseau (eth0). Fermée (DOWN), aucun messager n'entre ni ne sort.\n" +
-	"L'adresse          Adresse IP : 10.0.93.20. Sans elle, personne ne peut t'écrire.\n" +
-	"La rue             Réseau, défini par le masque (/24) : 10.0.93.20 et 10.0.93.254 habitent la même rue.\n" +
-	"La Tour            Passerelle (le routeur). On passe par elle pour sortir de sa rue.\n" +
-	"Le chemin          Route : « pour aller vers tel réseau, passe par telle tour ». La route par défaut sert pour tout le reste.\n" +
-	"L'Oracle des Noms  DNS : il traduit un nom (intranet) en adresse (10.0.92.20).\n" +
-	"La Source          DHCP : elle offre adresse, tour et oracle à chaque machine qui arrive.\n" +
-	"Les gardiens       Services : des programmes qui veillent en permanence (web, DHCP, ssh). systemctl les commande.\n" +
-	"Les portes         Ports : chaque gardien veille derrière sa porte numérotée. 22 ssh, 25 mails, 53 DNS, 80 web, 443 web chiffré.\n" +
-	"La Herse           Pare-feu : elle laisse passer ou jette les messagers selon sa loi (ses règles).\n" +
-	"Le blason          Certificat : il prouve l'identité d'un site en https, et n'est valable qu'entre deux dates.\n" +
-	"Parler en clair    Non chiffré : n'importe qui sur le chemin peut lire. Le contraire : chiffré (ssh, https).\n\n" +
-	"Tape schema pour voir la carte du royaume : ce qui marche en vert, ce qui est en panne en rouge, et ce que tu n'as pas encore exploré dans la brume.",
+	"LE LEXIQUE DE RADIA : l'image du royaume, puis le vrai mot du métier.\n\n" +
+	"La tour des sept étages   le modèle OSI (cat ModeleOSI)\n" +
+	"Les messagers             les paquets\n" +
+	"La porte du poste         la carte réseau (eth0, ou wlan0 en Wi-Fi)\n" +
+	"L'adresse                 l'adresse IP (10.0.93.20)\n" +
+	"La rue                    le réseau, défini par le masque (/24, /26)\n" +
+	"La Tour                   la passerelle (le routeur)\n" +
+	"Le chemin                 la route (et la route par défaut)\n" +
+	"L'Oracle des Noms         le DNS : un nom vers une adresse\n" +
+	"La Source                 le DHCP : adresse, passerelle, DNS\n" +
+	"Les gardiens              les services (systemctl)\n" +
+	"Les portes                les ports : 22 ssh, 25 mails, 53 DNS, 80 web\n" +
+	"La Herse                  le pare-feu\n" +
+	"Le blason                 le certificat d'un site https\n" +
+	"La Tour des Ondes         la borne Wi-Fi (son nom : le SSID)\n" +
+	"Le Carrefour des Prises   le switch, et ses ports\n" +
+	"Parler en clair           sans chiffrement (le contraire : ssh, https)\n\n" +
+	"schema dessine la carte du royaume : vert, ça marche ; rouge, en panne ; brume, pas encore exploré.",
 	"item_manuscript.gif");
 BatimentB.addItem(Lexique);
 
@@ -999,7 +1001,7 @@ function texteRadia(){
 		return "Radia range son portable. « Le réseau tient. Vint rentre lundi : il va être jaloux. Merci, la recrue. »";
 	}
 	// Une réplique courte : l'étage OSI, l'idée en deux phrases, ce qu'on fait. Le reste est dans le panneau.
-	var etage = function(id){ return C.gris("[" + ETAGE_OSI[id] + "]") + "\n"; };
+	var etage = function(id){ return ETAGE_OSI[id] ? C.gris("[" + ETAGE_OSI[id] + "]") + "\n" : ""; };
 	switch (etape.id){
 		case "r_batiment":
 		case "r_osi":
@@ -1009,8 +1011,10 @@ function texteRadia(){
 				C.gris("(schema : la tour et la carte. badges : ce que tu as appris. Ma SacocheDeRadia est sur le comptoir.)");
 		case "r_lien":
 			return "« On commence tout en bas, étages 1 et 2. " + NOTIONS_LIEN + "\n\nVa au Poste, derrière le comptoir (cd Poste), et lance l'Œil du Réseau : ip link. eth0 porte-t-elle le mot UP ? »";
+		case "r_annexe":
+			return "« " + TALKIE.r_annexe + " »";
 		case "r_fin":
-			return "« Tu as remonté les sept étages, du câble jusqu'au web. C'est comme ça qu'on dépanne un vrai réseau. Ton CertificatReseau t'attend dans ta Maison.\n\n" +
+			return "« Tu as remonté les sept étages, du câble jusqu'au web, au bâtiment B comme à l'Annexe. C'est comme ça qu'on dépanne un vrai réseau. Ton CertificatReseau t'attend dans ta Maison.\n\n" +
 				"Grace, de la WarRoom, voit du trafic bizarre sous la Citadelle. Une trappe vient de s'ouvrir : ssh citadelle, puis cd Crypte. Ce sera ton troisième chapitre. »";
 	}
 	if (NOTIONS[etape.id]) return etage(etape.id) + "« " + NOTIONS[etape.id] + "\n\n" + TALKIE[etape.id] + " »";
@@ -1074,6 +1078,7 @@ function texteSchema(){
 		return t + (ici === vrai ? C.jaune("  ◀ toi") : "");
 	}
 	var relie = v.lien && v.adresse && v.route;
+	var avecAnnexe = typeof annexeOuverte === "function" && annexeOuverte(), an = avecAnnexe ? annexe() : null;
 	var tour = [C.gras("LA TOUR OSI DU POSTE") + C.gris("  (cat ModeleOSI)")];
 	etagesOSI().slice().reverse().forEach(function(e){ tour.push("  " + ok(e.ok, "█ ") + completerDroite(e.titre, 16) + (e.ok ? C.vert("tient") : C.rouge("cassé"))); });
 	tour.push("");
@@ -1097,8 +1102,14 @@ function texteSchema(){
 		"      " + branche("mail", v.mail, "├─") + " " + lieu("mail", "mail", "Volière"),
 		connu("mail") ? "      │    " + voyant(v.mail, "porte 25 (mails)") : null,
 		"      " + branche("parefeu", true, "├─") + " " + lieu("parefeu", "parefeu", "Muraille (internet)"),
-		"      " + branche("lille", v.lille, "└─") + " " + lieu("lille", "lille", "Comptoir du Nord")
-	]).filter(function(l){ return l !== null; });
+		"      " + branche("lille", v.lille, avecAnnexe ? "├─" : "└─") + " " + lieu("lille", "lille", "Comptoir du Nord")
+	]).concat(avecAnnexe ? [
+		"      " + branche("borne", an.forward && dhcpBorneActif(), "└─") + " " + lieu("borne", "borne", "Tour des Ondes"),
+		connu("borne") ? "           " + voyant(!an.rfkill && an.wlan, "radio") + "  " + voyant(dhcpBorneActif(), "Source") : null,
+		connu("borne") ? "           " + voyant(an.forward, "passage") + "  " + voyant(an.zone, "noms") : null,
+		"           " + branche("switch", true, "└─") + " " + lieu("switch", "switch", "Prises"),
+		"              " + branche("affichage", an.ports[7], "└─") + " " + lieu("affichage", "affichage", "Grand Tableau")
+	] : []).filter(function(l){ return l !== null; });
 	if (typeof reliquesObtenues === "function"){
 		var r = reliquesObtenues(), total = Object.keys(RELIQUES).length;
 		lignes.push("", C.gras("BADGES : " + r.length + " sur " + total) + C.gris("  (badges : les leçons)"));
@@ -1163,6 +1174,7 @@ function verifierPanne(){
 	if (routeLilleOK()) state.complete("r_lille");
 	var telnet = servicePanne("routeur", "telnet.socket");
 	if (!telnet.actif && !telnet.auto) state.complete("r_telnet");
+	if (typeof verifierAnnexe === "function") verifierAnnexe();
 	if (Radia.getText() !== texteRadia()) Radia.cmd_text["less"] = texteRadia();
 	// Après chaque réparation, une ligne à retenir.
 	p.retenus = p.retenus || {};
@@ -1243,4 +1255,4 @@ GameEvents.addListener("read", function(e){
 /* Les illustrations des machines de la panne (outils/dessiner_lieux.py). */
 [[Routeur, "loc_routeur.gif"], [Intranet, "loc_intranet.gif"]].forEach(function(x){ x[0].room_pic = "./static/img/" + x[1]; });
 
-World.fige = true;
+/* World.fige est posé à la fin d'Annexe.js, une fois le second acte de la panne construit. */

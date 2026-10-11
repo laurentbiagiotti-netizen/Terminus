@@ -8,7 +8,7 @@ var vm = require("vm");
 
 var bavard = process.argv.indexOf("-v") > -1;
 var dossier = path.join(__dirname, "..", "Web", "static", "javascript");
-var fichiers = ["EventTarget.js", "Partie.js", "Item.js", "Room.js", "Manuel.js", "Shell.js", "SortsAvances.js", "GameObjects.js", "Chapitre2.js", "CommandesCyber.js", "Reseau.js", "Panne.js", "CommandesPanne.js", "RpgPanne.js", "SortsCrypte.js", "RpgCrypte.js", "GameState.js"];
+var fichiers = ["EventTarget.js", "Partie.js", "Item.js", "Room.js", "Manuel.js", "Shell.js", "SortsAvances.js", "GameObjects.js", "Chapitre2.js", "CommandesCyber.js", "Reseau.js", "Panne.js", "CommandesPanne.js", "Annexe.js", "RpgPanne.js", "SortsCrypte.js", "RpgCrypte.js", "GameState.js"];
 
 function nouveauMonde(stockage, graine){
 	stockage = stockage || {};
@@ -71,6 +71,8 @@ function nouveauMonde(stockage, graine){
 				.replace(/<adresse>/g, lire("ADRESSE_ATTAQUANT"))
 				.replace(/<sweats>/g, lire("NB_SWEATS"))
 				.replace(/<poste>/g, lire("ADRESSE_POSTE_CORBEAU"))
+				.replace(/<wifi>/g, lire("MDP_WIFI"))
+				.replace(/<bssid>/g, lire("BSSID_FAUX"))
 				.replace(/<pid-ecoute>/g, function(){ var p = lire("procCorbeau()"); return p ? String(p.pid) : "0"; })
 				.replace(/<pid:([a-z_-]+)>/g, function(tout, nom){
 					return String(lire("(current_room.procs || []).filter(function(p){ return p.name === " + JSON.stringify(nom) + "; }).map(function(p){ return p.pid; })[0]"));
@@ -88,6 +90,10 @@ function nouveauMonde(stockage, graine){
 			if (vim) this.editer(EDITIONS_VIM(vim[1] ? vim[1].split("/").pop() : "sudoers", vm.runInContext("({ poste: ADRESSE_POSTE_CORBEAU, compte: COMPTE_CACHE, port: PORT_CORBEAU, heure: HEURE_PREMIERE })", bac)));
 			// Dans nano, sur le poste du bâtiment B : corriger le DNS, puis ajouter un raccourci de nom.
 			if (/nano .*resolv\.conf/.test(commande)) this.editer("function(t){ return t.replace('10.0.92.35', '10.0.92.53'); }");
+			// Dans l'Annexe : la plage du DHCP de la borne, ip_forward gravé, la zone de l'Annexe.
+			if (/nano .*dhcpd\.conf/.test(commande)) this.editer("function(t){ return t.replace('10.0.94.100 10.0.94.150', '10.0.94.10 10.0.94.50'); }");
+			if (/nano .*sysctl\.conf/.test(commande)) this.editer("function(t){ return t.replace('#net.ipv4.ip_forward=1', 'net.ipv4.ip_forward=1'); }");
+			if (/nano .*annexe\.zone/.test(commande)) this.editer("function(t){ return t.replace('10.0.94.300', '10.0.94.40'); }");
 			if (/nano .*hosts$/.test(commande)) this.editer("function(t){ return t + '10.0.92.20\\tintra\\n'; }");
 			if (/nano .*authorized_keys/.test(commande)){
 				// Dans nano : couper la ligne du Corbeau, enregistrer, quitter.
