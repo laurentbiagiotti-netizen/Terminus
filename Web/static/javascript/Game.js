@@ -66,11 +66,25 @@ function banniere(genre, texte){
 	if (genre === "relique") detail = detail.split(" · ")[0].replace(/\.$/, "");
 	var b = document.createElement("div");
 	b.className = "banniere banniere-" + genre;
+	// Un badge : sa médaille, son rang, comme un trophée qui tombe.
+	var idBadge = genre === "relique" && typeof idDuBadge === "function" ? idDuBadge(detail) : null;
+	if (idBadge){
+		var rang = rangDuBadge(idBadge);
+		b.className += " banniere-badge rang-" + rang;
+		var medaille = document.createElement("img");
+		medaille.className = "banniere-medaille";
+		medaille.alt = "";
+		medaille.src = sourceImage("./static/img/badge_" + idBadge + ".gif");
+		b.appendChild(medaille);
+		titres.relique = "Badge débloqué · " + rang;
+		jouerSon(rang === "platine" || rang === "or" ? "succes" : "quete");
+	}
 	b.setAttribute("role", "status");
 	var t = document.createElement("span"); t.className = "banniere-titre";
 	t.textContent = /secondaire/.test(texte) ? "Quête secondaire" : titres[genre];
 	var d = document.createElement("span"); d.className = "banniere-detail"; d.textContent = detail;
-	b.appendChild(t); b.appendChild(d);
+	if (idBadge){ var texteBadge = document.createElement("span"); texteBadge.className = "banniere-texte"; texteBadge.appendChild(t); texteBadge.appendChild(d); b.appendChild(texteBadge); }
+	else { b.appendChild(t); b.appendChild(d); }
 	var pile = document.getElementById("bannieres");
 	if (!pile){ pile = document.createElement("div"); pile.id = "bannieres"; panneau.appendChild(pile); }
 	pile.appendChild(b);
@@ -370,10 +384,45 @@ function radioSOC(texte){
 	radio.classList.add("radio-nouveau");
 }
 
+/* La vitrine des badges, dans le panneau de droite : gagnés en couleur, à gagner en ombre. */
+function montrerBadges(liste){
+	var panneau = document.getElementById("pics"), scene = document.getElementById("scene");
+	if (!panneau || !scene || !liste.length) return false;
+	["carte", "galerie"].forEach(function(id){ var el = document.getElementById(id); if (el) el.parentNode.removeChild(el); });
+	var galerie = document.createElement("div");
+	galerie.id = "galerie";
+	galerie.setAttribute("aria-label", "Tes badges de compétence");
+	var gagnes = liste.filter(function(b){ return b.gagne; }).length;
+	var titre = document.createElement("p");
+	titre.className = "galerie-titre";
+	titre.textContent = "Badges de compétence · " + gagnes + " sur " + liste.length;
+	galerie.appendChild(titre);
+	var grille = document.createElement("div");
+	grille.className = "galerie-grille";
+	liste.forEach(function(b){
+		var tuile = document.createElement("figure");
+		tuile.className = "badge-tuile rang-" + b.rang + (b.gagne ? " badge-gagne" : " badge-cache");
+		tuile.title = b.nom + " (" + b.rang + ")" + (b.gagne ? "" : " : à gagner");
+		var img = document.createElement("img");
+		img.src = sourceImage("./static/img/badge_" + b.id + ".gif");
+		img.alt = b.nom;
+		var nom = document.createElement("figcaption");
+		nom.textContent = b.nom;
+		tuile.appendChild(img); tuile.appendChild(nom);
+		grille.appendChild(tuile);
+	});
+	galerie.appendChild(grille);
+	panneau.insertBefore(galerie, scene);
+	scene.hidden = true;
+	document.getElementById("legende").textContent = "";
+	return true;
+}
+
 /* La carte prend la place de l'image dans le panneau de droite (sur un écran assez large). */
 function montrerCarte(texte){
 	var panneau = document.getElementById("pics"), scene = document.getElementById("scene");
 	if (!panneau || !scene) return false;
+	var galerieOuverte = document.getElementById("galerie"); if (galerieOuverte) galerieOuverte.parentNode.removeChild(galerieOuverte);
 	var carte = document.getElementById("carte");
 	if (!carte){
 		carte = document.createElement("pre");

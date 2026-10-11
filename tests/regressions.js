@@ -536,7 +536,7 @@ var sortieLien = q5.taper("sudo ip link set eth0 up");
 contient(sortieLien, "Badge gagné : Lien physique", "une seule ligne : le badge");
 verifier(sortieLien.indexOf("À retenir") === -1 && sortieLien.indexOf("Radia, au talkie-walkie") === -1, "plus de leçon ni de consigne longue dans le terminal");
 contient(q5.taper("badges"), "couches Physique et Liaison", "badges nomme les couches en toutes lettres");
-contient(q5.taper("badges"), "░ Résolution DNS : à gagner", "les badges à gagner portent leur nom de compétence");
+contient(q5.taper("badges"), "░ Résolution DNS · argent · à gagner", "les badges à gagner portent leur nom de compétence");
 contient(q5.taper("badges dns"), "Résolution DNS", "badges filtre par nom de compétence");
 verifier(q5.taper("badges dns").indexOf("Lien physique") === -1, "badges dns ne montre que la compétence demandée");
 contient(q5.taper("badges reseau"), "RÉSEAU : LA PANNE DE L'ÉCOLE", "badges reseau");
@@ -557,6 +557,12 @@ q6.taper("ssh labo"); q6.taper("less TableauDuLabo");
 var court = q6.taper("pgrep -l -u corbeau"), long = q6.taper("pgrep -a -u corbeau");
 verifier(court.indexOf("corbeau@pts") === -1 && /\d+ sshd/.test(court), "pgrep -l : le nom court du processus");
 contient(long, "sshd: corbeau@pts/1", "pgrep -a : la ligne de commande entière");
+
+// Le badge platine : tous les badges d'un chapitre
+var q7 = nouveauMonde({}, 69);
+solution.slice(0, solution.indexOf("cat ~/CertificatReseau") + 1).forEach(function(c){ q7.jouerSolution(c); });
+verifier(q7.lire("state.has('platine_reseau')") === true, "tous les badges du réseau donnent le badge platine");
+contient(q7.taper("badges reseau"), "Maître du réseau · platine", "le badge platine figure dans badges");
 
 console.log(verifications + " vérifications, " + echecs + " échec" + (echecs > 1 ? "s" : ""));
 process.exit(echecs ? 1 : 0);

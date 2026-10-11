@@ -724,3 +724,36 @@ body.crt #scene, body.crt .intro-titre{
     #couches .voyant{ font-size: 0.7rem; padding: 1px 4px; gap: 4px; }
     #couches .voyant::before{ flex-basis: 6px; height: 6px; }
 }
+
+/* Les badges de compétence : la médaille dans la bannière, et la vitrine du panneau de droite */
+.banniere-badge{ grid-template-columns: 48px 1fr; align-items: center; column-gap: 12px; }
+.banniere-medaille{ width: 48px; height: 48px; image-rendering: pixelated; image-rendering: crisp-edges; }
+.banniere-texte{ display: grid; gap: 2px; }
+.banniere-badge.rang-bronze{ color: #d08a45; }
+.banniere-badge.rang-argent{ color: #c9d1d9; }
+.banniere-badge.rang-or{ color: #f2c94c; }
+.banniere-badge.rang-platine{ color: #a7d8ff; box-shadow: 4px 4px 0 #a7d8ff, 0 0 18px rgba(167, 216, 255, 0.45); }
+.banniere-badge .banniere-titre{ text-transform: none; }
+#galerie{
+    width: 100%;
+    max-width: 624px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    padding: 12px 14px;
+    border: 2px solid #f2f2f2;
+}
+.galerie-titre{ margin: 0 0 10px; color: var(--jaune); font-weight: 700; font-size: 0.85rem; }
+.galerie-grille{ display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 10px 8px; }
+.badge-tuile{ margin: 0; display: grid; justify-items: center; gap: 4px; text-align: center; }
+.badge-tuile img{ width: 56px; height: 56px; image-rendering: pixelated; image-rendering: crisp-edges; }
+.badge-tuile figcaption{ font-size: 0.66rem; line-height: 1.2; color: var(--texte); }
+.badge-cache img{ filter: grayscale(1) brightness(0.35); }
+.badge-cache figcaption{ color: #5a5a5a; }
+.badge-gagne.rang-platine img{ filter: drop-shadow(0 0 6px rgba(167, 216, 255, 0.8)); }
+@media (max-width: 820px){
+    #galerie{ padding: 8px; }
+    .galerie-grille{ grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; }
+    .badge-tuile img{ width: 40px; height: 40px; }
+    .badge-tuile figcaption{ font-size: 0.58rem; }
+}

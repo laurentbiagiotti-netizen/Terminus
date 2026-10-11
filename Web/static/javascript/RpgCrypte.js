@@ -170,6 +170,7 @@ var VERIFIER_MONDE_AVANT_CHASSE = verifierMonde;
 verifierMonde = function(){
 	VERIFIER_MONDE_AVANT_CHASSE();
 	verifierRpgCrypte();
+	verifierPlatines();
 };
 
 /* Le tableau de chasse : étroit, pour tenir dans le panneau de droite. */
@@ -216,7 +217,31 @@ var COUCHES_DU_BADGE = {
 	r_dns: "couche Application", r_dhcp: "couche Application", r_netplan: "couches Physique à Réseau", r_web: "couches Transport et Application",
 	r_https: "couche Présentation", r_smtp: "couche Transport", r_lille: "couche Réseau", r_telnet: "couches Session à Application"
 };
+COMPETENCES.platine_reseau = "Maître du réseau";
+COMPETENCES.platine_cyber = "Chasseur de Corbeau";
+/* Le rang de chaque badge, comme sur un tableau de trophées : bronze, argent, or, et platine pour un chapitre complet. */
+var RANGS_DES_BADGES = {
+	r_osi: "or", r_dns: "argent", r_dhcp: "argent", r_netplan: "argent", r_https: "argent", r_smtp: "argent", r_lille: "argent", r_telnet: "or",
+	c_suid: "argent", c_racine: "or", c_ecoute: "argent", c_journaux: "argent", c_carto: "argent", c_service: "argent", c_compte: "argent",
+	c_sudo: "argent", c_cle: "argent", c_preuves: "argent", c_gpg: "or", c_corbeau: "or", platine_reseau: "platine", platine_cyber: "platine"
+};
+function rangDuBadge(id){ return RANGS_DES_BADGES[id] || "bronze"; }
+function badgeGagne(id){ return /^platine_/.test(id) ? state.has(id) : !!state.quests[id]; }
+function idDuBadge(nom){ for (var k in COMPETENCES){ if (COMPETENCES[k] === nom) return k; } return null; }
 function nomDuBadge(id){ return COMPETENCES[id] || ""; }
+
+/* Tous les badges d'un chapitre gagnés : le badge platine. */
+function verifierPlatines(){
+	if (typeof RELIQUES !== "undefined" && state.has("panneOuverte") && !state.has("platine_reseau") &&
+		Object.keys(RELIQUES).every(function(id){ return state.quests[id]; })){
+		state.set("platine_reseau");
+		if (!state.has("rejeuEnCours")) say(C.jaune("✦ Badge gagné : Maître du réseau") + C.gris(" · platine : tous les badges du réseau · tape badges"));
+	}
+	if (state.has("crypteOuverte") && !state.has("platine_cyber") && Object.keys(TROPHEES_CRYPTE).every(function(id){ return state.quests[id]; })){
+		state.set("platine_cyber");
+		if (!state.has("rejeuEnCours")) say(C.jaune("✦ Badge gagné : Chasseur de Corbeau") + C.gris(" · platine : tous les badges de la chasse · tape badges"));
+	}
+}
 function sansAccent(t){ return String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
 
 /* badges : la collection de badges, et la leçon de chacun. Une commande du jeu, pas de Linux. */
@@ -227,9 +252,11 @@ function texteBadges(quel){
 	if (state.has("panneOuverte") && typeof RELIQUES !== "undefined") Object.keys(RELIQUES).forEach(function(id){
 		tous.push({ id: id, chap: "reseau", nom: COMPETENCES[id], image: RELIQUES[id], couche: COUCHES_DU_BADGE[id] || "", lecon: A_RETENIR[id] || "" });
 	});
+	if (state.has("panneOuverte")) tous.push({ id: "platine_reseau", chap: "reseau", nom: COMPETENCES.platine_reseau, image: "tous les badges du réseau", couche: "", lecon: "Les sept couches, du câble jusqu'au web : tu sais dépanner un réseau de bas en haut." });
 	if (state.has("crypteOuverte")) Object.keys(TROPHEES_CRYPTE).forEach(function(id){
 		tous.push({ id: id, chap: "cyber", nom: COMPETENCES[id], image: TROPHEES_CRYPTE[id][0], couche: "", lecon: TROPHEES_CRYPTE[id][1] });
 	});
+	if (state.has("crypteOuverte")) tous.push({ id: "platine_cyber", chap: "cyber", nom: COMPETENCES.platine_cyber, image: "tous les badges de la chasse", couche: "", lecon: "De la première trace au rapport d'incident : tu sais mener une enquête jusqu'au bout." });
 	// badges reseau, badges cyber, ou un nom de compétence (badges dns, badges sudo...).
 	var choisis = tous.filter(function(b){
 		if (!filtre) return true;
@@ -241,13 +268,15 @@ function texteBadges(quel){
 	[["reseau", "RÉSEAU : LA PANNE DE L'ÉCOLE"], ["cyber", "CYBERSÉCURITÉ : LA CHASSE AU CORBEAU"]].forEach(function(c){
 		var liste = choisis.filter(function(b){ return b.chap === c[0]; });
 		if (!liste.length) return;
-		var gagnes = liste.filter(function(b){ return state.quests[b.id]; }).length;
+		var gagnes = liste.filter(function(b){ return badgeGagne(b.id); }).length;
 		lignes.push("", C.gras(c[1]) + C.gris(" · " + gagnes + " sur " + liste.length));
 		liste.forEach(function(b){
-			if (!state.quests[b.id]){ lignes.push("  " + C.gris("░ " + b.nom + " : à gagner")); return; }
-			lignes.push("  " + C.jaune("✦ " + b.nom) + C.gris(" · " + b.image + (b.couche ? " · " + b.couche : "")), "    " + b.lecon);
+			var rang = rangDuBadge(b.id);
+			if (!badgeGagne(b.id)){ lignes.push("  " + C.gris("░ " + b.nom + " · " + rang + " · à gagner")); return; }
+			lignes.push("  " + C.jaune("✦ " + b.nom) + C.gris(" · " + rang + " · " + b.image + (b.couche ? " · " + b.couche : "")), "    " + b.lecon);
 		});
 	});
+	if (typeof montrerBadges === "function") montrerBadges(choisis.map(function(b){ return { id: b.id, nom: b.nom, rang: rangDuBadge(b.id), gagne: badgeGagne(b.id) }; }));
 	if (!tous.length) lignes.push("", "Pas encore de badge : ils se gagnent dans les chapitres sur le réseau et la cybersécurité, une réparation ou une porte fermée à la fois.");
 	return lignes.join("\n");
 }
