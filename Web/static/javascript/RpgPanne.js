@@ -162,6 +162,7 @@ function lieuxDecouverts(nom, args, hote){
 	if (/\bmail\b|\bMX\b|10\.0\.92\.11\b/.test(texte)) lieux.push("mail");
 	if (["traceroute", "mtr", "iptables", "tracepath", "nft"].indexOf(nom) > -1 || /parefeu|10\.0\.92\.254\b/.test(texte)) lieux.push("parefeu");
 	if (/lille|10\.0\.59\.|10\.0\.92\.248\b/.test(texte)) lieux.push("lille");
+	if (typeof annexeOuverte === "function" && !annexeOuverte()) return lieux;
 	if (hote === "borne" || hote === "portable" || /\bborne\b|10\.0\.94\.1\b|10\.0\.92\.94\b/.test(texte)) lieux.push("borne");
 	if (hote === "switch" || /\bswitch\b|10\.0\.94\.2\b|10\.0\.94\.0\//.test(texte)) lieux.push("switch");
 	if (hote === "affichage" || /affichage|10\.0\.94\.40\b/.test(texte)) lieux.push("affichage");

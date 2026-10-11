@@ -1113,7 +1113,8 @@ function texteSchema(){
 	if (typeof reliquesObtenues === "function"){
 		var r = reliquesObtenues(), total = Object.keys(RELIQUES).length;
 		lignes.push("", C.gras("BADGES : " + r.length + " sur " + total) + C.gris("  (badges : les leçons)"));
-		Object.keys(RELIQUES).filter(function(id){ return state.quests[id]; }).forEach(function(id){ lignes.push("  " + C.jaune("✦ ") + (typeof nomDuBadge === "function" ? nomDuBadge(id) : RELIQUES[id])); });
+		// Les trois derniers gagnés seulement : la liste complète est dans badges.
+		Object.keys(RELIQUES).filter(function(id){ return state.quests[id]; }).slice(-3).forEach(function(id){ lignes.push("  " + C.jaune("✦ ") + (typeof nomDuBadge === "function" ? nomDuBadge(id) : RELIQUES[id])); });
 		if (!r.length) lignes.push(C.gris("  Chaque réparation en rapporte une."));
 	}
 	return lignes.join("\n");

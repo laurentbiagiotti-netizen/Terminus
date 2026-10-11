@@ -1496,7 +1496,7 @@ Shell.sorts.tree = function(args, io){
 Shell.sorts.ps = function(args, io){
 	var lignes = [completerGauche("PID", 5) + " " + completerDroite("UTILISATEUR", 12) + "COMMANDE"];
 	function ligne(pid, proprio, nom){
-		lignes.push(completerGauche(pid, 5) + " " + completerDroite(proprio, 12) + nom);
+		lignes.push(completerGauche(pid, 5) + " " + completerDroite(String(proprio).length > 11 ? String(proprio).substring(0, 10) + "+" : proprio, 12) + nom);
 	}
 	ligne(1, "root", "init");
 	var procs = Shell.procsDeLHote().map(function(e){ return e.proc; }).sort(function(a, b){ return a.pid - b.pid; });
@@ -1623,14 +1623,24 @@ Shell.sorts.logout = function(args, io){
 };
 
 Shell.sorts.help = function(args, io){
-	var connus = state.knownSpells();
-	var lignes = [C.gras("Tes sorts (" + connus.length + " sur " + tousLesSorts().length + ") :")];
+	var tous = state.knownSpells(), connus = tous, choix = (args[0] || "").toLowerCase();
+	// Au-delà du chapitre 1, help ne montre que les sorts du chapitre en cours : 150 lignes d'un coup, c'est illisible.
+	var enCours = typeof state.chapitreEnCours === "function" ? state.chapitreEnCours() : 1;
+	var interne = { "1": 1, "2": 3, "3": 2 }[choix];
+	if (choix !== "tout" && choix !== "all" && (interne || enCours !== 1)){
+		var chap = interne || enCours;
+		connus = tous.filter(function(s){ return chapitreDuSort(s) === chap; });
+	}
+	var titre = connus.length === tous.length ? "Tes sorts (" + tous.length + " sur " + tousLesSorts().length + ") :" :
+		"Tes sorts du chapitre " + numeroAffiche(interne || enCours) + " (" + connus.length + ") :";
+	var lignes = [C.gras(titre)];
 	for (var i = 0; i < connus.length; i++){
 		var nomSort = connus[i];
 		lignes.push(nomSort.length < 12 ? "  " + C.vert(completerDroite(nomSort, 12)) + MANUEL[nomSort].resume :
 			"  " + C.vert(nomSort) + "\n" + "              " + MANUEL[nomSort].resume);
 	}
 	lignes.push("");
+	if (connus.length < tous.length) lignes.push("", C.gris("Et " + (tous.length - connus.length) + " autres sorts appris dans les autres chapitres : help 1, help 2, help 3, ou help tout."));
 	lignes.push("Pour le détail d'un sort : " + C.vert("man SORT") + " (par exemple man ls).");
 	lignes.push("");
 	lignes.push(C.gras("Les commandes du JEU") + C.gris(" (elles n'existent pas sous Linux : elles t'aident seulement à jouer)"));
@@ -1753,6 +1763,7 @@ Shell.ouApprendre = function(sort){
 			var parent = lieu.parents[0];
 			if (lieu.chapitre === 2 && !state.has("crypteOuverte")) return "Il s'apprend au chapitre 3, sous la Citadelle.";
 			if (lieu.chapitre === 3 && !state.has("panneOuverte")) return "Il s'apprend au chapitre 2, pendant la panne du réseau de l'école.";
+			if (typeof SORTS_ANNEXE !== "undefined" && SORTS_ANNEXE.indexOf(sort) > -1 && !annexeOuverte()) return "Il s'apprend plus tard dans la panne, à l'Annexe, une fois le bâtiment B réparé.";
 			if (lieu === current_room) return "Il s'apprend ici même, " + (lieu.items[i].person ? "auprès de " : "en lisant ") + lieu.items[i].itemname +
 				" : cat " + lieu.items[i].itemname;
 			var machine = typeof racineDe === "function" ? racineDe(lieu) : null;

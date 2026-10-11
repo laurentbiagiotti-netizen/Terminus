@@ -69,7 +69,7 @@ Shell.sorts.ping = function(args, io){
 			lignes.push("64 octets de " + (t.nom && !ipValide(cible) ? t.nom : r.ip) + " (" + r.ip + ") : icmp_seq=" + k + " ttl=" + (65 - t.sauts.length) + " temps=" + temps + " ms");
 			recus++;
 		} else if (t.erreur === "hote"){
-			lignes.push("Depuis " + (adressePoste() || ipDeHote(ici)) + " icmp_seq=" + k + " Hôte de destination injoignable");
+			lignes.push("Depuis " + ((ici === "poste-b" ? adressePoste() : null) || ipDeHote(ici)) + " icmp_seq=" + k + " Hôte de destination injoignable");
 		}
 	}
 	lignes.push("", "--- statistiques ping " + nom + " ---",
@@ -370,7 +370,7 @@ Shell.sorts.hostnamectl = function(args, io){
 	return " Static hostname: " + h + "\n       Icon name: computer-" + chassis + "\n         Chassis: " + chassis + "\n      Machine ID: " + id + "\n" +
 		"         Boot ID: " + sha256("boot-" + h + "-" + (state.panne.demarrages || 0)).substring(0, 32) + "\n" +
 		(chassis === "vm" ? "  Virtualization: kvm\n" : "") +
-		"Operating System: Debian GNU/Linux 12 (bookworm)\n          Kernel: Linux " + (info.noyau || "6.1.0-cybersup") + "\n    Architecture: x86-64";
+		"Operating System: Debian GNU/Linux 12 (bookworm)\n          Kernel: Linux " + (info.noyau || "6.1.0-cybersup") + "\n    Architecture: " + (/arm64/.test(info.noyau || "") ? "arm64" : "x86-64");
 };
 
 Shell.sorts.nmcli = function(args, io){
@@ -1285,12 +1285,13 @@ Shell.sorts.wget = function(args, io){
 	var nom = sortie || r.chemin.split("/").pop() || "index.html";
 	lignes.push("Résolution de " + hoteUrl + " (" + hoteUrl + ")… " + r.ip, "Connexion à " + hoteUrl + " (" + hoteUrl + ")|" + r.ip + "|:" + r.port + "… connecté.",
 		"requête HTTP transmise, en attente de la réponse… " + r.code + (r.code === 200 ? " OK" : " Not Found"));
-	GameEvents.fire({ type: "wget", ok: r.code === 200, hote: r.hote, chemin: r.chemin });
 	if (r.code !== 200){
+		GameEvents.fire({ type: "wget", ok: false, hote: r.hote, chemin: r.chemin });
 		lignes.push(horodatage + " ERREUR " + r.code + " : Not Found.");
 		throw new ShellError(lignes.join("\n"));
 	}
 	Shell.ecrire(nom, r.corps, false);
+	GameEvents.fire({ type: "wget", ok: true, hote: r.hote, chemin: r.chemin });
 	lignes.push("Taille : " + r.taille + " [" + r.type + "]", "Sauvegarde en : « " + nom + " »", "",
 		completerDroite(nom, 20) + "100%[===================>]  " + completerGauche(r.taille, 6) + "  --.-KB/s    ds 0s", "",
 		horodatage + " (1,2 MB/s) - « " + nom + " » sauvegardé [" + r.taille + "/" + r.taille + "]");

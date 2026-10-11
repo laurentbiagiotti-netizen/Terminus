@@ -195,7 +195,7 @@ function texteTraque(){
 	});
 	var t = Object.keys(TROPHEES_CRYPTE).filter(function(id){ return state.quests[id]; });
 	lignes.push("", C.gras("BADGES : " + t.length + " sur " + Object.keys(TROPHEES_CRYPTE).length) + C.gris("  (badges : les leçons)"));
-	t.forEach(function(id){ lignes.push("  " + C.jaune("✦ ") + nomDuBadge(id)); });
+	t.slice(-3).forEach(function(id){ lignes.push("  " + C.jaune("✦ ") + nomDuBadge(id)); });
 	if (!t.length) lignes.push(C.gris("  Chaque étape franchie en rapporte un."));
 	return lignes.join("\n");
 }
@@ -280,8 +280,10 @@ function texteBadges(quel){
 	[["reseau", "RÉSEAU : LA PANNE DE L'ÉCOLE"], ["cyber", "CYBERSÉCURITÉ : LA CHASSE AU CORBEAU"]].forEach(function(c){
 		var liste = choisis.filter(function(b){ return b.chap === c[0]; });
 		if (!liste.length) return;
-		var gagnes = liste.filter(function(b){ return badgeGagne(b.id); }).length;
-		lignes.push("", C.gras(c[1]) + C.gris(" · " + gagnes + " sur " + liste.length));
+		// Le même compte que schema et traque : les badges d'étape ; le platine vient en plus.
+		var etapes = liste.filter(function(b){ return !/^platine_/.test(b.id); });
+		var gagnes = etapes.filter(function(b){ return badgeGagne(b.id); }).length;
+		lignes.push("", C.gras(c[1]) + C.gris(" · " + gagnes + " sur " + etapes.length + (etapes.length < liste.length ? ", plus le platine" : "")));
 		liste.forEach(function(b){
 			var rang = rangDuBadge(b.id);
 			if (!badgeGagne(b.id)){ lignes.push("  " + C.gris("░ " + b.nom + " · " + rang + " · à gagner")); return; }

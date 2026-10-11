@@ -565,5 +565,23 @@ solution.slice(0, solution.indexOf("cat ~/CertificatReseau") + 1).forEach(functi
 verifier(q7.lire("state.has('platine_reseau')") === true, "tous les badges du réseau donnent le badge platine");
 contient(q7.taper("badges reseau"), "Maître du réseau · platine", "le badge platine figure dans badges");
 
+
+// Audit : l'Annexe reste fermée avant son heure, la zone suit named, wget ne valide qu'un fichier écrit
+var q8 = nouveauMonde({}, 71);
+jouerJusqua(q8, "sudo systemctl enable --now isc-dhcp-server");
+contient(q8.taper("ssh borne"), "Could not resolve", "la borne reste fermée tant que l'Annexe ne l'est pas");
+var q9 = nouveauMonde({}, 72);
+jouerJusqua(q9, "sudo systemctl reload named");
+verifier(q9.lire("state.quests.r_zone") === true, "zone rechargée");
+q9.taper("sudo systemctl stop named");
+verifier(q9.lire("pannesAnnexe().join(' ')").indexOf("zone DNS") > -1, "named arrêté : la zone de l'Annexe compte comme une panne");
+q9.taper("sudo systemctl start named");
+var q10 = nouveauMonde({}, 73);
+q10.taper("chapitre 2", "oui");
+["cat Radia", "cat SacocheDeRadia", "cd Poste", "cat AideMemoire"].forEach(function(c){ q10.taper(c); });
+q10.taper("cd /var/log");
+q10.taper("wget http://intranet/planning.txt");
+verifier(!q10.lire("state.quests.s_r_wget"), "wget sans pouvoir écrire ne valide pas la quête");
+
 console.log(verifications + " vérifications, " + echecs + " échec" + (echecs > 1 ? "s" : ""));
 process.exit(echecs ? 1 : 0);

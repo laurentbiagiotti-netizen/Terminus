@@ -118,6 +118,8 @@ function depuisPortable(){
 }
 function refusAnnexe(nom){
 	return function(){
+		if (!annexeOuverte()) return "ssh : Could not resolve hostname " + nom + ": Name or service not known\n" +
+			C.gris("(Cette machine est à l'Annexe : Radia t'y enverra une fois le bâtiment B réparé.)");
 		if (depuisPosteB() || depuisPortable()) return null;
 		return "ssh : connect to host " + nom + " port 22 : Connection timed out\n" +
 			C.gris("(Les équipements de l'Annexe s'administrent depuis le Poste du BatimentB ou depuis le Portable de l'Annexe.)");
@@ -357,7 +359,7 @@ chercherZone = function(nom, type){
 	var court = nomCourt(nom), seul = court.replace(/\.annexe$/, "");
 	var an = annexe();
 	if ((type || "A") === "A" && (/\.annexe$/.test(court) || seul === "affichage")){
-		return an.zone && an.zoneValeurs[seul] ? [an.zoneValeurs[seul]] : [];
+		return an.zone && HOTES.routeur.services.named.actif && an.zoneValeurs[seul] ? [an.zoneValeurs[seul]] : [];
 	}
 	return CHERCHER_ZONE_AVANT_ANNEXE(nom, type);
 };
@@ -939,7 +941,8 @@ Shell.sorts.nethogs = function(args, io){
 	if (glouton) lignes.push(completerGauche(PID_SYNCHRO, 7) + " affichage  synchro-videos    148,3   11842,7");
 	var sshd = (HOTES[h] && HOTES[h].services && HOTES[h].services.sshd) ? HOTES[h].services.sshd.pid : null;
 	if (sshd && Shell.pile_ssh.length) lignes.push(completerGauche(sshd, 7) + " root       sshd                0,4       0,1");
-	lignes.push("      ? root       unknown TCP         0,0       0,0", "", "  TOTAL                           " + (glouton ? "148,7   11842,8" : "  0,4       0,1"));
+	var avecSshd = !!(sshd && Shell.pile_ssh.length);
+	lignes.push("      ? root       unknown TCP         0,0       0,0", "", "  TOTAL                           " + (glouton ? "148,7   11842,8" : (avecSshd ? "  0,4       0,1" : "  0,0       0,0")));
 	if (io.tty) lignes.push(C.gris(h === "affichage" && synchroActive() ? "(Près de 12 Mo par seconde, soit environ 95 Mbit/s, pour un seul programme : synchro-videos. C'est un service : systemctl status synchro-videos.)" :
 		"(Le vrai nethogs est interactif, q le quitte. Il montre le trafic de CETTE machine, programme par programme.)"));
 	GameEvents.fire({ type: "nethogs", host: h, glouton: h === "affichage" && synchroActive() });
@@ -1097,6 +1100,35 @@ Shell.sorts.iperf3 = function(args, io){
 	if (io.tty) lignes.push(C.gris(lent ? "(3 Mbit/s en Wi-Fi 5 : presque rien. Quelque chose avale le débit de l'Annexe. La borne voit tout ce qui passe : sudo iftop, sur elle.)" : "(Près de 300 Mbit/s : un bon Wi-Fi, partagé entre tous ceux qui sont connectés.)"));
 	GameEvents.fire({ type: "iperfAnnexe", lent: lent });
 	return lignes.join("\n");
+};
+
+/* arping dans l'Annexe : les voisins de la même rue répondent. */
+var PORTEUR_AVANT_ANNEXE = porteurSurLeCable;
+porteurSurLeCable = function(h, ip){
+	if (dansReseau(ip, RESEAU_ANNEXE) && ["portable", "borne", "switch", "affichage"].indexOf(h) > -1){
+		if (!presentDansAnnexe(ip) || ip === HOTES[h].ip || (h === "borne" && ip === IP_BORNE)) return null;
+		if (ip === IP_BORNE) return MAC_BORNE_WIFI;
+		if (ip === annexe().adresse) return MAC_PORTABLE;
+		return macDe(ip);
+	}
+	return PORTEUR_AVANT_ANNEXE(h, ip);
+};
+/* ethtool sur une carte Wi-Fi : pas de câble à ausculter. */
+var ETHTOOL_AVANT_ANNEXE = Shell.sorts.ethtool;
+Shell.sorts.ethtool = function(args, io){
+	var carte = args.filter(function(a){ return a.charAt(0) !== "-"; })[0];
+	if (carte === "wlan0" && (Shell.hote() === "portable" || Shell.hote() === "borne")){
+		var up = interfacesDe(Shell.hote()).filter(function(i){ return i.nom === "wlan0"; })[0].up;
+		return "Settings for wlan0:\n\tLink detected: " + (up ? "yes" : "no") + (io.tty ? "\n" + C.gris("(Une carte Wi-Fi n'a pas de câble : ethtool en dit peu. iw dev wlan0 link donne le signal et la vitesse.)") : "");
+	}
+	return ETHTOOL_AVANT_ANNEXE(args, io);
+};
+/* resolvectl : la bonne carte, sur les machines de l'Annexe. */
+var RESOLVECTL_AVANT_ANNEXE = Shell.sorts.resolvectl;
+Shell.sorts.resolvectl = function(args, io){
+	var sortie = RESOLVECTL_AVANT_ANNEXE(args, io), h = Shell.hote();
+	var carte = { portable: "wlan0", borne: "eth0", switch: "br0", affichage: "eth0" }[h];
+	return carte ? String(sortie).replace(/Link 2 \(eth0\)/g, "Link 2 (" + carte + ")") : sortie;
 };
 
 /* ------------------------------------------------------------------ */
@@ -1268,7 +1300,7 @@ function verifierAnnexe(){
 	if (an.ssid === SSID_BON && an.wlan) state.complete("r_ssid");
 	if (an.ssid === SSID_BON && an.adresse && dansReseau(an.adresse, RESEAU_ANNEXE)) state.complete("r_plan");
 	if (an.forward) state.complete("r_forward");
-	if (an.zone) state.complete("r_zone");
+	if (an.zone && HOTES.routeur.services.named.actif) state.complete("r_zone");
 	if (an.ports[7]) state.complete("r_prise");
 	var synchro = servicePanne("affichage", "synchro-videos");
 	if (!synchro.actif && !synchro.auto) state.complete("r_debit");
@@ -1281,7 +1313,7 @@ function pannesAnnexe(){
 	else if (an.ssid !== SSID_BON) l.push("le portable de l'Annexe n'est pas sur le vrai Wi-Fi");
 	if (!dhcpBorneActif()) l.push("la Source de l'Annexe (le DHCP de la borne) est arrêtée");
 	if (!an.forward) l.push("la borne ne fait plus passer les paquets");
-	if (!an.zone) l.push("la zone DNS de l'Annexe n'est pas chargée");
+	if (!an.zone || !HOTES.routeur.services.named.actif) l.push("la zone DNS de l'Annexe n'est pas chargée (named, sur le routeur)");
 	if (!an.ports[7]) l.push("le port de l'écran (port7) est éteint");
 	if (an.ports[8]) l.push("la prise du couloir (port8) est ouverte : elle doit rester coupée");
 	var s = servicePanne("affichage", "synchro-videos");

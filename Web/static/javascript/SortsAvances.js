@@ -352,7 +352,7 @@ Shell.sorts.top = function(args, io){
 		completerGauche("PID", 5) + " " + completerDroite("UTILISATEUR", 12) + completerGauche("%CPU", 6) + "  COMMANDE"
 	];
 	for (var j = 0; j < procs.length; j++){
-		var ligne = completerGauche(procs[j].pid, 5) + " " + completerDroite(procs[j].owner, 12) +
+		var ligne = completerGauche(procs[j].pid, 5) + " " + completerDroite(String(procs[j].owner).length > 11 ? String(procs[j].owner).substring(0, 10) + "+" : procs[j].owner, 12) +
 			completerGauche(procs[j].cpu.toFixed(1).replace(".", ","), 6) + "  " + procs[j].name;
 		lignes.push(io.tty && procs[j].cpu >= 50 ? C.rouge(ligne) : ligne);
 	}
