@@ -1016,7 +1016,7 @@ Chaque sort que tu lances t'apprend quelque chose et éclaire un bout de la cart
 Le Poste de garde est là, derrière le comptoir : cd Poste, et tu es devant. Lance d'abord l'Œil du Réseau, ip link : il montre les portes du poste. \
 Regarde si eth0 (sa porte principale) porte le mot UP. Le Stéthoscope, ethtool eth0, te dira si le câble est vivant, et le Miroir des Noms, hostnamectl, sur quelle machine tu es.\n\n\
 Ma SacocheDeRadia est ouverte sur le comptoir : d'autres sorts de terrain, quand tu voudras. Et le Poste cache un GrimoireDesAnciens dans son tiroir.\n\n\
-Le Lexique, sur l'armoire, donne pour chaque image le vrai mot du métier. Et tape schema quand tu veux : la carte du royaume, en vert ce qui marche, en rouge ce qui est en panne, et la brume sur ce que tu n'as pas encore exploré. \
+Le Lexique, sur l'armoire, donne pour chaque image le vrai mot du métier. Et tape schema quand tu veux : ce n'est pas une commande Linux, c'est une commande du jeu (comme quetes ou xp) qui dessine la carte du royaume, en vert ce qui marche, en rouge ce qui est en panne, et la brume sur ce que tu n'as pas encore exploré. \
 Je reste en ligne au talkie-walkie. »";
 		case "r_ip": return debut + NOTIONS.r_ip + "\n\n" + TALKIE.r_ip + " »";
 		case "r_passerelle": return debut + NOTIONS.r_passerelle + "\n\n" + TALKIE.r_passerelle + " »";
@@ -1081,6 +1081,7 @@ function texteSchema(){
 	var relie = v.lien && v.adresse && v.route;
 	var lignes = [
 		C.gras("CARTE DU ROYAUME DE CYBERSUP"),
+		C.jaune("commande du jeu, pas Linux (man schema)"),
 		C.gris("vert : ça marche · rouge : en panne"),
 		C.gris("░ : pas encore exploré (lance des sorts)"),
 		"",

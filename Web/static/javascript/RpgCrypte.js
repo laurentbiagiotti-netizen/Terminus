@@ -106,7 +106,7 @@ function chasseRpg(){
 		r.toutRevele = true;
 		var nouvelles = LIEUX_CHASSE.filter(function(l){ return !r.carte[l.cle]; }).length;
 		LIEUX_CHASSE.forEach(function(l){ r.carte[l.cle] = true; });
-		if (nouvelles && !state.has("rejeuEnCours")) say(C.jaune("✦ Traque : ") + "la Lanterne a tout éclairé, " + nouvelles + " machines sortent de la brume d'un coup." + C.gris(" traque pour voir ton tableau de chasse."));
+		if (nouvelles && !state.has("rejeuEnCours")) say(C.jaune("✦ Traque : ") + "la Lanterne a tout éclairé, " + nouvelles + " machines sortent de la brume d'un coup." + C.gris(" traque (commande du jeu) pour voir ton tableau de chasse."));
 	}
 	return r;
 }
@@ -119,7 +119,7 @@ function revelerMachine(cle){
 	if (r.carte[cle]) return;
 	r.carte[cle] = true;
 	var l = LIEUX_CHASSE.filter(function(x){ return x.cle === cle; })[0];
-	if (l && !state.has("rejeuEnCours")) say(C.jaune("✦ Traque : ") + l.nom + " (" + cle + ") sort de la brume." + C.gris(" traque pour voir ton tableau de chasse."));
+	if (l && !state.has("rejeuEnCours")) say(C.jaune("✦ Traque : ") + l.nom + " (" + cle + ") sort de la brume." + C.gris(" traque (commande du jeu) pour voir ton tableau de chasse."));
 }
 
 /* Les machines qu'un sort nomme : dans ses arguments, ou dans ce qu'il a affiché. */
@@ -162,7 +162,7 @@ function verifierRpgCrypte(){
 		if (!state.quests[id] || r.trophees[id]) return;
 		r.trophees[id] = true;
 		if (state.has("rejeuEnCours")) return;
-		say(C.jaune("✦ Trophée de chasse : " + TROPHEES_CRYPTE[id][0] + ".") + C.gris(" (traque pour voir ton tableau)"));
+		say(C.jaune("✦ Trophée de chasse : " + TROPHEES_CRYPTE[id][0] + ".") + C.gris(" (traque, commande du jeu, pour voir ton tableau)"));
 		say(C.cyan("À retenir : ") + TROPHEES_CRYPTE[id][1]);
 	});
 }
@@ -175,7 +175,7 @@ verifierMonde = function(){
 /* Le tableau de chasse : étroit, pour tenir dans le panneau de droite. */
 function texteTraque(){
 	var r = chasseRpg(), ici = Shell.hote();
-	var lignes = [C.gras("TABLEAU DE CHASSE AU CORBEAU"), C.gris("rouge : souillé · vert : purifié"), C.gris("░ : pas encore traqué (lance des sorts)"), ""];
+	var lignes = [C.gras("TABLEAU DE CHASSE AU CORBEAU"), C.jaune("commande du jeu, pas Linux (man traque)"), C.gris("rouge : souillé · vert : purifié"), C.gris("░ : pas encore traqué (lance des sorts)"), ""];
 	LIEUX_CHASSE.forEach(function(l){
 		if (!r.carte[l.cle]){ lignes.push("  " + C.gris("░░░░░░░░░░  dans la brume")); return; }
 		var faites = l.etapes.filter(function(id){ return state.quests[id]; }).length, total = l.etapes.length;

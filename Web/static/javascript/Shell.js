@@ -86,6 +86,26 @@ function say(texte){
 }
 
 /* Sorts toujours disponibles : ce sont des commandes du jeu, pas de Linux. */
+var COMMANDES_DU_JEU = [
+	["quetes", "ton journal de quêtes"], ["indice", "un coup de pouce quand tu es bloqué (les paliers payants coûtent des points)"],
+	["xp", "ton expérience et ta note"], ["bulletin", "ton relevé de compétences"], ["succes", "tes succès"], ["chrono", "ton temps de jeu, étape par étape"],
+	["chapitre", "les chapitres"], ["carte", "la carte des lieux visités"], ["schema", "la carte du réseau de l'école (chapitre 2)"],
+	["traque", "ton tableau de chasse au Corbeau (chapitre 3)"], ["son", "le son"], ["crt on/off", "le vieil écran"],
+	["logout", "fermer ta session (ta partie reste dans ton compte)"], ["recommencer", "repartir de zéro, avec le même compte"]];
+/* Le manuel des commandes du jeu : on dit franchement qu'elles ne sont pas de Linux. */
+var MANUEL_DU_JEU = {
+	schema: "schema n'est PAS une commande Linux : c'est une commande du jeu, comme quetes ou xp.\n" +
+		"Elle dessine le réseau de l'école pendant la panne (chapitre 2) : en vert ce qui marche, en rouge ce qui est en panne,\n" +
+		"et dans la brume ce que tu n'as pas encore exploré.\n\n" +
+		"Sur un vrai Linux, personne ne te dessine le réseau : tu le reconstitues toi-même avec les vraies commandes,\n" +
+		"ip a (ton adresse), ip r (tes routes), ping (qui répond), dig (les noms), traceroute (le chemin).",
+	traque: "traque n'est PAS une commande Linux : c'est une commande du jeu, comme quetes ou xp.\n" +
+		"Elle affiche ton tableau de chasse au Corbeau (chapitre 3) : chaque machine de l'école, en rouge si le Corbeau\n" +
+		"y a encore laissé quelque chose, en vert si tu l'as nettoyée, et les trophées gagnés.\n\n" +
+		"Dans la vraie vie, un analyste tient ce tableau lui-même, dans un fichier ou un ticket d'incident : la liste des\n" +
+		"machines touchées, ce qui a été trouvé, ce qui a été corrigé. Les vraies commandes, ce sont celles qui le remplissent :\n" +
+		"nmap, who, last, ss, sha256sum, find..."
+};
 var SORTS_DU_JEU = ["quetes", "indice", "chapitre", "xp", "score", "bulletin", "succes", "chrono", "son", "crt", "carte", "schema", "recommencer", "logout", "sorts", "aide"];
 
 /* Vraies commandes Linux absentes de ce monde : on le dit gentiment. */
@@ -1610,10 +1630,9 @@ Shell.sorts.help = function(args, io){
 	}
 	lignes.push("");
 	lignes.push("Pour le détail d'un sort : " + C.vert("man SORT") + " (par exemple man ls).");
-	lignes.push("Ton journal de quêtes : " + C.vert("quetes") + ". Ton expérience et ta note : " + C.vert("xp") + ". Ton relevé de compétences : " + C.vert("bulletin") + ".");
-	lignes.push("Bloqué ? " + C.vert("indice") + " donne un coup de pouce, de plus en plus précis (les paliers payants coûtent des points sur la note).");
-	lignes.push("Tes succès : " + C.vert("succes") + ". Ton temps de jeu, étape par étape : " + C.vert("chrono") + ". Les chapitres : " + C.vert("chapitre") + ". Le son : " + C.vert("son") + ". La carte des lieux visités : " + C.vert("carte") + ". Le schéma du réseau (chapitre 2) : " + C.vert("schema") + ". Le vieil écran : " + C.vert("crt on") + " ou " + C.vert("crt off") + ".");
-	lignes.push("Fermer ta session (ta partie reste dans ton compte) : " + C.vert("logout") + ". Repartir de zéro, avec le même compte : " + C.vert("recommencer") + ".");
+	lignes.push("");
+	lignes.push(C.gras("Les commandes du JEU") + C.gris(" (elles n'existent pas sous Linux : elles t'aident seulement à jouer)"));
+	COMMANDES_DU_JEU.forEach(function(c){ lignes.push("  " + C.jaune(completerDroite(c[0], 12)) + c[1]); });
 	lignes.push(C.gris("Astuces : la touche Tab complète les noms, la flèche du haut rappelle tes derniers sorts."));
 	return lignes.join("\n");
 };
@@ -1638,6 +1657,8 @@ Shell.sorts.man = function(args, io){
 	if (MANUEL[sort]){
 		return "Le vieil homme reste silencieux. « Chaque chose en son temps », semble dire le vent. (Tu ne connais pas encore le sort " + sort + ".)";
 	}
+	if (MANUEL_DU_JEU[sort]) return C.jaune("Commande du jeu") + "\n\n" + MANUEL_DU_JEU[sort];
+	if (SORTS_DU_JEU.indexOf(sort) > -1) return sort + " n'est pas une commande Linux : c'est une commande du jeu. aide les liste toutes.";
 	return "Il n'y a pas de page de manuel pour « " + sort + " ».";
 };
 
