@@ -405,32 +405,74 @@ function demanderLoginApres(essai){
 	});
 }
 
-function creerNouveauCompte(prenom, id){
-	term.echo("\nNouvel utilisateur : " + C.vert(id) + "\n" +
-		C.gris("Choisis un mot de passe (4 caractères au moins). Il te servira à retrouver ta partie : retiens-le."));
-	term.demander("Nouveau mot de passe : ", true, function(premier){
+/*
+ * Un identifiant inconnu : on crée l'utilisateur comme le ferait adduser sur une Debian,
+ * messages compris. Le mot de passe ne s'affiche pas pendant la frappe, comme dans un vrai terminal.
+ */
+function creerNouveauCompte(login, id){
+	var uid = 1000 + Object.keys(lireComptes()).length + 1;
+	term.echo("\n" + C.gris("(Nouvel utilisateur : le jeu le crée comme le fait la commande adduser sous Linux.)") + "\n" +
+		"Adding user `" + id + "' ...\n" +
+		"Adding new group `" + id + "' (" + uid + ") ...\n" +
+		"Adding new user `" + id + "' (" + uid + ") with group `" + id + "' ...\n" +
+		"Creating home directory `/home/" + id + "' ...\n" +
+		"Copying files from `/etc/skel' ...");
+	demanderNouveauMotDePasse(login, id);
+}
+
+function demanderNouveauMotDePasse(login, id){
+	term.demander("New password: ", true, function(premier){
 		if (String(premier).length < 4){
-			term.echo(C.jaune("Trop court : 4 caractères au moins."));
-			creerNouveauCompte(prenom, id);
+			term.echo("BAD PASSWORD: The password is shorter than 4 characters");
+			demanderNouveauMotDePasse(login, id);
 			return;
 		}
-		term.demander("Retape le mot de passe : ", true, function(second){
+		term.demander("Retype new password: ", true, function(second){
 			if (second !== premier){
-				term.echo(C.jaune("Les deux mots de passe ne sont pas identiques. On recommence."));
-				creerNouveauCompte(prenom, id);
+				term.echo("Sorry, passwords do not match.\npasswd: Authentication token manipulation error\npasswd: password unchanged\n" +
+					C.gris("(Les deux saisies doivent être identiques. On recommence.)"));
+				demanderNouveauMotDePasse(login, id);
 				return;
 			}
-			nouvellePartie(prenom, premier);
+			term.echo("passwd: password updated successfully\n" +
+				"Changing the user information for " + id + "\n" +
+				"Enter the new value, or press ENTER for the default");
+			demanderInformations(login, id, premier);
 		});
 	});
 }
 
-function nouvellePartie(prenom, motDePasse){
+/* Les questions de adduser : le nom complet sert sur le diplôme, les autres sont là pour l'ambiance. */
+function demanderInformations(login, id, motDePasse){
+	var champs = ["Full Name", "Room Number", "Work Phone", "Home Phone", "Other"];
+	var valeurs = {};
+	(function suivant(i){
+		if (i < champs.length){
+			term.demander("\u00a0\u00a0\u00a0\u00a0" + champs[i] + " []: ", false, function(reponse){
+				valeurs[champs[i]] = String(reponse).trim().substring(0, 30);
+				suivant(i + 1);
+			});
+			return;
+		}
+		term.demander("Is the information correct? [Y/n] ", false, function(reponse){
+			if (/^n/i.test(String(reponse).trim())){ demanderInformations(login, id, motDePasse); return; }
+			nouvellePartie(login, motDePasse, valeurs["Full Name"]);
+		});
+	})(0);
+}
+
+function nouvellePartie(prenom, motDePasse, nomComplet){
 	var identifiant = adopterPrenom(prenom);
-	if (motDePasse !== undefined && creerCompte(prenom, motDePasse) === null){
+	if (nomComplet){
+		// Le nom complet de adduser est celui qui figure sur le diplôme ; l'identifiant reste celui du login.
+		PROFIL.prenom = nomComplet;
+		state.nom = nomComplet;
+		enregistrerProfil();
+	}
+	if (motDePasse !== undefined && creerCompte(prenom, motDePasse, nomComplet) === null){
 		term.echo(C.jaune("Impossible d'enregistrer ton compte sur cet ordinateur : la partie se joue quand même, mais ne sera pas retenue."));
 	}
-	term.echo("\nCompte créé. Enchanté, " + C.gras(PROFIL.prenom) + ". Sur ce système, tu seras " + C.vert(identifiant) +
+	term.echo("\nBienvenue, " + C.gras(PROFIL.prenom) + ". Sur ce système, tu es " + C.vert(identifiant) +
 		C.gris(" (c'est ce que répondra le sort whoami)") + ".\n");
 	state.save();
 	demanderParcours();

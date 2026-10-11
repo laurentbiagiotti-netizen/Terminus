@@ -603,3 +603,7 @@ body.crt #scene, body.crt .intro-titre{
 @media (prefers-reduced-motion: reduce){
     .revelation-scene, .revelation-brouille .revelation-scene img, .revelation-brouille .revelation-nom{ animation: none; }
 }
+
+/* Un mot de passe ne s'affiche pas pendant la frappe, comme dans un vrai terminal */
+#saisie.masque{ color: transparent; text-shadow: none; caret-color: var(--vert-clair); }
+#saisie.masque::selection{ background: transparent; }

@@ -307,6 +307,8 @@ Terminal.prototype.demander = function(texte, masque, rappel){
 	this.question = { rappel: rappel, masque: !!masque, texte: texte };
 	this.invite.innerHTML = ansiVersHTML(texte);
 	this.saisie.type = masque ? "password" : "text";
+	// Comme dans un vrai terminal, un mot de passe ne s'affiche pas du tout pendant la frappe.
+	this.saisie.classList.toggle("masque", !!masque);
 	this.saisie.value = "";
 	this.saisie.focus();
 };
@@ -318,6 +320,7 @@ Terminal.prototype.valider = function(){
 		var q = this.question;
 		this.question = null;
 		this.saisie.type = "text";
+		this.saisie.classList.remove("masque");
 		this.echo(q.texte + (q.masque ? "" : ligne));
 		this.invite.innerHTML = ansiVersHTML(this.texteInvite);
 		q.rappel(ligne);
