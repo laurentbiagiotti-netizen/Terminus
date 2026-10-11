@@ -58,6 +58,8 @@ html, body{
     font-size: 0.85rem;
     color: var(--vert-clair);
     white-space: nowrap;
+    flex-wrap: wrap;
+    row-gap: 6px;
 }
 #etat-niveau{ font-weight: 700; }
 #etat-barre{
@@ -76,7 +78,7 @@ html, body{
 #etat-barre .case.demie{ background: linear-gradient(to right, var(--vert) 50%, #161616 50%); }
 #etat-barre .case.allumee{ animation: case-allumee 600ms steps(3) 1; }
 @keyframes case-allumee{ 0%{ background: #ffffff; } }
-#etat-xp{ color: var(--texte); }
+#etat-xp{ color: var(--texte); margin-left: auto; }
 #scene{
     flex: 0 1 auto;
     min-height: 0;
