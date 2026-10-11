@@ -167,13 +167,16 @@ var SudoersCitadelle = fichier(CitadelleEtc, "sudoers",
 	"%sudo ALL=(ALL:ALL) ALL\n" +
 	"corbeau ALL=(ALL) NOPASSWD: ALL", { mode: "r--r-----", age: 0, heure: HEURE_PREMIERE });
 fichier(CitadelleEtc, "ProcedureComptes",
-	"PROCÉDURE : NETTOYER LES COMPTES APRÈS UNE INTRUSION (fiche d'Evi)\n\n" +
-	"1. Chercher les comptes qui ont l'UID 0 : ce sont tous des root.\n   awk -F: '$3 == 0 { print $1 }' /etc/passwd\n   Un seul doit sortir : root. Tout autre est un compte caché.\n" +
-	"2. Le supprimer : sudo userdel NOM\n" +
-	"3. Vérifier qui a le droit sudo : on peut l'avoir par le groupe sudo (groups NOM), ou par une ligne à son nom dans sudoers.\n" +
-	"4. Le retirer du groupe sudo : sudo gpasswd -d NOM sudo   (sur les systèmes récents, sudo usermod -rG sudo NOM marche aussi)\n" +
-	"5. Retirer sa ligne de sudoers : JAMAIS en éditant le fichier directement. sudo visudo, qui vérifie la syntaxe.\n   (visudo ouvre vim si tu le connais, nano sinon.) Ne touche pas aux lignes de root et du groupe sudo.\n\n" +
-	"Rappel : /etc/passwd liste les comptes (nom:x:UID:GID:...), /etc/shadow les empreintes de leurs mots de passe (hachées, pas chiffrées),\n/etc/group les groupes, /etc/sudoers qui peut devenir root.",
+	"FICHE D'EVI : CHASSER LE MAGE DES COMPTES\n\n" +
+	"1. Les faux rois (UID 0) : awk -F: '$3 == 0 { print $1 }' /etc/passwd\n" +
+	"   Seul root doit sortir. Les autres : sudo userdel NOM\n" +
+	"2. Ses pouvoirs sudo viennent du groupe sudo (groups NOM)\n" +
+	"   et d'une ligne dans sudoers. Il faut retirer les deux.\n" +
+	"3. Le groupe : sudo gpasswd -d NOM sudo  (ou sudo usermod -rG sudo NOM)\n" +
+	"4. sudoers : JAMAIS à la main. sudo visudo vérifie la syntaxe.\n" +
+	"   Ne touche pas aux lignes de root et de %sudo.\n\n" +
+	"passwd : les comptes. shadow : les mots de passe, hachés (pas chiffrés).\n" +
+	"group : les groupes. sudoers : qui peut devenir root.",
 	{ enseigne: ["userdel", "usermod", "gpasswd", "visudo", "groups", "awk"], image: "item_manuscript.gif" });
 
 function journalAuth(lignes){ return lignes.join("\n") + "\n"; }
@@ -199,9 +202,10 @@ fichier(CitadelleLog, "auth.log",
 	"09:30 citadelle sshd[3044]: Accepted publickey for " + JOUEUR + " from 10.0.92.1 port 42100 ssh2\n" +
 	"(Les journaux plus anciens sont compressés : auth.log.1.gz, auth.log.2.gz.)", { image: "item_manuscript.gif" });
 fichier(CitadelleLog, "CarnetDuVeilleur",
-	"Le carnet du veilleur de nuit, écrit au crayon :\n\n« Chaque nuit, les journaux de la veille sont compressés pour gagner de la place : auth.log devient auth.log.1.gz, \n" +
-	"puis auth.log.2.gz. Pas besoin de les décompresser pour les lire : zcat auth.log.2.gz | grep Accepted.\n" +
-	"gzip compresse, gunzip décompresse.\n\nEt le journal du système entier, services compris : sudo journalctl. Par service : sudo journalctl -u sshd. »",
+	"Le carnet du veilleur de nuit :\n\n" +
+	"« Chaque nuit, les vieux journaux sont compressés : auth.log.1.gz, auth.log.2.gz.\n" +
+	"Pas besoin de les ouvrir : zcat auth.log.2.gz | grep Accepted.\n" +
+	"gzip compresse, gunzip décompresse. Tout le système : sudo journalctl (-u sshd : un seul service). »",
 	{ enseigne: ["zcat", "gzip", "gunzip", "journalctl"], image: "item_manuscript.gif" });
 
 var NotesCorbeau = fichier(CacheCorbeau, "notes.gpg", texteArmure("notes-corbeau"), {
@@ -225,14 +229,14 @@ procCorbeau() && (procCorbeau().fichiers = [
 Racine.procs.forEach(function(p){ if (!p.corbeau) p.fichiers = ["[noyau]"]; });
 
 var FicheReflexe = fichier(Racine, "FicheReflexe",
-	"FICHE RÉFLEXE : ANALYSER UN PROCESSUS SUSPECT (de la part de Grace)\n\n" +
-	"- pgrep NOM donne son PID ; sudo lsof -p PID montre TOUT ce qu'il a ouvert : fichiers, connexions.\n" +
-	"- sudo lsof -i :PORT dit qui tient un port.\n" +
-	"- Un programme compilé ne se lit pas avec cat : strings en sort le texte lisible.\n" +
-	"- file dit ce qu'est vraiment un fichier, quel que soit son nom ; xxd montre ses octets, et les premiers trahissent le format.\n" +
-	"- Un texte qui ressemble à du charabia de lettres ? Essaie le ROT13 : tr 'A-Za-z' 'N-ZA-Mn-za-m'\n" +
-	"- Un fichier .gpg est chiffré pour de vrai : gpg -d FICHIER, avec la phrase de passe.\n" +
-	"- pkill NOM arrête des processus par leur nom.",
+	"FICHE DE GRACE : DÉMASQUER UN PROCESSUS\n\n" +
+	"  pgrep NOM, sudo lsof -p PID   son PID, et tout ce qu'il a ouvert\n" +
+	"  sudo lsof -i :PORT            qui tient ce port\n" +
+	"  strings FICHIER               le texte lisible d'un programme\n" +
+	"  file FICHIER, xxd FICHIER     sa vraie nature, ses premiers octets\n" +
+	"  tr 'A-Za-z' 'N-ZA-Mn-za-m'    défaire le ROT13\n" +
+	"  gpg -d FICHIER                lever un vrai sceau (phrase de passe)\n" +
+	"  pkill NOM                     arrêter par le nom",
 	{ enseigne: ["pgrep", "lsof", "strings", "tr", "gpg", "pkill", "file", "xxd"], revele: ["s_c_xxd"], image: "item_manuscript.gif" });
 
 var PHRASE_GRAFFITI = "Je reviens chaque nuit à trois heures, par la porte que personne ne regarde.";
@@ -247,7 +251,7 @@ GameEvents.addListener("read", function(e){
 /* ------------------------------------------------------------------ */
 
 /* --- web : le site vitrine de l'école --- */
-var Web = machine("web", "Le serveur du site de l'école. Les pages que voient les futurs étudiants sortent d'ici.", "loc_web.gif");
+var Web = machine("web", "La Vitrine : le serveur du site de l'école, celui que voient les futurs étudiants. Le mage noir y est passé cette nuit.", "loc_web.gif");
 var WebEtc = dossier(Web, "etc", "La configuration du serveur web.");
 var WebVar = dossier(Web, "var", "Les données du serveur.");
 var WebLog = dossier(WebVar, "log", "Les journaux du serveur web.", { image: "loc_library.gif" });
@@ -256,11 +260,12 @@ var WebUploads = dossier(WebWww, "uploads", "Les fichiers envoyés par le formul
 fichier(WebEtc, "hostname", "web");
 fichier(WebEtc, "httpd.conf", "# Configuration du serveur web\nListen 80\nListen 443\nDocumentRoot /var/www\nUser www-data\n");
 fichier(Web, "LISEZMOI",
-	"Note de Vint, l'administrateur réseau, scotchée sur le serveur :\n\n" +
-	"« Pour voir le site comme un visiteur : curl http://web/ (curl -I pour les en-têtes seulement).\n" +
-	"Pour dater un fichier : stat FICHIER. Pour lister ce qui a bougé depuis hier : find /var/www -mtime -1.\n" +
-	"Certains fichiers refusent d'être supprimés même par root : ils ont l'attribut immuable. lsattr le montre, sudo chattr -i le retire.\n" +
-	"Et pour corriger un texte en vitesse : sed 's/ancien/nouveau/g'. »",
+	"Note de Vint, sur le serveur :\n\n" +
+	"  curl http://web/ (curl -I : les en-têtes)   le site vu par un visiteur\n" +
+	"  stat FICHIER                               ses dates\n" +
+	"  find /var/www -mtime -1                    ce qui a bougé depuis hier\n" +
+	"  lsattr, sudo chattr -i FICHIER             l'attribut immuable, que même root ne supprime pas\n" +
+	"  sed 's/ancien/nouveau/g'                   corriger un texte",
 	{ enseigne: ["curl", "stat", "lsattr", "chattr", "sed"], image: "item_sign.gif" });
 fichier(WebWww, "index.html", "<!DOCTYPE html>\n<html><head><title>Cybersup, école de cybersécurité</title></head>\n<body><h1>Bienvenue à Cybersup</h1>\n<p>Candidatures ouvertes. Envoyez vos documents par le formulaire.</p>\n</body></html>");
 fichier(WebWww, "robots.txt", "User-agent: *\nDisallow: /brouillons/\n# Note aux robots : il n'y a rien de secret dans /brouillons, juste le menu de la cantine.\n# Note aux humains : robots.txt dit aux moteurs de recherche où ne pas aller. Ce n'est PAS une protection.");
@@ -278,19 +283,19 @@ fichier(WebLog, "access.log",
 	"10.0.92.1 - - [" + dateDuJour() + " 09:15] \"GET /robots.txt HTTP/1.1\" 200\n", { image: "item_manuscript.gif" });
 
 /* --- mail : la messagerie --- */
-var Mail = machine("mail", "Le serveur de messagerie de l'école. Des milliers de messages par jour, et parfois un piège.", "loc_mail.gif");
+var Mail = machine("mail", "La Volière : le serveur des messages de l'école. Parmi les pigeons, un hameçon du mage noir.", "loc_mail.gif");
 var MailEtc = dossier(Mail, "etc", "La configuration de la messagerie.");
 var MailVar = dossier(Mail, "var", "Les données de la messagerie.");
 var MailLog = dossier(MailVar, "log", "Les journaux de la messagerie.", { image: "loc_library.gif" });
 var MailSpool = dossier(MailVar, "spool", "La file des messages en attente d'analyse.", { image: "loc_backroom.gif" });
 fichier(MailEtc, "hostname", "mail");
 fichier(Mail, "AideMemoireMail",
-	"AIDE-MÉMOIRE DE LA MESSAGERIE\n\n" +
-	"- Une pièce jointe voyage encodée en base64 dans le message. Pour l'extraire : sed -n pour garder les bonnes lignes, puis base64 -d.\n" +
-	"- file dit ce qu'est vraiment un fichier, quel que soit son nom. xxd montre ses premiers octets.\n" +
-	"- awk découpe les journaux en colonnes : awk '{ print $3 }' mail.log\n" +
-	"- nc MACHINE PORT ouvre une connexion brute et affiche la bannière du service : nc mail 25\n" +
-	"- Garder les lignes entre deux repères : sed -n '/^--- pièce jointe/,/^--- fin/p' FICHIER",
+	"AIDE-MÉMOIRE DE LA VOLIÈRE\n\n" +
+	"Une pièce jointe voyage en base64, entre deux repères :\n" +
+	"  sed -n '/^--- pièce jointe/,/^--- fin/p' FICHIER   garde ces lignes, puis base64 -d\n" +
+	"  file, xxd             la vraie nature d'un fichier\n" +
+	"  awk '{ print $3 }' mail.log   une colonne d'un journal\n" +
+	"  nc mail 25            la bannière d'un service",
 	{ enseigne: ["file", "xxd", "awk", "nc"], image: "item_sign.gif" });
 var PIECE_JOINTE = "#!/bin/sh\n# charge du Corbeau (neutralisée pour le jeu)\n# Ouverte, elle aurait installé un accès sur le labo de TP.\necho \"Ceci était un piège. Ne lancez jamais une pièce jointe .sh\"\n";
 fichier(MailSpool, "message-0042.eml",
@@ -308,13 +313,13 @@ fichier(MailLog, "mail.log",
 	"09:02 mail postfix: from=<grace@cybersup.lan> to=<soc@cybersup.lan> status=sent\n", { image: "item_manuscript.gif" });
 
 /* --- dns --- */
-var Dns = machine("dns", "Le serveur DNS de l'école : il traduit les noms en adresses. Le falsifier, c'est détourner tout le monde.", "loc_dns.gif");
+var Dns = machine("dns", "L'Oracle des Noms : le serveur DNS traduit les noms en adresses. Fausser l'oracle, c'est égarer tout le royaume.", "loc_dns.gif");
 var DnsEtc = dossier(Dns, "etc", "La configuration du DNS.");
 var DnsBind = dossier(DnsEtc, "bind", "Les fichiers de zone : un nom, une adresse, une ligne.");
 fichier(Dns, "NotesDNS",
-	"NOTES SUR LE DNS\n\ndig NOM demande l'adresse d'un nom : dig web.cybersup.lan (ou dig +short web).\ndig -x ADRESSE fait l'inverse : le nom d'une adresse.\n" +
-	"La zone de l'école est dans /etc/bind/ecole.zone. Une ligne inconnue dans ce fichier peut envoyer tout le monde chez quelqu'un d'autre.\n" +
-	"On la retire avec un éditeur, en sudo : sudo vim /etc/bind/ecole.zone (ou nano).", { enseigne: ["dig"], image: "item_sign.gif" });
+	"NOTES DE L'ORACLE\n\n  dig +short web       l'adresse d'un nom\n  dig -x ADRESSE       le nom d'une adresse\n\n" +
+	"La zone de l'école : /etc/bind/ecole.zone. Une ligne inconnue y égare tout le monde.\n" +
+	"On la retire en sudo : sudo vim /etc/bind/ecole.zone (ou nano).", { enseigne: ["dig"], image: "item_sign.gif" });
 var ZoneEcole = fichier(DnsBind, "ecole.zone",
 	"; zone cybersup.lan\n" +
 	"cybersup  IN A 10.0.92.1\n" +
@@ -334,7 +339,7 @@ var ZONE_LEGITIME = [["cybersup", "10.0.92.1"], ["web", "10.0.92.10"], ["mail", 
 	["dns", "10.0.92.53"], ["labo", IP_LABO], ["poste-47", ADRESSE_POSTE_CORBEAU], ["sauvegarde", "10.0.92.200"], ["coffre", "10.0.92.250"], ["parefeu", "10.0.92.254"]];
 
 /* --- labo : la salle de TP, par où le Corbeau est entré --- */
-var Labo = machine("labo", "La machine du labo de TP. Les étudiants s'y connectent pour s'entraîner. Le Corbeau aussi, cette nuit.", "loc_labo.gif");
+var Labo = machine("labo", "L'Atelier des Apprentis, la machine du labo de TP. C'est par elle que le mage noir est entré cette nuit.", "loc_labo.gif");
 var LaboEtc = dossier(Labo, "etc", "La configuration du labo.");
 var LaboVar = dossier(Labo, "var", "Les données du labo.");
 var LaboLog = dossier(LaboVar, "log", "Les journaux du labo.", { image: "loc_library.gif" });
@@ -347,12 +352,14 @@ var PasswdLabo = fichier(LaboEtc, "passwd", "root:x:0:0:root:/root:/bin/bash\net
 var ShadowLabo = fichier(LaboEtc, "shadow", "root:$y$j9T$" + base64Aleatoire("lr", 20) + ":19950:::::\netudiant:$y$j9T$" + base64Aleatoire("le", 20) + ":19950:::::\ncorbeau:$y$j9T$" + base64Aleatoire("lc", 20) + ":20371:::::\nstagiaire:$y$j9T$" + base64Aleatoire("ls", 20) + ":20100:::::", { mode: "rw-r-----" });
 var GroupLabo = fichier(LaboEtc, "group", "root:x:0:\nsudo:x:27:\ntp:x:500:etudiant,stagiaire,corbeau\ncorbeau:x:1666:");
 fichier(Labo, "TableauDuLabo",
-	"Au tableau blanc du labo, une liste de commandes, entourée en rouge :\n\n" +
-	"who            qui est connecté en ce moment, et d'où\nlast           qui s'est connecté avant\n" +
-	"pgrep / pkill  trouver et arrêter des processus par leur nom (sudo pkill -u NOM : tous ceux d'un utilisateur)\n" +
-	"systemctl      les services : status, stop, disable --now\n" +
-	"usermod -L     bloquer le mot de passe d'un compte (attention : ses clés SSH marchent encore)\ngroups NOM     les groupes d'un compte\n" +
-	"ssh-copy-id    installer sa clé publique sur une machine\n\nEt en bas, d'une autre écriture : « Les leçons de vim sont dans /home/etudiant/vimtuteur. »",
+	"Au tableau blanc du labo, entouré en rouge :\n\n" +
+	"  who, last          qui est là, qui est venu\n" +
+	"  sudo pkill -u NOM  chasser toutes ses sessions\n" +
+	"  systemctl          les services : status, stop, disable --now\n" +
+	"  usermod -L NOM     verrouiller son mot de passe (ses clés SSH marchent encore)\n" +
+	"  groups NOM         ses groupes\n" +
+	"  ssh-copy-id        installer sa clé publique ailleurs\n\n" +
+	"En bas, d'une autre écriture : « Les leçons de vim sont dans /home/etudiant/vimtuteur. »",
 	{ enseigne: ["who", "last", "systemctl", "pgrep", "pkill", "usermod", "groups", "ssh-copy-id"], image: "item_sign.gif" });
 fichier(LaboLog, "syslog",
 	HEURE_PREMIERE + " labo systemd[1]: Created unit maj-auto.service (Mise à jour automatique)\n" +
@@ -407,48 +414,45 @@ Object.keys(LECONS_VIM).forEach(function(nom){
 	fichier(VimTuteur, nom, LECONS_VIM[nom], { owner: JOUEUR, mode: "rw-r--r--", image: "item_manuscript.gif" });
 });
 fichier(VimTuteur, "TuteurVim",
-	"LE TUTEUR VIM\n\n" +
-	"vim est l'éditeur qu'on trouve sur TOUS les serveurs, même les plus dépouillés. Il paraît étrange au début parce qu'il a des MODES :\n" +
-	"- le mode NORMAL, où chaque touche est une commande (au démarrage) ;\n- le mode INSERTION, où l'on écrit (i pour y entrer, Échap pour en sortir) ;\n" +
-	"- la ligne de commande, qui commence par : (:w enregistre, :q quitte, :wq les deux, :q! quitte sans enregistrer).\n\n" +
-	"Les cinq leçons de ce dossier se font dans l'ordre : vim lecon1.txt, et ainsi de suite. Chacune dit quoi faire.\n" +
-	"Si tu es perdu : Échap, puis :q! pour sortir sans rien casser. Tout le monde est passé par là.\n" +
-		"Une leçon abîmée ? rm leconN.txt : le tuteur en remet une copie neuve.\n\n" +
-	"(Les boutons en bas de l'éditeur aident sur téléphone : Échap, i, x, dd, u, :w, :wq, :q!.)",
+	"LE TUTEUR VIM, l'éditeur de tous les serveurs. Il a des MODES :\n\n" +
+	"  NORMAL      chaque touche est une commande (au démarrage)\n" +
+	"  INSERTION   on écrit : i pour entrer, Échap pour sortir\n" +
+	"  :           :w enregistre, :q quitte, :wq les deux, :q! sans enregistrer\n\n" +
+	"Les cinq leçons se font dans l'ordre : vim lecon1.txt, et ainsi de suite.\n" +
+	"Perdu ? Échap, puis :q!. Une leçon abîmée ? rm leconN.txt la remet à neuf.",
 	{ enseigne: ["vim"], revele: ["s_v_quitter", "s_v_x", "s_v_i", "s_v_A", "s_v_dw", "s_v_dd", "s_v_u", "s_v_p", "s_v_r", "s_v_cw", "s_v_recherche", "s_v_substitution", "s_v_G", "s_v_quitter_force"], image: "item_professor.gif" });
 
 /* --- parefeu --- */
-var Parefeu = machine("parefeu", "Le pare-feu de l'école : tout ce qui entre et sort du réseau passe par lui.", "loc_parefeu.gif");
+var Parefeu = machine("parefeu", "La Muraille : le pare-feu de l'école, entre les postes et les serveurs. Sa herse est levée.", "loc_parefeu.gif");
 var ParefeuEtc = dossier(Parefeu, "etc", "La configuration du pare-feu.");
 var ParefeuVar = dossier(Parefeu, "var", "Les données du pare-feu.");
 var ParefeuLog = dossier(ParefeuVar, "log", "Les journaux du pare-feu.", { image: "loc_library.gif" });
 fichier(ParefeuEtc, "hostname", "parefeu");
 fichier(Parefeu, "ConsignesParefeu",
-	"CONSIGNES DU PARE-FEU\n\n" +
-	"Ce pare-feu est posé entre les postes de travail et les serveurs (la Citadelle, 10.0.66.61). Tout ce qui va de l'un à l'autre le TRAVERSE.\n\n" +
-	"  sudo ufw status numbered\n      les règles, numérotées\n" +
-	"  sudo ufw route deny from ADRESSE\n      empêcher une machine de traverser le pare-feu (règle FWD)\n" +
-	"  sudo ufw deny from ADRESSE\n      l'empêcher de joindre le pare-feu LUI-MÊME seulement (règle IN)\n" +
-	"  sudo ufw enable\n      activer le pare-feu (sans ça, les règles ne servent à rien)\n" +
-	"  sudo ufw delete N\n      retirer la règle N\n\n" +
+	"CONSIGNES DE LA MURAILLE : entre les postes et les serveurs (la Citadelle, 10.0.66.61).\n\n" +
+	"  sudo ufw status numbered          les règles, numérotées\n" +
+	"  sudo ufw route deny from ADRESSE  interdire de TRAVERSER (règle FWD)\n" +
+	"  sudo ufw deny from ADRESSE        interdire de joindre la Muraille elle-même (IN)\n" +
+	"  sudo ufw enable                   baisser la herse : sans ça, rien ne s'applique\n" +
+	"  sudo ufw delete N                 retirer la règle N\n\n" +
 	"traceroute MACHINE montre que tout passe par ici.", { enseigne: ["ufw", "traceroute"], image: "item_sign.gif" });
 var ParefeuUfwLog = fichier(ParefeuLog, "ufw.log", "(vide : le pare-feu est désactivé depuis une mise à jour, la semaine dernière. Oups.)", { image: "item_manuscript.gif" });
 
 /* --- sauvegarde --- */
-var Sauvegarde = machine("sauvegarde", "Le serveur de sauvegarde : il garde des copies de tout, et maintenant les preuves de l'enquête.", "loc_sauvegarde.gif");
+var Sauvegarde = machine("sauvegarde", "Le Reliquaire : le serveur de sauvegarde. Les preuves de la chasse y seront mises à l'abri.", "loc_sauvegarde.gif");
 var SauvegardePreuves = dossier(Sauvegarde, "preuves", "Le dossier des preuves de l'incident. Ce qui entre ici ne doit plus jamais être modifié.", { mode: "rwxrwxrwt", image: "loc_backroom.gif" });
 var SauvegardeArchives = dossier(Sauvegarde, "archives", "Les sauvegardes de la nuit.");
 fichier(SauvegardeArchives, "nuit.tar.gz", "", { gzip: { nom: "nuit.tar", contenu: "(la sauvegarde complète de la nuit dernière)" }, age: 1 });
 var RegistrePreuves = fichier(SauvegardePreuves, "registre.txt", "REGISTRE DES PREUVES (empreinte SHA-256, puis nom du fichier)\n", { mode: "rw-rw-rw-" });
 
 /* --- imprimante et badgeuse --- */
-var Imprimante = machine("imprimante", "L'imprimante du couloir. Elle aussi a une adresse sur le réseau, et une mémoire.", "loc_imprimante.gif");
+var Imprimante = machine("imprimante", "La Presse : l'imprimante du couloir. Elle a une adresse sur le réseau, et une mémoire.", "loc_imprimante.gif");
 var ImprimanteSpool = dossier(Imprimante, "spool", "Les documents en attente d'impression.");
 fichier(ImprimanteSpool, "job-017.txt",
 	"Document oublié dans la file d'impression, envoyé à 02:55 depuis " + ADRESSE_POSTE_CORBEAU + " :\n\n" +
 	"« Liste de choses à rendre avant de partir : la clé USB du labo, le badge B-047, et les excuses que je dois à Laurent. »",
 	{ age: 0, heure: "02:55", revele: ["s_c_imprimante"], image: "item_manuscript.gif" });
-var Badgeuse = machine("badgeuse", "La badgeuse de l'entrée. Elle note qui entre, à quelle heure, et par quelle porte.", "loc_badgeuse.gif");
+var Badgeuse = machine("badgeuse", "Le Portail des Badges : il note qui entre, à quelle heure, et par quelle porte.", "loc_badgeuse.gif");
 var BadgeuseJournaux = dossier(Badgeuse, "journaux", "Les journaux des badges.");
 fichier(BadgeuseJournaux, "badges.log", (function(){
 	var t = "";
@@ -459,15 +463,14 @@ fichier(BadgeuseJournaux, "badges.log", (function(){
 })(), { revele: ["s_c_badgeuse"], image: "item_manuscript.gif" });
 
 fichier(Badgeuse, "NoteDuGardien",
-	"Le gardien de nuit a scotché une note sur le boîtier :\n\n" +
-	"« Chaque ligne de journaux/badges.log donne la date, l'heure, le numéro du badge et le sens.\n" +
-	"Pour ne garder que les passages d'un badge : awk '$3 == \"B-112\"' badges.log\n" +
-	"Pour la nuit seulement, on ajoute une condition : && $2 < \"06:00\"\n" +
-	"La nuit, personne n'est censé entrer. Si un badge passe quand même, je veux le savoir. »",
+	"Note du gardien de nuit :\n\n" +
+	"« journaux/badges.log : date, heure, badge, sens.\n" +
+	"Un seul badge : awk '$3 == \"B-112\"' badges.log. La nuit seulement : && $2 < \"06:00\"\n" +
+	"La nuit, personne n'entre. Si un badge passe quand même, je veux le savoir. »",
 	{ revele: ["s_c_badgeuse"], image: "item_sign.gif" });
 
 /* --- le poste d'où venaient les connexions --- */
-var Poste = machine("poste-47", "Un poste de travail ordinaire. Un sweat du BDE est posé sur le dossier de la chaise.", "loc_poste.gif");
+var Poste = machine("poste-47", "Un poste de travail ordinaire. Une cape noire pend au dossier de la chaise, sur un sweat du BDE.", "loc_poste.gif");
 var PosteHome = dossier(Poste, "home", "Les dossiers personnels.");
 var PosteStagiaire = dossier(PosteHome, "stagiaire", "Le dossier de la stagiaire.", { owner: "stagiaire" });
 var PosteTmp = dossier(Poste, "tmp", "Le dossier temporaire.", { mode: "rwxrwxrwt" });
@@ -592,20 +595,20 @@ prisesDe = function(hote){
 
 /* À l'ouverture de la Crypte, ce qui sert à l'enquête apparaît dans le monde. */
 var MementoReseau = new Item("MementoReseau",
-	"Un mémo de Vint, l'administrateur réseau, punaisé au-dessus des câbles :\n\n" +
-	"« Pour savoir où tu es : ip a (ton adresse), uname -a (le système), hostname.\n" +
-	"Pour découvrir les machines du réseau de l'école, et seulement de l'école : nmap 10.0.92.0/24.\n" +
-	"Une fois qu'elles sont connues, on s'y connecte : ssh labo, ssh web, ssh mail, ssh dns...\n" +
-	"Pour savoir où est installé un programme : which. Et ce que le noyau a vu passer : sudo dmesg.\n" +
-	"Rappel légal : scanner un réseau sans l'autorisation de son propriétaire est un délit. Ici, la mission t'y autorise. »",
+	"Le mémo de Vint, au-dessus des câbles :\n\n" +
+	"  ip a, uname -a, hostname     où suis-je, sur quel système\n" +
+	"  nmap 10.0.92.0/24            les machines de l'école (et seulement elles)\n" +
+	"  ssh labo, ssh web, ssh mail, ssh dns...   y entrer\n" +
+	"  which PROGRAMME, sudo dmesg  où il est installé, ce que le noyau a vu\n\n" +
+	"Scanner un réseau sans l'accord de son propriétaire est un délit. Ici, la mission t'y autorise.",
 	"item_sign.gif").enseigne("ip", "nmap", "uname", "which", "dmesg").revele("s_c_uname", "s_c_banniere", "s_c_dig_inverse");
 var ProcedurePreuves = new Item("ProcedurePreuves",
-	"PROCÉDURE : METTRE LES PREUVES À L'ABRI (fiche d'Evi)\n\n" +
-	"1. Le serveur de sauvegarde n'accepte que les clés, sauf une première fois, le temps d'installer la tienne :\n   une paire avec ssh-keygen, puis ssh-copy-id sauvegarde (il demande une seule fois ton mot de passe).\n" +
-	"2. Copier la preuve sans la modifier : scp FICHIER sauvegarde:/preuves/\n" +
-	"3. Sur la sauvegarde (ssh sauvegarde, cd /preuves), noter son empreinte dans le registre, en la gardant à l'écran :\n" +
+	"FICHE D'EVI : PORTER UNE PREUVE AU RELIQUAIRE\n\n" +
+	"1. Une clé pour la sauvegarde : ssh-keygen, puis ssh-copy-id sauvegarde\n" +
+	"2. Copier sans modifier : scp FICHIER sauvegarde:/preuves/\n" +
+	"3. Sur la sauvegarde (cd /preuves), noter l'empreinte en la voyant :\n" +
 	"   sha256sum FICHIER | tee -a registre.txt\n\n" +
-	"L'empreinte prouve plus tard que la preuve n'a pas bougé. C'est la « chaîne de traçabilité ».",
+	"L'empreinte prouve que la preuve n'a pas bougé : la chaîne de traçabilité.",
 	"item_sign.gif").enseigne("scp", "tee", "ssh-copy-id", "ssh-keygen");
 var ModeleRapport = new Item("ModeleRapport",
 	"RAPPORT D'INCIDENT : CITADELLE\n\n" +
@@ -622,47 +625,47 @@ var ModeleRapport = new Item("ModeleRapport",
 var QUETES_CHAPITRE2 = [
 	{ id: "c_crypte", titre: "Descendre dans la Crypte",
 	  indice: "Une trappe s'est ouverte dans le sol de la Citadelle : c'est par là que passe le trafic que voit Grace. ssh citadelle, puis regarde autour de toi." },
-	{ id: "c_integrite", titre: "Repérer le programme trafiqué",
+	{ id: "c_integrite", titre: "Trouver le grimoire corrompu (empreintes sha256)",
 	  indice: "L'Archiviste de la Crypte explique comment vérifier les empreintes du dossier bin." },
-	{ id: "c_message", titre: "Décoder le message du Corbeau",
+	{ id: "c_message", titre: "Lire le message du mage noir (base64)",
 	  indice: "Le programme trafiqué transporte une charge qui ne ressemble à rien. Ce n'est pas du chiffrement, juste un emballage." },
-	{ id: "c_suid", titre: "Trouver la porte dérobée",
+	{ id: "c_suid", titre: "Trouver la porte dérobée (bit SUID)",
 	  indice: "Le message parle du Caveau et d'un bit. L'Inscription du Caveau explique lequel, et comment le chercher." },
-	{ id: "c_racine", titre: "Entrer dans la Racine",
+	{ id: "c_racine", titre: "Entrer dans la Racine (devenir root)",
 	  indice: "Une porte dérobée, c'est un programme : il s'exécute." },
-	{ id: "c_ecoute", titre: "Couper l'écoute du Corbeau",
+	{ id: "c_ecoute", titre: "Briser l'oreille du mage (port en écoute)",
 	  indice: "Grace, à la radio, voit du trafic sur un port inhabituel. Un sort montre quel processus écoute sur quel port." },
-	{ id: "c_journaux", titre: "Retrouver la première connexion du Corbeau",
+	{ id: "c_journaux", titre: "Retrouver sa première venue (journaux)",
 	  indice: "Les journaux de la Citadelle sont dans son dossier var/log. Les plus anciens sont compressés. Le CarnetDuVeilleur explique comment les lire." },
-	{ id: "c_carto", titre: "Cartographier le réseau de l'école",
+	{ id: "c_carto", titre: "Dresser la carte du royaume (nmap)",
 	  indice: "Le Corbeau est entré par une autre machine de l'école. Le MementoReseau, dans la SalleReseau de Cybersup, explique comment découvrir les machines." },
-	{ id: "c_labo", titre: "Couper la session du Corbeau sur le labo",
+	{ id: "c_labo", titre: "Chasser le mage de l'Atelier (sa session)",
 	  indice: "La première connexion venait de l'adresse du labo. Connecte-toi au labo et regarde qui y est encore connecté. Le TableauDuLabo donne les commandes." },
-	{ id: "c_service", titre: "Neutraliser le service de persistance",
+	{ id: "c_service", titre: "Briser le rouage maudit (service)",
 	  indice: "Sur le labo, quelque chose se relance tout seul. Les services se gèrent avec systemctl." },
-	{ id: "c_web", titre: "Retirer la page piégée du site web",
+	{ id: "c_web", titre: "Arracher le masque de la Vitrine (webshell)",
 	  indice: "Le journal du site web (/var/log/access.log) montre un envoi depuis le labo, cette nuit. Le LISEZMOI du serveur web aide." },
-	{ id: "c_mail", titre: "Démonter le mail piégé",
+	{ id: "c_mail", titre: "Désamorcer l'hameçon (mail piégé)",
 	  indice: "Le Corbeau a d'abord piégé le labo avec un mail. La file des messages est dans /var/spool sur la machine mail." },
-	{ id: "c_dns", titre: "Corriger le faux enregistrement DNS",
+	{ id: "c_dns", titre: "Redresser la boussole de l'Oracle (faux DNS)",
 	  indice: "La zone DNS de l'école est sur la machine dns, dans /etc/bind. Un nom y pointe vers une adresse qui n'a rien à faire là." },
-	{ id: "c_parefeu", titre: "Bloquer le poste de l'attaquant au pare-feu",
+	{ id: "c_parefeu", titre: "Fermer la Muraille à son nid (pare-feu)",
 	  indice: "Le Corbeau est passé par le labo, mais il venait d'un poste à lui : who, sur le labo, montre d'où venait sa session. C'est ce poste qu'il faut bloquer, sur la machine parefeu." },
-	{ id: "c_compte", titre: "Supprimer le compte caché d'UID 0",
+	{ id: "c_compte", titre: "Détrôner le faux roi (compte d'UID 0)",
 	  indice: "Sur la Citadelle, /etc/passwd liste les comptes. La ProcedureComptes, dans /etc, explique comment repérer un faux root." },
-	{ id: "c_sudo", titre: "Retirer le droit sudo du Corbeau",
+	{ id: "c_sudo", titre: "Lui retirer ses pouvoirs (sudo)",
 	  indice: "Le Corbeau a le droit sudo de deux façons : une ligne à son nom dans /etc/sudoers, et sa place dans le groupe sudo (groups corbeau). Il faut retirer les deux. sudoers ne se modifie qu'avec visudo." },
-	{ id: "c_cle", titre: "Retirer la clé du Corbeau",
+	{ id: "c_cle", titre: "Briser la clé du nid (clé SSH)",
 	  indice: "Le Corbeau a laissé sa clé dans les clés autorisées de root, dans le dossier caché de la Racine. Le ManuelDeNano explique comment modifier un fichier." },
-	{ id: "c_coffre", titre: "Obtenir un accès au coffre",
+	{ id: "c_coffre", titre: "Forger ta clé du Coffre (ssh-keygen)",
 	  indice: "Les ConsignesDuCoffre sont dans la SalleServeurs de Cybersup." },
-	{ id: "c_preuves", titre: "Mettre les notes du Corbeau à l'abri",
+	{ id: "c_preuves", titre: "Porter ses notes au Reliquaire (preuves)",
 	  indice: "Le faux kworker gardait un fichier ouvert dans /tmp de la Citadelle. La ProcedurePreuves, dans la SalleServeurs, dit comment le mettre à l'abri sur la sauvegarde." },
-	{ id: "c_gpg", titre: "Déchiffrer les notes du Corbeau",
+	{ id: "c_gpg", titre: "Lever le sceau de ses notes (gpg)",
 	  indice: "Les notes sont chiffrées avec gpg. La phrase de passe est cachée dans la porte dérobée elle-même. La FicheReflexe de la Racine dit comment lire un binaire." },
 	{ id: "c_corbeau", titre: "Démasquer le Corbeau",
 	  indice: "Les notes donnent rendez-vous dans le coffre de l'école : ssh coffre. Le Corbeau ne s'y montre qu'une fois toutes ses portes fermées (toutes les étapes précédentes)." },
-	{ id: "c_rapport", titre: "Rédiger le rapport d'incident avec vim",
+	{ id: "c_rapport", titre: "Écrire la chronique de la chasse (rapport, vim)",
 	  indice: "Le modèle est dans ta Maison (ModeleRapport). Copie-le en rapport.txt, puis remplis-le avec vim." }
 ];
 
@@ -774,31 +777,33 @@ INDICES_CHAPITRE2.c_rapport = [
 /* La radio suit l'enquête                                             */
 /* ------------------------------------------------------------------ */
 
+var CONSEILS_DE_GRACE = {
+	c_message: "Le gardien est corrompu ! Sa dernière ligne, charge=, cache un message en base64. Déballe-le : base64 -d.",
+	c_suid: "Le mage parle d'une porte et d'un bit. L'Inscription du Caveau t'apprend à les chercher.",
+	c_racine: "Tu as trouvé sa porte. Une porte dérobée est un programme : lance-la (./.porte), puis descends (cd Racine).",
+	c_ecoute: "Mes sondes voient une connexion vers la Citadelle, sur le port " + PORT_CORBEAU + ". Qui l'écoute ? sudo ss -tlnp. Repasse lire la Radio, je t'apprends le sort.",
+	c_journaux: "L'oreille est brisée. Par où est-il entré ? Les journaux de la Citadelle sont dans var/log, les vieux sont compressés.",
+	c_carto: "Il venait de " + IP_LABO + ", une autre machine de l'école. Le MementoReseau, dans la SalleReseau, apprend à dresser la carte.",
+	c_labo: "C'est l'Atelier des Apprentis, le labo ! Va voir qui y traîne encore : ssh labo, et le TableauDuLabo.",
+	c_service: "Session chassée. Mais quelque chose se relance tout seul sur le labo : un service maudit.",
+	c_web: "L'Atelier est propre. Le mage a aussi touché la Vitrine cette nuit : lis les journaux du serveur web.",
+	c_mail: "Comment est-il entré dans l'Atelier ? Un mail suspect est arrivé à 02:41 dans la Volière (machine mail).",
+	c_dns: "Le mail venait d'un faux domaine. Et il a faussé l'Oracle : un nom de trop dans /etc/bind, sur la machine dns.",
+	c_parefeu: "L'Oracle dit vrai. La herse de la Muraille est levée depuis une semaine : ferme-la à son poste (machine parefeu).",
+	c_compte: "Herse baissée. Retour à la Citadelle : un compte de trop a les droits de root. Un faux roi.",
+	c_sudo: "Faux roi détrôné. Il garde ses pouvoirs sudo : par /etc/sudoers et par le groupe sudo. Retire les deux.",
+	c_cle: "Plus de pouvoirs. Reste sa clé dans les clés autorisées de root, dans la Racine. Le ManuelDeNano est là-bas.",
+	c_coffre: "Toutes ses portes sont closes. Qui est-il ? Le Coffre de l'école le dira : les ConsignesDuCoffre sont dans la SalleServeurs.",
+	c_preuves: "Ta clé est installée. Le faux veilleur gardait des notes dans /tmp : porte-les au Reliquaire avant d'y toucher (ProcedurePreuves).",
+	c_gpg: "Preuve à l'abri. Elle est scellée par gpg, mais la phrase de passe est cachée dans sa porte dérobée.",
+	c_corbeau: "Ses notes te donnent rendez-vous au Coffre. Vas-y : ssh coffre.",
+	c_rapport: "Laurent attend la chronique de la chasse, ton rapport d'incident. Le modèle est dans ta Maison. Avec vim."
+};
 function texteRadioReseau(){
 	var q = state.quests;
-	if (!q["c_ecoute"]) return null;
 	var etape = (typeof QUETES_CHAPITRE2 !== "undefined") ? QUETES_CHAPITRE2.filter(function(x){ return !q[x.id]; })[0] : null;
-	var debut = "La radio grésille. « ";
-	if (!etape) return debut + "Grace, terminé. Ton rapport est sur le bureau de Laurent, Frances commence en B1 dès lundi, et le SOC est enfin calme. Beau boulot. »";
-	switch (etape.id){
-		case "c_journaux": return debut + "L'écoute est coupée. Maintenant, il faut savoir par où il est entré. Les journaux de la Citadelle sont dans var/log, et les vieux sont compressés. Cherche sa première connexion. »";
-		case "c_carto": return debut + "Il venait de " + IP_LABO + ". Ce n'est pas la Citadelle, c'est une autre machine de l'école. Vint a laissé un MementoReseau dans la SalleReseau : découvre le réseau. »";
-		case "c_labo": return debut + "C'est le labo de TP ! Va voir qui y est connecté en ce moment : ssh labo. Le TableauDuLabo donne les commandes. »";
-		case "c_service": return debut + "Session coupée. Mais mes sondes voient encore le labo parler au poste du Corbeau. Quelque chose se relance tout seul là-bas : un service. »";
-		case "c_web": return debut + "Le labo est propre. Le Corbeau a aussi touché au site web cette nuit : regarde les journaux du serveur web. »";
-		case "c_mail": return debut + "Bien. Reste à comprendre comment il a eu accès au labo au départ. Un mail suspect est arrivé à 02:41 sur la machine mail. »";
-		case "c_dns": return debut + "Le mail venait d'un faux domaine. Et le Corbeau a ajouté un nom dans notre DNS pour détourner les mises à jour. Machine dns, dossier /etc/bind. »";
-		case "c_parefeu": return debut + "DNS corrigé. Maintenant on ferme la porte : le pare-feu est désactivé depuis une semaine, et le poste du Corbeau peut toujours entrer. Machine parefeu. »";
-		case "c_compte": return debut + "Pare-feu actif. Retour sur la Citadelle : son journal montre un useradd en pleine nuit. Un compte de trop, avec les droits de root. »";
-		case "c_sudo": return debut + "Compte supprimé. Mais le Corbeau a toujours le droit sudo sur la Citadelle : par /etc/sudoers, et par le groupe sudo. Retire-lui les deux. »";
-		case "c_cle": return debut + "Plus de sudo. Reste sa clé SSH dans les clés autorisées de root, dans la Racine. Evi a laissé un ManuelDeNano par là. »";
-		case "c_coffre": return debut + "Toutes ses portes sont fermées. Il reste à savoir QUI c'est. Evi peut t'ouvrir le coffre, où tout converge : ses ConsignesDuCoffre sont dans la SalleServeurs. »";
-		case "c_preuves": return debut + "Avant d'aller plus loin : le faux kworker gardait un fichier ouvert. C'est une preuve. Mets-la à l'abri sur la sauvegarde avant de la toucher : la ProcedurePreuves est dans la SalleServeurs. »";
-		case "c_gpg": return debut + "Preuve à l'abri. Elle est chiffrée, mais le Corbeau a laissé sa phrase de passe quelque part, à peine cachée. Commence par sa porte dérobée. »";
-		case "c_corbeau": return debut + "Ses notes te donnent rendez-vous au coffre. Vas-y : ssh coffre. »";
-		case "c_rapport": return debut + "Laurent attend ton rapport. Le modèle est dans ta Maison. Avec vim, s'il te plaît : c'est l'éditeur de tous les serveurs. »";
-	}
-	return null;
+	if (!etape) return "La radio grésille. « Grace, terminé. Ton rapport est sur le bureau de Laurent, Frances commence en B1 dès lundi, et le SOC est enfin calme. Beau boulot. »";
+	return CONSEILS_DE_GRACE[etape.id] ? "La radio grésille. « " + CONSEILS_DE_GRACE[etape.id] + " »" : null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -1088,51 +1093,47 @@ GameEvents.addListener("write", function(e){
 /* ------------------------------------------------------------------ */
 
 var CarnetDeTraque = fichier(CitadelleLog, "CarnetDeTraque",
-	"LE CARNET DE TRAQUE DE GRACE (oublié sur la pile de journaux)\n\n" +
-	"Un intrus laisse des traces dans les registres de connexion. Cinq sorts pour les lire, et un pour lui fermer la porte :\n\n" +
-	"  sudo lastb                     le Registre des Échecs : les connexions RATÉES (mot de passe faux, compte inconnu)\n" +
-	"  lastlog                        le Livre des Dernières Venues : la dernière connexion de chaque compte\n" +
-	"  w                              l'Œil du Veilleur : qui est connecté en ce moment, et ce qu'il fait\n" +
-	"  sudo chage -l NOM              le Couperet des Comptes : l'âge du mot de passe, la date d'expiration du compte\n" +
-	"  sudo chage -E 0 NOM            faire expirer un compte tout de suite (il ne pourra plus se connecter)\n" +
-	"  sudo fail2ban-client status sshd             le Gardien des Portes : qui est banni de ssh\n" +
+	"LE CARNET DE TRAQUE DE GRACE\n\n" +
+	"  sudo lastb              le Registre des Échecs : les connexions RATÉES\n" +
+	"  lastlog                 le Livre des Venues : la dernière de chaque compte\n" +
+	"  w                       l'Œil du Veilleur : qui est là, et ce qu'il fait\n" +
+	"  sudo chage -l NOM       le Couperet : l'âge du mot de passe\n" +
+	"  sudo chage -E 0 NOM     faire expirer un compte tout de suite\n" +
+	"  sudo fail2ban-client status sshd             le Gardien : qui est banni\n" +
 	"  sudo fail2ban-client set sshd banip ADRESSE  bannir une adresse\n\n" +
-	"Une rafale d'échecs juste avant une connexion réussie, c'est la signature d'un mot de passe deviné. Ou d'une clé volée.",
+	"Des échecs en rafale, puis une réussite : un mot de passe deviné.",
 	{ enseigne: ["lastb", "lastlog", "w", "chage", "fail2ban-client"], revele: ["s_c_lastb", "s_c_lastlog", "s_c_w", "s_c_chage", "s_c_fail2ban"], image: "item_manuscript.gif" });
 
 var TrousseDEvi = new Item("TrousseDEvi",
-	"LA TROUSSE D'EVI, l'administratrice (une sacoche de cuir, posée au pied de l'escalier)\n\n" +
-	"Mes outils d'analyse. Ils ne réparent rien : ils DÉBUSQUENT.\n\n" +
-	"  sudo clamscan -r DOSSIER       le Chien de Chasse : renifle chaque fichier et reconnaît les charges connues\n" +
-	"  sudo rkhunter --check          le Chasseur de Rootkits : passe la Citadelle au peigne fin (comptes, SUID, fichiers cachés, ports)\n" +
-	"  debsums -c                     le Témoin d'Origine : les programmes qui ne sont plus tels qu'installés\n" +
-	"  exiftool FICHIER               l'Œil du Faussaire : ce qu'une photo raconte d'elle-même (appareil, date, lieu)\n" +
-	"  getfacl CHEMIN                 la Loupe des Droits cachés : les permissions en plus des droits classiques (ACL)\n" +
-	"  sudo setfacl -x u:NOM CHEMIN   retirer une permission cachée\n\n" +
-	"Un attaquant malin ne touche pas aux droits que ls -l montre. Il ajoute une ACL, que personne ne regarde.",
+	"LA TROUSSE D'EVI : des outils qui ne réparent rien, ils DÉBUSQUENT.\n\n" +
+	"  sudo clamscan -r DOSSIER      le Chien de Chasse : les charges connues\n" +
+	"  sudo rkhunter --check         le Chasseur de Rootkits : tout le système\n" +
+	"  debsums -c                    le Témoin : les programmes modifiés\n" +
+	"  exiftool FICHIER              l'Œil du Faussaire : ce que dit une photo\n" +
+	"  getfacl CHEMIN                la Loupe : les droits cachés (ACL)\n" +
+	"  sudo setfacl -x u:NOM CHEMIN  retirer un droit caché\n\n" +
+	"Un mage malin ne touche pas aux droits de ls -l : il ajoute une ACL.",
 	"item_box.gif").enseigne("clamscan", "rkhunter", "debsums", "exiftool", "getfacl", "setfacl")
 	.revele("s_c_clamscan", "s_c_rkhunter", "s_c_debsums", "s_c_exif", "s_c_acl", "s_c_setfacl");
 Crypte.addItem(TrousseDEvi);
 
 /* Le bestiaire de la chasse : chaque image du chapitre et le vrai mot du métier, pour qui débute. */
 var Bestiaire = new Item("Bestiaire",
-	"LE BESTIAIRE DE LA CHASSE (un vieux livre relié, ouvert sur la table de la radio)\n" +
-	"À gauche l'image de la chasse, à droite le vrai mot du métier. Retiens les deux.\n\n" +
-	"Le Corbeau              L'attaquant : quelqu'un entré sans y être invité.\n" +
-	"Son nid                 Le poste d'où il attaque (son adresse IP).\n" +
-	"Une porte dérobée       Une backdoor : un accès caché qu'il s'est laissé pour revenir.\n" +
-	"Le bit qui ouvre tout   Le bit SUID : un programme qui s'exécute avec les droits de son propriétaire, root compris.\n" +
-	"Le faux roi             Un compte d'UID 0 : un second root, sous un autre nom.\n" +
-	"Le faux veilleur        Un processus déguisé (faux kworker) qui écoute sur un port.\n" +
-	"Le rouage qui revient   La persistance : un service qui relance l'accès tout seul (Restart=always).\n" +
-	"L'hameçon               Le phishing : un mail piégé qui pousse à ouvrir une pièce jointe.\n" +
-	"Le masque de la vitrine Un webshell : une page déposée sur le site pour y lancer des commandes.\n" +
-	"La boussole faussée     Un faux enregistrement DNS qui envoie tout le monde chez l'attaquant.\n" +
-	"La clé du nid           Sa clé SSH dans authorized_keys : une entrée sans mot de passe.\n" +
-	"L'empreinte            Le hash (SHA-256) : l'empreinte unique d'un fichier.\n" +
-	"Le reliquaire           La chaîne de traçabilité : des preuves copiées intactes, avec leur empreinte.\n" +
-	"Le tableau de chasse    La liste des machines touchées, et leur état (tape traque).\n\n" +
-	"Règle de la chasse : on ne traque que sur un réseau dont on a la charge. Ici, la mission t'y autorise.",
+	"LE BESTIAIRE : l'image de la chasse, puis le vrai mot du métier.\n\n" +
+	"Le Corbeau, mage noir     l'attaquant\n" +
+	"Son nid                   son poste (son adresse IP)\n" +
+	"La porte dérobée          une backdoor, pour revenir\n" +
+	"Le bit qui ouvre tout     le bit SUID\n" +
+	"Le faux roi               un compte d'UID 0, un second root\n" +
+	"Le faux veilleur          un processus déguisé qui écoute un port\n" +
+	"Le rouage qui revient     la persistance (un service relancé)\n" +
+	"L'hameçon                 le phishing (un mail piégé)\n" +
+	"Le masque de la vitrine   un webshell\n" +
+	"La boussole faussée       un faux enregistrement DNS\n" +
+	"La clé du nid             sa clé SSH dans authorized_keys\n" +
+	"L'empreinte               le hash (SHA-256)\n" +
+	"Le reliquaire             la chaîne de traçabilité\n\n" +
+	"On ne chasse que sur un réseau dont on a la charge.",
 	"item_historybook.gif");
 Crypte.addItem(Bestiaire);
 

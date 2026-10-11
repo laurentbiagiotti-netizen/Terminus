@@ -107,7 +107,7 @@ function chasseRpg(){
 		r.toutRevele = true;
 		var nouvelles = LIEUX_CHASSE.filter(function(l){ return !r.carte[l.cle]; }).length;
 		LIEUX_CHASSE.forEach(function(l){ r.carte[l.cle] = true; });
-		if (nouvelles && !state.has("rejeuEnCours")) say(C.jaune("✦ Traque : ") + "la Lanterne a tout éclairé, " + nouvelles + " machines sortent de la brume d'un coup." + C.gris(" traque (commande du jeu) pour voir ton tableau de chasse."));
+		if (nouvelles && !state.has("rejeuEnCours")) say(C.gris("◇ Traque : la Lanterne éclaire " + nouvelles + " machines d'un coup. traque pour les voir."));
 	}
 	return r;
 }
@@ -120,7 +120,7 @@ function revelerMachine(cle){
 	if (r.carte[cle]) return;
 	r.carte[cle] = true;
 	var l = LIEUX_CHASSE.filter(function(x){ return x.cle === cle; })[0];
-	if (l && !state.has("rejeuEnCours")) say(C.jaune("✦ Traque : ") + l.nom + " (" + cle + ") sort de la brume." + C.gris(" traque (commande du jeu) pour voir ton tableau de chasse."));
+	if (l && !state.has("rejeuEnCours")) Shell.narration.push({ lieu: l.nom + " (" + cle + ")", voir: "traque" });
 }
 
 /* Les machines qu'un sort nomme : dans ses arguments, ou dans ce qu'il a affiché. */
@@ -143,7 +143,6 @@ function effetRpgCrypte(nom, args, sortie){
 	var fiche = SORTS_RPG_CRYPTE[nom] || (typeof SORTS_RPG !== "undefined" ? SORTS_RPG[nom] : null);
 	if (fiche && !r.premiers[nom] && !state.quests["c_rapport"]){
 		r.premiers[nom] = true;
-		if (!state.has("rejeuEnCours")) say(C.vert("✦ " + fiche.nom.replace(/^./, function(c){ return c.toUpperCase(); }) + " (" + nom + ") : ") + fiche.image);
 	}
 	machinesNommees(nom, args, sortie).forEach(revelerMachine);
 }
@@ -163,8 +162,17 @@ function verifierRpgCrypte(){
 		if (!state.quests[id] || r.trophees[id]) return;
 		r.trophees[id] = true;
 		if (state.has("rejeuEnCours")) return;
-		say(C.jaune("✦ Badge gagné : " + nomDuBadge(id)) + C.gris(" · " + TROPHEES_CRYPTE[id][0] + " · tape badges pour la leçon"));
+		say(C.jaune("✦ Badge gagné : " + nomDuBadge(id)) + C.gris(" · badges"));
 	});
+	// Grace donne la quête suivante à la radio, comme Radia au talkie-walkie.
+	if (!state.quests["c_crypte"] || typeof QUETES_CHAPITRE2 === "undefined") return;
+	var suivante = QUETES_CHAPITRE2.filter(function(q){ return !state.quests[q.id]; })[0];
+	var cle = suivante ? suivante.id : "fin";
+	if (r.dernierConseil === cle) return;
+	r.dernierConseil = cle;
+	if (state.has("rejeuEnCours") || typeof texteRadio !== "function") return;
+	if (typeof radioSOC === "function") radioSOC(texteRadio());
+	say(C.gris("(Nouveau message de Grace : regarde la radio.)"));
 }
 var VERIFIER_MONDE_AVANT_CHASSE = verifierMonde;
 verifierMonde = function(){
@@ -235,11 +243,11 @@ function verifierPlatines(){
 	if (typeof RELIQUES !== "undefined" && state.has("panneOuverte") && !state.has("platine_reseau") &&
 		Object.keys(RELIQUES).every(function(id){ return state.quests[id]; })){
 		state.set("platine_reseau");
-		if (!state.has("rejeuEnCours")) say(C.jaune("✦ Badge gagné : Maître du réseau") + C.gris(" · platine : tous les badges du réseau · tape badges"));
+		if (!state.has("rejeuEnCours")) say(C.jaune("✦ Badge gagné : Maître du réseau") + C.gris(" · platine · badges"));
 	}
 	if (state.has("crypteOuverte") && !state.has("platine_cyber") && Object.keys(TROPHEES_CRYPTE).every(function(id){ return state.quests[id]; })){
 		state.set("platine_cyber");
-		if (!state.has("rejeuEnCours")) say(C.jaune("✦ Badge gagné : Chasseur de Corbeau") + C.gris(" · platine : tous les badges de la chasse · tape badges"));
+		if (!state.has("rejeuEnCours")) say(C.jaune("✦ Badge gagné : Chasseur de Corbeau") + C.gris(" · platine · badges"));
 	}
 }
 function sansAccent(t){ return String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }

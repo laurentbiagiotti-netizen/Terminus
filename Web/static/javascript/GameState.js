@@ -304,7 +304,8 @@ GameState.prototype.learn = function(sort){
 	else if (chapitre === 3) this.xp3 += XP_SORT_APPRIS;
 	else if (!this.has("chapitre1Saute")) this.xp += XP_SORT_APPRIS;
 	jouerSon("sort");
-	say(C.vert("✦ Nouveau sort appris : " + sort + ((chapitre === 3 || chapitre === 2) && typeof nomRpg === "function" && nomRpg(sort, chapitre) ? ", " + nomRpg(sort, chapitre) : "")) + " (" + MANUEL[sort].resume + "). Détail : man " + sort + (chapitre !== 1 || !this.has("chapitre1Saute") ? C.gris("  +" + XP_SORT_APPRIS + " XP") : ""));
+	// Pas une ligne par sort : Shell.fin regroupe tous les sorts du tour sur une seule ligne.
+	Shell.narration.push({ sort: sort, rpg: (chapitre === 3 || chapitre === 2) && typeof nomRpg === "function" ? nomRpg(sort, chapitre) : "", resume: MANUEL[sort].resume });
 	GameEvents.fire({ type: "learn", spell: sort });
 };
 
@@ -613,7 +614,7 @@ GameState.prototype.bilanXP = function(){
 			total += this.gainsDuTour[i].points;
 			if (raisons.indexOf(this.gainsDuTour[i].raison) === -1) raisons.push(this.gainsDuTour[i].raison);
 		}
-		say(C.gris("+" + total + " XP (" + raisons.join(", ") + ")"));
+		Shell.narration.push({ xp: total });
 		this.gainsDuTour = [];
 	}
 	var n = this.niveau();
@@ -783,7 +784,7 @@ GameState.prototype.texteDuCertificat = function(){
 		"  SCORE DU CHAPITRE 3  : " + this.xpNet(2) + " XP sur " + this.xpMax2() + "\n" +
 		"  NOTE                 : " + this.noteTexte(2) + "\n" +
 		"  Mention              : " + this.mention(2) + "\n" +
-		"  Sorts de sécurité    : " + couperEnLignes(ORDRE_DES_SORTS_2.filter(function(x){ return this.usages[x]; }, this).join(", "), 40, "\n                         ") + "\n" +
+		"  Sorts de sécurité    : " + ORDRE_DES_SORTS_2.filter(function(x){ return this.usages[x]; }, this).length + " sur " + ORDRE_DES_SORTS_2.length + "\n" +
 		"  Quêtes secondaires   : " + QUETES_SECONDAIRES_2.filter(function(q){ return this.quests[q.id]; }, this).length + " sur " + QUETES_SECONDAIRES_2.length + "\n" +
 		"  Temps du chapitre    : " + (minutes < 60 ? minutes + " min" : Math.floor(minutes / 60) + " h " + deuxChiffres(minutes % 60)) + "\n" +
 		"  Indices payants      : " + (this.malus2 ? this.nbIndices(2) + " (-" + this.malus2 + " XP sur la note)" : "aucun") + "\n" +
@@ -847,7 +848,7 @@ GameState.prototype.texteDuCertificatReseau = function(){
 		"  SCORE DU CHAPITRE 2  : " + this.xpNet(3) + " XP sur " + this.xpMax3() + "\n" +
 		"  NOTE                 : " + this.noteTexte(3) + "\n" +
 		"  Mention              : " + this.mention(3) + "\n" +
-		"  Sorts réseau         : " + couperEnLignes(ORDRE_DES_SORTS_3.filter(function(x){ return this.usages[x]; }, this).join(", "), 40, "\n                         ") + "\n" +
+		"  Sorts réseau         : " + ORDRE_DES_SORTS_3.filter(function(x){ return this.usages[x]; }, this).length + " sur " + ORDRE_DES_SORTS_3.length + "\n" +
 		"  Quêtes secondaires   : " + QUETES_SECONDAIRES_PANNE.filter(function(q){ return this.quests[q.id]; }, this).length + " sur " + QUETES_SECONDAIRES_PANNE.length + "\n" +
 		"  Temps du chapitre    : " + (minutes < 60 ? minutes + " min" : Math.floor(minutes / 60) + " h " + deuxChiffres(minutes % 60)) + "\n" +
 		"  Indices payants      : " + (this.malus3 ? this.nbIndices(3) + " (-" + this.malus3 + " XP sur la note)" : "aucun") + "\n" +
@@ -1388,7 +1389,7 @@ GameState.prototype.verifierSucces = function(){
 		if (this.succes[s.id] || !s.test(this)) continue;
 		this.succes[s.id] = true;
 		jouerSon("succes");
-		say(C.magenta("◆ Succès débloqué : " + s.titre) + C.gris(" (" + s.detail + "). Tape succes pour la liste."));
+		say(C.magenta("◆ Succès débloqué : " + s.titre) + C.gris(" · succes"));
 	}
 };
 

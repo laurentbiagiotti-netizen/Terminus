@@ -61,8 +61,13 @@ function banniere(genre, texte){
 	if (!panneau) return;
 	var titres = { quete: "Quête accomplie", sort: "Nouveau sort", succes: "Succès débloqué", niveau: "Niveau supérieur", relique: "Badge gagné" };
 	var detail = texte.replace(/^[★✦◆▲]\s*/, "").replace(/^(Quête secondaire accomplie|Quête accomplie|Nouveau sort appris|Succès débloqué|Badge gagné)\s*:\s*/, "")
-		.replace(/\s+\+\d+ XP$/, "").replace(/\s*\(.*$/, "").replace(/\. Tape succes.*$/, "");
-	if (genre === "sort") detail = detail.split(" ")[0].replace(/,$/, "") + (/, /.test(detail) ? " · " + detail.split(", ").slice(1).join(", ") : "");
+		.replace(/\s+\+\d+ XP$/, "").replace(/\s*\(.*$/, "").replace(/\. Tape succes.*$/, "").replace(/ · succes$/, "");
+	if (genre === "sort"){
+		var plusieurs = /^✦ Nouveaux sorts/.test(texte);
+		var tete = texte.replace(/^✦ Nouveaux? sorts? appris\s*:\s*/, "").split(" · ")[0];
+		if (plusieurs){ titres.sort = "Nouveaux sorts"; detail = tete.replace(/\s*\([^)]*\)/g, ""); }
+		else detail = tete.split(", ")[0] + (tete.indexOf(", ") > -1 ? " · " + tete.split(", ").slice(1).join(", ") : "");
+	}
 	if (genre === "relique") detail = detail.split(" · ")[0].replace(/\.$/, "");
 	var b = document.createElement("div");
 	b.className = "banniere banniere-" + genre;
@@ -307,6 +312,7 @@ function remplirBarre(note){
 function majEtat(){
 	var niveau = document.getElementById("etat-niveau");
 	if (!niveau) return;
+	majObjectif();
 	var pr = state.progression();
 	var etat = document.getElementById("etat");
 	var radio = document.getElementById("radio");
@@ -363,7 +369,8 @@ function radioSOC(texte){
 		/(La radio grésille[.,]?|Evi, à la radio|Grace, à la radio)\s*(.*)$/.exec(brut.replace(/\n/g, " "));
 	if (!m) return;
 	var qui = enCours === 3 ? "Radia" : (/Evi, à la radio|C'est Evi/.test(brut) ? "Evi" : (/C'est Laurent|Laurent :/.test(brut) ? "Laurent" : "Grace"));
-	var message = m[2].replace(/^C'est (Grace|Evi|Laurent)\s*:\s*/, "").replace(/^:\s*/, "").trim();
+	// Le message seul : les rappels entre parenthèses, à la fin, restent dans le terminal.
+	var message = m[2].replace(/^C'est (Grace|Evi|Laurent)\s*:\s*/, "").replace(/^:\s*/, "").trim().replace(/\s*\([^()]*\)$/, "");
 	var radio = document.getElementById("radio");
 	if (!radio) return;
 	var d = new Date();
@@ -382,6 +389,21 @@ function radioSOC(texte){
 	radio.classList.remove("radio-nouveau");
 	void radio.offsetWidth;
 	radio.classList.add("radio-nouveau");
+}
+
+/* L'objectif en cours, toujours visible à droite : le titre de la quête, et son indice quand la radio se tait. */
+function majObjectif(){
+	var bloc = document.getElementById("objectif");
+	if (!bloc || typeof state.queteEnCours !== "function") return;
+	var q = state.queteEnCours();
+	if (!q || (typeof introEnCours !== "undefined" && introEnCours)){ bloc.hidden = true; return; }
+	var radio = document.getElementById("radio");
+	bloc.querySelector(".objectif-nom").textContent = q.titre;
+	var radioVisible = !!(radio && !radio.hidden);
+	bloc.querySelector(".objectif-indice").textContent = radioVisible ? "" : (q.indice || "");
+	bloc.classList.toggle("avec-radio", radioVisible);
+	bloc.title = "quetes : le journal complet. indice : un coup de pouce plus précis.";
+	bloc.hidden = false;
 }
 
 /* La vitrine des badges, dans le panneau de droite : gagnés en couleur, à gagner en ombre. */

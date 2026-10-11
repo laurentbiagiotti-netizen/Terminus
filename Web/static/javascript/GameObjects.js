@@ -769,19 +769,10 @@ Au dos, d'une écriture pressée :\n\
     "item_manuscript.gif").droits("r--------", "root");
 KernelFiles.addItem(Certificate);
 var Instructions = new Item("Instructions",
-    "Tu as appris à te servir de ton ami Grep, à ce que je vois. \
-Sinon, il serait sage de retourner faire un peu de lecture à la Bibliotheque. \
-Car ici, tu vas avoir besoin de lui. Voici ta mission :\n\n\
-Les ArchivesDuNoyau regorgent de chroniques, et l'une d'elles contient le mot de passe sudo. \
-Ce mot de passe est très puissant : il permet de faire absolument n'importe quoi dans ce monde, \
-et de lancer un sort sur n'importe quel objet, même protégé. Tu sais qu'il figure sur une ligne \
-contenant « motdepasse= ». Trouve-la avec l'aide de grep. L'étoile (grep MOT *) ou grep -r \
-t'éviteront de fouiller les chroniques une par une.\n\n\
-Ensuite, il te faudra le sort sudo. Pour cela, écris simplement « sudo » devant le sort \
-à lancer, comme ceci : « sudo less OBJET ». On te demandera le mot de passe. Tape-le, \
-et le sort qui suit sudo sera lancé avec les pouvoirs de root, l'administrateur.\n\n\
-Regarde le Certificat avec ls -l : personne d'autre que root n'a le droit de le lire. \
-Lis-le avec sudo, et le chemin s'ouvrira.",
+    "Ta mission : l'une des chroniques des ArchivesDuNoyau contient le mot de passe sudo, sur une ligne « motdepasse= ». \
+Trouve-la avec grep (grep MOT * ou grep -r : inutile de les ouvrir une par une).\n\n\
+Puis écris sudo devant un sort : sudo less OBJET. Tape le mot de passe, et le sort part avec les pouvoirs de root, l'administrateur.\n\n\
+Le Certificat (ls -l) n'est lisible que par root. Lis-le avec sudo, et le chemin s'ouvrira.",
     "item_manuscript.gif").enseigne("sudo");
 KernelFiles.addItem(Instructions);
 
@@ -1142,25 +1133,14 @@ jeudi     test de restauration (une sauvegarde jamais testée n'est pas une sauv
 ];
 Sauvegardes.addItem(ArchiveLundi);
 SalleServeurs.addItem(new Item("Administratrice",
-    "« Ah, de l'aide ! Evi, administratrice système. Voilà ce que je vérifie tous les matins, crise ou pas crise.\n\
+    "« Ah, de l'aide ! Evi, administratrice système. Ma tournée du matin :\n\
 \n\
-La place. Un disque plein, et plus rien ne marche.\n\
-  df -h              le remplissage de chaque disque\n\
-  du -sh LIEU        le poids total d'un lieu\n\
-  du * | sort -n     tout ce qu'il y a ici, le plus lourd en dernier\n\
+  df -h, du -sh LIEU, du * | sort -n     la place : un disque plein, et tout s'arrête\n\
+  tar -tf / -xf / -cf ARCHIVE            lister, extraire, créer une sauvegarde\n\
+  crontab -l                             les tâches planifiées (cron)\n\
+  sudo crontab -u NOM -l   (ou -r)       celles d'un autre, ou les retirer\n\
 \n\
-Les sauvegardes. Une archive tar range plusieurs objets en un seul.\n\
-  tar -tf ARCHIVE              liste ce qu'elle contient\n\
-  tar -xf ARCHIVE              en extrait tout, à l'endroit où tu te trouves\n\
-  tar -cf ARCHIVE OBJETS...    en crée une\n\
-\n\
-Les tâches planifiées. Le démon cron relance des commandes à heure fixe, d'après la liste de chaque utilisateur : sa crontab.\n\
-  crontab -l                   affiche la tienne\n\
-  sudo crontab -u NOM -l       affiche celle d'un autre (il faut être root)\n\
-  sudo crontab -u NOM -r       la retire entièrement\n\
-\n\
-Un exercice ? Il y a dans une des baies une cachette de sauvegardes. Extrais sauvegarde-lundi.tar \
-et lis le rapport d'incident qu'elle contient : il te servira un jour, crois-moi. »",
+Un exercice ? Dans une baie, une cachette de sauvegardes : extrais sauvegarde-lundi.tar et lis son rapport d'incident. »",
     "item_artisan.gif").personnage().enseigne("df", "du", "tar", "crontab").revele("s_archive"));
 
 var SalleReseau = new Room("SalleReseau",
@@ -1168,21 +1148,13 @@ var SalleReseau = new Room("SalleReseau",
 Un administrateur réseau y est à moitié enfoui.",
     "item_workstation.gif");
 SalleReseau.addItem(new Item("AdminReseau",
-    "Une voix sort de l'armoire. « Vint, administrateur réseau. Ne débranche rien. \
-Le réseau, c'est simple : des machines qui portent un nom et qui se parlent.\n\
+    "Une voix sort de l'armoire. « Vint, administrateur réseau. Ne débranche rien. Le réseau : des machines qui ont un nom et se parlent.\n\
 \n\
-  hostname        le nom de la machine où tu es (regarde ton invite, juste après l'arobase)\n\
-  ping MACHINE    lui envoie de petits paquets pour vérifier qu'elle répond\n\
-  ssh MACHINE     ouvre un terminal sur cette machine, comme si tu étais assis devant\n\
-  exit            referme la connexion et te ramène d'où tu viens\n\
+  hostname        le nom de la machine où tu es (dans ton invite, après l'arobase)\n\
+  ping MACHINE    est-elle là ?\n\
+  ssh MACHINE     ouvrir un terminal sur elle ; exit pour revenir\n\
 \n\
-Tu débutes ? Lis d'abord le TableauBlanc, derrière moi : le réseau en cinq idées, sans jargon. \
-La liste des machines est dans hotes.txt. Tu ne peux te connecter que là où tu as un compte : \
-les machines où tu as déjà mis les pieds, plus celles des campus de Lille et de Marseille, \
-où j'ouvre un compte à chaque rentrée. Personne n'y va à pied.\n\
-\n\
-Essaie : ping lille, puis ssh lille. Regarde ton invite changer. Puis exit, et te revoilà ici. \
-C'est le moyen de transport le plus rapide de ce monde. »",
+Tu débutes ? Lis le TableauBlanc. La liste des machines est dans hotes.txt. Essaie : ping lille, puis ssh lille. »",
     "item_citizen1.gif").personnage().enseigne("hostname", "ping", "ssh").revele("s_ssh"));
 SalleReseau.addItem(new Item("hotes.txt",
     "# Les machines du réseau. Sous Linux, ce fichier s'appelle /etc/hosts.\n\
@@ -1193,27 +1165,15 @@ SalleReseau.addItem(new Item("hotes.txt",
 " + completerDroite(ADRESSE_ATTAQUANT, 13) + "citadelle    accès restreint"));
 /* Les notions de base du réseau, pour qui n'en a jamais entendu parler (reprises et approfondies au chapitre 2). */
 var TableauBlanc = new Item("TableauBlanc",
-    "Sur le tableau blanc de la SalleReseau, de l'écriture penchée de Vint :\n\
+    "LE RÉSEAU EN CINQ IDÉES (de l'écriture penchée de Vint)\n\
 \n\
-LE RÉSEAU EN CINQ IDÉES\n\
+1. L'ADRESSE IP : l'adresse postale d'une machine. 10.0.92.1 pour Cybersup.\n\
+2. LE NOM : plus facile à retenir. hotes.txt fait le lien (sur un vrai réseau : le DNS).\n\
+3. LE RÉSEAU : même début d'adresse, même rue (10.0.92). Pour sortir, la PASSERELLE.\n\
+4. PING : « tu es là ? », par le nom (ping lille) ou par l'adresse.\n\
+5. LE PORT : le guichet d'un service. 22 pour ssh, 80 pour le web.\n\
 \n\
-1. L'ADRESSE IP. Chaque machine d'un réseau a une adresse, comme chaque maison a une adresse postale.\n\
-   Quatre nombres de 0 à 255 séparés par des points : 10.0.92.1 pour Cybersup, 10.0.59.1 pour Lille.\n\
-\n\
-2. LE NOM. Une adresse, c'est dur à retenir : on donne aussi un nom aux machines (cybersup, lille).\n\
-   Un annuaire fait le lien entre les deux : ici, le fichier hotes.txt ; sur un vrai réseau, le DNS.\n\
-\n\
-3. LE RÉSEAU. Les machines dont l'adresse commence pareil sont dans le même réseau, comme les maisons\n\
-   d'une même rue : 10.0.92.1 et 10.0.92.53 sont voisines (la rue, c'est 10.0.92). Pour sortir de sa rue,\n\
-   on passe par la PASSERELLE : un routeur, le bureau de poste du quartier.\n\
-\n\
-4. PING. ping MACHINE envoie un tout petit paquet et attend la réponse : c'est « tu es là ? ».\n\
-   Il marche avec un nom (ping lille) ou directement avec une adresse (ping 10.0.59.1).\n\
-\n\
-5. LE PORT. Sur une machine, chaque service attend derrière un numéro de PORT, comme les guichets d'une poste :\n\
-   22 pour ssh (un terminal à distance), 80 pour le web. ssh MACHINE ouvre un terminal sur une autre machine ; exit le referme.\n\
-\n\
-Exercice : cherche l'adresse de Lille dans hotes.txt, et appelle Lille par son ADRESSE, pas par son nom.",
+Exercice : trouve l'adresse de Lille dans hotes.txt, et appelle Lille par son ADRESSE.",
     "item_sign.gif").revele("s_adresse");
 SalleReseau.addItem(TableauBlanc);
 Baie3.addItem(new Item(".bash_history",
@@ -1231,26 +1191,14 @@ et des voyants qui baignent la salle de leur lumière. Une demi-douzaine d'étud
 casque sur les oreilles. Personne ne lève la tête quand tu entres.",
     "loc_warroom.gif");
 var CheffeDeQuart = new Item("CheffeDeQuart",
-    "« Toi, là ! La nouvelle recrue ! Tu tombes bien. Grace, M2, cheffe de quart aujourd'hui. Je te résume la crise en trente secondes.\n\
+    "« Toi, la recrue ! Grace, cheffe de quart. Un intrus, le Sorcier Noir, a pris le contrôle de Terminus, notre monde d'entraînement : \
+regarde l'EcranMural. Il a verrouillé nos comptes, et Laurent est introuvable.\n\
 \n\
-Terminus, c'est notre monde d'entraînement : un pays entier, simulé, où l'on apprend les sorts du terminal. \
-Depuis ce matin, un intrus qui se fait appeler le Sorcier Noir en a pris le contrôle. Il corrompt tout, région après région : \
-regarde l'EcranMural. Il a verrouillé nos comptes à tous, et Laurent, le seul à avoir les clés du simulateur, est introuvable. \
-Mauvais jour pour disparaître.\n\
+Ton compte est neuf : il n'est pas sur sa liste. Entre dans Terminus, par la forêt ou la prairie. On te suit d'ici.\n\
 \n\
-Ton compte à toi est tout neuf : il n'est pas sur sa liste. Tu peux encore entrer dans Terminus, par la forêt ou par la prairie, \
-depuis chez toi. Nous, on te suit d'ici, sur les écrans.\n\
-\n\
-Et si tu veux te rendre utile tout de suite : le journal auth.log enregistre chaque tentative de connexion à nos machines \
-(l'heure, le résultat, le compte visé, l'adresse d'origine). Quelqu'un essaie des mots de passe à la chaîne depuis ce matin. \
-Trouve-moi l'adresse d'où viennent le plus d'échecs, et crie-la-moi : echo ADRESSE. C'est le travail de base d'un analyste :\n\
-\n\
-  grep ECHEC auth.log                       ne garde que les échecs\n\
-  grep ECHEC auth.log | cut -d\" \" -f4       ne garde que la quatrième colonne : l'adresse\n\
-  ... | sort | uniq -c | sort -n            compte chaque adresse, la pire en dernier\n\
-\n\
-Tu ne connais pas encore ces sorts ? Les gens de Terminus te les apprendront : la bibliothécaire, le tavernier. \
-Reviens quand tu sauras. »",
+Et pour t'entraîner : quelqu'un essaie des mots de passe à la chaîne. Trouve l'adresse qui échoue le plus dans auth.log, et crie-la : echo ADRESSE.\n\
+  grep ECHEC auth.log | cut -d\" \" -f4 | sort | uniq -c | sort -n\n\
+La bibliothécaire et le tavernier t'apprendront ces sorts. »",
     "item_grad.gif").personnage().revele("s_soc");
 WarRoom.addItem(CheffeDeQuart);
 var EcranMural = new Item("EcranMural", "", "loc_warroom.gif");
@@ -1498,32 +1446,17 @@ Citadelle.addItem(Phylactere);
 var VRAI_NOM = "laurent";
 
 var Laurent = new Item("Laurent",
-    "« Je te dois des explications. Je m'appelle Laurent. Dans un autre monde, pas si loin d'ici, \
-on m'appelle le Directeur Pédagogique de Cybersup.\n\
+    "« Je te dois des explications. Je m'appelle Laurent, Directeur Pédagogique de Cybersup.\n\
 \n\
-Le Sorcier Noir, la corruption qui ronge la côte, les trolls grognons : tout cela, c'était ton examen. \
-On ne retient pas un sort en le recopiant vingt fois. On le retient le jour où il nous sort d'un mauvais pas. \
-Alors je t'ai mis dans de mauvais pas.\n\
+Le Sorcier Noir, la corruption, les trolls : c'était ton examen. On retient un sort le jour où il nous sort d'un mauvais pas, \
+alors je t'en ai offert plusieurs. Le vieil homme du man ? Moi, avec une fausse barbe. L'enfant dans la cage ? Ma stagiaire. \
+Et la WarRoom passait son propre exercice de crise en même temps.\n\
 \n\
-Le vieil homme qui te soufflait la réponse à chaque man ? C'était moi. Je ne suis pas si vieux, c'est la barbe. \
-L'enfant dans la cage ? Ma stagiaire, très bien payée en chocolat. Les trolls sont des intermittents du spectacle. \
-Et le fermier a toujours eu deux épis. Quant aux habitants de Terminus, ce sont d'anciens élèves et des intervenants \
-de l'école, qui se prêtent au jeu chaque année : retourne les voir, ils n'ont plus de rôle à tenir.\n\
+Ces sorts n'ont rien de magique : ls, grep, chmod, sudo marchent tels quels sur les vraies machines, celles des hôpitaux et des banques. \
+Les défendre est un métier : c'est celui qu'on enseigne.\n\
 \n\
-Ta convocation annonçait une épreuve pratique, « lieu et surveillant communiqués en temps voulu ». Voilà : c'est communiqué. \
-Et pendant que tu passais la tienne, les M2 de la WarRoom passaient la leur, sans le savoir non plus : \
-un exercice de crise, avec un intrus qui leur verrouillait leurs comptes. Deux examens pour le prix d'une attaque.\n\
-\n\
-Ce que tu as appris ici n'a rien de magique, et c'est la meilleure nouvelle de la journée : \
-ls, cd, grep, chmod, ps, kill, sudo... ces sorts fonctionnent tels quels sur de vraies machines, \
-celles qui font tourner les hôpitaux, les banques et les trains. Les défendre, c'est un métier. \
-C'est celui qu'on enseigne chez nous.\n\
-\n\
-Ton Diplome est là, tu l'as mérité. La porte du Paradis est ouverte : va voir, c'est reposant. \
-Mon bureau à Cybersup t'est ouvert aussi, j'y ai laissé un mot pour toi. \
-Et en cadeau, le sort tree, si tu ne l'as pas déjà gagné : il dessine la carte de tout ce que tu viens de traverser.\n\
-\n\
-Une dernière chose, la seule vraie règle des mages : avec sudo, on relit sa ligne avant d'appuyer sur Entrée. »",
+Ton Diplome est là. Le Paradis est ouvert, mon bureau à Cybersup aussi, et je t'offre le sort tree. \
+Une seule règle : avec sudo, on relit sa ligne avant d'appuyer sur Entrée. »",
     "item_mysteryman.gif").personnage();
 Laurent.addCmdText("rm", "Laurent hausse un sourcil. « On ne supprime pas le directeur pédagogique. D'autres ont essayé, à la veille des partiels. »");
 Laurent.addCmdText("mv", "« Je me déplace très bien tout seul, merci. »");

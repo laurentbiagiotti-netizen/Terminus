@@ -2060,6 +2060,36 @@ Shell.lancer = function(jetons){
 	}
 };
 
+/* Les récompenses du tour tiennent en une ligne : les sorts appris ensemble, puis l'XP au bout,
+ * et les lieux qui sortent de la brume sur une petite ligne grise. Le détail est dans man, schema, traque. */
+Shell.compacterNarration = function(liste){
+	var sortie = [], sorts = [], lieux = [], voir = "", xp = 0, placeSorts = -1, placeLieux = -1;
+	liste.forEach(function(l){
+		if (l && typeof l === "object"){
+			if (l.sort){ if (placeSorts < 0){ placeSorts = sortie.length; sortie.push(null); } sorts.push(l); }
+			else if (l.lieu){ if (placeLieux < 0){ placeLieux = sortie.length; sortie.push(null); } lieux.push(l.lieu); voir = l.voir; }
+			else if (l.xp) xp += l.xp;
+			return;
+		}
+		sortie.push(l);
+	});
+	var gain = xp ? C.gris("  +" + xp + " XP") : "";
+	if (sorts.length === 1){
+		var s = sorts[0];
+		sortie[placeSorts] = C.vert("✦ Nouveau sort appris : " + s.sort + (s.rpg ? ", " + s.rpg : "")) + C.gris(" · " + s.resume + " · man " + s.sort) + gain;
+		gain = "";
+	} else if (sorts.length > 1){
+		sortie[placeSorts] = C.vert("✦ Nouveaux sorts appris : " + sorts.map(function(s){ return s.sort + (s.rpg && sorts.length <= 3 ? " (" + s.rpg + ")" : ""); }).join(", ")) +
+			C.gris(" · man " + sorts[0].sort + " pour le détail") + gain;
+		gain = "";
+	}
+	if (lieux.length) sortie[placeLieux] = C.gris("◇ " + (voir === "traque" ? "Traque" : "Carte") + " : " + lieux.join(", ") + (lieux.length > 1 ? " sortent" : " sort") + " de la brume · " + voir);
+	// Les petits gains (+5 XP) ne s'affichent seuls que si rien d'autre n'est annoncé : la barre d'XP les montre.
+	var annonce = sortie.some(function(l){ return typeof l === "string" && /^[★✦◆▲]/.test(l.replace(/\x1b\[[0-9;]*m/g, "")); });
+	if (gain && !annonce) sortie.push(C.gris("+" + xp + " XP"));
+	return sortie.filter(function(l){ return l !== null && l !== undefined; });
+};
+
 /* Apres chaque ligne : le monde reagit, puis on affiche l'ambiance et on sauvegarde. */
 Shell.fin = function(){
 	if (Shell.variable_developpee){
@@ -2069,10 +2099,11 @@ Shell.fin = function(){
 	verifierMonde();
 	state.verifierSucces();
 	state.bilanXP();
-	while (Shell.narration.length){
-		term.echo(Shell.narration.shift());
-	}
+	var lignes = Shell.compacterNarration(Shell.narration);
+	Shell.narration = [];
+	lignes.forEach(function(l){ term.echo(l); });
 	if (typeof majEtat === "function") majEtat();
+	if (typeof majObjectif === "function") majObjectif();
 	term.definirInvite(Shell.invite());
 	state.save();
 };

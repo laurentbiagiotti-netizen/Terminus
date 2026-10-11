@@ -520,37 +520,29 @@ function lieuDuChapitre2(lieu){
 }
 
 var Crypte = lieuDuChapitre2(new Room("Crypte",
-	"Sous la Citadelle, un escalier de pierre descend dans le froid. C'est ici que dorment les programmes du système : \
-on entend leurs ventilateurs ronronner derrière les murs. Une radio grésille sur une table, à côté d'un homme qui trie des parchemins.",
+	"Le donjon sous la Citadelle. Un escalier de pierre plonge dans le froid ; derrière les murs ronronnent les programmes du système. \
+Une radio grésille près d'un vieil archiviste.",
 	"loc_stair.gif"));
 Crypte.owner = "root";
 Crypte.mode = "rwxr-xr-x";
 
 var Whitfield = new Item("Archiviste",
-	"Un homme à lunettes rondes lève les yeux de ses parchemins. « Whitfield, archiviste du système. Ah, la nouvelle recrue. \
-Laurent m'a prévenu : tu viens pour l'intrus.\n\n\
-Ici, rien ne se perd. Pour chaque programme du dossier bin, j'ai noté son EMPREINTE dans la liste SHA256SUMS : \
-64 caractères calculés à partir de son contenu. Change une seule virgule dans un programme, et l'empreinte n'a plus rien à voir. \
-C'est comme ça qu'on repère un fichier trafiqué.\n\n\
-Va dans bin, et demande à sha256sum de vérifier toute la liste d'un coup : sha256sum -c SHA256SUMS. \
-Les programmes intacts répondent OK. Celui qui a été retouché, s'il y en a un, répondra ÉCHEC.\n\n\
-Et si tu tombes sur du charabia de lettres, de chiffres, de + et de /, qui finit parfois par un ou deux signes =, ce n'est pas du chiffrement : c'est du base64, \
-un simple emballage. base64 -d le déballe. Pour t'entraîner, emballe donc ton prénom : echo TonPrénom | base64. »",
+	"Un vieil homme lève les yeux de ses parchemins. « Whitfield, archiviste. Chaque programme de bin a son EMPREINTE dans la liste SHA256SUMS. \
+Change une virgule, l'empreinte change : c'est ainsi qu'on repère un grimoire corrompu.\n\n\
+Va dans bin et lance : sha256sum -c SHA256SUMS. Le programme trafiqué répondra ÉCHEC. »\n\
+(Du charabia qui finit par = ? C'est du base64, un simple emballage : base64 -d le déballe. Essaie : echo TonPrénom | base64)",
 	"item_archiviste.gif").personnage().enseigne("sha256sum", "base64").revele("s_c_base64");
 Crypte.addItem(Whitfield);
 
-var Radio = new Item("Radio",
-	"La radio grésille. « Ici Grace, depuis la WarRoom. Tu m'entends ? Bien. L'exercice est fini, mais les sondes du SOC \
-continuent de voir passer du trafic vers la Citadelle, et ça, ce n'est pas nous. Quelqu'un a fait son nid chez nous : on l'appelle le Corbeau.\n\n\
-La chasse est ouverte. Chaque sort que tu lances te dit ce qu'il fait en une image, et fait sortir des machines de la brume. \
-Chaque porte que tu lui fermes te rapporte un badge (badges relit ce qu'ils t'ont appris). Et tape traque quand tu veux : ce n'est pas une commande Linux, c'est une commande du jeu (comme quetes ou xp) qui affiche ton tableau de chasse, machine par machine, en rouge ce qu'il souille encore, en vert ce que tu as purifié. \
-Le Bestiaire, sur la table, donne pour chaque image le vrai mot du métier, et la TrousseDEvi, au pied de l'escalier, d'autres sorts de chasse.\n\n\
-Commence par l'Archiviste : il saura si quelqu'un a touché aux programmes. Je reste en ligne. »",
-	"item_workstation.gif");
+var TEXTE_RADIO_INTRO =
+	"La radio grésille. « Ici Grace, de la WarRoom. Un mage noir, le Corbeau, s'est glissé dans la Citadelle et a corrompu nos machines. On le chasse ensemble.\n\n\
+Commence par l'Archiviste : il saura quel programme a été ensorcelé. Je te guide à la radio. »\n\
+(traque : ton tableau de chasse. Le Bestiaire traduit chaque image en vrai mot. La TrousseDEvi est au pied de l'escalier.)";
+var Radio = new Item("Radio", TEXTE_RADIO_INTRO, "item_workstation.gif");
 Crypte.addItem(Radio);
 
 var DossierBin = lieuDuChapitre2(new Room("bin",
-	"Le dossier des programmes du système. Chacun est rangé là, exécutable, à sa place. Une liste d'empreintes est punaisée au mur.",
+	"La salle des grimoires du système : chaque programme y dort, exécutable. La liste des empreintes est clouée au mur.",
 	"loc_cluster.gif"));
 DossierBin.owner = "root";
 DossierBin.mode = "rwxr-xr-x";
@@ -611,8 +603,7 @@ var Sha256Sums = new Item("SHA256SUMS",
 [Gardien, ProgrammePasswd, Portier, Veilleur, Sha256Sums].forEach(function(item){ DossierBin.addItem(item); });
 
 var Caveau = lieuDuChapitre2(new Room("Caveau",
-	"Une salle voûtée creusée dans la roche. Le long des murs, des niches scellées : la plupart te sont fermées. \
-Quelque part ici se cache une porte que personne n'a construite.",
+	"Une salle voûtée taillée dans la roche. Des niches scellées par root bordent les murs. Quelque part, une porte que personne n'a bâtie.",
 	"loc_cave.gif"));
 Caveau.owner = "root";
 Caveau.mode = "rwxr-xr-x";
@@ -627,16 +618,11 @@ for (var numeroNiche = 1; numeroNiche <= 6; numeroNiche++){
 	NICHES.push(niche);
 }
 var Inscription = new Item("Inscription",
-	"Gravé dans la pierre, d'une écriture appliquée :\n\n\
-« Certains programmes s'exécutent avec les droits de leur PROPRIÉTAIRE, et non de celui qui les lance. \
-On les reconnaît à la lettre s à la place du x du propriétaire : -rwsr-xr-x. C'est le bit SUID. \
-Linux ne le respecte que sur les programmes compilés (les binaires), jamais sur les scripts.\n\
-passwd en a besoin, et c'est normal. Mais un programme SUID qui appartient à root et que personne n'a installé, \
-c'est une porte dérobée : n'importe qui le lance devient root le temps de son exécution.\n\n\
-Pour les trouver tous : find . -perm -4000\n\
-(-4000 veut dire : le bit SUID est posé. On écrit aussi -perm -u=s.)\n\n\
-Et si find se plaint de chaque niche fermée, fais-le taire : ses plaintes sortent par la sortie d'erreur, \
-la numéro 2. 2>/dev/null les envoie dans le trou noir du système ; 2>~/erreurs.txt les garde dans un objet, chez toi : ici, c'est le domaine de root, tu n'as pas le droit d'y écrire. »",
+	"Gravé dans la pierre :\n\n\
+« Certains programmes agissent avec les droits de leur PROPRIÉTAIRE : c'est le bit SUID, un s à la place du x (-rwsr-xr-x). \
+passwd en a besoin. Mais un programme SUID de root que personne n'a installé, c'est une porte dérobée.\n\
+Pour les trouver : find . -perm -4000\n\
+Les niches fermées font râler find sur la sortie d'erreur, la numéro 2 : 2>/dev/null la fait taire, 2>~/erreurs.txt la garde chez toi. »",
 	"item_sign.gif").revele("s_c_silence", "s_c_trace");
 Caveau.addItem(Inscription);
 Caveau.addItem(new Item("Lanterne", "Une lanterne froide. Personne ne l'a allumée depuis longtemps.", "item_trinket.gif").droits("rw-r--r--", "root"));
@@ -646,17 +632,14 @@ PorteDerobee.picturename = "./static/img/item_portal.gif";
 /* La .porte n'apparaît dans le Caveau qu'une fois le programme trafiqué repéré ET le message décodé (voir verifierChapitre2). */
 
 var Racine = lieuDuChapitre2(new Room("Racine",
-	"La Racine : le domaine de root, tout en bas de l'arbre. Des processus bourdonnent dans l'ombre comme des abeilles. \
-Rien ici n'est censé être visité par une recrue.",
+	"La Racine, le domaine de root, tout au fond du donjon. Des processus bourdonnent dans l'ombre comme des abeilles. Rien ici n'est fait pour une recrue.",
 	"loc_darkroom.gif"));
 Racine.owner = "root";
 Racine.mode = "rwxr-xr-x";
 
 var ManuelDeNano = new Item("ManuelDeNano",
-	"Un petit carnet corné, signé Evi, l'administratrice : « Pour modifier un fichier de configuration, on ne le recopie pas \
-à la main : on l'ouvre dans un éditeur. nano est le plus simple. sudo nano FICHIER pour un fichier de root. \
-Ctrl+K coupe la ligne du curseur, Ctrl+O enregistre, Ctrl+X quitte. Les boutons en bas de l'éditeur font pareil.\n\n\
-Et avant de toucher à un fichier important, on en garde une copie. Il y en a une à côté de chaque fichier sensible ici. »",
+	"Le carnet d'Evi : « Pour modifier un fichier de root : sudo nano FICHIER. Ctrl+K coupe la ligne, Ctrl+O enregistre, Ctrl+X quitte. \
+Avant de toucher un fichier sensible, garde une copie : il y en a une à côté de chacun, ici. »",
 	"item_manuscript.gif").enseigne("nano");
 Racine.addItem(ManuelDeNano);
 
@@ -707,17 +690,16 @@ var BoiteDeDepot = lieuDuChapitre2(new Room("BoiteDeDepot",
 BoiteDeDepot.owner = "evi";
 BoiteDeDepot.mode = "rwxrwxrwt";
 var ConsignesDuCoffre = new Item("ConsignesDuCoffre",
-	"Une fiche plastifiée, de la main d'Evi :\n\n\
-« LE COFFRE DE L'ÉCOLE : ACCÈS PAR CLÉ UNIQUEMENT\n\n\
-1. Fabrique ta paire de clés : ssh-keygen (une phrase de passe, c'est mieux).\n\
-2. Elle arrive dans ~/.ssh : id_ed25519 (PRIVÉE, tu la gardes) et id_ed25519.pub (PUBLIQUE, tu la donnes).\n\
-3. Dépose ta clé PUBLIQUE dans la BoiteDeDepot : cp ~/.ssh/id_ed25519.pub BoiteDeDepot\n\
-4. Je l'ajoute aux clés autorisées du coffre, et ssh coffre te laissera entrer.\n\n\
-Si tu me déposes ta clé PRIVÉE, je la détruis, et tu en refais une. Sans discuter. »",
+	"Fiche d'Evi. LE COFFRE N'OUVRE QU'AUX CLÉS.\n\n\
+1. ssh-keygen forge ta paire de clés (avec une phrase de passe, c'est mieux).\n\
+2. ~/.ssh/id_ed25519 est PRIVÉE : tu la gardes. id_ed25519.pub est PUBLIQUE : tu la donnes.\n\
+3. Dépose la publique : cp ~/.ssh/id_ed25519.pub BoiteDeDepot\n\
+4. Je l'installe, et ssh coffre t'ouvrira.\n\n\
+Une clé PRIVÉE déposée ici est détruite. Sans discuter.",
 	"item_sign.gif").enseigne("ssh-keygen");
 
 var Coffre = lieuDuChapitre2(new Room("Coffre",
-	"Le coffre de l'école : la machine où dorment les sujets d'examen et les notes. Il n'y a qu'une chaise, vide pour l'instant.",
+	"La chambre forte de l'école : les sujets d'examen et les notes y dorment. Une seule chaise, vide pour l'instant.",
 	"loc_warroom.gif"));
 Coffre.removeCommand("cd");
 Coffre.addCmdText("cd", "Le coffre n'a pas de porte : on n'y entre que par le réseau, avec une clé. ssh coffre");
@@ -725,19 +707,11 @@ Coffre.owner = "root";
 Coffre.mode = "rwxr-xr-x";
 
 var Corbeau = new Item("Corbeau",
-	"Sur la seule chaise du coffre, une silhouette en sweat à capuche du BDE fait tourner un stylo entre ses doigts. \
-Elle retire sa capuche. Tu la connais : c'est l'enfant de la cage ! Enfin, la stagiaire de Laurent.\n\n\
-« Bon. Tu m'as eue. Je m'appelle Frances. Pendant que je jouais l'enfant enlevée, j'avais un accès à tout : \
-la Citadelle, la Racine, les clés. Alors j'ai voulu voir si quelqu'un s'en rendrait compte. \
-Un programme trafiqué, une porte SUID, un faux kworker qui écoute sur le port " + PORT_CORBEAU + ", ma clé dans authorized_keys... \
-Tout ce qu'un vrai attaquant aurait fait. Je n'ai rien cassé, promis. Je voulais juste qu'on me remarque.\n\n\
-Je sais, je sais : la bonne méthode, c'était d'aller voir Laurent et de lui dire « votre Citadelle a un trou ». \
-Ça s'appelle la divulgation responsable, et c'est ce qui sépare les gentils des autres. \
-Tu crois qu'il va me renvoyer ? »\n\n\
-La radio grésille dans ta poche. C'est Laurent : « Frances, tu commences en B1 dès lundi. Et tu m'aideras à tout remettre d'aplomb. \
-Toi, la recrue : il me reste une chose à te demander, la plus importante dans notre métier. Le rapport d'incident. \
-Le modèle t'attend dans ta Maison : copie-le (cp ~/ModeleRapport ~/rapport.txt), remplis-le avec vim (vim ~/rapport.txt), \
-et ton certificat t'attendra à côté. »",
+	"Sur la chaise, une silhouette encapuchonnée de noir fait tourner une plume. Elle retire sa capuche : c'est Frances, la stagiaire de Laurent. L'enfant de la cage !\n\n\
+« Oui, le mage noir, c'était moi. J'avais les clés de tout, alors j'ai voulu voir si quelqu'un me trouverait : grimoire trafiqué, porte SUID, \
+faux kworker sur le port " + PORT_CORBEAU + ", ma clé chez root. Je n'ai rien cassé. J'aurais dû prévenir Laurent : ça s'appelle la divulgation responsable. »\n\n\
+La radio grésille. C'est Laurent : « Frances, tu commences en B1 dès lundi. Toi, la recrue : le rapport d'incident. \
+cp ~/ModeleRapport ~/rapport.txt, puis vim ~/rapport.txt. »",
 	"item_frances.gif").personnage();
 /* Le Corbeau n'attend dans le coffre qu'une fois ses notes déchiffrées (voir Reseau.js). */
 Coffre.addItem(new Item("SujetsDExamen", "Une pile de sujets sous scellés. Frances jure qu'elle ne les a pas ouverts. Les scellés lui donnent raison.", "item_manuscript.gif").droits("rw-------", "root"));
@@ -750,10 +724,8 @@ NICHES.forEach(function(n){ link_rooms(Caveau, n); });
 
 /* Le P.S. de Laurent : la panne du réseau de l'école (chapitre 2), avant la Crypte (chapitre 3). */
 Laurent.cmd_text["less"] += "\n\n" +
-	"P.S. Une dernière chose, et celle-là n'était PAS prévue au programme : pendant ton épreuve, le réseau de l'école est tombé. \
-Plus d'intranet, plus de mails, plus de liaison avec Lille, et Vint, notre administrateur réseau, est en vacances. \
-Radia, qui fait son M1 réseau à Marseille, est montée en renfort : elle t'attend au BatimentB de Cybersup (cd ~/Cybersup/BatimentB). \
-Ce sera ton deuxième chapitre, si tu as encore de l'énergie.";
+	"P.S. Imprévu : pendant ton épreuve, le réseau de l'école est tombé, et Vint, notre administrateur réseau, est en vacances. \
+Radia est montée de Marseille en renfort : elle t'attend au BatimentB (cd ~/Cybersup/BatimentB). Ce sera ton deuxième chapitre.";
 
 HOTES["coffre"] = { ip: "10.0.92.250", arrivee: function(){ return Coffre; },
 	refus: function(){
@@ -792,15 +764,7 @@ function cleCorbeauRetiree(){
 
 function texteRadio(){
 	if (typeof texteRadioReseau === "function"){ var t = texteRadioReseau(); if (t) return t; }
-	if (state.quests["c_corbeau"]) return "La radio grésille. « Grace, terminé. Frances rédige son rapport, et le SOC est enfin calme. Beau boulot, la recrue. »";
-	if (state.quests["c_coffre"]) return "La radio grésille. « Evi a installé ta clé. Le trafic vient d'un poste de l'école, " + ADRESSE_POSTE_CORBEAU + ". Le Corbeau est chez nous, dans le coffre. Va le voir : ssh coffre. »";
-	if (state.quests["c_cle"]) return "La radio grésille. « Plus de clé du Corbeau, plus de porte, plus d'écoute. Il reste à savoir QUI c'est. Les connexions venaient de l'intérieur de l'école. \
-Evi peut t'ouvrir le coffre, où tout converge : ses ConsignesDuCoffre sont dans la SalleServeurs. »";
-	if (state.quests["c_ecoute"]) return "La radio grésille. « Le trafic s'est arrêté ! Mais il reviendra tant que sa clé est dans les clés autorisées de root. \
-Elle est dans le dossier caché de la Racine. Evi a laissé un ManuelDeNano par là. »";
-	if (state.quests["c_racine"]) return "La radio grésille. « Tu es dans la Racine ? Mes sondes voient une connexion établie vers la Citadelle, sur le port " + PORT_CORBEAU + ". \
-Personne n'utilise ce port. Trouve quel processus l'écoute : ss -tlnp, avec sudo pour voir les processus de root. Je t'apprends le sort. (Repasse lire la Radio, dans la Crypte : less ../../Radio.) »";
-	return Radio.cmd_text["less"];
+	return TEXTE_RADIO_INTRO;
 }
 
 function verifierChapitre2(){
@@ -877,6 +841,8 @@ function etatChapitre2(nom){
 			break;
 		case "crypteOuverte":
 			relier(Citadelle, Crypte);
+			Citadelle.changeIntroText("La forteresse de la Citadelle, reprise au Sorcier Noir. Mais une trappe s'est ouverte dans le sol, et un froid de donjon en monte : la Crypte. \
+Laurent veille près du grand terminal.");
 			if (state.has("panneDirecte")) Laurent.addCmdText("less", TEXTE_LAURENT_RENFORT);
 			break;
 		case "porteApparue":
@@ -1063,13 +1029,9 @@ function sauterChapitre1(){
 
 /* Le texte de Laurent quand le joueur arrive en renfort pour la Crypte, sans avoir passé l'épreuve de première année. */
 var TEXTE_LAURENT_RENFORT =
-	"« Ah, te voilà, le renfort. Je suis Laurent, directeur pédagogique de Cybersup. Ne fais pas attention à la cape noire \
-posée sur la chaise : ce matin, je jouais le Sorcier Noir pour l'épreuve pratique des B1. Ils ont traversé tout Terminus \
-avec un simple terminal, et ils m'ont battu. Le monde est resté ouvert : si tu veux revoir les sorts de base, ses habitants sont toujours là.\n\n\
-Le problème, c'est ce que Grace a vu pendant la correction : du trafic sous la Citadelle, sur un port que personne n'utilise. \
-Quelqu'un est vraiment entré pendant l'examen, et ça, ce n'était pas au programme. Personne ici ne sait encore qui, ni comment.\n\n\
-Une trappe vient de s'ouvrir dans le sol : cd Crypte. L'Archiviste t'attend en bas, et Grace reste en ligne à la radio. \
-Ton compte a les droits sudo pour la mission. Une seule règle : avec sudo, on relit sa ligne avant d'appuyer sur Entrée. »";
+	"« Ah, le renfort ! Laurent, directeur pédagogique. La cape noire ? Ce matin, je jouais le Sorcier Noir pour l'épreuve des B1.\n\n\
+Mais pendant l'examen, un vrai mage noir est entré : Grace voit du trafic sous la Citadelle, sur un port que personne n'utilise. \
+Une trappe vient de s'ouvrir : cd Crypte. L'Archiviste t'attend en bas, Grace te guide à la radio. Tu as les droits sudo : relis toujours ta ligne. »";
 
 /* Le même, pour le renfort réseau : la Crypte ne s'ouvrira qu'une fois le réseau réparé. */
 var TEXTE_LAURENT_RENFORT_PANNE =
@@ -1127,9 +1089,8 @@ et moi je te suivrai à la radio. Ton compte a les droits sudo pour la mission. 
 	CheffeDeQuart.teaches = [];
 	// Le renfort n'a pas joué l'épreuve : la révélation du Corbeau doit se comprendre sans elle.
 	var texteCorbeau = Corbeau.getText()
-		.replace("Tu la connais : c'est l'enfant de la cage ! Enfin, la stagiaire de Laurent.",
-			"Tu ne l'as jamais vue. La radio grésille, c'est Laurent : « Frances ?! C'est ma stagiaire. Ce matin, dans l'épreuve des B1, elle jouait l'enfant enlevée par le Sorcier Noir. »")
-		.replace("Pendant que je jouais l'enfant enlevée, j'avais", "Ce matin, pendant que je jouais l'enfant enlevée dans l'épreuve des B1, j'avais");
+		.replace("c'est Frances, la stagiaire de Laurent. L'enfant de la cage !",
+			"c'est Frances. Tu ne l'as jamais vue : c'est la stagiaire de Laurent, qui jouait ce matin l'enfant enlevée dans l'épreuve des B1.");
 	Corbeau.setText(texteCorbeau);
 	if (Corbeau.cmd_text && Corbeau.cmd_text["less"]) Corbeau.addCmdText("less", texteCorbeau);
 	TableauAffichage.setText(TEXTE_TABLEAU + "\n\nRÉSULTATS DE L'ÉPREUVE PRATIQUE DES B1 : le Sorcier Noir est vaincu. Félicitations à la promo.");

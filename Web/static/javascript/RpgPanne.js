@@ -109,7 +109,7 @@ function revelerLieu(cle){
 	var carte = carteRpg();
 	if (carte[cle]) return;
 	carte[cle] = true;
-	if (!state.has("rejeuEnCours")) say(C.jaune("✦ Carte : ") + LIEUX_RPG[cle].nom + " (" + LIEUX_RPG[cle].vrai + ") sort de la brume." + C.gris(" schema pour la voir."));
+	if (!state.has("rejeuEnCours")) Shell.narration.push({ lieu: LIEUX_RPG[cle].nom + " (" + LIEUX_RPG[cle].vrai + ")", voir: "schema" });
 }
 
 /* Les lieux qu'un sort, ou la lecture d'un parchemin, fait découvrir. */
@@ -144,7 +144,6 @@ function effetRpg(nom, args){
 	p.premiers = p.premiers || {};
 	if (SORTS_RPG[nom] && !p.premiers[nom] && !state.has("victoireReseau")){
 		p.premiers[nom] = true;
-		if (!state.has("rejeuEnCours")) say(C.vert("✦ " + SORTS_RPG[nom].nom.replace(/^./, function(c){ return c.toUpperCase(); }) + " (" + nom + (ETAGES_DU_SORT[nom] ? ", " + ETAGES_DU_SORT[nom] : "") + ") : ") + SORTS_RPG[nom].image);
 	}
 	lieuxDecouverts(nom, args, hote).forEach(revelerLieu);
 }

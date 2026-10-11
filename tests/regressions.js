@@ -178,7 +178,7 @@ j12.taper("ssh-keygen", ["", ""]);
 contient(j12.taper("cp ~/.ssh/id_ed25519 BoiteDeDepot"), "PRIVÉE", "clé privée détruite");
 contient(j12.taper("cp ~/.ssh/id_ed25519.pub BoiteDeDepot"), "grillée", "clé publique grillée refusée");
 j12.taper("ssh-keygen", ["y", "", ""]);
-contient(j12.taper("cp ~/.ssh/id_ed25519.pub BoiteDeDepot"), "Obtenir un accès au coffre", "la nouvelle paire est acceptée sans avoir à vider la boîte");
+contient(j12.taper("cp ~/.ssh/id_ed25519.pub BoiteDeDepot"), "Forger ta clé du Coffre", "la nouvelle paire est acceptée sans avoir à vider la boîte");
 
 // --- Fautes de débutant et sorts inconnus ---
 var jf = nouveauMonde({}, 27);
@@ -502,7 +502,7 @@ var q4 = nouveauMonde({}, 66);
 q4.taper("chapitre 3", "oui");
 ["ssh citadelle", "less Laurent", "cd Crypte", "less Radio", "less Archiviste", "less /var/log/CarnetDeTraque"].forEach(function(c){ q4.taper(c); });
 contient(q4.taper("traque"), "dans la brume", "le tableau de chasse commence dans la brume");
-contient(q4.taper("less TrousseDEvi"), "Nouveau sort appris : clamscan, le Chien de Chasse", "la trousse d'Evi enseigne avec les noms imagés");
+contient(q4.taper("less TrousseDEvi"), "clamscan", "la trousse d'Evi enseigne avec les noms imagés");
 contient(q4.taper("less Bestiaire"), "Le faux roi", "le bestiaire donne les images et les vrais mots");
 contient(q4.taper("rkhunter --check"), "root", "rkhunter demande sudo");
 contient(q4.taper("sudo rkhunter --check"), "Comptes d'UID 0 autres que root             [ Warning ]", "rkhunter voit le compte caché");

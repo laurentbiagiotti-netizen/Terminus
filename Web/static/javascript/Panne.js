@@ -105,53 +105,34 @@ BatimentB.addItem(Lexique);
 
 /* Le modèle OSI : la clé de tout le chapitre, affichée sur l'armoire. */
 var ModeleOSI = new Item("ModeleOSI",
-	"LE MODÈLE OSI : LA TOUR DES SEPT ÉTAGES\n" +
-	"(l'affiche de Vint, punaisée sur l'armoire. C'est la clé de tout le chapitre.)\n\n" +
-	"Un message ne saute pas d'une machine à l'autre d'un seul coup. Il DESCEND les sept étages de la tour de l'expéditeur, " +
-	"traverse le câble, puis REMONTE les sept étages de la tour du destinataire. Chaque étage a un seul travail, et compte sur l'étage du dessous. " +
-	"Si un étage casse, tous ceux du dessus tombent avec lui.\n\n" +
-	"  7 APPLICATION    ce que tu utilises : le web, les mails, les noms\n" +
-	"                   HTTP, SMTP, DNS, DHCP, SSH       curl, dig, nc\n" +
-	"  6 PRÉSENTATION   la mise en forme et le CHIFFREMENT\n" +
-	"                   TLS (le s de https), certificats  openssl\n" +
-	"  5 SESSION        une conversation qui dure\n" +
-	"                   la session ssh ouverte sur le routeur   ssh, w\n" +
-	"  4 TRANSPORT      les PORTES (les ports) et la livraison\n" +
-	"                   TCP, UDP, ports 22 25 53 80 443   ss, nc, iptables\n" +
-	"  3 RÉSEAU         les ADRESSES IP et les ROUTES\n" +
-	"                   IP, routeurs, passerelle          ip a, ip r, ping\n" +
-	"  2 LIAISON        parler à son voisin, sur le même câble\n" +
-	"                   Ethernet, adresses MAC, ARP       ip neigh, arping\n" +
-	"  1 PHYSIQUE       le câble, la prise, le signal\n" +
-	"                   la carte réseau allumée ou non    ip link, ethtool\n\n" +
-	"Pour les retenir, de bas en haut :\n" +
-	"  « Pour Le Réseau, Tout Se Passe Automatiquement »\n" +
-	"  Physique, Liaison, Réseau, Transport, Session, Présentation, Application\n\n" +
-	"LA RÈGLE DU DÉPANNEUR : on part du bas, on monte étage par étage.\n" +
-	"  Pas de câble (étage 1) ? Inutile de chercher le DNS (étage 7).\n" +
-	"  Pas d'adresse (étage 3) ? Aucun site ne répondra (étage 7).\n" +
-	"Chaque panne du bâtiment B se range à un étage. Les sept voyants, au-dessus de l'image, montrent les sept étages du Poste : " +
-	"en rouge ce qui est cassé, en vert ce qui tient.\n\n" +
-	"Sur Internet, on parle aussi du modèle TCP/IP, en quatre couches : Accès réseau (1 et 2), Internet (3), Transport (4) " +
-	"et Application (5, 6 et 7). Mêmes idées, découpées autrement.\n\n" +
-	"Pour t'entraîner : écris les sept étages, du bas vers le haut, dans un fichier osi.txt de ta Maison. Par exemple :\n" +
+	"LE MODÈLE OSI : LA TOUR DES SEPT ÉTAGES (l'affiche de Vint)\n" +
+	"Un message descend les étages chez l'expéditeur, passe le câble, remonte chez\n" +
+	"le destinataire. Si un étage casse, tout ce qui est au-dessus tombe.\n\n" +
+	"  7 Application    le web, les mails, les noms      curl, dig, ssh\n" +
+	"  6 Présentation   le chiffrement (le s de https)   openssl\n" +
+	"  5 Session        une conversation qui dure        ssh, w\n" +
+	"  4 Transport      les PORTES : TCP, UDP, ports     ss, nc\n" +
+	"  3 Réseau         les ADRESSES IP et les routes    ip a, ip r, ping\n" +
+	"  2 Liaison        le voisin, l'adresse MAC         ip neigh, arping\n" +
+	"  1 Physique       le câble, la carte réseau        ip link, ethtool\n\n" +
+	"De bas en haut : « Pour Le Réseau, Tout Se Passe Automatiquement ».\n" +
+	"On dépanne toujours en partant du bas. Les sept voyants montrent le Poste.\n\n" +
+	"Entraîne-toi : écris les sept étages, du bas vers le haut, dans ~/osi.txt\n" +
 	"  echo Physique Liaison Réseau Transport Session Présentation Application > ~/osi.txt",
 	"item_osi.gif").revele("s_r_osi");
 BatimentB.addItem(ModeleOSI);
 
 /* La sacoche de Radia : ses sorts de terrain, en plus de ceux du chapitre. */
 var SacocheDeRadia = new Item("SacocheDeRadia",
-	"LA SACOCHE DE RADIA (posée sur le comptoir, ouverte)\n" +
-	"Mes sorts de terrain. Chacun t'apprend un vrai outil du métier, et chacun rapporte quelque chose.\n\n" +
-	"  sudo arping -c 3 10.0.93.254   le Cri dans la Rue : qui répond à cette adresse, dans TA rue ?\n" +
-	"                                 (le cri ne traverse jamais la Tour : l'ARP reste dans son réseau)\n" +
-	"  sudo arping -D -c 2 ADRESSE    avant de poser une adresse : quelqu'un l'a-t-il déjà ? 0 réponse : elle est libre\n" +
-	"  tracepath lille                le Petit Fil : le chemin sans être root, et la taille maximale des messagers (pmtu)\n" +
-	"  getent hosts NOM               le Traducteur Commun : traduit un nom comme le font les programmes (/etc/hosts, puis le DNS)\n" +
-	"  uptime                         l'Horloge d'Éveil : depuis quand la machine est éveillée (uptime -p : en clair)\n" +
-	"  iperf3 -c intranet             la Course des Messagers : le débit jusqu'à un serveur iperf3 (Vint en a laissé un sur l'intranet)\n" +
-	"  sudo nft list ruleset          la Nouvelle Herse : les règles du pare-feu dans la langue moderne (sur le routeur)\n\n" +
-	"Et dans le tiroir du Poste, Vint garde un GrimoireDesAnciens : les sorts d'avant ip, qu'on croise encore partout.",
+	"LA SACOCHE DE RADIA : ses sorts de terrain\n\n" +
+	"  sudo arping -c 3 10.0.93.254   le Cri : qui a cette adresse, dans ma rue ?\n" +
+	"  sudo arping -D -c 2 ADRESSE    cette adresse est-elle libre ?\n" +
+	"  tracepath lille                le Petit Fil : le chemin, sans être root\n" +
+	"  getent hosts NOM               le Traducteur : un nom vers une adresse\n" +
+	"  uptime -p                      l'Horloge : éveillée depuis quand ?\n" +
+	"  iperf3 -c intranet             la Course : le débit jusqu'au serveur\n" +
+	"  sudo nft list ruleset          la Nouvelle Herse (sur le routeur)\n\n" +
+	"Les vieux sorts d'avant ip sont dans le tiroir du Poste : GrimoireDesAnciens.",
 	"item_manuscript.gif").enseigne("arping", "tracepath", "getent", "uptime", "iperf3", "nft")
 	.revele("s_r_arping", "s_r_tracepath", "s_r_getent", "s_r_uptime", "s_r_iperf", "s_r_nft");
 BatimentB.addItem(SacocheDeRadia);
@@ -182,41 +163,29 @@ fichier(PosteB, "Etiquette",
 	"En temps normal, le DHCP du routeur donne tout ça tout seul. Ces valeurs servent quand il est en panne.",
 	{ image: "item_sign.gif" });
 fichier(PosteB, "AideMemoire",
-	"AIDE-MÉMOIRE DU POSTE, de la main de Vint\n\n" +
-	"Une panne réseau se répare de bas en haut :\n" +
-	"  1. le lien       ip link, ethtool eth0      la carte est-elle UP ? le câble voit-il quelque chose ?\n" +
-	"  2. l'adresse     ip a                       une ligne inet sur eth0 ?\n" +
-	"  3. la route      ip r, ping la passerelle   le poste sait-il par où sortir ?\n" +
-	"  4. les noms      cat /etc/resolv.conf, dig  le DNS répond-il ?\n" +
-	"  5. les services  curl, nc                   le service écoute-t-il ?\n\n" +
-	"Une adresse par le DHCP : sudo dhclient eth0. Pour rendre le bail : sudo dhclient -r eth0.\n" +
-	"À la main, quand le DHCP est en panne : sudo ip addr add ADRESSE/24 dev eth0, puis sudo ip route add default via PASSERELLE.\n" +
-	"Attention : ce qu'on fait avec ip s'efface au redémarrage.\n\n" +
-	"La configuration permanente est dans /etc/netplan, au format YAML (l'indentation compte, jamais de tabulation) :\n" +
-	"  netplan get                                  la lire\n" +
-	"  sudo netplan set ethernets.eth0.dhcp4=true   la modifier\n" +
-	"  sudo netplan apply                           l'appliquer tout de suite\n" +
-	"  sudo reboot                                  vérifier qu'elle tient au redémarrage\n\n" +
-	"nmcli device status : l'état des cartes réseau, vu par NetworkManager.\n" +
-	"Pour modifier un fichier de configuration : sudo nano FICHIER (Ctrl+O enregistre, Ctrl+X quitte).\n" +
-	"Pour tester un site : curl http://NOM/ (curl -I : les en-têtes seulement). Pour télécharger un fichier : wget.\n" +
-	"ping -c 4 MACHINE : exactement quatre paquets, puis le bilan.",
+	"AIDE-MÉMOIRE DU POSTE (Vint). On répare de bas en haut :\n" +
+	"  1. le lien      ip link, ethtool eth0     eth0 est-elle UP ?\n" +
+	"  2. l'adresse    ip a                      une ligne inet ?\n" +
+	"  3. la route     ip r, ping -c 4 ROUTEUR   par où sortir ?\n" +
+	"  4. les noms     cat /etc/resolv.conf      le DNS répond-il ?\n" +
+	"  5. le service   curl -I http://NOM/, nc   il écoute ?\n\n" +
+	"Adresse par DHCP : sudo dhclient eth0 (la rendre : sudo dhclient -r eth0).\n" +
+	"À la main : sudo ip addr add ADRESSE/24 dev eth0\n" +
+	"            sudo ip route add default via PASSERELLE\n" +
+	"Ce qu'on fait avec ip s'efface au redémarrage. Pour que ça dure :\n" +
+	"  netplan get, sudo netplan set ethernets.eth0.dhcp4=true, sudo netplan apply, sudo reboot\n" +
+	"Aussi : nmcli device status, sudo nano FICHIER, wget URL.",
 	{ enseigne: ["dhclient", "nmcli", "netplan", "reboot", "nano", "curl", "wget"],
 	  revele: ["s_r_ping", "s_r_nmcli", "s_r_bail", "s_r_reboot", "s_r_wget", "s_r_entetes"], image: "item_manuscript.gif" });
 
 var GrimoireDesAnciens = fichier(PosteB, "GrimoireDesAnciens",
-	"LE GRIMOIRE DES ANCIENS (dans le tiroir du poste, de la main de Vint)\n\n" +
-	"Avant ip, les mages réseau utilisaient quatre sorts, ceux du paquet net-tools. On les croise encore sur les vieux serveurs\n" +
-	"et dans les tutoriels : autant les reconnaître. Chacun a son équivalent moderne.\n\n" +
-	"  ifconfig          les cartes et leurs adresses           aujourd'hui : ip a\n" +
-	"  ifconfig -a       y compris les cartes éteintes (DOWN)\n" +
-	"  route -n          la table de routage                    aujourd'hui : ip r\n" +
-	"  arp -n            les voisins et leur adresse MAC        aujourd'hui : ip neigh\n" +
-	"  netstat -tulnp    les ports en écoute, et qui les tient  aujourd'hui : ss -tulnp\n" +
-	"  netstat -r        les routes, encore une fois\n" +
-	"  netstat -i        les compteurs de chaque carte          aujourd'hui : ip -s link\n\n" +
-	"Attention : ifconfig sans -a ne montre pas une carte éteinte. Plus d'un débutant a cru sa carte disparue.\n" +
-	"Ici, ces sorts lisent seulement : pour changer quelque chose, on utilise ip.",
+	"LE GRIMOIRE DES ANCIENS : les sorts d'avant ip (net-tools), encore partout\n\n" +
+	"  ifconfig -a       les cartes, même éteintes    aujourd'hui : ip a\n" +
+	"  route -n          les routes                   aujourd'hui : ip r\n" +
+	"  arp -n            les voisins (MAC)            aujourd'hui : ip neigh\n" +
+	"  netstat -tulnp    les ports en écoute          aujourd'hui : ss -tulnp\n" +
+	"  netstat -i        les compteurs des cartes     aujourd'hui : ip -s link\n\n" +
+	"Piège : sans -a, ifconfig cache les cartes éteintes. Ici, ils lisent seulement.",
 	{ enseigne: ["ifconfig", "route", "arp", "netstat"], revele: ["s_r_anciens"], image: "item_historybook.gif" });
 
 fichier(PosteEtc, "hostname", "poste-b");
@@ -225,17 +194,15 @@ var PosteHosts = fichier(PosteEtc, "hosts",
 var ResolvConf = fichier(PosteEtc, "resolv.conf",
 	"# Écrit à la main par stagiaire (le DHCP ne marchait plus)\nnameserver " + IP_DNS_FAUX + "\nsearch cybersup.lan\n");
 fichier(PosteEtc, "MemoDNS",
-	"MÉMO DNS\n\n" +
-	"Le DNS traduit les noms en adresses. Le poste pose ses questions au serveur écrit dans /etc/resolv.conf (ligne nameserver).\n\n" +
-	"  dig intranet                demande l'adresse d'intranet au serveur du poste\n" +
-	"  dig @" + IP_DNS + " intranet    la demande directement au serveur " + IP_DNS + "\n" +
+	"MÉMO DNS : le DNS traduit les noms en adresses.\n" +
+	"Le poste interroge le serveur noté dans /etc/resolv.conf (ligne nameserver).\n\n" +
+	"  dig intranet                l'adresse d'intranet, par le serveur du poste\n" +
+	"  dig @" + IP_DNS + " intranet    la même question, posée au vrai serveur\n" +
 	"  dig MX cybersup.lan         qui reçoit le courrier de l'école\n" +
-	"  host intranet               la même chose, en une ligne\n" +
-	"  nslookup intranet           la même chose, à l'ancienne\n" +
-	"  resolvectl status           quel serveur le poste interroge vraiment\n" +
-	"  sudo resolvectl dns eth0 ADRESSE   en changer, jusqu'au prochain redémarrage\n\n" +
-	"Si dig @serveur répond et que dig tout court échoue, ce n'est pas le DNS qui est en panne : c'est la configuration du poste.\n\n" +
-	"/etc/hosts passe avant le DNS : une ligne « ADRESSE NOM » y crée un raccourci, sur ce poste seulement.",
+	"  host intranet, nslookup intranet     pareil, en plus court\n" +
+	"  resolvectl status           le serveur vraiment utilisé\n\n" +
+	"dig @serveur marche mais pas dig ? Le DNS va bien : c'est le poste qui se trompe.\n" +
+	"/etc/hosts passe avant le DNS : « ADRESSE NOM » y crée un raccourci local.",
 	{ enseigne: ["dig", "host", "nslookup", "resolvectl"], revele: ["s_r_host", "s_r_nslookup", "s_r_mx", "s_r_hosts", "s_r_resolvectl"], image: "item_manuscript.gif" });
 var NETPLAN_INITIAL =
 	"# Configuration réseau du poste de l'accueil\n" +
@@ -282,28 +249,20 @@ fichier(RouteurDhcp, "dhcpd.conf",
 	"  fixed-address " + IP_POSTE + ";\n" +
 	"}\n");
 fichier(Routeur, "CahierDuRouteur",
-	"CAHIER DU ROUTEUR DU BÂTIMENT B\n\n" +
-	"Ce routeur relie le bâtiment B (10.0.93.0/24, interface eth0) au cœur du réseau de l'école (10.0.92.0/24, interface eth1).\n" +
-	"C'est aussi le serveur DHCP du bâtiment (isc-dhcp-server, configuration dans /etc/dhcp).\n\n" +
-	"Les services :\n" +
-	"  systemctl status NOM               son état\n" +
-	"  systemctl --failed                 ceux qui ont échoué\n" +
-	"  sudo systemctl enable --now NOM    le démarrer ET le relancer à chaque démarrage\n" +
-	"  sudo journalctl -u NOM             son journal : quand il a été arrêté (qui l'a fait : /var/log/syslog)\n" +
-	"  sudo ss -tulnp                     les ports ouverts (t : TCP, u : UDP) et qui les tient\n\n" +
-	"Le filtrage (iptables) :\n" +
-	"  sudo iptables -L FORWARD -n -v --line-numbers   les règles du trafic qui TRAVERSE le routeur, avec leurs compteurs\n" +
-	"  sudo iptables -D FORWARD N                      retirer la règle N\n\n" +
-	"Le routage :\n" +
-	"  ip r                                     les routes\n" +
-	"  La liaison avec Lille (10.0.59.0/24) passe par sa passerelle dédiée, lille-gw (" + IP_LILLE_GW + "), jamais par le parefeu.\n" +
-	"  sudo ip route add RÉSEAU via PASSERELLE  ajouter une route\n" +
-	"  traceroute MACHINE, mtr --report MACHINE où se perdent les paquets (traceroute -n : sans les noms)\n\n" +
-	"Écouter le réseau :\n" +
-	"  sudo tcpdump -i any -n port 53   les questions DNS qui passent, sur toutes les cartes\n" +
-	"  sudo tcpdump -i any -A port N    le CONTENU des paquets, lisible s'ils ne sont pas chiffrés\n\n" +
-	"Et sur n'importe quelle machine : ip neigh (les voisins et leur adresse MAC), ip -s link (les compteurs de la carte).\n\n" +
-	"Rappel : on n'écoute que le réseau dont on a la charge. Celui-là, c'est le nôtre.",
+	"CAHIER DU ROUTEUR : il relie le bâtiment B (eth0) à l'école (eth1).\n" +
+	"C'est aussi la Source du bâtiment : le service DHCP isc-dhcp-server.\n\n" +
+	"Services   systemctl status NOM, systemctl --failed\n" +
+	"           sudo systemctl enable --now NOM   (démarré ET relancé au boot)\n" +
+	"           sudo journalctl -u NOM            (qui l'a arrêté : /var/log/syslog)\n" +
+	"Ports      sudo ss -tulnp                    (t : TCP, u : UDP)\n" +
+	"Herse      sudo iptables -L FORWARD -n -v --line-numbers\n" +
+	"           sudo iptables -D FORWARD N        (retire la règle N)\n" +
+	"Routes     ip r, sudo ip route add RÉSEAU via PASSERELLE\n" +
+	"           Lille (10.0.59.0/24) passe par lille-gw (" + IP_LILLE_GW + ")\n" +
+	"Chemin     traceroute -n MACHINE, mtr --report MACHINE\n" +
+	"Écoute     sudo tcpdump -i any -n port 53, sudo tcpdump -i any -A port N\n" +
+	"Cartes     ip neigh (les voisins), ip -s link (les compteurs)\n\n" +
+	"On n'écoute que le réseau dont on a la charge. Celui-là, c'est le nôtre.",
 	{ enseigne: ["systemctl", "journalctl", "ss", "iptables", "tcpdump", "traceroute", "mtr"],
 	  revele: ["s_r_udp", "s_r_failed", "s_r_iptables_v", "s_r_dns_capture", "s_r_clair", "s_r_mtr", "s_r_traceroute_n", "s_r_voisins", "s_r_erreurs"],
 	  image: "item_manuscript.gif" });
@@ -326,19 +285,15 @@ fichier(IntranetNginx, "intranet.conf",
 	"server {\n    listen 80;\n    listen 443 ssl;\n    server_name intranet.cybersup.lan;\n    root /var/www/intranet;\n" +
 	"    ssl_certificate     /etc/ssl/intranet.pem;\n    ssl_certificate_key /etc/ssl/intranet.key;\n}\n");
 fichier(Intranet, "NoteDeVint",
-	"NOTE DE VINT, punaisée sur le serveur\n\n" +
-	"L'intranet, c'est nginx : configuration dans /etc/nginx, pages dans /var/www/intranet.\n" +
-	"Sur le port 80, il n'y a de place que pour UN serveur web. sudo ss -tlnp dit qui le tient.\n\n" +
-	"Le https :\n" +
-	"  openssl s_client -connect intranet:443               se connecter et voir le certificat\n" +
-	"  openssl x509 -noout -dates -in /etc/ssl/intranet.pem  ses dates de validité\n" +
-	"Un certificat a une date de début et une date de fin. Si l'horloge de celui qui vérifie est fausse, même un bon certificat est refusé.\n" +
-	"  timedatectl                     l'heure de la machine, et si elle est synchronisée\n" +
-	"  sudo timedatectl set-ntp true   la synchroniser sur le serveur de temps de l'école (" + IP_DNS + ")\n\n" +
-	"Tester un port :\n" +
-	"  nc -zv MACHINE PORT     « succeeded » : ouvert. « refused » : fermé. « timed out » : un pare-feu avale tout sans répondre.\n" +
-	"  telnet MACHINE PORT     l'ancêtre : parler à un service à la main.\n" +
-	"Le CLIENT telnet sert encore à tester un port. Un SERVEUR telnet, jamais : tout y passe en clair, mots de passe compris.",
+	"NOTE DE VINT : l'intranet, c'est nginx (pages dans /var/www/intranet).\n" +
+	"Un seul serveur web sur le port 80 : sudo ss -tlnp dit qui le tient.\n\n" +
+	"https      openssl s_client -connect intranet:443   (voir le certificat)\n" +
+	"           openssl x509 -noout -dates -in /etc/ssl/intranet.pem\n" +
+	"Horloge    timedatectl, sudo timedatectl set-ntp true\n" +
+	"Un certificat a des dates : une horloge fausse le fait refuser.\n\n" +
+	"Un port    nc -zv MACHINE PORT : succeeded, refused (fermé) ou timed out (pare-feu)\n" +
+	"           telnet MACHINE PORT : le client sert encore à tester.\n" +
+	"Un SERVEUR telnet, jamais : tout y passe en clair.",
 	{ enseigne: ["openssl", "timedatectl", "nc", "telnet"], revele: ["s_r_x509", "s_r_banniere", "s_r_telnet"], image: "item_manuscript.gif" });
 
 /* Le certificat de l'intranet : valide depuis vingt jours, pour quatre-vingt-dix jours en tout. */
@@ -1007,30 +962,18 @@ var ETAGE_OSI = {
 function talkiePour(id){ return (ETAGE_OSI[id] ? ETAGE_OSI[id] + ". " : "") + TALKIE[id]; }
 
 /* Ce qu'il faut comprendre avant chaque étape, expliqué à quelqu'un qui n'a jamais touché un réseau. */
-var NOTIONS_LIEN = "Étage 1, le PHYSIQUE : le câble et la carte réseau. Étage 2, la LIAISON : parler à ses voisins sur le même câble, grâce à leur adresse MAC. " +
-	"Une carte éteinte (DOWN), c'est l'étage 1 coupé : rien ne monte plus haut.";
+var NOTIONS_LIEN = "Étage 1, le câble et la carte réseau. Étage 2, parler à ses voisins grâce à leur adresse MAC. Une carte éteinte (DOWN) coupe tout le reste.";
 var NOTIONS = {
-	r_ip: "Une machine sans ADRESSE (adresse IP), c'est une maison sans adresse postale : personne ne peut lui écrire, elle ne peut écrire à personne. " +
-		"D'habitude, la Source de la Tour (le DHCP) en offre une toute seule. Si elle se tait, on la pose à la main, avec son masque /24 : il dit quelle partie de l'adresse est le nom de la « rue ».",
-	r_passerelle: "Le Poste parle maintenant à ses voisins de rue (10.0.93.quelque-chose), comme la Tour. Mais pour envoyer un messager plus loin, il doit passer par la Tour du Carrefour (la PASSERELLE). " +
-		"Sans chemin vers elle (une « route par défaut »), le Poste ne sait pas où envoyer le reste.",
-	r_dns: "On saute à l'étage 7 ? Oui : les étages 1 à 3 tiennent maintenant, et presque tout ce qu'on teste ensuite passe par les noms. " +
-		"Les humains retiennent des noms (intranet), les machines des adresses (10.0.92.20). L'Oracle des Noms (le DNS) traduit l'un en l'autre. " +
-		"Le Poste consulte l'oracle écrit dans /etc/resolv.conf. Si cet oracle n'existe pas, plus aucun nom ne marche, même si les chemins vont très bien.",
-	r_dhcp: "La Source (le DHCP) est un gardien de la Tour : elle offre adresse, chemin et oracle à chaque machine qui arrive. Un gardien (un SERVICE), c'est un programme qui veille en permanence. " +
-		"Il peut dormir (stop) ou veiller (start), et se réveiller seul ou non quand la machine démarre (enable, disable). Il faut les deux : éveillé ET réveillé à chaque démarrage.",
-	r_netplan: "Ce qu'on règle avec ip ne dure que jusqu'au prochain sommeil de la machine, comme une craie sur un tableau qu'on efface le soir. " +
-		"Ce qui doit durer se grave dans un grimoire relu à chaque réveil : un fichier de configuration, ici /etc/netplan.",
-	r_web: "Une machine abrite plusieurs gardiens, chacun derrière sa PORTE numérotée (un PORT) : 22 pour ssh, 80 pour le web. " +
-		"Une porte n'a qu'un seul gardien : si un intrus a pris la porte 80, le vrai gardien ne peut plus s'y installer.",
-	r_https: "https, c'est le web chiffré. La Bibliothèque prouve son identité avec un BLASON (un certificat), valable entre deux dates. " +
-		"Le Poste compare ces dates avec SA propre horloge : si elle est fausse, il croit que le blason n'est pas encore valable, et le refuse.",
-	r_smtp: "La Herse (le PARE-FEU) contrôle chaque messager qui traverse la Tour et applique sa loi, règle après règle : laisser passer (ACCEPT), jeter sans un mot (DROP) ou renvoyer (REJECT). " +
-		"Une porte fermée répond tout de suite « refused ». Un messager jeté n'a jamais de réponse : la connexion finit en « timed out ».",
-	r_lille: "La Tour choisit un chemin pour chaque messager grâce à ses ROUTES : « vers tel réseau, passe par telle passerelle ». " +
-		"Sans chemin précis, elle envoie tout vers la Muraille et internet. Or le Comptoir du Nord (Lille) a son propre pont.",
-	r_telnet: "Certains vieux sorts parlent EN CLAIR : n'importe qui sur le chemin entend tout, mots de passe compris. " +
-		"ssh fait le même travail que telnet, mais à travers un tunnel chiffré. Une porte inutile et dangereuse, on la ferme et on la scelle."
+	r_ip: "Sans ADRESSE IP, une machine est une maison sans adresse postale : personne ne peut lui écrire. D'habitude, la Source (le DHCP) en donne une toute seule.",
+	r_passerelle: "Le Poste parle à ses voisins de rue. Pour aller plus loin, il doit passer par la Tour du Carrefour (la PASSERELLE) : il lui faut une route par défaut.",
+	r_dns: "Les humains retiennent des noms, les machines des adresses. L'Oracle des Noms (le DNS) traduit l'un en l'autre.",
+	r_dhcp: "La Source est un SERVICE, un programme qui veille. Il doit être éveillé (start) ET se réveiller à chaque démarrage (enable).",
+	r_netplan: "Ce qu'on règle avec ip s'efface au redémarrage, comme une craie. Ce qui doit durer s'écrit dans /etc/netplan.",
+	r_web: "Chaque service écoute derrière une PORTE numérotée (un PORT) : 22 pour ssh, 80 pour le web. Une porte n'a qu'un seul gardien.",
+	r_https: "https, c'est le web chiffré. Le serveur montre un BLASON (un certificat) valable entre deux dates : si l'horloge du Poste ment, il est refusé.",
+	r_smtp: "La Herse (le PARE-FEU) laisse passer, jette ou renvoie chaque messager. « refused » : porte fermée. « timed out » : messager jeté.",
+	r_lille: "La Tour envoie chaque messager selon ses ROUTES. Sans route précise, tout part vers internet. Or Lille a son propre pont.",
+	r_telnet: "telnet parle EN CLAIR : tout s'entend, mots de passe compris. ssh fait le même travail dans un tunnel chiffré."
 };
 
 /* Ce qu'il faut retenir, juste après chaque réparation. */
@@ -1051,49 +994,27 @@ var A_RETENIR = {
 
 function texteRadia(){
 	var etape = prochaineEtapePanne();
-	var debut = "« ";
 	if (!etape){
-		if (state.has("crypteOuverte") && !state.quests["c_rapport"]) return "Radia range son portable. « Le réseau tient. Grace t'attend pour la suite, sous la Citadelle : ssh citadelle, puis cd Crypte. Et passe à Marseille, un jour : le réseau y passe mal, c'est fait exprès. »";
+		if (state.has("crypteOuverte") && !state.quests["c_rapport"]) return "Radia range son portable. « Le réseau tient. Grace t'attend sous la Citadelle : ssh citadelle, puis cd Crypte. »";
 		return "Radia range son portable. « Le réseau tient. Vint rentre lundi : il va être jaloux. Merci, la recrue. »";
 	}
+	// Une réplique courte : l'étage OSI, l'idée en deux phrases, ce qu'on fait. Le reste est dans le panneau.
+	var etage = function(id){ return C.gris("[" + ETAGE_OSI[id] + "]") + "\n"; };
 	switch (etape.id){
 		case "r_batiment":
 		case "r_osi":
-			return debut + "Ah, c'est toi la recrue dont Laurent parle à tout le monde ? Radia, mage du réseau, M1 au campus de Marseille." +
-				(state.has("chapitre1Saute") ? " Merci d'être venu en renfort. " : " On s'est croisés ce matin, à l'épreuve, je crois. ") + "\
-On m'a fait monter à Puteaux : le bâtiment B est tombé dans le Silence. Plus un messager (un paquet) n'en sort. \
-Plus d'intranet, plus de mails, plus de nouvelles de Lille. Vint, le gardien du réseau, est en vacances, et son stagiaire a « essayé des trucs » hier soir.\n\n\
-Tu n'as jamais réparé de réseau ? Aucun souci, je t'explique tout en chemin. Mais d'abord, la clé de tout : le MODÈLE OSI. \
-Un message, sur un réseau, c'est une tour de sept étages. En bas le câble, en haut le web. Chaque étage compte sur celui du dessous : \
-si l'étage 1 est cassé, les six autres tombent avec lui. Tous les réseaux du monde se dépannent comme ça, en partant du bas.\n\n\
-L'affiche de Vint est punaisée sur l'armoire, là : cat ModeleOSI. Lis-la avant tout. Je te dirai à chaque étape à quel étage on travaille.\n\n\
-Chaque sort que tu lances t'apprend quelque chose et éclaire un bout de la carte. Chaque réparation te rapporte un badge : il y en a douze à gagner, et badges relit ce qu'ils t'ont appris. \
-Ma SacocheDeRadia est ouverte sur le comptoir, avec d'autres sorts de terrain, et le Poste cache un GrimoireDesAnciens dans son tiroir.\n\n\
-Le Lexique, sur l'armoire, donne pour chaque image le vrai mot du métier. Et tape schema quand tu veux : ce n'est pas une commande Linux, \
-c'est une commande du jeu (comme quetes ou xp) qui dessine la tour OSI du Poste et la carte du royaume. Je reste en ligne au talkie-walkie. »";
+			return "« " + (state.has("chapitre1Saute") ? "Merci d'être venu en renfort ! " : "Ah, la recrue de Laurent ! ") +
+				"Radia, mage du réseau. Le bâtiment B est tombé dans le Silence : plus d'intranet, plus de mails, plus de Lille. Vint, le gardien, est en vacances.\n\n" +
+				"Un réseau, c'est une tour de sept étages : le MODÈLE OSI. On répare toujours en partant du bas. Lis l'affiche sur l'armoire : cat ModeleOSI. »\n" +
+				C.gris("(schema : la tour et la carte. badges : ce que tu as appris. Ma SacocheDeRadia est sur le comptoir.)");
 		case "r_lien":
-			return debut + "La tour OSI, tu l'as en tête : on commence tout en bas, étages 1 et 2. " + NOTIONS_LIEN + "\n\n\
-Le Poste de garde est là, derrière le comptoir : cd Poste, et tu es devant. Lance d'abord l'Œil du Réseau, ip link : il montre les portes du poste. \
-Regarde si eth0 (sa porte principale) porte le mot UP. Le Stéthoscope, ethtool eth0, te dira si le câble est vivant (étage 1), \
-et le Miroir des Noms, hostnamectl, sur quelle machine tu es. »";
-		case "r_ip": return debut + ETAGE_OSI.r_ip + ". " + NOTIONS.r_ip + "\n\n" + TALKIE.r_ip + " »";
-		case "r_passerelle": return debut + ETAGE_OSI.r_passerelle + ". " + NOTIONS.r_passerelle + "\n\n" + TALKIE.r_passerelle + " »";
-		case "r_dns": return debut + ETAGE_OSI.r_dns + ". " + NOTIONS.r_dns + "\n\n" + TALKIE.r_dns + "\n\nAstuce : si dig @" + IP_DNS + " intranet répond alors que dig intranet échoue, le serveur DNS va très bien. C'est le poste qui pose ses questions au mauvais endroit. »";
-		case "r_dhcp": return debut + ETAGE_OSI.r_dhcp + ". " + NOTIONS.r_dhcp + "\n\n" + TALKIE.r_dhcp + " Le routeur se trouve par son nom maintenant que le DNS marche : ssh routeur. »";
-		case "r_netplan": return debut + ETAGE_OSI.r_netplan + ". " + NOTIONS.r_netplan + "\n\n" + TALKIE.r_netplan + " Ensuite, tu pourras même vérifier avec sudo reboot. »";
-		case "r_web": return debut + ETAGE_OSI.r_web + ". " + NOTIONS.r_web + "\n\n" + TALKIE.r_web + " Sur un port, il n'y a de place que pour un seul programme. »";
-		case "r_https": return debut + ETAGE_OSI.r_https + ". " + NOTIONS.r_https + "\n\n" + TALKIE.r_https + " Un certificat a une date de début. Si l'horloge de celui qui vérifie est fausse... »";
-		case "r_smtp": return debut + ETAGE_OSI.r_smtp + ". " + NOTIONS.r_smtp + "\n\n" + TALKIE.r_smtp + " Un port fermé répond « refused ». Un paquet qui n'obtient AUCUNE réponse, c'est un pare-feu qui l'avale. »";
-		case "r_lille": return debut + ETAGE_OSI.r_lille + ". " + NOTIONS.r_lille + "\n\n" + TALKIE.r_lille + " Le CahierDuRouteur dit par où doit passer la liaison avec Lille. »";
-		case "r_telnet": return debut + ETAGE_OSI.r_telnet + ". " + NOTIONS.r_telnet + "\n\n" + TALKIE.r_telnet + " »";
-		case "r_fin": return debut + "Lien, adresse, route, noms, DHCP, configuration permanente, serveur web, horloge, pare-feu, routage, et un telnet en moins : \
-tu as remonté les sept étages du modèle OSI, du câble jusqu'au web, et gagné les douze badges. \
-C'est exactement comme ça qu'on dépanne un vrai réseau, ici ou ailleurs : les images s'oublient, les mots du métier restent. \
-Ton CertificatReseau t'attend dans ta Maison. Vint rentre lundi : il va être jaloux.\n\n\
-Ah, et Grace, de la WarRoom, m'a demandé de te passer un message. Ses sondes voient du trafic bizarre sous la Citadelle, sur un port que personne n'utilise. \
-Une trappe vient de s'ouvrir dans la Citadelle : ssh citadelle, puis cd Crypte. Ce sera ton troisième chapitre. »";
+			return "« On commence tout en bas, étages 1 et 2. " + NOTIONS_LIEN + "\n\nVa au Poste, derrière le comptoir (cd Poste), et lance l'Œil du Réseau : ip link. eth0 porte-t-elle le mot UP ? »";
+		case "r_fin":
+			return "« Tu as remonté les sept étages, du câble jusqu'au web. C'est comme ça qu'on dépanne un vrai réseau. Ton CertificatReseau t'attend dans ta Maison.\n\n" +
+				"Grace, de la WarRoom, voit du trafic bizarre sous la Citadelle. Une trappe vient de s'ouvrir : ssh citadelle, puis cd Crypte. Ce sera ton troisième chapitre. »";
 	}
-	return debut + "On continue ? »";
+	if (NOTIONS[etape.id]) return etage(etape.id) + "« " + NOTIONS[etape.id] + "\n\n" + TALKIE[etape.id] + " »";
+	return "« On continue ? »";
 }
 
 /* ------------------------------------------------------------------ */
@@ -1250,7 +1171,7 @@ function verifierPanne(){
 		p.retenus[id] = true;
 		if (state.has("rejeuEnCours")) return;
 		// Une seule ligne dans le terminal : le badge. La leçon se relit avec badges.
-		if (typeof RELIQUES !== "undefined" && RELIQUES[id]) say(C.jaune("✦ Badge gagné : " + (typeof nomDuBadge === "function" ? nomDuBadge(id) : RELIQUES[id])) + C.gris(" · " + RELIQUES[id] + " · tape badges pour la leçon"));
+		if (typeof RELIQUES !== "undefined" && RELIQUES[id]) say(C.jaune("✦ Badge gagné : " + (typeof nomDuBadge === "function" ? nomDuBadge(id) : RELIQUES[id])) + C.gris(" · badges"));
 	});
 	// Radia annonce la suite au talkie-walkie, à chaque étape franchie.
 	var suivante = prochaineEtapePanne();
