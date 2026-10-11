@@ -309,7 +309,7 @@ Shell.chercher = function(chemin, io, cmd){
 	return Shell.chercherDepuis(current_room, chemin, io, cmd);
 };
 
-/* La racine « / » de la machine où se trouve un lieu : une machine du réseau, ou la Citadelle au chapitre 2. */
+/* La racine « / » de la machine où se trouve un lieu : une machine du réseau, ou la Citadelle pendant la Crypte. */
 Shell.racineAbsolue = function(lieu){
 	var racine = typeof racineDe === "function" ? racineDe(lieu) : null;
 	if (racine) return racine;
@@ -1709,8 +1709,7 @@ var SORTS_APPRIS_EN_ROUTE = {
 	"cp": "Il s'apprend auprès de l'Artisane, à l'Atelier du village, quand on lui apporte un Rouage.",
 	"bash": "Il s'apprend auprès de l'Artisane, à l'Atelier du village, une fois ses rouages copiés.",
 	"cowsay": "Ce n'est pas un sort mais un paquet : il s'installe avec sudo apt install cowsay (l'Affiche de la SalleDeCours explique apt).",
-	"ss": "Il s'apprend au chapitre 2, en écoutant la Radio de la Crypte une fois arrivé dans la Racine.",
-	"ssh-keygen": "Il s'apprend au chapitre 2, avec les ConsignesDuCoffre qu'Evi pose dans la SalleServeurs de Cybersup.",
+	"ssh-keygen": "Il s'apprend au chapitre 3, avec les ConsignesDuCoffre qu'Evi pose dans la SalleServeurs de Cybersup.",
 	"tree": "Il s'apprend dans un drapeau caché de la SalleServeurs de Cybersup, ou en cadeau à la fin du chapitre 1."
 };
 
@@ -1718,16 +1717,24 @@ var SORTS_APPRIS_EN_ROUTE = {
 Shell.ouApprendre = function(sort){
 	if (sort === "vi") sort = "vim";
 	if (SORTS_APPRIS_EN_ROUTE[sort]) return SORTS_APPRIS_EN_ROUTE[sort];
-	for (var id in World.rooms){
-		if (!World.rooms.hasOwnProperty(id)) continue;
-		var lieu = World.rooms[id];
+	// D'abord les lieux du chapitre du sort (un sort de la panne s'apprend aussi dans la Crypte, mais plus tard).
+	var chapitre = typeof chapitreDuSort === "function" ? chapitreDuSort(sort) : 1;
+	var ids = Object.keys(World.rooms);
+	ids.sort(function(a, b){ return ((World.rooms[b].chapitre || 1) === chapitre) - ((World.rooms[a].chapitre || 1) === chapitre); });
+	for (var n = 0; n < ids.length; n++){
+		var lieu = World.rooms[ids[n]];
+		// En mission cyber, la panne n'est pas au programme : ses lieux n'enseignent rien.
+		if (lieu.chapitre === 3 && state.has("panneSautee")) continue;
 		for (var i = 0; i < lieu.items.length; i++){
 			if (lieu.items[i].teaches.indexOf(sort) === -1) continue;
 			var parent = lieu.parents[0];
-			if (lieu.chapitre === 2 && !state.has("crypteOuverte")) return "Il s'apprend au chapitre 2, sous la Citadelle.";
+			if (lieu.chapitre === 2 && !state.has("crypteOuverte")) return "Il s'apprend au chapitre 3, sous la Citadelle.";
+			if (lieu.chapitre === 3 && !state.has("panneOuverte")) return "Il s'apprend au chapitre 2, pendant la panne du réseau de l'école.";
 			if (lieu === current_room) return "Il s'apprend ici même, " + (lieu.items[i].person ? "auprès de " : "en lisant ") + lieu.items[i].itemname +
 				" : cat " + lieu.items[i].itemname;
 			var machine = typeof racineDe === "function" ? racineDe(lieu) : null;
+			if (machine && typeof PosteB !== "undefined" && machine === PosteB) return "Il s'apprend en lisant " + lieu.items[i].itemname +
+				", sur le Poste du BatimentB (cd ~/Cybersup/BatimentB/Poste" + (lieu === machine ? "" : ", puis cd " + Shell.cheminAffiche(lieu)) + ").";
 			if (machine) return "Il s'apprend " + (lieu.items[i].person ? "auprès de " : "en lisant ") + lieu.items[i].itemname +
 				", sur la machine " + machine.racineHote + " (ssh " + machine.racineHote + ")" + (lieu === machine ? "" : ", dans " + Shell.cheminAffiche(lieu)) + ".";
 			return "Il s'apprend " + (lieu.items[i].person ? "auprès de " : "en lisant ") + lieu.items[i].itemname +

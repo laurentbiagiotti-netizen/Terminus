@@ -745,10 +745,11 @@ link_rooms(Crypte, Caveau);
 NICHES.forEach(function(n){ link_rooms(Caveau, n); });
 /* BoiteDeDepot et Coffre n'apparaissent dans la SalleServeurs qu'à l'ouverture de la Crypte (voir verifierChapitre2). */
 
-/* Le P.S. de Laurent, et le nouveau réseau. */
+/* Le P.S. de Laurent : la panne du réseau de l'école (chapitre 2), avant la Crypte (chapitre 3). */
 Laurent.cmd_text["less"] += "\n\n" +
-	"P.S. Une dernière chose, et celle-là n'était PAS prévue au programme : les sondes de Grace voient passer du trafic \
-sous la Citadelle. Quelqu'un est entré pendant ton examen. Une trappe vient de s'ouvrir dans le sol : cd Crypte. \
+	"P.S. Une dernière chose, et celle-là n'était PAS prévue au programme : pendant ton épreuve, le réseau de l'école est tombé. \
+Plus d'intranet, plus de mails, plus de liaison avec Lille, et Vint, notre administrateur réseau, est en vacances. \
+Radia, qui fait son M1 réseau à Marseille, est montée en renfort : elle t'attend au BatimentB de Cybersup (cd ~/Cybersup/BatimentB). \
 Ce sera ton deuxième chapitre, si tu as encore de l'énergie.";
 
 HOTES["coffre"] = { ip: "10.0.92.250", arrivee: function(){ return Coffre; },
@@ -803,7 +804,8 @@ function verifierChapitre2(){
 	function une(nom, condition){
 		if (!state.has(nom) && condition) state.applyState(nom);
 	}
-	une("crypteOuverte", state.has("victoire"));
+	// La Crypte (chapitre 3) s'ouvre quand le réseau est réparé, ou d'emblée en mission cyber.
+	une("crypteOuverte", state.has("victoire") && (!!state.quests["r_fin"] || state.has("panneSautee")));
 	if (!state.has("crypteOuverte")) return;
 	// Aussi pour les sauvegardes faites avant le chapitre 2 : la SalleServeurs y est restaurée sans ces lieux.
 	if (SalleServeurs.children.indexOf(BoiteDeDepot) === -1) relier(SalleServeurs, BoiteDeDepot);
@@ -872,6 +874,7 @@ function etatChapitre2(nom){
 			break;
 		case "crypteOuverte":
 			relier(Citadelle, Crypte);
+			if (state.has("panneDirecte")) Laurent.addCmdText("less", TEXTE_LAURENT_RENFORT);
 			break;
 		case "porteApparue":
 			poser(Caveau, PorteDerobee);
@@ -908,7 +911,7 @@ Essaie : ssh coffre. »");
 			state.complete("c_rapport");
 			poser(Home, CertificatCyber);
 			CertificatCyber.cmd_text["less"] = state.texteDuCertificat();
-			say(C.gris("(Ton CertificatCyber est posé dans ta Maison : cat ~/CertificatCyber. Il porte la note du chapitre 2 et son code de vérification.)"));
+			say(C.gris("(Ton CertificatCyber est posé dans ta Maison : cat ~/CertificatCyber. Il porte la note du chapitre 3 et son code de vérification.)"));
 			break;
 	}
 }
@@ -986,7 +989,7 @@ GameEvents.addListener("read", function(e){
 });
 
 /* ------------------------------------------------------------------ */
-/* Jouer le chapitre 2 directement                                     */
+/* Jouer directement le chapitre 2 (la panne) ou 3 (la Crypte)        */
 /* ------------------------------------------------------------------ */
 
 /*
@@ -1053,7 +1056,7 @@ function sauterChapitre1(){
 	return true;
 }
 
-/* Le texte de Laurent quand le joueur arrive en renfort, sans avoir passé l'épreuve de première année. */
+/* Le texte de Laurent quand le joueur arrive en renfort pour la Crypte, sans avoir passé l'épreuve de première année. */
 var TEXTE_LAURENT_RENFORT =
 	"« Ah, te voilà, le renfort. Je suis Laurent, directeur pédagogique de Cybersup. Ne fais pas attention à la cape noire \
 posée sur la chaise : ce matin, je jouais le Sorcier Noir pour l'épreuve pratique des première année. Ils ont traversé tout Terminus \
@@ -1063,6 +1066,23 @@ Quelqu'un est vraiment entré pendant l'examen, et ça, ce n'était pas au progr
 Une trappe vient de s'ouvrir dans le sol : cd Crypte. L'Archiviste t'attend en bas, et Grace reste en ligne à la radio. \
 Ton compte a les droits sudo pour la mission. Une seule règle : avec sudo, on relit sa ligne avant d'appuyer sur Entrée. »";
 
+/* Le même, pour le renfort réseau : la Crypte ne s'ouvrira qu'une fois le réseau réparé. */
+var TEXTE_LAURENT_RENFORT_PANNE =
+	"« Ah, te voilà, le renfort réseau. Je suis Laurent, directeur pédagogique de Cybersup. Ne fais pas attention à la cape noire \
+posée sur la chaise : ce matin, je jouais le Sorcier Noir pour l'épreuve pratique des première année. Ils ont traversé tout Terminus \
+avec un simple terminal, et ils m'ont battu.\n\n\
+Pendant ce temps, le réseau de l'école est tombé, et Vint est en vacances. Radia t'attend au BatimentB de Cybersup : \
+c'est là-bas que ça se passe, pas ici. Et s'il te reste de l'énergie ensuite, Grace a quelque chose à te montrer sous cette Citadelle. »";
+
+var TEXTE_MISSION_PANNE =
+	"TICKET D'INCIDENT\n\n" +
+	"Tu n'es pas là pour l'épreuve de première année : elle s'est jouée ce matin. Les B1 ont traversé Terminus et vaincu le Sorcier Noir, " +
+	"qui n'était autre que Laurent, le directeur pédagogique, déguisé pour l'occasion.\n\n" +
+	"Mais pendant l'épreuve, le réseau de l'école est tombé : le bâtiment B est coupé du monde, l'intranet affiche n'importe quoi, " +
+	"les mails ne partent plus et Lille ne répond plus. Vint, l'administrateur réseau, est en vacances. On t'a appelé en renfort, " +
+	"parce que tu connais déjà les bases du terminal.\n\n" +
+	"Tu arrives au BatimentB de Cybersup. Radia, M1 réseau, t'attend devant l'armoire qui clignote : ";
+
 var TEXTE_MISSION_CYBER =
 	"MISSION CYBER\n\n" +
 	"Tu n'es pas là pour l'épreuve de première année : elle s'est jouée ce matin. Les B1 ont traversé Terminus et vaincu le Sorcier Noir, " +
@@ -1070,6 +1090,14 @@ var TEXTE_MISSION_CYBER =
 	"Mais pendant la correction, les sondes de la WarRoom ont vu passer du trafic qui n'était pas prévu. Grace a demandé du renfort, " +
 	"et c'est toi qu'on a appelé, parce que tu connais déjà les bases du terminal.\n\n" +
 	"Tu arrives à Cybersup, dans la WarRoom, où les voyants clignotent encore. Grace, la cheffe de quart, t'attend pour le briefing : ";
+
+/* Le ticket d'incident, posé dans la Maison du renfort réseau. */
+var TicketIncident = new Item("TicketIncident",
+	"CYBERSUP · SUPPORT · TICKET N° 4012 · PRIORITÉ HAUTE\n\n" +
+	"Objet : panne générale du réseau. Bâtiment B coupé, intranet hors service, mails bloqués, liaison avec Lille perdue.\n" +
+	"Administrateur réseau : en congés. Intervenante sur place : Radia, M1 réseau (campus de Marseille).\n\n" +
+	"Se présenter au BatimentB de Cybersup (cd ~/Cybersup/BatimentB).\n" +
+	"Droits sudo accordés pour la durée de l'intervention.", "item_manuscript.gif");
 
 /* L'ordre de mission, posé dans la Maison du renfort. */
 var OrdreDeMission = new Item("OrdreDeMission",
@@ -1108,10 +1136,12 @@ function chapitre2Possible(){
 }
 
 /*
- * Rejoue le chapitre 1 en silence et place le joueur dans la Citadelle, en renfort.
+ * Rejoue le chapitre 1 en silence et place le joueur en renfort : à la WarRoom pour la Crypte
+ * (cible 2, la mission cyber), au BatimentB pour la panne (cible 3).
  * Si le passage n'aboutit pas, la partie est remise comme avant. Renvoie vrai si c'est fait.
  */
-function commencerChapitre2(){
+function commencerChapitre2(cible){
+	cible = cible === 3 ? 3 : 2;
 	var avant = null;
 	try {
 		state.save();
@@ -1123,6 +1153,8 @@ function commencerChapitre2(){
 	state.alias = {};   // les alias du joueur ne doivent pas détourner la relecture
 	var ok = false;
 	state.flags.rejeuEnCours = true;   // pas de fanfare pendant la relecture silencieuse
+	// La mission cyber saute aussi la panne ; le renfort réseau, lui, commence par elle.
+	state.set(cible === 2 ? "panneSautee" : "panneDirecte");
 	try {
 		ok = sauterChapitre1();
 	} catch (e){
@@ -1132,6 +1164,8 @@ function commencerChapitre2(){
 	state.alias = alias;
 	Shell.narration = [];
 	if (!ok){
+		delete state.flags.panneSautee;
+		delete state.flags.panneDirecte;
 		// Rien ne doit rester du passage raté : on remet la sauvegarde d'avant et on recharge la page.
 		Shell.sauvegardeBloquee = true;
 		try {
@@ -1139,62 +1173,88 @@ function commencerChapitre2(){
 			else window.localStorage.removeItem(CLE_SAUVEGARDE);
 		} catch (e){}
 		term.echo(C.rouge("Le passage à la mission cyber n'a pas abouti.") + " Ta partie est remise comme avant.\n" +
-			C.gris("Pour la mission cyber, pars d'une partie neuve : recommencer, puis choisis le parcours 2."));
+			C.gris("Pour partir en renfort, pars d'une partie neuve : recommencer, puis choisis ton enveloppe."));
 		window.location.reload();
 		return false;
 	}
 	state.set("chapitre1Saute");
 	state.malus = 0;
 	state.indices = {};
-	PROFIL.chapitre = 2;
+	PROFIL.chapitre = cible;
 	enregistrerProfil();
 	adapterAuRenfort();
-	// Le renfort commence à la WarRoom de Cybersup, et monte à la Citadelle par ssh.
 	Shell.pile_ssh = [];
+	state.gainsDuTour = [];
+	if (cible === 3){
+		// Le renfort réseau commence au BatimentB, devant Radia.
+		Laurent.addCmdText("less", TEXTE_LAURENT_RENFORT_PANNE);
+		poser(Home, TicketIncident);
+		verifierMonde();
+		enterRoom(BatimentB);
+		Shell.lieu_precedent = null;
+		montrerImage(BatimentB.room_pic, BatimentB.room_name);
+		term.effacer();
+		term.echo(C.vert(C.gras("CHAPITRE 2 : LA PANNE")) + "\n\n" + TEXTE_MISSION_PANNE + C.vert("cat Radia") + "\n\n" +
+			C.gris("Ce chapitre a sa propre note sur 20. Tape quetes pour le journal, indice si tu bloques, xp pour ta note."));
+		return true;
+	}
+	// Le renfort cyber commence à la WarRoom de Cybersup, et monte à la Citadelle par ssh.
 	enterRoom(WarRoom);
 	Shell.lieu_precedent = null;
-	state.gainsDuTour = [];
 	poser(Home, OrdreDeMission);
 	montrerImage(WarRoom.room_pic, WarRoom.room_name);
 	term.effacer();
-	term.echo(C.vert(C.gras("CHAPITRE 2 : LA CRYPTE")) + "\n\n" + TEXTE_MISSION_CYBER + C.vert("cat CheffeDeQuart") + "\n\n" +
+	term.echo(C.vert(C.gras("CHAPITRE 3 : LA CRYPTE")) + "\n\n" + TEXTE_MISSION_CYBER + C.vert("cat CheffeDeQuart") + "\n\n" +
 		C.gris("Ce chapitre a sa propre note sur 20. Tape quetes pour le journal, indice si tu bloques, xp pour ta note."));
 	return true;
 }
 
 Shell.sorts.chapitre = function(args, io){
 	var demande = args[0];
+	var mission = state.has("chapitre1Saute");
 	if (demande === undefined){
+		var etat1 = state.has("victoire") ? (mission ? C.gris("non joué (renfort)") : C.vert("terminé")) : C.jaune("en cours");
+		var etat2 = state.quests["r_fin"] ? C.vert("terminé") : (state.has("panneSautee") ? C.gris("pas au programme (mission cyber)") : (state.has("panneOuverte") ? C.jaune("ouvert") : C.gris("fermé")));
+		var etat3 = state.quests["c_rapport"] ? C.vert("terminé") : (state.has("crypteOuverte") ? C.jaune("ouvert") : C.gris("fermé"));
+		var conseil;
+		if (chapitre2Possible()) conseil = "La panne (chapitre 2) s'ouvre en battant le Sorcier Noir, la Crypte (chapitre 3) en réparant le réseau. " +
+			"Si tu connais déjà les bases, tu peux aussi partir tout de suite en renfort : chapitre 2 (la panne) ou chapitre 3 (la mission cyber).";
+		else if (state.quests["c_rapport"]) conseil = "Tout est terminé : tes certificats sont dans ta Maison (ls ~).";
+		else if (state.has("crypteOuverte")) conseil = "La Crypte est sous la Citadelle : ssh citadelle, puis cd Crypte. Tape quetes pour l'étape en cours.";
+		else if (state.has("panneOuverte")) conseil = "Radia t'attend au BatimentB de Cybersup : cd ~/Cybersup/BatimentB. Tape quetes pour l'étape en cours.";
+		else conseil = "Le chapitre 2 s'ouvre quand tu auras battu le Sorcier Noir.";
 		return C.gras("LES CHAPITRES") + "\n\n" +
-			"  1. Terminus      " + (state.has("victoire") ? (state.has("chapitre1Saute") ? C.gris("non joué (mission cyber)") : C.vert("terminé")) : C.jaune("en cours")) +
-			"   L'épreuve de première année : Linux de base, jusqu'au Sorcier Noir. Note sur le Diplome.\n" +
-			"  2. La Crypte     " + (state.quests["c_rapport"] ? C.vert("terminé") : (state.has("crypteOuverte") ? C.jaune("ouvert") : C.gris("fermé"))) +
-			"   La mission cyber : la Crypte, puis tout le réseau de l'école, jusqu'au rapport d'incident. Note sur le CertificatCyber.\n\n" +
-			C.gris(chapitre2Possible() ?
-				"Le chapitre 2 s'ouvre en battant le Sorcier Noir. Si tu connais déjà les bases, tu peux aussi partir tout de suite en mission cyber : chapitre 2" :
-				(state.quests["c_rapport"] ? "Mission terminée : ton CertificatCyber est dans ta Maison (cat ~/CertificatCyber)." :
-				state.has("crypteOuverte") ? "La Crypte est sous la Citadelle : ssh citadelle, puis cd Crypte. Tape quetes pour l'étape en cours." :
-				"Le chapitre 2 s'ouvre quand tu auras battu le Sorcier Noir."));
+			"  1. Terminus      " + etat1 + "   L'épreuve de première année : Linux de base, jusqu'au Sorcier Noir. Note sur le Diplome.\n" +
+			"  2. La panne      " + etat2 + "   Le réseau de l'école est tombé : le réparer couche par couche, du câble au pare-feu. Note sur le CertificatReseau.\n" +
+			"  3. La Crypte     " + etat3 + "   La mission cyber : la Crypte, puis tout le réseau de l'école, jusqu'au rapport d'incident. Note sur le CertificatCyber.\n\n" +
+			C.gris(conseil);
 	}
-	if (demande === "1") return state.has("chapitre1Saute") ?
-		"Tu es venu en renfort pour la mission cyber : le chapitre 1, ce sont les première année qui l'ont passé ce matin. Le monde de Terminus reste ouvert si tu veux le visiter." :
+	if (demande === "1") return mission ?
+		"Tu es venu en renfort : le chapitre 1, ce sont les première année qui l'ont passé ce matin. Le monde de Terminus reste ouvert si tu veux le visiter." :
 		"Le chapitre 1 commence dans ta Maison : cd, puis ls.";
-	if (demande !== "2") throw new ShellError("chapitre : il n'y a que les chapitres 1 et 2. Tape chapitre pour la liste.");
-	if (state.has("crypteOuverte")){
-		return "Le chapitre 2 est déjà ouvert : la Crypte est sous la Citadelle. Depuis n'importe où : ssh citadelle, puis cd Crypte.";
+	if (demande !== "2" && demande !== "3") throw new ShellError("chapitre : il n'y a que les chapitres 1, 2 et 3. Tape chapitre pour la liste.");
+	if (demande === "2"){
+		if (state.has("panneSautee")) return "Tu es venu en renfort pour la mission cyber : la panne du réseau ne fait pas partie de ta mission.";
+		if (state.has("panneOuverte")) return "Le chapitre 2 est déjà ouvert : Radia t'attend au BatimentB de Cybersup (cd ~/Cybersup/BatimentB).";
+	} else if (state.has("crypteOuverte")){
+		return "Le chapitre 3 est déjà ouvert : la Crypte est sous la Citadelle. Depuis n'importe où : ssh citadelle, puis cd Crypte.";
 	}
 	if (!chapitre2Possible()){
-		return "Tu as commencé l'épreuve de première année : le chapitre 2 s'ouvrira quand tu auras battu le Sorcier Noir.\n" +
-			C.gris("(La mission cyber se choisit au tout début d'une partie. Pour repartir de zéro et la choisir : recommencer.)");
+		if (demande === "3" && state.has("panneOuverte")) return "Le chapitre 3 s'ouvrira quand le réseau de l'école sera réparé (chapitre 2) : Radia t'attend au BatimentB de Cybersup.";
+		return "Tu as commencé l'épreuve de première année : le chapitre " + demande + " s'ouvrira " + (demande === "2" ? "quand tu auras battu le Sorcier Noir." : "après le chapitre 2.") + "\n" +
+			C.gris("(Le renfort se choisit au tout début d'une partie. Pour repartir de zéro et le choisir : recommencer.)");
 	}
-	term.demander("Partir en mission cyber ? On t'appelle en renfort : l'épreuve de première année (chapitre 1) ne sera pas notée pour toi. Tape oui pour confirmer : ", false, function(reponse){
+	var question = demande === "2" ?
+		"Partir en renfort sur la panne du réseau ? L'épreuve de première année (chapitre 1) ne sera pas notée pour toi. Tape oui pour confirmer : " :
+		"Partir en mission cyber ? On t'appelle en renfort : l'épreuve de première année (chapitre 1) et la panne (chapitre 2) ne seront pas notées pour toi. Tape oui pour confirmer : ";
+	term.demander(question, false, function(reponse){
 		if (String(reponse).trim().toLowerCase() !== "oui"){
 			term.echo("Bien. L'épreuve de première année t'attend.");
 			return;
 		}
-		if (commencerChapitre2()) Shell.fin();
+		if (commencerChapitre2(demande === "2" ? 3 : 2)) Shell.fin();
 	});
 	return "";
 };
 
-/* World.fige est posé à la fin de Reseau.js, une fois le réseau construit. */
+/* World.fige est posé à la fin de Panne.js, une fois tous les chapitres construits. */

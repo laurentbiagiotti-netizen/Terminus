@@ -1573,7 +1573,7 @@ link_rooms(SalleServeurs, Baie3);
 link_rooms(Baie2, Sauvegardes);
 
 // À partir d'ici, tout ce qui est créé l'est par le joueur.
-/* World.fige est posé à la fin de Chapitre2.js, une fois le chapitre 2 construit. */
+/* World.fige est posé à la fin de Panne.js, une fois tous les chapitres construits. */
 
 
 /**
@@ -1647,6 +1647,7 @@ function verifierMonde(){
     CarteEtudiante.cmd_text["less"] = texteCarteEtudiante();
     EcranMural.cmd_text["less"] = texteEcranMural();
     Voyants.cmd_text["less"] = texteVoyants();
+    if (typeof verifierPanne === "function") verifierPanne();
     if (typeof verifierChapitre2 === "function") verifierChapitre2();
 }
 

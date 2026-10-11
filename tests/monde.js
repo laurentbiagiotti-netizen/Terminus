@@ -8,7 +8,7 @@ var vm = require("vm");
 
 var bavard = process.argv.indexOf("-v") > -1;
 var dossier = path.join(__dirname, "..", "Web", "static", "javascript");
-var fichiers = ["EventTarget.js", "Partie.js", "Item.js", "Room.js", "Manuel.js", "Shell.js", "SortsAvances.js", "GameObjects.js", "Chapitre2.js", "CommandesCyber.js", "Reseau.js", "GameState.js"];
+var fichiers = ["EventTarget.js", "Partie.js", "Item.js", "Room.js", "Manuel.js", "Shell.js", "SortsAvances.js", "GameObjects.js", "Chapitre2.js", "CommandesCyber.js", "Reseau.js", "Panne.js", "CommandesPanne.js", "GameState.js"];
 
 function nouveauMonde(stockage, graine){
 	stockage = stockage || {};
@@ -86,6 +86,9 @@ function nouveauMonde(stockage, graine){
 			if (/^gpg (-c|--symmetric)/.test(commande)) return this.taper(commande, ["ma phrase a moi", "ma phrase a moi"]);
 			var vim = /(?:^|\s)(?:vim|vi|visudo)(?:\s+(\S+))?\s*$/.exec(commande);
 			if (vim) this.editer(EDITIONS_VIM(vim[1] ? vim[1].split("/").pop() : "sudoers", vm.runInContext("({ poste: ADRESSE_POSTE_CORBEAU, compte: COMPTE_CACHE, port: PORT_CORBEAU, heure: HEURE_PREMIERE })", bac)));
+			// Dans nano, sur le poste du bâtiment B : corriger le DNS, puis ajouter un raccourci de nom.
+			if (/nano .*resolv\.conf/.test(commande)) this.editer("function(t){ return t.replace('10.0.92.35', '10.0.92.53'); }");
+			if (/nano .*hosts$/.test(commande)) this.editer("function(t){ return t + '10.0.92.20\\tintra\\n'; }");
 			if (/nano .*authorized_keys/.test(commande)){
 				// Dans nano : couper la ligne du Corbeau, enregistrer, quitter.
 				this.editer("function(t){ return t.split('\\n').filter(function(l){ return l.indexOf('corbeau@nid') === -1; }).join('\\n'); }");

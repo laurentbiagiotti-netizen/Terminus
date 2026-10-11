@@ -196,10 +196,11 @@ def poste():
     sol(d, 150)
     return im
 
-for nom, f in [("loc_labo.gif", labo), ("loc_web.gif", web), ("loc_mail.gif", mail), ("loc_dns.gif", dns), ("loc_parefeu.gif", parefeu),
-               ("loc_badgeuse.gif", badgeuse), ("loc_imprimante.gif", imprimante), ("loc_sauvegarde.gif", sauvegarde), ("loc_poste.gif", poste)]:
-    finir(nom, f())
-print("ok")
+if __name__ == "__main__":
+    for nom, f in [("loc_labo.gif", labo), ("loc_web.gif", web), ("loc_mail.gif", mail), ("loc_dns.gif", dns), ("loc_parefeu.gif", parefeu),
+                   ("loc_badgeuse.gif", badgeuse), ("loc_imprimante.gif", imprimante), ("loc_sauvegarde.gif", sauvegarde), ("loc_poste.gif", poste)]:
+        finir(nom, f())
+    print("ok")
 
 # --- les deux enveloppes du premier lancement ---
 def enveloppe(nom, mission):
@@ -216,8 +217,9 @@ def enveloppe(nom, mission):
         d.ellipse([24, 19, 35, 30], fill=V); d.point((29, 24), fill=N); d.point((30, 24), fill=N)
     im.resize((w*2, h*2), Image.NEAREST).save(OUT + nom)
 
-enveloppe("item_convocation.gif", False)
-enveloppe("item_mission.gif", True)
+if __name__ == "__main__":
+    enveloppe("item_convocation.gif", False)
+    enveloppe("item_mission.gif", True)
 
 # ------------------------------------------------------------------
 # Cybersup, la Crypte et les dossiers système
@@ -436,12 +438,13 @@ def tmp_():
     sol(d, 150)
     return im
 
-for nom, f in [("loc_cybersup.gif", cybersup), ("loc_sallereseau.gif", sallereseau), ("loc_salleserveurs.gif", salleserveurs), ("loc_baie.gif", baie),
-               ("loc_bde.gif", bde), ("loc_bureau.gif", bureau), ("loc_lille.gif", lille), ("loc_marseille.gif", marseille), ("loc_coffre.gif", coffre),
-               ("loc_crypte.gif", crypte), ("loc_bin.gif", binaires), ("loc_caveau.gif", caveau), ("loc_racine.gif", racine),
-               ("loc_etc.gif", etc_), ("loc_journaux.gif", journaux), ("loc_tmp.gif", tmp_)]:
-    finir(nom, f())
-print("ok 2")
+if __name__ == "__main__":
+    for nom, f in [("loc_cybersup.gif", cybersup), ("loc_sallereseau.gif", sallereseau), ("loc_salleserveurs.gif", salleserveurs), ("loc_baie.gif", baie),
+                   ("loc_bde.gif", bde), ("loc_bureau.gif", bureau), ("loc_lille.gif", lille), ("loc_marseille.gif", marseille), ("loc_coffre.gif", coffre),
+                   ("loc_crypte.gif", crypte), ("loc_bin.gif", binaires), ("loc_caveau.gif", caveau), ("loc_racine.gif", racine),
+                   ("loc_etc.gif", etc_), ("loc_journaux.gif", journaux), ("loc_tmp.gif", tmp_)]:
+        finir(nom, f())
+    print("ok 2")
 
 # --- le Corbeau, pour la scène où on le démasque ---
 def corbeau():
@@ -465,5 +468,6 @@ def corbeau():
     d.line([(88, 116), (86, 129)], fill=B, width=2); d.line([(100, 114), (102, 127)], fill=B, width=2)
     return im
 
-finir("item_corbeau.gif", corbeau())
-print("ok 3")
+if __name__ == "__main__":
+    finir("item_corbeau.gif", corbeau())
+    print("ok 3")

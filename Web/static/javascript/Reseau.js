@@ -614,7 +614,7 @@ var ModeleRapport = new Item("ModeleRapport",
 
 var QUETES_CHAPITRE2 = [
 	{ id: "c_crypte", titre: "Descendre dans la Crypte",
-	  indice: "Laurent a ajouté un P.S. : relis-le (less Laurent, dans la Citadelle). La trappe est dans la Citadelle." },
+	  indice: "Une trappe s'est ouverte dans le sol de la Citadelle : c'est par là que passe le trafic que voit Grace. ssh citadelle, puis regarde autour de toi." },
 	{ id: "c_integrite", titre: "Repérer le programme trafiqué",
 	  indice: "L'Archiviste de la Crypte explique comment vérifier les empreintes du dossier bin." },
 	{ id: "c_message", titre: "Décoder le message du Corbeau",
@@ -1078,4 +1078,4 @@ Object.keys(World.rooms).forEach(function(id){
 	else if (n.room_name === "tmp" || n.room_name === ".cache") n.room_pic = "./static/img/loc_tmp.gif";
 });
 
-World.fige = true;
+/* World.fige est posé à la fin de Panne.js, une fois le chapitre de la panne construit. */

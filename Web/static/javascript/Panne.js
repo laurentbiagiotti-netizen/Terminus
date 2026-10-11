@@ -1,0 +1,1013 @@
+/**
+ * Panne.js : le chapitre 2, la panne générale du réseau de l'école.
+ *
+ * Pendant l'épreuve des B1, le stagiaire de Vint (l'administrateur réseau, en vacances)
+ * a « essayé des trucs » : le bâtiment B est coupé du monde, l'intranet affiche une page
+ * par défaut, les mails ne partent plus, Lille ne répond plus. Radia, M1 réseau du campus
+ * de Marseille, attend la recrue au BatimentB de Cybersup.
+ *
+ * La panne se répare couche par couche, de bas en haut : le lien (ip link), l'adresse
+ * (ip addr, dhclient), la route (ip route), les noms (resolv.conf, dig), le DHCP du routeur
+ * (systemctl, journalctl), la configuration permanente (netplan), puis les services :
+ * le serveur web (ss, systemctl), l'horloge (timedatectl, openssl), le pare-feu (iptables),
+ * le routage vers Lille (traceroute, ip route) et un telnet oublié (tcpdump).
+ *
+ * Numérotation : ce chapitre est le deuxième pour le joueur. Dans le code, il porte le
+ * numéro 3 (le 2 est la Crypte, écrite avant lui) : quêtes r_ et s_r_, xp3, note(3).
+ * Les sorts sont dans CommandesPanne.js.
+ */
+
+/* ------------------------------------------------------------------ */
+/* Les adresses du réseau                                              */
+/* ------------------------------------------------------------------ */
+
+var IP_POSTE = "10.0.93.20";
+var IP_ROUTEUR = "10.0.93.254";          // le routeur, côté bâtiment B (eth0)
+var IP_ROUTEUR_COEUR = "10.0.92.249";    // le même routeur, côté cœur du réseau (eth1)
+var IP_DNS = "10.0.92.53";
+var IP_DNS_FAUX = "10.0.92.35";          // la faute de frappe du stagiaire
+var IP_INTRANET = "10.0.92.20";
+var IP_LILLE_GW = "10.0.92.248";
+var IP_PAREFEU = "10.0.92.254";
+var IP_LILLE = "10.0.59.1";
+var IP_PRESTATAIRE = "10.0.92.66";       // le script du prestataire qui se connecte en telnet
+var MAC_POSTE = "52:54:00:5d:14:20";
+var MAC_ROUTEUR = "52:54:00:5d:fe:01";
+var MOT_DE_PASSE_TELNET = aleaChoix("mdp-telnet", ["Routeur", "Armoire", "Switch", "Reseau", "Cable"]) + aleaEntier("mdp-telnet-n", 10, 99) + "!";
+
+/* L'état du poste et du routeur : ce qui n'est pas un fichier ni un service. */
+function etatPanneInitial(){
+	return {
+		lien: false,           // eth0 est-elle UP ?
+		adresses: [],          // adresses posées sur eth0 : { ip, prefixe, dhcp }
+		routes: [],            // routes du poste : { vers: "default" ou "10.0.92.0/24", via, dhcp }
+		dnsRuntime: null,      // serveur DNS donné par resolvectl ou par le DHCP (prioritaire sur resolv.conf)
+		bail: false,           // un bail DHCP est en cours
+		bailRendu: false,      // dhclient -r a été fait (quête secondaire)
+		arp: false,            // le poste a déjà parlé au routeur (ip neigh)
+		routesRouteur: [],     // routes ajoutées à la main sur le routeur
+		iptables: {
+			INPUT: [], OUTPUT: [],
+			FORWARD: [{ proto: "tcp", dport: "25", src: "10.0.93.0/24", cible: "DROP", commentaire: "test anti-spam (stagiaire)", paquets: 1342, octets: 80520 }]
+		},
+		nginxEchec: true,      // nginx a échoué au démarrage (port 80 déjà pris)
+		netplanOK: false,      // netplan apply a donné un réseau qui marche
+		annonce: null          // dernière étape annoncée au talkie-walkie
+	};
+}
+
+function lieuDuChapitre3(lieu){
+	lieu.chapitre = 3;
+	return lieu;
+}
+function dossier3(parent, nom, intro, options){
+	return lieuDuChapitre3(dossier(parent, nom, intro, options));
+}
+
+/* ------------------------------------------------------------------ */
+/* Le bâtiment B et le poste de l'accueil                              */
+/* ------------------------------------------------------------------ */
+
+var BatimentB = lieuDuChapitre3(new Room("BatimentB",
+	"Le bâtiment B de Cybersup : l'accueil des visiteurs, deux salles de TP et une armoire réseau dont tous les voyants sont orange. \
+Ce matin, plus rien n'y passe : ni intranet, ni mail, ni Lille. Une étudiante est assise par terre devant l'armoire, un ordinateur portable sur les genoux. \
+Derrière le comptoir, le Poste de l'accueil attend qu'on s'occupe de lui.",
+	"loc_batimentb.gif"));
+BatimentB.owner = "root";
+BatimentB.mode = "rwxr-xr-x";
+
+var Radia = new Item("Radia", "", "item_lady.gif").personnage().enseigne("ip", "ethtool", "hostnamectl").revele("s_r_hostnamectl");
+BatimentB.addItem(Radia);
+
+/* Le poste est une vraie machine Linux : on s'assoit devant (cd Poste), sa racine est « / ». */
+var PosteB = lieuDuChapitre3(new Room("Poste",
+	"Le poste de l'accueil du bâtiment B. Un vieux PC de bureau, une étiquette jaunie collée sous l'écran, un câble réseau bien branché. \
+Tu es assis devant : tout ce que tu tapes ici s'exécute sur lui.",
+	"loc_posteb.gif"));
+PosteB.racineHote = "poste-b";
+PosteB.owner = "root";
+PosteB.mode = "rwxr-xr-x";
+link_rooms(BatimentB, PosteB);
+
+var PosteEtc = dossier3(PosteB, "etc", "La configuration du poste.", { image: "loc_etc.gif" });
+var PosteNetplan = dossier3(PosteEtc, "netplan", "La configuration réseau permanente : ce qui est écrit ici est appliqué à chaque démarrage.", { image: "loc_etc.gif" });
+var PosteVar = dossier3(PosteB, "var", "Les données du poste.", { image: "loc_etc.gif" });
+var PosteLog = dossier3(PosteVar, "log", "Les journaux du poste.", { image: "loc_journaux.gif" });
+var PosteTmp = dossier3(PosteB, "tmp", "Le dossier temporaire du poste. Tout le monde peut y écrire.", { mode: "rwxrwxrwt", image: "loc_tmp.gif" });
+
+fichier(PosteB, "Etiquette",
+	"Une étiquette jaunie, collée sous l'écran :\n\n" +
+	"  POSTE DE L'ACCUEIL · BÂTIMENT B\n" +
+	"  nom        : poste-b\n" +
+	"  adresse    : " + IP_POSTE + "/24\n" +
+	"  passerelle : " + IP_ROUTEUR + " (le routeur du bâtiment)\n" +
+	"  DNS        : " + IP_DNS + "\n\n" +
+	"En temps normal, le DHCP du routeur donne tout ça tout seul. Ces valeurs servent quand il est en panne.",
+	{ image: "item_sign.gif" });
+fichier(PosteB, "AideMemoire",
+	"AIDE-MÉMOIRE DU POSTE, de la main de Vint\n\n" +
+	"Une panne réseau se répare de bas en haut :\n" +
+	"  1. le lien       ip link, ethtool eth0      la carte est-elle UP ? le câble voit-il quelque chose ?\n" +
+	"  2. l'adresse     ip a                       une ligne inet sur eth0 ?\n" +
+	"  3. la route      ip r, ping la passerelle   le poste sait-il par où sortir ?\n" +
+	"  4. les noms      cat /etc/resolv.conf, dig  le DNS répond-il ?\n" +
+	"  5. les services  curl, nc                   le service écoute-t-il ?\n\n" +
+	"Une adresse par le DHCP : sudo dhclient eth0. Pour rendre le bail : sudo dhclient -r eth0.\n" +
+	"À la main, quand le DHCP est en panne : sudo ip addr add ADRESSE/24 dev eth0, puis sudo ip route add default via PASSERELLE.\n" +
+	"Attention : ce qu'on fait avec ip s'efface au redémarrage.\n\n" +
+	"La configuration permanente est dans /etc/netplan, au format YAML (l'indentation compte, jamais de tabulation) :\n" +
+	"  netplan get                                  la lire\n" +
+	"  sudo netplan set ethernets.eth0.dhcp4=true   la modifier\n" +
+	"  sudo netplan apply                           l'appliquer tout de suite\n" +
+	"  sudo reboot                                  vérifier qu'elle tient au redémarrage\n\n" +
+	"nmcli device status : l'état des cartes réseau, vu par NetworkManager.\n" +
+	"Pour modifier un fichier de configuration : sudo nano FICHIER (Ctrl+O enregistre, Ctrl+X quitte).\n" +
+	"Pour tester un site : curl http://NOM/ (curl -I : les en-têtes seulement). Pour télécharger un fichier : wget.\n" +
+	"ping -c 4 MACHINE : exactement quatre paquets, puis le bilan.",
+	{ enseigne: ["dhclient", "nmcli", "netplan", "reboot", "nano", "curl", "wget"],
+	  revele: ["s_r_ping", "s_r_nmcli", "s_r_bail", "s_r_reboot", "s_r_wget", "s_r_entetes"], image: "item_manuscript.gif" });
+
+fichier(PosteEtc, "hostname", "poste-b");
+var PosteHosts = fichier(PosteEtc, "hosts",
+	"127.0.0.1\tlocalhost\n127.0.1.1\tposte-b\n\n# Les noms écrits ici passent avant le DNS, sur ce poste seulement.\n");
+var ResolvConf = fichier(PosteEtc, "resolv.conf",
+	"# Écrit à la main par stagiaire (le DHCP ne marchait plus)\nnameserver " + IP_DNS_FAUX + "\nsearch cybersup.lan\n");
+fichier(PosteEtc, "MemoDNS",
+	"MÉMO DNS\n\n" +
+	"Le DNS traduit les noms en adresses. Le poste pose ses questions au serveur écrit dans /etc/resolv.conf (ligne nameserver).\n\n" +
+	"  dig intranet                demande l'adresse d'intranet au serveur du poste\n" +
+	"  dig @" + IP_DNS + " intranet    la demande directement au serveur " + IP_DNS + "\n" +
+	"  dig MX cybersup.lan         qui reçoit le courrier de l'école\n" +
+	"  host intranet               la même chose, en une ligne\n" +
+	"  nslookup intranet           la même chose, à l'ancienne\n" +
+	"  resolvectl status           quel serveur le poste interroge vraiment\n" +
+	"  sudo resolvectl dns eth0 ADRESSE   en changer, jusqu'au prochain redémarrage\n\n" +
+	"Si dig @serveur répond et que dig tout court échoue, ce n'est pas le DNS qui est en panne : c'est la configuration du poste.\n\n" +
+	"/etc/hosts passe avant le DNS : une ligne « ADRESSE NOM » y crée un raccourci, sur ce poste seulement.",
+	{ enseigne: ["dig", "host", "nslookup", "resolvectl"], revele: ["s_r_host", "s_r_nslookup", "s_r_mx", "s_r_hosts", "s_r_resolvectl"], image: "item_manuscript.gif" });
+var NETPLAN_INITIAL =
+	"# Configuration réseau du poste de l'accueil\n" +
+	"# Modifié par stagiaire : le DHCP ne répondait plus, alors je l'ai coupé.\n" +
+	"network:\n" +
+	"  version: 2\n" +
+	"  renderer: NetworkManager\n" +
+	"  ethernets:\n" +
+	"    eth0:\n" +
+	"      dhcp4: false\n";
+var NetplanPoste = fichier(PosteNetplan, "01-poste.yaml", NETPLAN_INITIAL, { mode: "rw-------" });
+fichier(PosteLog, "syslog",
+	"hier 18:10 poste-b sudo: stagiaire : COMMAND=/usr/sbin/ip link set eth0 down\n" +
+	"hier 18:12 poste-b sudo: stagiaire : COMMAND=/usr/bin/nano /etc/netplan/01-poste.yaml\n" +
+	"08:00 poste-b kernel: rtc_cmos 00:00: setting system clock to 2001-01-01T00:00:00 UTC (la pile de la carte mère est à plat)\n" +
+	"08:01 poste-b NetworkManager: device (eth0): state change: disconnected (administratively down)\n" +
+	"08:01 poste-b systemd-timesyncd: synchronisation désactivée\n", { image: "item_manuscript.gif" });
+
+/* ------------------------------------------------------------------ */
+/* Le routeur et l'intranet                                            */
+/* ------------------------------------------------------------------ */
+
+function machine3(nom, intro, image){
+	return lieuDuChapitre3(machine(nom, intro, image));
+}
+
+var Routeur = machine3("routeur", "Le routeur du bâtiment B : il relie le bâtiment au cœur du réseau de l'école, et il distribue les adresses (DHCP).", "loc_routeur.gif");
+var RouteurEtc = dossier3(Routeur, "etc", "La configuration du routeur.", { image: "loc_etc.gif" });
+var RouteurDhcp = dossier3(RouteurEtc, "dhcp", "La configuration du serveur DHCP.", { image: "loc_etc.gif" });
+var RouteurVar = dossier3(Routeur, "var", "Les données du routeur.", { image: "loc_etc.gif" });
+var RouteurLog = dossier3(RouteurVar, "log", "Les journaux du routeur.", { image: "loc_journaux.gif" });
+fichier(RouteurEtc, "hostname", "routeur");
+fichier(RouteurDhcp, "dhcpd.conf",
+	"# isc-dhcp-server : les adresses du bâtiment B\n" +
+	"subnet 10.0.93.0 netmask 255.255.255.0 {\n" +
+	"  range 10.0.93.100 10.0.93.199;\n" +
+	"  option routers " + IP_ROUTEUR + ";\n" +
+	"  option domain-name-servers " + IP_DNS + ";\n" +
+	"  option domain-name \"cybersup.lan\";\n" +
+	"}\n" +
+	"# Le poste de l'accueil reçoit toujours la même adresse.\n" +
+	"host poste-b {\n" +
+	"  hardware ethernet " + MAC_POSTE + ";\n" +
+	"  fixed-address " + IP_POSTE + ";\n" +
+	"}\n");
+fichier(Routeur, "CahierDuRouteur",
+	"CAHIER DU ROUTEUR DU BÂTIMENT B\n\n" +
+	"Ce routeur relie le bâtiment B (10.0.93.0/24, interface eth0) au cœur du réseau de l'école (10.0.92.0/24, interface eth1).\n" +
+	"C'est aussi le serveur DHCP du bâtiment (isc-dhcp-server, configuration dans /etc/dhcp).\n\n" +
+	"Les services :\n" +
+	"  systemctl status NOM               son état\n" +
+	"  systemctl --failed                 ceux qui ont échoué\n" +
+	"  sudo systemctl enable --now NOM    le démarrer ET le relancer à chaque démarrage\n" +
+	"  sudo journalctl -u NOM             son journal (qui l'a arrêté, et quand)\n" +
+	"  sudo ss -tulnp                     les ports ouverts (t : TCP, u : UDP) et qui les tient\n\n" +
+	"Le filtrage (iptables) :\n" +
+	"  sudo iptables -L FORWARD -n -v --line-numbers   les règles du trafic qui TRAVERSE le routeur, avec leurs compteurs\n" +
+	"  sudo iptables -D FORWARD N                      retirer la règle N\n\n" +
+	"Le routage :\n" +
+	"  ip r                                     les routes\n" +
+	"  La liaison avec Lille (10.0.59.0/24) passe par sa passerelle dédiée, lille-gw (" + IP_LILLE_GW + "), jamais par le parefeu.\n" +
+	"  sudo ip route add RÉSEAU via PASSERELLE  ajouter une route\n" +
+	"  traceroute MACHINE, mtr --report MACHINE où se perdent les paquets (traceroute -n : sans les noms)\n\n" +
+	"Écouter le réseau :\n" +
+	"  sudo tcpdump -n port 53     les questions DNS qui passent\n" +
+	"  sudo tcpdump -A port N      le CONTENU des paquets, lisible s'ils ne sont pas chiffrés\n\n" +
+	"Et sur n'importe quelle machine : ip neigh (les voisins et leur adresse MAC), ip -s link (les compteurs de la carte).\n\n" +
+	"Rappel : on n'écoute que le réseau dont on a la charge. Celui-là, c'est le nôtre.",
+	{ enseigne: ["systemctl", "journalctl", "ss", "iptables", "tcpdump", "traceroute", "mtr"],
+	  revele: ["s_r_udp", "s_r_failed", "s_r_iptables_v", "s_r_dns_capture", "s_r_clair", "s_r_mtr", "s_r_traceroute_n", "s_r_voisins", "s_r_erreurs"],
+	  image: "item_manuscript.gif" });
+fichier(RouteurLog, "syslog",
+	"hier 18:02 routeur sudo: stagiaire : COMMAND=/usr/bin/systemctl disable --now isc-dhcp-server\n" +
+	"hier 18:05 routeur sudo: stagiaire : COMMAND=/usr/sbin/iptables -I FORWARD -s 10.0.93.0/24 -p tcp --dport 25 -j DROP -m comment --comment \"test anti-spam (stagiaire)\"\n" +
+	"hier 18:07 routeur sudo: stagiaire : COMMAND=/usr/sbin/ip route del 10.0.59.0/24 via " + IP_LILLE_GW + "\n" +
+	"(Le journal complet des services : sudo journalctl.)\n", { image: "item_manuscript.gif" });
+
+var Intranet = machine3("intranet", "Le serveur de l'intranet : planning, menus de la cantine, annonces. Tout le monde s'en sert, personne ne sait où il est.", "loc_intranet.gif");
+var IntranetEtc = dossier3(Intranet, "etc", "La configuration du serveur.", { image: "loc_etc.gif" });
+var IntranetNginx = dossier3(IntranetEtc, "nginx", "La configuration de nginx, le serveur web de l'intranet.", { image: "loc_etc.gif" });
+var IntranetSsl = dossier3(IntranetEtc, "ssl", "Les certificats du serveur.", { image: "loc_etc.gif" });
+var IntranetVar = dossier3(Intranet, "var", "Les données du serveur.", { image: "loc_etc.gif" });
+var IntranetWww = dossier3(IntranetVar, "www", "Les sites servis par cette machine.", { image: "loc_web.gif" });
+var IntranetHtml = dossier3(IntranetWww, "html", "La page par défaut d'apache2. Personne ne l'a demandée.", { image: "loc_web.gif" });
+var IntranetSite = dossier3(IntranetWww, "intranet", "Les pages de l'intranet, servies par nginx.", { image: "loc_web.gif" });
+fichier(IntranetEtc, "hostname", "intranet");
+fichier(IntranetNginx, "intranet.conf",
+	"server {\n    listen 80;\n    listen 443 ssl;\n    server_name intranet.cybersup.lan;\n    root /var/www/intranet;\n" +
+	"    ssl_certificate     /etc/ssl/intranet.pem;\n    ssl_certificate_key /etc/ssl/intranet.key;\n}\n");
+fichier(Intranet, "NoteDeVint",
+	"NOTE DE VINT, punaisée sur le serveur\n\n" +
+	"L'intranet, c'est nginx : configuration dans /etc/nginx, pages dans /var/www/intranet.\n" +
+	"Sur le port 80, il n'y a de place que pour UN serveur web. sudo ss -tlnp dit qui le tient.\n\n" +
+	"Le https :\n" +
+	"  openssl s_client -connect intranet:443               se connecter et voir le certificat\n" +
+	"  openssl x509 -noout -dates -in /etc/ssl/intranet.pem  ses dates de validité\n" +
+	"Un certificat a une date de début et une date de fin. Si l'horloge de celui qui vérifie est fausse, même un bon certificat est refusé.\n" +
+	"  timedatectl                     l'heure de la machine, et si elle est synchronisée\n" +
+	"  sudo timedatectl set-ntp true   la synchroniser sur le serveur de temps de l'école (" + IP_DNS + ")\n\n" +
+	"Tester un port :\n" +
+	"  nc -zv MACHINE PORT     « succeeded » : ouvert. « refused » : fermé. « timed out » : un pare-feu avale tout sans répondre.\n" +
+	"  telnet MACHINE PORT     l'ancêtre : parler à un service à la main.\n" +
+	"Le CLIENT telnet sert encore à tester un port. Un SERVEUR telnet, jamais : tout y passe en clair, mots de passe compris.",
+	{ enseigne: ["openssl", "timedatectl", "nc", "telnet"], revele: ["s_r_x509", "s_r_banniere", "s_r_telnet"], image: "item_manuscript.gif" });
+
+/* Le certificat de l'intranet : valide depuis vingt jours, pour quatre-vingt-dix jours en tout. */
+function dateDecalee(jours){
+	var d = new Date();
+	d.setDate(d.getDate() + jours);
+	return d;
+}
+var MOIS_ANGLAIS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function dateOpenssl(d){
+	return MOIS_ANGLAIS[d.getMonth()] + " " + completerGauche(d.getDate(), 2) + " 08:00:00 " + d.getFullYear() + " GMT";
+}
+var CERTIFICAT_INTRANET = { sujet: "CN = intranet.cybersup.lan", emetteur: "CN = Cybersup CA interne", debut: dateDecalee(-20), fin: dateDecalee(70) };
+var TEXTE_CERTIFICAT = (function(){
+	var lignes = ["-----BEGIN CERTIFICATE-----"];
+	for (var i = 0; i < 6; i++) lignes.push(base64Aleatoire("cert-intranet-" + i, 64));
+	lignes.push("-----END CERTIFICATE-----");
+	return lignes.join("\n") + "\n";
+})();
+fichier(IntranetSsl, "intranet.pem", TEXTE_CERTIFICAT, { image: "item_locker.gif" });
+fichier(IntranetSsl, "intranet.key", "-----BEGIN PRIVATE KEY-----\n(la clé privée du serveur : elle ne sort jamais d'ici)\n-----END PRIVATE KEY-----\n", { mode: "rw-------", image: "item_locker.gif" });
+var PAGE_APACHE = "<!DOCTYPE html>\n<html><head><title>Apache2 Debian Default Page: It works</title></head>\n<body><h1>Apache2 Debian Default Page</h1>\n" +
+	"<p>It works!</p>\n<p>This is the default welcome page used to test the correct operation of the Apache2 server after installation.</p>\n</body></html>";
+fichier(IntranetHtml, "index.html", PAGE_APACHE);
+fichier(IntranetSite, "index.html",
+	"<!DOCTYPE html>\n<html><head><title>Intranet de Cybersup</title></head>\n<body><h1>Intranet de Cybersup</h1>\n" +
+	"<ul>\n<li><a href=\"planning.txt\">Le planning de la semaine</a></li>\n<li>Menu de la cantine : lasagnes (encore)</li>\n" +
+	"<li>Objets trouvés : une cape noire, une fausse barbe (voir le bureau de Laurent)</li>\n</ul>\n</body></html>");
+fichier(IntranetSite, "planning.txt",
+	"PLANNING DE LA SEMAINE\n\nLundi    retour de Vint (enfin)\nMardi    TP réseau au bâtiment B (si le réseau marche)\n" +
+	"Mercredi partiel de Linux des B1 (le Sorcier Noir a promis d'être gentil)\nJeudi    afterwork du BDE\nVendredi Laurent corrige les copies\n");
+
+/* ------------------------------------------------------------------ */
+/* La description des machines                                         */
+/* ------------------------------------------------------------------ */
+
+/* Les équipements de la panne ne s'administrent que depuis le poste du bâtiment B. */
+function depuisPosteB(){
+	if (Shell.hote() === "poste-b") return true;
+	return Shell.pile_ssh.some(function(l){ return racineDe(l) === PosteB; });
+}
+function refusPanne(nom){
+	return function(){
+		if (depuisPosteB()) return null;
+		return "ssh : connect to host " + nom + " port 22 : Connection timed out\n" +
+			C.gris("(Les équipements réseau du bâtiment B ne s'administrent que depuis le Poste de l'accueil : cd ~/Cybersup/BatimentB/Poste, puis ssh " + nom + ".)");
+	};
+}
+
+function servicePanne(hote, nom){ return HOTES[hote].services[nom]; }
+function telnetActif(){ return servicePanne("routeur", "telnet.socket").actif; }
+function dhcpActif(){ return servicePanne("routeur", "isc-dhcp-server").actif; }
+function nginxActif(){ return servicePanne("intranet", "nginx").actif; }
+function apacheActif(){ return servicePanne("intranet", "apache2").actif; }
+
+decrireHote("poste-b", { ip: IP_POSTE, arrivee: function(){ return PosteB; }, noyau: "6.1.0-25-amd64", panne: true, chassis: "desktop",
+	refus: function(){
+		return "ssh : connect to host poste-b port 22 : Connection refused\n" +
+			C.gris("(Le poste de l'accueil n'a pas de serveur ssh : on s'assoit devant. cd ~/Cybersup/BatimentB/Poste)");
+	},
+	ports: {},
+	services: {
+		"NetworkManager": service("poste-b", "NetworkManager", "Network Manager"),
+		"systemd-resolved": service("poste-b", "systemd-resolved", "Network Name Resolution"),
+		"systemd-timesyncd": service("poste-b", "systemd-timesyncd", "Network Time Synchronization", { actif: false, auto: false })
+	} });
+decrireHote("routeur", { ip: IP_ROUTEUR, ip2: IP_ROUTEUR_COEUR, arrivee: function(){ return Routeur; }, refus: refusPanne("routeur"), noyau: "6.1.0-25-amd64", panne: true, chassis: "server",
+	ports: {
+		22: port("ssh", BANNIERE_SSH),
+		23: { service: "telnet", banniere: "Debian GNU/Linux 12\nrouteur login: ", ferme: function(){ return !telnetActif(); } }
+	},
+	services: {
+		sshd: service("routeur", "sshd", "OpenBSD Secure Shell server"),
+		"isc-dhcp-server": service("routeur", "isc-dhcp-server", "ISC DHCP IPv4 server", { actif: false, auto: false, procNom: "dhcpd" }),
+		"telnet.socket": service("routeur", "telnet.socket", "Telnet Server Activation Socket", { procNom: "in.telnetd" })
+	} });
+decrireHote("intranet", { ip: IP_INTRANET, arrivee: function(){ return Intranet; }, refus: refusPanne("intranet"), noyau: "6.1.0-25-amd64", panne: true, chassis: "vm",
+	web: function(){ return apacheActif() ? IntranetHtml : IntranetSite; },
+	ports: {
+		22: port("ssh", BANNIERE_SSH),
+		80: { service: "http", banniere: function(){ return "HTTP/1.1 400 Bad Request\nServer: " + (apacheActif() ? "Apache/2.4.57 (Debian)" : "nginx/1.22.1"); },
+			ferme: function(){ return !apacheActif() && !nginxActif(); } },
+		443: { service: "https", banniere: "(chiffré : ici, nc ne lit que du bruit)", ferme: function(){ return !nginxActif(); } }
+	},
+	services: {
+		sshd: service("intranet", "sshd", "OpenBSD Secure Shell server"),
+		nginx: service("intranet", "nginx", "A high performance web server and a reverse proxy server", { actif: false }),
+		apache2: service("intranet", "apache2", "The Apache HTTP Server"),
+		"fwupd-refresh": service("intranet", "fwupd-refresh", "Refresh fwupd metadata", { actif: false })
+	} });
+
+/* Le journal de chaque machine suit ce qui s'y passe. */
+Object.defineProperty(HOTES["routeur"], "journal", { configurable: true, get: function(){
+	var j = [["hier 18:02", "isc-dhcp-server", "Stopping isc-dhcp-server.service - ISC DHCP IPv4 server..."],
+		["hier 18:02", "sudo", "stagiaire : COMMAND=/usr/bin/systemctl disable --now isc-dhcp-server"],
+		["hier 18:05", "sudo", "stagiaire : COMMAND=/usr/sbin/iptables -I FORWARD -s 10.0.93.0/24 -p tcp --dport 25 -j DROP"],
+		["hier 18:07", "sudo", "stagiaire : COMMAND=/usr/sbin/ip route del 10.0.59.0/24 via " + IP_LILLE_GW],
+		["08:05", "in.telnetd", "connect from " + IP_PRESTATAIRE + " (script de supervision du prestataire, toutes les cinq minutes)"],
+		["08:10", "in.telnetd", "connect from " + IP_PRESTATAIRE]];
+	if (dhcpActif()) j.push(["09:20", "isc-dhcp-server", "Started isc-dhcp-server.service - ISC DHCP IPv4 server."]);
+	if (state.panne && state.panne.bail) j.push(["09:21", "dhcpd", "DHCPACK on " + IP_POSTE + " to " + MAC_POSTE + " (poste-b) via eth0"]);
+	if (!telnetActif()) j.push(["09:40", "systemd", "telnet.socket: Deactivated successfully."]);
+	return lignesDeJournal(j);
+} });
+Object.defineProperty(HOTES["intranet"], "journal", { configurable: true, get: function(){
+	var j = [["hier 18:20", "apt", "Installation de php-cli (par stagiaire), avec sa dépendance apache2"],
+		["06:00", "apache2", "Started apache2.service - The Apache HTTP Server."],
+		["06:00", "nginx", "Starting nginx.service - A high performance web server..."],
+		["06:00", "nginx", "nginx: [emerg] bind() to 0.0.0.0:80 failed (98: Address already in use)"],
+		["06:00", "nginx", "nginx.service: Failed with result 'exit-code'."],
+		["06:01", "fwupd-refresh", "fwupd-refresh.service: Failed (pas d'accès à internet pour les mises à jour du micrologiciel, sans gravité)"]];
+	if (!apacheActif()) j.push(["09:30", "apache2", "Stopped apache2.service - The Apache HTTP Server."]);
+	if (nginxActif()) j.push(["09:31", "nginx", "Started nginx.service - A high performance web server and a reverse proxy server."]);
+	return lignesDeJournal(j);
+} });
+Object.defineProperty(HOTES["poste-b"], "journal", { configurable: true, get: function(){
+	var j = [["hier 18:10", "sudo", "stagiaire : COMMAND=/usr/sbin/ip link set eth0 down"],
+		["08:00", "kernel", "rtc_cmos 00:00: setting system clock to 2001-01-01T00:00:00 UTC (pile de la carte mère à plat)"],
+		["08:01", "NetworkManager", "device (eth0): state change: disconnected (administratively down)"]];
+	if (horlogePosteOK()) j.push(["09:25", "systemd-timesyncd", "Contacted time server " + IP_DNS + ":123. Initial clock synchronization."]);
+	return lignesDeJournal(j);
+} });
+HOTES["poste-b"].dmesg = ["[    0.000000] Linux version 6.1.0-25-amd64", "[    0.412377] rtc_cmos 00:00: setting system clock to 2001-01-01T00:00:00 UTC",
+	"[    2.103344] e1000e 0000:00:19.0 eth0: (PCI Express:2.5GT/s) 52:54:00:5d:14:20"];
+HOTES["routeur"].dmesg = ["[    0.000000] Linux version 6.1.0-25-amd64", "[    1.900120] e1000e eth0: Link is Up 1000 Mbps Full Duplex", "[    1.900355] e1000e eth1: Link is Up 1000 Mbps Full Duplex"];
+
+/* Les processus des services qui tournent au départ. */
+PosteB.addProc(611, "NetworkManager", "root", { service: "NetworkManager", cpu: 0.2, protege: TEXTE_SERVICE_PROTEGE });
+PosteB.addProc(498, "systemd-resolved", "systemd-resolve", { service: "systemd-resolved", cpu: 0.1, protege: TEXTE_SERVICE_PROTEGE });
+Routeur.addProc(tirerPids("routeur-sshd", 1, 300, 999)[0], "sshd", "root", { service: "sshd", cpu: 0.1, protege: TEXTE_SERVICE_PROTEGE });
+Routeur.addProc(tirerPids("routeur-telnet", 1, 300, 999)[0], "in.telnetd", "root", { service: "telnet.socket", cpu: 0.1 });
+Intranet.addProc(tirerPids("intranet-sshd", 1, 300, 999)[0], "sshd", "root", { service: "sshd", cpu: 0.1, protege: TEXTE_SERVICE_PROTEGE });
+Intranet.addProc(tirerPids("intranet-apache", 1, 1000, 1999)[0], "apache2", "root", { service: "apache2", cpu: 0.6, protege: TEXTE_SERVICE_PROTEGE });
+
+/* Les noms de la panne entrent dans la zone DNS de l'école (et dans la liste des noms légitimes). */
+var ZONE_PANNE = [["intranet", IP_INTRANET], ["routeur", IP_ROUTEUR], ["poste-b", IP_POSTE], ["lille-gw", IP_LILLE_GW], ["lille", IP_LILLE], ["marseille", "10.0.13.1"]];
+var LIGNE_MX = "@         IN MX 10 mail.cybersup.lan.";
+function lignesZonePanne(){
+	return ZONE_PANNE.map(function(l){ return completerDroite(l[0], 9) + " IN A " + l[1]; }).concat([LIGNE_MX]);
+}
+ZoneEcole.setText(ZoneEcole.getText() + lignesZonePanne().join("\n") + "\n");
+ZoneEcole.modifie = false;
+ZONE_PANNE.forEach(function(l){ ZONE_LEGITIME.push(l); });
+
+/* ------------------------------------------------------------------ */
+/* Le réseau de la panne : qui joint qui                               */
+/* ------------------------------------------------------------------ */
+
+function nombreIp(ip){ return ip.split(".").reduce(function(t, o){ return t * 256 + parseInt(o, 10); }, 0); }
+function ipValide(ip){ return /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.test(ip) && ip.split(".").every(function(o){ return +o <= 255; }); }
+function dansReseau(ip, cidr){
+	var m = /^(\d+\.\d+\.\d+\.\d+)\/(\d+)$/.exec(cidr);
+	if (!m || !ipValide(ip)) return false;
+	var bloc = Math.pow(2, 32 - parseInt(m[2], 10));
+	return Math.floor(nombreIp(m[1]) / bloc) === Math.floor(nombreIp(ip) / bloc);
+}
+function reseauDe(ip, prefixe){
+	var bloc = Math.pow(2, 32 - prefixe), n = Math.floor(nombreIp(ip) / bloc) * bloc;
+	return [Math.floor(n / 16777216) % 256, Math.floor(n / 65536) % 256, Math.floor(n / 256) % 256, n % 256].join(".") + "/" + prefixe;
+}
+
+/* L'adresse utile du poste : la première posée dans le réseau du bâtiment B, en /24. */
+function adressePoste(){
+	var a = (state.panne.adresses || []).filter(function(x){ return x.prefixe === 24 && dansReseau(x.ip, "10.0.93.0/24") && x.ip !== IP_ROUTEUR; })[0];
+	return a ? a.ip : null;
+}
+/* Les réseaux directement branchés au poste. */
+function reseauxPoste(){
+	if (!state.panne.lien) return [];
+	return state.panne.adresses.map(function(a){ return reseauDe(a.ip, a.prefixe); });
+}
+function routeDuPoste(ip){
+	var p = state.panne;
+	if (reseauxPoste().some(function(r){ return dansReseau(ip, r); })) return "direct";
+	var meilleure = null, longueur = -1;
+	p.routes.forEach(function(r){
+		var l = r.vers === "default" ? 0 : parseInt(r.vers.split("/")[1], 10);
+		if ((r.vers === "default" || dansReseau(ip, r.vers)) && l > longueur){ meilleure = r; longueur = l; }
+	});
+	return meilleure ? meilleure.via : null;
+}
+function routeParDefautPoste(){
+	var r = state.panne.routes.filter(function(x){ return x.vers === "default"; })[0];
+	return r ? r.via : null;
+}
+function routesDuRouteur(){
+	return [{ vers: "default", via: IP_PAREFEU, dev: "eth1", base: true }].concat(state.panne.routesRouteur);
+}
+function routeDuRouteur(ip){
+	if (dansReseau(ip, "10.0.93.0/24") || dansReseau(ip, "10.0.92.0/24")) return "direct";
+	var meilleure = null, longueur = -1;
+	routesDuRouteur().forEach(function(r){
+		var l = r.vers === "default" ? 0 : parseInt(r.vers.split("/")[1], 10);
+		if ((r.vers === "default" || dansReseau(ip, r.vers)) && l > longueur){ meilleure = r; longueur = l; }
+	});
+	return meilleure ? meilleure.via : null;
+}
+
+/* Le filtrage du routeur, comme iptables : la première règle qui correspond décide. */
+function regleCorrespond(r, paquet){
+	if (r.proto && r.proto !== "all" && r.proto !== paquet.proto) return false;
+	if (r.dport && r.dport !== String(paquet.dport)) return false;
+	if (r.src && !(r.src.indexOf("/") > -1 ? dansReseau(paquet.src, r.src) : r.src === paquet.src)) return false;
+	if (r.dst && !(r.dst.indexOf("/") > -1 ? dansReseau(paquet.dst || "", r.dst) : r.dst === paquet.dst)) return false;
+	return true;
+}
+function verdictForward(paquet){
+	var regles = state.panne.iptables.FORWARD;
+	for (var i = 0; i < regles.length; i++){
+		if (regleCorrespond(regles[i], paquet)) return regles[i].cible;
+	}
+	return "ACCEPT";
+}
+
+/* Le nom d'une adresse connue. */
+function nomDeIp(ip){
+	if (ip === IP_ROUTEUR_COEUR) return "routeur";
+	if (ip === IP_LILLE_GW) return "lille-gw";
+	for (var h in HOTES){
+		if (HOTES.hasOwnProperty(h) && HOTES[h].ip === ip) return h;
+	}
+	return null;
+}
+function ipDeHote(h){ return h === "poste-b" ? (adressePoste() || IP_POSTE) : (HOTES[h] || {}).ip; }
+
+/* Un port est-il ouvert sur la machine visée ? */
+function portOuvert(nom, proto, numero){
+	if (proto === "udp"){
+		if (numero === "53") return nom === "dns";
+		if (numero === "67") return nom === "routeur" && dhcpActif();
+		if (numero === "123") return nom === "dns";
+		return false;
+	}
+	var ports = (HOTES[nom] || {}).ports || {};
+	var p = ports[numero];
+	return !!p && !(p.ferme && p.ferme());
+}
+
+/*
+ * Le chemin d'une machine de la panne vers une adresse : { ok, erreur, sauts }.
+ * erreur : "reseau" (Network is unreachable), "hote" (Destination Host Unreachable),
+ * "delai" (personne ne répond), "refus" (port fermé), "rejet" (rejeté par un pare-feu).
+ */
+function cheminVers(depuis, ip, options){
+	options = options || {};
+	var paquet = { proto: options.proto || "icmp", dport: options.port, dst: ip };
+	var sauts = [];
+	if (ip === "127.0.0.1" || ip === ipDeHote(depuis) || (depuis === "routeur" && ip === IP_ROUTEUR_COEUR)){
+		return arrivee(depuis, ip, [], options, true);
+	}
+	if (depuis === "poste-b"){
+		if (!state.panne.lien) return { ok: false, erreur: "reseau", sauts: [] };
+		var gw = routeDuPoste(ip);
+		if (!adressePoste() && !state.panne.adresses.length) return { ok: false, erreur: "reseau", sauts: [] };
+		if (gw === null) return { ok: false, erreur: "reseau", sauts: [] };
+		if (gw === "direct"){
+			// Sur le câble du bâtiment B, il n'y a que le réseau 10.0.93.0/24 : le reste ne répond pas aux demandes ARP.
+			if (!dansReseau(ip, "10.0.93.0/24")) return { ok: false, erreur: "hote", sauts: [] };
+			if (ip === IP_ROUTEUR) state.panne.arp = true;
+			return arrivee(depuis, ip, sauts, options);
+		}
+		if (gw !== IP_ROUTEUR || !adressePoste()) return { ok: false, erreur: "hote", sauts: [] };
+		state.panne.arp = true;
+		sauts.push(["routeur", IP_ROUTEUR]);
+		if (ip === IP_ROUTEUR_COEUR) return arrivee("routeur", ip, sauts, options, true);
+		paquet.src = adressePoste();
+		var v = verdictForward(paquet);
+		var regle = state.panne.iptables.FORWARD.filter(function(r){ return regleCorrespond(r, paquet); })[0];
+		if (regle && options.compter) regle.paquets = (regle.paquets || 0) + 1;
+		if (v === "DROP") return { ok: false, erreur: "delai", sauts: sauts };
+		if (v === "REJECT") return { ok: false, erreur: "rejet", sauts: sauts };
+		return depuisLeRouteur(ip, sauts, options);
+	}
+	if (depuis === "routeur") return depuisLeRouteur(ip, sauts, options);
+	// L'intranet, et les autres serveurs du cœur : le routeur est leur passerelle vers le reste.
+	if (dansReseau(ip, "10.0.92.0/24")) return arrivee(depuis, ip, sauts, options);
+	sauts.push(["routeur", IP_ROUTEUR_COEUR]);
+	return depuisLeRouteur(ip, sauts, options);
+}
+function depuisLeRouteur(ip, sauts, options){
+	var gw = routeDuRouteur(ip);
+	if (gw === "direct") return arrivee("routeur", ip, sauts, options);
+	if (gw === IP_LILLE_GW){
+		sauts.push(["lille-gw", IP_LILLE_GW]);
+		return arrivee("routeur", ip, sauts, options);
+	}
+	if (gw !== IP_PAREFEU) return { ok: false, erreur: "delai", sauts: sauts };
+	sauts.push(["parefeu", IP_PAREFEU]);
+	if (ip === IP_PAREFEU) { sauts.pop(); return arrivee("routeur", ip, sauts, options); }
+	// Le parefeu ne laisse pas passer le trafic vers Lille : il a sa liaison à lui.
+	if (dansReseau(ip, "10.0.59.0/24")) return { ok: false, erreur: "delai", sauts: sauts };
+	return arrivee("routeur", ip, sauts, options);
+}
+function arrivee(depuis, ip, sauts, options, local){
+	var nom = ip === "127.0.0.1" ? depuis : nomDeIp(ip);
+	if (!nom && /^10\./.test(ip)) return { ok: false, erreur: "hote", sauts: sauts };
+	// Le poste ne répond que s'il a vraiment cette adresse, carte allumée.
+	if (nom === "poste-b" && !local && !(state.panne.lien && adressePoste() === ip)) return { ok: false, erreur: "hote", sauts: sauts };
+	sauts = sauts.concat([[nom || ip, ip]]);
+	if (options.port !== undefined && !portOuvert(nom || "", options.proto || "tcp", String(options.port))){
+		return { ok: false, erreur: options.proto === "udp" ? "delai" : "refus", sauts: sauts, nom: nom };
+	}
+	return { ok: true, sauts: sauts, nom: nom };
+}
+
+/* Le serveur DNS que le poste interroge vraiment : celui de resolvectl ou du DHCP, sinon le premier de resolv.conf. */
+function dnsDuFichier(){
+	var m = /^\s*nameserver\s+(\S+)/m.exec(ResolvConf.getText());
+	return m ? m[1] : null;
+}
+function dnsEffectif(depuis){
+	if ((depuis || Shell.hote()) !== "poste-b") return IP_DNS;
+	return state.panne.dnsRuntime || dnsDuFichier();
+}
+function dnsRepond(depuis, serveur){
+	return serveur === IP_DNS && cheminVers(depuis, serveur, { proto: "udp", port: "53" }).ok;
+}
+/* /etc/hosts du poste */
+function depuisHosts(nom){
+	var trouve = null;
+	lignesDe(PosteHosts.getText()).forEach(function(l){
+		var c = l.replace(/#.*$/, "").trim().split(/\s+/);
+		if (c.length >= 2 && !trouve && c.slice(1).some(function(n){ return n === nom; })) trouve = c[0];
+	});
+	return trouve;
+}
+function nomCourt(nom){ return String(nom).replace(/\.$/, "").replace(/\.cybersup\.lan$/, ""); }
+/* Un enregistrement de la zone (A par défaut). */
+function chercherZone(nom, type){
+	var court = nomCourt(nom);
+	if (court === "cybersup.lan" || court === "") court = "@";
+	return zoneDns().filter(function(r){ return r.nom === court && r.type === (type || "A"); }).map(function(r){ return r.valeur; });
+}
+
+/* Traduire un nom en adresse, depuis une machine : { ip } ou { erreur: "temp" | "inconnu" }. */
+function resoudreDepuis(depuis, nom){
+	if (ipValide(nom)) return { ip: nom };
+	if (nom === "localhost") return { ip: "127.0.0.1" };
+	var court = nomCourt(nom);
+	if (depuis === "poste-b"){
+		var local = depuisHosts(nom) || depuisHosts(court);
+		if (local){
+			if (local !== "127.0.0.1" && local !== "127.0.1.1" && chercherZone(court).length === 0) state.complete("s_r_hosts");
+			return { ip: local === "127.0.1.1" ? "127.0.0.1" : local };
+		}
+		if (!dnsRepond(depuis, dnsEffectif(depuis))) return { erreur: "temp" };
+	} else if (!estHotePanne(depuis)){
+		// Ailleurs, les noms des machines connues se résolvent aussi directement (comme avant la panne).
+		if (HOTES[court] && HOTES[court].ip) return { ip: HOTES[court].ip };
+	}
+	var a = chercherZone(court);
+	return a.length ? { ip: a[0] } : { erreur: "inconnu" };
+}
+
+function estHotePanne(h){ return !!(HOTES[h] && HOTES[h].panne); }
+
+/* La résolution des noms marche-t-elle sur le poste (sans compter /etc/hosts) ? */
+function dnsPosteOK(){
+	return !!adressePoste() && state.panne.lien && dnsRepond("poste-b", dnsEffectif("poste-b"));
+}
+function reseauPosteOK(){
+	return !!adressePoste() && state.panne.lien && routeParDefautPoste() === IP_ROUTEUR && dnsPosteOK();
+}
+/* L'horloge du poste : sa pile est à plat, elle repart de 2001 tant qu'elle n'est pas synchronisée. */
+function horlogePosteOK(){
+	return servicePanne("poste-b", "systemd-timesyncd").actif && cheminVers("poste-b", IP_DNS, { proto: "udp", port: "123" }).ok;
+}
+function dateDuPoste(){
+	var d = new Date();
+	if (Shell.hote() !== "poste-b" || horlogePosteOK()) return d;
+	return new Date(2001, 0, 1, d.getHours(), d.getMinutes(), d.getSeconds());
+}
+
+/* Le DHCP : le serveur du routeur répond si le lien est là et le service tourne. */
+function obtenirBail(){
+	var p = state.panne;
+	if (!p.lien || !dhcpActif()) return false;
+	p.adresses = p.adresses.filter(function(a){ return !a.dhcp && a.ip !== IP_POSTE; });
+	p.adresses.unshift({ ip: IP_POSTE, prefixe: 24, dhcp: true });
+	p.routes = p.routes.filter(function(r){ return r.vers !== "default"; });
+	p.routes.push({ vers: "default", via: IP_ROUTEUR, dhcp: true });
+	p.dnsRuntime = IP_DNS;
+	p.bail = true;
+	return true;
+}
+function rendreBail(){
+	var p = state.panne;
+	p.adresses = p.adresses.filter(function(a){ return !a.dhcp; });
+	p.routes = p.routes.filter(function(r){ return !r.dhcp; });
+	if (p.bail) p.dnsRuntime = null;
+	p.bail = false;
+}
+
+/* ------------------------------------------------------------------ */
+/* netplan : un tout petit lecteur de YAML                             */
+/* ------------------------------------------------------------------ */
+
+function ErreurYaml(ligne, message){ this.ligne = ligne; this.message = message; }
+
+function lireYaml(texte){
+	var lignes = [];
+	texte.split("\n").forEach(function(brute, i){
+		if (/\t/.test(brute.replace(/#.*$/, ""))) throw new ErreurYaml(i + 1, "found character '\\t' that cannot start any token (pas de tabulation en YAML : des espaces)");
+		var sans = brute.replace(/\s+#.*$/, "").replace(/^#.*$/, "");
+		if (sans.trim() === "") return;
+		lignes.push({ indent: sans.match(/^ */)[0].length, contenu: sans.trim(), num: i + 1 });
+	});
+	var pos = 0;
+	function scalaire(v){
+		v = v.trim();
+		if (/^\[.*\]$/.test(v)) return v.slice(1, -1).split(",").map(function(x){ return scalaire(x); }).filter(function(x){ return x !== ""; });
+		if (/^(true|yes)$/i.test(v)) return true;
+		if (/^(false|no)$/i.test(v)) return false;
+		return v.replace(/^["']|["']$/g, "");
+	}
+	function bloc(indent){
+		if (pos >= lignes.length) return null;
+		if (lignes[pos].contenu.charAt(0) === "-"){
+			var liste = [];
+			while (pos < lignes.length && lignes[pos].indent === indent && lignes[pos].contenu.charAt(0) === "-"){
+				var reste = lignes[pos].contenu.replace(/^-\s*/, "");
+				if (/^[^:\s\[]+:(\s|$)/.test(reste)){
+					lignes[pos] = { indent: indent + 2, contenu: reste, num: lignes[pos].num };
+					liste.push(bloc(indent + 2));
+				} else {
+					liste.push(scalaire(reste));
+					pos++;
+				}
+			}
+			return liste;
+		}
+		var objet = {};
+		while (pos < lignes.length && lignes[pos].indent === indent){
+			var l = lignes[pos];
+			var m = /^([^:]+):(?:\s+(.*))?$/.exec(l.contenu);
+			if (!m) throw new ErreurYaml(l.num, "could not find expected ':'");
+			pos++;
+			if (m[2] !== undefined && m[2].trim() !== ""){ objet[m[1].trim()] = scalaire(m[2]); continue; }
+			if (pos < lignes.length && lignes[pos].indent > indent) objet[m[1].trim()] = bloc(lignes[pos].indent);
+			else if (pos < lignes.length && lignes[pos].indent === indent && lignes[pos].contenu.charAt(0) === "-") objet[m[1].trim()] = bloc(indent);
+			else objet[m[1].trim()] = null;
+		}
+		if (pos < lignes.length && lignes[pos].indent > indent) throw new ErreurYaml(lignes[pos].num, "mapping values are not allowed in this context (indentation inattendue)");
+		return objet;
+	}
+	var racine = lignes.length ? bloc(lignes[0].indent) : {};
+	if (pos < lignes.length) throw new ErreurYaml(lignes[pos].num, "did not find expected key (indentation incohérente)");
+	return racine || {};
+}
+
+/* Ce que dit la configuration netplan du poste pour eth0. */
+function confNetplan(){
+	var y;
+	try { y = lireYaml(NetplanPoste.getText()); }
+	catch (e){ if (e instanceof ErreurYaml) return { erreur: "/etc/netplan/01-poste.yaml:" + e.ligne + ": Invalid YAML: " + e.message }; throw e; }
+	var eth = y && y.network && y.network.ethernets && y.network.ethernets.eth0;
+	if (!eth || typeof eth !== "object") return { erreur: "/etc/netplan/01-poste.yaml: network.ethernets.eth0 introuvable" };
+	var conf = { dhcp4: eth.dhcp4 === true, adresses: [], passerelle: null, dns: null };
+	(Array.isArray(eth.addresses) ? eth.addresses : []).forEach(function(a){
+		var m = /^(\d+\.\d+\.\d+\.\d+)\/(\d+)$/.exec(String(a));
+		if (m && ipValide(m[1])) conf.adresses.push({ ip: m[1], prefixe: parseInt(m[2], 10) });
+	});
+	if (eth.gateway4) conf.passerelle = String(eth.gateway4);
+	(Array.isArray(eth.routes) ? eth.routes : []).forEach(function(r){
+		if (r && (r.to === "default" || r.to === "0.0.0.0/0") && r.via) conf.passerelle = String(r.via);
+	});
+	if (eth.nameservers && Array.isArray(eth.nameservers.addresses) && eth.nameservers.addresses.length) conf.dns = String(eth.nameservers.addresses[0]);
+	return conf;
+}
+
+/* netplan apply (et le démarrage) : la configuration du fichier remplace celle du moment. */
+function appliquerNetplan(){
+	var conf = confNetplan();
+	if (conf.erreur) return conf;
+	var p = state.panne;
+	p.lien = true;
+	p.adresses = [];
+	p.routes = [];
+	p.dnsRuntime = null;
+	p.bail = false;
+	conf.adresses.forEach(function(a){ p.adresses.push({ ip: a.ip, prefixe: a.prefixe }); });
+	if (conf.passerelle && p.adresses.some(function(a){ return dansReseau(conf.passerelle, reseauDe(a.ip, a.prefixe)); })) p.routes.push({ vers: "default", via: conf.passerelle });
+	if (conf.dns) p.dnsRuntime = conf.dns;
+	conf.bail = conf.dhcp4 ? obtenirBail() : false;
+	if (reseauPosteOK()) p.netplanOK = true;
+	return conf;
+}
+
+/* ------------------------------------------------------------------ */
+/* Les quêtes du chapitre                                              */
+/* ------------------------------------------------------------------ */
+
+var QUETES_PANNE = [
+	{ id: "r_batiment", titre: "Rejoindre Radia au BatimentB",
+	  indice: "Laurent a ajouté un P.S. : relis-le (less Laurent, dans la Citadelle). Le BatimentB est à Cybersup." },
+	{ id: "r_lien", titre: "Réveiller la carte réseau du poste",
+	  indice: "Radia explique la méthode : on part du bas. Sur le Poste, ip link montre si eth0 est UP." },
+	{ id: "r_ip", titre: "Donner une adresse IP au poste",
+	  indice: "ip a ne montre aucune ligne inet sur eth0. Le DHCP ne répond pas : l'Etiquette du poste donne l'adresse à poser à la main." },
+	{ id: "r_passerelle", titre: "Indiquer au poste sa passerelle",
+	  indice: "Le routeur répond, le reste du réseau non : il manque la route par défaut. ip r la montre, l'Etiquette donne la passerelle." },
+	{ id: "r_dns", titre: "Réparer la résolution des noms",
+	  indice: "Les adresses passent, les noms non. Regarde quel serveur le poste interroge : /etc/resolv.conf. Le MemoDNS, dans /etc, aide." },
+	{ id: "r_dhcp", titre: "Relancer le serveur DHCP du routeur",
+	  indice: "Le DHCP n'a jamais répondu. Il tourne sur le routeur : ssh routeur, puis lis le CahierDuRouteur." },
+	{ id: "r_netplan", titre: "Rendre la configuration du poste permanente",
+	  indice: "La configuration qui survit au redémarrage est dans /etc/netplan, sur le poste. L'AideMemoire du poste explique netplan." },
+	{ id: "r_web", titre: "Rendre l'intranet à nginx",
+	  indice: "curl http://intranet/ affiche une page par défaut. Sur l'intranet (ssh intranet), quelqu'un d'autre tient le port 80. La NoteDeVint aide." },
+	{ id: "r_https", titre: "Remettre le poste à l'heure",
+	  indice: "curl https://intranet/, depuis le poste, refuse un certificat « pas encore valide ». Compare les dates du certificat avec date, sur le poste." },
+	{ id: "r_smtp", titre: "Débloquer l'envoi des mails",
+	  indice: "nc -zv mail 25, depuis le poste : timed out. Un paquet avalé sans réponse, c'est un pare-feu. Le routeur filtre avec iptables." },
+	{ id: "r_lille", titre: "Rétablir la route vers Lille",
+	  indice: "traceroute lille, depuis le poste, montre où les paquets se perdent. Le CahierDuRouteur dit par où passe la liaison avec Lille." },
+	{ id: "r_telnet", titre: "Fermer le telnet du routeur",
+	  indice: "ss -tlnp, sur le routeur, montre un port 23 ouvert. sudo tcpdump -A port 23 montre pourquoi c'est grave." },
+	{ id: "r_fin", titre: "Faire le compte rendu à Radia",
+	  indice: "Tout remarche : retourne voir Radia, au BatimentB (cat Radia)." }
+];
+
+var QUETES_SECONDAIRES_PANNE = [
+	{ id: "s_r_ping", titre: "Envoyer exactement quatre paquets avec ping -c 4" },
+	{ id: "s_r_voisins", titre: "Lire l'adresse MAC du routeur avec ip neigh" },
+	{ id: "s_r_erreurs", titre: "Lire les compteurs de la carte avec ip -s link" },
+	{ id: "s_r_hostnamectl", titre: "Relever l'identité de trois machines avec hostnamectl" },
+	{ id: "s_r_host", titre: "Résoudre un nom avec host" },
+	{ id: "s_r_nslookup", titre: "Résoudre un nom avec nslookup" },
+	{ id: "s_r_mx", titre: "Trouver le serveur de courrier de l'école (dig MX)" },
+	{ id: "s_r_hosts", titre: "Se créer un raccourci de nom dans /etc/hosts" },
+	{ id: "s_r_resolvectl", titre: "Voir quel DNS le poste interroge avec resolvectl" },
+	{ id: "s_r_nmcli", titre: "Faire le point sur les cartes avec nmcli" },
+	{ id: "s_r_bail", titre: "Rendre puis reprendre un bail DHCP" },
+	{ id: "s_r_reboot", titre: "Redémarrer le poste et retrouver le réseau tout seul" },
+	{ id: "s_r_udp", titre: "Voir le port du DHCP avec ss -u" },
+	{ id: "s_r_failed", titre: "Lister les services en échec" },
+	{ id: "s_r_wget", titre: "Télécharger le planning de l'intranet avec wget" },
+	{ id: "s_r_entetes", titre: "Lire les en-têtes de l'intranet avec curl -I" },
+	{ id: "s_r_x509", titre: "Lire les dates du certificat avec openssl x509" },
+	{ id: "s_r_banniere", titre: "Lire la bannière du serveur de mail avec nc" },
+	{ id: "s_r_telnet", titre: "Parler au serveur de mail avec telnet" },
+	{ id: "s_r_iptables_v", titre: "Compter les paquets bloqués avec iptables -v" },
+	{ id: "s_r_mtr", titre: "Faire un rapport mtr" },
+	{ id: "s_r_traceroute_n", titre: "Tracer une route sans les noms (traceroute -n)" },
+	{ id: "s_r_dns_capture", titre: "Voir passer des questions DNS avec tcpdump" },
+	{ id: "s_r_clair", titre: "Voir un mot de passe passer en clair avec tcpdump -A" }
+];
+
+var INDICES_PANNE = {
+	r_batiment: [
+		"Le BatimentB est un lieu de Cybersup, comme la SalleReseau.",
+		"cd ~/Cybersup/BatimentB puis cat Radia"],
+	r_lien: [
+		"ip link montre eth0 sans le mot UP entre les chevrons : la carte est éteinte. ip link set la rallume, avec sudo.",
+		"cd Poste, puis sudo ip link set eth0 up"],
+	r_ip: [
+		"Le DHCP ne répond pas (sudo dhclient eth0 ne reçoit rien). On pose l'adresse de l'Etiquette à la main, avec son masque /24.",
+		"Sur le Poste : sudo ip addr add " + IP_POSTE + "/24 dev eth0"],
+	r_passerelle: [
+		"ip r ne montre aucune ligne « default » : le poste ne sait pas par où sortir de son réseau. La passerelle est le routeur, " + IP_ROUTEUR + ".",
+		"Sur le Poste : sudo ip route add default via " + IP_ROUTEUR],
+	r_dns: [
+		"cat /etc/resolv.conf : le serveur noté là, " + IP_DNS_FAUX + ", n'existe pas. Le bon est sur l'Etiquette. dig @" + IP_DNS + " intranet le prouve.",
+		"Sur le Poste : sudo nano /etc/resolv.conf, remplace " + IP_DNS_FAUX + " par " + IP_DNS + ", Ctrl+O, Ctrl+X (ou : sudo resolvectl dns eth0 " + IP_DNS + ")"],
+	r_dhcp: [
+		"Sur le routeur, systemctl status isc-dhcp-server le montre arrêté ET désactivé. Il faut les deux : le démarrer, et l'activer au démarrage.",
+		"ssh routeur, puis sudo systemctl enable --now isc-dhcp-server"],
+	r_netplan: [
+		"Dans /etc/netplan/01-poste.yaml, le stagiaire a écrit dhcp4: false. Remets true, puis applique : la configuration du fichier remplace celle du moment.",
+		"Sur le Poste : sudo netplan set ethernets.eth0.dhcp4=true, puis sudo netplan apply"],
+	r_web: [
+		"sudo ss -tlnp, sur l'intranet : c'est apache2 qui tient le port 80, et nginx n'a pas pu démarrer. Arrête et désactive apache2, puis démarre nginx.",
+		"ssh intranet, sudo systemctl disable --now apache2, puis sudo systemctl start nginx"],
+	r_https: [
+		"Le certificat est valide depuis vingt jours, mais date, sur le poste, affiche 2001 : pour lui, le certificat n'existe pas encore. Synchronise son horloge.",
+		"Sur le Poste : sudo timedatectl set-ntp true"],
+	r_smtp: [
+		"sudo iptables -L FORWARD -n --line-numbers, sur le routeur : une règle DROP vise le port 25 du bâtiment B. Retire-la par son numéro.",
+		"ssh routeur, puis sudo iptables -D FORWARD 1"],
+	r_lille: [
+		"Le traceroute passe par le parefeu, qui jette tout ce qui va vers Lille. Il manque la route vers 10.0.59.0/24 par lille-gw, sur le routeur.",
+		"ssh routeur, puis sudo ip route add 10.0.59.0/24 via " + IP_LILLE_GW],
+	r_telnet: [
+		"Le port 23 est tenu par un socket systemd, telnet.socket. Il faut l'arrêter ET le désactiver.",
+		"ssh routeur, puis sudo systemctl disable --now telnet.socket"],
+	r_fin: [
+		"Radia est au BatimentB de Cybersup.",
+		"cd ~/Cybersup/BatimentB puis cat Radia"]
+};
+
+function routeLilleOK(){
+	return state.panne.routesRouteur.some(function(r){ return r.vers === "10.0.59.0/24" && r.via === IP_LILLE_GW; });
+}
+
+/*
+ * Ce qui ne marche plus, au moment de faire le compte rendu : une étape franchie puis défaite
+ * (un redémarrage, une règle remise...) doit être refaite avant que Radia signe le certificat.
+ */
+function pannesRestantes(){
+	var p = state.panne, liste = [];
+	var dhcp = servicePanne("routeur", "isc-dhcp-server"), apache = servicePanne("intranet", "apache2"), nginx = servicePanne("intranet", "nginx");
+	var telnet = servicePanne("routeur", "telnet.socket");
+	if (!p.lien) liste.push("la carte eth0 du poste est éteinte");
+	else if (!adressePoste()) liste.push("le poste n'a plus d'adresse");
+	else if (routeParDefautPoste() !== IP_ROUTEUR) liste.push("le poste n'a plus de passerelle");
+	else if (!dnsPosteOK()) liste.push("le poste ne résout plus les noms");
+	if (!(dhcp.actif && dhcp.auto)) liste.push("le serveur DHCP du routeur n'est pas démarré et activé");
+	var conf = confNetplan();
+	if (conf.erreur || !(conf.dhcp4 || (conf.adresses.length && conf.passerelle && conf.dns))) liste.push("la configuration netplan du poste ne tiendrait pas au redémarrage");
+	if (apache.actif || apache.auto || !nginx.actif || !nginx.auto) liste.push("l'intranet n'est plus servi par nginx");
+	if (!horlogePosteOK()) liste.push("l'horloge du poste n'est plus synchronisée");
+	if (verdictForward({ proto: "tcp", dport: "25", src: IP_POSTE, dst: "10.0.92.11" }) !== "ACCEPT") liste.push("le routeur bloque de nouveau les mails");
+	if (!routeLilleOK()) liste.push("la route vers Lille a disparu");
+	if (telnet.actif || telnet.auto) liste.push("le telnet du routeur est de nouveau ouvert");
+	return liste;
+}
+
+/* La prochaine étape de la panne, ou null. */
+function prochaineEtapePanne(){
+	for (var i = 0; i < QUETES_PANNE.length; i++){
+		if (!state.quests[QUETES_PANNE[i].id]) return QUETES_PANNE[i];
+	}
+	return null;
+}
+
+/* ------------------------------------------------------------------ */
+/* Radia : ce qu'elle dit, au BatimentB et au talkie-walkie            */
+/* ------------------------------------------------------------------ */
+
+var TALKIE = {
+	r_ip: "eth0 est UP ! Maintenant, l'adresse : ip a. Essaie sudo dhclient eth0 ; si le DHCP ne répond pas, l'Etiquette du poste donne l'adresse à poser à la main.",
+	r_passerelle: "Le poste a une adresse. ping " + IP_ROUTEUR + " (le routeur) doit répondre. Mais pour sortir du bâtiment, il lui faut une passerelle : ip r, et l'Etiquette.",
+	r_dns: "Les adresses passent ! Mais ping intranet échoue : les noms ne se traduisent plus. cat /etc/resolv.conf, et le MemoDNS, dans /etc.",
+	r_dhcp: "Tout marche... à la main. Pourquoi le DHCP n'a rien donné ? Il tourne sur le routeur : ssh routeur, et lis le CahierDuRouteur.",
+	r_netplan: "Le DHCP est reparti. Mais au prochain redémarrage, le poste oubliera tout ce que tu as fait avec ip : sa configuration permanente est dans /etc/netplan. L'AideMemoire explique.",
+	r_web: "Le bâtiment B est reconnecté pour de bon. Les serveurs, maintenant : curl http://intranet/ affiche n'importe quoi. Va voir sur place : ssh intranet.",
+	r_https: "nginx est revenu ! Mais curl https://intranet/, depuis le poste, refuse le certificat. Ses dates avec openssl s_client, l'heure du poste avec date : compare.",
+	r_smtp: "Le poste est à l'heure. Plus personne ne peut envoyer de mail depuis le bâtiment B : nc -zv mail 25, depuis le poste. Timed out ou refused ? Ça change tout.",
+	r_lille: "Les mails partent ! Reste Lille : traceroute lille, depuis le poste, montre où les paquets se perdent.",
+	r_telnet: "Lille répond ! Une dernière chose : ss -tlnp, sur le routeur, montre un port 23 ouvert. Telnet. Regarde ce qui y passe (sudo tcpdump -A port 23), puis ferme-le.",
+	r_fin: "Plus un voyant orange dans l'armoire. Reviens me voir au BatimentB : cat Radia."
+};
+
+function texteRadia(){
+	var etape = prochaineEtapePanne();
+	var debut = "« ";
+	if (!etape){
+		if (state.has("crypteOuverte") && !state.quests["c_rapport"]) return "Radia range son portable. « Le réseau tient. Grace t'attend pour la suite, sous la Citadelle : ssh citadelle, puis cd Crypte. Et passe à Marseille, un jour : le réseau y passe mal, c'est fait exprès. »";
+		return "Radia range son portable. « Le réseau tient. Vint rentre lundi : il va être jaloux. Merci, la recrue. »";
+	}
+	switch (etape.id){
+		case "r_batiment":
+		case "r_lien":
+			return debut + "Ah, c'est toi la recrue dont Laurent parle à tout le monde ? Radia, M1 réseau, campus de Marseille. On s'est déjà croisés, je crois. \
+On m'a fait monter à Puteaux ce matin : tout le bâtiment B est coupé du monde, et le reste de l'école ne va guère mieux. \
+Plus d'intranet, plus de mails, plus de liaison avec Lille. Vint, l'administrateur réseau, est en vacances, et son stagiaire a « essayé des trucs » hier soir.\n\n\
+Une panne réseau, ça se répare couche par couche, en partant du bas. D'abord le LIEN : la carte réseau est-elle allumée ? \
+Puis l'ADRESSE : la machine a-t-elle une adresse IP ? Puis la ROUTE : sait-elle par où sortir ? Puis les NOMS : le DNS répond-il ? \
+Et seulement après, les SERVICES. Celui qui commence par le haut cherche pendant des heures.\n\n\
+Le Poste de l'accueil est là, derrière le comptoir : cd Poste, et tu es devant. Commence par ip link : regarde si eth0 est UP. \
+ethtool eth0 te dira si le câble voit quelque chose. Et hostnamectl, si tu veux savoir sur quelle machine tu es. Je reste en ligne au talkie-walkie. »";
+		case "r_ip": return debut + TALKIE.r_ip + " »";
+		case "r_passerelle": return debut + TALKIE.r_passerelle + " »";
+		case "r_dns": return debut + TALKIE.r_dns + "\n\nAstuce : si dig @" + IP_DNS + " intranet répond alors que dig intranet échoue, le serveur DNS va très bien. C'est le poste qui pose ses questions au mauvais endroit. »";
+		case "r_dhcp": return debut + TALKIE.r_dhcp + " Le routeur se trouve par son nom maintenant que le DNS marche : ssh routeur. »";
+		case "r_netplan": return debut + TALKIE.r_netplan + " Ensuite, tu pourras même vérifier avec sudo reboot. »";
+		case "r_web": return debut + TALKIE.r_web + " Sur un port, il n'y a de place que pour un seul programme. »";
+		case "r_https": return debut + TALKIE.r_https + " Un certificat a une date de début. Si l'horloge de celui qui vérifie est fausse... »";
+		case "r_smtp": return debut + TALKIE.r_smtp + " Un port fermé répond « refused ». Un paquet qui n'obtient AUCUNE réponse, c'est un pare-feu qui l'avale. »";
+		case "r_lille": return debut + TALKIE.r_lille + " Le CahierDuRouteur dit par où doit passer la liaison avec Lille. »";
+		case "r_telnet": return debut + TALKIE.r_telnet + " »";
+		case "r_fin": return debut + "Lien, adresse, route, noms, DHCP, configuration permanente, serveur web, horloge, pare-feu, routage, et un telnet en moins : \
+tu as remonté tout le modèle en couches, de bas en haut. C'est exactement comme ça qu'on dépanne un réseau, ici ou ailleurs. \
+Ton CertificatReseau t'attend dans ta Maison. Vint rentre lundi : il va être jaloux.\n\n\
+Ah, et Grace, de la WarRoom, m'a demandé de te passer un message. Ses sondes voient du trafic bizarre sous la Citadelle, sur un port que personne n'utilise. \
+Une trappe vient de s'ouvrir dans la Citadelle : ssh citadelle, puis cd Crypte. Ce sera ton troisième chapitre. »";
+	}
+	return debut + "On continue ? »";
+}
+
+/* ------------------------------------------------------------------ */
+/* Le monde réagit                                                     */
+/* ------------------------------------------------------------------ */
+
+var CertificatReseau = new Item("CertificatReseau", "", "item_manuscript.gif");
+
+function verifierPanne(){
+	if (!state.panne) state.panne = etatPanneInitial();
+	// En mission cyber (la Crypte directement), la panne n'est pas au programme.
+	if (state.has("chapitre1Saute") && !state.has("panneDirecte") && !state.has("panneSautee")) state.set("panneSautee");
+	if (!state.has("panneOuverte") && state.has("victoire") && !state.has("panneSautee")) state.applyState("panneOuverte");
+	if (!state.has("panneOuverte")) return;
+	// Aussi pour les sauvegardes faites avant ce chapitre : Cybersup y est restauré sans le bâtiment B.
+	if (Cybersup.children.indexOf(BatimentB) === -1) relier(Cybersup, BatimentB);
+	if (!state.has("zonePanne")){
+		state.set("zonePanne");
+		var zone = zoneDns();
+		var manquantes = lignesZonePanne().filter(function(l){ var c = l.trim().split(/\s+/); return !zone.some(function(r){ return r.nom === c[0] && r.type === c[2]; }); });
+		if (manquantes.length) ZoneEcole.setText(ZoneEcole.getText().replace(/\n?$/, "\n") + manquantes.join("\n") + "\n");
+	}
+	var p = state.panne;
+	if (p.lien) state.complete("r_lien");
+	if (p.lien && adressePoste()) state.complete("r_ip");
+	if (p.lien && adressePoste() && routeParDefautPoste() === IP_ROUTEUR) state.complete("r_passerelle");
+	if (dnsPosteOK()) state.complete("r_dns");
+	var dhcp = servicePanne("routeur", "isc-dhcp-server");
+	if (dhcp.actif && dhcp.auto) state.complete("r_dhcp");
+	if (p.netplanOK) state.complete("r_netplan");
+	var apache = servicePanne("intranet", "apache2"), nginx = servicePanne("intranet", "nginx");
+	if (!apache.actif && !apache.auto && nginx.actif && nginx.auto) state.complete("r_web");
+	if (horlogePosteOK()) state.complete("r_https");
+	if (verdictForward({ proto: "tcp", dport: "25", src: IP_POSTE, dst: "10.0.92.11" }) === "ACCEPT") state.complete("r_smtp");
+	if (routeLilleOK()) state.complete("r_lille");
+	var telnet = servicePanne("routeur", "telnet.socket");
+	if (!telnet.actif && !telnet.auto) state.complete("r_telnet");
+	if (Radia.getText() !== texteRadia()) Radia.cmd_text["less"] = texteRadia();
+	// Radia annonce la suite au talkie-walkie, à chaque étape franchie.
+	var suivante = prochaineEtapePanne();
+	if (state.quests["r_batiment"] && suivante && p.annonce !== suivante.id){
+		if (p.annonce !== null && TALKIE[suivante.id] && !state.has("rejeuEnCours")) say("Radia, au talkie-walkie : « " + TALKIE[suivante.id] + " »");
+		p.annonce = suivante.id;
+	}
+	if (state.has("victoireReseau")) CertificatReseau.cmd_text["less"] = state.texteDuCertificatReseau();
+}
+
+/* Les événements de l'histoire du chapitre (appelés par GameState.applyState). */
+function etatPanne(nom){
+	switch (nom){
+		case "panneOuverte":
+			relier(Cybersup, BatimentB);
+			break;
+		case "victoireReseau":
+			if (!state.dateVictoire3) state.dateVictoire3 = dateDuJour();
+			state.complete("r_fin");
+			poser(Home, CertificatReseau);
+			CertificatReseau.cmd_text["less"] = state.texteDuCertificatReseau();
+			say(C.gris("(Ton CertificatReseau est posé dans ta Maison : cat ~/CertificatReseau. Il porte la note du chapitre 2 et son code de vérification.)"));
+			break;
+	}
+}
+
+GameEvents.addListener("enter", function(e){
+	if (e.room === BatimentB && !state.quests["r_batiment"] && state.has("panneOuverte")){
+		state.debutChapitre3 = state.tempsMs;
+		state.complete("r_batiment");
+	}
+});
+GameEvents.addListener("read", function(e){
+	if (e.item !== Radia || state.has("victoireReseau")) return;
+	var restantes = QUETES_PANNE.filter(function(q){ return q.id !== "r_fin" && !state.quests[q.id]; });
+	if (restantes.length) return;
+	var pannes = pannesRestantes();
+	if (pannes.length){
+		say("Radia fronce les sourcils devant son portable. « Attends... ça ne tient plus. " + pannes.join(", ").replace(/^./, function(c){ return c.toUpperCase(); }) +
+			". Remets ça d'aplomb, et reviens me voir. »");
+		return;
+	}
+	state.applyState("victoireReseau");
+});
+
+/* Les illustrations des machines de la panne (outils/dessiner_lieux.py). */
+[[Routeur, "loc_routeur.gif"], [Intranet, "loc_intranet.gif"]].forEach(function(x){ x[0].room_pic = "./static/img/" + x[1]; });
+
+World.fige = true;

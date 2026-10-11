@@ -29,7 +29,9 @@ var sorts = ["ls", "cd", "pwd", "less", "help", "man", "clear", "exit", "mv", "c
 	"sha256sum", "base64", "nano", "ss", "ssh-keygen", "indice", "chapitre", "succes", "chrono", "son", "bulletin", "./.porte",
 	"strings", "file", "xxd", "md5sum", "sha1sum", "stat", "chattr", "lsattr", "gzip", "gunzip", "zcat", "sed", "awk", "tr", "rev", "tee",
 	"which", "uname", "dmesg", "journalctl", "last", "who", "lsof", "pgrep", "pkill", "systemctl", "userdel", "usermod", "groups", "visudo",
-	"ip", "traceroute", "dig", "nmap", "nc", "curl", "ufw", "scp", "ssh-copy-id", "gpg", "vi", "logout"];
+	"ip", "traceroute", "dig", "nmap", "nc", "curl", "ufw", "scp", "ssh-copy-id", "gpg", "vi", "logout",
+	"ethtool", "hostnamectl", "dhclient", "nmcli", "netplan", "reboot", "wget", "host", "nslookup", "resolvectl", "iptables", "tcpdump",
+	"mtr", "openssl", "timedatectl", "telnet", "carte"];
 var options = ["-a", "-l", "-la", "-r", "-rf", "-n", "-n 3", "-9", "-s", "-c", "-i", "-v", "-u", "-d:", "-f1", "-f", "-x", "-tf", "-xf", "-cf",
 	"--help", "-", "--", "-z", "-c", "-d", "-tlnp", "-perm -4000", "-perm /u=s", "-perm", "-user root", "2>/dev/null", "2>err", "2>>err", "2>&1", "u-s", "4755", "+t", "-1", "-0", "-99999", "+x", "-x", "755", "000", "u+rwx", "o-r", "a=", "999", "-name", "-type", "d", "f", "-L", "-u sorcier"];
 var noms = [".", "..", "~", "/", "*", "?", ".*", "~/", "../..", "./.", "//", "a/b/c", "~/Village", "Marche", "Boite", "Cage", "Portail",
@@ -43,7 +45,13 @@ var noms = [".", "..", "~", "/", "*", "?", ".*", "~/", "../..", "./.", "//", "a/
 	"labo", "web", "mail", "dns", "parefeu", "badgeuse", "imprimante", "poste-47", "/etc/passwd", "/var/log", "/tmp", "/", "/etc/bind/ecole.zone",
 	"10.0.92.0/24", "10.0.92.60", "http://web/", "http://web/robots.txt", "sauvegarde:/preuves/", "web:/tmp", "auth.log.2.gz", "notes.gpg", "maj.php",
 	"'s/a/b/g'", "'/a/,/b/p'", "'2,3p'", "'$3 == 0'", "'{ print $1, $3 }'", "'A-Za-z' 'N-ZA-Mn-za-m'", "-F:", "-i :6666", "-x", "+short", "-I", "-o",
-	"status", "stop", "disable --now", "list-units", "maj-auto", "sshd", "enable", "deny from", "delete 1", "-L", "-U", "corbeau", "maintenance", "-u sshd", "-d", "-c", "-k", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"];
+	"status", "stop", "disable --now", "list-units", "maj-auto", "sshd", "enable", "deny from", "delete 1",
+	"eth0", "eth1", "link", "addr", "route", "neigh", "set", "up", "down", "add", "del", "flush", "default", "via", "dev", "get", "10.0.93.20/24", "10.0.93.20",
+	"10.0.93.254", "10.0.92.53", "10.0.92.35", "10.0.59.0/24", "10.0.92.248", "intranet", "routeur", "poste-b", "lille", "lille-gw", "https://intranet/",
+	"http://intranet/planning.txt", "intranet:443", "FORWARD", "INPUT", "-D FORWARD 1", "-L FORWARD", "-A FORWARD -p tcp --dport 25 -j DROP", "port 23", "port 53",
+	"s_client -connect intranet:443", "x509 -noout -dates -in /etc/ssl/intranet.pem", "set-ntp true", "set-ntp", "apply", "try", "set ethernets.eth0.dhcp4=true",
+	"MX", "@10.0.92.53", "@routeur", "nginx", "apache2", "telnet.socket", "isc-dhcp-server", "--failed", "-xeu nginx", "/etc/resolv.conf", "/etc/hosts",
+	"/etc/netplan/01-poste.yaml", "~/Cybersup/BatimentB/Poste", "BatimentB", "Poste", "Radia", "--report", "-br", "-tulnp", "dns eth0 10.0.92.53", "query intranet", "25", "23", "-L", "-U", "corbeau", "maintenance", "-u sshd", "-d", "-c", "-k", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"];
 var liaisons = [" | ", " > ", " >> ", " ; ", " && ", " |", "| ", " || ", ">", " & "];
 
 function ligneAleatoire(){

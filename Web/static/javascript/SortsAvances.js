@@ -856,7 +856,7 @@ Shell.sorts.bulletin = function(args, io){
 /*
  * La carte : les lieux visités, en arbre (comme tree), avec « tu es ici ».
  * Un lieu pas encore visité mais voisin d'un lieu connu apparaît en « ? ».
- * Au chapitre 2, les machines du réseau de l'école s'ajoutent une fois le réseau découvert.
+ * Les machines du réseau de l'école s'ajoutent une fois le réseau découvert (ou la panne commencée, pour les siennes).
  */
 function texteCarte(){
 	var mission = state.has("chapitre1Saute");
@@ -869,19 +869,22 @@ function texteCarte(){
 	}
 	function branche(lieu, prefixe, dernier, profondeur){
 		lignes.push(prefixe + (profondeur ? (dernier ? "└── " : "├── ") : "") + nom(lieu));
-		var enfants = lieu.children.filter(function(e){ return !e.racineHote && (connu(e) || !cache(e)); });
+		var enfants = lieu.children.filter(function(e){ return (!e.racineHote || (typeof PosteB !== "undefined" && e === PosteB)) && (connu(e) || !cache(e)); });
 		var visibles = enfants.filter(connu), inconnus = enfants.length - visibles.length;
 		var suite = prefixe + (profondeur ? (dernier ? "    " : "│   ") : "");
 		visibles.forEach(function(e, i){ branche(e, suite, i === visibles.length - 1 && !inconnus, profondeur + 1); });
 		if (inconnus) lignes.push(suite + "└── " + C.gris(inconnus === 1 ? "? (un lieu pas encore visité)" : "? (" + inconnus + " lieux pas encore visités)"));
 	}
-	if (mission && typeof Citadelle !== "undefined" && connu(Citadelle)) branche(Citadelle, "", true, 0);
+	if (mission && state.has("panneDirecte") && typeof Cybersup !== "undefined" && connu(Cybersup)) branche(Cybersup, "", true, 0);
+	else if (mission && typeof Citadelle !== "undefined" && connu(Citadelle)) branche(Citadelle, "", true, 0);
 	else branche(Home, "", true, 0);
-	if (typeof HOTES !== "undefined" && state.has("reseauCartographie")){
+	var panne = state.quests["r_batiment"];
+	if (typeof HOTES !== "undefined" && (state.has("reseauCartographie") || panne)){
 		lignes.push("", C.gras("Le réseau de l'école") + C.gris("  (ssh MACHINE)"));
 		Object.keys(HOTES).forEach(function(h){
 			var racine = HOTES[h].arrivee ? HOTES[h].arrivee() : null;
-			if (!racine || !racine.racineHote) return;
+			if (!racine || !racine.racineHote || (typeof Machines !== "undefined" && racine.parents[0] !== Machines)) return;
+			if (!state.has("reseauCartographie") && racine.chapitre !== 3) return;
 			if (connu(racine)) branche(racine, "", true, 0);
 			else lignes.push(C.gris(h + "  (jamais visitée)"));
 		});

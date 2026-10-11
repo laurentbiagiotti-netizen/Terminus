@@ -70,7 +70,8 @@ j4.taper("alias cd='ls'");
 // Un passage qui ne peut pas aboutir (le chemin rejoué est remplacé par un chemin qui ne mène nulle part).
 j4.lire("CHEMIN_CHAPITRE_1 = ['cd ~/ForetOuest', 'ls']");
 var xpAvant = j4.lire("state.xp");
-contient(j4.taper("chapitre 2", "oui"), "quand tu auras battu le Sorcier Noir", "la mission cyber ne se choisit plus en cours de chapitre 1");
+contient(j4.taper("chapitre 3", "oui"), "après le chapitre 2", "la mission cyber ne se choisit plus en cours de chapitre 1");
+contient(j4.taper("chapitre 2", "oui"), "quand tu auras battu le Sorcier Noir", "le renfort réseau ne se choisit plus en cours de chapitre 1");
 // Même forcé, un passage qui échoue remet la partie comme avant.
 j4.lire("commencerChapitre2()");
 var j4bis = nouveauMonde(st4);
@@ -81,7 +82,7 @@ verifier(j4bis.lire("state.alias.cd") === "ls", "les alias du joueur sont conser
 // Avec des alias gênants sur une partie neuve, le passage réussit quand même.
 var j5 = nouveauMonde({}, 15);
 j5.lire("state.alias.echo = 'ls'; state.alias.cd = 'pwd'");
-contient(j5.taper("chapitre 2", "oui"), "CHAPITRE 2", "les alias ne détournent pas le passage au chapitre 2");
+contient(j5.taper("chapitre 3", "oui"), "CHAPITRE 3", "les alias ne détournent pas le passage au chapitre 3");
 verifier(j5.lire("state.alias.echo") === "ls", "les alias sont rendus après le passage");
 
 // --- Les lieux du chapitre 2 n'apparaissent qu'à l'ouverture de la Crypte, même avec une ancienne sauvegarde ---
@@ -89,7 +90,7 @@ var j6 = nouveauMonde({}, 16);
 verifier(j6.taper("ls ~/Cybersup/SalleServeurs").indexOf("BoiteDeDepot") === -1, "pas de BoiteDeDepot au chapitre 1");
 var st7 = {};
 var j7 = nouveauMonde(st7, 17);
-j7.taper("chapitre 2", "oui");
+j7.taper("chapitre 3", "oui");
 j7.taper("ssh citadelle");
 j7.lire("SalleServeurs.children = SalleServeurs.children.filter(function(l){ return l !== BoiteDeDepot && l !== Coffre; }); state.save()");
 var j7bis = nouveauMonde(st7);
@@ -100,7 +101,7 @@ contient(ls7, "Coffre", "une ancienne sauvegarde retrouve le Coffre");
 // --- Chapitre 2 joué jusqu'au Caveau ---
 function jusquAuCaveau(graine){
 	var j = nouveauMonde({}, graine);
-	j.taper("chapitre 2", "oui");
+	j.taper("chapitre 3", "oui");
 	j.taper("ssh citadelle");
 	["cd Crypte", "less Archiviste", "cd bin", "sha256sum -c SHA256SUMS", "grep charge= gardien | cut -d= -f2 | base64 -d", "cd ../Caveau", "less Inscription"]
 		.forEach(function(c){ j.taper(c); });
@@ -109,7 +110,7 @@ function jusquAuCaveau(graine){
 
 // --- Verrous du chapitre 2 : la porte n'apparaît qu'après l'intégrité et le message ---
 var jv = nouveauMonde({}, 25);
-jv.taper("chapitre 2", "oui");
+jv.taper("chapitre 3", "oui");
 jv.taper("ssh citadelle");
 jv.taper("cd Crypte"); jv.taper("less Archiviste"); jv.taper("cd Caveau");
 verifier(jv.taper("ls -a").indexOf(".porte") === -1, "pas de porte avant d'avoir décodé le message");
@@ -119,7 +120,7 @@ verifier(!jv.lire("Caveau.hasItem(PorteDerobee)"), "décoder sans vérifier les 
 contient(jv.taper("sha256sum -c SHA256SUMS"), "gardien: ÉCHEC", "vérification des empreintes");
 verifier(jv.lire("Caveau.hasItem(PorteDerobee)"), "la porte apparaît une fois les deux étapes faites");
 var jr = nouveauMonde({}, 26);
-jr.taper("chapitre 2", "oui");
+jr.taper("chapitre 3", "oui");
 jr.taper("ssh citadelle");
 jr.taper("cd Crypte");
 contient(jr.taper("quetes"), "détail : quetes 1", "le journal replie le chapitre 1 pendant la Crypte");
@@ -144,7 +145,7 @@ verifier((s10.match(/escalier/g) || []).length === 1, "l'escalier n'est annoncé
 // --- Refaire sa clé après l'installation ---
 var st11 = {};
 var j11 = nouveauMonde(st11, 21);
-j11.taper("chapitre 2", "oui");
+j11.taper("chapitre 3", "oui");
 j11.taper("ssh citadelle");
 j11.lire("state.applyState('ecouteCoupee'); state.set('ecouteCoupee'); AuthorizedKeys.cmd_text.less = CLE_LAURENT + '\\n'; verifierMonde();");
 j11.taper("cd ~/Cybersup/SalleServeurs");
@@ -168,7 +169,7 @@ var j11bis = nouveauMonde(st11);
 contient(j11bis.taper("ssh coffre"), "Bienvenue sur coffre", "la clé remplacée tient après rechargement");
 // Clé privée déposée puis publique grillée, puis nouvelle paire : la boîte ne bloque plus le dépôt.
 var j12 = nouveauMonde({}, 22);
-j12.taper("chapitre 2", "oui");
+j12.taper("chapitre 3", "oui");
 j12.taper("ssh citadelle");
 j12.lire("state.set('ecouteCoupee'); AuthorizedKeys.cmd_text.less = CLE_LAURENT + '\\n'; verifierMonde();");
 j12.taper("cd ~/Cybersup/SalleServeurs");
@@ -188,7 +189,8 @@ jf.lire("state.spells.echo = true");
 contient(jf.taper("echo Le Sorcier s'appelle Laurent"), "guillemets doubles", "l'apostrophe est expliquée");
 contient(jf.taper("head Convocation"), "Scriptorium", "un sort inconnu dit où l'apprendre");
 contient(jf.taper("cp a b"), "Artisane", "cp s'apprend auprès de l'Artisane");
-contient(jf.taper("sha256sum x"), "chapitre 2", "les sorts du chapitre 2 renvoient au chapitre 2");
+contient(jf.taper("sha256sum x"), "chapitre 3", "les sorts de la Crypte renvoient au chapitre 3");
+contient(jf.taper("dig x"), "chapitre 2", "les sorts de la panne renvoient au chapitre 2");
 // Indices qui regardent la partie
 jf.lire("state.spells.alias = true; state.alias.ls = 'pwd'");
 contient(jf.taper("indice", "non"), "unalias ls", "indice repère un alias qui masque un sort");
@@ -222,7 +224,7 @@ contient(jl.taper("cat l"), "x", "&> redirige les deux sorties");
 verifier(jl.taper("echo vers erreurs >&2 2>/dev/null").indexOf("vers erreurs") > -1, ">&2 puis 2>/dev/null : l'ordre compte");
 verifier(jl.lire("current_room.getNode('&2')") === null, ">&2 ne crée pas d'objet nommé &2");
 var jb = nouveauMonde({}, 30);
-jb.taper("chapitre 2", "oui");
+jb.taper("chapitre 3", "oui");
 jb.taper("ssh citadelle");
 ["cd Crypte", "less Archiviste", "cd bin", "sha256sum -c SHA256SUMS", "grep charge= gardien | cut -d= -f2 | base64 -d"].forEach(function(c){ jb.taper(c); });
 contient(jb.taper("cat passwd"), "ELF", "passwd est un binaire, pas un script");
@@ -240,7 +242,7 @@ contient(jb.taper("ps"), "[kworker/", "ps affiche les threads du noyau entre cro
 // --- La mission cyber raconte l'histoire du renfort ---
 var j13 = nouveauMonde({}, 23);
 contient(j13.taper("chapitre"), "mission cyber", "chapitre propose la mission cyber en début de partie");
-var s13 = j13.taper("chapitre 2", "oui");
+var s13 = j13.taper("chapitre 3", "oui");
 contient(s13, "MISSION CYBER", "le récit de la mission cyber");
 contient(s13, "renfort", "le joueur arrive en renfort");
 verifier(j13.lire("current_room") === j13.lire("WarRoom"), "le renfort commence dans la WarRoom");
@@ -253,13 +255,13 @@ contient(j13.taper("cat ~/Cybersup/TableauAffichage"), "Félicitations à la pro
 contient(j13.taper("chapitre 1"), "renfort", "le chapitre 1 est raconté comme passé par d'autres");
 var st14 = {};
 var j14 = nouveauMonde(st14, 24);
-j14.taper("chapitre 2", "oui");
+j14.taper("chapitre 3", "oui");
 j14.taper("ssh citadelle");
 contient(nouveauMonde(st14).taper("less Laurent"), "le renfort", "le texte du renfort survit au rechargement");
 
 // --- Audit du chapitre 2 (octobre) ---
 var a1 = nouveauMonde({}, 31);
-a1.taper("chapitre 2", "oui");
+a1.taper("chapitre 3", "oui");
 a1.taper("ssh citadelle");
 a1.taper("cd Crypte");
 a1.taper("less Archiviste");
@@ -371,7 +373,7 @@ contient(a7.taper("quetes"), "dans ta Maison", "le journal dit où est le certif
 
 // Mission cyber : le chapitre 1 ne bouge plus, la révélation se comprend, le code ne change pas à chaque lecture
 var a8 = nouveauMonde({}, 38);
-a8.taper("chapitre 2", "oui");
+a8.taper("chapitre 3", "oui");
 var xp1 = a8.lire("state.xp");
 a8.taper("pwd"); a8.taper("history"); a8.taper("cd ~/Village");
 verifier(a8.lire("state.xp") === xp1, "en mission cyber, les gains du chapitre 1 ne comptent pas");
@@ -410,6 +412,62 @@ contient(d1.taper("crt on"), "activé", "crt on");
 var d2 = nouveauMonde({}, 52);
 jouerJusqua(d2, "nmap 10.0.92.0/24");
 contient(d2.taper("carte"), "Le réseau de l'école", "la carte ajoute le réseau une fois découvert");
+
+// La panne (chapitre 2) : renforts, anciennes sauvegardes, carte
+var p1st = {};
+var p1 = nouveauMonde(p1st, 61);
+p1.taper("chapitre 3", "oui");
+verifier(p1.lire("state.has('panneSautee') && !state.has('panneOuverte')"), "la mission cyber saute la panne");
+verifier(p1.taper("ls ~/Cybersup").indexOf("BatimentB") === -1, "pas de BatimentB en mission cyber");
+contient(p1.taper("chapitre 2"), "ne fait pas partie de ta mission", "la panne n'est pas proposée en mission cyber");
+contient(p1.taper("dig x"), "NotesDNS", "en mission cyber, dig s'apprend dans la Crypte");
+// Une sauvegarde de mission cyber d'avant la panne : elle reste une mission cyber.
+var ancienne = JSON.parse(p1st["terminus-cybersup"]);
+delete ancienne.flags.panneSautee; delete ancienne.panne; delete ancienne.xp3;
+p1st["terminus-cybersup"] = JSON.stringify(ancienne);
+var p2 = nouveauMonde(p1st);
+verifier(p2.lire("state.has('panneSautee') && !state.has('panneOuverte') && state.chapitreEnCours() === 2"), "une ancienne mission cyber le reste");
+// Une ancienne partie où la Crypte s'ouvrait dès la victoire : elle reste ouverte, et la panne s'ajoute.
+var p3st = {};
+var p3 = nouveauMonde(p3st, 62);
+jouerJusqua(p3, "less Laurent");
+var vieille = JSON.parse(p3st["terminus-cybersup"]);
+delete vieille.flags.panneOuverte; delete vieille.flags.zonePanne; delete vieille.panne;
+vieille.flags.crypteOuverte = true;
+vieille.lieux[p3.lire("Cybersup.id")].k = vieille.lieux[p3.lire("Cybersup.id")].k.filter(function(id){ return id !== p3.lire("BatimentB.id"); });
+var objetZone = vieille.objets[p3.lire("ZoneEcole.id")];
+objetZone.x = 1; objetZone.c = { less: p3.lire("ZoneEcole.getText()").split("intranet")[0] };
+p3st["terminus-cybersup"] = JSON.stringify(vieille);
+var p4 = nouveauMonde(p3st);
+verifier(p4.lire("state.has('crypteOuverte') && state.has('panneOuverte')"), "une ancienne partie garde la Crypte et gagne la panne");
+contient(p4.taper("ls ~/Cybersup"), "BatimentB", "le BatimentB apparaît dans une ancienne partie");
+contient(p4.lire("ZoneEcole.getText()"), "intranet", "les noms de la panne rejoignent une zone DNS déjà modifiée");
+verifier(p4.taper("quetes").indexOf("Chapitre 3 : la Crypte") > -1, "le journal montre les deux chapitres");
+p4.taper("cd ~/Cybersup/BatimentB/Poste");
+contient(p4.taper("carte"), "poste-b  ◀ tu es ici", "la carte montre le poste");
+contient(p4.taper("ping 10.0.92.20"), "pas accessible", "le poste n'a pas de réseau au départ");
+contient(p4.taper("cd .."), "BatimentB", "on se lève du poste avec cd ..");
+
+// Audit de la panne : le réseau suit vraiment l'état du poste, et Radia vérifie avant de signer
+var q1 = nouveauMonde({}, 63);
+q1.taper("chapitre 2", "oui");
+["cat Radia", "cd Poste", "cat AideMemoire", "cat etc/MemoDNS", "sudo ip link set eth0 up", "sudo ip addr add 10.0.93.20/16 dev eth0"].forEach(function(c){ q1.taper(c); });
+verifier(q1.taper("ping -c 1 10.0.92.53").indexOf("1 reçus") === -1, "une adresse en /16 ne joint pas le cœur du réseau sans passerelle");
+["sudo ip addr flush dev eth0", "sudo ip addr add 10.0.93.20/24 dev eth0", "sudo ip route add default via 10.0.93.254"].forEach(function(c){ q1.taper(c); });
+contient(q1.taper("ping -c 1 10.0.92.53"), "1 reçus", "avec la passerelle, le cœur répond");
+q1.taper("sudo ip link set eth0 down");
+contient(q1.taper("ping -c 1 10.0.92.53"), "pas accessible", "carte éteinte : plus rien ne passe");
+var q2 = nouveauMonde({}, 64);
+jouerJusqua(q2, "sudo systemctl disable --now telnet.socket");
+q2.taper("exit");
+q2.taper("sudo timedatectl set-ntp false");
+q2.taper("cd ~/Cybersup/BatimentB");
+contient(q2.taper("cat Radia"), "horloge du poste", "Radia refuse de signer si une réparation a été défaite");
+verifier(!q2.lire("state.quests.r_fin"), "pas de certificat avec une horloge désynchronisée");
+q2.taper("sudo timedatectl set-ntp true");
+q2.taper("cd ~/Cybersup/BatimentB/Poste"); q2.taper("sudo timedatectl set-ntp true"); q2.taper("cd ..");
+q2.taper("cat Radia");
+verifier(q2.lire("state.quests.r_fin") === true, "une fois réparé, Radia signe");
 
 console.log(verifications + " vérifications, " + echecs + " échec" + (echecs > 1 ? "s" : ""));
 process.exit(echecs ? 1 : 0);

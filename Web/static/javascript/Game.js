@@ -133,22 +133,23 @@ function ecranDeVictoire(chapitre){
 	var cadre = document.createElement("div");
 	cadre.className = "victoire-cadre";
 	var image = document.createElement("img");
-	image.src = sourceImage(chapitre === 2 ? "./static/img/item_locker.gif" : "./static/img/item_grad.gif");
+	var images = { 1: "item_grad.gif", 2: "item_locker.gif", 3: "item_workstation.gif" };
+	image.src = sourceImage("./static/img/" + images[chapitre]);
 	image.alt = "";
 	var titre = document.createElement("p");
 	titre.className = "victoire-titre";
-	titre.textContent = chapitre === 2 ? "Incident clos" : "Le Sorcier Noir est vaincu";
+	titre.textContent = chapitre === 2 ? "Incident clos" : (chapitre === 3 ? "Réseau rétabli" : "Le Sorcier Noir est vaincu");
 	var note = document.createElement("p");
 	note.className = "victoire-note";
-	note.textContent = state.noteTexte(chapitre === 2 ? 2 : undefined);
+	note.textContent = state.noteTexte(chapitre === 1 ? undefined : chapitre);
 	var mention = document.createElement("p");
 	mention.className = "victoire-mention";
-	mention.textContent = state.mention(chapitre === 2 ? 2 : undefined);
+	mention.textContent = state.mention(chapitre === 1 ? undefined : chapitre);
 	var commande = document.createElement("p");
 	commande.className = "victoire-commande";
-	commande.appendChild(document.createTextNode(chapitre === 2 ? "Ton certificat : " : "Ton diplôme : "));
+	commande.appendChild(document.createTextNode(chapitre === 1 ? "Ton diplôme : " : "Ton certificat : "));
 	var code = document.createElement("code");
-	code.textContent = chapitre === 2 ? "cat ~/CertificatCyber" : "cat Diplome";
+	code.textContent = chapitre === 2 ? "cat ~/CertificatCyber" : (chapitre === 3 ? "cat ~/CertificatReseau" : "cat Diplome");
 	commande.appendChild(code);
 	var suite = document.createElement("p");
 	suite.className = "victoire-suite";
@@ -220,8 +221,8 @@ var completerSansFete = GameState.prototype.complete;
 GameState.prototype.complete = function(id){
 	var deja = this.quests[id];
 	completerSansFete.call(this, id);
-	if (!deja && (id === "m_boss" || id === "c_rapport") && !Shell.sauvegardeBloquee && !this.has("rejeuEnCours")){
-		setTimeout(function(){ ecranDeVictoire(id === "c_rapport" ? 2 : 1); }, 700);
+	if (!deja && (id === "m_boss" || id === "c_rapport" || id === "r_fin") && !Shell.sauvegardeBloquee && !this.has("rejeuEnCours")){
+		setTimeout(function(){ ecranDeVictoire(id === "c_rapport" ? 2 : (id === "r_fin" ? 3 : 1)); }, 700);
 	}
 	if (!deja && id === "c_corbeau" && !Shell.sauvegardeBloquee) revelationDuCorbeau();
 };
@@ -252,14 +253,22 @@ function majEtat(){
 	var pr = state.progression();
 	var etat = document.getElementById("etat");
 	var radio = document.getElementById("radio");
-	if (radio && radio.hidden && state.chapitreEnCours() === 2 && typeof texteRadio === "function") radioSOC(texteRadio());
-	etat.classList.toggle("etat-alerte", state.chapitreEnCours() === 2 && !state.quests["c_rapport"]);
-	if (state.chapitreEnCours() === 2){
-		var max2 = state.xpMax2();
-		niveau.textContent = state.quests["c_rapport"] ? "Chapitre 2 · incident clos" : "Chapitre 2 · incident en cours";
+	var enCours = state.chapitreEnCours();
+	if (radio && radio.hidden && enCours === 2 && typeof texteRadio === "function") radioSOC(texteRadio());
+	if (radio && radio.hidden && enCours === 3 && typeof prochaineEtapePanne === "function") radioSOC(texteTalkie());
+	etat.classList.toggle("etat-alerte", (enCours === 2 && !state.quests["c_rapport"]) || (enCours === 3 && !state.quests["r_fin"]));
+	if (enCours === 2){
+		niveau.textContent = state.quests["c_rapport"] ? "Chapitre 3 · incident clos" : "Chapitre 3 · incident en cours";
 		remplirBarre(state.note(2));
 		document.getElementById("etat-xp").textContent = state.xpNet(2) + " XP · " + state.noteTexte(2) + (state.malus2 ? " (indices -" + state.malus2 + ")" : "");
-		document.getElementById("etat").title = "Note du chapitre 2. Tape xp pour le détail.";
+		document.getElementById("etat").title = "Note du chapitre 3 (la Crypte). Tape xp pour le détail.";
+		return;
+	}
+	if (enCours === 3){
+		niveau.textContent = state.quests["r_fin"] ? "Chapitre 2 · réseau rétabli" : "Chapitre 2 · panne en cours";
+		remplirBarre(state.note(3));
+		document.getElementById("etat-xp").textContent = state.xpNet(3) + " XP · " + state.noteTexte(3) + (state.malus3 ? " (indices -" + state.malus3 + ")" : "");
+		document.getElementById("etat").title = "Note du chapitre 2 (la panne). Tape xp pour le détail.";
 		return;
 	}
 	niveau.textContent = "Niveau " + pr.niveau + " · " + pr.titre;
@@ -271,19 +280,31 @@ function majEtat(){
 }
 
 /*
- * Au chapitre 2, la salle de crise : les messages radio de Grace, d'Evi et de Laurent
- * s'affichent aussi dans un bandeau, comme sur un écran du SOC.
+ * Pendant la Crypte, la salle de crise : les messages radio de Grace, d'Evi et de Laurent
+ * s'affichent aussi dans un bandeau, comme sur un écran du SOC. Pendant la panne, c'est le
+ * talkie-walkie de Radia.
  */
+function texteTalkie(){
+	var etape = prochaineEtapePanne();
+	if (etape && (etape.id === "r_lien" || etape.id === "r_batiment")) return "Radia, au talkie-walkie : « Commence par le bas : le Poste, derrière le comptoir (cd Poste), puis ip link. eth0 est-elle UP ? »";
+	if (!etape || !TALKIE[etape.id]) return "Radia, au talkie-walkie : « Le réseau tient. Beau travail. »";
+	return "Radia, au talkie-walkie : « " + TALKIE[etape.id] + " »";
+}
 function radioSOC(texte){
-	if (typeof document === "undefined" || state.chapitreEnCours() !== 2) return;
+	if (typeof document === "undefined") return;
+	var enCours = state.chapitreEnCours();
+	if (enCours !== 2 && enCours !== 3) return;
 	var brut = String(texte).replace(/\x1b\[[0-9;]*m/g, "");
-	var m = /(La radio grésille[.,]?|Evi, à la radio|Grace, à la radio)\s*(.*)$/.exec(brut.replace(/\n/g, " "));
+	var m = enCours === 3 ? /(Radia, au talkie-walkie)\s*:?\s*(.*)$/.exec(brut.replace(/\n/g, " ")) :
+		/(La radio grésille[.,]?|Evi, à la radio|Grace, à la radio)\s*(.*)$/.exec(brut.replace(/\n/g, " "));
 	if (!m) return;
-	var qui = /Evi/.test(brut) ? "Evi" : (/C'est Laurent|Laurent :/.test(brut) ? "Laurent" : "Grace");
+	var qui = enCours === 3 ? "Radia" : (/Evi/.test(brut) ? "Evi" : (/C'est Laurent|Laurent :/.test(brut) ? "Laurent" : "Grace"));
 	var message = m[2].replace(/^C'est (Grace|Evi|Laurent)\s*:\s*/, "").replace(/^:\s*/, "").trim();
 	var radio = document.getElementById("radio");
 	if (!radio) return;
 	var d = new Date();
+	var titre = radio.querySelector(".radio-titre");
+	if (titre) titre.textContent = enCours === 3 ? "Talkie-walkie" : "Radio du SOC";
 	radio.querySelector(".radio-qui").textContent = qui + ", " + (d.getHours() < 10 ? "0" : "") + d.getHours() + ":" + (d.getMinutes() < 10 ? "0" : "") + d.getMinutes();
 	radio.querySelector(".radio-texte").textContent = message;
 	radio.hidden = false;
@@ -352,6 +373,7 @@ function demarrer(){
 	}
 	// La radio du SOC reprend là où l'enquête en est.
 	if (state.chapitreEnCours() === 2 && typeof texteRadio === "function" && state.has("crypteOuverte")) radioSOC(texteRadio());
+	if (state.chapitreEnCours() === 3 && typeof texteTalkie === "function" && state.has("panneOuverte")) radioSOC(texteTalkie());
 	state.dernierInstant = Date.now();
 	majEtat();
 	document.getElementById("saisie").focus();
@@ -481,12 +503,13 @@ function nouvellePartie(prenom, motDePasse, nomComplet, email){
 	demanderParcours();
 }
 
-/* Les deux enveloppes, à choisir au clavier (1 ou 2) ou d'un clic. */
+/* Les trois enveloppes, à choisir au clavier (1, 2 ou 3) ou d'un clic. */
 function enveloppes(){
 	var boite = document.createElement("div");
 	boite.className = "enveloppes";
-	[["1", "item_convocation.gif", "Convocation", "L'épreuve pratique de première année : tu découvres le terminal Linux. Chapitre 1, puis chapitre 2."],
-	 ["2", "item_mission.gif", "Ordre de mission", "La WarRoom demande un renfort d'urgence, pour qui connaît déjà les bases. Chapitre 2 directement."]].forEach(function(e){
+	[["1", "item_convocation.gif", "Convocation", "L'épreuve pratique de première année : tu découvres le terminal Linux. Chapitre 1, puis la suite."],
+	 ["2", "item_ticket.gif", "Ticket d'incident", "Le réseau de l'école est en panne : on cherche quelqu'un qui connaît déjà les bases. Chapitre 2 directement (réseau)."],
+	 ["3", "item_mission.gif", "Ordre de mission", "La WarRoom demande un renfort d'urgence, pour qui connaît déjà les bases. Chapitre 3 directement (cyber)."]].forEach(function(e){
 		var bouton = document.createElement("button");
 		bouton.type = "button";
 		bouton.className = "enveloppe";
@@ -513,22 +536,22 @@ function enveloppes(){
 	return boite;
 }
 
-/* Deux convocations possibles : l'épreuve de première année, ou la mission cyber pour ceux qui connaissent les bases. */
+/* Trois convocations possibles : l'épreuve de première année, ou un renfort (réseau ou cyber) pour ceux qui connaissent les bases. */
 function demanderParcours(){
-	term.echo("Dans ta boîte aux lettres, deux enveloppes portent ton nom. Une seule est pour toi.");
+	term.echo("Dans ta boîte aux lettres, trois enveloppes portent ton nom. Une seule est pour toi.");
 	term.ajouterElement(enveloppes());
-	term.demander("Tape 1 ou 2 (ou choisis une enveloppe) : ", false, function(reponse){
+	term.demander("Tape 1, 2 ou 3 (ou choisis une enveloppe) : ", false, function(reponse){
 		var choix = String(reponse).trim();
 		Array.prototype.forEach.call(document.querySelectorAll(".enveloppes"), function(b){
 			b.classList.add("enveloppes-choisi");
 			Array.prototype.forEach.call(b.querySelectorAll(".enveloppe"), function(e, i){ if (String(i + 1) === choix) e.classList.add("enveloppe-choisie"); e.disabled = true; });
 		});
-		if (choix !== "1" && choix !== "2"){
-			term.echo(C.jaune("Réponds 1 ou 2. En cas de doute, choisis 1 : c'est le début de l'histoire."));
+		if (choix !== "1" && choix !== "2" && choix !== "3"){
+			term.echo(C.jaune("Réponds 1, 2 ou 3. En cas de doute, choisis 1 : c'est le début de l'histoire."));
 			demanderParcours();
 			return;
 		}
-		if (choix === "2" && commencerChapitre2()){
+		if (choix !== "1" && commencerChapitre2(choix === "2" ? 3 : 2)){
 			Shell.fin();
 			return;
 		}
