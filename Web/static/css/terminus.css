@@ -676,7 +676,7 @@ body.crt #scene, body.crt .intro-titre{
 /* Pendant la panne : les voyants du réseau, sous la barre d'état */
 #couches{
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
     gap: 4px 6px;
     width: 100%;
     max-width: 624px;
@@ -716,7 +716,7 @@ body.crt #scene, body.crt .intro-titre{
 #couches .voyant-court{ display: none; }
 #couches .voyant-long, #couches .voyant-court{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 820px){
-    #couches{ gap: 3px 4px; margin: -4px 0 8px; }
+    #couches{ gap: 3px 4px; margin: -4px 0 8px; grid-template-columns: repeat(4, 1fr); }
     #couches .voyant-long{ display: none; }
     #couches .voyant-court{ display: inline; }
     #couches .voyant{ font-size: 0.7rem; padding: 1px 4px; gap: 4px; }
