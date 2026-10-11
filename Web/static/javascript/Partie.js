@@ -73,7 +73,8 @@ function identifiantDepuisPrenom(prenom){
 }
 
 /* Nom sous lequel le système connaît le joueur (voir le sort whoami). */
-var JOUEUR = (PROFIL.prenom && identifiantDepuisPrenom(PROFIL.prenom)) || "apprenti";
+/* Avec un compte, c'est son identifiant (le prénom tapé au login) ; PROFIL.prenom, lui, devient le nom complet du diplôme. */
+var JOUEUR = COMPTE_ACTIF || (PROFIL.prenom && identifiantDepuisPrenom(PROFIL.prenom)) || "apprenti";
 
 /* Tirage déterministe : pour une même graine et un même sel, toujours le même nombre entre 0 et 1. */
 function alea(sel){

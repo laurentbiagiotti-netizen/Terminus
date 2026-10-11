@@ -76,6 +76,7 @@ Shell.sorts.ping = function(args, io){
 		combien + " paquets transmis, " + recus + " reçus, " + (recus ? "0" : "100") + " % de paquets perdus");
 	if (!t.ok && t.erreur === "delai" && io.tty) lignes.push(C.gris("(Aucune réponse : quelque part après " + (t.sauts.length ? t.sauts[t.sauts.length - 1][0] : "le poste") + ", les paquets se perdent. traceroute dit où.)"));
 	if (demande > 5 && io.tty) lignes.push(C.gris("(Ici, ping s'arrête à 5 paquets.)"));
+	if (!explicite && io.tty && !state.has("pingSansFinVu")){ state.set("pingSansFinVu"); lignes.push(C.gris("(Sur un vrai Linux, ping sans -c ne s'arrête jamais : Ctrl+C l'arrête. Ici, le jeu s'arrête tout seul après 3 paquets.)")); }
 	GameEvents.fire({ type: "pingPanne", ok: t.ok, n: combien, explicite: explicite, host: t.nom });
 	return lignes.join("\n");
 };
@@ -499,7 +500,7 @@ Shell.sorts.reboot = function(args, io){
 		"Debian GNU/Linux 12 poste-b tty1", "",
 		"[  OK  ] Started NetworkManager.service - Network Manager.",
 		(conf.erreur ? "[FAILED] Failed to start netplan-generate.service: " + conf.erreur : "[  OK  ] Finished netplan-generate.service."),
-		"[  OK  ] Started systemd-timesyncd.service" + (servicePanne("poste-b", "systemd-timesyncd").actif ? " - Network Time Synchronization." : " (désactivé)"),
+		(servicePanne("poste-b", "systemd-timesyncd").actif ? "[  OK  ] Started systemd-timesyncd.service - Network Time Synchronization." : "         systemd-timesyncd.service est désactivé : il ne démarre pas."),
 		"[  OK  ] Reached target network-online.target - Network is Online.", ""];
 	var ok = reseauPosteOK();
 	if (io.tty) lignes.push(ok ? C.vert("Le poste a redémarré et retrouvé son réseau tout seul : adresse, passerelle, DNS.") :
@@ -655,9 +656,11 @@ Shell.sorts.resolvectl = function(args, io){
 	var global = surPoste ? (dnsDuFichier() || "") : IP_DNS;
 	if (action === "status"){
 		GameEvents.fire({ type: "resolvectl", action: "status", host: h });
-		return "Global\n       Protocols: +LLMNR +mDNS -DNSOverTLS DNSSEC=no/unsupported\nresolv.conf mode: foreign\n     DNS Servers: " + global + "\n      DNS Domain: cybersup.lan\n\n" +
+		var courantGlobal = !lienDns;
+		return "Global\n         Protocols: +LLMNR +mDNS -DNSOverTLS DNSSEC=no/unsupported\n  resolv.conf mode: foreign\n" +
+			(courantGlobal ? "Current DNS Server: " + (dnsEffectif(h) || "") + "\n" : "") + "       DNS Servers: " + global + "\n        DNS Domain: cybersup.lan\n\n" +
 			"Link 2 (eth0)\n    Current Scopes: " + (surPoste && !p.lien ? "none" : "DNS") + "\n         Protocols: +DefaultRoute -LLMNR -mDNS -DNSOverTLS\n" +
-			"Current DNS Server: " + (dnsEffectif(h) || "") + "\n       DNS Servers: " + lienDns + "\n        DNS Domain: cybersup.lan" +
+			(courantGlobal ? "" : "Current DNS Server: " + (dnsEffectif(h) || "") + "\n       DNS Servers: " + lienDns + "\n        DNS Domain: cybersup.lan") +
 			(surPoste && io.tty ? "\n" + C.gris("(Le poste interroge le serveur de « Current DNS Server ». Ceux de Link 2 viennent de resolvectl ou du DHCP et passent devant ceux de /etc/resolv.conf.)") : "");
 	}
 	if (action === "dns"){
@@ -918,7 +921,7 @@ Shell.sorts.systemctl = function(args, io){
 	var nom = (mots[1] || "").replace(/\.service$/, "");
 	if (!mots[1]) throw new ShellError("systemctl " + action + " : quel service ? Exemple : systemctl status nginx");
 	if (nom === "ssh") nom = "sshd";
-	if (nom === "telnet") nom = "telnet.socket";
+	if (nom === "telnet") throw new ShellError("Unit telnet.service could not be found." + (io.tty ? "\n" + C.gris("(Ici, telnet n'est pas un service mais un socket : systemctl ... telnet.socket)") : ""));
 	if (nom === "timesyncd") nom = "systemd-timesyncd";
 	var s = services[nom];
 	if (!s) throw new ShellError("Unit " + nomUnite(nom) + " could not be found.");
@@ -989,8 +992,8 @@ Shell.sorts.journalctl = function(args, io){
 	}
 	var hier = new Date();
 	hier.setDate(hier.getDate() - 1);
-	var jourHier = deuxChiffres(hier.getMonth() + 1) + "/" + deuxChiffres(hier.getDate());
-	return String(AVANT_PANNE.journalctl(propres, io)).replace(/^\d\d\/\d\d hier /gm, jourHier + " ");
+	var jourHier = MOIS_ANGLAIS[hier.getMonth()] + " " + deuxChiffres(hier.getDate());
+	return String(AVANT_PANNE.journalctl(propres, io)).replace(/^[A-Z][a-z]{2} \d\d hier /gm, jourHier + " ");
 };
 
 /* ------------------------------------------------------------------ */
@@ -1057,11 +1060,16 @@ Shell.sorts.iptables = function(args, io){
 		return sortie.join("\n");
 	}
 	if (h !== "routeur") throw new ShellError("iptables : sur " + h + ", personne ne filtre rien avec iptables, et ce n'est pas le moment de commencer. Le filtrage du bâtiment B se fait sur le routeur.");
+	if (!chaine && action === "F"){
+		["INPUT", "FORWARD", "OUTPUT"].forEach(function(c){ tables[c].length = 0; });
+		GameEvents.fire({ type: "iptables", action: "F" });
+		return io.tty ? C.jaune("(Toutes les chaînes sont vidées : plus aucune règle sur ce routeur. Ça débloque tout, y compris ce qui devait rester bloqué. En production, on retire seulement la règle fautive : sudo iptables -D FORWARD N.)") : "";
+	}
 	if (!chaine) throw new ShellError("iptables : quelle chaîne ? INPUT, FORWARD ou OUTPUT.");
 	if (action === "F"){
 		tables[chaine].length = 0;
 		GameEvents.fire({ type: "iptables", action: "F" });
-		return "";
+		return io.tty ? C.jaune("(La chaîne " + chaine + " est vidée en entier. Ça marche, mais en production on retire seulement la règle fautive : sudo iptables -D " + chaine + " N.)") : "";
 	}
 	if (action === "D"){
 		if (position !== null){
@@ -1095,12 +1103,12 @@ Shell.sorts.tcpdump = function(args, io){
 	var h = Shell.hote();
 	if (!io.sudo) throw new ShellError("tcpdump: eth0: You don't have permission to perform this capture on that device\n(socket: Operation not permitted)\n" + C.gris("(Écouter le réseau est réservé à root : sudo tcpdump ...)"));
 	if (!estHotePanne(h)) throw new ShellError("tcpdump : sur " + h + ", tu n'as rien à écouter : la mission ne concerne que le réseau du bâtiment B. On n'écoute que le réseau dont on a la charge.");
-	var contenu = false, numerique = false, limite = null, carte = "eth0", filtre = [];
+	var contenu = false, numerique = false, limite = null, carte = "eth0", carteChoisie = false, filtre = [];
 	for (var i = 0; i < args.length; i++){
 		var a = args[i];
 		if (a === "-A" || a === "-X") contenu = true;
 		else if (a === "-n" || a === "-nn") numerique = true;
-		else if (a === "-i"){ carte = args[++i]; if (!carte) throw new ShellError("tcpdump: option requires an argument -- 'i'"); }
+		else if (a === "-i"){ carte = args[++i]; carteChoisie = true; if (!carte) throw new ShellError("tcpdump: option requires an argument -- 'i'"); }
 		else if (a === "-c") limite = parseInt(args[++i], 10);
 		else if (/^-[nAXvl]+$/.test(a)){ if (/[AX]/.test(a)) contenu = true; if (/n/.test(a)) numerique = true; }
 		else if (a.charAt(0) === "-") throw new ShellError("tcpdump : option « " + a + " » inconnue ici. Exemples : sudo tcpdump -n port 53, sudo tcpdump -A port 23");
@@ -1154,7 +1162,8 @@ Shell.sorts.tcpdump = function(args, io){
 	}
 	if (limite) paquets = paquets.slice(0, limite);
 	var lignes = ["tcpdump: verbose output suppressed, use -v[v]... for full protocol decode",
-		"listening on " + carte + ", link-type EN10MB (Ethernet), snapshot length 262144 bytes"];
+		"listening on " + carte + ", link-type " + (carte === "any" ? "LINUX_SLL2 (Linux cooked v2)" : "EN10MB (Ethernet)") + ", snapshot length 262144 bytes"];
+	if (!carteChoisie && h === "routeur" && io.tty) lignes.push(C.gris("(Sans -i, tcpdump n'écoute que la première carte, eth0, côté bâtiment B. Ici le jeu te montre tout, mais sur un vrai routeur, pour écouter aussi eth1, côté cœur : sudo tcpdump -i any ...)"));
 	paquets.forEach(function(p, k){
 		lignes.push(heure + "." + completerGauche(String(104211 + k * 3317).substring(0, 6), 6) + " IP " + p.l);
 		if (contenu && p.c) lignes.push(io.tty && p.secret ? C.jaune(p.c) : p.c);
@@ -1371,10 +1380,12 @@ Shell.sorts.timedatectl = function(args, io){
 	if (action === "status" || action === "show"){
 		var d = h === "poste-b" ? dateDuPoste() : new Date();
 		var local = formaterDate(d, ["+%a %F %T"]);
-		var utc = new Date(d.getTime() - 2 * 3600000);
+		var hiver = d.getMonth() < 2 || d.getMonth() > 9 || (d.getMonth() === 2 && d.getDate() < 25) || (d.getMonth() === 9 && d.getDate() >= 26);
+		var zone = hiver ? "CET" : "CEST", decalage = hiver ? 1 : 2;
+		var utc = new Date(d.getTime() - decalage * 3600000);
 		GameEvents.fire({ type: "timedatectl", action: "status", host: h });
-		return "               Local time: " + local + " CEST\n           Universal time: " + formaterDate(utc, ["+%a %F %T"]) + " UTC\n                 RTC time: " + formaterDate(h === "poste-b" ? new Date(2001, 0, 1, d.getHours() - 2, d.getMinutes()) : utc, ["+%a %F %T"]) + "\n" +
-			"                Time zone: Europe/Paris (CEST, +0200)\nSystem clock synchronized: " + (sync ? "yes" : (io.tty ? C.rouge("no") : "no")) + "\n              NTP service: " + (timesyncd ? (timesyncd.actif ? "active" : "inactive") : "active") + "\n          RTC in local time: no" +
+		return "               Local time: " + local + " " + zone + "\n           Universal time: " + formaterDate(utc, ["+%a %F %T"]) + " UTC\n                 RTC time: " + formaterDate(h === "poste-b" ? new Date(2001, 0, 1, d.getHours() - decalage, d.getMinutes()) : utc, ["+%a %F %T"]) + "\n" +
+			"                Time zone: Europe/Paris (" + zone + ", +0" + decalage + "00)\nSystem clock synchronized: " + (sync ? "yes" : (io.tty ? C.rouge("no") : "no")) + "\n              NTP service: " + (timesyncd ? (timesyncd.actif ? "active" : "inactive") : "active") + "\n          RTC in local TZ: no" +
 			(h === "poste-b" && timesyncd.actif && !sync && io.tty ? "\n" + C.gris("(La synchronisation est demandée, mais le serveur de temps (" + IP_DNS + ") est injoignable : le réseau du poste n'est pas encore réparé.)") : "");
 	}
 	if (action === "set-ntp"){
@@ -1598,7 +1609,7 @@ Shell.sorts.route = function(args, io){
 	var h = Shell.hote(), numerique = args.indexOf("-n") > -1;
 	var texte = texteTableDeRoutage(h, numerique);
 	if (io.tty && tableDeRoutage(h).length === 0) texte += "\n" + C.gris("(Aucun chemin : la carte est éteinte ou n'a pas d'adresse.)");
-	else if (io.tty && !tableDeRoutage(h).some(function(r){ return r.prefixe === 0; })) texte += "\n" + C.gris("(Pas de ligne default, flag UG : la machine ne sait pas par où sortir de sa rue.)");
+	else if (io.tty && !tableDeRoutage(h).some(function(r){ return r.prefixe === 0; })) texte += "\n" + C.gris("(Pas de route par défaut, la ligne 0.0.0.0 avec le drapeau UG : la machine ne sait pas par où sortir de sa rue.)");
 	sortAncien("route");
 	GameEvents.fire({ type: "route", host: h, numerique: numerique });
 	return texte;
@@ -1833,8 +1844,10 @@ Shell.sorts.iperf3 = function(args, io){
 		"[  5] local " + ipDeHote(h) + " port 43712 connected to " + r.ip + " port 5201",
 		"[ ID] Interval           Transfer     Bitrate"];
 	for (var k = 0; k < duree; k++) lignes.push("[  5]   " + k + ".00-" + (k + 1) + ".00   sec  " + completerGauche(String(parSeconde).replace(".", ","), 5) + " MBytes  " + completerGauche(String(debit).replace(".", ","), 5) + " Mbits/sec");
+	var total = completerGauche(String(Math.round(parSeconde * duree * 10) / 10).replace(".", ","), 5);
 	lignes.push("- - - - - - - - - - - - - - - - - - - - - - - - -", "[ ID] Interval           Transfer     Bitrate         Retr",
-		"[  5]   0.00-" + duree + ".00   sec  " + completerGauche(String(Math.round(parSeconde * duree * 10) / 10).replace(".", ","), 5) + " MBytes  " + completerGauche(String(debit).replace(".", ","), 5) + " Mbits/sec    0             sender",
+		"[  5]   0.00-" + duree + ".00   sec  " + total + " MBytes  " + completerGauche(String(debit).replace(".", ","), 5) + " Mbits/sec    0             sender",
+		"[  5]   0.00-" + duree + ".04   sec  " + total + " MBytes  " + completerGauche(String(debit).replace(".", ","), 5) + " Mbits/sec                  receiver",
 		"", "iperf Done.");
 	if (io.tty) lignes.push(C.gris(lent ? "(Environ 100 Mbit/s : la liaison avec Lille est un tunnel loué, dix fois plus étroit que le réseau de l'école.)" :
 		"(Environ 940 Mbit/s : presque tout le gigabit du câble. Le reste part dans les en-têtes des paquets.)"));

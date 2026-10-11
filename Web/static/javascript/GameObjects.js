@@ -1711,9 +1711,11 @@ function texteEcranMural(){
         ligne("Oston", fini ? "restauré" : "CORROMPU") + "\n" +
         ligne("Nouvelle-Console", fini ? "restaurée" : "NE RÉPOND PLUS") + "\n" +
         ligne("Citadelle", citadelle) + "\n\n" +
-        "  Agent sur le terrain : " + (state.nom || JOUEUR) + "\n" +
+        (state.has("chapitre1Saute") ? "  Épreuve des B1 : terminée ce matin. Toi, tu es le renfort : ta mission est ailleurs.\n" +
+        "  Étapes franchies par les B1 : " + QUETES_PRINCIPALES.length + " sur " + QUETES_PRINCIPALES.length : "") +
+        (state.has("chapitre1Saute") ? "" : "  Agent sur le terrain : " + (state.nom || JOUEUR) + "\n" +
         "  Dernière position connue dans Terminus : " + (state.dernierLieu || "aucune, il n'y est pas encore entré") + "\n" +
-        "  Étapes franchies : " + QUETES_PRINCIPALES.filter(function(q){ return state.quests[q.id]; }).length + " sur " + QUETES_PRINCIPALES.length;
+        "  Étapes franchies : " + QUETES_PRINCIPALES.filter(function(q){ return state.quests[q.id]; }).length + " sur " + QUETES_PRINCIPALES.length);
 }
 
 function texteVoyants(){

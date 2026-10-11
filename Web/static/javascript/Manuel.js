@@ -547,7 +547,7 @@ var MANUEL = {
 	page:
 "Utilise « ping » pour envoyer de petits paquets à une machine et écouter\n" +
 "si elle répond, et en combien de temps.\n\n" +
-"  ping MACHINE\n" +
+"  ping MACHINE           sans fin, jusqu'à Ctrl+C (ici, le jeu s'arrête tout seul après 3)\n" +
 "  ping -c 2 MACHINE      seulement 2 paquets\n\n" +
 "100 % de paquets perdus : la machine est éteinte, injoignable, ou protégée\n" +
 "par un pare-feu."

@@ -42,7 +42,8 @@ html, body{
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: safe center;
+    overflow: hidden;
     padding: 18px;
     border-left: 1px solid var(--trait);
     min-width: 0;
@@ -77,6 +78,8 @@ html, body{
 @keyframes case-allumee{ 0%{ background: #ffffff; } }
 #etat-xp{ color: var(--texte); }
 #scene{
+    flex: 0 1 auto;
+    min-height: 0;
     width: 100%;
     max-width: 624px;
     max-height: calc(100% - 5.5em);
@@ -97,6 +100,48 @@ html, body{
     overflow-wrap: anywhere;
     margin: 0 0 2px;
 }
+
+/* Chaque ligne d'un bloc : une ligne longue repart sous sa deuxième colonne (htmlEnLignes, Terminal.js). */
+#sortie .lig{ display: block; }
+#sortie .p2{ padding-left: 2ch; text-indent: -2ch; }
+#sortie .p3{ padding-left: 3ch; text-indent: -3ch; }
+#sortie .p4{ padding-left: 4ch; text-indent: -4ch; }
+#sortie .p5{ padding-left: 5ch; text-indent: -5ch; }
+#sortie .p6{ padding-left: 6ch; text-indent: -6ch; }
+#sortie .p7{ padding-left: 7ch; text-indent: -7ch; }
+#sortie .p8{ padding-left: 8ch; text-indent: -8ch; }
+#sortie .p9{ padding-left: 9ch; text-indent: -9ch; }
+#sortie .p10{ padding-left: 10ch; text-indent: -10ch; }
+#sortie .p11{ padding-left: 11ch; text-indent: -11ch; }
+#sortie .p12{ padding-left: 12ch; text-indent: -12ch; }
+#sortie .p13{ padding-left: 13ch; text-indent: -13ch; }
+#sortie .p14{ padding-left: 14ch; text-indent: -14ch; }
+#sortie .p15{ padding-left: 15ch; text-indent: -15ch; }
+#sortie .p16{ padding-left: 16ch; text-indent: -16ch; }
+#sortie .p17{ padding-left: 17ch; text-indent: -17ch; }
+#sortie .p18{ padding-left: 18ch; text-indent: -18ch; }
+#sortie .p19{ padding-left: 19ch; text-indent: -19ch; }
+#sortie .p20{ padding-left: 20ch; text-indent: -20ch; }
+#sortie .p21{ padding-left: 21ch; text-indent: -21ch; }
+#sortie .p22{ padding-left: 22ch; text-indent: -22ch; }
+#sortie .p23{ padding-left: 23ch; text-indent: -23ch; }
+#sortie .p24{ padding-left: 24ch; text-indent: -24ch; }
+#sortie .p25{ padding-left: 25ch; text-indent: -25ch; }
+#sortie .p26{ padding-left: 26ch; text-indent: -26ch; }
+#sortie .p27{ padding-left: 27ch; text-indent: -27ch; }
+#sortie .p28{ padding-left: 28ch; text-indent: -28ch; }
+#sortie .p29{ padding-left: 29ch; text-indent: -29ch; }
+#sortie .p30{ padding-left: 30ch; text-indent: -30ch; }
+#sortie .p31{ padding-left: 31ch; text-indent: -31ch; }
+#sortie .p32{ padding-left: 32ch; text-indent: -32ch; }
+#sortie .p33{ padding-left: 33ch; text-indent: -33ch; }
+#sortie .p34{ padding-left: 34ch; text-indent: -34ch; }
+#sortie .p35{ padding-left: 35ch; text-indent: -35ch; }
+#sortie .p36{ padding-left: 36ch; text-indent: -36ch; }
+#sortie .p37{ padding-left: 37ch; text-indent: -37ch; }
+#sortie .p38{ padding-left: 38ch; text-indent: -38ch; }
+#sortie .p39{ padding-left: 39ch; text-indent: -39ch; }
+#sortie .p40{ padding-left: 40ch; text-indent: -40ch; }
 /* Une invite trop longue (un long prénom, un chemin profond, une question) passe à la ligne
    et le champ de saisie garde toujours au moins 10 caractères de large. */
 #ligne{
@@ -485,23 +530,32 @@ body.crt #scene, body.crt .intro-titre{
 
 /* Les bannières du panneau de l'image */
 #pics{ position: relative; }
-.banniere{
+/* Les bannières s'empilent dans une colonne, la plus récente en bas, sans se chevaucher. */
+#bannieres{
     position: absolute;
-    bottom: calc(44px + var(--rang, 0) * 62px);
+    bottom: 44px;
     right: 16px;
     z-index: 5;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-end;
+    max-width: min(320px, calc(100% - 32px));
+    pointer-events: none;
+}
+.banniere{
+    position: relative;
     display: grid;
     gap: 2px;
-    max-width: min(320px, calc(100% - 32px));
+    max-width: 100%;
     padding: 8px 14px;
     background: #000000;
     border: 2px solid currentColor;
     box-shadow: 4px 4px 0 currentColor;
     animation: banniere-entree 260ms steps(4) both;
-    transition: bottom 200ms steps(3);
 }
 .banniere-titre{ font-weight: 700; font-size: 0.8rem; }
-.banniere-detail{ color: #ffffff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banniere-detail{ color: #ffffff; white-space: normal; }
 .banniere-quete{ color: var(--jaune); }
 .banniere-sort{ color: var(--vert-clair); }
 .banniere-relique{ color: #f0a24a; }
@@ -612,7 +666,7 @@ body.crt #scene, body.crt .intro-titre{
 /* Pendant la panne : les voyants du réseau, sous la barre d'état */
 #couches{
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 4px 6px;
     width: 100%;
     max-width: 624px;
@@ -651,6 +705,6 @@ body.crt #scene, body.crt .intro-titre{
 }
 @media (max-width: 820px){
     #couches{ gap: 3px 4px; margin: -4px 0 8px; }
-    #couches .voyant{ font-size: 0.62rem; padding: 1px 4px; gap: 4px; }
+    #couches .voyant{ font-size: 0.7rem; padding: 1px 4px; gap: 4px; }
     #couches .voyant::before{ flex-basis: 6px; height: 6px; }
 }

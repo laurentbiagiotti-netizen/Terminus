@@ -71,11 +71,12 @@ function banniere(genre, texte){
 	t.textContent = /secondaire/.test(texte) ? "Quête secondaire" : titres[genre];
 	var d = document.createElement("span"); d.className = "banniere-detail"; d.textContent = detail;
 	b.appendChild(t); b.appendChild(d);
-	panneau.appendChild(b);
+	var pile = document.getElementById("bannieres");
+	if (!pile){ pile = document.createElement("div"); pile.id = "bannieres"; panneau.appendChild(pile); }
+	pile.appendChild(b);
 	bannieres.push(b);
 	// Les bannières s'empilent ; au-delà de trois, les plus anciennes s'effacent.
 	while (bannieres.length > (window.innerWidth < 820 ? 1 : 3)){ var vieille = bannieres.shift(); if (vieille.parentNode) vieille.parentNode.removeChild(vieille); }
-	bannieres.forEach(function(x, i){ x.style.setProperty("--rang", String(bannieres.length - 1 - i)); });
 	setTimeout(function(){
 		b.classList.add("banniere-sortie");
 		setTimeout(function(){
@@ -236,15 +237,15 @@ function majCouches(visible){
 	var panneau = document.getElementById("pics"), etat = document.getElementById("etat");
 	if (!panneau || !etat) return;
 	var bloc = document.getElementById("couches");
-	if (!visible || typeof voyantsPanne !== "function"){ if (bloc) bloc.hidden = true; return; }
+	if (!visible || typeof etagesOSI !== "function"){ if (bloc) bloc.hidden = true; return; }
 	if (!bloc){
 		bloc = document.createElement("div");
 		bloc.id = "couches";
-		bloc.setAttribute("aria-label", "État du réseau");
+		bloc.setAttribute("aria-label", "Les sept étages du modèle OSI");
 		etat.parentNode.insertBefore(bloc, etat.nextSibling);
 	}
 	bloc.hidden = false;
-	var voyants = voyantsPanne();
+	var voyants = etagesOSI();
 	if (bloc.children.length !== voyants.length){
 		bloc.textContent = "";
 		voyants.forEach(function(){ var v = document.createElement("span"); v.className = "voyant"; bloc.appendChild(v); });
@@ -257,7 +258,7 @@ function majCouches(visible){
 			var change = el.className !== "voyant";
 			el.className = cls + (change ? " voyant-change" : "");
 		}
-		el.title = v.titre + (v.ok ? " : ça marche" : " : en panne") + " (schema pour le détail)";
+		el.title = "Étage " + v.titre + (v.ok ? " : il tient" : " : cassé") + " (modèle OSI ; schema pour le détail)";
 	});
 }
 
@@ -321,9 +322,9 @@ function majEtat(){
  */
 function texteTalkie(){
 	var etape = prochaineEtapePanne();
-	if (etape && (etape.id === "r_lien" || etape.id === "r_batiment")) return "Radia, au talkie-walkie : « Commence par le bas : le Poste, derrière le comptoir (cd Poste), puis ip link. eth0 est-elle UP ? »";
+	if (etape && etape.id === "r_batiment") etape = { id: "r_osi" };
 	if (!etape || !TALKIE[etape.id]) return "Radia, au talkie-walkie : « Le réseau tient. Beau travail. »";
-	return "Radia, au talkie-walkie : « " + TALKIE[etape.id] + " »";
+	return "Radia, au talkie-walkie : « " + (typeof talkiePour === "function" ? talkiePour(etape.id) : TALKIE[etape.id]) + " »";
 }
 function radioSOC(texte){
 	if (typeof document === "undefined") return;
@@ -333,7 +334,7 @@ function radioSOC(texte){
 	var m = enCours === 3 ? /(Radia, au talkie-walkie)\s*:?\s*(.*)$/.exec(brut.replace(/\n/g, " ")) :
 		/(La radio grésille[.,]?|Evi, à la radio|Grace, à la radio)\s*(.*)$/.exec(brut.replace(/\n/g, " "));
 	if (!m) return;
-	var qui = enCours === 3 ? "Radia" : (/Evi/.test(brut) ? "Evi" : (/C'est Laurent|Laurent :/.test(brut) ? "Laurent" : "Grace"));
+	var qui = enCours === 3 ? "Radia" : (/Evi, à la radio|C'est Evi/.test(brut) ? "Evi" : (/C'est Laurent|Laurent :/.test(brut) ? "Laurent" : "Grace"));
 	var message = m[2].replace(/^C'est (Grace|Evi|Laurent)\s*:\s*/, "").replace(/^:\s*/, "").trim();
 	var radio = document.getElementById("radio");
 	if (!radio) return;

@@ -28,12 +28,12 @@ var SORTS_RPG = {
 	resolvectl:  { nom: "la Boussole des Noms",    image: "La boussole montre quel Oracle la machine consulte vraiment." },
 	systemctl:   { nom: "le Sceptre des Gardiens", image: "Le sceptre réveille, endort et scelle les gardiens (les services)." },
 	journalctl:  { nom: "les Chroniques",          image: "Les chroniques racontent ce que chaque gardien a fait, et quand." },
-	ss:          { nom: "le Registre des Portes",  image: "Le registre dit quelles portes (les ports) sont ouvertes, et qui les garde." },
+	ss:          { nom: "le Guet des Portes",  image: "Le guet dit quelles portes (les ports) sont ouvertes, et qui les garde." },
 	iptables:    { nom: "la Herse",                image: "Tu lis la loi de la herse : quels messagers passent, lesquels sont jetés." },
 	tcpdump:     { nom: "l'Oreille du Mur",        image: "Tu entends passer les messagers. Ceux qui parlent en clair, tu les comprends." },
 	traceroute:  { nom: "le Fil d'Ariane",         image: "Le fil se déroule étape par étape, et montre où le chemin se casse." },
 	mtr:         { nom: "la Longue-Vue",           image: "La longue-vue suit le chemin longtemps et compte les messagers perdus." },
-	openssl:     { nom: "la Loupe des Sceaux",     image: "Tu lis le sceau d'un site (son certificat) et ses dates de validité." },
+	openssl:     { nom: "la Loupe des Blasons",     image: "Tu lis le blason d'un site (son certificat) et ses dates de validité." },
 	timedatectl: { nom: "le Clocher",              image: "Tu règles l'horloge de la machine sur celle du royaume." },
 	nc:          { nom: "le Heurtoir",             image: "Tu frappes à une porte : ouverte, fermée, ou personne ne répond ?" },
 	telnet:      { nom: "le Cornet",               image: "Tu parles à un gardien à voix haute. Tout le monde peut entendre." },
@@ -42,13 +42,23 @@ var SORTS_RPG = {
 	ifconfig:    { nom: "l'Ancien Œil",            image: "Le sort des anciens : les cartes et leurs adresses, comme ip a, mais sans les cartes éteintes." },
 	route:       { nom: "l'Ancienne Carte",        image: "La table des chemins, à la façon des anciens : où part chaque messager." },
 	arp:         { nom: "l'Ancien Voisinage",      image: "Les voisins de ta rue, et l'identité gravée dans leur carte (l'adresse MAC)." },
-	netstat:     { nom: "l'Ancien Registre",       image: "Les portes ouvertes et leurs gardiens, comme ss, mais dans la langue d'avant." },
+	netstat:     { nom: "l'Ancien Guet",       image: "Les portes ouvertes et leurs gardiens, comme ss, mais dans la langue d'avant." },
 	arping:      { nom: "le Cri dans la Rue",      image: "Tu cries une adresse dans ta rue : celui qui la porte te répond, avec son identité." },
 	tracepath:   { nom: "le Petit Fil",            image: "Un fil plus léger que celui d'Ariane : il mesure aussi la taille des messagers qui passent." },
-	getent:      { nom: "le Registre Commun",      image: "Tu traduis un nom exactement comme le font les programmes : les raccourcis, puis l'Oracle." },
-	uptime:      { nom: "le Sablier",              image: "Le sablier dit depuis quand la machine est éveillée, et combien elle travaille." },
+	getent:      { nom: "le Traducteur Commun",      image: "Tu traduis un nom exactement comme le font les programmes : les raccourcis, puis l'Oracle." },
+	uptime:      { nom: "l'Horloge d'Éveil",              image: "L'horloge dit depuis quand la machine est éveillée, et combien elle travaille." },
 	iperf3:      { nom: "la Course des Messagers", image: "Tes messagers courent jusqu'à un serveur et reviennent : tu mesures le débit du chemin." },
 	nft:         { nom: "la Nouvelle Herse",       image: "La loi du pare-feu, écrite dans la langue moderne du noyau (nftables)." }
+};
+
+/* L'étage du modèle OSI où travaille chaque sort du chapitre. */
+var ETAGES_DU_SORT = {
+	ip: "étages 2 et 3", ethtool: "étage 1", hostnamectl: "la machine", dhclient: "étage 7, pour l'étage 3", nmcli: "étages 1 à 3",
+	netplan: "étages 1 à 3", reboot: "toute la tour", curl: "étage 7", wget: "étage 7", dig: "étage 7", host: "étage 7", nslookup: "étage 7",
+	resolvectl: "étage 7", systemctl: "les services", journalctl: "les journaux", ss: "étage 4", iptables: "étages 3 et 4", tcpdump: "étages 2 à 7",
+	traceroute: "étage 3", mtr: "étage 3", openssl: "étage 6", timedatectl: "pour l'étage 6", nc: "étage 4", telnet: "étage 7, en clair",
+	ping: "étage 3", ssh: "étages 5 à 7, chiffrés", ifconfig: "étages 2 et 3", route: "étage 3", arp: "étage 2", netstat: "étage 4",
+	arping: "étage 2", tracepath: "étage 3", getent: "étage 7", iperf3: "étage 4", nft: "étages 3 et 4"
 };
 
 /* Les lieux de la carte du royaume. Le poste est connu dès le départ ; le reste est dans la brume. */
@@ -64,8 +74,9 @@ var LIEUX_RPG = {
 
 /* La relique que rapporte chaque réparation. */
 var RELIQUES = {
+	r_osi:        "la Clé des Sept Étages",
 	r_lien:       "la Rune du Lien",
-	r_ip:         "le Sceau de l'Adresse",
+	r_ip:         "la Plaque de l'Adresse",
 	r_passerelle: "la Clé du Carrefour",
 	r_dns:        "l'Œil de l'Oracle",
 	r_dhcp:       "l'Eau de la Source",
@@ -133,7 +144,7 @@ function effetRpg(nom, args){
 	p.premiers = p.premiers || {};
 	if (SORTS_RPG[nom] && !p.premiers[nom] && !state.has("victoireReseau")){
 		p.premiers[nom] = true;
-		if (!state.has("rejeuEnCours")) say(C.vert("✦ " + SORTS_RPG[nom].nom.replace(/^./, function(c){ return c.toUpperCase(); }) + " (" + nom + ") : ") + SORTS_RPG[nom].image);
+		if (!state.has("rejeuEnCours")) say(C.vert("✦ " + SORTS_RPG[nom].nom.replace(/^./, function(c){ return c.toUpperCase(); }) + " (" + nom + (ETAGES_DU_SORT[nom] ? ", " + ETAGES_DU_SORT[nom] : "") + ") : ") + SORTS_RPG[nom].image);
 	}
 	lieuxDecouverts(nom, args, hote).forEach(revelerLieu);
 }

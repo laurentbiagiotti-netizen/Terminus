@@ -696,7 +696,8 @@ Shell.sorts.journalctl = function(args, io){
 	GameEvents.fire({ type: "journalctl", host: Shell.hote(), unite: unite, depuis: depuis, lignes: entrees.map(function(e){ return e.message; }).join("\n") });
 	if (entrees.length === 0) return "-- No entries --";
 	return entrees.map(function(e){
-		return dateDuJour().substring(5).replace("-", "/") + " " + e.heure + ":" + (e.secondes || "00") + " " + Shell.hote() + " " + e.unite + ": " + e.message;
+		var j = dateDuJour().split("-");
+		return ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][+j[1] - 1] + " " + j[2] + " " + e.heure + ":" + (e.secondes || "00") + " " + Shell.hote() + " " + e.unite + ": " + e.message;
 	}).join("\n");
 };
 
@@ -712,7 +713,7 @@ Shell.sorts.last = function(args, io){
 	GameEvents.fire({ type: "last", host: Shell.hote(), qui: qui });
 	return lignes.map(function(l){
 		return completerDroite(l.qui, 10) + completerDroite(l.tty, 8) + completerDroite(l.depuis, 16) + l.quand;
-	}).concat(["", "wtmp begins " + dateDuJour()]).join("\n");
+	}).concat(["", "wtmp begins " + (function(){ var d = new Date(); d.setDate(d.getDate() - 7); return d.getFullYear() + "-" + deuxChiffres(d.getMonth() + 1) + "-" + deuxChiffres(d.getDate()); })()]).join("\n");
 };
 
 Shell.sorts.who = function(args, io){
@@ -822,7 +823,7 @@ Shell.sorts.systemctl = function(args, io){
 			"     Loaded: loaded (" + (s.fichier || "/etc/systemd/system/" + nom + ".service") + "; " + (s.auto ? "enabled" : "disabled") + ")\n" +
 			"     Active: " + (s.actif ? (io.tty ? C.vert("active (running)") : "active (running)") : "inactive (dead)") + "\n" +
 			(s.actif && s.pid ? "   Main PID: " + s.pid + " (" + nom + ")\n" : "") +
-			(s.execStart ? "    Process: ExecStart=" + s.execStart + "\n" : "") +
+			(s.execStart ? "    Process: ExecStart=" + s.execStart + (io.tty ? C.gris("   (lu dans le fichier du service)") : "") + "\n" : "") +
 			(s.restart ? "    Restart: " + s.restart + C.gris("  (relancé automatiquement s'il s'arrête)") : "");
 	}
 	if (["stop", "start", "restart", "enable", "disable"].indexOf(action) === -1){
@@ -834,7 +835,7 @@ Shell.sorts.systemctl = function(args, io){
 	if (action === "stop") arreterService(hote, nom);
 	if (action === "start" || action === "restart") demarrerService(hote, nom);
 	GameEvents.fire({ type: "systemctl", action: action, host: hote, service: nom, now: maintenant });
-	if (action === "disable") return "Removed /etc/systemd/system/multi-user.target.wants/" + nom + ".service.";
+	if (action === "disable") return "Removed \"/etc/systemd/system/multi-user.target.wants/" + nom + ".service\".";
 	if (action === "enable") return "Created symlink /etc/systemd/system/multi-user.target.wants/" + nom + ".service.";
 	return "";
 };
@@ -896,8 +897,8 @@ Shell.sorts.usermod = function(args, io){
 		if (args[i].charAt(0) !== "-") mots.push(args[i]);
 	}
 	var nom = mots[0];
-	if (!nom || (!verrou && !deverrou && !groupe)) throw new ShellError("usermod : utilisations ici :\n  sudo usermod -L NOM          verrouiller le compte (-U pour le déverrouiller)\n" +
-		"  sudo usermod -rG GROUPE NOM  retirer NOM du GROUPE\n  sudo usermod -aG GROUPE NOM  ajouter NOM au GROUPE");
+	if (!nom || (!verrou && !deverrou && !groupe)) throw new ShellError("usermod : utilisations ici :\n  sudo usermod -L NOM          bloquer le mot de passe du compte (-U pour le débloquer)\n" +
+		"  sudo usermod -aG GROUPE NOM  ajouter NOM au GROUPE\n  sudo gpasswd -d NOM GROUPE   retirer NOM du GROUPE");
 	if (!io.sudo) throw new ShellError("usermod : Permission denied.\n" + C.gris("(Réservé à root : sudo usermod ...)"));
 	if (groupe){
 		if (!retirer && !ajouter) throw new ShellError("usermod : -G seul remplacerait TOUS les groupes de " + nom + ". Précise -aG (ajouter) ou -rG (retirer).");
@@ -1131,7 +1132,7 @@ Shell.sorts.ufw = function(args, io){
 		if (pf.actif || args[1] === "numbered"){
 			lignes.push("", "     To                         Action      From", "     --                         ------      ----");
 			pf.regles.forEach(function(r, i){
-				lignes.push((args[1] === "numbered" ? "[" + completerGauche(i + 1, 2) + "] " : "     ") + completerDroite(r.vers || "Anywhere", 27) + completerDroite(r.action.toUpperCase() + " IN", 12) + r.de);
+				lignes.push((args[1] === "numbered" ? "[" + completerGauche(i + 1, 2) + "] " : "     ") + completerDroite(r.vers || "Anywhere", 27) + completerDroite(r.action.toUpperCase() + (r.route ? " FWD" : " IN"), 12) + r.de);
 			});
 			if (pf.regles.length) lignes.push("", C.gris("(Les règles se lisent dans l'ordre : la première qui correspond à une connexion décide.)"));
 		}
@@ -1139,6 +1140,9 @@ Shell.sorts.ufw = function(args, io){
 	}
 	if (action === "enable"){ pf.actif = true; GameEvents.fire({ type: "ufwChange" }); return "Firewall is active and enabled on system startup"; }
 	if (action === "disable"){ pf.actif = false; GameEvents.fire({ type: "ufwChange" }); return "Firewall stopped and disabled on system startup"; }
+	// ufw route ... : la règle vise le trafic qui TRAVERSE le pare-feu (FWD), pas celui qui lui est destiné (IN).
+	var route = false;
+	if (action === "route"){ route = true; args = args.slice(1); action = args[0]; }
 	// ufw insert N RÈGLE : la règle prend la place N (les règles sont lues dans l'ordre, la première qui correspond décide).
 	var position = null;
 	if (action === "insert"){
@@ -1152,7 +1156,8 @@ Shell.sorts.ufw = function(args, io){
 		var r, regle;
 		if ((r = /^from\s+(\S+)(?:\s+to\s+any)?(?:\s+port\s+(\d+))?$/.exec(m))) regle = { action: action, de: r[1], vers: r[2] ? r[2] + "/tcp" : "Anywhere" };
 		else if ((r = /^(\d+)(\/tcp)?$/.exec(m))) regle = { action: action, de: "Anywhere", vers: r[1] + "/tcp" };
-		else throw new ShellError("ERROR: Wrong number of arguments\n" + C.gris("(Exemples : sudo ufw deny from 10.0.92.47, sudo ufw allow 22, sudo ufw insert 1 deny from 10.0.92.47)"));
+		else throw new ShellError("ERROR: Wrong number of arguments\n" + C.gris("(Exemples : sudo ufw route deny from 10.0.92.47, sudo ufw allow 22, sudo ufw route insert 1 deny from 10.0.92.47)"));
+		if (route) regle.route = true;
 		if (position !== null) pf.regles.splice(position - 1, 0, regle);
 		else pf.regles.push(regle);
 		GameEvents.fire({ type: "ufwChange", regle: regle });
@@ -1395,7 +1400,12 @@ MANUEL["systemctl"] = page("gérer les services de la machine", "SYSTEM ConTroL"
 	"  systemctl list-units           les services\n  systemctl status NOM           son état\n  sudo systemctl stop NOM        l'arrêter\n  sudo systemctl disable NOM     ne plus le lancer au démarrage\n  sudo systemctl disable --now NOM   les deux d'un coup\n\n" +
 	"Un service marqué Restart=always revient tout seul si on tue son processus : il faut l'arrêter avec systemctl.");
 MANUEL["userdel"] = page("supprimer un compte", "USER DELete", "  sudo userdel NOM       supprime le compte (refusé tant qu'il a des processus)");
-MANUEL["usermod"] = page("modifier un compte (le verrouiller...)", "USER MODify", "  sudo usermod -L NOM    verrouille le compte : plus de connexion par mot de passe\n  sudo usermod -U NOM    le déverrouille");
+MANUEL["usermod"] = page("modifier un compte (bloquer son mot de passe, ses groupes)", "USER MODify",
+	"  sudo usermod -L NOM          bloque le MOT DE PASSE du compte (-U pour le débloquer)\n" +
+	"  sudo usermod -aG GROUPE NOM  ajouter NOM au GROUPE\n" +
+	"  sudo usermod -rG GROUPE NOM  le retirer du GROUPE (seulement sur les systèmes récents)\n\n" +
+	"Attention : -L ne bloque pas les clés SSH. Un compte verrouillé ainsi entre encore par clé.\n" +
+	"Pour tout couper : sudo chage -E 0 NOM (le compte expire). Pour retirer d'un groupe, partout : sudo gpasswd -d NOM GROUPE.");
 MANUEL["groups"] = page("voir les groupes d'un utilisateur", "GROUPS", "  groups                 tes groupes\n  groups corbeau         ceux d'un autre\n\nÊtre dans le groupe sudo, c'est pouvoir devenir root.");
 MANUEL["visudo"] = page("modifier les droits sudo sans risque", "VIsual SUDO",
 	"  sudo visudo            ouvre /etc/sudoers dans l'éditeur\n\nvisudo vérifie la syntaxe avant d'enregistrer : une faute dans sudoers peut priver\ntout le monde de sudo. On ne modifie jamais ce fichier autrement.");
@@ -1410,7 +1420,7 @@ MANUEL["nc"] = page("ouvrir une connexion brute vers un port", "NetCat", "  nc m
 MANUEL["curl"] = page("lire une page web en ligne de commande", "Client URL",
 	"  curl http://web/              la page d'accueil\n  curl http://web/robots.txt    un fichier précis\n  curl -I http://web/           seulement les en-têtes\n  curl -o page.html http://web/ enregistre dans un fichier");
 MANUEL["ufw"] = page("régler le pare-feu", "Uncomplicated FireWall",
-	"  sudo ufw status [numbered]       les règles\n  sudo ufw deny from 10.0.92.47    bloquer une adresse\n  sudo ufw allow 22                autoriser un port\n  sudo ufw enable                  activer le pare-feu\n  sudo ufw delete N                retirer la règle N");
+	"  sudo ufw status [numbered]       les règles\n  sudo ufw route deny from 10.0.92.47   empêcher une adresse de TRAVERSER le pare-feu\n  sudo ufw deny from 10.0.92.47    l'empêcher de joindre le pare-feu lui-même\n  sudo ufw allow 22                autoriser un port\n  sudo ufw enable                  activer le pare-feu\n  sudo ufw delete N                retirer la règle N");
 MANUEL["scp"] = page("copier un fichier vers ou depuis une autre machine", "Secure CoPy",
 	"  scp FICHIER sauvegarde:/preuves/      copie vers une machine\n  scp web:/var/log/access.log .         copie depuis une machine\n\nscp passe par ssh : mêmes comptes, mêmes clés.");
 MANUEL["ssh-copy-id"] = page("installer sa clé publique sur une machine", "SSH COPY IDentity",

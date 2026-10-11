@@ -75,7 +75,7 @@ Shell.sorts.lastlog = function(args, io){
 
 Shell.sorts.w = function(args, io){
 	var h = Shell.hote(), info = infoHote(h);
-	var sessions = [{ qui: JOUEUR, tty: "pts/0", depuis: "10.0.92.1", heure: "09:30", quoi: "w", idle: "0.00s" }];
+	var sessions = [{ qui: JOUEUR, tty: "pts/0", depuis: "10.0.92.1", heure: "09:12", quoi: "w", idle: "0.00s" }];
 	(typeof info.sessions === "function" ? info.sessions() : []).forEach(function(s){
 		sessions.push({ qui: s.qui, tty: s.tty, depuis: s.depuis.replace(/[()]/g, ""), heure: s.heure || "09:12", quoi: s.qui === "corbeau" ? "-bash" : "-", idle: "5:41m" });
 	});
@@ -126,7 +126,7 @@ Shell.sorts.chage = function(args, io){
 		shadow.setText(lignes.join("\n"));
 		GameEvents.fire({ type: "chage", host: h, qui: qui, expire: jours });
 		if (qui === "corbeau" && jours === "0" && h === "citadelle") queteCrypte("s_c_chage");
-		return io.tty ? C.vert(jours === "" ? "Le compte " + qui + " n'expire plus." : "Le compte " + qui + " a expiré le " + dateDesJours(jours) + " : il ne peut plus ouvrir de session.") : "";
+		return io.tty ? C.vert(jours === "" ? "Le compte " + qui + " n'expire plus." : "Le compte " + qui + " a expiré" + (jours === "0" ? " (au 1er janvier 1970, autant dire depuis toujours)" : "") + " : il ne peut plus ouvrir de session, même par clé SSH.") : "";
 	}
 	GameEvents.fire({ type: "chage", host: h, qui: qui, lecture: true });
 	return [["Last password change", champs[2] ? dateDesJours(champs[2]) : "never"], ["Password expires", champs[4] && champs[4] !== "99999" && champs[2] ? dateDesJours(+champs[2] + (+champs[4])) : "never"],
@@ -147,9 +147,9 @@ Shell.sorts["fail2ban-client"] = function(args, io){
 	GameEvents.fire({ type: "fail2ban", args: args });
 	if (!args.length || phrase === "status") return "Status\n|- Number of jail:\t1\n`- Jail list:\tsshd";
 	if (phrase === "status sshd"){
-		return "Status for the jail: sshd\n|- Filter\n|  |- Currently failed:\t0\n|  |- Total failed:\t7\n|  `- Journal matches:\t_SYSTEMD_UNIT=sshd.service\n" +
+		return "Status for the jail: sshd\n|- Filter\n|  |- Currently failed:\t0\n|  |- Total failed:\t0\n|  `- Journal matches:\t_SYSTEMD_UNIT=sshd.service\n" +
 			"`- Actions\n   |- Currently banned:\t" + c.bannis.length + "\n   |- Total banned:\t" + c.bannis.length + "\n   `- Banned IP list:\t" + c.bannis.join(" ") +
-			(io.tty && !c.bannis.length ? "\n" + C.gris("(Personne n'est banni : les sept échecs du labo sont restés sous le seuil, et le Corbeau est ensuite entré par clé.)") : "");
+			(io.tty && !c.bannis.length ? "\n" + C.gris("(Personne n'est banni : Evi n'a installé fail2ban que ce matin, après l'intrusion. Il n'a rien vu de la nuit ; les sept échecs, c'est lastb qui les garde. Désormais, cinq échecs en dix minutes valent un bannissement automatique.)") : "");
 	}
 	var m = /^set sshd (banip|unbanip) (\S+)$/.exec(phrase);
 	if (!m) throw new ShellError("fail2ban-client : utilisation ici : status, status sshd, set sshd banip ADRESSE, set sshd unbanip ADRESSE");
@@ -206,7 +206,7 @@ Shell.sorts.clamscan = function(args, io){
 		else if (!seulementInfectes && fichiers.length <= 15) lignes.push(f.chemin + ": OK");
 	});
 	if (!seulementInfectes && fichiers.length > 15 && io.tty) lignes.push(C.gris("(" + (fichiers.length - infectes) + " fichiers sains, non listés.)"));
-	lignes.push("", "----------- SCAN SUMMARY -----------", "Known viruses: 8697542", "Scanned directories: " + (recursif ? "plusieurs" : "1"),
+	lignes.push("", "----------- SCAN SUMMARY -----------", "Known viruses: 8697542", "Scanned directories: " + (cibles.length || 1),
 		"Scanned files: " + fichiers.length, "Infected files: " + infectes);
 	if (io.tty && !io.sudo && fichiers.some(function(f){ return f.item.mode && f.item.mode.charAt(6) !== "r"; })) lignes.push(C.gris("(Sans sudo, les fichiers fermés aux autres ne sont qu'effleurés : sudo clamscan -r renifle tout.)"));
 	if (io.tty && infectes) lignes.push(C.gris("(clamscan reconnaît, il ne soigne pas. Chaque charge trouvée doit être retirée à la main, et comprise.)"));
@@ -232,7 +232,7 @@ Shell.sorts.rkhunter = function(args, io){
 		ligne("Processus déguisés (faux kworker)", kworker), ligne("Port dérobé " + PORT_CORBEAU + "/tcp", kworker),
 		"", "Checking accounts and keys...", ligne("Comptes d'UID 0 autres que root", uid0), ligne("Clés SSH inconnues chez root", cle),
 		"", "System checks summary", "=====================", "Possible rootkits: " + (kworker || porte ? 1 : 0), "Warnings: " + (alertes + 1)];
-	if (io.tty) lignes.push(C.gris(alertes ? "(Chaque Warning est une porte que le Corbeau a laissée. /tmp/.cache restera signalé : c'est là que dorment ses notes, des preuves.)" :
+	if (io.tty) lignes.push(C.gris(alertes ? "(Chaque Warning est une porte que le Corbeau a laissée. /tmp/.cache restera signalé : c'est là que dorment ses notes, des preuves." + (gardien ? " Et gardien restera signalé tant qu'on ne l'aura pas réinstallé depuis son paquet d'origine : c'est le travail d'Evi, après l'enquête." : "") + ")" :
 		"(Plus une porte ouverte : il ne reste que /tmp/.cache, la cachette où dorment les preuves.)"));
 	GameEvents.fire({ type: "rkhunter", alertes: alertes });
 	queteCrypte("s_c_rkhunter");
@@ -261,13 +261,13 @@ Shell.sorts.exiftool = function(args, io){
 	var t = Shell.objetLisible(cible, io, "exiftool");
 	var item = t.item, nom = item.itemname;
 	function champ(c, v){ return completerDroite(c, 32) + ": " + v; }
-	var lignes = [champ("ExifTool Version Number", "12.57"), champ("File Name", nom), champ("File Size", Math.max(1, item.getText().length) + " bytes"),
+	var lignes = [champ("ExifTool Version Number", "12.57"), champ("File Name", nom), champ("File Size", item.format === "png" ? "1.2 MB" : Math.max(1, item.getText().length) + " bytes"),
 		champ("File Permissions", "-" + (item.mode || "rw-r--r--"))];
 	if (item.format === "png"){
 		lignes.push(champ("File Type", "PNG"), champ("MIME Type", "image/png"), champ("Image Size", "640x480"),
-			champ("Make", "Fujifilm"), champ("Camera Model Name", "X-T30"), champ("Artist", "BDE Cybersup"), champ("Create Date", "rentrée de septembre, 10:42"),
-			champ("GPS Latitude", "48 deg 53' 4.20\" N"), champ("GPS Longitude", "2 deg 14' 18.60\" E"), champ("GPS Position", "Puteaux, devant l'école"));
-		if (io.tty) lignes.push(C.gris("(Une photo garde souvent l'appareil, la date et l'endroit exact où elle a été prise. Avant de publier, on retire ces métadonnées : exiftool -all= FICHIER.)"));
+			champ("Make", "Appareil du BDE"), champ("Camera Model Name", "PhotoBox 3"), champ("Artist", "BDE Cybersup"), champ("Create Date", "2026:09:01 10:42:00"),
+			champ("GPS Latitude", "48 deg 53' 4.20\" N"), champ("GPS Longitude", "2 deg 14' 18.60\" E"), champ("GPS Position", "48 deg 53' 4.20\" N, 2 deg 14' 18.60\" E"));
+		if (io.tty) lignes.push(C.gris("(Ces coordonnées tombent à Puteaux, devant l'école. Une photo garde souvent l'appareil, la date et l'endroit exact où elle a été prise. Avant de publier, on retire ces métadonnées : exiftool -all= FICHIER.)"));
 		if (nom === "photo-promo.png") queteCrypte("s_c_exif");
 	} else if (item.gzip){
 		lignes.push(champ("File Type", "GZIP"), champ("File Type Extension", "gz"), champ("MIME Type", "application/x-gzip"), champ("Compression", "Deflated"),
@@ -367,3 +367,22 @@ MANUEL["setfacl"] = page("modifier les permissions cachées (ACL)", "SET File AC
 var SORTS_CHASSE = ["lastb", "lastlog", "w", "chage", "fail2ban-client", "clamscan", "rkhunter", "debsums", "exiftool", "getfacl", "setfacl"];
 ORDRE_DES_SORTS_2 = ORDRE_DES_SORTS_2.concat(SORTS_CHASSE);
 COMMANDES_REELLES = COMMANDES_REELLES.filter(function(c){ return SORTS_CHASSE.indexOf(c) === -1; });
+
+/* gpasswd : retirer quelqu'un d'un groupe, sur tous les Linux (usermod -rG n'existe que sur les plus récents). */
+Shell.sorts.gpasswd = function(args, io){
+	var mode = args[0], nom = args[1], groupe = args[2];
+	if ((mode !== "-d" && mode !== "-a") || !nom || !groupe) throw new ShellError("Utilisation : sudo gpasswd -d NOM GROUPE (retirer NOM du GROUPE), sudo gpasswd -a NOM GROUPE (l'ajouter)");
+	if (!io.sudo) throw new ShellError("gpasswd: Permission denied.\n" + C.gris("(sudo gpasswd " + args.join(" ") + ")"));
+	var fichierGroupes = fichierSysteme("group");
+	if (fichierGroupes && mode === "-d"){
+		var ligne = lignesDe(fichierGroupes.getText()).filter(function(l){ return l.split(":")[0] === groupe; })[0];
+		if (ligne && (ligne.split(":")[3] || "").split(",").indexOf(nom) === -1) throw new ShellError("gpasswd: user '" + nom + "' is not a member of '" + groupe + "'");
+	}
+	Shell.sorts.usermod([mode === "-d" ? "-rG" : "-aG", groupe, nom], io);
+	return (mode === "-d" ? "Removing user " + nom + " from group " : "Adding user " + nom + " to group ") + groupe;
+};
+MANUEL["gpasswd"] = page("ajouter ou retirer quelqu'un d'un groupe", "Group PASSWorD",
+	"  sudo gpasswd -d NOM GROUPE   retirer NOM du GROUPE\n  sudo gpasswd -a NOM GROUPE   l'ajouter\n\n" +
+	"Marche sur tous les Linux. Retirer quelqu'un du groupe sudo lui enlève le droit de devenir root par ce chemin-là.");
+ORDRE_DES_SORTS_2.push("gpasswd");
+COMMANDES_REELLES = COMMANDES_REELLES.filter(function(c){ return c !== "gpasswd"; });

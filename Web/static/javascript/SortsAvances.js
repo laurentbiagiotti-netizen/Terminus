@@ -301,7 +301,8 @@ Shell.sorts.date = function(args, io){
 	valeurs["F"] = valeurs["Y"] + "-" + valeurs["m"] + "-" + valeurs["d"];
 	valeurs["T"] = valeurs["H"] + ":" + valeurs["M"] + ":" + valeurs["S"];
 	if (args.length > 0){
-		if (args[0].charAt(0) !== "+") throw new ShellError("date : je ne règle pas l'horloge du monde. Pour choisir l'affichage : date +%H:%M  ou  date +%F");
+		if (args[0].charAt(0) !== "+") throw new ShellError("date : je ne règle pas l'horloge du monde. Pour choisir l'affichage : date +%H:%M  ou  date +%F" +
+			(Shell.hote() === "poste-b" ? "\n" + C.gris("(Sur le poste, c'est timedatectl qui règle l'horloge : vois la NoteDeVint, sur l'intranet.)") : ""));
 		return args.join(" ").substring(1).replace(/%(.)/g, function(tout, lettre){
 			return valeurs.hasOwnProperty(lettre) ? valeurs[lettre] : tout;
 		});
@@ -671,6 +672,7 @@ Shell.sorts.ping = function(args, io){
 	lignes.push("--- statistiques ping " + hote + " ---");
 	lignes.push(combien + " paquets transmis, " + (muet ? 0 : combien) + " reçus, " + (muet ? "100" : "0") + " % de paquets perdus");
 	if (muet && io.tty) lignes.push(C.gris("(Aucune réponse : la machine existe, mais quelque chose, un pare-feu sans doute, avale tes paquets.)"));
+	if (!p.opts.c && io.tty && !state.has("pingSansFinVu")){ state.set("pingSansFinVu"); lignes.push(C.gris("(Sur un vrai Linux, ping sans -c ne s'arrête jamais : Ctrl+C l'arrête. Ici, le jeu s'arrête tout seul après 3 paquets.)")); }
 	GameEvents.fire({ type: "ping", host: hote, ok: !muet, parAdresse: p.reste[0] === ip });
 	return lignes.join("\n");
 };

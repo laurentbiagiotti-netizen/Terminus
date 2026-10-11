@@ -156,8 +156,8 @@ var PasswdCitadelle = fichier(CitadelleEtc, "passwd",
 var ShadowCitadelle = fichier(CitadelleEtc, "shadow",
 	"root:$y$j9T$" + base64Aleatoire("sh-root", 20) + ":19950:0:99999:7:::\n" +
 	"laurent:$y$j9T$" + base64Aleatoire("sh-laurent", 20) + ":19950:0:99999:7:::\n" +
-	"corbeau:$y$j9T$" + base64Aleatoire("sh-corbeau", 20) + ":20371:0:99999:7:::\n" +
-	COMPTE_CACHE + ":$y$j9T$" + base64Aleatoire("sh-cache", 20) + ":20371:0:99999:7:::", { mode: "rw-r-----" });
+	"corbeau:$y$j9T$" + base64Aleatoire("sh-corbeau", 20) + ":20736:0:99999:7:::\n" +
+	COMPTE_CACHE + ":$y$j9T$" + base64Aleatoire("sh-cache", 20) + ":20736:0:99999:7:::", { mode: "rw-r-----" });
 var GroupCitadelle = fichier(CitadelleEtc, "group",
 	"root:x:0:\nsudo:x:27:laurent,corbeau\nadm:x:4:laurent\ncorbeau:x:1666:\nlaurent:x:1001:");
 var SudoersCitadelle = fichier(CitadelleEtc, "sudoers",
@@ -171,10 +171,10 @@ fichier(CitadelleEtc, "ProcedureComptes",
 	"1. Chercher les comptes qui ont l'UID 0 : ce sont tous des root.\n   awk -F: '$3 == 0 { print $1 }' /etc/passwd\n   Un seul doit sortir : root. Tout autre est un compte caché.\n" +
 	"2. Le supprimer : sudo userdel NOM\n" +
 	"3. Vérifier qui a le droit sudo : on peut l'avoir par le groupe sudo (groups NOM), ou par une ligne à son nom dans sudoers.\n" +
-	"4. Le retirer du groupe sudo : sudo usermod -rG sudo NOM\n" +
+	"4. Le retirer du groupe sudo : sudo gpasswd -d NOM sudo   (sur les systèmes récents, sudo usermod -rG sudo NOM marche aussi)\n" +
 	"5. Retirer sa ligne de sudoers : JAMAIS en éditant le fichier directement. sudo visudo, qui vérifie la syntaxe.\n   (visudo ouvre vim si tu le connais, nano sinon.) Ne touche pas aux lignes de root et du groupe sudo.\n\n" +
-	"Rappel : /etc/passwd liste les comptes (nom:x:UID:GID:...), /etc/shadow leurs mots de passe chiffrés,\n/etc/group les groupes, /etc/sudoers qui peut devenir root.",
-	{ enseigne: ["userdel", "usermod", "visudo", "groups", "awk"], image: "item_manuscript.gif" });
+	"Rappel : /etc/passwd liste les comptes (nom:x:UID:GID:...), /etc/shadow les empreintes de leurs mots de passe (hachées, pas chiffrées),\n/etc/group les groupes, /etc/sudoers qui peut devenir root.",
+	{ enseigne: ["userdel", "usermod", "gpasswd", "visudo", "groups", "awk"], image: "item_manuscript.gif" });
 
 function journalAuth(lignes){ return lignes.join("\n") + "\n"; }
 var AuthLog2 = fichier(CitadelleLog, "auth.log.2.gz", "", {
@@ -208,8 +208,9 @@ var NotesCorbeau = fichier(CacheCorbeau, "notes.gpg", texteArmure("notes-corbeau
 	owner: "corbeau", mode: "rw-r--r--", age: 0, heure: HEURE_PREMIERE, image: "item_locker.gif",
 	gpg: { phrase: PHRASE_CORBEAU, armure: texteArmure("notes-corbeau"), clair:
 		"CARNET DU CORBEAU\n\n" +
-		"- Entrée par le labo : la clé SSH d'un compte de TP traînait dans un dossier partagé.\n" +
-		"- De là, la Citadelle. Un compte de secours, " + COMPTE_CACHE + ", avec l'UID 0. Au cas où.\n" +
+		"- Entrée par le labo : un mail piégé pour les comptes de TP, puis la clé SSH d'un compte de TP qui traînait dans un dossier partagé.\n" +
+		"- La Citadelle : quelques mots de passe essayés au hasard depuis le labo, pour voir. Puis la bonne clé.\n" +
+		"- Un compte de secours, " + COMPTE_CACHE + ", avec l'UID 0. Au cas où.\n" +
 		"- Une porte SUID dans le Caveau, un faux kworker sur le port " + PORT_CORBEAU + ".\n" +
 		"- Une page déposée sur le site web, un faux enregistrement DNS, un service qui se relance tout seul sur le labo.\n" +
 		"- Mon poste : " + ADRESSE_POSTE_CORBEAU + ".\n\n" +
@@ -288,7 +289,8 @@ fichier(Mail, "AideMemoireMail",
 	"- Une pièce jointe voyage encodée en base64 dans le message. Pour l'extraire : sed -n pour garder les bonnes lignes, puis base64 -d.\n" +
 	"- file dit ce qu'est vraiment un fichier, quel que soit son nom. xxd montre ses premiers octets.\n" +
 	"- awk découpe les journaux en colonnes : awk '{ print $3 }' mail.log\n" +
-	"- nc MACHINE PORT ouvre une connexion brute et affiche la bannière du service : nc mail 25",
+	"- nc MACHINE PORT ouvre une connexion brute et affiche la bannière du service : nc mail 25\n" +
+	"- Garder les lignes entre deux repères : sed -n '/^--- pièce jointe/,/^--- fin/p' FICHIER",
 	{ enseigne: ["file", "xxd", "awk", "nc"], image: "item_sign.gif" });
 var PIECE_JOINTE = "#!/bin/sh\n# charge du Corbeau (neutralisée pour le jeu)\n# Ouverte, elle aurait installé un accès sur le labo de TP.\necho \"Ceci était un piège. Ne lancez jamais une pièce jointe .sh\"\n";
 fichier(MailSpool, "message-0042.eml",
@@ -349,7 +351,7 @@ fichier(Labo, "TableauDuLabo",
 	"who            qui est connecté en ce moment, et d'où\nlast           qui s'est connecté avant\n" +
 	"pgrep / pkill  trouver et arrêter des processus par leur nom (sudo pkill -u NOM : tous ceux d'un utilisateur)\n" +
 	"systemctl      les services : status, stop, disable --now\n" +
-	"usermod -L     verrouiller un compte\ngroups NOM     les groupes d'un compte\n" +
+	"usermod -L     bloquer le mot de passe d'un compte (attention : ses clés SSH marchent encore)\ngroups NOM     les groupes d'un compte\n" +
 	"ssh-copy-id    installer sa clé publique sur une machine\n\nEt en bas, d'une autre écriture : « Les leçons de vim sont dans /home/etudiant/vimtuteur. »",
 	{ enseigne: ["who", "last", "systemctl", "pgrep", "pkill", "usermod", "groups", "ssh-copy-id"], image: "item_sign.gif" });
 fichier(LaboLog, "syslog",
@@ -422,8 +424,13 @@ var ParefeuVar = dossier(Parefeu, "var", "Les données du pare-feu.");
 var ParefeuLog = dossier(ParefeuVar, "log", "Les journaux du pare-feu.", { image: "loc_library.gif" });
 fichier(ParefeuEtc, "hostname", "parefeu");
 fichier(Parefeu, "ConsignesParefeu",
-	"CONSIGNES DU PARE-FEU\n\nsudo ufw status numbered      les règles, numérotées\nsudo ufw deny from ADRESSE    bloquer une machine\n" +
-	"sudo ufw enable               activer le pare-feu (sans ça, les règles ne servent à rien)\nsudo ufw delete N             retirer la règle N\n\n" +
+	"CONSIGNES DU PARE-FEU\n\n" +
+	"Ce pare-feu est posé entre les postes de travail et les serveurs (la Citadelle, 10.0.66.61). Tout ce qui va de l'un à l'autre le TRAVERSE.\n\n" +
+	"  sudo ufw status numbered\n      les règles, numérotées\n" +
+	"  sudo ufw route deny from ADRESSE\n      empêcher une machine de traverser le pare-feu (règle FWD)\n" +
+	"  sudo ufw deny from ADRESSE\n      l'empêcher de joindre le pare-feu LUI-MÊME seulement (règle IN)\n" +
+	"  sudo ufw enable\n      activer le pare-feu (sans ça, les règles ne servent à rien)\n" +
+	"  sudo ufw delete N\n      retirer la règle N\n\n" +
 	"traceroute MACHINE montre que tout passe par ici.", { enseigne: ["ufw", "traceroute"], image: "item_sign.gif" });
 var ParefeuUfwLog = fichier(ParefeuLog, "ufw.log", "(vide : le pare-feu est désactivé depuis une mise à jour, la semaine dernière. Oups.)", { image: "item_manuscript.gif" });
 
@@ -515,7 +522,7 @@ decrireHote("sauvegarde", { ip: "10.0.92.200", arrivee: function(){ return Sauve
 		var pub = dossierCle !== -1 ? dossierCle.getItemFromName("id_ed25519.pub") : -1;
 		if (pub === -1 || state.reseau.cles["sauvegarde"] !== pub.getText()){
 			return JOUEUR + "@sauvegarde : Permission denied (publickey).\n" +
-				C.gris("(Le serveur de sauvegarde n'accepte que les clés. Fabrique ta paire avec ssh-keygen si ce n'est pas fait, puis installe-la : ssh-copy-id sauvegarde)");
+				C.gris("(Le serveur de sauvegarde n'accepte que les clés, sauf une première fois, le temps d'installer la tienne avec le mot de passe de ton compte. Fabrique ta paire avec ssh-keygen si ce n'est pas fait, puis installe-la : ssh-copy-id sauvegarde)");
 		}
 		return null;
 	}),
@@ -594,7 +601,7 @@ var MementoReseau = new Item("MementoReseau",
 	"item_sign.gif").enseigne("ip", "nmap", "uname", "which", "dmesg").revele("s_c_uname", "s_c_banniere", "s_c_dig_inverse");
 var ProcedurePreuves = new Item("ProcedurePreuves",
 	"PROCÉDURE : METTRE LES PREUVES À L'ABRI (fiche d'Evi)\n\n" +
-	"1. Le serveur de sauvegarde n'accepte que les clés. Une paire : ssh-keygen. L'installer : ssh-copy-id sauvegarde\n" +
+	"1. Le serveur de sauvegarde n'accepte que les clés, sauf une première fois, le temps d'installer la tienne :\n   une paire avec ssh-keygen, puis ssh-copy-id sauvegarde (il demande une seule fois ton mot de passe).\n" +
 	"2. Copier la preuve sans la modifier : scp FICHIER sauvegarde:/preuves/\n" +
 	"3. Sur la sauvegarde (ssh sauvegarde, cd /preuves), noter son empreinte dans le registre, en la gardant à l'écran :\n" +
 	"   sha256sum FICHIER | tee -a registre.txt\n\n" +
@@ -737,13 +744,13 @@ INDICES_CHAPITRE2.c_dns = [
 	"ssh dns, sudo vim /etc/bind/ecole.zone, place-toi sur la ligne maj, dd, puis :wq"];
 INDICES_CHAPITRE2.c_parefeu = [
 	"Le pare-feu est désactivé. Il faut bloquer l'adresse du POSTE du Corbeau, celle d'où venait sa session sur le labo (who), et activer le pare-feu. Pas l'adresse du labo : le labo est une machine de l'école qu'il a seulement traversée.",
-	"ssh parefeu, sudo ufw deny from " + ADRESSE_POSTE_CORBEAU + ", puis sudo ufw enable"];
+	"ssh parefeu, sudo ufw route deny from " + ADRESSE_POSTE_CORBEAU + ", puis sudo ufw enable"];
 INDICES_CHAPITRE2.c_compte = [
 	"Un compte d'UID 0 est un root. awk -F: '$3 == 0' /etc/passwd les liste tous.",
 	"ssh citadelle, cd etc, awk -F: '$3 == 0 { print $1 }' passwd, puis sudo userdel " + COMPTE_CACHE];
 INDICES_CHAPITRE2.c_sudo = [
-	"Une ligne commence par corbeau dans /etc/sudoers (sudo visudo l'ouvre), et groups corbeau montre qu'il est aussi dans le groupe sudo : usermod -rG retire quelqu'un d'un groupe.",
-	"Sur la Citadelle : sudo usermod -rG sudo corbeau, puis sudo visudo, place-toi sur la ligne corbeau, supprime-la (dd dans vim, Ctrl+K dans nano), et enregistre (:wq)"];
+	"Une ligne commence par corbeau dans /etc/sudoers (sudo visudo l'ouvre), et groups corbeau montre qu'il est aussi dans le groupe sudo : gpasswd -d retire quelqu'un d'un groupe.",
+	"Sur la Citadelle : sudo gpasswd -d corbeau sudo, puis sudo visudo, place-toi sur la ligne corbeau, supprime-la (dd dans vim, Ctrl+K dans nano), et enregistre (:wq)"];
 INDICES_CHAPITRE2.c_cle = [
 	"Le fichier est .ssh/authorized_keys, dans la Racine. Il appartient à root : sudo nano. La ligne à retirer finit par corbeau@nid.",
 	"Dans la Racine : sudo nano .ssh/authorized_keys, place le curseur sur la ligne corbeau@nid, Ctrl+K, puis Ctrl+X et O pour enregistrer."];
@@ -772,7 +779,7 @@ function texteRadioReseau(){
 	if (!q["c_ecoute"]) return null;
 	var etape = (typeof QUETES_CHAPITRE2 !== "undefined") ? QUETES_CHAPITRE2.filter(function(x){ return !q[x.id]; })[0] : null;
 	var debut = "La radio grésille. « ";
-	if (!etape) return debut + "Grace, terminé. Ton rapport est sur le bureau de Laurent, Frances commence en B1 à la rentrée, et le SOC est enfin calme. Beau boulot. »";
+	if (!etape) return debut + "Grace, terminé. Ton rapport est sur le bureau de Laurent, Frances commence en B1 dès lundi, et le SOC est enfin calme. Beau boulot. »";
 	switch (etape.id){
 		case "c_journaux": return debut + "L'écoute est coupée. Maintenant, il faut savoir par où il est entré. Les journaux de la Citadelle sont dans var/log, et les vieux sont compressés. Cherche sa première connexion. »";
 		case "c_carto": return debut + "Il venait de " + IP_LABO + ". Ce n'est pas la Citadelle, c'est une autre machine de l'école. Vint a laissé un MementoReseau dans la SalleReseau : découvre le réseau. »";
@@ -804,27 +811,6 @@ function verifierReseau(){
 	if (!Crypte.hasItem(TrousseDEvi)) Crypte.addItem(TrousseDEvi);
 	if (!Crypte.hasItem(Bestiaire)) Crypte.addItem(Bestiaire);
 
-/* Le bestiaire de la chasse : chaque image du chapitre et le vrai mot du métier, pour qui débute. */
-var Bestiaire = new Item("Bestiaire",
-	"LE BESTIAIRE DE LA CHASSE (un vieux livre relié, ouvert sur la table de la radio)\n" +
-	"À gauche l'image de la chasse, à droite le vrai mot du métier. Retiens les deux.\n\n" +
-	"Le Corbeau              L'attaquant : quelqu'un entré sans y être invité.\n" +
-	"Son nid                 Le poste d'où il attaque (son adresse IP).\n" +
-	"Une porte dérobée       Une backdoor : un accès caché qu'il s'est laissé pour revenir.\n" +
-	"Le bit qui ouvre tout   Le bit SUID : un programme qui s'exécute avec les droits de son propriétaire, root compris.\n" +
-	"Le faux roi             Un compte d'UID 0 : un second root, sous un autre nom.\n" +
-	"Le faux veilleur        Un processus déguisé (faux kworker) qui écoute sur un port.\n" +
-	"Le rouage qui revient   La persistance : un service qui relance l'accès tout seul (Restart=always).\n" +
-	"L'hameçon               Le phishing : un mail piégé qui pousse à ouvrir une pièce jointe.\n" +
-	"Le masque de la vitrine Un webshell : une page déposée sur le site pour y lancer des commandes.\n" +
-	"La boussole faussée     Un faux enregistrement DNS qui envoie tout le monde chez l'attaquant.\n" +
-	"La clé du nid           Sa clé SSH dans authorized_keys : une entrée sans mot de passe.\n" +
-	"Le sceau d'empreinte    Le hash (SHA-256) : l'empreinte unique d'un fichier.\n" +
-	"Le reliquaire           La chaîne de traçabilité : des preuves copiées intactes, avec leur empreinte.\n" +
-	"Le tableau de chasse    La liste des machines touchées, et leur état (tape traque).\n\n" +
-	"Règle de la chasse : on ne traque que sur un réseau dont on a la charge. Ici, la mission t'y autorise.",
-	"item_historybook.gif");
-Crypte.addItem(Bestiaire);
 	if (!CitadelleLog.hasItem(CarnetDeTraque)) CitadelleLog.addItem(CarnetDeTraque);
 	function une(nom, condition){ if (!state.has(nom) && condition) state.applyState(nom); }
 	une("reseauOuvert", true);
@@ -848,14 +834,24 @@ Crypte.addItem(Bestiaire);
 			". Plus personne ne trouve ces machines par leur nom ! Remets-les (par exemple : " + manquantes[0][0] + " IN A " + manquantes[0][1] + "), et ne retire que la ligne maj. »");
 	}
 	var pf = state.reseau.parefeu;
+	// Les anciennes sauvegardes ont bloqué le poste avec « ufw deny from » : la règle devient une règle de passage.
+	if (state.quests["c_parefeu"] && !state.has("ufwRouteMigre")){
+		state.set("ufwRouteMigre");
+		pf.regles.forEach(function(r){ if (adresseDansPlage(r.de, ADRESSE_POSTE_CORBEAU) && (r.action === "deny" || r.action === "reject")) r.route = true; });
+	}
 	if (posteBloque()) state.complete("c_parefeu");
+	else if (pf.actif && !state.has("ufwInSignale") && pf.regles.some(function(r){ return !r.route && (r.action === "deny" || r.action === "reject") && r.de !== "Anywhere" && adresseDansPlage(r.de, ADRESSE_POSTE_CORBEAU); })){
+		state.set("ufwInSignale");
+		say("La radio grésille. C'est Grace : « Ta règle empêche le poste de joindre le pare-feu lui-même, mais pas de le TRAVERSER pour atteindre la Citadelle. " +
+			"Pour le trafic qui passe à travers : sudo ufw route deny from " + ADRESSE_POSTE_CORBEAU + ". »");
+	}
 	else if (state.quests["c_parefeu"] && !state.has("parefeuRouvert")){
 		state.set("parefeuRouvert");
 		say("La radio grésille. C'est Grace : « Mes sondes revoient passer le poste " + ADRESSE_POSTE_CORBEAU + " : le pare-feu ne le bloque plus ! sudo ufw status numbered sur parefeu. »");
 	}
 	if (posteBloque()) delete state.flags["parefeuRouvert"];
 	ParefeuUfwLog.setText(pf.actif ?
-		"[UFW BLOCK] IN=eth0 SRC=" + (posteBloque() ? ADRESSE_POSTE_CORBEAU + " DST=10.0.92.53 PROTO=TCP DPT=22 (bloqué)" : "(rien de bloqué pour l'instant)") :
+		"[UFW BLOCK] IN=eth0 OUT=eth1 SRC=" + (posteBloque() ? ADRESSE_POSTE_CORBEAU + " DST=10.0.66.61 PROTO=TCP DPT=22 (vers la Citadelle, bloqué)" : "(rien de bloqué pour l'instant)") :
 		"(vide : le pare-feu est désactivé depuis une mise à jour, la semaine dernière. Oups.)");
 	ParefeuUfwLog.modifie = false;
 	if (!/^maintenance:/m.test(PasswdCitadelle.getText())){
@@ -933,7 +929,7 @@ function posteBloque(){
 	if (!pf.actif) return false;
 	for (var i = 0; i < pf.regles.length; i++){
 		var r = pf.regles[i];
-		if ((r.vers || "Anywhere") !== "Anywhere" || !adresseDansPlage(r.de, ADRESSE_POSTE_CORBEAU)) continue;
+		if (!r.route || (r.vers || "Anywhere") !== "Anywhere" || !adresseDansPlage(r.de, ADRESSE_POSTE_CORBEAU)) continue;
 		return r.action === "deny" || r.action === "reject";
 	}
 	return false;
@@ -1097,7 +1093,7 @@ var CarnetDeTraque = fichier(CitadelleLog, "CarnetDeTraque",
 	"  sudo lastb                     le Registre des Échecs : les connexions RATÉES (mot de passe faux, compte inconnu)\n" +
 	"  lastlog                        le Livre des Dernières Venues : la dernière connexion de chaque compte\n" +
 	"  w                              l'Œil du Veilleur : qui est connecté en ce moment, et ce qu'il fait\n" +
-	"  sudo chage -l NOM              le Sablier des Comptes : l'âge du mot de passe, la date d'expiration du compte\n" +
+	"  sudo chage -l NOM              le Couperet des Comptes : l'âge du mot de passe, la date d'expiration du compte\n" +
 	"  sudo chage -E 0 NOM            faire expirer un compte tout de suite (il ne pourra plus se connecter)\n" +
 	"  sudo fail2ban-client status sshd             le Gardien des Portes : qui est banni de ssh\n" +
 	"  sudo fail2ban-client set sshd banip ADRESSE  bannir une adresse\n\n" +
@@ -1109,7 +1105,7 @@ var TrousseDEvi = new Item("TrousseDEvi",
 	"Mes outils d'analyse. Ils ne réparent rien : ils DÉBUSQUENT.\n\n" +
 	"  sudo clamscan -r DOSSIER       le Chien de Chasse : renifle chaque fichier et reconnaît les charges connues\n" +
 	"  sudo rkhunter --check          le Chasseur de Rootkits : passe la Citadelle au peigne fin (comptes, SUID, fichiers cachés, ports)\n" +
-	"  debsums -c                     le Registre des Sceaux d'origine : les programmes qui ne sont plus tels qu'installés\n" +
+	"  debsums -c                     le Témoin d'Origine : les programmes qui ne sont plus tels qu'installés\n" +
 	"  exiftool FICHIER               l'Œil du Faussaire : ce qu'une photo raconte d'elle-même (appareil, date, lieu)\n" +
 	"  getfacl CHEMIN                 la Loupe des Droits cachés : les permissions en plus des droits classiques (ACL)\n" +
 	"  sudo setfacl -x u:NOM CHEMIN   retirer une permission cachée\n\n" +
@@ -1117,6 +1113,28 @@ var TrousseDEvi = new Item("TrousseDEvi",
 	"item_box.gif").enseigne("clamscan", "rkhunter", "debsums", "exiftool", "getfacl", "setfacl")
 	.revele("s_c_clamscan", "s_c_rkhunter", "s_c_debsums", "s_c_exif", "s_c_acl", "s_c_setfacl");
 Crypte.addItem(TrousseDEvi);
+
+/* Le bestiaire de la chasse : chaque image du chapitre et le vrai mot du métier, pour qui débute. */
+var Bestiaire = new Item("Bestiaire",
+	"LE BESTIAIRE DE LA CHASSE (un vieux livre relié, ouvert sur la table de la radio)\n" +
+	"À gauche l'image de la chasse, à droite le vrai mot du métier. Retiens les deux.\n\n" +
+	"Le Corbeau              L'attaquant : quelqu'un entré sans y être invité.\n" +
+	"Son nid                 Le poste d'où il attaque (son adresse IP).\n" +
+	"Une porte dérobée       Une backdoor : un accès caché qu'il s'est laissé pour revenir.\n" +
+	"Le bit qui ouvre tout   Le bit SUID : un programme qui s'exécute avec les droits de son propriétaire, root compris.\n" +
+	"Le faux roi             Un compte d'UID 0 : un second root, sous un autre nom.\n" +
+	"Le faux veilleur        Un processus déguisé (faux kworker) qui écoute sur un port.\n" +
+	"Le rouage qui revient   La persistance : un service qui relance l'accès tout seul (Restart=always).\n" +
+	"L'hameçon               Le phishing : un mail piégé qui pousse à ouvrir une pièce jointe.\n" +
+	"Le masque de la vitrine Un webshell : une page déposée sur le site pour y lancer des commandes.\n" +
+	"La boussole faussée     Un faux enregistrement DNS qui envoie tout le monde chez l'attaquant.\n" +
+	"La clé du nid           Sa clé SSH dans authorized_keys : une entrée sans mot de passe.\n" +
+	"L'empreinte            Le hash (SHA-256) : l'empreinte unique d'un fichier.\n" +
+	"Le reliquaire           La chaîne de traçabilité : des preuves copiées intactes, avec leur empreinte.\n" +
+	"Le tableau de chasse    La liste des machines touchées, et leur état (tape traque).\n\n" +
+	"Règle de la chasse : on ne traque que sur un réseau dont on a la charge. Ici, la mission t'y autorise.",
+	"item_historybook.gif");
+Crypte.addItem(Bestiaire);
 
 QUETES_SECONDAIRES_2.splice(QUETES_SECONDAIRES_2.indexOf(QUETES_SECONDAIRES_2.filter(function(q){ return q.id === "s_v_quitter"; })[0]), 0,
 	{ id: "s_c_lastb", titre: "Compter les connexions ratées sur la Citadelle avec lastb" },

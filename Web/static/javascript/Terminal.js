@@ -52,6 +52,30 @@ function ansiVersHTML(texte){
 	return html;
 }
 
+/*
+ * Le texte d'un bloc, ligne par ligne. Une ligne longue qui passe à la ligne garde son alignement :
+ * la suite repart sous la deuxième colonne (« commande      explication »), ou sous le retrait de la ligne.
+ * Les couleurs ouvertes sur une ligne continuent sur les suivantes.
+ */
+function htmlEnLignes(texte){
+	var lignes = texte.split("\n"), html = "", actifs = "";
+	for (var i = 0; i < lignes.length; i++){
+		var ligne = lignes[i];
+		var brut = ligne.replace(/\x1b\[[0-9;]*m/g, "");
+		var retrait = 0;
+		if (brut.length > 40){
+			var col = /^(\s*\S(?:.*?\S)?\s{2,})\S/.exec(brut);
+			if (col && col[1].length <= 40) retrait = col[1].length;
+			else retrait = Math.min(brut.length - brut.replace(/^\s+/, "").length, 40);
+		}
+		var contenu = ansiVersHTML(actifs + ligne);
+		html += "<span class=\"lig" + (retrait > 1 ? " p" + retrait : "") + "\">" + (contenu || "\u00a0") + "</span>";
+		var codes = ligne.match(/\x1b\[[0-9;]*m/g);
+		if (codes) codes.forEach(function(c){ actifs = (c === "\x1b[0m" || c === "\x1b[m") ? "" : actifs + c; });
+	}
+	return html;
+}
+
 function Terminal(elements){
 	this.sortie = elements.sortie;
 	this.saisie = elements.saisie;
@@ -276,7 +300,7 @@ Terminal.prototype.echo = function(texte){
 		if (GENRES_DE_BLOC[g][2] && this.onEvenement) this.onEvenement(GENRES_DE_BLOC[g][2], brut);
 		break;
 	}
-	bloc.innerHTML = ansiVersHTML(String(texte)) || "&nbsp;";
+	bloc.innerHTML = htmlEnLignes(String(texte)) || "&nbsp;";
 	this.sortie.appendChild(bloc);
 	this.defiler();
 };

@@ -399,8 +399,8 @@ Shell.sorts.ss = function(args, io){
 		if (opts.a) return true;
 		return opts.l ? p.etat === "LISTEN" : p.etat === "ESTAB";
 	});
-	var lignes = [completerDroite("État", 8) + completerDroite("Recv-Q", 8) + completerDroite("Send-Q", 8) +
-		completerDroite("Adresse locale:Port", 24) + completerDroite("Adresse distante:Port", 24) + (opts.p ? "Processus" : "")];
+	var lignes = [completerDroite("State", 8) + completerDroite("Recv-Q", 8) + completerDroite("Send-Q", 8) +
+		completerDroite("Local Address:Port", 24) + completerDroite("Peer Address:Port", 24) + (opts.p ? "Process" : "")];
 	var cachees = 0;
 	for (var j = 0; j < prises.length; j++){
 		var p = prises[j];
@@ -534,7 +534,7 @@ Ici, rien ne se perd. Pour chaque programme du dossier bin, j'ai noté son EMPRE
 C'est comme ça qu'on repère un fichier trafiqué.\n\n\
 Va dans bin, et demande à sha256sum de vérifier toute la liste d'un coup : sha256sum -c SHA256SUMS. \
 Les programmes intacts répondent OK. Celui qui a été retouché, s'il y en a un, répondra ÉCHEC.\n\n\
-Et si tu tombes sur du charabia qui finit par un ou deux signes =, ce n'est pas du chiffrement : c'est du base64, \
+Et si tu tombes sur du charabia de lettres, de chiffres, de + et de /, qui finit parfois par un ou deux signes =, ce n'est pas du chiffrement : c'est du base64, \
 un simple emballage. base64 -d le déballe. Pour t'entraîner, emballe donc ton prénom : echo TonPrénom | base64. »",
 	"item_archiviste.gif").personnage().enseigne("sha256sum", "base64").revele("s_c_base64");
 Crypte.addItem(Whitfield);
@@ -641,7 +641,7 @@ la numéro 2. 2>/dev/null les envoie dans le trou noir du système ; 2>~/erreurs
 Caveau.addItem(Inscription);
 Caveau.addItem(new Item("Lanterne", "Une lanterne froide. Personne ne l'a allumée depuis longtemps.", "item_trinket.gif").droits("rw-r--r--", "root"));
 Caveau.addItem(new Item("Coffret", "Un coffret vide. Quelqu'un a gratté le mot « croa » sur le couvercle.", "item_box.gif").droits("rw-r--r--", "root"));
-var PorteDerobee = programmeBinaire(".porte", "binaire-porte", "rwsr-xr-x", "La porte pivote sans un bruit.");
+var PorteDerobee = programmeBinaire(".porte", "binaire-porte", "rwsr-xr-x", "");
 PorteDerobee.picturename = "./static/img/item_portal.gif";
 /* La .porte n'apparaît dans le Caveau qu'une fois le programme trafiqué repéré ET le message décodé (voir verifierChapitre2). */
 
@@ -717,7 +717,7 @@ Si tu me déposes ta clé PRIVÉE, je la détruis, et tu en refais une. Sans dis
 	"item_sign.gif").enseigne("ssh-keygen");
 
 var Coffre = lieuDuChapitre2(new Room("Coffre",
-	"Le coffre de l'école : la machine où dorment les sujets d'examen et les notes. Il n'y a qu'une chaise, et elle est occupée.",
+	"Le coffre de l'école : la machine où dorment les sujets d'examen et les notes. Il n'y a qu'une chaise, vide pour l'instant.",
 	"loc_warroom.gif"));
 Coffre.removeCommand("cd");
 Coffre.addCmdText("cd", "Le coffre n'a pas de porte : on n'y entre que par le réseau, avec une clé. ssh coffre");
@@ -734,7 +734,7 @@ Tout ce qu'un vrai attaquant aurait fait. Je n'ai rien cassé, promis. Je voulai
 Je sais, je sais : la bonne méthode, c'était d'aller voir Laurent et de lui dire « votre Citadelle a un trou ». \
 Ça s'appelle la divulgation responsable, et c'est ce qui sépare les gentils des autres. \
 Tu crois qu'il va me renvoyer ? »\n\n\
-La radio grésille dans ta poche. C'est Laurent : « Frances, tu commences en B1 à la rentrée. Et tu m'aideras à tout remettre d'aplomb. \
+La radio grésille dans ta poche. C'est Laurent : « Frances, tu commences en B1 dès lundi. Et tu m'aideras à tout remettre d'aplomb. \
 Toi, la recrue : il me reste une chose à te demander, la plus importante dans notre métier. Le rapport d'incident. \
 Le modèle t'attend dans ta Maison : copie-le (cp ~/ModeleRapport ~/rapport.txt), remplis-le avec vim (vim ~/rapport.txt), \
 et ton certificat t'attendra à côté. »",
@@ -799,7 +799,7 @@ Evi peut t'ouvrir le coffre, où tout converge : ses ConsignesDuCoffre sont dans
 	if (state.quests["c_ecoute"]) return "La radio grésille. « Le trafic s'est arrêté ! Mais il reviendra tant que sa clé est dans les clés autorisées de root. \
 Elle est dans le dossier caché de la Racine. Evi a laissé un ManuelDeNano par là. »";
 	if (state.quests["c_racine"]) return "La radio grésille. « Tu es dans la Racine ? Mes sondes voient une connexion établie vers la Citadelle, sur le port " + PORT_CORBEAU + ". \
-Personne n'utilise ce port. Trouve quel processus l'écoute : ss -tlnp, avec sudo pour voir les processus de root. Je t'apprends le sort. »";
+Personne n'utilise ce port. Trouve quel processus l'écoute : ss -tlnp, avec sudo pour voir les processus de root. Je t'apprends le sort. (Repasse lire la Radio, dans la Crypte : less ../../Radio.) »";
 	return Radio.cmd_text["less"];
 }
 
@@ -947,6 +947,7 @@ GameEvents.addListener("stderr", function(e){
 });
 
 GameEvents.addListener("script", function(e){
+	if (e.item === PorteDerobee && e.direct && state.has("porteOuverte") && PorteDerobee.mode.charAt(2) === "s") say("La porte pivote sans un bruit.");
 	if (e.item === PorteDerobee && e.direct && !state.has("porteOuverte")){
 		if (!state.quests["c_suid"]){
 			say("La .porte refuse de bouger. Des lettres apparaissent sur le bois : « Prouve que tu sais trouver les portes comme moi : find . -perm -4000 »");
@@ -957,6 +958,7 @@ GameEvents.addListener("script", function(e){
 			return;
 		}
 		state.set("porteOuverte");
+		say("La porte pivote sans un bruit.");
 		say("Pendant une fraction de seconde, tu es root. Un escalier apparaît derrière la .porte : il descend vers la Racine.");
 	}
 });
@@ -1062,7 +1064,7 @@ function sauterChapitre1(){
 /* Le texte de Laurent quand le joueur arrive en renfort pour la Crypte, sans avoir passé l'épreuve de première année. */
 var TEXTE_LAURENT_RENFORT =
 	"« Ah, te voilà, le renfort. Je suis Laurent, directeur pédagogique de Cybersup. Ne fais pas attention à la cape noire \
-posée sur la chaise : ce matin, je jouais le Sorcier Noir pour l'épreuve pratique des première année. Ils ont traversé tout Terminus \
+posée sur la chaise : ce matin, je jouais le Sorcier Noir pour l'épreuve pratique des B1. Ils ont traversé tout Terminus \
 avec un simple terminal, et ils m'ont battu. Le monde est resté ouvert : si tu veux revoir les sorts de base, ses habitants sont toujours là.\n\n\
 Le problème, c'est ce que Grace a vu pendant la correction : du trafic sous la Citadelle, sur un port que personne n'utilise. \
 Quelqu'un est vraiment entré pendant l'examen, et ça, ce n'était pas au programme. Personne ici ne sait encore qui, ni comment.\n\n\
@@ -1072,7 +1074,7 @@ Ton compte a les droits sudo pour la mission. Une seule règle : avec sudo, on r
 /* Le même, pour le renfort réseau : la Crypte ne s'ouvrira qu'une fois le réseau réparé. */
 var TEXTE_LAURENT_RENFORT_PANNE =
 	"« Ah, te voilà, le renfort réseau. Je suis Laurent, directeur pédagogique de Cybersup. Ne fais pas attention à la cape noire \
-posée sur la chaise : ce matin, je jouais le Sorcier Noir pour l'épreuve pratique des première année. Ils ont traversé tout Terminus \
+posée sur la chaise : ce matin, je jouais le Sorcier Noir pour l'épreuve pratique des B1. Ils ont traversé tout Terminus \
 avec un simple terminal, et ils m'ont battu.\n\n\
 Pendant ce temps, le réseau de l'école est tombé, et Vint est en vacances. Radia t'attend au BatimentB de Cybersup : \
 c'est là-bas que ça se passe, pas ici. Et s'il te reste de l'énergie ensuite, Grace a quelque chose à te montrer sous cette Citadelle. »";
@@ -1115,7 +1117,7 @@ var OrdreDeMission = new Item("OrdreDeMission",
 function adapterAuRenfort(){
 	Laurent.addCmdText("less", TEXTE_LAURENT_RENFORT);
 	CheffeDeQuart.addCmdText("less", "« Le renfort ! Parfait, merci d'être venu si vite. Je te résume.\n\n\
-Ce matin, les première année ont passé leur épreuve pratique dans Terminus, le monde d'entraînement de l'école. \
+Ce matin, les B1 ont passé leur épreuve pratique dans Terminus, le monde d'entraînement de l'école. \
 Le méchant de l'épreuve, le Sorcier Noir, c'était Laurent, notre directeur pédagogique, et ils l'ont battu. \
 Pendant ce temps, mes M2 faisaient un exercice de crise ici. Tout était prévu, tout était sous contrôle.\n\n\
 Sauf ça : depuis la correction, mes sondes voient du trafic sous la Citadelle, la machine de l'épreuve, sur un port que personne n'utilise. \
@@ -1126,7 +1128,7 @@ et moi je te suivrai à la radio. Ton compte a les droits sudo pour la mission. 
 	// Le renfort n'a pas joué l'épreuve : la révélation du Corbeau doit se comprendre sans elle.
 	var texteCorbeau = Corbeau.getText()
 		.replace("Tu la connais : c'est l'enfant de la cage ! Enfin, la stagiaire de Laurent.",
-			"Tu ne l'as jamais vue. La radio grésille, c'est Laurent : « Frances ?! C'est ma stagiaire. Ce matin, dans l'épreuve des première année, elle jouait l'enfant enlevée par le Sorcier Noir. »")
+			"Tu ne l'as jamais vue. La radio grésille, c'est Laurent : « Frances ?! C'est ma stagiaire. Ce matin, dans l'épreuve des B1, elle jouait l'enfant enlevée par le Sorcier Noir. »")
 		.replace("Pendant que je jouais l'enfant enlevée, j'avais", "Ce matin, pendant que je jouais l'enfant enlevée dans l'épreuve des B1, j'avais");
 	Corbeau.setText(texteCorbeau);
 	if (Corbeau.cmd_text && Corbeau.cmd_text["less"]) Corbeau.addCmdText("less", texteCorbeau);
@@ -1233,7 +1235,7 @@ Shell.sorts.chapitre = function(args, io){
 			C.gris(conseil);
 	}
 	if (demande === "1") return mission ?
-		"Tu es venu en renfort : le chapitre 1, ce sont les première année qui l'ont passé ce matin. Le monde de Terminus reste ouvert si tu veux le visiter." :
+		"Tu es venu en renfort : le chapitre 1, ce sont les B1 qui l'ont passé ce matin. Le monde de Terminus reste ouvert si tu veux le visiter." :
 		"Le chapitre 1 commence dans ta Maison : cd, puis ls.";
 	if (demande !== "2" && demande !== "3") throw new ShellError("chapitre : il n'y a que les chapitres 1, 2 et 3. Tape chapitre pour la liste.");
 	if (demande === "2"){

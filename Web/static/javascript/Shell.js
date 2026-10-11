@@ -1626,7 +1626,9 @@ Shell.sorts.help = function(args, io){
 	var connus = state.knownSpells();
 	var lignes = [C.gras("Tes sorts (" + connus.length + " sur " + tousLesSorts().length + ") :")];
 	for (var i = 0; i < connus.length; i++){
-		lignes.push("  " + C.vert(completerDroite(connus[i], 9)) + MANUEL[connus[i]].resume);
+		var nomSort = connus[i];
+		lignes.push(nomSort.length < 12 ? "  " + C.vert(completerDroite(nomSort, 12)) + MANUEL[nomSort].resume :
+			"  " + C.vert(nomSort) + "\n" + "              " + MANUEL[nomSort].resume);
 	}
 	lignes.push("");
 	lignes.push("Pour le détail d'un sort : " + C.vert("man SORT") + " (par exemple man ls).");
@@ -1655,7 +1657,7 @@ Shell.sorts.man = function(args, io){
 			C.gras(sort) + " : " + MANUEL[sort].titre + "\n\n" + MANUEL[sort].page + "\n\n" + C.gris("Souviens-toiiiii...");
 	}
 	if (MANUEL[sort]){
-		return "Le vieil homme reste silencieux. « Chaque chose en son temps », semble dire le vent. (Tu ne connais pas encore le sort " + sort + ".)";
+		return "Le vieil homme reste silencieux. « Chaque chose en son temps », semble dire le vent. (Tu ne connais pas encore le sort " + sort + ". " + Shell.ouApprendre(sort) + ")";
 	}
 	if (MANUEL_DU_JEU[sort]) return C.jaune("Commande du jeu") + "\n\n" + MANUEL_DU_JEU[sort];
 	if (SORTS_DU_JEU.indexOf(sort) > -1) return sort + " n'est pas une commande Linux : c'est une commande du jeu. aide les liste toutes.";
@@ -1758,6 +1760,12 @@ Shell.ouApprendre = function(sort){
 				", sur le Poste du BatimentB (cd ~/Cybersup/BatimentB/Poste" + (lieu === machine ? "" : ", puis cd " + Shell.cheminAffiche(lieu)) + ").";
 			if (machine) return "Il s'apprend " + (lieu.items[i].person ? "auprès de " : "en lisant ") + lieu.items[i].itemname +
 				", sur la machine " + machine.racineHote + " (ssh " + machine.racineHote + ")" + (lieu === machine ? "" : ", dans " + Shell.cheminAffiche(lieu)) + ".";
+			if (typeof Citadelle !== "undefined" && lieu !== Citadelle && Shell.racineAbsolue(lieu) === Citadelle){
+				var morceaux = [];
+				for (var l = lieu, garde = 0; l && l !== Citadelle && garde++ < 50; l = l.parents[0]) morceaux.unshift(l.room_name);
+				return "Il s'apprend " + (lieu.items[i].person ? "auprès de " : "en lisant ") + lieu.items[i].itemname +
+					", dans /" + morceaux.join("/") + " de la Citadelle (ssh citadelle, puis cd " + morceaux.join("/") + ").";
+			}
 			return "Il s'apprend " + (lieu.items[i].person ? "auprès de " : "en lisant ") + lieu.items[i].itemname +
 				", dans " + lieu.room_name + (parent && parent !== Home ? " (du côté de " + parent.room_name + ")" : "") + ".";
 		}

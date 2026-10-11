@@ -783,7 +783,7 @@ GameState.prototype.texteDuCertificat = function(){
 		"  SCORE DU CHAPITRE 3  : " + this.xpNet(2) + " XP sur " + this.xpMax2() + "\n" +
 		"  NOTE                 : " + this.noteTexte(2) + "\n" +
 		"  Mention              : " + this.mention(2) + "\n" +
-		"  Sorts de sécurité    : " + ORDRE_DES_SORTS_2.filter(function(x){ return this.usages[x]; }, this).join(", ") + "\n" +
+		"  Sorts de sécurité    : " + couperEnLignes(ORDRE_DES_SORTS_2.filter(function(x){ return this.usages[x]; }, this).join(", "), 40, "\n                         ") + "\n" +
 		"  Quêtes secondaires   : " + QUETES_SECONDAIRES_2.filter(function(q){ return this.quests[q.id]; }, this).length + " sur " + QUETES_SECONDAIRES_2.length + "\n" +
 		"  Temps du chapitre    : " + (minutes < 60 ? minutes + " min" : Math.floor(minutes / 60) + " h " + deuxChiffres(minutes % 60)) + "\n" +
 		"  Indices payants      : " + (this.malus2 ? this.nbIndices(2) + " (-" + this.malus2 + " XP sur la note)" : "aucun") + "\n" +
@@ -1267,7 +1267,7 @@ Tu n'oserais tout de même pas le dire à voix haute ? »");
     		poser(Citadelle, Laurent);
     		poser(Citadelle, Diplome);
     		Citadelle.changeIntroText("La Citadelle n'a plus rien de menaçant : le grand terminal affiche un fond d'écran avec un pingouin. \
-Laurent t'y attend, sa cape sur le bras.");
+Laurent t'y attend ; sa cape noire est posée sur une chaise.");
     		relier(Citadelle, Paradise);
     		BureauDeLaurent.mode = "rwxr-xr-x";
     		poser(BureauDeLaurent, MotDeLaurent);
@@ -1312,6 +1312,11 @@ Tu connais cette barbe. C'est le vieil homme des MontagnesEst.\n\n\
     		say(C.gris("(Laurent a visiblement des choses à te dire : less Laurent. Ton Diplome est posé à côté.)"));
     		break;
     	case "fin":
+    		if (this.has("chapitre1Saute")){
+    			say(C.vert(C.gras("FIN")) + "\n\nLe Paradis de l'épreuve de première année. Tu es venu en renfort : ce chapitre n'est pas noté pour toi.\n" +
+    				"Ta note est celle de ton chapitre, sur ton certificat (ls ~). Et maintenant, ouvre un vrai terminal : tout ce que tu sais y fonctionne.");
+    			break;
+    		}
     		var bilan = this.progression();
     		say(C.vert(C.gras("FIN")) + "\n\n" +
     			C.gras("SCORE FINAL : " + this.xpNet() + " XP sur " + bilan.max) + (this.malus ? C.gris("  (" + this.xp + " gagnés, -" + this.malus + " d'indices)") : "") + "\n" +

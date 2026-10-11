@@ -67,7 +67,7 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
 | Première utilisation d'un sort (52) | 5 |
 | Lieu découvert (44) | 5 |
 
-Le total possible est de 3860 XP au chapitre 1. Les deux autres chapitres ont chacun leur barème, sur le même principe, et leur note sur 20 à part : 3675 XP pour la panne (13 étapes, 31 quêtes secondaires, 35 sorts, 20 lieux), 5610 XP pour la Crypte (22 étapes, 45 quêtes secondaires dont 14 autour de vim, 48 sorts, 48 lieux). La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
+Le total possible est de 3860 XP au chapitre 1. Les deux autres chapitres ont chacun leur barème, sur le même principe, et leur note sur 20 à part : 3825 XP pour la panne (14 étapes, 32 quêtes secondaires, 35 sorts, 20 lieux), 5625 XP pour la Crypte (22 étapes, 45 quêtes secondaires dont 14 autour de vim, 49 sorts, 48 lieux). La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
 
 Ordres de grandeur : un parcours réduit au strict nécessaire (une quarantaine de commandes, impossible sans connaître la solution) donne 10 sur 20. La solution ci-dessous, dernier chapitre compris, donne 20 sur 20. Les derniers points se gagnent en visitant chaque lieu et en lançant chaque sort au moins une fois : `xp` liste ceux qui n'ont jamais servi.
 
@@ -404,18 +404,23 @@ bulletin
 
 ## Chapitre 2 : la panne (le réseau de l'école)
 
-Notions : le modèle en couches, de bas en haut. Le lien (`ip link`, `ethtool`), l'adresse (`ip addr`, `dhclient`), la route (`ip route`, `ping`), les noms (`/etc/resolv.conf`, `dig`, `host`, `nslookup`, `resolvectl`, `/etc/hosts`), le DHCP et les services (`systemctl`, `journalctl`, `ss`), la configuration permanente (`netplan`, `nmcli`, `reboot`), le web (`curl`, `wget`), l'horloge et les certificats (`timedatectl`, `openssl`), les ports et le pare-feu (`nc`, `telnet`, `iptables`), le routage (`traceroute`, `mtr`) et l'écoute du réseau (`tcpdump`). En bonus, les sorts des anciens (`ifconfig`, `route`, `arp`, `netstat`) et la sacoche de Radia (`arping`, `tracepath`, `getent`, `uptime`, `iperf3`, `nft`).
+Notions : le modèle OSI, la clé de tout le chapitre (sept étages : Physique, Liaison, Réseau, Transport, Session, Présentation, Application ; on dépanne de bas en haut). Le lien (`ip link`, `ethtool`), l'adresse (`ip addr`, `dhclient`), la route (`ip route`, `ping`), les noms (`/etc/resolv.conf`, `dig`, `host`, `nslookup`, `resolvectl`, `/etc/hosts`), le DHCP et les services (`systemctl`, `journalctl`, `ss`), la configuration permanente (`netplan`, `nmcli`, `reboot`), le web (`curl`, `wget`), l'horloge et les certificats (`timedatectl`, `openssl`), les ports et le pare-feu (`nc`, `telnet`, `iptables`), le routage (`traceroute`, `mtr`) et l'écoute du réseau (`tcpdump`). En bonus, les sorts des anciens (`ifconfig`, `route`, `arp`, `netstat`) et la sacoche de Radia (`arping`, `tracepath`, `getent`, `uptime`, `iperf3`, `nft`).
 
 Pendant l'épreuve des B1, le stagiaire de Vint (l'administrateur réseau, en vacances) a « essayé des trucs » : le poste de l'accueil du bâtiment B a sa carte éteinte et un DNS mal recopié, le serveur DHCP du routeur est arrêté, apache2 a pris le port 80 de nginx sur l'intranet, une règle iptables avale les mails du bâtiment, la route vers Lille a disparu, et un vieux telnet traîne sur le routeur. La pile de la carte mère du poste est à plat, en plus : son horloge repart de 2001.
 
-Le chapitre s'ouvre après la victoire sur le Sorcier Noir : le P.S. de Laurent envoie au BatimentB de Cybersup, où Radia (M1 réseau, campus de Marseille) attend la recrue. Il suit 13 étapes, a sa propre note sur 20 et son propre certificat (CertificatReseau), avec un code de vérification. Radia annonce l'étape suivante au talkie-walkie après chaque réparation. Un groupe qui ne fait que ce chapitre (une séance sur le réseau Linux) choisit le ticket d'incident au démarrage (ou tape `chapitre 2` avant d'avoir franchi la première étape) : il arrive directement au BatimentB, avec les droits sudo, et le chapitre 1 est rejoué en silence sans être noté.
+Le chapitre s'ouvre après la victoire sur le Sorcier Noir : le P.S. de Laurent envoie au BatimentB de Cybersup, où Radia (M1 réseau, campus de Marseille) attend la recrue. Il suit 14 étapes, a sa propre note sur 20 et son propre certificat (CertificatReseau), avec un code de vérification. Radia annonce l'étape suivante au talkie-walkie après chaque réparation. Un groupe qui ne fait que ce chapitre (une séance sur le réseau Linux) choisit le ticket d'incident au démarrage (ou tape `chapitre 2` avant d'avoir franchi la première étape) : il arrive directement au BatimentB, avec les droits sudo, et le chapitre 1 est rejoué en silence sans être noté.
 
 Le Poste de l'accueil est une vraie machine : on s'assoit devant (`cd Poste`), son invite devient `poste-b`, et `/` désigne sa racine. Le routeur et l'intranet ne s'administrent que depuis ce poste, par `ssh`. Les valeurs de ce chapitre sont les mêmes dans toutes les parties.
 
-### 7. Le lien, l'adresse et la route
+### 7. Le modèle OSI, puis le lien, l'adresse et la route
+
+Radia commence par la clé de tout : l'affiche du modèle OSI, punaisée sur l'armoire (`cat ModeleOSI`). La lire valide la première étape et rapporte la première relique. Écrire les sept étages dans l'ordre dans `~/osi.txt` valide une quête secondaire (accents et majuscules indifférents). Ensuite, chaque étape dit à quel étage elle se joue, et les sept voyants au-dessus de l'image montrent les étages du Poste.
 
 ```
 cd ~/Cybersup/BatimentB
+cat Radia
+cat ModeleOSI
+echo Physique Liaison Réseau Transport Session Présentation Application > ~/osi.txt
 cat Radia
 cat SacocheDeRadia
 cd Poste
@@ -564,8 +569,8 @@ ip r
 sudo ip route add 10.0.59.0/24 via 10.0.92.248
 traceroute -n lille
 sudo ss -tlnp
-sudo tcpdump -A port 23
-sudo tcpdump -n port 53
+sudo tcpdump -i any -A port 23
+sudo tcpdump -i any -n port 53
 sudo systemctl disable --now telnet.socket
 hostnamectl
 exit
@@ -590,7 +595,7 @@ Radia remet le CertificatReseau, avec la note du chapitre 2 et son code de véri
 
 Notions : empreintes (`sha256sum`, `sha256sum -c`), encodage (`base64`, `base64 -d`), bit SUID (`ls -l`, `find -perm -4000`, `chmod u-s`), sortie d'erreur (`2>`, `2>/dev/null`), ports en écoute (`ss -tlnp`, vu au chapitre 2), édition de fichiers (`nano`, vu au chapitre 2), clés SSH (`ssh-keygen`, clé publique et clé privée, `authorized_keys`). Puis, sur tout le réseau de l'école : journaux compressés (`zcat`, `journalctl`, `last`, `who`), cartographie (`nmap`, et `ip`, `nc`, `dig`, `traceroute` vus au chapitre 2), processus et services (`pgrep`, `pkill`, `lsof`, `systemctl`), attribut immuable (`lsattr`, `chattr`), filtres de texte (`sed`, `awk`, `tr`, `rev`, `tee`), comptes et droits (`userdel`, `usermod`, `groups`, `visudo`), pare-feu (`ufw`), copie de preuves (`ssh-copy-id`, `scp`, `md5sum`, `sha1sum`), analyse de fichiers (`file`, `xxd`, `strings`, `stat`), chiffrement (`gpg`) et l'éditeur des serveurs, `vim`, avec ses leçons. En bonus, le carnet de traque de Grace (`lastb`, `lastlog`, `w`, `chage`, `fail2ban-client`) et la trousse d'Evi (`clamscan`, `rkhunter`, `debsums`, `exiftool`, `getfacl`, `setfacl`).
 
-Le chapitre se joue comme une chasse : le Corbeau a fait son nid sur le réseau, chaque sort porte un nom imagé (`nmap`, la Lanterne des Ports ; `lsof`, le Filet) et, au premier lancement, dit ce qu'il fait en une image. Les machines de l'école sortent de la brume dès qu'un sort les nomme, et `traque` affiche le tableau de chasse : en rouge ce que le Corbeau souille encore, en vert ce qui est purifié. Chaque étape franchie rapporte un trophée et une ligne « À retenir ». Le Bestiaire de la Crypte donne, pour chaque image, le vrai mot du métier.
+Le chapitre se joue comme une chasse : le Corbeau a fait son nid sur le réseau, chaque sort porte un nom imagé (`nmap`, la Lanterne des Ports ; `lsof`, le Filet) et, au premier lancement, dit ce qu'il fait en une image. Les machines de l'école sortent de la brume dès qu'un sort les nomme, et `traque` affiche le tableau de chasse : en rouge ce que le Corbeau souille encore, en vert ce qui est purifié. Chaque étape franchie (sauf le rapport) rapporte un trophée et une ligne « À retenir ». Le Bestiaire de la Crypte donne, pour chaque image, le vrai mot du métier.
 
 L'enquête suit 22 étapes : la Crypte (7 étapes, comme avant), les journaux de la Citadelle, la cartographie du réseau, le labo de TP (session et service), le site web, la messagerie, le DNS, le pare-feu, les comptes et sudo, la clé, le coffre, les preuves, les notes chiffrées, le Corbeau, puis le rapport d'incident rédigé dans vim. La radio de Grace annonce toujours l'étape suivante.
 
@@ -827,7 +832,7 @@ ssh parefeu
 less ConsignesParefeu
 traceroute web
 sudo ufw status numbered
-sudo ufw deny from <poste>
+sudo ufw route deny from <poste>
 sudo ufw enable
 sudo ufw status numbered
 cd etc
@@ -837,7 +842,7 @@ cat ufw.log
 exit
 ```
 
-La page piégée du site a l'attribut immuable : même root ne peut pas la supprimer avant `chattr -i`. La pièce jointe du mail est encodée en base64 entre deux lignes repères : `sed -n '/début/,/fin/p'` garde l'intervalle, `grep -v` retire les repères. `dig -x` sur l'adresse de `maj` répond `poste-47` : un simple poste de travail se fait passer pour le serveur des mises à jour. Dans `vim ecole.zone`, on descend sur la ligne qui commence par `maj` (par exemple `/maj` puis Entrée), `dd`, puis `:wq`. Si on retire une autre ligne par erreur, la radio dit laquelle remettre. Au pare-feu, les règles se lisent dans l'ordre : un `allow` pour le poste placé avant le `deny` le laisse passer (`sudo ufw insert 1 deny from ...` met la règle en tête). Bloquer l'adresse du labo est une erreur que Grace signale : le Corbeau n'a fait que le traverser.
+La page piégée du site a l'attribut immuable : même root ne peut pas la supprimer avant `chattr -i`. La pièce jointe du mail est encodée en base64 entre deux lignes repères : `sed -n '/début/,/fin/p'` garde l'intervalle, `grep -v` retire les repères. `dig -x` sur l'adresse de `maj` répond `poste-47` : un simple poste de travail se fait passer pour le serveur des mises à jour. Dans `vim ecole.zone`, on descend sur la ligne qui commence par `maj` (par exemple `/maj` puis Entrée), `dd`, puis `:wq`. Si on retire une autre ligne par erreur, la radio dit laquelle remettre. Au pare-feu, le poste doit être empêché de TRAVERSER le pare-feu pour joindre les serveurs : c'est `ufw route deny` (une règle FWD). `ufw deny from` tout court ne protège que le pare-feu lui-même, et Grace le fait remarquer. Les règles se lisent dans l'ordre : un `allow` pour le poste placé avant le `deny` le laisse passer (`sudo ufw route insert 1 deny from ...` met la règle en tête). Bloquer l'adresse du labo est une erreur que Grace signale : le Corbeau n'a fait que le traverser.
 
 ### 18. L'imprimante et la badgeuse
 
@@ -863,7 +868,7 @@ less ProcedureComptes
 awk -F: '$3 == 0 { print $1 }' passwd
 sudo userdel maintenance
 groups corbeau
-sudo usermod -rG sudo corbeau
+sudo gpasswd -d corbeau sudo
 groups corbeau
 sudo cat sudoers
 sudo visudo
@@ -875,7 +880,7 @@ sudo rkhunter --check
 exit
 ```
 
-Le Corbeau a le droit sudo de deux façons : par le groupe `sudo` (`groups corbeau`) et par une ligne à son nom dans sudoers. `usermod -rG sudo corbeau` le sort du groupe. `visudo` ouvre sudoers dans vim (ou nano pour qui ne connaît pas encore vim) : on se place sur la ligne qui commence par `corbeau`, `dd`, puis `:wq`. `visudo` vérifie la syntaxe avant d'enregistrer : une ligne cassée est refusée. Modifier sudoers directement (`sudo nano /etc/sudoers`) ne valide pas l'étape, et Evi le fait remarquer ; retirer aussi les lignes de root ou du groupe sudo non plus.
+Le Corbeau a le droit sudo de deux façons : par le groupe `sudo` (`groups corbeau`) et par une ligne à son nom dans sudoers. `gpasswd -d corbeau sudo` le sort du groupe (sur les systèmes récents, `usermod -rG sudo corbeau` aussi). `visudo` ouvre sudoers dans vim (ou nano pour qui ne connaît pas encore vim) : on se place sur la ligne qui commence par `corbeau`, `dd`, puis `:wq`. `visudo` vérifie la syntaxe avant d'enregistrer : une ligne cassée est refusée. Modifier sudoers directement (`sudo nano /etc/sudoers`) ne valide pas l'étape, et Evi le fait remarquer ; retirer aussi les lignes de root ou du groupe sudo non plus.
 
 ### 20. Les preuves et les notes chiffrées
 
@@ -939,4 +944,4 @@ cat CertificatCyber
 
 Dans `vim rapport.txt`, pour chacune des quatre lignes à compléter : s'y placer (`j`), `A`, taper la réponse, Échap. Puis `:wq`. Les réponses : l'adresse du poste (vue avec `who` sur le labo, ou dans les notes du Corbeau), le compte caché (`maintenance`), le port de la porte dérobée (6666) et l'heure de la première connexion (ligne `Accepted` de `auth.log.2.gz`). Si une réponse manque, le rapport n'est pas accepté. Le rapport écrit avec un autre éditeur est refusé : Laurent veut vim.
 
-À ce stade le chapitre 3 affiche 5610 XP sur 5610, soit 20 sur 20, et le CertificatCyber porte son code de vérification.
+À ce stade le chapitre 3 affiche 5625 XP sur 5625, soit 20 sur 20, et le CertificatCyber porte son code de vérification.

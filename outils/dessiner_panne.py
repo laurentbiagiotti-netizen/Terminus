@@ -240,7 +240,27 @@ def ticket(nom):
     im.resize((w*2, h*2), Image.NEAREST).save(OUT + nom)
 
 
+# --- l'affiche du modèle OSI : la tour des sept étages, du câble jusqu'au web ---
+def osi():
+    im, d = toile()
+    texte_centre(d, 2, "MODELE OSI", B)
+    noms = ["PHYSIQUE", "LIAISON", "RESEAU", "TRANSPORT", "SESSION", "PRESENTATION", "APPLICATION"]
+    for k, nom in enumerate(noms):
+        y1 = 150 - k*18; y0 = y1 - 15
+        x0 = 26; x1 = 150
+        boite(d, x0, y0, x1, y1, V if k in (0, 2, 6) else B, N, 1)
+        d.rectangle([x0+2, y0+2, x0+12, y1-2], fill=V if k in (0, 2, 6) else B)
+        d.text((x0+5, y0+3), str(k+1), fill=N)
+        d.text((x0+17, y0+3), nom, fill=B)
+    # le toit, et le câble qui part du rez-de-chaussée
+    d.polygon([(30, 23), (88, 13), (146, 23)], fill=B)
+    d.line([(150, 146), (166, 146), (170, 162)], fill=V, width=2)
+    sol(d, 156)
+    return im
+
+
 if __name__ == "__main__":
+    finir("item_osi.gif", osi())
     for nom, f in [("loc_batimentb.gif", batimentb), ("loc_posteb.gif", posteb), ("loc_routeur.gif", routeur), ("loc_intranet.gif", intranet),
                    ("loc_batimentb_ok.gif", batimentb_ok)]:
         finir(nom, f())
