@@ -1181,7 +1181,7 @@ function texteSchema(){
 	if (typeof reliquesObtenues === "function"){
 		var r = reliquesObtenues(), total = Object.keys(RELIQUES).length;
 		lignes.push("", C.gras("BADGES : " + r.length + " sur " + total) + C.gris("  (badges : les leçons)"));
-		r.forEach(function(nom){ lignes.push("  " + C.jaune("✦ ") + nom); });
+		Object.keys(RELIQUES).filter(function(id){ return state.quests[id]; }).forEach(function(id){ lignes.push("  " + C.jaune("✦ ") + (typeof nomDuBadge === "function" ? nomDuBadge(id) : RELIQUES[id])); });
 		if (!r.length) lignes.push(C.gris("  Chaque réparation en rapporte une."));
 	}
 	return lignes.join("\n");
@@ -1250,7 +1250,7 @@ function verifierPanne(){
 		p.retenus[id] = true;
 		if (state.has("rejeuEnCours")) return;
 		// Une seule ligne dans le terminal : le badge. La leçon se relit avec badges.
-		if (typeof RELIQUES !== "undefined" && RELIQUES[id]) say(C.jaune("✦ Badge gagné : " + RELIQUES[id] + ".") + C.gris(" (badges pour relire la leçon)"));
+		if (typeof RELIQUES !== "undefined" && RELIQUES[id]) say(C.jaune("✦ Badge gagné : " + (typeof nomDuBadge === "function" ? nomDuBadge(id) : RELIQUES[id])) + C.gris(" · " + RELIQUES[id] + " · tape badges pour la leçon"));
 	});
 	// Radia annonce la suite au talkie-walkie, à chaque étape franchie.
 	var suivante = prochaineEtapePanne();

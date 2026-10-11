@@ -163,7 +163,7 @@ function verifierRpgCrypte(){
 		if (!state.quests[id] || r.trophees[id]) return;
 		r.trophees[id] = true;
 		if (state.has("rejeuEnCours")) return;
-		say(C.jaune("✦ Badge gagné : " + TROPHEES_CRYPTE[id][0] + ".") + C.gris(" (badges pour relire la leçon)"));
+		say(C.jaune("✦ Badge gagné : " + nomDuBadge(id)) + C.gris(" · " + TROPHEES_CRYPTE[id][0] + " · tape badges pour la leçon"));
 	});
 }
 var VERIFIER_MONDE_AVANT_CHASSE = verifierMonde;
@@ -186,7 +186,7 @@ function texteTraque(){
 	});
 	var t = Object.keys(TROPHEES_CRYPTE).filter(function(id){ return state.quests[id]; });
 	lignes.push("", C.gras("BADGES : " + t.length + " sur " + Object.keys(TROPHEES_CRYPTE).length) + C.gris("  (badges : les leçons)"));
-	t.forEach(function(id){ lignes.push("  " + C.jaune("✦ ") + TROPHEES_CRYPTE[id][0]); });
+	t.forEach(function(id){ lignes.push("  " + C.jaune("✦ ") + nomDuBadge(id)); });
 	if (!t.length) lignes.push(C.gris("  Chaque étape franchie en rapporte un."));
 	return lignes.join("\n");
 }
@@ -199,33 +199,63 @@ Shell.sorts.traque = function(args, io){
 };
 if (SORTS_DU_JEU.indexOf("traque") === -1) SORTS_DU_JEU.push("traque");
 
+/* Le nom de compétence de chaque badge : c'est lui qu'on affiche, le nom imagé vient en second. */
+var COMPETENCES = {
+	r_osi: "Modèle OSI", r_lien: "Lien physique", r_ip: "Adressage IP", r_passerelle: "Passerelle par défaut",
+	r_dns: "Résolution DNS", r_dhcp: "Service DHCP", r_netplan: "Configuration permanente", r_web: "Ports et services",
+	r_https: "Certificats et horloge", r_smtp: "Filtrage iptables", r_lille: "Routage statique", r_telnet: "Protocoles chiffrés",
+	c_crypte: "Méthode d'enquête", c_integrite: "Intégrité des fichiers", c_message: "Encodage base64", c_suid: "Bit SUID",
+	c_racine: "Élévation de privilèges", c_ecoute: "Ports en écoute", c_journaux: "Analyse de journaux", c_carto: "Cartographie réseau",
+	c_labo: "Sessions utilisateur", c_service: "Persistance et services", c_web: "Attribut immuable", c_mail: "Hameçonnage",
+	c_dns: "Usurpation DNS", c_parefeu: "Filtrage ufw", c_compte: "Comptes d'UID 0", c_sudo: "Droits sudo", c_cle: "Clés SSH",
+	c_coffre: "Authentification par clé", c_preuves: "Chaîne de traçabilité", c_gpg: "Chiffrement gpg", c_corbeau: "Attribution"
+};
+/* La couche OSI d'un badge du chapitre 2, en toutes lettres. */
+var COUCHES_DU_BADGE = {
+	r_osi: "les sept couches", r_lien: "couches Physique et Liaison", r_ip: "couche Réseau", r_passerelle: "couche Réseau",
+	r_dns: "couche Application", r_dhcp: "couche Application", r_netplan: "couches Physique à Réseau", r_web: "couches Transport et Application",
+	r_https: "couche Présentation", r_smtp: "couche Transport", r_lille: "couche Réseau", r_telnet: "couches Session à Application"
+};
+function nomDuBadge(id){ return COMPETENCES[id] || ""; }
+function sansAccent(t){ return String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
+
 /* badges : la collection de badges, et la leçon de chacun. Une commande du jeu, pas de Linux. */
 function texteBadges(quel){
-	var lignes = [C.gras("TES BADGES") + C.gris("  (commande du jeu : chaque badge garde la leçon de l'étape)")];
-	function section(titre, liste){
+	var filtre = sansAccent(quel);
+	var lignes = [C.gras("TES BADGES DE COMPÉTENCE") + C.gris("  (commande du jeu : chaque badge garde la leçon de l'étape)")];
+	var tous = [];
+	if (state.has("panneOuverte") && typeof RELIQUES !== "undefined") Object.keys(RELIQUES).forEach(function(id){
+		tous.push({ id: id, chap: "reseau", nom: COMPETENCES[id], image: RELIQUES[id], couche: COUCHES_DU_BADGE[id] || "", lecon: A_RETENIR[id] || "" });
+	});
+	if (state.has("crypteOuverte")) Object.keys(TROPHEES_CRYPTE).forEach(function(id){
+		tous.push({ id: id, chap: "cyber", nom: COMPETENCES[id], image: TROPHEES_CRYPTE[id][0], couche: "", lecon: TROPHEES_CRYPTE[id][1] });
+	});
+	// badges reseau, badges cyber, ou un nom de compétence (badges dns, badges sudo...).
+	var choisis = tous.filter(function(b){
+		if (!filtre) return true;
+		if (filtre === "reseau" || filtre === "panne") return b.chap === "reseau";
+		if (filtre === "cyber" || filtre === "chasse" || filtre === "securite") return b.chap === "cyber";
+		return sansAccent(b.nom).indexOf(filtre) > -1;
+	});
+	if (filtre && !choisis.length) return "badges : aucune compétence ne correspond à « " + quel + " ». " + C.gris("Exemples : badges reseau, badges cyber, badges dns, badges sudo.");
+	[["reseau", "RÉSEAU : LA PANNE DE L'ÉCOLE"], ["cyber", "CYBERSÉCURITÉ : LA CHASSE AU CORBEAU"]].forEach(function(c){
+		var liste = choisis.filter(function(b){ return b.chap === c[0]; });
+		if (!liste.length) return;
 		var gagnes = liste.filter(function(b){ return state.quests[b.id]; }).length;
-		lignes.push("", C.gras(titre) + C.gris("  " + gagnes + " sur " + liste.length));
+		lignes.push("", C.gras(c[1]) + C.gris("  " + gagnes + " sur " + liste.length));
 		liste.forEach(function(b){
-			if (!state.quests[b.id]){ lignes.push("  " + C.gris("░ ??? : une étape à franchir")); return; }
-			lignes.push("  " + C.jaune("✦ " + b.nom) + (b.etage ? C.gris("  " + b.etage) : ""), "    " + b.lecon);
+			if (!state.quests[b.id]){ lignes.push("  " + C.gris("░ " + b.nom + " : à gagner")); return; }
+			lignes.push("  " + C.jaune("✦ " + b.nom) + C.gris("  " + b.image + (b.couche ? ", " + b.couche : "")), "    " + b.lecon);
 		});
-	}
-	if ((!quel || quel === "2") && state.has("panneOuverte") && typeof RELIQUES !== "undefined"){
-		section("CHAPITRE 2 : LA PANNE", Object.keys(RELIQUES).map(function(id){
-			return { id: id, nom: RELIQUES[id], etage: (typeof ETAGE_OSI !== "undefined" && ETAGE_OSI[id]) || (id === "r_osi" ? "les sept étages" : ""), lecon: A_RETENIR[id] || "" };
-		}));
-	}
-	if ((!quel || quel === "3") && state.has("crypteOuverte")){
-		section("CHAPITRE 3 : LA CHASSE AU CORBEAU", Object.keys(TROPHEES_CRYPTE).map(function(id){
-			return { id: id, nom: TROPHEES_CRYPTE[id][0], lecon: TROPHEES_CRYPTE[id][1] };
-		}));
-	}
-	if (lignes.length === 1) lignes.push("", "Pas encore de badge : ils se gagnent aux chapitres 2 et 3, une réparation ou une porte fermée à la fois.");
+	});
+	if (!tous.length) lignes.push("", "Pas encore de badge : ils se gagnent dans les chapitres sur le réseau et la cybersécurité, une réparation ou une porte fermée à la fois.");
 	return lignes.join("\n");
 }
-Shell.sorts.badges = function(args, io){ return texteBadges(args[0]); };
+Shell.sorts.badges = function(args, io){ return texteBadges(args.join(" ")); };
 if (SORTS_DU_JEU.indexOf("badges") === -1) SORTS_DU_JEU.push("badges");
-if (typeof COMMANDES_DU_JEU !== "undefined") COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 4, 0, ["badges", "tes badges, et la leçon de chacun (badges 2, badges 3)"]);
+if (typeof COMMANDES_DU_JEU !== "undefined") COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 4, 0, ["badges", "tes badges de compétence et leur leçon (badges reseau, badges cyber, badges dns...)"]);
 if (typeof MANUEL_DU_JEU !== "undefined") MANUEL_DU_JEU.badges = "badges n'est PAS une commande Linux : c'est une commande du jeu, comme quetes ou xp.\n" +
-	"Chaque étape franchie aux chapitres 2 et 3 rapporte un badge. badges les liste, avec la leçon de chacun :\n" +
-	"c'est ton aide-mémoire, à relire avant une évaluation.\n\n  badges      tous tes badges\n  badges 2    ceux de la panne (le modèle OSI, étage par étage)\n  badges 3    ceux de la chasse au Corbeau";
+	"Chaque étape franchie rapporte un badge de compétence (Adressage IP, Résolution DNS, Bit SUID...). badges les liste,\n" +
+	"avec la leçon de chacun : c'est ton aide-mémoire, à relire avant une évaluation.\n\n" +
+	"  badges           tous tes badges\n  badges reseau    ceux du réseau (la panne, couche par couche)\n" +
+	"  badges cyber     ceux de la cybersécurité (la chasse au Corbeau)\n  badges dns       un badge précis, par le nom de sa compétence";

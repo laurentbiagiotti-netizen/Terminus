@@ -509,7 +509,7 @@ contient(q4.taper("sudo rkhunter --check"), "Comptes d'UID 0 autres que root    
 contient(q4.taper("cd bin"), "bin", "on descend dans bin");
 contient(q4.taper("debsums -c"), "/Crypte/bin/gardien", "debsums trouve le gardien modifié");
 verifier(q4.taper("debsums -c").indexOf("Trophée") === -1, "pas de trophée sans étape franchie");
-contient(q4.taper("sha256sum -c SHA256SUMS"), "Badge gagné : la Loupe de l'Archiviste", "une étape rapporte un badge");
+contient(q4.taper("sha256sum -c SHA256SUMS"), "Badge gagné : Intégrité des fichiers", "une étape rapporte un badge");
 contient(q4.taper("clamscan gardien"), "Unix.Trojan.Gardien-1 FOUND", "clamscan reconnaît le gardien trafiqué");
 contient(q4.taper("sudo fail2ban-client set sshd banip 10.0.92.1"), "passerelle", "fail2ban refuse de bannir la passerelle");
 contient(q4.taper("sudo chage -E 0 laurent"), "Vise le compte de l'intrus", "chage protège laurent");
@@ -522,7 +522,7 @@ contient(q4.taper("man gpasswd"), "ProcedureComptes", "man dit où apprendre un 
 var q5 = nouveauMonde({}, 67);
 q5.taper("chapitre 2", "oui");
 q5.taper("cat Radia");
-contient(q5.taper("cat ModeleOSI"), "Badge gagné : la Clé des Sept Étages", "lire l'affiche OSI rapporte le premier badge");
+contient(q5.taper("cat ModeleOSI"), "Badge gagné : Modèle OSI", "lire l'affiche OSI rapporte le premier badge");
 verifier(q5.lire("state.quests.r_osi") === true, "r_osi accomplie");
 q5.taper("echo Application Physique > ~/osi.txt");
 verifier(!q5.lire("state.quests.s_r_osi"), "les étages dans le désordre ne valident pas");
@@ -533,10 +533,13 @@ contient(q5.taper("schema"), "LA TOUR OSI DU POSTE", "le schema montre la tour O
 verifier(q5.lire("etagesOSI().length") === 7, "sept voyants, un par étage");
 q5.taper("cd Poste");
 var sortieLien = q5.taper("sudo ip link set eth0 up");
-contient(sortieLien, "Badge gagné : la Rune du Lien", "une seule ligne : le badge");
+contient(sortieLien, "Badge gagné : Lien physique", "une seule ligne : le badge");
 verifier(sortieLien.indexOf("À retenir") === -1 && sortieLien.indexOf("Radia, au talkie-walkie") === -1, "plus de leçon ni de consigne longue dans le terminal");
-contient(q5.taper("badges"), "Étages 1 et 2 (Physique, Liaison)", "badges relit la leçon, avec l'étage");
-contient(q5.taper("badges"), "░ ??? : une étape à franchir", "les badges à gagner restent cachés");
+contient(q5.taper("badges"), "couches Physique et Liaison", "badges nomme les couches en toutes lettres");
+contient(q5.taper("badges"), "░ Résolution DNS : à gagner", "les badges à gagner portent leur nom de compétence");
+contient(q5.taper("badges dns"), "Résolution DNS", "badges filtre par nom de compétence");
+verifier(q5.taper("badges dns").indexOf("Lien physique") === -1, "badges dns ne montre que la compétence demandée");
+contient(q5.taper("badges reseau"), "RÉSEAU : LA PANNE DE L'ÉCOLE", "badges reseau");
 contient(q5.taper("man badges"), "commande du jeu", "man badges");
 contient(q5.taper("ping -c 1 10.0.93.254"), "pas accessible", "sans adresse rien ne part");
 q5.taper("sudo ip addr add 10.0.93.20/24 dev eth0");
