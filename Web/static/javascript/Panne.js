@@ -984,7 +984,7 @@ function prochaineEtapePanne(){
 var TALKIE = {
 	r_osi: "Avant de toucher à quoi que ce soit, lis l'affiche sur l'armoire : cat ModeleOSI. Sept étages, et tout le chapitre tient dedans.",
 	r_lien: "La tour, tu l'as en tête. Maintenant, le Poste, derrière le comptoir (cd Poste), étage 1 : ip link. eth0 est-elle UP ?",
-	r_ip: "La porte est ouverte (eth0 est UP) ! Mais le Poste n'a pas d'adresse : ip a. Appelle la Source (sudo dhclient eth0) ; si elle reste muette, l'Etiquette du poste donne l'adresse à poser à la main.",
+	r_ip: "La porte est ouverte (eth0 est UP) ! Mais le Poste n'a pas d'adresse : ip a. Lis l'AideMemoire du Poste (cat AideMemoire) : elle t'apprend à appeler la Source (sudo dhclient eth0). Si la Source reste muette, l'Etiquette du poste donne l'adresse à poser à la main.",
 	r_passerelle: "Le Poste a une adresse. Lance l'Écho vers la Tour (ping " + IP_ROUTEUR + ") : elle doit répondre. Mais pour sortir de la rue, il faut un chemin vers elle : ip r, et l'Etiquette.",
 	r_dns: "Les messagers circulent ! Mais ping intranet échoue : le Poste consulte un oracle qui n'existe pas. cat /etc/resolv.conf, et le MemoDNS, dans /etc.",
 	r_dhcp: "Tout marche... à la main. Pourquoi la Source n'a rien donné ? Elle coule au pied de la Tour : ssh routeur, et lis le CahierDuRouteur.",
