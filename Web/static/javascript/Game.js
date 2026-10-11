@@ -335,8 +335,6 @@ function demarrer(){
 	Shell.narration = [];
 
 	montrerImage("./static/img/titlescreen_cybersup.gif", "");
-	// Une partie d'avant les comptes attend qu'on la réclame en créant son compte.
-	if (rangerPartieSansCompte()){ window.location.reload(); return; }
 	var sansIntro = false;
 	try { sansIntro = window.sessionStorage.getItem("terminus-sans-intro") === "1"; window.sessionStorage.removeItem("terminus-sans-intro"); } catch (e){}
 	if (!COMPTE_ACTIF){
@@ -408,8 +406,7 @@ function demanderLoginApres(essai){
 }
 
 function creerNouveauCompte(prenom, id){
-	var ancienne = anciennesParties(id).length > 0;
-	term.echo("\nNouvel utilisateur : " + C.vert(id) + (ancienne ? C.gris("  (une partie d'avant à ce nom a été retrouvée : elle sera rangée dans ce compte)") : "") + "\n" +
+	term.echo("\nNouvel utilisateur : " + C.vert(id) + "\n" +
 		C.gris("Choisis un mot de passe (4 caractères au moins). Il te servira à retrouver ta partie : retiens-le."));
 	term.demander("Nouveau mot de passe : ", true, function(premier){
 		if (String(premier).length < 4){
@@ -421,11 +418,6 @@ function creerNouveauCompte(prenom, id){
 			if (second !== premier){
 				term.echo(C.jaune("Les deux mots de passe ne sont pas identiques. On recommence."));
 				creerNouveauCompte(prenom, id);
-				return;
-			}
-			if (ancienne){
-				if (creerCompte(prenom, premier) === "ancienne"){ term.echo("Compte créé. On recharge ta partie..."); window.location.reload(); }
-				else term.echo(C.jaune("Impossible de créer le compte (stockage indisponible)."));
 				return;
 			}
 			nouvellePartie(prenom, premier);

@@ -1493,9 +1493,6 @@ GameState.prototype.load = function(){
 /* Les comptes : un identifiant, un mot de passe, une partie            */
 /* ------------------------------------------------------------------ */
 
-/* Les anciennes parties (avant les comptes) attendent ici qu'on les réclame en créant le compte. */
-var CLE_SESSIONS = "terminus-cybersup-sessions";
-
 function lireComptes(){
 	try { return JSON.parse(window.localStorage.getItem(CLE_COMPTES)) || {}; }
 	catch (e){ return {}; }
@@ -1514,53 +1511,15 @@ function verifierMotDePasse(id, motDePasse){
 	return !!c && c.empreinte === empreinteMotDePasse(c.sel, motDePasse);
 }
 
-/* Les anciennes parties à ce nom, d'avant les comptes : elles reviendront au compte créé sous ce nom. */
-function anciennesParties(id){
-	var liste;
-	try { liste = JSON.parse(window.localStorage.getItem(CLE_SESSIONS)); } catch (e){ liste = null; }
-	if (!liste) return [];
-	if (!Array.isArray(liste)) liste = Object.keys(liste).map(function(k){ var x = liste[k]; x.id = x.id || k; return x; });
-	return liste.filter(function(x){ return x && x.id === id && x.profil; });
-}
-
-/* Avant les comptes, une partie unique vivait sans nom de compte : elle devient une ancienne partie à réclamer. */
-function rangerPartieSansCompte(){
-	if (COMPTE_ACTIF || !PROFIL.prenom) return false;
-	try {
-		var liste = [];
-		try { liste = JSON.parse(window.localStorage.getItem(CLE_SESSIONS)) || []; } catch (e){ liste = []; }
-		if (!Array.isArray(liste)) liste = [];
-		liste.push({ id: identifiantDepuisPrenom(PROFIL.prenom), prenom: PROFIL.prenom, date: Date.now(),
-			profil: window.localStorage.getItem(CLE_PROFIL), sauvegarde: window.localStorage.getItem(CLE_SAUVEGARDE) });
-		window.localStorage.setItem(CLE_SESSIONS, JSON.stringify(liste));
-		window.localStorage.removeItem(CLE_PROFIL);
-		window.localStorage.removeItem(CLE_SAUVEGARDE);
-		return true;
-	} catch (e){
-		return false;
-	}
-}
-
-/*
- * Crée le compte et y range la partie : soit l'ancienne partie retrouvée à ce nom, soit la partie
- * neuve en cours. Renvoie "ancienne" (il faut recharger la page), "neuve", ou null si c'est impossible.
- */
+/* Crée le compte et y range la partie neuve en cours. Renvoie "neuve", ou null si c'est impossible. */
 function creerCompte(prenom, motDePasse){
 	var id = identifiantDepuisPrenom(prenom);
 	try {
 		var comptes = lireComptes();
 		var sel = base64Aleatoire("sel-" + id + "-" + Date.now() + "-" + Math.random(), 12);
 		comptes[id] = { prenom: String(prenom).trim(), sel: sel, empreinte: empreinteMotDePasse(sel, motDePasse), creation: Date.now() };
-		var ancienne = anciennesParties(id).pop();
-		if (ancienne){
-			window.localStorage.setItem("terminus-cybersup-profil-" + id, ancienne.profil);
-			if (ancienne.sauvegarde) window.localStorage.setItem("terminus-cybersup-partie-" + id, ancienne.sauvegarde);
-			var liste = JSON.parse(window.localStorage.getItem(CLE_SESSIONS)) || [];
-			if (Array.isArray(liste)) window.localStorage.setItem(CLE_SESSIONS, JSON.stringify(liste.filter(function(x){ return !(x.id === id && x.profil === ancienne.profil); })));
-		}
 		ecrireComptes(comptes);
 		window.localStorage.setItem(CLE_ACTIF, id);
-		if (ancienne){ Shell.sauvegardeBloquee = true; return "ancienne"; }
 		// La partie neuve en cours passe sous le nom du compte.
 		COMPTE_ACTIF = id;
 		var ancienProfil = CLE_PROFIL, ancienneSauvegarde = CLE_SAUVEGARDE;

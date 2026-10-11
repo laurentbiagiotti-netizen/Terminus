@@ -16,6 +16,22 @@
  * Sans compte connecté, on est à l'écran de connexion.
  */
 var CLE_COMPTES = "terminus-cybersup-comptes";
+
+/*
+ * Remise à zéro : à l'arrivée des comptes, tout ce qui avait été enregistré avant (parties,
+ * prénoms, parties mises de côté) est effacé une fois pour toutes. Chacun repart de zéro.
+ */
+var VERSION_DES_COMPTES = "comptes-1";
+(function(){
+	try {
+		var stockage = window.localStorage;
+		if (stockage.getItem("terminus-cybersup-version") === VERSION_DES_COMPTES) return;
+		var cles = [];
+		for (var i = 0; i < stockage.length; i++){ var k = stockage.key(i); if (k && k.indexOf("terminus-cybersup") === 0) cles.push(k); }
+		cles.forEach(function(k){ stockage.removeItem(k); });
+		stockage.setItem("terminus-cybersup-version", VERSION_DES_COMPTES);
+	} catch (e){}
+})();
 var CLE_ACTIF = "terminus-cybersup-actif";
 var COMPTE_ACTIF = (function(){
 	try { return window.localStorage.getItem(CLE_ACTIF) || null; } catch (e){ return null; }

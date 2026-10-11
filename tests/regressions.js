@@ -298,17 +298,6 @@ var l5 = nouveauMonde(stL);
 verifier(l5.lire("PROFIL.prenom") === "Thomas" && l5.lire("PROFIL.aChoisir") === true, "recommencer garde le compte et fait rechoisir le parcours");
 verifier(l5.lire("current_room.room_name") === "Maison", "recommencer repart de zéro");
 verifier(l5.lire("verifierMotDePasse('thomas', 'secret1')") === true, "recommencer garde le mot de passe");
-// Une partie d'avant les comptes est retrouvée en créant le compte à ce nom
-var stV = {};
-var v1 = nouveauMonde(stV, 44);
-v1.lire("adopterPrenom('Léa'); state.save()");
-v1.taper("cd PrairieNord");
-var v2 = nouveauMonde(stV);
-verifier(v2.lire("rangerPartieSansCompte()") === true, "l'ancienne partie est mise de côté");
-verifier(v2.lire("anciennesParties('lea').length") === 1, "elle attend le compte lea");
-var v3 = nouveauMonde(stV, 45);
-verifier(v3.lire("creerCompte('Lea', 'motdepasse')") === "ancienne", "le compte créé reprend l'ancienne partie");
-verifier(nouveauMonde(stV).lire("current_room.room_name") === "PrairieNord", "l'ancienne partie revient");
 
 // Les leçons de vim
 var a2 = nouveauMonde({}, 32);

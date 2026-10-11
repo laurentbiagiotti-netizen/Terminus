@@ -14,7 +14,8 @@ function nouveauMonde(stockage, graine){
 	stockage = stockage || {};
 	// Une graine fixe par défaut : les tests sont reproductibles. Les valeurs propres à
 	// la partie (mot de passe, adresses, PID...) se lisent ensuite avec jeu.lire().
-	if (!stockage["terminus-cybersup-profil"]){
+	stockage["terminus-cybersup-version"] = stockage["terminus-cybersup-version"] || "comptes-1";
+	if (!stockage["terminus-cybersup-profil"] && !stockage["terminus-cybersup-actif"]){
 		stockage["terminus-cybersup-profil"] = JSON.stringify({ graine: graine || 4242, prenom: null, chapitre: 1 });
 	}
 	var ecran = [];
