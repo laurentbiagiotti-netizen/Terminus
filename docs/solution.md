@@ -67,7 +67,7 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
 | Première utilisation d'un sort (52) | 5 |
 | Lieu découvert (44) | 5 |
 
-Le total possible est de 3860 XP au chapitre 1. Les deux autres chapitres ont chacun leur barème, sur le même principe, et leur note sur 20 à part : 3675 XP pour la panne (13 étapes, 31 quêtes secondaires, 35 sorts, 20 lieux), 4895 XP pour la Crypte (22 étapes, 34 quêtes secondaires dont 14 autour de vim, 37 sorts, 48 lieux). La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
+Le total possible est de 3860 XP au chapitre 1. Les deux autres chapitres ont chacun leur barème, sur le même principe, et leur note sur 20 à part : 3675 XP pour la panne (13 étapes, 31 quêtes secondaires, 35 sorts, 20 lieux), 5610 XP pour la Crypte (22 étapes, 45 quêtes secondaires dont 14 autour de vim, 48 sorts, 48 lieux). La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
 
 Ordres de grandeur : un parcours réduit au strict nécessaire (une quarantaine de commandes, impossible sans connaître la solution) donne 10 sur 20. La solution ci-dessous, dernier chapitre compris, donne 20 sur 20. Les derniers points se gagnent en visitant chaque lieu et en lançant chaque sort au moins une fois : `xp` liste ceux qui n'ont jamais servi.
 
@@ -588,7 +588,9 @@ Radia remet le CertificatReseau, avec la note du chapitre 2 et son code de véri
 
 ## Chapitre 3 : la Crypte (la mission cyber)
 
-Notions : empreintes (`sha256sum`, `sha256sum -c`), encodage (`base64`, `base64 -d`), bit SUID (`ls -l`, `find -perm -4000`, `chmod u-s`), sortie d'erreur (`2>`, `2>/dev/null`), ports en écoute (`ss -tlnp`, vu au chapitre 2), édition de fichiers (`nano`, vu au chapitre 2), clés SSH (`ssh-keygen`, clé publique et clé privée, `authorized_keys`). Puis, sur tout le réseau de l'école : journaux compressés (`zcat`, `journalctl`, `last`, `who`), cartographie (`nmap`, et `ip`, `nc`, `dig`, `traceroute` vus au chapitre 2), processus et services (`pgrep`, `pkill`, `lsof`, `systemctl`), attribut immuable (`lsattr`, `chattr`), filtres de texte (`sed`, `awk`, `tr`, `rev`, `tee`), comptes et droits (`userdel`, `usermod`, `groups`, `visudo`), pare-feu (`ufw`), copie de preuves (`ssh-copy-id`, `scp`, `md5sum`, `sha1sum`), analyse de fichiers (`file`, `xxd`, `strings`, `stat`), chiffrement (`gpg`) et l'éditeur des serveurs, `vim`, avec ses leçons.
+Notions : empreintes (`sha256sum`, `sha256sum -c`), encodage (`base64`, `base64 -d`), bit SUID (`ls -l`, `find -perm -4000`, `chmod u-s`), sortie d'erreur (`2>`, `2>/dev/null`), ports en écoute (`ss -tlnp`, vu au chapitre 2), édition de fichiers (`nano`, vu au chapitre 2), clés SSH (`ssh-keygen`, clé publique et clé privée, `authorized_keys`). Puis, sur tout le réseau de l'école : journaux compressés (`zcat`, `journalctl`, `last`, `who`), cartographie (`nmap`, et `ip`, `nc`, `dig`, `traceroute` vus au chapitre 2), processus et services (`pgrep`, `pkill`, `lsof`, `systemctl`), attribut immuable (`lsattr`, `chattr`), filtres de texte (`sed`, `awk`, `tr`, `rev`, `tee`), comptes et droits (`userdel`, `usermod`, `groups`, `visudo`), pare-feu (`ufw`), copie de preuves (`ssh-copy-id`, `scp`, `md5sum`, `sha1sum`), analyse de fichiers (`file`, `xxd`, `strings`, `stat`), chiffrement (`gpg`) et l'éditeur des serveurs, `vim`, avec ses leçons. En bonus, le carnet de traque de Grace (`lastb`, `lastlog`, `w`, `chage`, `fail2ban-client`) et la trousse d'Evi (`clamscan`, `rkhunter`, `debsums`, `exiftool`, `getfacl`, `setfacl`).
+
+Le chapitre se joue comme une chasse : le Corbeau a fait son nid sur le réseau, chaque sort porte un nom imagé (`nmap`, la Lanterne des Ports ; `lsof`, le Filet) et, au premier lancement, dit ce qu'il fait en une image. Les machines de l'école sortent de la brume dès qu'un sort les nomme, et `traque` affiche le tableau de chasse : en rouge ce que le Corbeau souille encore, en vert ce qui est purifié. Chaque étape franchie rapporte un trophée et une ligne « À retenir ». Le Bestiaire de la Crypte donne, pour chaque image, le vrai mot du métier.
 
 L'enquête suit 22 étapes : la Crypte (7 étapes, comme avant), les journaux de la Citadelle, la cartographie du réseau, le labo de TP (session et service), le site web, la messagerie, le DNS, le pare-feu, les comptes et sudo, la clé, le coffre, les preuves, les notes chiffrées, le Corbeau, puis le rapport d'incident rédigé dans vim. La radio de Grace annonce toujours l'étape suivante.
 
@@ -605,9 +607,13 @@ ssh citadelle
 cd Crypte
 less Archiviste
 less Radio
+less Bestiaire
+less TrousseDEvi
+traque
 cd bin
 ls -l
 sha256sum -c SHA256SUMS
+debsums -c
 cat gardien
 grep charge= gardien | cut -d= -f2 | base64 -d
 echo $USER | base64
@@ -683,6 +689,10 @@ ssh citadelle
 cd var
 cd log
 less CarnetDuVeilleur
+less CarnetDeTraque
+sudo lastb
+lastlog
+sudo chage -l corbeau
 ls -l
 cat auth.log
 zcat auth.log.1.gz
@@ -710,6 +720,7 @@ ssh labo
 uname -a
 less TableauDuLabo
 who
+w
 last
 pgrep -l -u corbeau
 sudo lsof -p <pid:maj-auto>
@@ -779,7 +790,11 @@ cat access.log
 find /var/www -mtime -1
 cd ../www
 cat index.html
+getfacl uploads
+sudo clamscan -r uploads
+sudo setfacl -x u:corbeau uploads
 cd uploads
+exiftool photo-promo.png
 stat maj.php
 sudo rm maj.php
 lsattr
@@ -853,6 +868,10 @@ groups corbeau
 sudo cat sudoers
 sudo visudo
 sudo cat sudoers
+sudo chage -E 0 corbeau
+sudo fail2ban-client status sshd
+sudo fail2ban-client set sshd banip <poste>
+sudo rkhunter --check
 exit
 ```
 
@@ -920,4 +939,4 @@ cat CertificatCyber
 
 Dans `vim rapport.txt`, pour chacune des quatre lignes à compléter : s'y placer (`j`), `A`, taper la réponse, Échap. Puis `:wq`. Les réponses : l'adresse du poste (vue avec `who` sur le labo, ou dans les notes du Corbeau), le compte caché (`maintenance`), le port de la porte dérobée (6666) et l'heure de la première connexion (ligne `Accepted` de `auth.log.2.gz`). Si une réponse manque, le rapport n'est pas accepté. Le rapport écrit avec un autre éditeur est refusé : Laurent veut vim.
 
-À ce stade le chapitre 3 affiche 4895 XP sur 4895, soit 20 sur 20, et le CertificatCyber porte son code de vérification.
+À ce stade le chapitre 3 affiche 5610 XP sur 5610, soit 20 sur 20, et le CertificatCyber porte son code de vérification.

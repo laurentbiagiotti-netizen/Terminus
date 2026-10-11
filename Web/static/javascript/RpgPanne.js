@@ -77,7 +77,10 @@ var RELIQUES = {
 	r_telnet:     "le Verrou du Silence"
 };
 
-function nomRpg(sort){ return SORTS_RPG[sort] ? SORTS_RPG[sort].nom : ""; }
+function nomRpg(sort, chapitre){
+	if (chapitre === 2 && typeof SORTS_RPG_CRYPTE !== "undefined" && SORTS_RPG_CRYPTE[sort]) return SORTS_RPG_CRYPTE[sort].nom;
+	return SORTS_RPG[sort] ? SORTS_RPG[sort].nom : "";
+}
 
 function reliquesObtenues(){
 	return Object.keys(RELIQUES).filter(function(id){ return state.quests[id]; }).map(function(id){ return RELIQUES[id]; });

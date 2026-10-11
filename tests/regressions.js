@@ -497,5 +497,22 @@ contient(q3.taper("nft list ruleset"), "Operation not permitted", "nft demande s
 contient(q3.taper("uptime -p"), "up 1 hour", "uptime avant redémarrage");
 verifier(!q3.lire("state.quests.s_r_uptime"), "pas de quête uptime sans redémarrage");
 
+// Le chapitre 3 en chasse : le tableau, les nouveaux sorts, les trophées
+var q4 = nouveauMonde({}, 66);
+q4.taper("chapitre 3", "oui");
+["ssh citadelle", "less Laurent", "cd Crypte", "less Radio", "less Archiviste", "less /var/log/CarnetDeTraque"].forEach(function(c){ q4.taper(c); });
+contient(q4.taper("traque"), "dans la brume", "le tableau de chasse commence dans la brume");
+contient(q4.taper("less TrousseDEvi"), "Nouveau sort appris : clamscan, le Chien de Chasse", "la trousse d'Evi enseigne avec les noms imagés");
+contient(q4.taper("less Bestiaire"), "Le faux roi", "le bestiaire donne les images et les vrais mots");
+contient(q4.taper("rkhunter --check"), "root", "rkhunter demande sudo");
+contient(q4.taper("sudo rkhunter --check"), "Comptes d'UID 0 autres que root             [ Warning ]", "rkhunter voit le compte caché");
+contient(q4.taper("cd bin"), "bin", "on descend dans bin");
+contient(q4.taper("debsums -c"), "/Crypte/bin/gardien", "debsums trouve le gardien modifié");
+verifier(q4.taper("debsums -c").indexOf("Trophée") === -1, "pas de trophée sans étape franchie");
+contient(q4.taper("sha256sum -c SHA256SUMS"), "Trophée de chasse : le Sceau de l'Archiviste", "une étape rapporte un trophée");
+contient(q4.taper("clamscan gardien"), "Unix.Trojan.Gardien-1 FOUND", "clamscan reconnaît le gardien trafiqué");
+contient(q4.taper("sudo fail2ban-client set sshd banip 10.0.92.1"), "passerelle", "fail2ban refuse de bannir la passerelle");
+contient(q4.taper("sudo chage -E 0 laurent"), "Vise le compte de l'intrus", "chage protège laurent");
+
 console.log(verifications + " vérifications, " + echecs + " échec" + (echecs > 1 ? "s" : ""));
 process.exit(echecs ? 1 : 0);

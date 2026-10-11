@@ -304,7 +304,7 @@ GameState.prototype.learn = function(sort){
 	else if (chapitre === 3) this.xp3 += XP_SORT_APPRIS;
 	else if (!this.has("chapitre1Saute")) this.xp += XP_SORT_APPRIS;
 	jouerSon("sort");
-	say(C.vert("✦ Nouveau sort appris : " + sort + (chapitre === 3 && typeof nomRpg === "function" && nomRpg(sort) ? ", " + nomRpg(sort) : "")) + " (" + MANUEL[sort].resume + "). Détail : man " + sort + (chapitre !== 1 || !this.has("chapitre1Saute") ? C.gris("  +" + XP_SORT_APPRIS + " XP") : ""));
+	say(C.vert("✦ Nouveau sort appris : " + sort + ((chapitre === 3 || chapitre === 2) && typeof nomRpg === "function" && nomRpg(sort, chapitre) ? ", " + nomRpg(sort, chapitre) : "")) + " (" + MANUEL[sort].resume + "). Détail : man " + sort + (chapitre !== 1 || !this.has("chapitre1Saute") ? C.gris("  +" + XP_SORT_APPRIS + " XP") : ""));
 	GameEvents.fire({ type: "learn", spell: sort });
 };
 

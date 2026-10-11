@@ -541,8 +541,11 @@ Crypte.addItem(Whitfield);
 
 var Radio = new Item("Radio",
 	"La radio grésille. « Ici Grace, depuis la WarRoom. Tu m'entends ? Bien. L'exercice est fini, mais les sondes du SOC \
-continuent de voir passer du trafic vers la Citadelle, et ça, ce n'est pas nous. Commence par l'Archiviste : il saura \
-si quelqu'un a touché aux programmes. Je reste en ligne. »",
+continuent de voir passer du trafic vers la Citadelle, et ça, ce n'est pas nous. Quelqu'un a fait son nid chez nous : on l'appelle le Corbeau.\n\n\
+La chasse est ouverte. Chaque sort que tu lances te dit ce qu'il fait en une image, et fait sortir des machines de la brume. \
+Chaque porte que tu lui fermes te rapporte un trophée. Tape traque quand tu veux : ton tableau de chasse, machine par machine, en rouge ce qu'il souille encore, en vert ce que tu as purifié. \
+Le Bestiaire, sur la table, donne pour chaque image le vrai mot du métier, et la TrousseDEvi, au pied de l'escalier, d'autres sorts de chasse.\n\n\
+Commence par l'Archiviste : il saura si quelqu'un a touché aux programmes. Je reste en ligne. »",
 	"item_workstation.gif");
 Crypte.addItem(Radio);
 

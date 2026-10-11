@@ -800,6 +800,32 @@ function texteRadioReseau(){
 
 function verifierReseau(){
 	if (!state.has("crypteOuverte")) return;
+	// Les anciennes sauvegardes n'ont pas la trousse d'Evi ni le carnet de Grace.
+	if (!Crypte.hasItem(TrousseDEvi)) Crypte.addItem(TrousseDEvi);
+	if (!Crypte.hasItem(Bestiaire)) Crypte.addItem(Bestiaire);
+
+/* Le bestiaire de la chasse : chaque image du chapitre et le vrai mot du métier, pour qui débute. */
+var Bestiaire = new Item("Bestiaire",
+	"LE BESTIAIRE DE LA CHASSE (un vieux livre relié, ouvert sur la table de la radio)\n" +
+	"À gauche l'image de la chasse, à droite le vrai mot du métier. Retiens les deux.\n\n" +
+	"Le Corbeau              L'attaquant : quelqu'un entré sans y être invité.\n" +
+	"Son nid                 Le poste d'où il attaque (son adresse IP).\n" +
+	"Une porte dérobée       Une backdoor : un accès caché qu'il s'est laissé pour revenir.\n" +
+	"Le bit qui ouvre tout   Le bit SUID : un programme qui s'exécute avec les droits de son propriétaire, root compris.\n" +
+	"Le faux roi             Un compte d'UID 0 : un second root, sous un autre nom.\n" +
+	"Le faux veilleur        Un processus déguisé (faux kworker) qui écoute sur un port.\n" +
+	"Le rouage qui revient   La persistance : un service qui relance l'accès tout seul (Restart=always).\n" +
+	"L'hameçon               Le phishing : un mail piégé qui pousse à ouvrir une pièce jointe.\n" +
+	"Le masque de la vitrine Un webshell : une page déposée sur le site pour y lancer des commandes.\n" +
+	"La boussole faussée     Un faux enregistrement DNS qui envoie tout le monde chez l'attaquant.\n" +
+	"La clé du nid           Sa clé SSH dans authorized_keys : une entrée sans mot de passe.\n" +
+	"Le sceau d'empreinte    Le hash (SHA-256) : l'empreinte unique d'un fichier.\n" +
+	"Le reliquaire           La chaîne de traçabilité : des preuves copiées intactes, avec leur empreinte.\n" +
+	"Le tableau de chasse    La liste des machines touchées, et leur état (tape traque).\n\n" +
+	"Règle de la chasse : on ne traque que sur un réseau dont on a la charge. Ici, la mission t'y autorise.",
+	"item_historybook.gif");
+Crypte.addItem(Bestiaire);
+	if (!CitadelleLog.hasItem(CarnetDeTraque)) CitadelleLog.addItem(CarnetDeTraque);
 	function une(nom, condition){ if (!state.has(nom) && condition) state.applyState(nom); }
 	une("reseauOuvert", true);
 	// Le service maj-auto est configuré pour redémarrer tout seul (Restart=always).
@@ -1060,6 +1086,50 @@ GameEvents.addListener("write", function(e){
 		say("Laurent lit par-dessus ton épaule. « Le contenu est bon. Mais je t'ai demandé vim : sur un serveur, tu n'auras souvent que lui. Rouvre-le avec vim, et enregistre avec :wq. »");
 	}
 });
+
+/* ------------------------------------------------------------------ */
+/* Les sorts de chasse du chapitre 3 : le carnet de Grace, la trousse d'Evi */
+/* ------------------------------------------------------------------ */
+
+var CarnetDeTraque = fichier(CitadelleLog, "CarnetDeTraque",
+	"LE CARNET DE TRAQUE DE GRACE (oublié sur la pile de journaux)\n\n" +
+	"Un intrus laisse des traces dans les registres de connexion. Cinq sorts pour les lire, et un pour lui fermer la porte :\n\n" +
+	"  sudo lastb                     le Registre des Échecs : les connexions RATÉES (mot de passe faux, compte inconnu)\n" +
+	"  lastlog                        le Livre des Dernières Venues : la dernière connexion de chaque compte\n" +
+	"  w                              l'Œil du Veilleur : qui est connecté en ce moment, et ce qu'il fait\n" +
+	"  sudo chage -l NOM              le Sablier des Comptes : l'âge du mot de passe, la date d'expiration du compte\n" +
+	"  sudo chage -E 0 NOM            faire expirer un compte tout de suite (il ne pourra plus se connecter)\n" +
+	"  sudo fail2ban-client status sshd             le Gardien des Portes : qui est banni de ssh\n" +
+	"  sudo fail2ban-client set sshd banip ADRESSE  bannir une adresse\n\n" +
+	"Une rafale d'échecs juste avant une connexion réussie, c'est la signature d'un mot de passe deviné. Ou d'une clé volée.",
+	{ enseigne: ["lastb", "lastlog", "w", "chage", "fail2ban-client"], revele: ["s_c_lastb", "s_c_lastlog", "s_c_w", "s_c_chage", "s_c_fail2ban"], image: "item_manuscript.gif" });
+
+var TrousseDEvi = new Item("TrousseDEvi",
+	"LA TROUSSE D'EVI, l'administratrice (une sacoche de cuir, posée au pied de l'escalier)\n\n" +
+	"Mes outils d'analyse. Ils ne réparent rien : ils DÉBUSQUENT.\n\n" +
+	"  sudo clamscan -r DOSSIER       le Chien de Chasse : renifle chaque fichier et reconnaît les charges connues\n" +
+	"  sudo rkhunter --check          le Chasseur de Rootkits : passe la Citadelle au peigne fin (comptes, SUID, fichiers cachés, ports)\n" +
+	"  debsums -c                     le Registre des Sceaux d'origine : les programmes qui ne sont plus tels qu'installés\n" +
+	"  exiftool FICHIER               l'Œil du Faussaire : ce qu'une photo raconte d'elle-même (appareil, date, lieu)\n" +
+	"  getfacl CHEMIN                 la Loupe des Droits cachés : les permissions en plus des droits classiques (ACL)\n" +
+	"  sudo setfacl -x u:NOM CHEMIN   retirer une permission cachée\n\n" +
+	"Un attaquant malin ne touche pas aux droits que ls -l montre. Il ajoute une ACL, que personne ne regarde.",
+	"item_box.gif").enseigne("clamscan", "rkhunter", "debsums", "exiftool", "getfacl", "setfacl")
+	.revele("s_c_clamscan", "s_c_rkhunter", "s_c_debsums", "s_c_exif", "s_c_acl", "s_c_setfacl");
+Crypte.addItem(TrousseDEvi);
+
+QUETES_SECONDAIRES_2.splice(QUETES_SECONDAIRES_2.indexOf(QUETES_SECONDAIRES_2.filter(function(q){ return q.id === "s_v_quitter"; })[0]), 0,
+	{ id: "s_c_lastb", titre: "Compter les connexions ratées sur la Citadelle avec lastb" },
+	{ id: "s_c_lastlog", titre: "Lire la dernière venue de chaque compte avec lastlog" },
+	{ id: "s_c_w", titre: "Voir qui est connecté au labo avec w" },
+	{ id: "s_c_chage", titre: "Faire expirer le compte du Corbeau sur la Citadelle avec chage" },
+	{ id: "s_c_fail2ban", titre: "Bannir le poste du Corbeau avec fail2ban" },
+	{ id: "s_c_clamscan", titre: "Débusquer une charge malveillante avec clamscan" },
+	{ id: "s_c_rkhunter", titre: "Passer la Citadelle au Chasseur de Rootkits (rkhunter)" },
+	{ id: "s_c_debsums", titre: "Trouver le programme modifié avec debsums" },
+	{ id: "s_c_exif", titre: "Découvrir où a été prise la photo de la promo avec exiftool" },
+	{ id: "s_c_acl", titre: "Trouver la permission cachée du Corbeau avec getfacl" },
+	{ id: "s_c_setfacl", titre: "Retirer la permission cachée avec setfacl" });
 
 /* Les PNJ du chapitre 1 restent les mêmes : on ajoute seulement des enseignements à l'Archiviste. */
 Whitfield.enseigne("md5sum", "sha1sum");
