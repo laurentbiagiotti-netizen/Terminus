@@ -442,26 +442,28 @@ function demanderNouveauMotDePasse(login, id){
 	});
 }
 
-/* Les questions de adduser : le nom complet sert sur le diplôme, les autres sont là pour l'ambiance. */
+/* Les informations du compte, comme le demande adduser : le nom complet (celui du diplôme) et l'adresse e-mail. */
 function demanderInformations(login, id, motDePasse){
-	var champs = ["Full Name", "Room Number", "Work Phone", "Home Phone", "Other"];
-	var valeurs = {};
-	(function suivant(i){
-		if (i < champs.length){
-			term.demander("\u00a0\u00a0\u00a0\u00a0" + champs[i] + " []: ", false, function(reponse){
-				valeurs[champs[i]] = String(reponse).trim().substring(0, 30);
-				suivant(i + 1);
+	term.demander("\u00a0\u00a0\u00a0\u00a0Full Name []: ", false, function(nom){
+		nom = String(nom).trim().substring(0, 30);
+		(function demanderEmail(){
+			term.demander("\u00a0\u00a0\u00a0\u00a0Email []: ", false, function(email){
+				email = String(email).trim().substring(0, 80);
+				if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+					term.echo("adduser: invalid email address" + C.gris("  (exemple : prenom.nom@cybersup.fr)"));
+					demanderEmail();
+					return;
+				}
+				term.demander("Is the information correct? [Y/n] ", false, function(reponse){
+					if (/^n/i.test(String(reponse).trim())){ demanderInformations(login, id, motDePasse); return; }
+					nouvellePartie(login, motDePasse, nom, email);
+				});
 			});
-			return;
-		}
-		term.demander("Is the information correct? [Y/n] ", false, function(reponse){
-			if (/^n/i.test(String(reponse).trim())){ demanderInformations(login, id, motDePasse); return; }
-			nouvellePartie(login, motDePasse, valeurs["Full Name"]);
-		});
-	})(0);
+		})();
+	});
 }
 
-function nouvellePartie(prenom, motDePasse, nomComplet){
+function nouvellePartie(prenom, motDePasse, nomComplet, email){
 	var identifiant = adopterPrenom(prenom);
 	if (nomComplet){
 		// Le nom complet de adduser est celui qui figure sur le diplôme ; l'identifiant reste celui du login.
@@ -469,7 +471,8 @@ function nouvellePartie(prenom, motDePasse, nomComplet){
 		state.nom = nomComplet;
 		enregistrerProfil();
 	}
-	if (motDePasse !== undefined && creerCompte(prenom, motDePasse, nomComplet) === null){
+	if (email){ PROFIL.email = email; enregistrerProfil(); }
+	if (motDePasse !== undefined && creerCompte(prenom, motDePasse, nomComplet, email) === null){
 		term.echo(C.jaune("Impossible d'enregistrer ton compte sur cet ordinateur : la partie se joue quand même, mais ne sera pas retenue."));
 	}
 	term.echo("\nBienvenue, " + C.gras(PROFIL.prenom) + ". Sur ce système, tu es " + C.vert(identifiant) +

@@ -1512,12 +1512,12 @@ function verifierMotDePasse(id, motDePasse){
 }
 
 /* Crée le compte et y range la partie neuve en cours. Renvoie "neuve", ou null si c'est impossible. */
-function creerCompte(prenom, motDePasse, nomComplet){
+function creerCompte(prenom, motDePasse, nomComplet, email){
 	var id = identifiantDepuisPrenom(prenom);
 	try {
 		var comptes = lireComptes();
 		var sel = base64Aleatoire("sel-" + id + "-" + Date.now() + "-" + Math.random(), 12);
-		comptes[id] = { prenom: String(nomComplet || prenom).trim(), sel: sel, empreinte: empreinteMotDePasse(sel, motDePasse), creation: Date.now() };
+		comptes[id] = { prenom: String(nomComplet || prenom).trim(), email: email || "", sel: sel, empreinte: empreinteMotDePasse(sel, motDePasse), creation: Date.now() };
 		ecrireComptes(comptes);
 		window.localStorage.setItem(CLE_ACTIF, id);
 		// La partie neuve en cours passe sous le nom du compte.
