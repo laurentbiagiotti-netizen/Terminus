@@ -504,6 +504,7 @@ body.crt #scene, body.crt .intro-titre{
 .banniere-detail{ color: #ffffff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .banniere-quete{ color: var(--jaune); }
 .banniere-sort{ color: var(--vert-clair); }
+.banniere-relique{ color: #f0a24a; }
 .banniere-succes{ color: var(--magenta); }
 .banniere-niveau{ color: var(--cyan); }
 .banniere-niveau .banniere-detail{ font-size: 1.15rem; font-weight: 700; white-space: normal; }
