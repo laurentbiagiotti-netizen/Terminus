@@ -27,17 +27,7 @@ function deuxChiffres(n){ return n < 10 ? "0" + n : "" + n; }
 var Home = new Room("Maison",
     "Tu es chez toi, bien au chaud.",
     "loc_farm.gif");
-Home.addItem(new Item("LettreDeBienvenue", "Bienvenue ! Si tu découvres le jeu, voici quelques conseils :\n\n" +
-		"Regarde autour de toi avec le sort « ls ».\n" +
-		"Va dans un autre lieu avec « cd LIEU ».\n" +
-		"Reviens sur tes pas avec « cd .. ».\n" +
-		"Examine un objet ou parle à quelqu'un avec « cat OBJET ».\n" +
-		"Pour un très long texte, « less OBJET » en montre la première page.\n\n" +
-        "Si tu ne sais plus où tu es, tape « pwd ».\n" +
-        "Si tu ne sais plus quoi faire, tape « quetes ». Et « help » te rappelle tes sorts.\n\n" +
-		"Vas-y, explore. Nous espérons que ce que tu trouveras te plaira.\n" +
-        "Ta Convocation de rentrée à Cybersup est arrivée ce matin : elle est posée juste à côté.\n" +
-        "Tout ce que tu apprendras ici fonctionne aussi dans un vrai terminal Linux.",
+Home.addItem(new Item("LettreDeBienvenue", "Bienvenue ! Quelques conseils pour commencer :\n\n  ls           regarde autour de toi\n  cd LIEU      va dans un lieu (cd .. pour revenir)\n  cat OBJET    examine un objet, parle à quelqu'un\n  less OBJET   lit un long texte page par page\n  pwd          où suis-je ?\n  quetes       que faire ?\n  help         tes sorts\n\nTa Convocation de rentrée à Cybersup est posée juste à côté.\nTout ce que tu apprends ici marche aussi dans un vrai terminal Linux.",
     "item_manuscript.gif"));
 var ChaussetteGauche = new Item(".ChaussetteGauche",
     "Ta chaussette gauche, disparue depuis des semaines ! Elle était là depuis le début, \
@@ -46,24 +36,7 @@ pour qu'une chose échappe à « ls ».",
     "none.gif").droits("rw-r--r--", JOUEUR);
 Home.addItem(ChaussetteGauche);
 Home.addItem(new Item("Convocation",
-    "CYBERSUP · école de cybersécurité\n\
-8 Terrasse Bellini, Puteaux (La Défense)\n\
-\n\
-CONVOCATION DE RENTRÉE\n\
-\n\
-Tu es attendu aujourd'hui pour ta rentrée en première année (B1).\n\
-\n\
-  1. Passe à l'Accueil du campus retirer ta carte étudiante et signer la feuille d'émargement.\n\
-     Le campus est tout près de chez toi : cd Cybersup\n\
-  2. Suis ton premier cours, en SalleDeCours.\n\
-  3. Une épreuve pratique clôturera la journée. Le lieu et le nom du surveillant \
-te seront communiqués en temps voulu.\n\
-\n\
-Aucun document autorisé pendant l'épreuve, sauf le manuel (man).\n\
-\n\
-Laurent, Directeur Pédagogique\n\
-\n\
-PS : d'ici là, rien ne t'interdit d'aller te promener. Il paraît que la forêt est belle en cette saison.",
+    "CYBERSUP · école de cybersécurité\n\nCONVOCATION DE RENTRÉE · première année (B1)\n\n  1. Passe à l'Accueil retirer ta carte étudiante. Le campus est tout près : cd Cybersup\n  2. Suis ton premier cours, en SalleDeCours.\n  3. Une épreuve pratique clôturera la journée.\n\nSeul document autorisé : le manuel (man).\n\nLaurent, Directeur Pédagogique\n\nPS : d'ici là, va te promener. La forêt est belle en cette saison.",
     "item_manuscript.gif"));
 
 //WESTERN FOREST
@@ -92,17 +65,7 @@ L'intérieur de l'académie est aussi impressionnant que sa façade : avec ses h
 et ses arches gothiques, elle paraît encore plus vaste du dedans.",
     "loc_academy.gif");
 var HurryingStudent = new Item("EleveEnRetard",
-    "Tu interpelles quelqu'un qui passe en courant. Collision : l'élève s'étale par terre, \
-se relève d'un bond, s'excuse et te demande si ça va. Tu es plus solide que tu n'en as l'air : \
-rien de cassé.\n\
-« Pardon, pardon ! Je cours tellement que je ne regardais pas devant moi... Dis donc, on ne s'est \
-jamais croisés. Tu débarques, pas vrai ? » Clin d'œil. « T'inquiète, c'est plein de nouveaux \
-aujourd'hui. Va donc essayer un cours d'initiation gratuit ! Je t'aurais bien montré le chemin, \
-mais je file en classe : je n'ai pas encore signé la feuille de présence, et ici ça ne pardonne pas. \
-Entre dans la salle de Cours, on s'occupera de toi. Et si tu veux apprendre \
-à lire comme un vrai mage, passe au Scriptorium. À plus ! »\n\
-L'élève disparaît au coin du couloir avant que tu aies pu lui demander son nom. Dommage : \
-quelqu'un de sympathique, et à peu près de ton âge.",
+    "Un élève pressé te percute, se relève d'un bond et s'excuse. « Pardon ! Tu es nouveau, toi ? Va essayer le cours d'initiation, dans la salle de Cours. Et pour apprendre à lire comme un vrai mage, passe au Scriptorium. Je file : je n'ai pas signé la feuille de présence ! »\nIl disparaît au coin du couloir avant que tu aies pu lui demander son nom.",
     "item_student.gif").personnage();
 SpellCastingAcademy.addItem(HurryingStudent);
 
@@ -139,18 +102,7 @@ On te pousse aussitôt dans le cours d'initiation, déjà entamé. \
 Te voilà en pleine leçon sur le sort de déplacement.",
     "loc_classroom.gif");
 Lessons.addItem(new Item("Professeur",
-    "Le professeur est difficile à suivre, mais tu en retiens juste assez pour apprendre trois choses :\n\
-\n\
-1. Le sort « mv » déplace les choses dans le monde.\n\
-2. Il faut indiquer l'objet, puis sa destination : mv OBJET DESTINATION\n\
-3. Ce sort ne fonctionne que sur certains objets, par exemple les mannequins de la SalleEntrainement.\n\
-\n\
-En fin de leçon, il marmonne une astuce pour élèves avancés : l'étoile * remplace n'importe quelle \
-suite de lettres. Ainsi « mv Mannequin* Boite » déplace d'un seul geste tout ce dont le nom commence \
-par Mannequin.\n\
-\n\
-Tu n'as pas assez écouté pour retenir quels objets refusent de bouger. \
-Tant pis : l'expérimentation, ça a toujours été ton style. Mais prudence !",
+    "Le professeur est difficile à suivre, mais tu retiens l'essentiel :\n\n  mv OBJET DESTINATION   déplace un objet (pas tous : essaie les mannequins de la SalleEntrainement)\n  mv Mannequin* Boite    l'étoile * remplace n'importe quelle suite de lettres : tous les Mannequin d'un coup\n\nQuels objets refusent de bouger ? Tu n'as pas écouté. Expérimente, mais prudence !",
     "item_professor.gif").personnage().enseigne("mv"));
 
 //SCRIPTORIUM (nouveau : head, tail, wc)
@@ -159,18 +111,7 @@ var Scriptorium = new Room("Scriptorium",
 Un copiste lève à peine les yeux de son ouvrage.",
     "loc_library.gif");
 Scriptorium.addItem(new Item("Copiste",
-    "Le copiste soupire sans lâcher sa plume. « Encore un débutant qui déroule tout un parchemin \
-avec less pour n'en lire que la première ligne... Écoute bien, je ne le répéterai pas :\n\
-\n\
-  cat PARCHEMIN          affiche tout, d'une traite (celui-là, tu le connais déjà)\n\
-  head PARCHEMIN         seulement les 10 premières lignes\n\
-  tail PARCHEMIN         seulement les 10 dernières\n\
-  head -n 3 PARCHEMIN    les 3 premières (pareil avec tail)\n\
-  wc -l PARCHEMIN        compte les lignes sans rien afficher\n\
-\n\
-Tu veux t'exercer ? Le GrandParchemin est là, sur le pupitre. Dis-moi combien de lignes il compte, \
-puis lis-moi son début et sa fin. Et sans le dérouler en entier, je te prie : \
-il y en a pour la journée. »",
+    "Le copiste soupire. « Encore un qui déroule tout un parchemin pour en lire la première ligne...\n\n  head PARCHEMIN        les 10 premières lignes\n  tail PARCHEMIN        les 10 dernières\n  head -n 3 PARCHEMIN   les 3 premières (pareil avec tail)\n  wc -l PARCHEMIN       compte les lignes, sans rien afficher\n\nExerce-toi sur le GrandParchemin : combien de lignes ? Puis lis-moi son début et sa fin, sans tout dérouler. »",
     "item_librarian.gif").personnage().enseigne("head", "tail", "wc").revele("s_parchemin"));
 var GrandParchemin = (function(){
     var h = new Hasard(118);
@@ -273,31 +214,11 @@ var EasternMountains = new Room("MontagnesEst",
 Assis juste devant, un vieil homme.",
     "loc_mountains.gif");
 var OldMan = new Item("VieilHomme",
-    "Tu engages la conversation avec le vieil homme. Il te salue chaleureusement, \
-comme si vous étiez de vieux amis. Tu te sens tout de suite à l'aise.\n\
-« Bien le bonjour ! Belle matinée pour l'aventure, pas vrai ? Tu m'as l'air jeune et plein \
-d'énergie. Si tu as assez de courage, ton destin t'attend au fond de cette grotte. Il prendra \
-la forme d'un portail. Franchis-le, et le prochain chapitre de ta vie commencera. »\n\
-Le vieil homme lit la stupeur sur ton visage et t'adresse un sourire rassurant. \
-« Je ne suis qu'un vieillard fragile, je ne peux pas t'accompagner là-dedans. Mais je peux \
-t'offrir quelques sorts simples qui t'aideront en chemin. Lis donc mes vieux manuscrits et \
-essaie-les. Et si un sort t'échappe, appelle-moi : man, suivi de son nom. Je t'entendrai, \
-où que tu sois. »\n\
-Tu remarques, dépassant de sa manche, un stylo rouge. Curieux accessoire pour un ermite.",
+    "Le vieil homme te salue comme un vieil ami. « Belle matinée pour l'aventure ! Ton destin t'attend au fond de cette grotte : un portail. Franchis-le, et le chapitre suivant de ta vie commencera.\nJe suis trop vieux pour t'accompagner. Mais lis mes VieuxManuscrits : quelques sorts pour la route. Et si un sort t'échappe, appelle-moi : man, suivi de son nom. »\nUn stylo rouge dépasse de sa manche. Curieux accessoire pour un ermite.",
 	"item_mysteryman.gif").personnage();
 EasternMountains.addItem(OldMan);
 EasternMountains.addItem(new Item("VieuxManuscrits",
-    "Si tu oublies tes sorts, tape « help » : la liste de ceux que tu connais apparaîtra. \
-Pour le détail d'un sort, tape « man » suivi de son nom. Par exemple, pour le sort mv : \
-man mv\n\
-\n\
-Quatre secrets de vieux mage :\n\
-  1. Certaines choses de ce monde sont cachées : leur nom commence par un point. \
-« ls » ne les montre pas, mais « ls -a » (a comme all, tout) les révèle.\n\
-  2. La flèche du haut rappelle tes derniers sorts, « history » en affiche la liste complète, \
-et « !! » relance le tout dernier tel quel.\n\
-  3. « ls -l » (l comme long) donne le détail de chaque chose : ses droits et son propriétaire.\n\
-  4. Presque tous les sorts acceptent « --help » : « ls --help » te donne son aide-mémoire sans même me déranger.",
+    "Un sort oublié ? « help » les liste, « man SORT » en explique un (man mv).\n\nQuatre secrets de vieux mage :\n  ls -a          montre les choses cachées, celles dont le nom commence par un point\n  ls -l          le détail de chaque chose : ses droits, son propriétaire\n  history        tes derniers sorts (flèche du haut : le précédent ; !! le relance)\n  SORT --help    l'aide-mémoire d'un sort, par exemple ls --help",
     "item_manuscript.gif").enseigne("history"));
 var MotDuVieilHomme = new Item("MotSurLeRocher",
     "Le vieil homme n'est plus là. Sur son rocher, un mot tracé au stylo rouge :\n\
@@ -712,16 +633,7 @@ var Clearing = new Room("Clairiere",
 Derrière lui, un tas de gravats.",
     "loc_clearing.gif");
 var CryingMan = new Item("HommeEnPleurs",
-    "« Toi ! Tu pratiques la magie ! Ça se voit, tu as cet air-là. \
-Tu viens finir le travail, c'est ça ? Eh bien vas-y, fais donc : il ne me reste plus rien \
-à prendre. Plus depuis le passage de tes semblables, il y a quelques jours. »\n\n\
-« Ce qui s'est passé ? Tu OSES demander... tu le sais parfaitement. \
-Tes amis, les sbires du sorcier, ont détruit ma maison et enlevé ma pauvre \
-fille, voilà ce qui s'est passé ! Ma femme est même partie chercher de l'aide au village, et je n'ai \
-plus de nouvelles depuis ! »\n\n\
-« Hm ? Bon, c'est vrai que tu n'as pas l'air d'un sbire du sorcier. N'empêche, \
-je ne fais pas confiance aux mages. Si tu es vraiment qui tu prétends être, prouve tes \
-bonnes intentions en me bâtissant une nouvelle Chaumiere ! »",
+    "« Toi ! Un mage ! Tu viens finir le travail ? Il ne me reste plus rien à prendre. »\n\n« Les sbires du sorcier ont détruit ma maison et enlevé ma fille ! Ma femme est partie chercher de l'aide au village, et je n'ai plus de nouvelles. »\n\n« Hm... tu n'as pas l'air d'un sbire. Prouve-le : bâtis-moi une nouvelle Chaumiere ! »",
     "item_man.gif").personnage().revele("s_chaumiere");
 Clearing.addItem(CryingMan);
 Clearing.removeCommand("cd");
@@ -895,19 +807,7 @@ var Taverne = new Room("Taverne",
 près de la cheminée. Derrière le comptoir, le tavernier essuie des chopes en surveillant un gros registre.",
     "loc_taverne.gif");
 Taverne.addItem(new Item("Barde",
-    "« Approche ! Tu connais echo ? C'est le sort des bardes : il fait résonner tes mots.\n\
-\n\
-  echo Bonjour Terminus        répète tes mots à voix haute\n\
-  echo Bonjour > Message       les écrit dans un objet, qu'il crée... ou qu'il ÉCRASE s'il existe déjà\n\
-  echo Encore >> Message       les ajoute à la fin, sans rien effacer\n\
-\n\
-Un chevron, j'écrase. Deux chevrons, j'ajoute. Répète-le trois fois avant de dormir.\n\
-\n\
-echo sait aussi lire les variables, ces boîtes à étiquette dont parle le Marchand : \
-echo $USER fait résonner ton nom, echo $PWD l'endroit où tu te tiens.\n\
-\n\
-Tiens, signe donc le LivreDOr de la taverne : ajoute ton nom à la fin. À la FIN, hein. \
-Le tavernier tient beaucoup aux signatures des autres. »",
+    "« Approche ! echo est le sort des bardes : il fait résonner tes mots.\n\n  echo Bonjour Terminus     répète tes mots\n  echo Bonjour > Message    les écrit dans un objet, qu'il crée... ou qu'il ÉCRASE\n  echo Encore >> Message    les ajoute à la fin, sans rien effacer\n\nUn chevron, j'écrase. Deux chevrons, j'ajoute.\necho lit aussi les variables : echo $USER, echo $PWD.\n\nSigne donc le LivreDOr : ton nom à la FIN. Le tavernier tient aux signatures des autres. »",
     "item_barde.gif").personnage().enseigne("echo").revele("s_livredor", "s_variables"));
 var TEXTE_LIVRE_DOR =
     "LIVRE D'OR de la Taverne du Pingouin Manchot\n\
@@ -948,20 +848,7 @@ var Registre = (function(){
 })();
 Taverne.addItem(Registre);
 var Tavernier = new Item("Tavernier",
-    "« Qu'est-ce que ce sera ? ... Ah, tu veux te rendre utile. Regarde mon Registre : une ligne par chope \
-servie, avec le nom du client, la boisson et le prix, séparés par des deux-points. \
-Je veux savoir qui est mon meilleur client, et je n'ai pas que ça à faire de compter.\n\
-\n\
-Le secret, c'est le tuyau : la barre verticale | envoie ce qu'affiche un sort directement dans le sort suivant. \
-On construit la réponse un morceau après l'autre :\n\
-\n\
-  cut -d: -f1 Registre                             ne garde que la première colonne, les noms\n\
-  cut -d: -f1 Registre | sort                      les trie\n\
-  cut -d: -f1 Registre | sort | uniq -c            compte chaque nom (uniq fusionne les lignes identiques qui se suivent)\n\
-  cut -d: -f1 Registre | sort | uniq -c | sort -n  range les comptes du plus petit au plus grand\n\
-  cat Registre | wc -l                             compte toutes les chopes servies\n\
-\n\
-Quand tu sauras qui c'est, crie-moi son nom : echo NOM. Si tu ne sais pas crier, demande au barde. »",
+    "« Tu veux te rendre utile ? Mon Registre note chaque chope servie : client:boisson:prix. Qui est mon meilleur client ? Je n'ai pas le temps de compter.\n\nLe secret, c'est le tuyau | : il envoie ce qu'affiche un sort dans le suivant.\n\n  cut -d: -f1 Registre                             les noms seulement\n  cut -d: -f1 Registre | sort                      triés\n  cut -d: -f1 Registre | sort | uniq -c            comptés (uniq fusionne les doublons qui se suivent)\n  cut -d: -f1 Registre | sort | uniq -c | sort -n  du plus petit au plus grand\n  cat Registre | wc -l                             le nombre de chopes servies\n\nTrouvé ? Crie-moi son nom : echo NOM. Crier, le barde l'enseigne. »",
     "item_tavernier.gif").personnage().enseigne("sort", "uniq", "cut").revele("s_client");
 Taverne.addItem(Tavernier);
 
@@ -973,16 +860,7 @@ et comment défendre les machines qui font tourner le monde. Aujourd'hui, pourta
 il se passe quelque chose dans la WarRoom.",
     "loc_stata.gif");
 Cybersup.addItem(new Item("Accueil",
-    "« Bienvenue à Cybersup ! Moi, c'est Hedy, je tiens l'accueil. Tu es de la nouvelle promo de B1 ? Parfait. \
-Ta CarteEtudiante est prête, elle est là, sur le comptoir.\n\
-\n\
-Il faudra aussi signer la FeuilleEmargement : on ajoute son nom à la fin, sans effacer celui des autres. \
-Tu ne sais pas encore écrire dans un objet ? Ce n'est pas grave. Un barde de ma connaissance l'enseigne très bien, \
-dans une taverne du pays de Terminus. Reviens signer quand tu sauras.\n\
-\n\
-Pour t'y retrouver, lis le PlanDuCampus. Ton premier cours est en SalleDeCours. \
-Et si tu cherches Laurent, le directeur pédagogique... prends un ticket. Tout le monde le cherche depuis ce matin, \
-surtout ceux de la WarRoom. »",
+    "« Bienvenue à Cybersup ! Hedy, à l'accueil. Nouvelle promo de B1 ? Ta CarteEtudiante est là, sur le comptoir.\n\nSigne aussi la FeuilleEmargement : ton nom à la fin, sans effacer les autres. Tu ne sais pas encore écrire dans un objet ? Un barde l'enseigne, dans une taverne de Terminus. Reviens après.\n\nLis le PlanDuCampus. Ton premier cours : SalleDeCours. Laurent, le directeur ? Tout le monde le cherche depuis ce matin. »",
     "item_lady.gif").personnage().revele("s_emargement"));
 var CarteEtudiante = new Item("CarteEtudiante", "", "item_locker.gif");
 Cybersup.addItem(CarteEtudiante);
@@ -1028,18 +906,7 @@ Cybersup.addItem(new Item("Pancarte",
 La porte est fermée à clé. Un ls -l te dirait qui a le droit d'entrer.",
     "item_sign.gif"));
 Cybersup.addItem(new Item("RSSI",
-    "« Halte ! Auguste, responsable de la sécurité des systèmes d'information. RSSI, pour les intimes. \
-Personne ne va plus loin sans trois vérifications.\n\
-\n\
-Un : qui es-tu ? Le sort id te le dira : ton numéro d'utilisateur, ton groupe, et tous les groupes auxquels tu appartiens. \
-Le numéro 0, c'est root.\n\
-\n\
-Deux : ton mot de passe. Change-le avec passwd, et choisis-le sérieusement : douze caractères au moins, \
-des majuscules, des minuscules, des chiffres. Une phrase entière fait très bien l'affaire. \
-Et n'utilise jamais ici un mot de passe qui te sert ailleurs : un mot de passe, c'est comme une brosse à dents, ça ne se partage pas.\n\
-\n\
-Trois : à qui appartient quoi ? ls -l te le montre, deuxième colonne. Seul root peut donner une chose à quelqu'un d'autre : \
-sudo chown NOM CHOSE. Tu n'as pas encore sudo ? Alors ce n'est pas encore ton problème. »",
+    "« Halte ! Auguste, RSSI : la sécurité, c'est moi. Trois vérifications.\n\nUn : qui es-tu ? id te le dit. Le numéro 0, c'est root.\nDeux : ton mot de passe. Change-le avec passwd : douze caractères au moins, ou une phrase entière. Jamais le même qu'ailleurs.\nTrois : à qui appartient quoi ? ls -l te montre le propriétaire. Seul root peut donner une chose : sudo chown NOM CHOSE.\n\nPas encore sudo ? Alors ce n'est pas encore ton problème. »",
     "item_professor.gif").personnage().enseigne("id", "passwd", "chown").revele("s_passwd"));
 
 var SalleDeCours = new Room("SalleDeCours",
@@ -1047,20 +914,7 @@ var SalleDeCours = new Room("SalleDeCours",
 et un formateur qui t'attendait manifestement.",
     "loc_classroom.gif");
 SalleDeCours.addItem(new Item("Formateur",
-    "Le formateur, Dennis d'après son badge, trace au tableau une colonne de numéros. « Tout sort qu'on lance devient un processus : \
-un programme en train de tourner. Chacun porte un numéro unique, son PID, et appartient à celui qui l'a lancé.\n\
-\n\
-  ps             liste les processus en cours\n\
-  top            les mêmes, classés du plus gourmand au plus sage\n\
-  kill PID       demande poliment au processus de s'arrêter (signal TERM)\n\
-  kill -9 PID    l'arrête sans lui demander son avis (signal KILL), à réserver aux têtus\n\
-  whoami         te rappelle sous quel nom le système te connaît\n\
-\n\
-Règle d'or : tu ne peux arrêter que TES processus. Ceux des autres, seul root, l'administrateur, \
-peut y toucher.\n\
-\n\
-Travaux pratiques : un élève a lancé ici un sortilege_infini qui tourne en boucle, et un golem_tetu \
-qui n'écoute rien. Je les ai mis à ton nom, cadeau. Débarrasse-m'en. »",
+    "Le formateur, Dennis d'après son badge : « Tout sort lancé devient un processus. Chacun a un numéro, son PID, et un propriétaire.\n\n  ps             les processus en cours\n  top            les mêmes, du plus gourmand au plus sage\n  kill PID       demande au processus de s'arrêter (signal TERM)\n  kill -9 PID    l'arrête de force (signal KILL), pour les têtus\n  whoami         ton nom pour le système\n\nTu ne peux arrêter que TES processus. Ceux des autres, seul root.\n\nTP : un sortilege_infini tourne en boucle et un golem_tetu n'écoute rien. Ils sont à ton nom. Débarrasse-m'en. »",
     "item_TA.gif").personnage().enseigne("ps", "top", "kill", "whoami").revele("s_processus"));
 SalleDeCours.addItem(new Item("Affiche",
     "AFFICHE DU CLUB LINUX\n\
@@ -1086,17 +940,7 @@ SalleDeCours.addProc(PIDS_COURS[1], "golem_tetu", JOUEUR, {
     killText: "Le golem_tetu n'a pas le temps de protester : le signal KILL ne se discute pas."
 });
 SalleDeCours.addItem(new Item("EtudianteCurieuse",
-    "« Tu cherches quelque chose ? Moi aussi, tout le temps. Margaret, B3. Avec le BDE on organise le CTF de l'école, une chasse au drapeau : \
-quelqu'un cache un fichier, les autres le traquent.\n\
-\n\
-  find LIEU -name NOM       fouille un lieu et tout ce qu'il contient, cachettes comprises\n\
-  find . -name \"flag*\"      cherche à partir d'ici tout ce dont le nom commence par flag\n\
-  find . -type d            ne montre que les lieux (f pour les objets)\n\
-\n\
-Les guillemets autour de \"flag*\" comptent : sans eux, c'est le terminal qui interprète l'étoile \
-avant que find ne la voie.\n\
-\n\
-Un drapeau est caché quelque part dans la SalleServeurs. Trouve-le et lis-le : il y a une récompense. »",
+    "« Margaret, B3. Avec le BDE on organise le CTF de l'école : quelqu'un cache un fichier, les autres le traquent.\n\n  find LIEU -name NOM     fouille un lieu et tout ce qu'il contient\n  find . -name \"flag*\"    à partir d'ici, tout ce dont le nom commence par flag\n  find . -type d          seulement les lieux (f pour les objets)\n\nGarde les guillemets autour de \"flag*\" : sans eux, le terminal interprète l'étoile avant find.\nUn drapeau est caché dans la SalleServeurs. Trouve-le et lis-le : il y a une récompense. »",
     "item_grad.gif").personnage().enseigne("find").revele("s_ctf"));
 
 var SalleServeurs = new Room("SalleServeurs",
@@ -1264,17 +1108,7 @@ var Inventaire = (function(){
     return new Item("Inventaire", lignes.join("\n"), "item_historybook.gif");
 })();
 BDE.addItem(new Item("PresidenteDuBDE",
-    "« Salut ! Ada, présidente du BDE. Le BDE, c'est tout ce qui n'est pas dans le programme : les afterworks du jeudi, \
-le CTF de l'école, les soirées, et la boutique. On vient de recevoir les nouveaux sweats, regarde.\n\
-\n\
-D'ailleurs, tu tombes à pic. Je dois annoncer ce soir combien de sweats il nous reste, et l'Inventaire fait des kilomètres. \
-Chaque ligne, c'est un article en stock : son type, sa taille, sa couleur. Combien de lignes parlent d'un sweat ? \
-Crie-moi le nombre : echo NOMBRE.\n\
-\n\
-  grep -c sweat Inventaire          compte les lignes qui contiennent « sweat »\n\
-  grep sweat Inventaire | wc -l     la même chose, avec un tuyau\n\
-\n\
-Tu ne connais pas grep ? La bibliothécaire de Terminus te l'apprendra. Reviens me voir après : il y a un autocollant à la clé. »",
+    "« Salut ! Ada, présidente du BDE : afterworks, CTF, soirées, et la boutique. Les nouveaux sweats viennent d'arriver.\n\nJe dois annoncer ce soir combien il en reste, et l'Inventaire fait des kilomètres (une ligne par article). Combien de lignes parlent d'un sweat ? Crie-le : echo NOMBRE.\n\n  grep -c sweat Inventaire         compte les lignes qui contiennent « sweat »\n  grep sweat Inventaire | wc -l    pareil, avec un tuyau\n\nPas encore grep ? La bibliothécaire de Terminus l'enseigne. Un autocollant t'attend. »",
     "item_student.gif").personnage().revele("s_bde"));
 BDE.addItem(Inventaire);
 BDE.addItem(new Item("Boutique",
@@ -1446,17 +1280,7 @@ Citadelle.addItem(Phylactere);
 var VRAI_NOM = "laurent";
 
 var Laurent = new Item("Laurent",
-    "« Je te dois des explications. Je m'appelle Laurent, Directeur Pédagogique de Cybersup.\n\
-\n\
-Le Sorcier Noir, la corruption, les trolls : c'était ton examen. On retient un sort le jour où il nous sort d'un mauvais pas, \
-alors je t'en ai offert plusieurs. Le vieil homme du man ? Moi, avec une fausse barbe. L'enfant dans la cage ? Ma stagiaire. \
-Et la WarRoom passait son propre exercice de crise en même temps.\n\
-\n\
-Ces sorts n'ont rien de magique : ls, grep, chmod, sudo marchent tels quels sur les vraies machines, celles des hôpitaux et des banques. \
-Les défendre est un métier : c'est celui qu'on enseigne.\n\
-\n\
-Ton Diplome est là. Le Paradis est ouvert, mon bureau à Cybersup aussi, et je t'offre le sort tree. \
-Une seule règle : avec sudo, on relit sa ligne avant d'appuyer sur Entrée. »",
+    "« Je te dois des explications. Laurent, Directeur Pédagogique de Cybersup.\n\nLe Sorcier Noir, les trolls : c'était ton examen. Le vieil homme du man ? Moi, avec une fausse barbe. L'enfant dans la cage ? Ma stagiaire.\n\nCes sorts n'ont rien de magique : ls, grep, chmod, sudo marchent tels quels sur les vraies machines. Les défendre est un métier, celui qu'on enseigne ici.\n\nTon Diplome est là, le Paradis est ouvert, et je t'offre le sort tree. Une règle : avec sudo, on relit sa ligne avant Entrée. »\n\nP.S. Pendant ton épreuve, le réseau de l'école est tombé. Radia t'attend au BatimentB (cd ~/Cybersup/BatimentB) : ce sera ton chapitre 2.",
     "item_mysteryman.gif").personnage();
 Laurent.addCmdText("rm", "Laurent hausse un sourcil. « On ne supprime pas le directeur pédagogique. D'autres ont essayé, à la veille des partiels. »");
 Laurent.addCmdText("mv", "« Je me déplace très bien tout seul, merci. »");

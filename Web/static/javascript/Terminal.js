@@ -337,9 +337,17 @@ Terminal.prototype.demander = function(texte, masque, rappel){
 	this.saisie.focus();
 };
 
+/* Une commande suggérée, écrite en gris dans la ligne vide : Tab (ou →) l'écrit pour de vrai. */
+Terminal.prototype.proposer = function(texte, libelle){
+	this.suggestion = texte || null;
+	this.saisie.placeholder = texte ? (libelle || "") + texte + "   ⇥ Tab" : "";
+	this.saisie.classList.toggle("avec-suggestion", !!texte);
+};
+
 Terminal.prototype.valider = function(){
 	var ligne = this.saisie.value;
 	this.saisie.value = "";
+	if (!this.question && ligne.trim() !== "") this.proposer(null);
 	if (this.question){
 		var q = this.question;
 		this.question = null;
@@ -377,6 +385,10 @@ Terminal.prototype.touche = function(e){
 			this.saisie.value = this.positionHistorique === this.historique.length ?
 				this.brouillon : this.historique[this.positionHistorique];
 		}
+	} else if ((e.key === "Tab" || e.key === "ArrowRight") && this.suggestion && this.saisie.value === ""){
+		e.preventDefault();
+		this.saisie.value = this.suggestion;
+		this.saisie.selectionStart = this.saisie.selectionEnd = this.suggestion.length;
 	} else if (e.key === "Tab"){
 		e.preventDefault();
 		if (!this.onCompletion) return;

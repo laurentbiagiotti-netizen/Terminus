@@ -56,7 +56,7 @@ contient(t("less lettredebienvenue"), "majuscules et minuscules", "indice sur la
 contient(t("cd /"), "partent de ta Maison", "pas de chemin absolu");
 contient(t("less .ChaussetteGauche"), "chaussette gauche", "lecture de la chaussette");
 s = t("less Convocation");
-contient(s, "8 Terrasse Bellini", "la convocation de rentrée");
+contient(s, "CONVOCATION DE RENTRÉE", "la convocation de rentrée");
 contient(s, "Laurent, Directeur Pédagogique", "la convocation est signée");
 verifier(jeu.lire("state.quests.s_chaussette") === true, "quête secrète de la chaussette");
 
@@ -81,7 +81,7 @@ verifier(jeu.lire("state.quests.s_mannequins") === true, "quête des mannequins"
 t("cd ../Scriptorium");
 contient(t("head GrandParchemin"), "ne connais pas encore", "head pas encore appris");
 appris(t("cat Copiste"), "tail", "cat est connu dès le départ et suffit pour écouter le Copiste");
-contient(t("less Copiste"), "Encore un débutant", "less Copiste marche aussi");
+contient(t("less Copiste"), "Encore un qui déroule", "less Copiste marche aussi");
 s = t("less GrandParchemin");
 contient(s, "Fin de la première page", "less coupe les longs textes");
 contient(t("wc -l GrandParchemin"), "120 GrandParchemin", "wc -l");

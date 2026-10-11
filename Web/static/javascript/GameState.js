@@ -191,6 +191,8 @@ function GameState(){
 	// Expérience
 	this.xp = 0;
 	this.usages = {};          // sorts déjà utilisés au moins une fois
+	this.frequences = {};      // combien de fois chaque sort a été lancé (le récapitulatif de fin de chapitre)
+	this.quiz = {};            // le meilleur score au quiz de chaque chapitre
 	this.visited = {};         // lieux déjà visités
 	this.gainsDuTour = [];     // petits gains à annoncer à la fin de la ligne en cours
 	this.niveauAnnonce = 1;
@@ -1551,7 +1553,7 @@ GameState.prototype.save = function(){
 			v: VERSION_SAUVEGARDE,
 			flags: this.flags, spells: this.spells, depart: SORTS_DE_DEPART, quests: this.quests, seen: this.seen,
 			nb: this.nbCommandes, nom: this.nom, lieu: this.dernierLieu,
-			xp: this.xp, usages: this.usages, visites: this.visited, niveau: this.niveauAnnonce, temps: this.tempsMs,
+			xp: this.xp, usages: this.usages, freq: this.frequences, quiz: this.quiz, visites: this.visited, niveau: this.niveauAnnonce, temps: this.tempsMs,
 			env: this.env, alias: this.alias, paquets: this.paquets, cron: this.cron,
 			indices: this.indices, malus: this.malus, dateVictoire: this.dateVictoire,
 			xp2: this.xp2, malus2: this.malus2, cles: this.clesGenerees, pub: this.clePublique, priv: this.clePrivee,
@@ -1617,6 +1619,8 @@ GameState.prototype.load = function(){
 		this.dernierLieu = donnees.lieu || null;
 		this.xp = donnees.xp || 0;
 		this.usages = donnees.usages || {};
+		this.frequences = donnees.freq || {};
+		this.quiz = donnees.quiz || {};
 		this.visited = donnees.visites || {};
 		this.niveauAnnonce = donnees.niveau || 1;
 		this.tempsMs = donnees.temps || 0;

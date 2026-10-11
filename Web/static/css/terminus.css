@@ -785,3 +785,124 @@ body.crt #scene, body.crt .intro-titre{
     .badge-tuile img{ width: 40px; height: 40px; }
     .badge-tuile figcaption{ font-size: 0.58rem; }
 }
+
+/* ------------------------------------------------------------------ */
+/* Le guide : suggestion, tutoriel, piste, scènes, quiz, récapitulatif  */
+/* ------------------------------------------------------------------ */
+#saisie::placeholder{ color: #6f6f6f; opacity: 1; font-style: italic; }
+#saisie.avec-suggestion::placeholder{ color: #7d9a86; }
+.banniere-guide .banniere-detail{ font-size: 0.85rem; }
+
+#objectif.objectif-tuto{
+    border-left-color: var(--vert-clair);
+    background: rgba(78, 216, 122, 0.08);
+    animation: tuto-pouls 2.4s ease-in-out infinite;
+}
+#objectif.objectif-tuto .objectif-mot{ color: var(--vert-clair); }
+#objectif.objectif-tuto .objectif-piste{ color: var(--vert-clair); font-weight: 700; }
+@keyframes tuto-pouls{ 50%{ background: rgba(78, 216, 122, 0.16); } }
+.objectif-piste{
+    color: var(--cyan);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.objectif-piste:empty{ display: none; }
+@media (max-width: 820px){
+    #objectif.avec-radio.avec-piste{ display: flex; }
+    .objectif-piste{ -webkit-line-clamp: 2; }
+}
+
+.scene-chapitre{
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.92);
+    animation: victoire-fond 400ms ease-out both;
+    cursor: pointer;
+}
+.scene-cadre{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 100%;
+    overflow-y: auto;
+    padding: 22px 20px;
+    border: 2px solid var(--vert);
+    background: #000000;
+    text-align: center;
+}
+.scene-cadre img{ width: 100%; max-width: 360px; image-rendering: pixelated; border: 1px solid var(--trait); }
+.scene-titre{ margin: 4px 0 0; color: #ffffff; font-size: 1.25rem; font-weight: 700; }
+.scene-ligne{ margin: 0; color: var(--texte); opacity: 0; animation: scene-ligne 600ms ease-out forwards; }
+@keyframes scene-ligne{ from{ opacity: 0; transform: translateY(6px); } to{ opacity: 1; transform: none; } }
+.scene-carte{ margin: 8px 0 0; font-size: 0.85rem; color: var(--gris); }
+.scene-etape{ white-space: nowrap; }
+.scene-ici{ color: var(--jaune); font-weight: 700; }
+.scene-fait{ color: var(--vert-clair); }
+.scene-trait{ color: var(--trait); }
+.scene-suite{ margin: 6px 0 0; color: var(--gris); font-size: 0.85rem; }
+
+.quiz{ cursor: default; }
+.quiz-cadre{ align-items: stretch; text-align: left; }
+.quiz-entete{ margin: 0; color: var(--jaune); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; }
+.quiz-question{ margin: 0 0 4px; color: #ffffff; font-weight: 700; font-size: 1.05rem; }
+.quiz-choix{
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--trait);
+    background: #0b0b0b;
+    color: var(--texte);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.quiz-choix:hover:not(:disabled), .quiz-choix:focus-visible{ border-color: var(--vert); color: #ffffff; }
+.quiz-choix:disabled{ cursor: default; opacity: 0.6; }
+.quiz-choix.quiz-juste{ border-color: var(--vert-clair); color: var(--vert-clair); opacity: 1; }
+.quiz-choix.quiz-faux{ border-color: var(--rouge); color: var(--rouge); opacity: 1; }
+.quiz-explication{ margin: 4px 0 0; color: var(--texte); }
+.quiz-cadre .victoire-note, .quiz-cadre .scene-titre, .quiz-cadre .scene-ligne, .quiz-cadre .scene-suite{ text-align: center; }
+
+.victoire-recap{
+    width: 100%;
+    max-width: 380px;
+    margin: 4px 0 0;
+    padding: 8px 12px;
+    border-top: 1px solid var(--trait);
+    border-bottom: 1px solid var(--trait);
+    font-size: 0.88rem;
+}
+.victoire-recap p{ display: flex; justify-content: space-between; gap: 12px; margin: 2px 0; }
+.recap-nom{ color: var(--gris); }
+.recap-valeur{ color: var(--vert-clair); text-align: right; }
+
+/* Le contraste fort : blanc franc, couleurs vives */
+body.contraste{
+    --texte: #ffffff;
+    --gris: #c8c8c8;
+    --vert: #3dff6e;
+    --vert-clair: #7dff9e;
+    --bleu: #8fc3ff;
+    --jaune: #ffe066;
+    --rouge: #ff8a8a;
+    --magenta: #ecb3ff;
+    --cyan: #8af5f5;
+    --trait: #777777;
+}
+body.contraste #saisie::placeholder{ color: #b0b0b0; }
+body.contraste .pale{ opacity: 1; }
+
+@media (prefers-reduced-motion: reduce){
+    #objectif.objectif-tuto, .scene-chapitre{ animation: none; }
+    .scene-ligne{ animation: none; opacity: 1; }
+}

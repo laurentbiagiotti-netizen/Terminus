@@ -266,12 +266,23 @@ function sansAccents(texte){
 Shell.introuvable = function(cmd, nom, lieu){
 	var message = (cmd ? cmd + " : " : "") + "« " + nom + " » : aucun lieu ni objet de ce nom ici";
 	var proche = lieu ? lieu.getNodeIgnoringCase(nom) : null;
+	if (!proche && lieu && nom.length > 3 && !(sansAccents(nom) !== nom && lieu.getNodeIgnoringCase(sansAccents(nom)))){
+		// Une lettre de trop, de moins ou inversée : on propose le nom qui existe.
+		var noms = lieu.children.map(function(r){ return r.room_name; }).concat(lieu.items.map(function(o){ return o.itemname; }));
+		var voisin = noms.filter(function(n){ return distanceUn(nom, n) || distanceUn(nom.toLowerCase(), n.toLowerCase()); })[0];
+		if (voisin){
+			proposer(nom, voisin);
+			return (cmd ? cmd + " : " : "") + "« " + nom + " » : aucun lieu ni objet de ce nom ici\n" + C.gris("(Tu voulais dire « " + voisin + " » ? Tab l'écrit pour toi.)");
+		}
+	}
 	if (proche){
+		proposer(nom, proche.toString().replace(/\/$/, ""));
 		message += "\n" + C.gris("(Sous Linux, majuscules et minuscules comptent : il existe « " + proche.toString() + " ».)");
 	} else if (lieu && sansAccents(nom) !== nom){
 		var sansAccent = lieu.getNodeIgnoringCase(sansAccents(nom));
 		if (sansAccent){
 			message += "\n" + C.gris("(Les noms de ce monde s'écrivent sans accents, comme souvent sous Linux : « " + sansAccent.toString() + " ».)");
+			proposer(nom, sansAccent.toString().replace(/\/$/, ""));
 		}
 	}
 	return message;
@@ -1712,15 +1723,26 @@ function distanceUn(a, b){
 	return false;
 }
 
+/* La ligne corrigée que le terminal propose après une erreur (Tab l'écrit) : le premier mot remplacé. */
+Shell.proposition = null;
+Shell.ligneCourante = "";
+function proposer(ancien, nouveau){
+	var l = Shell.ligneCourante || "";
+	var i = l.indexOf(ancien);
+	if (i === -1) return;
+	Shell.proposition = l.substring(0, i) + nouveau + l.substring(i + ancien.length);
+}
 Shell.sortInconnu = function(nom){
 	// cd.. ou ls-l : il manque l'espace entre le sort et la suite.
 	var colle = /^([a-z][a-z0-9-]*?)(\.\.?|-[A-Za-z0-9-]*|~.*|\.\/.*|\/.*)$/.exec(nom);
 	if (colle && (Shell.sorts.hasOwnProperty(colle[1]) || SORTS_DU_JEU.indexOf(colle[1]) > -1) && !Shell.sorts.hasOwnProperty(nom)){
+		proposer(nom, colle[1] + " " + colle[2]);
 		return nom + " : sort inconnu. Il manque une espace entre le sort et la suite : " + colle[1] + " " + colle[2] + "\n" +
 			C.gris("(Le terminal sépare les mots avec des espaces : sans elle, il cherche un sort qui s'appellerait « " + nom + " ».)");
 	}
 	var ici = current_room.getNode(nom);
-	if (ici instanceof Room) return "« " + nom + " » est un lieu, pas un sort. Pour y aller : cd " + nom;
+	if (ici instanceof Room){ proposer(nom, "cd " + nom); return "« " + nom + " » est un lieu, pas un sort. Pour y aller : cd " + nom; }
+	if (ici !== null) proposer(nom, "less " + nom);
 	if (ici !== null) return "« " + nom + " » n'est pas un sort. Pour regarder un objet ou parler à quelqu'un : less " + nom;
 	if (COMMANDES_REELLES.indexOf(nom) > -1){
 		return "« " + nom + " » existe bel et bien sous Linux, mais ce sort n'a pas cours à Terminus. Tape help pour revoir les tiens.";
@@ -1728,10 +1750,11 @@ Shell.sortInconnu = function(nom){
 	var connus = state.knownSpells().concat(SORTS_DU_JEU);
 	if (nom.length > 1){
 		for (var i = 0; i < connus.length; i++){
-			if (distanceUn(nom, connus[i])) return nom + " : sort inconnu. Voulais-tu dire « " + connus[i] + " » ?";
+			if (distanceUn(nom, connus[i])){ proposer(nom, connus[i]); return nom + " : sort inconnu. Voulais-tu dire « " + connus[i] + " » ?"; }
 		}
 	}
 	if (nom !== nom.toLowerCase() && Shell.sorts[nom.toLowerCase()]){
+		proposer(nom, nom.toLowerCase());
 		return nom + " : sort inconnu. Les sorts s'écrivent en minuscules : " + nom.toLowerCase();
 	}
 	return nom + " : sort inconnu. Tape help pour revoir tes sorts.";
@@ -1785,6 +1808,7 @@ Shell.ouApprendre = function(sort){
 };
 
 Shell.appeler = function(nom, args, io){
+	if (Shell.sorts.hasOwnProperty(nom) && state.frequences) state.frequences[nom] = (state.frequences[nom] || 0) + 1;
 	if (nom.indexOf("/") > -1) return Shell.lancerScript(nom, io, true);
 	if (!Shell.sorts.hasOwnProperty(nom)){
 		if (state.paquets[nom] && Shell.paquets[nom] && Shell.paquets[nom].lancer) return Shell.paquets[nom].lancer(args, io);
@@ -2128,6 +2152,8 @@ Shell.invite = function(){
 
 /* Point d'entree : appele par Game.js pour chaque ligne validee. */
 Shell.executer = function(ligne){
+	Shell.proposition = null;
+	Shell.ligneCourante = ligne;
 	if (ligne.trim() === "") return;
 	// !! rejoue le sort precedent (sudo !! est un grand classique).
 	if (ligne.indexOf("!!") > -1){
