@@ -133,7 +133,7 @@ function ecranDeVictoire(chapitre){
 	var cadre = document.createElement("div");
 	cadre.className = "victoire-cadre";
 	var image = document.createElement("img");
-	var images = { 1: "item_grad.gif", 2: "item_locker.gif", 3: "item_workstation.gif" };
+	var images = { 1: "item_grad.gif", 2: "item_locker.gif", 3: "loc_batimentb_ok.gif" };
 	image.src = sourceImage("./static/img/" + images[chapitre]);
 	image.alt = "";
 	var titre = document.createElement("p");
@@ -196,7 +196,7 @@ function revelationDuCorbeau(){
 		minuteurs.forEach(clearTimeout);
 		fond.classList.remove("revelation-brouille");
 		fond.classList.add("revelation-demasque", "revelation-fin");
-		image.src = sourceImage(Corbeau.picturename || "./static/img/item_student.gif");
+		image.src = sourceImage(Corbeau.picturename || "./static/img/item_frances.gif");
 	}
 	function fermer(e){
 		if (e && e.type === "keydown"){ e.preventDefault(); e.stopPropagation(); }
@@ -210,7 +210,7 @@ function revelationDuCorbeau(){
 	if (calmeDemande){ finale(); return; }
 	minuteurs.push(setTimeout(function(){ fond.classList.add("revelation-brouille"); }, 1600));
 	minuteurs.push(setTimeout(function(){
-		image.src = sourceImage(Corbeau.picturename || "./static/img/item_student.gif");
+		image.src = sourceImage(Corbeau.picturename || "./static/img/item_frances.gif");
 		fond.classList.add("revelation-demasque");
 	}, 2300));
 	minuteurs.push(setTimeout(function(){ fond.classList.remove("revelation-brouille"); }, 2700));
@@ -226,6 +226,39 @@ GameState.prototype.complete = function(id){
 	}
 	if (!deja && id === "c_corbeau" && !Shell.sauvegardeBloquee) revelationDuCorbeau();
 };
+
+/*
+ * Pendant la panne, une rangée de voyants sous la barre d'état : chaque couche et chaque service
+ * du réseau, vert quand il marche, rouge sinon. C'est le schema en miniature.
+ */
+function majCouches(visible){
+	var panneau = document.getElementById("pics"), etat = document.getElementById("etat");
+	if (!panneau || !etat) return;
+	var bloc = document.getElementById("couches");
+	if (!visible || typeof voyantsPanne !== "function"){ if (bloc) bloc.hidden = true; return; }
+	if (!bloc){
+		bloc = document.createElement("div");
+		bloc.id = "couches";
+		bloc.setAttribute("aria-label", "État du réseau");
+		etat.parentNode.insertBefore(bloc, etat.nextSibling);
+	}
+	bloc.hidden = false;
+	var voyants = voyantsPanne();
+	if (bloc.children.length !== voyants.length){
+		bloc.textContent = "";
+		voyants.forEach(function(){ var v = document.createElement("span"); v.className = "voyant"; bloc.appendChild(v); });
+	}
+	voyants.forEach(function(v, i){
+		var el = bloc.children[i];
+		var cls = "voyant " + (v.ok ? "voyant-ok" : "voyant-ko");
+		if (el.textContent !== v.titre) el.textContent = v.titre;
+		if (el.className.replace(" voyant-change", "") !== cls){
+			var change = el.className !== "voyant";
+			el.className = cls + (change ? " voyant-change" : "");
+		}
+		el.title = v.titre + (v.ok ? " : ça marche" : " : en panne") + " (schema pour le détail)";
+	});
+}
 
 /* La barre d'état : vingt cases, une par point de la note sur 20. */
 function remplirBarre(note){
@@ -264,6 +297,7 @@ function majEtat(){
 		document.getElementById("etat").title = "Note du chapitre 3 (la Crypte). Tape xp pour le détail.";
 		return;
 	}
+	majCouches(enCours === 3);
 	if (enCours === 3){
 		niveau.textContent = state.quests["r_fin"] ? "Chapitre 2 · réseau rétabli" : "Chapitre 2 · panne en cours";
 		remplirBarre(state.note(3));

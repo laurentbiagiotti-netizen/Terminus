@@ -536,7 +536,7 @@ Va dans bin, et demande à sha256sum de vérifier toute la liste d'un coup : sha
 Les programmes intacts répondent OK. Celui qui a été retouché, s'il y en a un, répondra ÉCHEC.\n\n\
 Et si tu tombes sur du charabia qui finit par un ou deux signes =, ce n'est pas du chiffrement : c'est du base64, \
 un simple emballage. base64 -d le déballe. Pour t'entraîner, emballe donc ton prénom : echo TonPrénom | base64. »",
-	"item_librarian.gif").personnage().enseigne("sha256sum", "base64").revele("s_c_base64");
+	"item_archiviste.gif").personnage().enseigne("sha256sum", "base64").revele("s_c_base64");
 Crypte.addItem(Whitfield);
 
 var Radio = new Item("Radio",
@@ -735,7 +735,7 @@ La radio grésille dans ta poche. C'est Laurent : « Frances, tu commences en B1
 Toi, la recrue : il me reste une chose à te demander, la plus importante dans notre métier. Le rapport d'incident. \
 Le modèle t'attend dans ta Maison : copie-le (cp ~/ModeleRapport ~/rapport.txt), remplis-le avec vim (vim ~/rapport.txt), \
 et ton certificat t'attendra à côté. »",
-	"item_student.gif").personnage();
+	"item_frances.gif").personnage();
 /* Le Corbeau n'attend dans le coffre qu'une fois ses notes déchiffrées (voir Reseau.js). */
 Coffre.addItem(new Item("SujetsDExamen", "Une pile de sujets sous scellés. Frances jure qu'elle ne les a pas ouverts. Les scellés lui donnent raison.", "item_manuscript.gif").droits("rw-------", "root"));
 var CertificatCyber = new Item("CertificatCyber", "", "item_manuscript.gif");

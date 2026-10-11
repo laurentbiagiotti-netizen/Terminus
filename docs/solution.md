@@ -62,12 +62,12 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
 | Action | XP |
 | --- | --- |
 | Étape de la quête principale (13) | 100 chacune, 300 pour la victoire finale |
-| Quête secondaire (28, dont 2 secrètes) | 50 |
+| Quête secondaire (29, dont 2 secrètes) | 50 |
 | Sort appris (43 : 52 sorts, dont 9 connus au départ, `cat` compris) | 10 |
 | Première utilisation d'un sort (52) | 5 |
 | Lieu découvert (44) | 5 |
 
-Le total possible est de 3810 XP au chapitre 1. Les deux autres chapitres ont chacun leur barème, sur le même principe, et leur note sur 20 à part : 3175 XP pour la panne (13 étapes, 24 quêtes secondaires, 25 sorts, 20 lieux), 4895 XP pour la Crypte (22 étapes, 34 quêtes secondaires dont 14 autour de vim, 37 sorts, 48 lieux). La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
+Le total possible est de 3860 XP au chapitre 1. Les deux autres chapitres ont chacun leur barème, sur le même principe, et leur note sur 20 à part : 3175 XP pour la panne (13 étapes, 24 quêtes secondaires, 25 sorts, 20 lieux), 4895 XP pour la Crypte (22 étapes, 34 quêtes secondaires dont 14 autour de vim, 37 sorts, 48 lieux). La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
 
 Ordres de grandeur : un parcours réduit au strict nécessaire (une quarantaine de commandes, impossible sans connaître la solution) donne 10 sur 20. La solution ci-dessous, dernier chapitre compris, donne 20 sur 20. Les derniers points se gagnent en visitant chaque lieu et en lançant chaque sort au moins une fois : `xp` liste ceux qui n'ont jamais servi.
 
@@ -319,8 +319,10 @@ tar -xf Baie2/.sauvegardes/sauvegarde-lundi.tar
 cat rapport-incident.txt
 cd ../SalleReseau
 less AdminReseau
+less TableauBlanc
 cat hotes.txt
 ping lille
+ping 10.0.59.1
 ssh lille
 less EtudiantDeLille
 exit
@@ -328,6 +330,8 @@ ssh marseille
 less EtudianteDeMarseille
 exit
 ```
+
+Le TableauBlanc de Vint pose les cinq idées de base du réseau pour qui n'en a jamais fait : l'adresse IP, le nom, le réseau et la passerelle, ping, le port. Appeler Lille par son adresse (`ping 10.0.59.1`) plutôt que par son nom est une quête secondaire. Ces notions sont reprises et approfondies au chapitre 2.
 
 Les campus de Lille et de Marseille n'ont pas de porte : `cd CampusLille` est refusé, on n'y entre que par `ssh`, et `exit` ramène au point de départ. Les deux étudiants donnent chacun un indice pour le combat final.
 
@@ -396,7 +400,7 @@ xp
 bulletin
 ```
 
-À ce stade le compteur affiche 3810 XP sur 3810, niveau 10 (Root), 20 sur 20, félicitations du jury, et les six blocs du bulletin sont acquis.
+À ce stade le compteur affiche 3860 XP sur 3860, niveau 10 (Root), 20 sur 20, félicitations du jury, et les six blocs du bulletin sont acquis.
 
 ## Chapitre 2 : la panne (le réseau de l'école)
 

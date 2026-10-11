@@ -1176,6 +1176,7 @@ Le réseau, c'est simple : des machines qui portent un nom et qui se parlent.\n\
   ssh MACHINE     ouvre un terminal sur cette machine, comme si tu étais assis devant\n\
   exit            referme la connexion et te ramène d'où tu viens\n\
 \n\
+Tu débutes ? Lis d'abord le TableauBlanc, derrière moi : le réseau en cinq idées, sans jargon. \
 La liste des machines est dans hotes.txt. Tu ne peux te connecter que là où tu as un compte : \
 les machines où tu as déjà mis les pieds, plus celles des campus de Lille et de Marseille, \
 où j'ouvre un compte à chaque rentrée. Personne n'y va à pied.\n\
@@ -1190,6 +1191,31 @@ SalleReseau.addItem(new Item("hotes.txt",
 10.0.59.1    lille        le campus de Lille\n\
 10.0.13.1    marseille    le campus de Marseille\n\
 " + completerDroite(ADRESSE_ATTAQUANT, 13) + "citadelle    accès restreint"));
+/* Les notions de base du réseau, pour qui n'en a jamais entendu parler (reprises et approfondies au chapitre 2). */
+var TableauBlanc = new Item("TableauBlanc",
+    "Sur le tableau blanc de la SalleReseau, de l'écriture penchée de Vint :\n\
+\n\
+LE RÉSEAU EN CINQ IDÉES\n\
+\n\
+1. L'ADRESSE IP. Chaque machine d'un réseau a une adresse, comme chaque maison a une adresse postale.\n\
+   Quatre nombres de 0 à 255 séparés par des points : 10.0.92.1 pour Cybersup, 10.0.59.1 pour Lille.\n\
+\n\
+2. LE NOM. Une adresse, c'est dur à retenir : on donne aussi un nom aux machines (cybersup, lille).\n\
+   Un annuaire fait le lien entre les deux : ici, le fichier hotes.txt ; sur un vrai réseau, le DNS.\n\
+\n\
+3. LE RÉSEAU. Les machines dont l'adresse commence pareil sont dans le même réseau, comme les maisons\n\
+   d'une même rue : 10.0.92.1 et 10.0.92.53 sont voisines (la rue, c'est 10.0.92). Pour sortir de sa rue,\n\
+   on passe par la PASSERELLE : un routeur, le bureau de poste du quartier.\n\
+\n\
+4. PING. ping MACHINE envoie un tout petit paquet et attend la réponse : c'est « tu es là ? ».\n\
+   Il marche avec un nom (ping lille) ou directement avec une adresse (ping 10.0.59.1).\n\
+\n\
+5. LE PORT. Sur une machine, chaque service attend derrière un numéro de PORT, comme les guichets d'une poste :\n\
+   22 pour ssh (un terminal à distance), 80 pour le web. ssh MACHINE ouvre un terminal sur une autre machine ; exit le referme.\n\
+\n\
+Exercice : cherche l'adresse de Lille dans hotes.txt, et appelle Lille par son ADRESSE, pas par son nom.",
+    "item_sign.gif").revele("s_adresse");
+SalleReseau.addItem(TableauBlanc);
 Baie3.addItem(new Item(".bash_history",
     "ls\ncd Baie2\nls\nls -a\ncd .sauvegardes\ncat flag.txt\nwhoami\nsudo rm -rf /\n# oups",
     "none.gif"));
@@ -1910,6 +1936,12 @@ GameEvents.addListener("tar", function(e){
 });
 GameEvents.addListener("ssh", function(e){
     state.complete("s_ssh");
+});
+GameEvents.addListener("ping", function(e){
+    if (e.ok && e.parAdresse && e.host === "lille"){
+        if (!state.quests["s_adresse"]) say("Vint sort la tête de l'armoire. « Par son adresse, sans passer par le nom : c'est exactement ce que fait le réseau en coulisses. Le nom, c'est pour les humains. »");
+        state.complete("s_adresse");
+    }
 });
 GameEvents.addListener("apt", function(e){
     state.complete("s_apt");

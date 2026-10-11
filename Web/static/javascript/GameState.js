@@ -117,6 +117,7 @@ var QUETES_SECONDAIRES = [
 	{ id: "s_passwd", titre: "Choisir un mot de passe digne de ce nom" },
 	{ id: "s_archive", titre: "Extraire la sauvegarde de la SalleServeurs" },
 	{ id: "s_ssh", titre: "Voyager par ssh" },
+	{ id: "s_adresse", titre: "Joindre Lille par son adresse IP" },
 	{ id: "s_apt", titre: "Installer un paquet" },
 	{ id: "s_emargement", titre: "Signer la FeuilleEmargement de la rentrée" },
 	{ id: "s_soc", titre: "Identifier l'attaquant dans les journaux de la WarRoom" },

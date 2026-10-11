@@ -671,7 +671,7 @@ Shell.sorts.ping = function(args, io){
 	lignes.push("--- statistiques ping " + hote + " ---");
 	lignes.push(combien + " paquets transmis, " + (muet ? 0 : combien) + " reçus, " + (muet ? "100" : "0") + " % de paquets perdus");
 	if (muet && io.tty) lignes.push(C.gris("(Aucune réponse : la machine existe, mais quelque chose, un pare-feu sans doute, avale tes paquets.)"));
-	GameEvents.fire({ type: "ping", host: hote, ok: !muet });
+	GameEvents.fire({ type: "ping", host: hote, ok: !muet, parAdresse: p.reste[0] === ip });
 	return lignes.join("\n");
 };
 

@@ -433,6 +433,8 @@ contient(t("cd ~/Cybersup/CampusLille"), "on n'y va pas à pied", "Lille ne se r
 t("cd ~/Cybersup/SalleReseau");
 contient(t("cat hotes.txt"), "marseille", "la liste des machines");
 contient(t("ping -c 1 lille"), "1 reçus", "ping lille");
+contient(t("less TableauBlanc"), "ADRESSE IP", "le tableau des notions de réseau");
+contient(t("ping -c 1 10.0.59.1"), "Le nom, c'est pour les humains", "ping par adresse");
 contient(t("ssh lille"), "Bienvenue sur lille", "ssh lille");
 contient(t("hostname"), "lille", "hostname à Lille");
 contient(t("less EtudiantDeLille"), "Linus", "l'étudiant de Lille");
@@ -498,11 +500,11 @@ contient(t("cat ~/Cybersup/WarRoom/EcranMural"), "reprise", "l'écran mural apr�
 contient(t("cat ~/Cybersup/TableauAffichage"), "une seule copie rendue", "les résultats sont affichés");
 contient(t("cat ~/Cybersup/CarteEtudiante"), "Niveau", "la carte étudiante affiche le niveau");
 s = t("quetes");
-contient(s, "28 accomplies sur 28", "journal complet");
+contient(s, "29 accomplies sur 29", "journal complet");
 verifier(s.split("Chapitre 2")[0].indexOf("[ ]") === -1, "plus aucune quête ouverte au chapitre 1");
 contient(s, "Chapitre 2 : la panne", "le chapitre 2 (la panne) s'ouvre après la victoire");
 verifier(s.indexOf("Chapitre 3 : la Crypte") === -1, "la Crypte attend que le réseau soit réparé");
-contient(t("less ~/Cybersup/BatimentB/Radia"), "couche par couche", "Radia attend au BatimentB");
+contient(t("less ~/Cybersup/BatimentB/Radia"), "en partant du bas", "Radia attend au BatimentB");
 
 // --- Score : il ne manque que quelques premières utilisations et quelques lieux ---
 t("sudo chown apprenti ~/Cybersup/SalleServeurs/Baie1/LISEZMOI");
@@ -874,7 +876,9 @@ verifier(jeu10.lire("current_room.room_name") === "BatimentB", "le renfort rése
 verifier(jeu10.lire("state.chapitreEnCours()") === 3, "chapitre en cours : la panne");
 verifier(!jeu10.lire("state.has('crypteOuverte')"), "la Crypte reste fermée tant que le réseau est en panne");
 contient(v("cat ~/TicketIncident"), "BatimentB", "le ticket d'incident");
-contient(v("cat Radia"), "couche par couche", "Radia explique la méthode");
+contient(v("cat Radia"), "en partant du bas", "Radia explique la méthode");
+contient(v("cat Lexique"), "Passerelle", "le lexique de Radia");
+contient(v("schema"), "LE RÉSEAU DE L'ÉCOLE", "le schéma du réseau");
 contient(v("ssh routeur"), "que depuis le Poste", "le routeur ne s'administre que depuis le poste");
 v("cd Poste");
 v("cat AideMemoire"); v("cat etc/MemoDNS");

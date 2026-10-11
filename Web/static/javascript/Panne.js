@@ -76,8 +76,28 @@ Derrière le comptoir, le Poste de l'accueil attend qu'on s'occupe de lui.",
 BatimentB.owner = "root";
 BatimentB.mode = "rwxr-xr-x";
 
-var Radia = new Item("Radia", "", "item_lady.gif").personnage().enseigne("ip", "ethtool", "hostnamectl").revele("s_r_hostnamectl");
+var Radia = new Item("Radia", "", "item_radia.gif").personnage().enseigne("ip", "ethtool", "hostnamectl").revele("s_r_hostnamectl");
 BatimentB.addItem(Radia);
+
+/* Le lexique de Radia : chaque notion du chapitre en deux phrases, pour qui n'a jamais touché un réseau. */
+var Lexique = new Item("Lexique",
+	"LE LEXIQUE DE RADIA (scotché sur l'armoire, pour les B1)\n\n" +
+	"Carte réseau    la prise réseau de la machine (eth0). Éteinte (DOWN), rien n'entre ni ne sort, comme un téléphone en mode avion.\n" +
+	"Adresse IP      l'adresse de la machine sur le réseau, comme une adresse postale : 10.0.93.20.\n" +
+	"Masque (/24)    dit quelle partie de l'adresse est la « rue » : en /24, les trois premiers nombres. 10.0.93.20 et 10.0.93.254 sont dans la même rue.\n" +
+	"Passerelle      le routeur par lequel on sort de sa rue pour aller ailleurs, comme le bureau de poste du quartier.\n" +
+	"Route           une indication de chemin : « pour aller vers tel réseau, passe par telle passerelle ». La route par défaut sert pour tout le reste.\n" +
+	"DNS             l'annuaire du réseau : il traduit un nom (intranet) en adresse (10.0.92.20).\n" +
+	"DHCP            le service qui distribue automatiquement adresse, passerelle et DNS aux machines qui arrivent sur le réseau.\n" +
+	"Service         un programme qui tourne en permanence sur un serveur (web, DHCP, ssh). systemctl les démarre et les arrête.\n" +
+	"Port            le numéro de guichet d'un service sur une machine : 22 ssh, 25 mail, 53 DNS, 80 web, 443 web chiffré.\n" +
+	"Paquet          un petit morceau de données qui voyage sur le réseau. ping en envoie un pour demander « tu es là ? ».\n" +
+	"Pare-feu        le videur du réseau : il laisse passer ou jette les paquets selon des règles.\n" +
+	"Certificat      la carte d'identité d'un site en https, valable entre deux dates.\n" +
+	"En clair        lisible par quiconque écoute le réseau. Le contraire : chiffré (ssh, https).\n\n" +
+	"Et quand tu ne sais plus où tu en es : schema dessine le réseau de l'école, avec ce qui marche en vert et ce qui est en panne en rouge.",
+	"item_manuscript.gif");
+BatimentB.addItem(Lexique);
 
 /* Le poste est une vraie machine Linux : on s'assoit devant (cd Poste), sa racine est « / ». */
 var PosteB = lieuDuChapitre3(new Room("Poste",
@@ -890,6 +910,45 @@ var TALKIE = {
 	r_fin: "Plus un voyant orange dans l'armoire. Reviens me voir au BatimentB : cat Radia."
 };
 
+/* Ce qu'il faut comprendre avant chaque étape, expliqué à quelqu'un qui n'a jamais touché un réseau. */
+var NOTIONS = {
+	r_ip: "Le principe : une machine sans adresse IP, c'est une maison sans adresse postale. Personne ne peut lui écrire, elle ne peut écrire à personne. " +
+		"D'habitude, le DHCP du routeur donne une adresse toute seule. S'il ne répond pas, on la pose à la main, avec son masque /24 (il dit quelle partie de l'adresse est la « rue »).",
+	r_passerelle: "Le principe : le poste parle maintenant à ses voisins de rue (10.0.93.quelque-chose), comme le routeur. Mais pour écrire plus loin, il faut passer par la passerelle, " +
+		"le bureau de poste du quartier. Sans « route par défaut » vers elle, le poste ne sait pas où envoyer le reste.",
+	r_dns: "Le principe : les humains retiennent des noms (intranet), les machines des adresses (10.0.92.20). Le DNS est l'annuaire qui traduit l'un en l'autre. " +
+		"Le poste demande à l'annuaire écrit dans /etc/resolv.conf. Si cet annuaire n'existe pas, plus aucun nom ne marche, même si le réseau va très bien.",
+	r_dhcp: "Le principe : le DHCP est un service du routeur qui distribue adresse, passerelle et annuaire à chaque machine qui arrive. Un service, c'est un programme qui tourne en permanence. " +
+		"Il peut être arrêté (stop) ou démarré (start), et activé ou non au démarrage de la machine (enable, disable). Il faut les deux : démarré ET activé.",
+	r_netplan: "Le principe : ce qu'on règle avec ip ne dure que jusqu'au prochain redémarrage, comme une note sur un tableau qu'on efface le soir. " +
+		"Ce qui doit durer s'écrit dans un fichier de configuration, relu à chaque démarrage : sur ce poste, /etc/netplan.",
+	r_web: "Le principe : un serveur fait tourner plusieurs services, chacun derrière son PORT, comme les guichets d'une poste : 22 pour ssh, 80 pour le web. " +
+		"Un guichet ne peut avoir qu'un seul employé : si un programme a pris le port 80, aucun autre ne peut s'y installer.",
+	r_https: "Le principe : https, c'est le web chiffré. Le serveur prouve son identité avec un CERTIFICAT, une sorte de carte d'identité valable entre deux dates. " +
+		"Le poste compare ces dates avec SA propre horloge : si elle est fausse, il croit que le certificat n'est pas encore valable, et refuse.",
+	r_smtp: "Le principe : le pare-feu est le videur du réseau. Il lit chaque paquet et applique ses règles dans l'ordre : laisser passer (ACCEPT), jeter sans rien dire (DROP) ou refuser (REJECT). " +
+		"Un port fermé répond tout de suite « refused ». Un paquet jeté ne reçoit aucune réponse : la connexion finit en « timed out ».",
+	r_lille: "Le principe : le routeur choisit un chemin pour chaque paquet grâce à ses ROUTES : « pour tel réseau, passe par telle passerelle ». " +
+		"Quand il n'a pas de route précise, il utilise sa route par défaut, vers internet. Or la liaison avec Lille a son propre chemin.",
+	r_telnet: "Le principe : certains vieux protocoles envoient tout EN CLAIR. N'importe qui branché sur le réseau peut lire ce qui passe, mots de passe compris. " +
+		"ssh fait le même travail que telnet, mais chiffré. Un service inutile et dangereux, on l'arrête et on le désactive."
+};
+
+/* Ce qu'il faut retenir, juste après chaque réparation. */
+var A_RETENIR = {
+	r_lien: "Une carte réseau éteinte (DOWN) ne laisse rien passer. ip link montre son état, sudo ip link set eth0 up l'allume.",
+	r_ip: "Une adresse IP identifie une machine sur le réseau. ip a la montre ; le /24 dit que les machines en 10.0.93.x sont dans le même réseau.",
+	r_passerelle: "Pour sortir de son réseau, il faut une route par défaut vers la passerelle (le routeur). ip r montre les routes.",
+	r_dns: "Le DNS traduit les noms en adresses. Le poste interroge le serveur noté dans /etc/resolv.conf : s'il est faux, plus aucun nom ne marche.",
+	r_dhcp: "Un service doit être démarré (start) ET activé au démarrage (enable). enable --now fait les deux.",
+	r_netplan: "Ce qu'on fait avec ip s'efface au redémarrage ; la configuration permanente s'écrit dans /etc/netplan, puis netplan apply.",
+	r_web: "Un port = un service. ss -tlnp dit quel programme tient quel port. Deux programmes ne peuvent pas partager le même port.",
+	r_https: "Un certificat est valable entre deux dates : une horloge fausse le fait refuser. timedatectl set-ntp true synchronise l'heure.",
+	r_smtp: "« refused » : port fermé. « timed out » : un pare-feu jette les paquets. iptables -L montre les règles, la première qui correspond décide.",
+	r_lille: "Une route précise passe avant la route par défaut. ip route add RÉSEAU via PASSERELLE en ajoute une.",
+	r_telnet: "telnet envoie tout en clair, ssh chiffre. Un service dangereux s'arrête et se désactive : disable --now."
+};
+
 function texteRadia(){
 	var etape = prochaineEtapePanne();
 	var debut = "« ";
@@ -903,21 +962,28 @@ function texteRadia(){
 			return debut + "Ah, c'est toi la recrue dont Laurent parle à tout le monde ? Radia, M1 réseau, campus de Marseille. On s'est déjà croisés, je crois. \
 On m'a fait monter à Puteaux ce matin : tout le bâtiment B est coupé du monde, et le reste de l'école ne va guère mieux. \
 Plus d'intranet, plus de mails, plus de liaison avec Lille. Vint, l'administrateur réseau, est en vacances, et son stagiaire a « essayé des trucs » hier soir.\n\n\
-Une panne réseau, ça se répare couche par couche, en partant du bas. D'abord le LIEN : la carte réseau est-elle allumée ? \
-Puis l'ADRESSE : la machine a-t-elle une adresse IP ? Puis la ROUTE : sait-elle par où sortir ? Puis les NOMS : le DNS répond-il ? \
-Et seulement après, les SERVICES. Celui qui commence par le haut cherche pendant des heures.\n\n\
-Le Poste de l'accueil est là, derrière le comptoir : cd Poste, et tu es devant. Commence par ip link : regarde si eth0 est UP. \
-ethtool eth0 te dira si le câble voit quelque chose. Et hostnamectl, si tu veux savoir sur quelle machine tu es. Je reste en ligne au talkie-walkie. »";
-		case "r_ip": return debut + TALKIE.r_ip + " »";
-		case "r_passerelle": return debut + TALKIE.r_passerelle + " »";
-		case "r_dns": return debut + TALKIE.r_dns + "\n\nAstuce : si dig @" + IP_DNS + " intranet répond alors que dig intranet échoue, le serveur DNS va très bien. C'est le poste qui pose ses questions au mauvais endroit. »";
-		case "r_dhcp": return debut + TALKIE.r_dhcp + " Le routeur se trouve par son nom maintenant que le DNS marche : ssh routeur. »";
-		case "r_netplan": return debut + TALKIE.r_netplan + " Ensuite, tu pourras même vérifier avec sudo reboot. »";
-		case "r_web": return debut + TALKIE.r_web + " Sur un port, il n'y a de place que pour un seul programme. »";
-		case "r_https": return debut + TALKIE.r_https + " Un certificat a une date de début. Si l'horloge de celui qui vérifie est fausse... »";
-		case "r_smtp": return debut + TALKIE.r_smtp + " Un port fermé répond « refused ». Un paquet qui n'obtient AUCUNE réponse, c'est un pare-feu qui l'avale. »";
-		case "r_lille": return debut + TALKIE.r_lille + " Le CahierDuRouteur dit par où doit passer la liaison avec Lille. »";
-		case "r_telnet": return debut + TALKIE.r_telnet + " »";
+Tu n'as jamais réparé de réseau ? Aucun souci, je t'explique tout au fur et à mesure. Un réseau, ce sont des machines qui s'envoient des messages, \
+un peu comme du courrier. Pour qu'un message arrive, il faut, dans l'ordre :\n\
+  1. le LIEN : la prise réseau de la machine est-elle allumée ?\n\
+  2. l'ADRESSE : la machine a-t-elle une adresse, comme une maison a une adresse postale ?\n\
+  3. la ROUTE : sait-elle par où envoyer ses messages pour sortir de sa rue ?\n\
+  4. les NOMS : sait-elle traduire « intranet » en adresse ?\n\
+  5. les SERVICES : de l'autre côté, quelqu'un répond-il ?\n\
+On répare toujours dans cet ordre, en partant du bas. Celui qui commence par le haut cherche pendant des heures.\n\n\
+Le Poste de l'accueil est là, derrière le comptoir : cd Poste, et tu es devant. Commence par ip link : il liste les cartes réseau du poste. \
+Regarde si eth0 (la prise réseau) porte le mot UP. ethtool eth0 te dira si le câble voit quelque chose, et hostnamectl sur quelle machine tu es.\n\n\
+Le Lexique, sur l'armoire, explique chaque mot en deux phrases. Et tape schema quand tu veux : il dessine le réseau de l'école, en vert ce qui marche, en rouge ce qui est en panne. \
+Je reste en ligne au talkie-walkie. »";
+		case "r_ip": return debut + NOTIONS.r_ip + "\n\n" + TALKIE.r_ip + " »";
+		case "r_passerelle": return debut + NOTIONS.r_passerelle + "\n\n" + TALKIE.r_passerelle + " »";
+		case "r_dns": return debut + NOTIONS.r_dns + "\n\n" + TALKIE.r_dns + "\n\nAstuce : si dig @" + IP_DNS + " intranet répond alors que dig intranet échoue, le serveur DNS va très bien. C'est le poste qui pose ses questions au mauvais endroit. »";
+		case "r_dhcp": return debut + NOTIONS.r_dhcp + "\n\n" + TALKIE.r_dhcp + " Le routeur se trouve par son nom maintenant que le DNS marche : ssh routeur. »";
+		case "r_netplan": return debut + NOTIONS.r_netplan + "\n\n" + TALKIE.r_netplan + " Ensuite, tu pourras même vérifier avec sudo reboot. »";
+		case "r_web": return debut + NOTIONS.r_web + "\n\n" + TALKIE.r_web + " Sur un port, il n'y a de place que pour un seul programme. »";
+		case "r_https": return debut + NOTIONS.r_https + "\n\n" + TALKIE.r_https + " Un certificat a une date de début. Si l'horloge de celui qui vérifie est fausse... »";
+		case "r_smtp": return debut + NOTIONS.r_smtp + "\n\n" + TALKIE.r_smtp + " Un port fermé répond « refused ». Un paquet qui n'obtient AUCUNE réponse, c'est un pare-feu qui l'avale. »";
+		case "r_lille": return debut + NOTIONS.r_lille + "\n\n" + TALKIE.r_lille + " Le CahierDuRouteur dit par où doit passer la liaison avec Lille. »";
+		case "r_telnet": return debut + NOTIONS.r_telnet + "\n\n" + TALKIE.r_telnet + " »";
 		case "r_fin": return debut + "Lien, adresse, route, noms, DHCP, configuration permanente, serveur web, horloge, pare-feu, routage, et un telnet en moins : \
 tu as remonté tout le modèle en couches, de bas en haut. C'est exactement comme ça qu'on dépanne un réseau, ici ou ailleurs. \
 Ton CertificatReseau t'attend dans ta Maison. Vint rentre lundi : il va être jaloux.\n\n\
@@ -928,6 +994,61 @@ Une trappe vient de s'ouvrir dans la Citadelle : ssh citadelle, puis cd Crypte. 
 }
 
 /* ------------------------------------------------------------------ */
+/* Les voyants du réseau et le schema                                  */
+/* ------------------------------------------------------------------ */
+
+/* L'état de chaque couche et de chaque service, tel qu'il est vraiment, à cet instant. */
+function voyantsPanne(){
+	var p = state.panne;
+	var dhcp = servicePanne("routeur", "isc-dhcp-server"), nginx = servicePanne("intranet", "nginx"), apache = servicePanne("intranet", "apache2");
+	return [
+		{ id: "lien", titre: "Lien", ok: !!p.lien },
+		{ id: "adresse", titre: "Adresse", ok: !!(p.lien && adressePoste()) },
+		{ id: "route", titre: "Route", ok: !!(p.lien && adressePoste() && routeParDefautPoste() === IP_ROUTEUR) },
+		{ id: "noms", titre: "Noms", ok: dnsPosteOK() },
+		{ id: "dhcp", titre: "DHCP", ok: dhcp.actif && dhcp.auto },
+		{ id: "web", titre: "Web", ok: nginx.actif && !apache.actif },
+		{ id: "heure", titre: "Heure", ok: horlogePosteOK() },
+		{ id: "mail", titre: "Mail", ok: verdictForward({ proto: "tcp", dport: "25", src: IP_POSTE, dst: "10.0.92.11" }) === "ACCEPT" },
+		{ id: "lille", titre: "Lille", ok: routeLilleOK() },
+		{ id: "telnet", titre: "Telnet", ok: !servicePanne("routeur", "telnet.socket").actif }
+	];
+}
+
+/* Le schéma du réseau de l'école, en caractères, avec les liens en vert ou en rouge. */
+function texteSchema(){
+	var v = {};
+	voyantsPanne().forEach(function(x){ v[x.id] = x.ok; });
+	var ici = Shell.hote();
+	function lien(ok, texte){ return ok ? C.vert(texte) : C.rouge(texte); }
+	function boite(nom, ok){ var t = "[ " + nom + " ]"; return (ici === nom ? C.gras(t) : t) + (ici === nom ? C.jaune(" ◀ tu es ici") : ""); }
+	var posteRouteur = v.lien && v.adresse;
+	var lignes = [
+		C.gras("LE RÉSEAU DE L'ÉCOLE") + C.gris("   en vert : ce qui marche ; en rouge : ce qui est en panne"),
+		"",
+		C.gris("  BÂTIMENT B : 10.0.93.0/24          CŒUR DU RÉSEAU : 10.0.92.0/24"),
+		"",
+		"  " + boite("poste-b", true) + " " + lien(posteRouteur, "──────") + " " + boite("routeur", true) + " " + lien(true, "──┬──") + " " + boite("intranet", true) + "  " + lien(v.web, "web") + " " + lien(v.heure, "https"),
+		"   " + completerDroite(adressePoste() || "pas d'adresse", 21) + "DHCP " + lien(v.dhcp, v.dhcp ? "actif" : "arrêté") + "   " + lien(true, "├──") + " " + boite("dns", true) + "  " + IP_DNS,
+		"   " + completerDroite("passerelle " + (v.route ? "ok" : "absente"), 21) + "telnet " + (v.telnet ? C.vert("fermé") : C.rouge("ouvert")) + "  " + lien(v.mail, "├──") + " " + boite("mail", true) + "  port 25 " + (v.mail ? C.vert("ouvert") : C.rouge("bloqué par le pare-feu")),
+		"   " + completerDroite("annuaire (DNS) " + (v.noms ? "ok" : "en panne"), 21) + "             " + lien(true, "├──") + " " + boite("parefeu", true) + "  vers internet",
+		"                                        " + lien(v.lille, "└──") + " " + boite("lille-gw", true) + " " + lien(v.lille, "────") + " " + boite("lille", true),
+		"",
+		"  Les couches du poste : " + ["lien", "adresse", "route", "noms"].map(function(k){ return lien(v[k], "● " + k); }).join("  "),
+		"  Les services :         " + [["dhcp", "DHCP"], ["web", "web"], ["heure", "heure"], ["mail", "mail"], ["lille", "Lille"], ["telnet", "telnet fermé"]].map(function(k){ return lien(v[k[0]], "● " + k[1]); }).join("  ")
+	];
+	return lignes.join("\n");
+}
+
+Shell.sorts.schema = function(args, io){
+	if (!state.has("panneOuverte")) return "Le schéma du réseau de l'école s'affiche pendant la panne (chapitre 2). " + C.gris("Pour l'instant, hotes.txt, dans la SalleReseau de Cybersup, liste les machines.");
+	var texte = texteSchema();
+	GameEvents.fire({ type: "schema" });
+	if (io.tty && typeof montrerCarte === "function" && montrerCarte(texte)) return texte + "\n" + C.gris("(Le schéma remplace aussi l'image jusqu'à ton prochain déplacement. schema pour le revoir.)");
+	return texte;
+};
+
+/* ------------------------------------------------------------------ */
 /* Le monde réagit                                                     */
 /* ------------------------------------------------------------------ */
 
@@ -935,6 +1056,13 @@ var CertificatReseau = new Item("CertificatReseau", "", "item_manuscript.gif");
 
 function verifierPanne(){
 	if (!state.panne) state.panne = etatPanneInitial();
+	// Les anciennes sauvegardes n'ont pas le TableauBlanc du chapitre 1 ni le Lexique de Radia.
+	if (typeof TableauBlanc !== "undefined" && !SalleReseau.hasItem(TableauBlanc)) SalleReseau.addItem(TableauBlanc);
+	if (!BatimentB.hasItem(Lexique)) BatimentB.addItem(Lexique);
+	// Les portraits redessinés dans le style d'origine remplacent ceux des anciennes sauvegardes.
+	[[Whitfield, "item_archiviste.gif"], [Corbeau, "item_frances.gif"], [Radia, "item_radia.gif"]].forEach(function(x){
+		if (x[0].picturename !== "./static/img/" + x[1]) x[0].picturename = "./static/img/" + x[1];
+	});
 	// En mission cyber (la Crypte directement), la panne n'est pas au programme.
 	if (state.has("chapitre1Saute") && !state.has("panneDirecte") && !state.has("panneSautee")) state.set("panneSautee");
 	if (!state.has("panneOuverte") && state.has("victoire") && !state.has("panneSautee")) state.applyState("panneOuverte");
@@ -963,6 +1091,13 @@ function verifierPanne(){
 	var telnet = servicePanne("routeur", "telnet.socket");
 	if (!telnet.actif && !telnet.auto) state.complete("r_telnet");
 	if (Radia.getText() !== texteRadia()) Radia.cmd_text["less"] = texteRadia();
+	// Après chaque réparation, une ligne à retenir.
+	p.retenus = p.retenus || {};
+	Object.keys(A_RETENIR).forEach(function(id){
+		if (!state.quests[id] || p.retenus[id]) return;
+		p.retenus[id] = true;
+		if (!state.has("rejeuEnCours")) say(C.cyan("À retenir : ") + A_RETENIR[id]);
+	});
 	// Radia annonce la suite au talkie-walkie, à chaque étape franchie.
 	var suivante = prochaineEtapePanne();
 	if (state.quests["r_batiment"] && suivante && p.annonce !== suivante.id){
@@ -982,6 +1117,9 @@ function etatPanne(nom){
 			if (!state.dateVictoire3) state.dateVictoire3 = dateDuJour();
 			state.complete("r_fin");
 			poser(Home, CertificatReseau);
+			BatimentB.room_pic = "./static/img/loc_batimentb_ok.gif";
+			BatimentB.changeIntroText("Le bâtiment B de Cybersup. Dans l'armoire réseau, tous les voyants sont passés au vert. Radia range son portable, l'air satisfait. Derrière le comptoir, le Poste de l'accueil ronronne tranquillement.");
+			if (typeof montrerImage === "function") montrerImage(BatimentB.room_pic, BatimentB.room_name);
 			CertificatReseau.cmd_text["less"] = state.texteDuCertificatReseau();
 			say(C.gris("(Ton CertificatReseau est posé dans ta Maison : cat ~/CertificatReseau. Il porte la note du chapitre 2 et son code de vérification.)"));
 			break;
