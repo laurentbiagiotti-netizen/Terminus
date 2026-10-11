@@ -249,17 +249,7 @@ function afficherIp(objet, action, reste, h, stats, bref, io){
 		return lignes.join("\n");
 	}
 	// ip neigh : la table des voisins (ARP).
-	var voisins = [];
-	if (h === "poste-b"){
-		if (state.panne.lien && adressePoste() && state.panne.arp) voisins.push(IP_ROUTEUR + " dev eth0 lladdr " + MAC_ROUTEUR + " REACHABLE");
-		else if (state.panne.lien && adressePoste()) voisins.push(IP_ROUTEUR + " dev eth0 FAILED");
-	} else if (h === "routeur"){
-		if (state.panne.lien && adressePoste()) voisins.push(IP_POSTE + " dev eth0 lladdr " + MAC_POSTE + " REACHABLE");
-		voisins.push(IP_PAREFEU + " dev eth1 lladdr " + macDe(IP_PAREFEU) + " REACHABLE", IP_DNS + " dev eth1 lladdr " + macDe(IP_DNS) + " STALE");
-	} else {
-		var passerelle = texteRoutes(h)[0].split(" ")[2];
-		voisins.push(passerelle + " dev eth0 lladdr " + (passerelle === IP_ROUTEUR_COEUR ? "52:54:00:5d:fe:02" : macDe(passerelle)) + " REACHABLE");
-	}
+	var voisins = voisinsDe(h).map(function(v){ return v.ip + " dev " + v.dev + (v.mac ? " lladdr " + v.mac : "") + " " + v.etat; });
 	GameEvents.fire({ type: "ipNeigh", host: h, sortie: voisins.join("\n") });
 	if (voisins.length === 0 && io.tty) return C.gris("(Aucun voisin connu : le poste n'a encore parlé à personne sur son réseau. Un ping vers le routeur remplit la table.)");
 	return voisins.join("\n") + (h === "poste-b" && io.tty && voisins[0].indexOf("lladdr") > -1 ? "\n" + C.gris("(L'adresse MAC est l'identité matérielle de la carte du routeur. ip neigh montre les voisins avec qui le poste a déjà parlé.)") : "");
@@ -500,6 +490,7 @@ Shell.sorts.reboot = function(args, io){
 	exigerSudo(io, "reboot", "Failed to set wall message, ignoring: Interactive authentication required.\nCall to Reboot failed: Interactive authentication required.");
 	var p = state.panne;
 	p.demarrages = (p.demarrages || 0) + 1;
+	p.bootMs = state.tempsMs || 0;
 	// Au démarrage, les services activés démarrent, les autres non ; la configuration réseau vient de netplan.
 	Object.keys(HOTES["poste-b"].services).forEach(function(n){ var s = HOTES["poste-b"].services[n]; if (s.auto) demarrerService("poste-b", n); else if (s.actif) arreterService("poste-b", n); });
 	var conf = appliquerNetplan();
@@ -1514,6 +1505,409 @@ var ORDRE_DES_SORTS_3 = ["ip", "ethtool", "hostnamectl", "dhclient", "nmcli", "n
 	"dig", "host", "nslookup", "resolvectl", "systemctl", "journalctl", "ss", "iptables", "tcpdump", "traceroute", "mtr",
 	"openssl", "timedatectl", "nc", "telnet"];
 ORDRE_DES_SORTS_2 = ORDRE_DES_SORTS_2.filter(function(s){ return ORDRE_DES_SORTS_3.indexOf(s) === -1; });
+COMMANDES_REELLES = COMMANDES_REELLES.filter(function(c){ return ORDRE_DES_SORTS_3.indexOf(c) === -1; });
+
+/* ------------------------------------------------------------------ */
+/* Les sorts des anciens (net-tools) : ifconfig, route, arp, netstat   */
+/* ------------------------------------------------------------------ */
+
+function masqueDe(prefixe){
+	var n = prefixe === 0 ? 0 : (0xFFFFFFFF << (32 - prefixe)) >>> 0;
+	return [n >>> 24, (n >>> 16) & 255, (n >>> 8) & 255, n & 255].join(".");
+}
+
+/* Les voisins connus d'une machine (la table ARP) : { ip, dev, mac (ou null), etat }. */
+function voisinsDe(h){
+	var v = [];
+	if (h === "poste-b"){
+		if (state.panne.lien && adressePoste() && state.panne.arp) v.push({ ip: IP_ROUTEUR, dev: "eth0", mac: MAC_ROUTEUR, etat: "REACHABLE" });
+		else if (state.panne.lien && adressePoste()) v.push({ ip: IP_ROUTEUR, dev: "eth0", mac: null, etat: "FAILED" });
+	} else if (h === "routeur"){
+		if (state.panne.lien && adressePoste()) v.push({ ip: IP_POSTE, dev: "eth0", mac: MAC_POSTE, etat: "REACHABLE" });
+		v.push({ ip: IP_PAREFEU, dev: "eth1", mac: macDe(IP_PAREFEU), etat: "REACHABLE" }, { ip: IP_DNS, dev: "eth1", mac: macDe(IP_DNS), etat: "STALE" });
+	} else {
+		var passerelle = texteRoutes(h)[0].split(" ")[2];
+		v.push({ ip: passerelle, dev: "eth0", mac: passerelle === IP_ROUTEUR_COEUR ? "52:54:00:5d:fe:02" : macDe(passerelle), etat: "REACHABLE" });
+	}
+	return v;
+}
+
+/* Les sorts des anciens comptent pour la quête secondaire quand les quatre ont servi pendant la panne. */
+function sortAncien(nom){
+	if (!state.has("panneOuverte")) return;
+	var p = state.panne;
+	p.anciens = p.anciens || {};
+	p.anciens[nom] = true;
+	if (["ifconfig", "route", "arp", "netstat"].every(function(n){ return p.anciens[n]; })) quetePanne("s_r_anciens");
+}
+
+function lectureSeulement(sort, moderne){
+	return new ShellError(sort + " : ici, les sorts des anciens lisent seulement. Pour changer quelque chose : " + moderne);
+}
+
+Shell.sorts.ifconfig = function(args, io){
+	var tout = args.indexOf("-a") > -1;
+	var noms = args.filter(function(a){ return a.charAt(0) !== "-"; });
+	if (noms.length > 1) throw lectureSeulement("ifconfig", "sudo ip link set " + noms[0] + " up, ou sudo ip addr add ADRESSE/24 dev " + noms[0]);
+	var h = Shell.hote(), cartes = interfacesDe(h);
+	if (noms.length === 1){
+		cartes = cartes.filter(function(c){ return c.nom === noms[0]; });
+		if (!cartes.length) throw new ShellError(noms[0] + ": error fetching interface information: Device not found");
+		tout = true;
+	}
+	var blocs = [], cachees = [];
+	cartes.forEach(function(i, n){
+		if (!i.up && !tout){ cachees.push(i.nom); return; }
+		var drapeaux = i.lo ? "73<UP,LOOPBACK,RUNNING>" : (i.up ? "4163<UP,BROADCAST,RUNNING,MULTICAST>" : "4098<BROADCAST,MULTICAST>");
+		var l = [i.nom + ": flags=" + drapeaux + "  mtu " + (i.lo ? 65536 : 1500)];
+		i.adresses.forEach(function(a){
+			l.push("        inet " + (io.tty ? C.cyan(a.ip) : a.ip) + "  netmask " + masqueDe(a.prefixe) + (i.lo ? "" : "  broadcast " + diffusion(a.ip, a.prefixe)));
+		});
+		l.push(i.lo ? "        loop  txqueuelen 1000  (Boucle locale)" : "        ether " + i.mac + "  txqueuelen 1000  (Ethernet)");
+		var paquets = i.up ? 9921 + (i.lo ? 0 : 311) : 0;
+		l.push("        RX packets " + paquets + "  bytes " + paquets * 186, "        TX packets " + Math.floor(paquets * 0.21) + "  bytes " + Math.floor(paquets * 0.21) * 148);
+		blocs.push(l.join("\n"));
+	});
+	if (cachees.length && io.tty) blocs.push(C.gris("(ifconfig cache les cartes éteintes : " + cachees.join(", ") + ". ifconfig -a les montre toutes, comme ip link.)"));
+	sortAncien("ifconfig");
+	GameEvents.fire({ type: "ifconfig", host: h, tout: tout });
+	return blocs.join("\n\n");
+};
+
+/* La table de routage, lue dans les routes de la machine (les mêmes que ip r). */
+function tableDeRoutage(h){
+	return texteRoutes(h).map(function(l){
+		var m = l.split(/\s+/), dest = m[0] === "default" ? "0.0.0.0/0" : m[0];
+		var via = valeurApres(m, "via");
+		return { dest: dest.split("/")[0], prefixe: +dest.split("/")[1], via: via || null, dev: valeurApres(m, "dev") || "eth0", metrique: valeurApres(m, "metric") || "0" };
+	});
+}
+function texteTableDeRoutage(h, numerique){
+	var lignes = ["Kernel IP routing table", completerDroite("Destination", 14) + completerDroite("Gateway", 14) + completerDroite("Genmask", 16) + "Flags Metric Ref Use Iface"];
+	tableDeRoutage(h).forEach(function(r){
+		var dest = !numerique && r.prefixe === 0 ? "default" : r.dest;
+		var gw = r.via ? (numerique ? r.via : (r.prefixe === 0 ? "_gateway" : (nomDeIp(r.via) || r.via))) : "0.0.0.0";
+		lignes.push(completerDroite(dest, 14) + completerDroite(gw, 14) + completerDroite(masqueDe(r.prefixe), 16) + completerDroite(r.via ? "UG" : "U", 6) +
+			completerDroite(r.metrique, 7) + completerGauche("0", 3) + completerGauche("0", 4) + " " + r.dev);
+	});
+	return lignes.join("\n");
+}
+
+Shell.sorts.route = function(args, io){
+	if (args.some(function(a){ return /^(add|del)$/.test(a); })) throw lectureSeulement("route", "sudo ip route add RÉSEAU via PASSERELLE (ou del)");
+	var h = Shell.hote(), numerique = args.indexOf("-n") > -1;
+	var texte = texteTableDeRoutage(h, numerique);
+	if (io.tty && tableDeRoutage(h).length === 0) texte += "\n" + C.gris("(Aucun chemin : la carte est éteinte ou n'a pas d'adresse.)");
+	else if (io.tty && !tableDeRoutage(h).some(function(r){ return r.prefixe === 0; })) texte += "\n" + C.gris("(Pas de ligne default, flag UG : la machine ne sait pas par où sortir de sa rue.)");
+	sortAncien("route");
+	GameEvents.fire({ type: "route", host: h, numerique: numerique });
+	return texte;
+};
+
+Shell.sorts.arp = function(args, io){
+	if (args.some(function(a){ return /^-(s|d)$/.test(a); })) throw lectureSeulement("arp", "la table des voisins se remplit toute seule, il suffit de parler au voisin (ping)");
+	var h = Shell.hote(), numerique = args.indexOf("-n") > -1;
+	var lignes = [completerDroite("Address", 25) + completerDroite("HWtype", 8) + completerDroite("HWaddress", 20) + completerDroite("Flags Mask", 16) + "Iface"];
+	voisinsDe(h).forEach(function(v){
+		var nom = numerique ? v.ip : ((nomDeIp(v.ip) ? nomDeIp(v.ip) + ".cybersup.lan" : v.ip));
+		lignes.push(completerDroite(nom, 25) + completerDroite(v.mac ? "ether" : "", 8) + completerDroite(v.mac || "(incomplete)", 20) + completerDroite(v.mac ? "C" : "", 16) + v.dev);
+	});
+	sortAncien("arp");
+	if (lignes.length === 1 && io.tty) return C.gris("(Aucun voisin connu : la machine n'a encore parlé à personne dans sa rue.)");
+	GameEvents.fire({ type: "arp", host: h });
+	return lignes.join("\n");
+};
+
+Shell.sorts.netstat = function(args, io){
+	var o = { t: false, u: false, l: false, n: false, p: false, a: false, r: false, i: false };
+	args.forEach(function(a){
+		if (a.charAt(0) !== "-") throw new ShellError("netstat : argument inattendu « " + a + " ». Exemple : netstat -tulnp");
+		for (var k = 1; k < a.length; k++){
+			if (!o.hasOwnProperty(a.charAt(k))) throw new ShellError("netstat : option inconnue « -" + a.charAt(k) + " ». Celles qui existent ici : -t -u -l -n -p -a -r -i");
+			o[a.charAt(k)] = true;
+		}
+	});
+	var h = Shell.hote();
+	sortAncien("netstat");
+	GameEvents.fire({ type: "netstat", host: h, routes: o.r, cartes: o.i });
+	if (o.r) return texteTableDeRoutage(h, o.n);
+	if (o.i){
+		var l = ["Kernel Interface table", "Iface      MTU    RX-OK RX-ERR RX-DRP RX-OVR    TX-OK TX-ERR TX-DRP TX-OVR Flg"];
+		interfacesDe(h).forEach(function(i, n){
+			if (!i.up) return;
+			var paquets = 9921 + n * 311;
+			l.push(completerDroite(i.nom, 7) + completerGauche(i.lo ? 65536 : 1500, 6) + completerGauche(paquets, 9) + "      0      0 0      " + completerGauche(Math.floor(paquets * 0.21), 8) + "      0      0      0 " + (i.lo ? "LRU" : "BMRU"));
+		});
+		return l.join("\n");
+	}
+	if (!o.t && !o.u){ o.t = true; o.u = true; }
+	var liste = socketsDe(h).filter(function(s){
+		if (s.proto === "tcp" && !o.t) return false;
+		if (s.proto === "udp" && !o.u) return false;
+		if (o.a) return true;
+		return o.l ? (s.etat === "LISTEN" || s.etat === "UNCONN") : s.etat === "ESTAB";
+	});
+	var lignes = [o.l ? "Active Internet connections (only servers)" : "Active Internet connections (w/o servers)",
+		"Proto Recv-Q Send-Q " + completerDroite("Local Address", 20) + completerDroite("Foreign Address", 18) + completerDroite("State", 12) + (o.p ? "PID/Program name" : "")];
+	var caches = 0;
+	liste.forEach(function(s){
+		var local = s.local.replace("%lo", "").replace(/^\*:/, "0.0.0.0:");
+		if (!o.n) local = local.replace(/:(\d+)$/, function(t, n){ return ":" + (NOMS_DE_PORTS[n] || n); });
+		var proc = "";
+		if (o.p){ if (io.sudo) proc = s.pid + "/" + s.proc; else { proc = "-"; caches++; } }
+		lignes.push(completerDroite(s.proto, 6) + completerGauche("0", 6) + completerGauche("0", 7) + " " + completerDroite(local, 20) + completerDroite(s.pair.replace(/^\*:/, "0.0.0.0:"), 18) +
+			completerDroite(s.etat === "UNCONN" ? "" : (s.etat === "ESTAB" ? "ESTABLISHED" : s.etat), 12) + proc);
+	});
+	if (caches && io.tty) lignes.push(C.gris("(Les processus de root s'affichent avec sudo : sudo netstat -tulnp)"));
+	return lignes.join("\n");
+};
+
+/* ------------------------------------------------------------------ */
+/* La sacoche de Radia : arping, tracepath, getent, uptime, iperf3, nft */
+/* ------------------------------------------------------------------ */
+
+/* Qui porte cette adresse sur le câble d'une carte ? (l'ARP ne traverse pas les routeurs) */
+function porteurSurLeCable(h, ip){
+	if (dansReseau(ip, "10.0.93.0/24")){
+		if (ip === IP_ROUTEUR && h !== "routeur") return MAC_ROUTEUR;
+		if (ip === IP_POSTE && h !== "poste-b" && state.panne.lien && adressePoste() === IP_POSTE) return MAC_POSTE;
+		return null;
+	}
+	if (dansReseau(ip, "10.0.92.0/24")){
+		if (ip === IP_ROUTEUR_COEUR) return h === "routeur" ? null : "52:54:00:5d:fe:02";
+		var nom = nomDeIp(ip);
+		return nom && nom !== h ? macDe(ip) : null;
+	}
+	return null;
+}
+
+Shell.sorts.arping = function(args, io){
+	var combien = 3, doublon = false, cible = null;
+	for (var i = 0; i < args.length; i++){
+		if (args[i] === "-c") combien = parseInt(args[++i], 10);
+		else if (args[i] === "-D") doublon = true;
+		else if (args[i] === "-I") i++;
+		else if (args[i].charAt(0) === "-") throw new ShellError("arping : option inconnue « " + args[i] + " ». Celles qui existent ici : -c NOMBRE, -D, -I CARTE");
+		else cible = args[i];
+	}
+	if (!cible) throw new ShellError("arping : quelle adresse crier ? Utilisation : sudo arping -c 3 ADRESSE");
+	if (isNaN(combien) || combien < 1) throw new ShellError("arping : -c attend un nombre");
+	combien = Math.min(combien, 5);
+	exigerSudo(io, "arping", "arping: socket: Operation not permitted");
+	var h = Shell.hote();
+	var r = resoudreDepuis(h, cible);
+	if (r.erreur) throw new ShellError("arping: " + cible + ": Name or service not known");
+	var cartes = interfacesDe(h).filter(function(c){ return !c.lo; });
+	var carte = cartes.filter(function(c){ return c.adresses.some(function(a){ return dansReseau(r.ip, reseauDe(a.ip, a.prefixe)); }); })[0] || cartes[0];
+	if (!carte || !carte.up) throw new ShellError("arping: Interface \"" + (carte ? carte.nom : "eth0") + "\" is down" + (io.tty ? "\n" + C.gris("(La porte est fermée : sudo ip link set eth0 up.)") : ""));
+	var adresse = carte.adresses[0];
+	if (!adresse && !doublon) throw new ShellError("arping: no source address in not-configured interface" + (io.tty ? "\n" + C.gris("(Pas d'adresse sur " + carte.nom + " : arping -D, lui, marche quand même.)") : ""));
+	var memeRue = carte.adresses.some(function(a){ return dansReseau(r.ip, reseauDe(a.ip, a.prefixe)); }) || (doublon && dansReseau(r.ip, "10.0.93.0/24") && h === "poste-b");
+	var mac = memeRue ? porteurSurLeCable(h, r.ip) : null;
+	var lignes = ["ARPING " + r.ip + " from " + (doublon ? "0.0.0.0" : adresse.ip) + " " + carte.nom];
+	if (mac){
+		for (var k = 0; k < combien; k++) lignes.push("Unicast reply from " + r.ip + " [" + mac.toUpperCase() + "]  " + (0.6 + k * 0.07).toFixed(3) + "ms");
+		lignes.push("Sent " + combien + " probes (1 broadcast(s))", "Received " + combien + " response(s)");
+		if (h === "poste-b" && r.ip === IP_ROUTEUR) state.panne.arp = true;
+		if (doublon && io.tty) lignes.push(C.jaune("(Quelqu'un porte déjà cette adresse : la poser ici créerait un conflit.)"));
+	} else {
+		lignes.push("Sent " + combien + " probes (" + combien + " broadcast(s))", "Received 0 response(s)");
+		if (io.tty){
+			if (doublon) lignes.push(C.vert("(Personne d'autre ne porte cette adresse dans la rue : pas de conflit, elle est libre.)"));
+			else if (!memeRue) lignes.push(C.gris("(Le cri ne traverse jamais la Tour : arping ne parle qu'aux machines de ta rue, ici " + reseauDe(adresse.ip, adresse.prefixe) + ". Au-delà, c'est ping.)"));
+			else lignes.push(C.gris("(Personne ne porte cette adresse dans ta rue.)"));
+		}
+	}
+	GameEvents.fire({ type: "arping", host: h, cible: r.ip, doublon: doublon, reponses: mac ? combien : 0 });
+	if (doublon && !mac && h === "poste-b" && r.ip === IP_POSTE) quetePanne("s_r_arping");
+	return lignes.join("\n");
+};
+
+Shell.sorts.tracepath = function(args, io){
+	if (!estHotePanne(Shell.hote())) throw new ShellError("tracepath : ce sort sert sur les machines de la panne (le Poste, le routeur, l'intranet).");
+	var numerique = args.indexOf("-n") > -1;
+	var cible = args.filter(function(a){ return a.charAt(0) !== "-"; })[0];
+	if (!cible) throw new ShellError("tracepath : vers quelle machine ? Utilisation : tracepath MACHINE (-n : sans les noms)");
+	var ici = Shell.hote();
+	var r = resoudreDepuis(ici, cible);
+	if (r.erreur) throw new ShellError("tracepath: " + cible + ": " + (r.erreur === "temp" ? "Temporary failure in name resolution" : "Name or service not known"));
+	var t = cheminVers(ici, r.ip);
+	if (t.erreur === "reseau") throw new ShellError("tracepath: connect: Network is unreachable");
+	var pmtu = 1500;
+	var lignes = [" 1?: [LOCALHOST]" + completerGauche("pmtu 1500", 32)];
+	t.sauts.forEach(function(s, i){
+		var nom = numerique ? s[1] : (s[0].indexOf(".") > -1 ? s[0] : s[0] + ".cybersup.lan");
+		var change = "";
+		if (s[0] === "lille-gw" && pmtu === 1500){ pmtu = 1400; change = " pmtu 1400"; }
+		var dernier = t.ok && i === t.sauts.length - 1;
+		lignes.push(completerGauche(i + 1, 2) + ":  " + completerDroite(nom, 40) + completerGauche(tempsDeSaut(i, s[1]) + "ms", 9) + (dernier ? " reached" : change));
+	});
+	if (t.ok) lignes.push("     Resume: pmtu " + pmtu + " hops " + t.sauts.length + " back " + t.sauts.length);
+	else {
+		for (var k = 1; k <= 3; k++) lignes.push(completerGauche(t.sauts.length + k, 2) + ":  no reply");
+		lignes.push("     Too many hops: pmtu " + pmtu, "     Resume: pmtu " + pmtu);
+	}
+	if (io.tty && pmtu < 1500) lignes.push(C.gris("(La liaison vers Lille passe dans un tunnel chiffré : chaque messager y perd un peu de place. pmtu 1400 : la taille maximale d'un paquet sur tout le chemin.)"));
+	GameEvents.fire({ type: "tracepath", ok: t.ok, cible: r.ip, pmtu: pmtu });
+	if (t.ok && r.ip === IP_LILLE) quetePanne("s_r_tracepath");
+	return lignes.join("\n");
+};
+
+Shell.sorts.getent = function(args, io){
+	var base = args[0], cles = args.slice(1);
+	if (!base) throw new ShellError("Utilisation : getent BASE [CLÉ...]. Ici : getent hosts NOM");
+	if (base !== "hosts" && base !== "ahosts") throw new ShellError("getent : ici, la base hosts suffit : getent hosts NOM. (Sur un vrai Linux, getent passwd et getent group existent aussi.)");
+	var h = Shell.hote();
+	if (!cles.length){
+		if (h !== "poste-b") return "127.0.0.1       localhost\n127.0.1.1       " + h;
+		return lignesDe(PosteHosts.getText()).filter(function(l){ return l.replace(/#.*$/, "").trim(); }).map(function(l){
+			var c = l.replace(/#.*$/, "").trim().split(/\s+/);
+			return completerDroite(c[0], 16) + c.slice(1).join(" ");
+		}).join("\n");
+	}
+	var lignes = [], deRaccourci = false;
+	cles.forEach(function(nom){
+		var r = resoudreDepuis(h, nom);
+		if (r.erreur) return;
+		var raccourci = h === "poste-b" && !ipValide(nom) && (depuisHosts(nom) || depuisHosts(nomCourt(nom)));
+		if (raccourci && ["localhost", "poste-b"].indexOf(nomCourt(nom)) === -1) deRaccourci = true;
+		var complet = ipValide(nom) ? (nomDeIp(nom) ? nomDeIp(nom) + ".cybersup.lan" : nom) : (raccourci ? nom : nomCourt(nom) + ".cybersup.lan");
+		if (base === "ahosts") ["STREAM", "DGRAM", "RAW"].forEach(function(type, k){ lignes.push(completerDroite(r.ip, 16) + completerDroite(type, 7) + (k === 0 ? complet : "")); });
+		else lignes.push(completerDroite(r.ip, 16) + complet + (raccourci || ipValide(nom) || complet === nomCourt(nom) ? "" : " " + nomCourt(nom)));
+	});
+	if (!lignes.length && io.tty) return C.gris("(getent ne dit rien quand il ne trouve pas : ce nom n'est ni dans /etc/hosts ni au DNS, ou le DNS ne répond pas.)");
+	GameEvents.fire({ type: "getent", host: h, raccourci: deRaccourci });
+	if (deRaccourci) quetePanne("s_r_getent");
+	return lignes.join("\n") + (deRaccourci && io.tty ? "\n" + C.gris("(Ce nom vient de /etc/hosts : getent lit les raccourcis avant de consulter l'Oracle, comme tous les programmes. dig, lui, ne demande qu'au DNS.)") : "");
+};
+
+Shell.sorts.uptime = function(args, io){
+	var h = Shell.hote(), p = state.panne || {};
+	var minutes;
+	if (h === "poste-b") minutes = p.demarrages ? Math.max(0, Math.floor(((state.tempsMs || 0) - (p.bootMs || 0)) / 60000)) : 87;
+	else if (h === "routeur") minutes = 41 * 1440 + 187;
+	else if (h === "intranet") minutes = 192;
+	else minutes = 12 * 1440 + 305;
+	var heure = h === "poste-b" ? dateDuPoste() : new Date();
+	var j = Math.floor(minutes / 1440), hh = Math.floor((minutes % 1440) / 60), mm = minutes % 60;
+	var charge = h === "intranet" ? "0,31, 0,22, 0,18" : "0,02, 0,04, 0,01";
+	GameEvents.fire({ type: "uptime", host: h, minutes: minutes });
+	if (h === "poste-b" && p.demarrages && minutes < 30) quetePanne("s_r_uptime");
+	if (args.indexOf("-p") > -1){
+		var morceaux = [];
+		if (j) morceaux.push(j + (j > 1 ? " days" : " day"));
+		if (hh) morceaux.push(hh + (hh > 1 ? " hours" : " hour"));
+		morceaux.push(mm + (mm > 1 ? " minutes" : " minute"));
+		return "up " + morceaux.join(", ");
+	}
+	if (args.indexOf("-s") > -1) return formaterDate(new Date(heure.getTime() - minutes * 60000), ["+%F %T"]);
+	var duree = (j ? j + (j > 1 ? " days, " : " day, ") : "") + (hh ? hh + ":" + deuxChiffres(mm) : mm + " min");
+	var texte = " " + formaterDate(heure, ["+%T"]) + " up " + duree + ",  1 user,  load average: " + charge;
+	if (io.tty && h === "poste-b" && p.demarrages && minutes < 30) texte += "\n" + C.gris("(Le poste vient de se réveiller : le Grand Sommeil date de quelques minutes.)");
+	return texte;
+};
+
+Shell.sorts.iperf3 = function(args, io){
+	if (args.indexOf("-s") > -1) throw new ShellError("iperf3 : ici, les serveurs iperf3 tournent déjà (Vint en a laissé un sur l'intranet). Lance le client : iperf3 -c intranet");
+	var i = args.indexOf("-c");
+	var cible = i > -1 ? args[i + 1] : null;
+	if (!cible) throw new ShellError("iperf3 : il faut un serveur. Utilisation : iperf3 -c MACHINE (-t SECONDES)");
+	var duree = 3, it = args.indexOf("-t");
+	if (it > -1){ duree = parseInt(args[it + 1], 10); if (isNaN(duree) || duree < 1) throw new ShellError("iperf3 : -t attend un nombre de secondes"); }
+	duree = Math.min(duree, 5);
+	var h = Shell.hote();
+	var r = resoudreDepuis(h, cible);
+	if (r.erreur) throw new ShellError("iperf3: error - unable to resolve host " + cible);
+	var t = cheminVers(h, r.ip);
+	var serveur = ["intranet", "lille"].indexOf(t.nom || nomDeIp(r.ip)) > -1;
+	if (!t.ok || !serveur){
+		var raison = t.erreur === "reseau" ? "Network is unreachable" : (!t.ok && t.erreur === "delai" ? "Connection timed out" : (t.ok ? "Connection refused" : "No route to host"));
+		GameEvents.fire({ type: "iperf", ok: false });
+		throw new ShellError("iperf3: error - unable to connect to server - server may have stopped running or use a different port, firewall issue, etc.: " + raison +
+			(t.ok && !serveur && io.tty ? "\n" + C.gris("(Aucun serveur iperf3 n'attend sur cette machine. Il y en a un sur l'intranet, et un autre à Lille.)") : ""));
+	}
+	var lent = t.sauts.some(function(s){ return s[0] === "lille-gw"; });
+	var debit = lent ? 94.1 : 941;
+	var parSeconde = lent ? 11.2 : 112;
+	var lignes = ["Connecting to host " + cible + ", port 5201",
+		"[  5] local " + ipDeHote(h) + " port 43712 connected to " + r.ip + " port 5201",
+		"[ ID] Interval           Transfer     Bitrate"];
+	for (var k = 0; k < duree; k++) lignes.push("[  5]   " + k + ".00-" + (k + 1) + ".00   sec  " + completerGauche(String(parSeconde).replace(".", ","), 5) + " MBytes  " + completerGauche(String(debit).replace(".", ","), 5) + " Mbits/sec");
+	lignes.push("- - - - - - - - - - - - - - - - - - - - - - - - -", "[ ID] Interval           Transfer     Bitrate         Retr",
+		"[  5]   0.00-" + duree + ".00   sec  " + completerGauche(String(Math.round(parSeconde * duree * 10) / 10).replace(".", ","), 5) + " MBytes  " + completerGauche(String(debit).replace(".", ","), 5) + " Mbits/sec    0             sender",
+		"", "iperf Done.");
+	if (io.tty) lignes.push(C.gris(lent ? "(Environ 100 Mbit/s : la liaison avec Lille est un tunnel loué, dix fois plus étroit que le réseau de l'école.)" :
+		"(Environ 940 Mbit/s : presque tout le gigabit du câble. Le reste part dans les en-têtes des paquets.)"));
+	GameEvents.fire({ type: "iperf", ok: true, host: t.nom, debit: debit });
+	if ((t.nom || nomDeIp(r.ip)) === "intranet") quetePanne("s_r_iperf");
+	return lignes.join("\n");
+};
+
+function regleNft(r){
+	var morceaux = [];
+	if (r.src) morceaux.push("ip saddr " + r.src);
+	if (r.dst) morceaux.push("ip daddr " + r.dst);
+	if (r.proto && r.dport) morceaux.push(r.proto + " dport " + r.dport);
+	else if (r.proto) morceaux.push("ip protocol " + r.proto);
+	morceaux.push("counter packets " + (r.paquets || 0) + " bytes " + (r.octets || 0));
+	morceaux.push(String(r.cible).toLowerCase());
+	if (r.commentaire) morceaux.push("comment \"" + r.commentaire + "\"");
+	return morceaux.join(" ");
+}
+
+Shell.sorts.nft = function(args, io){
+	var phrase = args.join(" ");
+	if (!/^list\s+(ruleset|tables|table\s+ip\s+filter)$/.test(phrase)) throw new ShellError("nft : ici, la Nouvelle Herse se lit seulement : sudo nft list ruleset (ou nft list tables).\n" +
+		C.gris("(iptables et nft partagent les mêmes règles : pour en changer une, iptables suffit.)"));
+	if (!io.sudo) throw new ShellError("Error: Could not process rule: Operation not permitted\n" + C.gris("(sudo nft " + phrase + ")"));
+	var h = Shell.hote();
+	GameEvents.fire({ type: "nft", host: h });
+	if (/tables/.test(phrase)) return h === "routeur" ? "table ip filter" : "";
+	var chaines = h === "routeur" ? state.panne.iptables : { INPUT: [], FORWARD: [], OUTPUT: [] };
+	var lignes = ["table ip filter {"];
+	["INPUT", "FORWARD", "OUTPUT"].forEach(function(c, i){
+		lignes.push("\tchain " + c + " {", "\t\ttype filter hook " + c.toLowerCase() + " priority filter; policy accept;");
+		(chaines[c] || []).forEach(function(r){ lignes.push("\t\t" + regleNft(r)); });
+		lignes.push("\t}" + (i < 2 ? "\n" : ""));
+	});
+	lignes.push("}");
+	if (h === "routeur") quetePanne("s_r_nft");
+	if (io.tty) lignes.push(C.gris("(La même loi qu'avec iptables -L, écrite dans la langue moderne du noyau : nftables.)"));
+	return lignes.join("\n");
+};
+
+MANUEL["ifconfig"] = page("voir les cartes et leurs adresses (à l'ancienne)", "InterFace CONFIGuration",
+	"  ifconfig               les cartes ALLUMÉES et leurs adresses (inet, netmask, broadcast)\n  ifconfig -a            toutes les cartes, même éteintes\n  ifconfig eth0          une seule carte\n\n" +
+	"Le sort des anciens (paquet net-tools). Son équivalent moderne : ip a. Piège : sans -a, une carte DOWN n'apparaît pas.");
+MANUEL["route"] = page("voir la table de routage (à l'ancienne)", "ROUTE",
+	"  route                  la table des chemins, avec les noms\n  route -n               la même, avec les adresses (plus rapide, sans DNS)\n\n" +
+	"Flags : U, la route est active ; G, elle passe par une passerelle (Gateway). La ligne 0.0.0.0 (default) est la route par défaut.\nÉquivalent moderne : ip r.");
+MANUEL["arp"] = page("voir les voisins et leur adresse MAC (à l'ancienne)", "Address Resolution Protocol",
+	"  arp                    les voisins connus, avec leur nom\n  arp -n                 les mêmes, avec leur adresse\n\n" +
+	"L'ARP traduit une adresse IP de ta rue en adresse MAC (l'identité matérielle de la carte). Équivalent moderne : ip neigh.");
+MANUEL["netstat"] = page("voir les connexions et les ports (à l'ancienne)", "NETwork STATistics",
+	"  netstat -tulnp         les ports en écoute, en TCP et UDP, et le programme qui les tient (avec sudo)\n  netstat -tn            les connexions établies\n" +
+	"  netstat -r             la table de routage (comme route)\n  netstat -i             les compteurs de chaque carte\n\nÉquivalent moderne : ss (mêmes options : ss -tulnp).");
+MANUEL["arping"] = page("crier une adresse dans son réseau local", "ARP PING",
+	"  sudo arping -c 3 ADRESSE      qui porte cette adresse dans ma rue ? (réponse : son adresse MAC)\n  sudo arping -D -c 2 ADRESSE   détection de doublon : 0 réponse, l'adresse est libre\n\n" +
+	"arping parle en ARP, sous l'IP : il ne traverse jamais un routeur, mais il marche même quand un pare-feu bloque ping.");
+MANUEL["tracepath"] = page("voir le chemin des paquets, sans être root", "TRACE PATH",
+	"  tracepath MACHINE      chaque étape du chemin, et la pmtu\n  tracepath -n MACHINE   sans les noms\n\n" +
+	"La pmtu (Path MTU) est la taille maximale d'un paquet sur TOUT le chemin : un tunnel la réduit souvent (1500 devient 1400).");
+MANUEL["getent"] = page("interroger les bases du système, comme le font les programmes", "GET ENTries",
+	"  getent hosts NOM       traduire un nom : /etc/hosts d'abord, puis le DNS (comme ping, curl, ssh)\n  getent ahosts NOM      la même chose, en détail\n  getent hosts           tout /etc/hosts\n\n" +
+	"dig n'interroge que le DNS ; getent suit le même chemin que les programmes. Quand les deux ne disent pas la même chose, /etc/hosts y est pour quelque chose.");
+MANUEL["uptime"] = page("depuis quand la machine est allumée", "UP TIME",
+	"  uptime                 l'heure, la durée d'éveil, les utilisateurs, la charge moyenne (1, 5, 15 minutes)\n  uptime -p              la durée, en clair\n  uptime -s              la date du dernier démarrage\n\n" +
+	"Un serveur qui a « up 3 min » alors que personne ne l'a redémarré, c'est une coupure de courant, ou un plantage : il faut aller voir les journaux.");
+MANUEL["iperf3"] = page("mesurer le débit entre deux machines", "IPERF version 3",
+	"  iperf3 -c MACHINE      envoyer des données au serveur iperf3 de MACHINE pendant quelques secondes\n  iperf3 -c MACHINE -t 5 pendant 5 secondes\n  iperf3 -s              (lancer un serveur, de l'autre côté)\n\n" +
+	"ping dit si ça passe et en combien de temps ; iperf3 dit COMBIEN passe. Sur un câble gigabit, on mesure environ 940 Mbit/s.");
+MANUEL["nft"] = page("lire les règles du pare-feu (nftables)", "NetFilter Tables",
+	"  sudo nft list ruleset  toutes les tables, chaînes et règles\n  sudo nft list tables   les tables seulement\n\n" +
+	"nftables est le successeur d'iptables : sur les Linux récents, iptables écrit en fait ses règles dans nftables. Les deux montrent donc la même loi.");
+
+ORDRE_DES_SORTS_3 = ORDRE_DES_SORTS_3.concat(["ifconfig", "route", "arp", "netstat", "arping", "tracepath", "getent", "uptime", "iperf3", "nft"]);
 COMMANDES_REELLES = COMMANDES_REELLES.filter(function(c){ return ORDRE_DES_SORTS_3.indexOf(c) === -1; });
 
 /* ------------------------------------------------------------------ */

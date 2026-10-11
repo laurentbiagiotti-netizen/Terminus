@@ -102,6 +102,23 @@ var Lexique = new Item("Lexique",
 	"item_manuscript.gif");
 BatimentB.addItem(Lexique);
 
+/* La sacoche de Radia : ses sorts de terrain, en plus de ceux du chapitre. */
+var SacocheDeRadia = new Item("SacocheDeRadia",
+	"LA SACOCHE DE RADIA (posée sur le comptoir, ouverte)\n" +
+	"Mes sorts de terrain. Chacun t'apprend un vrai outil du métier, et chacun rapporte quelque chose.\n\n" +
+	"  sudo arping -c 3 10.0.93.254   le Cri dans la Rue : qui répond à cette adresse, dans TA rue ?\n" +
+	"                                 (le cri ne traverse jamais la Tour : l'ARP reste dans son réseau)\n" +
+	"  sudo arping -D -c 2 ADRESSE    avant de poser une adresse : quelqu'un l'a-t-il déjà ? 0 réponse : elle est libre\n" +
+	"  tracepath lille                le Petit Fil : le chemin sans être root, et la taille maximale des messagers (pmtu)\n" +
+	"  getent hosts NOM               le Registre Commun : traduit un nom comme le font les programmes (/etc/hosts, puis le DNS)\n" +
+	"  uptime                         le Sablier : depuis quand la machine est éveillée (uptime -p : en clair)\n" +
+	"  iperf3 -c intranet             la Course des Messagers : le débit jusqu'à un serveur iperf3 (Vint en a laissé un sur l'intranet)\n" +
+	"  sudo nft list ruleset          la Nouvelle Herse : les règles du pare-feu dans la langue moderne (sur le routeur)\n\n" +
+	"Et dans le tiroir du Poste, Vint garde un GrimoireDesAnciens : les sorts d'avant ip, qu'on croise encore partout.",
+	"item_manuscript.gif").enseigne("arping", "tracepath", "getent", "uptime", "iperf3", "nft")
+	.revele("s_r_arping", "s_r_tracepath", "s_r_getent", "s_r_uptime", "s_r_iperf", "s_r_nft");
+BatimentB.addItem(SacocheDeRadia);
+
 /* Le poste est une vraie machine Linux : on s'assoit devant (cd Poste), sa racine est « / ». */
 var PosteB = lieuDuChapitre3(new Room("Poste",
 	"Le Poste de garde du bâtiment B : un vieux PC de bureau, une étiquette jaunie collée sous l'écran, un câble réseau bien branché. \
@@ -149,6 +166,21 @@ fichier(PosteB, "AideMemoire",
 	"ping -c 4 MACHINE : exactement quatre paquets, puis le bilan.",
 	{ enseigne: ["dhclient", "nmcli", "netplan", "reboot", "nano", "curl", "wget"],
 	  revele: ["s_r_ping", "s_r_nmcli", "s_r_bail", "s_r_reboot", "s_r_wget", "s_r_entetes"], image: "item_manuscript.gif" });
+
+var GrimoireDesAnciens = fichier(PosteB, "GrimoireDesAnciens",
+	"LE GRIMOIRE DES ANCIENS (dans le tiroir du poste, de la main de Vint)\n\n" +
+	"Avant ip, les mages réseau utilisaient quatre sorts, ceux du paquet net-tools. On les croise encore sur les vieux serveurs\n" +
+	"et dans les tutoriels : autant les reconnaître. Chacun a son équivalent moderne.\n\n" +
+	"  ifconfig          les cartes et leurs adresses           aujourd'hui : ip a\n" +
+	"  ifconfig -a       y compris les cartes éteintes (DOWN)\n" +
+	"  route -n          la table de routage                    aujourd'hui : ip r\n" +
+	"  arp -n            les voisins et leur adresse MAC        aujourd'hui : ip neigh\n" +
+	"  netstat -tulnp    les ports en écoute, et qui les tient  aujourd'hui : ss -tulnp\n" +
+	"  netstat -r        les routes, encore une fois\n" +
+	"  netstat -i        les compteurs de chaque carte          aujourd'hui : ip -s link\n\n" +
+	"Attention : ifconfig sans -a ne montre pas une carte éteinte. Plus d'un débutant a cru sa carte disparue.\n" +
+	"Ici, ces sorts lisent seulement : pour changer quelque chose, on utilise ip.",
+	{ enseigne: ["ifconfig", "route", "arp", "netstat"], revele: ["s_r_anciens"], image: "item_historybook.gif" });
 
 fichier(PosteEtc, "hostname", "poste-b");
 var PosteHosts = fichier(PosteEtc, "hosts",
@@ -815,7 +847,14 @@ var QUETES_SECONDAIRES_PANNE = [
 	{ id: "s_r_mtr", titre: "Faire un rapport mtr" },
 	{ id: "s_r_traceroute_n", titre: "Tracer une route sans les noms (traceroute -n)" },
 	{ id: "s_r_dns_capture", titre: "Voir passer des questions DNS avec tcpdump" },
-	{ id: "s_r_clair", titre: "Voir un mot de passe passer en clair avec tcpdump -A" }
+	{ id: "s_r_clair", titre: "Voir un mot de passe passer en clair avec tcpdump -A" },
+	{ id: "s_r_anciens", titre: "Lancer les quatre sorts des anciens : ifconfig, route, arp et netstat" },
+	{ id: "s_r_arping", titre: "Vérifier avec arping -D que personne n'a pris l'adresse du poste" },
+	{ id: "s_r_tracepath", titre: "Mesurer avec tracepath la taille des messagers jusqu'à Lille" },
+	{ id: "s_r_getent", titre: "Retrouver ton raccourci de /etc/hosts avec getent hosts" },
+	{ id: "s_r_uptime", titre: "Constater avec uptime que le poste vient de se réveiller" },
+	{ id: "s_r_iperf", titre: "Mesurer le débit jusqu'à l'intranet avec iperf3" },
+	{ id: "s_r_nft", titre: "Lire la loi de la herse dans la langue moderne (nft list ruleset)" }
 ];
 
 var INDICES_PANNE = {
@@ -976,6 +1015,7 @@ On répare toujours dans cet ordre, en partant du bas. Celui qui commence par le
 Chaque sort que tu lances t'apprend quelque chose et éclaire un bout de la carte. Chaque réparation te rapporte une relique : il y en a onze à gagner.\n\n\
 Le Poste de garde est là, derrière le comptoir : cd Poste, et tu es devant. Lance d'abord l'Œil du Réseau, ip link : il montre les portes du poste. \
 Regarde si eth0 (sa porte principale) porte le mot UP. Le Stéthoscope, ethtool eth0, te dira si le câble est vivant, et le Miroir des Noms, hostnamectl, sur quelle machine tu es.\n\n\
+Ma SacocheDeRadia est ouverte sur le comptoir : d'autres sorts de terrain, quand tu voudras. Et le Poste cache un GrimoireDesAnciens dans son tiroir.\n\n\
 Le Lexique, sur l'armoire, donne pour chaque image le vrai mot du métier. Et tape schema quand tu veux : la carte du royaume, en vert ce qui marche, en rouge ce qui est en panne, et la brume sur ce que tu n'as pas encore exploré. \
 Je reste en ligne au talkie-walkie. »";
 		case "r_ip": return debut + NOTIONS.r_ip + "\n\n" + TALKIE.r_ip + " »";
@@ -1088,6 +1128,8 @@ function verifierPanne(){
 	// Les anciennes sauvegardes n'ont pas le TableauBlanc du chapitre 1 ni le Lexique de Radia.
 	if (typeof TableauBlanc !== "undefined" && !SalleReseau.hasItem(TableauBlanc)) SalleReseau.addItem(TableauBlanc);
 	if (!BatimentB.hasItem(Lexique)) BatimentB.addItem(Lexique);
+	if (!BatimentB.hasItem(SacocheDeRadia)) BatimentB.addItem(SacocheDeRadia);
+	if (!PosteB.hasItem(GrimoireDesAnciens)) PosteB.addItem(GrimoireDesAnciens);
 	// Les portraits redessinés dans le style d'origine remplacent ceux des anciennes sauvegardes.
 	[[Whitfield, "item_archiviste.gif"], [Corbeau, "item_frances.gif"], [Radia, "item_radia.gif"]].forEach(function(x){
 		if (x[0].picturename !== "./static/img/" + x[1]) x[0].picturename = "./static/img/" + x[1];

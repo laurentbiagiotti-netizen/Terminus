@@ -469,5 +469,33 @@ q2.taper("cd ~/Cybersup/BatimentB/Poste"); q2.taper("sudo timedatectl set-ntp tr
 q2.taper("cat Radia");
 verifier(q2.lire("state.quests.r_fin") === true, "une fois réparé, Radia signe");
 
+// Les nouveaux sorts de la panne : la sacoche de Radia et le grimoire des anciens
+var q3 = nouveauMonde({}, 65);
+q3.taper("chapitre 2", "oui");
+["cat Radia", "cat SacocheDeRadia", "cd Poste", "cat GrimoireDesAnciens"].forEach(function(c){ q3.taper(c); });
+contient(q3.taper("ifconfig"), "ifconfig -a", "ifconfig cache une carte éteinte, et le dit");
+contient(q3.taper("ifconfig -a"), "eth0: flags=4098", "ifconfig -a montre la carte éteinte");
+contient(q3.taper("sudo arping -c 1 10.0.93.254"), "is down", "arping sur une carte éteinte");
+q3.taper("sudo ip link set eth0 up");
+contient(q3.taper("sudo arping -D -c 2 10.0.93.20"), "Received 0 response", "arping -D : l'adresse est libre");
+verifier(q3.lire("state.quests.s_r_arping") === true, "quête arping");
+q3.taper("sudo ip addr add 10.0.93.20/24 dev eth0");
+contient(q3.taper("sudo arping -c 2 10.0.93.254"), "52:54:00:5D:FE:01", "arping trouve la MAC du routeur");
+contient(q3.taper("sudo arping -c 1 10.0.92.53"), "ne traverse jamais la Tour", "arping ne sort pas de la rue");
+contient(q3.taper("arp -n"), "52:54:00:5d:fe:01", "arp montre le voisin");
+contient(q3.taper("route -n"), "Pas de ligne default", "route signale l'absence de passerelle");
+q3.taper("sudo ip route add default via 10.0.93.254");
+contient(q3.taper("route -n"), "UG", "route montre la passerelle");
+contient(q3.taper("sudo netstat -tulnp"), "systemd-resolve", "netstat avec sudo montre les programmes");
+verifier(q3.lire("state.quests.s_r_anciens") === true, "quête des anciens");
+contient(q3.taper("tracepath lille"), "Temporary failure", "tracepath sans DNS");
+contient(q3.taper("tracepath 10.0.59.1"), "no reply", "tracepath : la route vers Lille manque");
+verifier(!q3.lire("state.quests.s_r_tracepath"), "pas de quête tracepath tant que Lille ne répond pas");
+contient(q3.taper("iperf3 -c 10.0.92.20"), "941 Mbits/sec", "iperf3 vers l'intranet");
+contient(q3.taper("iperf3 -c 10.0.93.254"), "Connection refused", "pas de serveur iperf3 sur le routeur");
+contient(q3.taper("nft list ruleset"), "Operation not permitted", "nft demande sudo");
+contient(q3.taper("uptime -p"), "up 1 hour", "uptime avant redémarrage");
+verifier(!q3.lire("state.quests.s_r_uptime"), "pas de quête uptime sans redémarrage");
+
 console.log(verifications + " vérifications, " + echecs + " échec" + (echecs > 1 ? "s" : ""));
 process.exit(echecs ? 1 : 0);

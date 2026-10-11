@@ -38,7 +38,17 @@ var SORTS_RPG = {
 	nc:          { nom: "le Heurtoir",             image: "Tu frappes à une porte : ouverte, fermée, ou personne ne répond ?" },
 	telnet:      { nom: "le Cornet",               image: "Tu parles à un gardien à voix haute. Tout le monde peut entendre." },
 	ping:        { nom: "l'Écho",                  image: "Tu lances un appel et tu écoutes s'il revient." },
-	ssh:         { nom: "le Portail",              image: "Un portail s'ouvre vers une autre machine, par un tunnel que nul ne peut lire." }
+	ssh:         { nom: "le Portail",              image: "Un portail s'ouvre vers une autre machine, par un tunnel que nul ne peut lire." },
+	ifconfig:    { nom: "l'Ancien Œil",            image: "Le sort des anciens : les cartes et leurs adresses, comme ip a, mais sans les cartes éteintes." },
+	route:       { nom: "l'Ancienne Carte",        image: "La table des chemins, à la façon des anciens : où part chaque messager." },
+	arp:         { nom: "l'Ancien Voisinage",      image: "Les voisins de ta rue, et l'identité gravée dans leur carte (l'adresse MAC)." },
+	netstat:     { nom: "l'Ancien Registre",       image: "Les portes ouvertes et leurs gardiens, comme ss, mais dans la langue d'avant." },
+	arping:      { nom: "le Cri dans la Rue",      image: "Tu cries une adresse dans ta rue : celui qui la porte te répond, avec son identité." },
+	tracepath:   { nom: "le Petit Fil",            image: "Un fil plus léger que celui d'Ariane : il mesure aussi la taille des messagers qui passent." },
+	getent:      { nom: "le Registre Commun",      image: "Tu traduis un nom exactement comme le font les programmes : les raccourcis, puis l'Oracle." },
+	uptime:      { nom: "le Sablier",              image: "Le sablier dit depuis quand la machine est éveillée, et combien elle travaille." },
+	iperf3:      { nom: "la Course des Messagers", image: "Tes messagers courent jusqu'à un serveur et reviennent : tu mesures le débit du chemin." },
+	nft:         { nom: "la Nouvelle Herse",       image: "La loi du pare-feu, écrite dans la langue moderne du noyau (nftables)." }
 };
 
 /* Les lieux de la carte du royaume. Le poste est connu dès le départ ; le reste est dans la brume. */
@@ -105,7 +115,7 @@ function lieuxDecouverts(nom, args, hote){
 	if (["dig", "host", "nslookup", "resolvectl"].indexOf(nom) > -1 || /\bdns\b|10\.0\.92\.53\b/.test(texte)) lieux.push("dns");
 	if (hote === "intranet" || /intranet|10\.0\.92\.20\b/.test(texte)) lieux.push("intranet");
 	if (/\bmail\b|\bMX\b|10\.0\.92\.11\b/.test(texte)) lieux.push("mail");
-	if (nom === "traceroute" || nom === "mtr" || nom === "iptables" || /parefeu|10\.0\.92\.254\b/.test(texte)) lieux.push("parefeu");
+	if (["traceroute", "mtr", "iptables", "tracepath", "nft"].indexOf(nom) > -1 || /parefeu|10\.0\.92\.254\b/.test(texte)) lieux.push("parefeu");
 	if (/lille|10\.0\.59\.|10\.0\.92\.248\b/.test(texte)) lieux.push("lille");
 	return lieux;
 }

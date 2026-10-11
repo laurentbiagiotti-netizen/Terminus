@@ -67,7 +67,7 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
 | Première utilisation d'un sort (52) | 5 |
 | Lieu découvert (44) | 5 |
 
-Le total possible est de 3860 XP au chapitre 1. Les deux autres chapitres ont chacun leur barème, sur le même principe, et leur note sur 20 à part : 3175 XP pour la panne (13 étapes, 24 quêtes secondaires, 25 sorts, 20 lieux), 4895 XP pour la Crypte (22 étapes, 34 quêtes secondaires dont 14 autour de vim, 37 sorts, 48 lieux). La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
+Le total possible est de 3860 XP au chapitre 1. Les deux autres chapitres ont chacun leur barème, sur le même principe, et leur note sur 20 à part : 3675 XP pour la panne (13 étapes, 31 quêtes secondaires, 35 sorts, 20 lieux), 4895 XP pour la Crypte (22 étapes, 34 quêtes secondaires dont 14 autour de vim, 37 sorts, 48 lieux). La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
 
 Ordres de grandeur : un parcours réduit au strict nécessaire (une quarantaine de commandes, impossible sans connaître la solution) donne 10 sur 20. La solution ci-dessous, dernier chapitre compris, donne 20 sur 20. Les derniers points se gagnent en visitant chaque lieu et en lançant chaque sort au moins une fois : `xp` liste ceux qui n'ont jamais servi.
 
@@ -404,7 +404,7 @@ bulletin
 
 ## Chapitre 2 : la panne (le réseau de l'école)
 
-Notions : le modèle en couches, de bas en haut. Le lien (`ip link`, `ethtool`), l'adresse (`ip addr`, `dhclient`), la route (`ip route`, `ping`), les noms (`/etc/resolv.conf`, `dig`, `host`, `nslookup`, `resolvectl`, `/etc/hosts`), le DHCP et les services (`systemctl`, `journalctl`, `ss`), la configuration permanente (`netplan`, `nmcli`, `reboot`), le web (`curl`, `wget`), l'horloge et les certificats (`timedatectl`, `openssl`), les ports et le pare-feu (`nc`, `telnet`, `iptables`), le routage (`traceroute`, `mtr`) et l'écoute du réseau (`tcpdump`).
+Notions : le modèle en couches, de bas en haut. Le lien (`ip link`, `ethtool`), l'adresse (`ip addr`, `dhclient`), la route (`ip route`, `ping`), les noms (`/etc/resolv.conf`, `dig`, `host`, `nslookup`, `resolvectl`, `/etc/hosts`), le DHCP et les services (`systemctl`, `journalctl`, `ss`), la configuration permanente (`netplan`, `nmcli`, `reboot`), le web (`curl`, `wget`), l'horloge et les certificats (`timedatectl`, `openssl`), les ports et le pare-feu (`nc`, `telnet`, `iptables`), le routage (`traceroute`, `mtr`) et l'écoute du réseau (`tcpdump`). En bonus, les sorts des anciens (`ifconfig`, `route`, `arp`, `netstat`) et la sacoche de Radia (`arping`, `tracepath`, `getent`, `uptime`, `iperf3`, `nft`).
 
 Pendant l'épreuve des B1, le stagiaire de Vint (l'administrateur réseau, en vacances) a « essayé des trucs » : le poste de l'accueil du bâtiment B a sa carte éteinte et un DNS mal recopié, le serveur DHCP du routeur est arrêté, apache2 a pris le port 80 de nginx sur l'intranet, une règle iptables avale les mails du bâtiment, la route vers Lille a disparu, et un vieux telnet traîne sur le routeur. La pile de la carte mère du poste est à plat, en plus : son horloge repart de 2001.
 
@@ -417,19 +417,27 @@ Le Poste de l'accueil est une vraie machine : on s'assoit devant (`cd Poste`), s
 ```
 cd ~/Cybersup/BatimentB
 cat Radia
+cat SacocheDeRadia
 cd Poste
 ls
 cat Etiquette
 cat AideMemoire
+cat GrimoireDesAnciens
+ifconfig
+ifconfig -a
 hostnamectl
 ip link
 ethtool eth0
 sudo ip link set eth0 up
 ip a
 sudo dhclient eth0
+sudo arping -D -c 2 10.0.93.20
 sudo ip addr add 10.0.93.20/24 dev eth0
 ping -c 4 10.0.93.254
 ip neigh
+arp -n
+sudo arping -c 3 10.0.93.254
+route -n
 ip -s link
 ping 10.0.92.53
 ip r
@@ -440,7 +448,8 @@ ping intranet
 
 1. `ip link` montre `eth0` sans le mot UP : la carte est éteinte (`ethtool eth0` : « Link detected: no »). Le stagiaire l'avait coupée la veille.
 2. `dhclient` ne reçoit aucune réponse : le serveur DHCP est en panne. L'Etiquette donne l'adresse à poser à la main, avec son masque `/24` (sans lui, l'adresse est posée en `/32` et le poste ne voit même pas le routeur).
-3. Le routeur répond, le reste du réseau non (« Le réseau n'est pas accessible ») : il manque la route par défaut vers la passerelle.
+3. `arping -D` vérifie, avant de poser l'adresse, que personne ne la porte déjà. Les sorts des anciens (`ifconfig`, `route`, `arp`) montrent la même chose que `ip`, à l'ancienne ; `ifconfig` sans `-a` cache la carte éteinte.
+4. Le routeur répond, le reste du réseau non (« Le réseau n'est pas accessible ») : il manque la route par défaut vers la passerelle.
 
 ### 8. Les noms
 
@@ -460,6 +469,7 @@ nslookup intranet
 dig MX cybersup.lan
 sudo nano hosts
 ping -c 1 intra
+getent hosts intra
 nmcli device status
 ```
 
@@ -476,6 +486,8 @@ systemctl status isc-dhcp-server
 sudo journalctl -u isc-dhcp-server
 sudo systemctl enable --now isc-dhcp-server
 sudo ss -tulnp
+sudo netstat -tulnp
+sudo nft list ruleset
 cd etc/dhcp
 cat dhcpd.conf
 cd /var/log
@@ -489,6 +501,7 @@ netplan get
 sudo netplan set ethernets.eth0.dhcp4=true
 sudo netplan apply
 sudo reboot
+uptime
 cd /var/log
 cat syslog
 ```
@@ -520,6 +533,7 @@ cd /var/www/intranet
 hostnamectl
 exit
 curl -I http://intranet/
+iperf3 -c intranet
 cd /tmp
 wget http://intranet/planning.txt
 curl https://intranet/
@@ -555,6 +569,7 @@ sudo tcpdump -n port 53
 sudo systemctl disable --now telnet.socket
 hostnamectl
 exit
+tracepath lille
 ```
 
 1. `nc -zv mail 25` répond « timed out », pas « refused » : personne ne répond, pas même pour refuser. C'est la signature d'un pare-feu qui jette les paquets. Sur le routeur, la règle 1 de la chaîne FORWARD jette le port 25 du bâtiment B ; ses compteurs (`-v`) montrent qu'elle a déjà servi.
