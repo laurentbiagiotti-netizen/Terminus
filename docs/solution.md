@@ -727,7 +727,7 @@ less TableauDuLabo
 who
 w
 last
-pgrep -l -u corbeau
+pgrep -a -u corbeau
 sudo lsof -p <pid:maj-auto>
 sudo pkill -u corbeau
 who

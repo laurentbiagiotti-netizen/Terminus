@@ -127,6 +127,10 @@ montrerImage = function(src, legende){
 };
 
 /* La fin d'un chapitre : un écran de victoire, puis on retourne au jeu. */
+/* Sur un écran tactile, on touche ; avec un clavier, on appuie sur Entrée. */
+function toucheOuEntree(){
+	return window.matchMedia && window.matchMedia("(pointer: coarse)").matches ? "Touche l'écran" : "Appuie sur Entrée";
+}
 function ecranDeVictoire(chapitre){
 	var fond = document.createElement("div");
 	fond.id = "victoire";
@@ -155,7 +159,7 @@ function ecranDeVictoire(chapitre){
 	commande.appendChild(code);
 	var suite = document.createElement("p");
 	suite.className = "victoire-suite";
-	suite.textContent = "Appuie sur Entrée pour continuer";
+	suite.textContent = toucheOuEntree() + " pour continuer";
 	[image, titre, note, mention, commande, suite].forEach(function(e){ cadre.appendChild(e); });
 	fond.appendChild(cadre);
 	document.body.appendChild(fond);
@@ -189,7 +193,7 @@ function revelationDuCorbeau(){
 	vrai.textContent = "Frances, la stagiaire de Laurent";
 	var suite = document.createElement("p");
 	suite.className = "revelation-suite";
-	suite.textContent = "Corbeau démasqué. Appuie sur Entrée pour l'écouter.";
+	suite.textContent = "Corbeau démasqué. " + toucheOuEntree() + " pour l'écouter.";
 	[image, nom, vrai, suite].forEach(function(e){ scene.appendChild(e); });
 	fond.appendChild(scene);
 	document.body.appendChild(fond);
@@ -248,12 +252,16 @@ function majCouches(visible){
 	var voyants = etagesOSI();
 	if (bloc.children.length !== voyants.length){
 		bloc.textContent = "";
-		voyants.forEach(function(){ var v = document.createElement("span"); v.className = "voyant"; bloc.appendChild(v); });
+		voyants.forEach(function(){
+			var v = document.createElement("span"); v.className = "voyant";
+			["voyant-long", "voyant-court"].forEach(function(c){ var t = document.createElement("span"); t.className = c; v.appendChild(t); });
+			bloc.appendChild(v);
+		});
 	}
 	voyants.forEach(function(v, i){
 		var el = bloc.children[i];
 		var cls = "voyant " + (v.ok ? "voyant-ok" : "voyant-ko");
-		if (el.textContent !== v.titre) el.textContent = v.titre;
+		if (el.children[0].textContent !== v.titre){ el.children[0].textContent = v.titre; el.children[1].textContent = v.court || v.titre; }
 		if (el.className.replace(" voyant-change", "") !== cls){
 			var change = el.className !== "voyant";
 			el.className = cls + (change ? " voyant-change" : "");
@@ -291,6 +299,11 @@ function majEtat(){
 	var enCours = state.chapitreEnCours();
 	if (radio && radio.hidden && enCours === 2 && typeof texteRadio === "function") radioSOC(texteRadio());
 	if (radio && radio.hidden && enCours === 3 && typeof prochaineEtapePanne === "function") radioSOC(texteTalkie());
+	// Après la victoire, le talkie-walkie se met à jour (et annonce la suite quand la Crypte s'ouvre).
+	if (radio && enCours === 3 && state.quests["r_fin"] && typeof texteTalkie === "function"){
+		var dernier = texteTalkie();
+		if (radio.dataset.dernier !== dernier){ radio.dataset.dernier = dernier; radioSOC(dernier); }
+	}
 	etat.classList.toggle("etat-alerte", (enCours === 2 && !state.quests["c_rapport"]) || (enCours === 3 && !state.quests["r_fin"]));
 	if (enCours === 2){
 		niveau.textContent = state.quests["c_rapport"] ? "Chapitre 3 · incident clos" : "Chapitre 3 · incident en cours";
@@ -323,7 +336,8 @@ function majEtat(){
 function texteTalkie(){
 	var etape = prochaineEtapePanne();
 	if (etape && etape.id === "r_batiment") etape = { id: "r_osi" };
-	if (!etape || !TALKIE[etape.id]) return "Radia, au talkie-walkie : « Le réseau tient. Beau travail. »";
+	if (!etape || !TALKIE[etape.id]) return "Radia, au talkie-walkie : « Le réseau tient, les sept étages sont au vert. Ton CertificatReseau t'attend dans ta Maison" +
+		(state.has("crypteOuverte") ? ", et Grace t'attend sous la Citadelle : ssh citadelle, puis cd Crypte. »" : ". Beau travail. »");
 	return "Radia, au talkie-walkie : « " + (typeof talkiePour === "function" ? talkiePour(etape.id) : TALKIE[etape.id]) + " »";
 }
 function radioSOC(texte){
@@ -343,6 +357,13 @@ function radioSOC(texte){
 	if (titre) titre.textContent = enCours === 3 ? "Talkie-walkie" : "Radio du SOC";
 	radio.querySelector(".radio-qui").textContent = qui + ", " + (d.getHours() < 10 ? "0" : "") + d.getHours() + ":" + (d.getMinutes() < 10 ? "0" : "") + d.getMinutes();
 	radio.querySelector(".radio-texte").textContent = message;
+	radio.classList.remove("radio-ouvert");
+	if (!radio.dataset.clic){
+		radio.dataset.clic = "1";
+		radio.addEventListener("click", function(){ radio.classList.toggle("radio-ouvert"); });
+	}
+	var suite = radio.querySelector(".radio-suite");
+	if (suite) suite.hidden = message.length < (window.innerWidth < 820 ? 120 : 260);
 	radio.hidden = false;
 	radio.classList.remove("radio-nouveau");
 	void radio.offsetWidth;

@@ -186,10 +186,14 @@ html, body{
 /* La barre de touches : seulement sur les écrans tactiles. */
 #touches{
     display: none;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
     gap: 6px;
     margin-top: 10px;
+    scrollbar-width: none;
 }
+#touches::-webkit-scrollbar{ display: none; }
+#touches button{ flex: 1 0 auto; }
 #touches button, .editeur-pied button{
     font: inherit;
     font-size: 0.9rem;
@@ -282,7 +286,8 @@ html, body{
 .vim-position{ color: var(--gris); white-space: nowrap; }
 @media (max-width: 480px){
     .editeur-pied button{ min-width: 2.2em; padding: 6px 6px; }
-    #touches button{ min-width: 2.1em; padding: 6px 5px; }
+    #touches{ gap: 4px; }
+    #touches button{ min-width: 1.9em; padding: 6px 4px; }
 }
 .vim-capture{
     position: absolute;
@@ -490,10 +495,15 @@ body.crt #scene, body.crt .intro-titre{
 .radio-texte{
     color: var(--texte);
     display: -webkit-box;
-    -webkit-line-clamp: 4;
+    -webkit-line-clamp: 6;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+/* Un message trop long se lit en entier d'un clic (ou d'un toucher) sur la radio. */
+#radio{ cursor: pointer; }
+#radio.radio-ouvert .radio-texte{ -webkit-line-clamp: unset; display: block; max-height: 40vh; overflow-y: auto; }
+.radio-suite{ color: var(--gris); font-size: 0.72rem; }
+#radio.radio-ouvert .radio-suite, .radio-suite[hidden]{ display: none; }
 .radio-voyant{
     width: 8px;
     height: 8px;
@@ -512,7 +522,7 @@ body.crt #scene, body.crt .intro-titre{
 }
 @media (max-width: 820px){
     #radio{ margin-bottom: 6px; padding: 4px 10px; gap: 2px; font-size: 0.75rem; }
-    .radio-texte{ -webkit-line-clamp: 1; }
+    .radio-texte{ -webkit-line-clamp: 3; }
 }
 
 /* Les annonces du jeu dans le terminal */
@@ -703,8 +713,12 @@ body.crt #scene, body.crt .intro-titre{
 @media (prefers-reduced-motion: reduce){
     #couches .voyant-ko::before, #couches .voyant-change{ animation: none; }
 }
+#couches .voyant-court{ display: none; }
+#couches .voyant-long, #couches .voyant-court{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 820px){
     #couches{ gap: 3px 4px; margin: -4px 0 8px; }
+    #couches .voyant-long{ display: none; }
+    #couches .voyant-court{ display: inline; }
     #couches .voyant{ font-size: 0.7rem; padding: 1px 4px; gap: 4px; }
     #couches .voyant::before{ flex-basis: 6px; height: 6px; }
 }

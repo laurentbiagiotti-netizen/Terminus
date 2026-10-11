@@ -282,7 +282,7 @@ Shell.sorts.sha256sum = function(args, io){
 	}
 	if (formatees === 0) throw new ShellError("sha256sum : aucune ligne d'empreinte correctement formatée (EMPREINTE  NOM)");
 	if (echecs.length > 0){
-		io.err("sha256sum : AVERTISSEMENT : " + echecs.length + " somme" + (echecs.length > 1 ? "s" : "") +
+		io.errFin("sha256sum : AVERTISSEMENT : " + echecs.length + " somme" + (echecs.length > 1 ? "s" : "") +
 			" de contrôle calculée" + (echecs.length > 1 ? "s ne correspondent" : " ne correspond") + " PAS");
 	}
 	GameEvents.fire({ type: "sha256sum", check: true, room: current_room, failed: echecs });

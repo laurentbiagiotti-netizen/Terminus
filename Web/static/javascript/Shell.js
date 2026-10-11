@@ -1912,7 +1912,7 @@ Shell.tuyau = function(jetons){
 	var stdin = null, stdinSansFin = false;
 	var noms = [];
 	var echec = false;
-	var sortieFinale = "", finaleALEcran = false;
+	var sortieFinale = "", finaleALEcran = false, erreursApres = [];
 	try {
 		for (var s = 0; s < segments.length; s++){
 			var argv = [];
@@ -1952,6 +1952,8 @@ Shell.tuyau = function(jetons){
 			}
 			var io = { stdin: stdin, stdinSansFin: stdinSansFin, tty: sorties[1].t === "ecran", sortie1: sorties[1], sudo: false, erreurs: [] };
 			io.err = (function(liste){ return function(message){ liste.push(message); }; })(io.erreurs);
+			// Un avertissement qu'un vrai programme écrit APRÈS ses résultats (sha256sum -c, par exemple).
+			io.errFin = function(message){ io.erreursFin = io.erreursFin || []; io.erreursFin.push(message); };
 			var nom = argv[0], args = argv.slice(1);
 			if (nom === "sudo"){
 				if (!state.knows("sudo")){
@@ -1997,6 +1999,10 @@ Shell.tuyau = function(jetons){
 			}
 			if (erreurs !== null) ranger(sorties[2], erreurs, true);
 			ranger(sorties[1], texte, false);
+			if (io.erreursFin && io.erreursFin.length){
+				if (sorties[2].t === "ecran") erreursApres.push(io.erreursFin.join("\n"));
+				else ranger(sorties[2], io.erreursFin.join("\n"), true);
+			}
 			// Un objet visé par une redirection est créé (ou vidé) même s'il n'y a rien à y écrire.
 			[1, 2].forEach(function(n){
 				var c = sorties[n];
@@ -2015,8 +2021,9 @@ Shell.tuyau = function(jetons){
 				destination: sorties[2].t === "ecran" ? null : (sorties[2] === sorties[1] || sorties[2].t === "tuyau" ? "&1" : sorties[2].cible),
 				args: args, sudo: io.sudo });
 		}
+		if (finaleALEcran && sortieFinale !== "") term.echo(sortieFinale);
+		erreursApres.forEach(function(m){ term.echo(m); });
 		if (finaleALEcran){
-			if (sortieFinale !== "") term.echo(sortieFinale);
 			if (noms[noms.length - 1] === "echo"){
 				GameEvents.fire({ type: "echo", text: sansAnsi(sortieFinale), room: current_room });
 			}

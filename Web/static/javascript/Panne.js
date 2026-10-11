@@ -1106,13 +1106,13 @@ function etagesOSI(){
 	voyantsPanne().forEach(function(x){ v[x.id] = x.ok; });
 	var p = state.panne;
 	return [
-		{ n: 1, id: "physique", titre: "1 Physique", ok: v.lien },
-		{ n: 2, id: "liaison", titre: "2 Liaison", ok: !!(v.lien && p.arp && adressePoste()) },
-		{ n: 3, id: "reseau", titre: "3 Réseau", ok: !!(v.route && v.lille) },
-		{ n: 4, id: "transport", titre: "4 Transport", ok: !!(v.mail && v.web) },
-		{ n: 5, id: "session", titre: "5 Session", ok: !!(v.route && v.telnet) },
-		{ n: 6, id: "presentation", titre: "6 Présentation", ok: !!v.heure },
-		{ n: 7, id: "application", titre: "7 Application", ok: !!(v.noms && v.dhcp && v.web) }
+		{ n: 1, id: "physique", titre: "1 Physique", court: "1 Phys.", ok: v.lien },
+		{ n: 2, id: "liaison", titre: "2 Liaison", court: "2 Liais.", ok: !!(v.lien && p.arp && adressePoste()) },
+		{ n: 3, id: "reseau", titre: "3 Réseau", court: "3 Rés.", ok: !!(v.route && v.lille) },
+		{ n: 4, id: "transport", titre: "4 Transport", court: "4 Transp.", ok: !!(v.mail && v.web) },
+		{ n: 5, id: "session", titre: "5 Session", court: "5 Sess.", ok: !!(v.route && v.telnet) },
+		{ n: 6, id: "presentation", titre: "6 Présentation", court: "6 Prés.", ok: !!v.heure },
+		{ n: 7, id: "application", titre: "7 Application", court: "7 Appli.", ok: !!(v.noms && v.dhcp && v.web) }
 	];
 }
 
@@ -1276,6 +1276,7 @@ function etatPanne(nom){
 			if (typeof montrerImage === "function") montrerImage(BatimentB.room_pic, BatimentB.room_name);
 			CertificatReseau.cmd_text["less"] = state.texteDuCertificatReseau();
 			say(C.gris("(Ton CertificatReseau est posé dans ta Maison : cat ~/CertificatReseau. Il porte la note du chapitre 2 et son code de vérification.)"));
+			if (typeof radioSOC === "function" && typeof texteTalkie === "function") radioSOC(texteTalkie());
 			break;
 	}
 }

@@ -195,7 +195,7 @@ function sortEmpreinte(nom, fonction){
 				echecs++;
 			}
 		});
-		if (echecs) io.err(nom + " : AVERTISSEMENT : " + echecs + " somme(s) de contrôle ne correspond(ent) PAS");
+		if (echecs) io.errFin(nom + " : AVERTISSEMENT : " + echecs + " somme(s) de contrôle ne correspond(ent) PAS");
 		return resultats.join("\n");
 	};
 }
@@ -761,19 +761,21 @@ Shell.sorts.lsof = function(args, io){
 };
 
 function procsCorrespondants(args, cmd){
-	var utilisateur = null, motif = null, liste = false, complet = false;
+	var utilisateur = null, motif = null, liste = false, complet = false, ligneEntiere = false;
 	for (var i = 0; i < args.length; i++){
 		if (args[i] === "-u") utilisateur = args[++i];
 		else if (args[i] === "-l") liste = true;
+		else if (args[i] === "-a"){ liste = true; ligneEntiere = true; }
+		else if (/^-[la]+$/.test(args[i])){ liste = true; if (args[i].indexOf("a") > -1) ligneEntiere = true; }
 		else if (args[i] === "-f") complet = true;
 		else if (/^-(9|KILL|15|TERM)$/.test(args[i])) continue;
-		else if (args[i].charAt(0) === "-") throw new ShellError(cmd + " : option « " + args[i] + " » inconnue ici. Celles qui existent : -u UTILISATEUR, -l" + (cmd === "pkill" ? ", -9" : ""));
+		else if (args[i].charAt(0) === "-") throw new ShellError(cmd + " : option « " + args[i] + " » inconnue ici. Celles qui existent : -u UTILISATEUR, -l, -a" + (cmd === "pkill" ? ", -9" : ""));
 		else motif = args[i];
 	}
 	if (motif === null && utilisateur === null) throw new ShellError(cmd + " : quel processus ? Utilisation : " + cmd + " NOM (ou -u UTILISATEUR)");
 	var re = motif === null ? null : new RegExp(motif.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
 	return {
-		liste: liste,
+		liste: liste, ligneEntiere: ligneEntiere,
 		procs: Shell.procsDeLHote().filter(function(e){
 			if (utilisateur !== null && e.proc.owner !== utilisateur) return false;
 			return re === null || re.test(e.proc.name) || (complet && re.test(e.proc.commande || ""));
@@ -784,7 +786,9 @@ function procsCorrespondants(args, cmd){
 Shell.sorts.pgrep = function(args, io){
 	var r = procsCorrespondants(args, "pgrep");
 	GameEvents.fire({ type: "pgrep", count: r.procs.length });
-	return r.procs.map(function(e){ return r.liste ? e.proc.pid + " " + e.proc.name : String(e.proc.pid); }).join("\n");
+	// -l : le nom court du processus (comme ps) ; -a : sa ligne de commande entière.
+	function nomCourt(n){ n = String(n); return n.charAt(0) === "[" ? n : n.replace(/^-/, "").split(/[:\s]/)[0]; }
+	return r.procs.map(function(e){ return r.liste ? e.proc.pid + " " + (r.ligneEntiere ? e.proc.name : nomCourt(e.proc.name)) : String(e.proc.pid); }).join("\n");
 };
 
 Shell.sorts.pkill = function(args, io){
@@ -1043,25 +1047,32 @@ Shell.sorts.dig = function(args, io){
 };
 
 /* nmap : quelles machines répondent, et quels ports sont ouverts. Uniquement sur le réseau de l'école. */
+/* L'adresse d'une machine sur le réseau de l'école (le routeur du bâtiment B y a sa deuxième carte, ip2). */
+function ipDansLEcole(h){
+	var x = HOTES[h] || {};
+	if (/^10\.0\.92\./.test(x.ip || "")) return x.ip;
+	if (/^10\.0\.92\./.test(x.ip2 || "")) return x.ip2;
+	return null;
+}
 Shell.sorts.nmap = function(args, io){
 	var cible = args.filter(function(a){ return a.charAt(0) !== "-"; })[0];
 	if (!cible) throw new ShellError("nmap : que faut-il scanner ? Exemples : nmap 10.0.92.0/24 (tout le réseau de l'école), nmap web");
 	var hotes = [];
 	if (/^10\.0\.92\.0\/24$/.test(cible)){
-		Object.keys(HOTES).forEach(function(h){ if (/^10\.0\.92\./.test(HOTES[h].ip) && HOTES[h].ports) hotes.push(h); });
+		Object.keys(HOTES).forEach(function(h){ if (ipDansLEcole(h) && HOTES[h].ports) hotes.push(h); });
 	} else {
 		var h = hoteDepuisCible(cible);
 		if (!h && /^\d+\.\d+\.\d+\.\d+(\/\d+)?$/.test(cible)) throw new ShellError("nmap : " + cible + " n'est pas sur le réseau de l'école (10.0.92.0/24).\n" +
 			C.gris("(Scanner une machine sans l'autorisation de son propriétaire est un délit. La mission ne t'autorise que le réseau de l'école.)"));
 		if (!h) throw new ShellError("nmap : Failed to resolve \"" + cible + "\".");
-		if (!/^10\.0\.92\./.test(HOTES[h].ip)) throw new ShellError("nmap : on ne scanne que le réseau de l'école (10.0.92.0/24). Scanner les machines des autres sans autorisation est illégal.");
+		if (!ipDansLEcole(h)) throw new ShellError("nmap : on ne scanne que le réseau de l'école (10.0.92.0/24). Scanner les machines des autres sans autorisation est illégal.");
 		hotes.push(h);
 	}
-	hotes.sort(function(a, b){ return +HOTES[a].ip.split(".")[3] - +HOTES[b].ip.split(".")[3]; });
+	hotes.sort(function(a, b){ return +ipDansLEcole(a).split(".")[3] - +ipDansLEcole(b).split(".")[3]; });
 	var lignes = ["Starting Nmap 7.94 ( https://nmap.org )"];
 	hotes.forEach(function(h){
 		var ports = HOTES[h].ports || {};
-		lignes.push("Nmap scan report for " + h + ".cybersup.lan (" + HOTES[h].ip + ")");
+		lignes.push("Nmap scan report for " + h + ".cybersup.lan (" + ipDansLEcole(h) + ")");
 		lignes.push("PORT     STATE SERVICE");
 		Object.keys(ports).sort(function(a, b){ return +a - +b; }).forEach(function(p){
 			if (ports[p].ferme && ports[p].ferme()) return;
@@ -1393,7 +1404,7 @@ MANUEL["last"] = page("voir l'historique des connexions", "LAST (les dernières 
 MANUEL["who"] = page("voir qui est connecté en ce moment", "WHO", "  who                    les sessions ouvertes sur cette machine, avec leur provenance");
 MANUEL["lsof"] = page("voir les fichiers et connexions ouverts par les processus", "LiSt Open Files",
 	"  sudo lsof -i :6666     qui utilise le port 6666\n  sudo lsof -i           toutes les connexions réseau\n  sudo lsof -p PID       tout ce qu'un processus a ouvert\n\nSous Linux, tout est fichier : une connexion réseau aussi.");
-MANUEL["pgrep"] = page("trouver le PID d'un processus par son nom", "Process GREP", "  pgrep sshd             les PID des processus dont le nom contient sshd\n  pgrep -l -u corbeau    ceux de l'utilisateur corbeau, avec leur nom");
+MANUEL["pgrep"] = page("trouver le PID d'un processus par son nom", "Process GREP", "  pgrep sshd             les PID des processus dont le nom contient sshd\n  pgrep -l -u corbeau    ceux de l'utilisateur corbeau, avec leur nom\n  pgrep -a -u corbeau    avec leur ligne de commande entière (sshd: corbeau@pts/1...)");
 MANUEL["pkill"] = page("arrêter des processus par leur nom", "Process KILL",
 	"  pkill NOM              envoie TERM à tous les processus qui portent ce nom\n  sudo pkill -u corbeau  arrête tous ceux d'un utilisateur\n  pkill -9 NOM           sans négocier");
 MANUEL["systemctl"] = page("gérer les services de la machine", "SYSTEM ConTroL",

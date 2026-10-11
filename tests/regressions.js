@@ -537,5 +537,18 @@ contient(q5.taper("ping -c 1 10.0.93.254"), "pas accessible", "sans adresse rien
 q5.taper("sudo ip addr add 10.0.93.20/24 dev eth0");
 contient(q5.taper("ping 10.0.93.254"), "Ctrl+C", "ping rappelle que sans -c, il ne s'arrête jamais");
 
+// Derniers points de l'audit : l'avertissement de sha256sum après la liste, pgrep -l / -a, nmap voit le routeur
+var q6 = nouveauMonde({}, 68);
+q6.taper("chapitre 3", "oui");
+["ssh citadelle", "less Laurent", "cd Crypte", "less Archiviste", "cd bin"].forEach(function(c){ q6.taper(c); });
+var sortieSha = q6.taper("sha256sum -c SHA256SUMS");
+verifier(sortieSha.indexOf("veilleur: OK") > -1 && sortieSha.indexOf("veilleur: OK") < sortieSha.indexOf("AVERTISSEMENT"), "sha256sum -c : l'avertissement vient après la liste");
+q6.taper("cd ~/Cybersup/SalleReseau"); q6.taper("less MementoReseau");
+contient(q6.taper("nmap 10.0.92.0/24"), "routeur.cybersup.lan (10.0.92.249)", "nmap voit le routeur par sa carte côté école");
+q6.taper("ssh labo"); q6.taper("less TableauDuLabo");
+var court = q6.taper("pgrep -l -u corbeau"), long = q6.taper("pgrep -a -u corbeau");
+verifier(court.indexOf("corbeau@pts") === -1 && /\d+ sshd/.test(court), "pgrep -l : le nom court du processus");
+contient(long, "sshd: corbeau@pts/1", "pgrep -a : la ligne de commande entière");
+
 console.log(verifications + " vérifications, " + echecs + " échec" + (echecs > 1 ? "s" : ""));
 process.exit(echecs ? 1 : 0);
