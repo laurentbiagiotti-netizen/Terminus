@@ -1108,7 +1108,7 @@ function etagesOSI(){
 	return [
 		{ n: 1, id: "physique", titre: "1 Physique", court: "1 Phys.", ok: v.lien },
 		{ n: 2, id: "liaison", titre: "2 Liaison", court: "2 Liais.", ok: !!(v.lien && p.arp && adressePoste()) },
-		{ n: 3, id: "reseau", titre: "3 Réseau", court: "3 Rés.", ok: !!(v.route && v.lille) },
+		{ n: 3, id: "reseau", titre: "3 Réseau", court: "3 Rés.", ok: !!(v.adresse && v.route) },
 		{ n: 4, id: "transport", titre: "4 Transport", court: "4 Transp.", ok: !!(v.mail && v.web) },
 		{ n: 5, id: "session", titre: "5 Session", court: "5 Sess.", ok: !!(v.route && v.telnet) },
 		{ n: 6, id: "presentation", titre: "6 Présentation", court: "6 Prés.", ok: !!v.heure },
