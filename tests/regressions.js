@@ -592,5 +592,19 @@ q10.taper("cd /var/log");
 q10.taper("wget http://intranet/planning.txt");
 verifier(!q10.lire("state.quests.s_r_wget"), "wget sans pouvoir écrire ne valide pas la quête");
 
+// --- Nour, la Cartographe : l'adressage en images, cinq colles avec echo ---
+var jn = nouveauMonde({}, 31);
+jn.taper("chapitre 2", "oui");
+contient(jn.taper("cat Cartographe"), "cinq colles", "Nour pose ses colles");
+contient(jn.taper("cat PlanDesAdresses"), "PASSERELLE", "le plan des adresses explique la passerelle");
+contient(jn.taper("cat Quartiers"), "255.255.255.192", "les quartiers donnent le masque d'un /26");
+contient(jn.taper("echo 10.0.93.20"), "premier numéro", "une mauvaise rue reçoit une aide");
+verifier(!jn.lire("state.quests.s_r_rue"), "une mauvaise réponse ne valide rien");
+contient(jn.taper("echo 10.0.93.0"), "Exact", "la bonne rue est acceptée");
+verifier(jn.lire("state.quests.s_r_rue") === true, "la rue valide sa quête");
+jn.taper("cd Poste");
+jn.taper("echo 62");
+verifier(!jn.lire("state.quests.s_r_maisons"), "les colles se répondent dans le bâtiment B, pas ailleurs");
+
 console.log(verifications + " vérifications, " + echecs + " échec" + (echecs > 1 ? "s" : ""));
 process.exit(echecs ? 1 : 0);

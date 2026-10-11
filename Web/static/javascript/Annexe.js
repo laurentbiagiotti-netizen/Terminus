@@ -1341,4 +1341,4 @@ GameEvents.addListener("dnsPanne", function(e){ if (e.ok && e.outil === "dig" &&
 /* Les illustrations des lieux de l'Annexe (outils/dessiner_panne.py). */
 [[Borne, "loc_borne.gif"], [Switch, "loc_switch.gif"], [Affichage, "loc_affichage.gif"]].forEach(function(x){ x[0].room_pic = "./static/img/" + x[1]; });
 
-World.fige = true;
+

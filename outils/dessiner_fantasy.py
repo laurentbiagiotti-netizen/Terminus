@@ -683,6 +683,93 @@ def boitier():
     return im
 
 
+# ------------------------------------------------------------------
+# Le plan des adresses (bâtiment B) : la rue, les quartiers, la cartographe
+# ------------------------------------------------------------------
+
+def maison(d, x, y, w=22, h=22, num=None, c=B):
+    """Une maison de face : un toit pointu, une porte, et son numéro au-dessus de la porte."""
+    d.polygon([(x - 2, y), (x + w // 2, y - 12), (x + w + 2, y)], fill=c)
+    d.rectangle([x, y, x + w, y + h], fill=c)
+    d.rectangle([x + w // 2 - 4, y + h - 10, x + w // 2 + 4, y + h], fill=N)
+    if num:
+        d.rectangle([x + 1, y + 2, x + w - 1, y + 10], fill=N)
+        d.text((x + (w - d.textlength(num)) / 2, y + 1), num, fill=V)
+
+
+def plan_rue():
+    """Une adresse IP comme une adresse postale : la rue 10.0.93, les maisons, le panneau .0, le crieur .255, la Tour .254."""
+    im, d = toile()
+    d.rectangle([22, 4, 154, 20], fill=B)
+    texte_centre(d, 8, "RUE 10.0.93.0/24", N)
+    d.rectangle([0, 112, W, H], fill=V)                        # la rue
+    for x in range(4, W, 16):
+        d.rectangle([x, 138, x + 8, 140], fill=B)              # les pointillés
+    d.rectangle([4, 46, 6, 74], fill=B)                        # le panneau de la rue, .0
+    d.rectangle([0, 38, 20, 48], fill=B); d.text((4, 38), ".0", fill=N)
+    for i, (x, num) in enumerate([(14, ".1"), (44, ".2"), (78, ".20"), (110, ".253")]):
+        maison(d, x, 88, w=28 if num == ".253" else 24, h=24, num=num)
+    d.text((68, 98), "..", fill=B); d.text((102, 98), "..", fill=B)
+    briques(d, 146, 40, 172, 112)                              # la Tour, la passerelle .254
+    creneaux(d, 146, 172, 40, h=6, w=5)
+    d.rectangle([152, 92, 166, 112], fill=N)
+    d.rectangle([116, 44, 144, 54], fill=N); d.text((118, 44), ".254", fill=B)
+    # le crieur public, .255 : ce qu'on lui dit, toute la rue l'entend
+    d.ellipse([76, 146, 86, 156], fill=B)
+    d.rectangle([77, 156, 85, 168], fill=B)
+    d.polygon([(86, 150), (98, 144), (98, 160)], fill=B)
+    for k in range(3):
+        r = 6 + k * 6
+        d.arc([98 - r, 152 - r, 98 + r, 152 + r], 300, 60, fill=B, width=2)
+    d.rectangle([40, 150, 70, 160], fill=N); d.text((42, 151), ".255", fill=B)
+    return im
+
+
+def quartiers():
+    """Une rue /24 coupée en quatre quartiers de /26 : .0, .64, .128, .192. Le premier est l'Annexe."""
+    im, d = toile()
+    d.rectangle([14, 2, 162, 16], fill=B)
+    texte_centre(d, 5, "10.0.94.0/24 = 4 x /26", N)
+    cases = [(8, 24, ".0"), (92, 24, ".64"), (8, 98, ".128"), (92, 98, ".192")]
+    for k, (x, y, nom) in enumerate(cases):
+        fond = V if k == 0 else N
+        d.rectangle([x, y, x + 76, y + 66], fill=fond, outline=B, width=2)
+        for j in range(2):
+            for i in range(3):
+                hx, hy = x + 8 + i * 22, y + 26 + j * 20
+                d.polygon([(hx - 1, hy), (hx + 7, hy - 6), (hx + 15, hy)], fill=B)
+                d.rectangle([hx, hy, hx + 14, hy + 10], fill=B)
+                d.rectangle([hx + 5, hy + 4, hx + 9, hy + 10], fill=fond)
+        d.rectangle([x + 4, y + 4, x + 8 + d.textlength(nom), y + 14], fill=N)
+        d.text((x + 6, y + 4), nom, fill=B)
+    d.rectangle([84, 24, 92, 164], fill=B); d.rectangle([8, 90, 168, 98], fill=B)   # les rues entre les quartiers
+    return im
+
+
+def cartographe():
+    """Nour, la cartographe du réseau : des lunettes, un crayon sur l'oreille, un plan déroulé."""
+    im, d = toile()
+    d.ellipse([60, 12, 116, 68], fill=B)
+    d.polygon([(56, 30), (66, 8), (110, 8), (120, 30), (120, 60), (112, 30), (64, 30), (56, 60)], fill=V)   # les cheveux
+    d.rectangle([68, 36, 84, 46], outline=N, width=2); d.rectangle([92, 36, 108, 46], outline=N, width=2)
+    d.line([(84, 40), (92, 40)], fill=N, width=2)                # les lunettes
+    d.rectangle([80, 56, 96, 59], fill=N)                       # le sourire
+    d.line([(112, 22), (126, 6)], fill=N, width=3)              # le crayon
+    d.rectangle([80, 68, 96, 76], fill=B)
+    d.polygon([(46, 76), (130, 76), (140, 120), (36, 120)], fill=B)
+    # le plan déroulé : une grille, une rue verte, des points pour les maisons
+    d.rectangle([28, 96, 148, 160], fill=B, outline=N, width=2)
+    d.ellipse([20, 92, 36, 164], fill=B, outline=N, width=2); d.ellipse([140, 92, 156, 164], fill=B, outline=N, width=2)
+    for x in range(40, 140, 16):
+        d.line([(x, 102), (x, 154)], fill=N)
+    for y in range(110, 154, 12):
+        d.line([(36, y), (144, y)], fill=N)
+    d.rectangle([36, 124, 144, 132], fill=V)
+    for x in range(44, 140, 16):
+        d.rectangle([x, 115, x + 4, 119], fill=V)
+    return im
+
+
 DESSINS = {
     "loc_batimentb.gif": lambda: batimentb(False), "loc_batimentb_ok.gif": lambda: batimentb(True),
     "loc_posteb.gif": posteb, "loc_routeur.gif": routeur, "loc_intranet.gif": intranet,
@@ -692,6 +779,7 @@ DESSINS = {
     "loc_labo.gif": labo, "loc_web.gif": web, "loc_mail.gif": mail, "loc_dns.gif": dns, "loc_parefeu.gif": parefeu,
     "loc_sauvegarde.gif": sauvegarde, "loc_imprimante.gif": imprimante, "loc_badgeuse.gif": badgeuse, "loc_poste.gif": poste,
     "item_gaspard.gif": gaspard, "item_boitier.gif": boitier,
+    "item_plan_rue.gif": plan_rue, "item_quartiers.gif": quartiers, "item_cartographe.gif": cartographe,
 }
 
 if __name__ == "__main__":

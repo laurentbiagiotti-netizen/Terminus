@@ -8,7 +8,7 @@
     <meta name="author" content="Shawn Conrad, Michele Pratusevich (jeu d'origine) ; édition Cybersup : Laurent Biagiotti" />
     <meta name="description" content="Terminus, édition Cybersup : un jeu d'aventure pour apprendre le terminal Linux." />
     <title>Terminus, édition Cybersup</title>
-    <link href="./static/css/terminus.css?v=20261011222602" rel="stylesheet" />
+    <link href="./static/css/terminus.css?v=20261011225125" rel="stylesheet" />
   </head>
   <body>
     <main id="jeu">
@@ -16,8 +16,8 @@
         <div id="sortie" aria-live="polite"></div>
         <form id="ligne" autocomplete="off">
           <label id="invite" for="saisie">$ </label>
-          <input id="saisie" type="text" autocomplete="off" autocapitalize="off" autocorrect="off"
-                 spellcheck="false" aria-label="Tape un sort ici" />
+          <textarea id="saisie" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off"
+                 spellcheck="false" enterkeyhint="send" aria-label="Tape un sort ici"></textarea>
         </form>
         <div id="touches" aria-label="Touches utiles">
           <button type="button" data-touche="Tab" title="Compléter le nom">Tab</button>
@@ -53,27 +53,28 @@
       </aside>
     </main>
     <!-- Scripts -->
-    <script src="./static/javascript/EventTarget.js?v=20261011222602"></script>
-    <script src="./static/javascript/Partie.js?v=20261011222602"></script>
-    <script src="./static/javascript/Item.js?v=20261011222602"></script>
-    <script src="./static/javascript/Room.js?v=20261011222602"></script>
-    <script src="./static/javascript/Terminal.js?v=20261011222602"></script>
-    <script src="./static/javascript/Manuel.js?v=20261011222602"></script>
-    <script src="./static/javascript/Shell.js?v=20261011222602"></script>
-    <script src="./static/javascript/SortsAvances.js?v=20261011222602"></script>
-    <script src="./static/javascript/GameObjects.js?v=20261011222602"></script>
-    <script src="./static/javascript/Chapitre2.js?v=20261011222602"></script>
-    <script src="./static/javascript/CommandesCyber.js?v=20261011222602"></script>
-    <script src="./static/javascript/Reseau.js?v=20261011222602"></script>
-    <script src="./static/javascript/Panne.js?v=20261011222602"></script>
-    <script src="./static/javascript/CommandesPanne.js?v=20261011222602"></script>
-    <script src="./static/javascript/Annexe.js?v=20261011222602"></script>
-    <script src="./static/javascript/RpgPanne.js?v=20261011222602"></script>
-    <script src="./static/javascript/SortsCrypte.js?v=20261011222602"></script>
-    <script src="./static/javascript/RpgCrypte.js?v=20261011222602"></script>
-    <script src="./static/javascript/GameState.js?v=20261011222602"></script>
-    <script src="./static/javascript/Intro.js?v=20261011222602"></script>
-    <script src="./static/javascript/Game.js?v=20261011222602"></script>
-    <script src="./static/javascript/Guide.js?v=20261011222602"></script> <!-- Execute last -->
+    <script src="./static/javascript/EventTarget.js?v=20261011225125"></script>
+    <script src="./static/javascript/Partie.js?v=20261011225125"></script>
+    <script src="./static/javascript/Item.js?v=20261011225125"></script>
+    <script src="./static/javascript/Room.js?v=20261011225125"></script>
+    <script src="./static/javascript/Terminal.js?v=20261011225125"></script>
+    <script src="./static/javascript/Manuel.js?v=20261011225125"></script>
+    <script src="./static/javascript/Shell.js?v=20261011225125"></script>
+    <script src="./static/javascript/SortsAvances.js?v=20261011225125"></script>
+    <script src="./static/javascript/GameObjects.js?v=20261011225125"></script>
+    <script src="./static/javascript/Chapitre2.js?v=20261011225125"></script>
+    <script src="./static/javascript/CommandesCyber.js?v=20261011225125"></script>
+    <script src="./static/javascript/Reseau.js?v=20261011225125"></script>
+    <script src="./static/javascript/Panne.js?v=20261011225125"></script>
+    <script src="./static/javascript/CommandesPanne.js?v=20261011225125"></script>
+    <script src="./static/javascript/Annexe.js?v=20261011225125"></script>
+    <script src="./static/javascript/Adresses.js?v=20261011225125"></script>
+    <script src="./static/javascript/RpgPanne.js?v=20261011225125"></script>
+    <script src="./static/javascript/SortsCrypte.js?v=20261011225125"></script>
+    <script src="./static/javascript/RpgCrypte.js?v=20261011225125"></script>
+    <script src="./static/javascript/GameState.js?v=20261011225125"></script>
+    <script src="./static/javascript/Intro.js?v=20261011225125"></script>
+    <script src="./static/javascript/Game.js?v=20261011225125"></script>
+    <script src="./static/javascript/Guide.js?v=20261011225125"></script> <!-- Execute last -->
   </body>
 </html>

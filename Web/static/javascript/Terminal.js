@@ -95,7 +95,27 @@ function Terminal(elements){
 		e.preventDefault();
 		self.valider();
 	});
-	this.saisie.addEventListener("keydown", function(e){ self.touche(e); });
+	// La saisie est une zone de texte : une longue commande passe à la ligne au lieu de défiler.
+	// Entrée valide (jamais de retour à la ligne), et la zone grandit avec ce qu'on tape.
+	this.saisie.addEventListener("keydown", function(e){
+		if (e.key === "Enter" && !e.isComposing){ e.preventDefault(); self.valider(); self.ajuster(); return; }
+		self.touche(e);
+		setTimeout(function(){ self.ajuster(); }, 0);
+	});
+	this.saisie.addEventListener("input", function(){
+		// Un retour à la ligne glissé par un clavier de téléphone vaut Entrée ; collé au milieu d'un texte, une espace.
+		if (/[\r\n]/.test(self.saisie.value)){
+			var valeur = self.saisie.value;
+			if (/^[^\r\n]*\r?\n$/.test(valeur)){ self.saisie.value = valeur.replace(/\r?\n$/, ""); self.valider(); }
+			else {
+				var position = self.saisie.selectionStart;
+				self.saisie.value = valeur.replace(/\r?\n/g, " ").replace(/ $/, "");
+				self.saisie.selectionStart = self.saisie.selectionEnd = Math.min(position, self.saisie.value.length);
+			}
+		}
+		self.ajuster();
+	});
+	window.addEventListener("resize", function(){ self.ajuster(); });
 	// Taper n'importe ou sur la page ecrit dans le terminal, meme sans avoir clique dedans.
 	document.addEventListener("keydown", function(e){
 		var editeur = document.getElementById("editeur");
@@ -145,6 +165,7 @@ function Terminal(elements){
 				} else {
 					self.inserer(bouton.getAttribute("data-texte"));
 				}
+				self.ajuster();
 			});
 		}
 	}
@@ -330,7 +351,6 @@ Terminal.prototype.defiler = function(){
 Terminal.prototype.demander = function(texte, masque, rappel){
 	this.question = { rappel: rappel, masque: !!masque, texte: texte };
 	this.invite.innerHTML = ansiVersHTML(texte);
-	this.saisie.type = masque ? "password" : "text";
 	// Comme dans un vrai terminal, un mot de passe ne s'affiche pas du tout pendant la frappe.
 	this.saisie.classList.toggle("masque", !!masque);
 	this.saisie.value = "";
@@ -341,7 +361,16 @@ Terminal.prototype.demander = function(texte, masque, rappel){
 Terminal.prototype.proposer = function(texte, libelle){
 	this.suggestion = texte || null;
 	this.saisie.placeholder = texte ? (libelle || "") + texte + "   ⇥ Tab" : "";
+	this.ajuster();
 	this.saisie.classList.toggle("avec-suggestion", !!texte);
+};
+
+/* La hauteur de la zone de saisie suit son contenu : une ligne, ou plusieurs pour une longue commande. */
+Terminal.prototype.ajuster = function(){
+	var champ = this.saisie;
+	if (!champ || champ.tagName !== "TEXTAREA") return;
+	champ.style.height = "auto";
+	champ.style.height = champ.scrollHeight + "px";
 };
 
 Terminal.prototype.valider = function(){
@@ -351,7 +380,6 @@ Terminal.prototype.valider = function(){
 	if (this.question){
 		var q = this.question;
 		this.question = null;
-		this.saisie.type = "text";
 		this.saisie.classList.remove("masque");
 		this.echo(q.texte + (q.masque ? "" : ligne));
 		this.invite.innerHTML = ansiVersHTML(this.texteInvite);

@@ -68,7 +68,7 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
 | Première utilisation d'un sort (52) | 5 |
 | Lieu découvert (44) | 5 |
 
-Le total possible est de 3860 XP au chapitre 1. Les deux autres chapitres ont chacun leur barème, sur le même principe, et leur note sur 20 à part : 5540 XP pour la panne (22 étapes, 45 quêtes secondaires, 50 sorts, 28 lieux), 5625 XP pour la Crypte (22 étapes, 45 quêtes secondaires dont 14 autour de vim, 49 sorts, 48 lieux). La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
+Le total possible est de 3860 XP au chapitre 1. Les deux autres chapitres ont chacun leur barème, sur le même principe, et leur note sur 20 à part : 5790 XP pour la panne (22 étapes, 50 quêtes secondaires, 50 sorts, 28 lieux), 5625 XP pour la Crypte (22 étapes, 45 quêtes secondaires dont 14 autour de vim, 49 sorts, 48 lieux). La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
 
 Ordres de grandeur : un parcours réduit au strict nécessaire (une quarantaine de commandes, impossible sans connaître la solution) donne 10 sur 20. La solution ci-dessous, dernier chapitre compris, donne 20 sur 20. Les derniers points se gagnent en visitant chaque lieu et en lançant chaque sort au moins une fois : `xp` liste ceux qui n'ont jamais servi.
 
@@ -405,7 +405,7 @@ bulletin
 
 ## Chapitre 2 : la panne (le réseau de l'école)
 
-Notions : le modèle OSI, la clé de tout le chapitre (sept étages : Physique, Liaison, Réseau, Transport, Session, Présentation, Application ; on dépanne de bas en haut). Le lien (`ip link`, `ethtool`), l'adresse (`ip addr`, `dhclient`), la route (`ip route`, `ping`), les noms (`/etc/resolv.conf`, `dig`, `host`, `nslookup`, `resolvectl`, `/etc/hosts`), le DHCP et les services (`systemctl`, `journalctl`, `ss`), la configuration permanente (`netplan`, `nmcli`, `reboot`), le web (`curl`, `wget`), l'horloge et les certificats (`timedatectl`, `openssl`), les ports et le pare-feu (`nc`, `telnet`, `iptables`), le routage (`traceroute`, `mtr`) et l'écoute du réseau (`tcpdump`). En bonus, les sorts des anciens (`ifconfig`, `route`, `arp`, `netstat`) et la sacoche de Radia (`arping`, `tracepath`, `getent`, `uptime`, `iperf3`, `nft`). À l'Annexe : le Wi-Fi (`rfkill`, `iw`, `nmcli`), le plan d'adressage (`ipcalc`), le routage du noyau (`sysctl`), la zone DNS (`named-checkzone`), le switch (`lldpctl`) et le débit (`iftop`, `nethogs`, `vnstat`, `conntrack`), plus la boîte à outils de Vint (`arp-scan`, `fping`, `whois`, `chronyc`, `smbclient`).
+Notions : le modèle OSI, la clé de tout le chapitre (sept étages : Physique, Liaison, Réseau, Transport, Session, Présentation, Application ; on dépanne de bas en haut). L'adressage en images, avec Nour la Cartographe : une adresse IP comme une adresse postale (la rue, le numéro), le masque (/24, /26, 255.255.255.192), l'adresse du réseau, la diffusion, la passerelle et les sous-réseaux. Le lien (`ip link`, `ethtool`), l'adresse (`ip addr`, `dhclient`), la route (`ip route`, `ping`), les noms (`/etc/resolv.conf`, `dig`, `host`, `nslookup`, `resolvectl`, `/etc/hosts`), le DHCP et les services (`systemctl`, `journalctl`, `ss`), la configuration permanente (`netplan`, `nmcli`, `reboot`), le web (`curl`, `wget`), l'horloge et les certificats (`timedatectl`, `openssl`), les ports et le pare-feu (`nc`, `telnet`, `iptables`), le routage (`traceroute`, `mtr`) et l'écoute du réseau (`tcpdump`). En bonus, les sorts des anciens (`ifconfig`, `route`, `arp`, `netstat`) et la sacoche de Radia (`arping`, `tracepath`, `getent`, `uptime`, `iperf3`, `nft`). À l'Annexe : le Wi-Fi (`rfkill`, `iw`, `nmcli`), le plan d'adressage (`ipcalc`), le routage du noyau (`sysctl`), la zone DNS (`named-checkzone`), le switch (`lldpctl`) et le débit (`iftop`, `nethogs`, `vnstat`, `conntrack`), plus la boîte à outils de Vint (`arp-scan`, `fping`, `whois`, `chronyc`, `smbclient`).
 
 Pendant l'épreuve des B1, le stagiaire de Vint (l'administrateur réseau, en vacances) a « essayé des trucs » : le poste de l'accueil du bâtiment B a sa carte éteinte et un DNS mal recopié, le serveur DHCP du routeur est arrêté, apache2 a pris le port 80 de nginx sur l'intranet, une règle iptables avale les mails du bâtiment, la route vers Lille a disparu, et un vieux telnet traîne sur le routeur. La pile de la carte mère du poste est à plat, en plus : son horloge repart de 2001.
 
@@ -417,6 +417,8 @@ Le Poste de l'accueil est une vraie machine : on s'assoit devant (`cd Poste`), s
 
 Radia commence par la clé de tout : l'affiche du modèle OSI, punaisée sur l'armoire (`cat ModeleOSI`). La lire valide la première étape et rapporte le premier badge. Écrire les sept étages dans l'ordre dans `~/osi.txt` valide une quête secondaire (accents et majuscules indifférents). Ensuite, chaque étape dit à quel étage elle se joue, et les sept voyants au-dessus de l'image montrent les étages du Poste.
 
+Au tableau blanc du bâtiment B, Nour, la Cartographe, explique les adresses en images : une adresse IP se lit comme une adresse postale, la rue (le réseau) puis le numéro de la maison (la machine), et le masque dit où s'arrête le nom de la rue (`cat PlanDesAdresses`, puis `cat Quartiers` pour les sous-réseaux). Ses cinq colles se répondent à voix haute, dans le bâtiment B, avec `echo` : chacune valide une quête secondaire, et une mauvaise réponse ne coûte rien (Nour dit où regarder).
+
 ```
 cd ~/Cybersup/BatimentB
 cat Radia
@@ -424,6 +426,15 @@ cat ModeleOSI
 echo Physique Liaison Réseau Transport Session Présentation Application > ~/osi.txt
 cat Radia
 cat SacocheDeRadia
+cat Cartographe
+cat PlanDesAdresses
+cat Quartiers
+echo 10.0.93.0
+echo 10.0.93.255
+echo 62
+echo 255.255.255.192
+echo 10.0.94.64
+cat Cartographe
 cd Poste
 ls
 cat Etiquette

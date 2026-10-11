@@ -169,6 +169,15 @@ html, body{
     color: #ffffff;
     font: inherit;
     caret-color: var(--vert-clair);
+    /* Une zone de texte d'une ligne, qui passe à la ligne comme un vrai terminal. */
+    display: block;
+    resize: none;
+    overflow: hidden;
+    height: 1.45em;
+    line-height: inherit;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-all;
 }
 .gras{ font-weight: 700; color: #ffffff; }
 .pale{ opacity: 0.7; }
