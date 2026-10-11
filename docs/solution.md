@@ -9,7 +9,7 @@ Trois repères utiles en salle :
 - un joueur perdu tape `cd` pour rentrer à la Maison, puis `cd -` pour revenir d'où il vient ;
 - un joueur bloqué tape `indice` : deux paliers payants par étape (30 puis 60 XP retirés de la note, pas du niveau), et des remarques gratuites quand quelque chose coince (rouages creux, alias qui masque un sort, clé SSH grillée ou effacée).
 
-Au premier lancement, le jeu demande le prénom (il devient l'identifiant sur le système et le nom sur le diplôme), puis propose deux enveloppes : la convocation à l'épreuve de première année (chapitre 1, la solution ci-dessous) ou l'ordre de mission de la WarRoom (chapitre 2 directement, voir la partie 7).
+Au premier lancement, le jeu affiche `terminus login:` : le prénom devient l'identifiant sur le système et le nom sur le diplôme, puis le joueur choisit un mot de passe qui lui permet de retrouver sa partie après un `logout`. Le jeu propose ensuite deux enveloppes : la convocation à l'épreuve de première année (chapitre 1, la solution ci-dessous) ou l'ordre de mission de la WarRoom (chapitre 2 directement, voir la partie 7).
 
 Chaque partie est différente. Au premier lancement, le jeu tire une graine au hasard qui fixe le mot de passe sudo, le meilleur client de la taverne, l'adresse de l'attaquant, le nombre de sweats du BDE et les numéros de processus. Dans les blocs ci-dessous, ces valeurs sont écrites entre chevrons :
 

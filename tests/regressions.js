@@ -273,22 +273,42 @@ contient(a1.taper("pwd"), "Citadelle", "cd / mène à la racine de la Citadelle"
 contient(a1.taper("cd ~"), "connexion à citadelle est donc fermée", "cd ~ referme la connexion ssh");
 contient(a1.taper("exit"), "On ne quitte pas", "plus de connexion fantôme après cd ~");
 
-// logout : deux joueurs au même prénom
+// Les comptes : identifiant et mot de passe
 var stL = {};
 var l1 = nouveauMonde(stL, 41);
-l1.lire("adopterPrenom('Thomas'); state.save()");
-l1.taper("logout", "oui");
-var l2 = nouveauMonde(stL, 42);
-verifier(l2.lire("sessionsDuPrenom('thomas').length") === 1, "la partie de Thomas est proposée, pas reprise d'office");
-l2.lire("adopterPrenom('Thomas'); state.save()");
-l2.taper("cd ForetOuest");
-l2.taper("logout", "oui");
+l1.taper("cd ForetOuest");
+verifier(l1.lire("adopterPrenom('Thomas'); creerCompte('Thomas', 'secret1')") === "neuve", "créer un compte range la partie en cours");
+verifier(stL["terminus-cybersup-actif"] === "thomas", "le compte est connecté");
+verifier(!!stL["terminus-cybersup-partie-thomas"] && !stL["terminus-cybersup"], "la sauvegarde passe sous le nom du compte");
+verifier(stL["terminus-cybersup-comptes"].indexOf("secret1") === -1, "le mot de passe n'est pas gardé en clair");
+var l2 = nouveauMonde(stL);
+verifier(l2.lire("PROFIL.prenom") === "Thomas" && l2.lire("current_room.room_name") === "ForetOuest", "le compte connecté retrouve sa partie");
+verifier(l2.lire("verifierMotDePasse('thomas', 'secret1')") === true, "bon mot de passe");
+verifier(l2.lire("verifierMotDePasse('thomas', 'secret2')") === false, "mauvais mot de passe refusé");
+contient(l2.taper("logout"), "Session fermée", "logout ferme la session");
+verifier(!stL["terminus-cybersup-actif"], "plus de compte connecté après logout");
 var l3 = nouveauMonde(stL, 43);
-verifier(l3.lire("sessionsDuPrenom('Thomas').length") === 2, "deux Thomas gardent chacun leur partie");
-contient(l3.lire("decrireSession(sessionsDuPrenom('Thomas')[0])"), "chapitre 1", "la partie mise de côté est décrite");
-verifier(l3.lire("reprendreSession(sessionsDuPrenom('Thomas')[1])") === true, "reprendre la partie choisie");
-verifier(nouveauMonde(stL).lire("current_room.room_name") === "ForetOuest", "c'est bien la partie choisie qui revient");
-verifier(nouveauMonde(stL).lire("sessionsDuPrenom('Thomas').length") === 1, "l'autre Thomas attend toujours");
+verifier(l3.lire("COMPTE_ACTIF") === null && !l3.lire("PROFIL.prenom"), "après logout, l'écran de connexion repart de zéro");
+verifier(l3.lire("lireComptes().thomas.prenom") === "Thomas", "le compte de Thomas existe toujours");
+verifier(l3.lire("ouvrirSession('thomas')") === true, "se reconnecter");
+var l4 = nouveauMonde(stL);
+verifier(l4.lire("current_room.room_name") === "ForetOuest", "la partie revient avec le compte");
+l4.taper("recommencer", "oui");
+var l5 = nouveauMonde(stL);
+verifier(l5.lire("PROFIL.prenom") === "Thomas" && l5.lire("PROFIL.aChoisir") === true, "recommencer garde le compte et fait rechoisir le parcours");
+verifier(l5.lire("current_room.room_name") === "Maison", "recommencer repart de zéro");
+verifier(l5.lire("verifierMotDePasse('thomas', 'secret1')") === true, "recommencer garde le mot de passe");
+// Une partie d'avant les comptes est retrouvée en créant le compte à ce nom
+var stV = {};
+var v1 = nouveauMonde(stV, 44);
+v1.lire("adopterPrenom('Léa'); state.save()");
+v1.taper("cd PrairieNord");
+var v2 = nouveauMonde(stV);
+verifier(v2.lire("rangerPartieSansCompte()") === true, "l'ancienne partie est mise de côté");
+verifier(v2.lire("anciennesParties('lea').length") === 1, "elle attend le compte lea");
+var v3 = nouveauMonde(stV, 45);
+verifier(v3.lire("creerCompte('Lea', 'motdepasse')") === "ancienne", "le compte créé reprend l'ancienne partie");
+verifier(nouveauMonde(stV).lire("current_room.room_name") === "PrairieNord", "l'ancienne partie revient");
 
 // Les leçons de vim
 var a2 = nouveauMonde({}, 32);
@@ -364,8 +384,8 @@ verifier(a8.lire("state.xp") === xp1, "en mission cyber, les gains du chapitre 1
 verifier(a8.taper("xp").indexOf("Niveau") === -1, "xp ne montre que le chapitre 2 en mission cyber");
 contient(a8.lire("Corbeau.getText()"), "Tu ne l'as jamais vue", "la révélation du Corbeau se comprend sans le chapitre 1");
 a8.taper("ssh citadelle");
-contient(a8.taper("man logout"), "mise de côté", "man logout");
-contient(a8.taper("logout --help"), "90 jours", "logout --help");
+contient(a8.taper("man logout"), "ton compte", "man logout");
+contient(a8.taper("logout --help"), "terminus login", "logout --help");
 a8.lire("state.dateVictoire2 = '2026-10-10'");
 var c1 = a8.lire("state.codeDuCertificat()"); a8.taper("pwd"); a8.taper("pwd");
 verifier(a8.lire("state.codeDuCertificat()") === c1, "le code du certificat ne change pas d'une lecture à l'autre");

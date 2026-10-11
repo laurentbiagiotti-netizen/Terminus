@@ -1585,29 +1585,18 @@ Shell.sorts.exit = function(args, io){
  */
 var PAGE_LOGOUT = C.gras("logout") + " : fermer sa session\n\n" +
 	"  logout      dans une connexion ssh : la ferme, comme exit (Ctrl+D fait pareil)\n" +
-	"  logout      sur ta machine de départ : ferme ta session de jeu. Ta partie est mise de côté\n" +
-	"              sur cet ordinateur, et le joueur suivant commence la sienne.\n\n" +
-	"Pour reprendre ta partie, redonne ton prénom au démarrage : le jeu te la propose (s'il y en a\n" +
-	"plusieurs au même prénom, il les liste avec leur niveau et leur date). Une partie mise de côté\n" +
-	"est oubliée au bout de 90 jours.";
+	"  logout      sur ta machine de départ : ferme ta session de jeu. Ta partie reste enregistrée\n" +
+	"              dans ton compte, et l'écran revient à « terminus login: » pour le joueur suivant.\n\n" +
+	"Pour reprendre, connecte-toi avec ton identifiant et ton mot de passe.";
 
 Shell.sorts.logout = function(args, io){
 	if (args.indexOf("--help") > -1) return PAGE_LOGOUT;
 	if (Shell.pile_ssh.length > 0) return Shell.sorts.exit(args, io);
 	if (!io.tty) throw new ShellError("logout : il faut un écran, pas de tuyau.");
-	var qui = PROFIL.prenom || JOUEUR;
-	term.demander("Fermer la session de " + qui + " ? Ta partie sera mise de côté sur cet ordinateur. Tape oui pour confirmer : ", false, function(reponse){
-		if (String(reponse).trim().toLowerCase() !== "oui"){
-			term.echo("La session reste ouverte.");
-			return;
-		}
-		if (!mettreSessionDeCote()){
-			term.echo(C.jaune("Impossible d'enregistrer ta partie sur cet ordinateur (stockage indisponible) : la session reste ouverte."));
-			return;
-		}
-		term.echo("Session fermée. À bientôt, " + qui + " : pour reprendre, redonne simplement ton prénom au démarrage.");
-		window.location.reload();
-	});
+	if (!COMPTE_ACTIF) return "logout : pas de session ouverte ici.";
+	if (!fermerSession()) throw new ShellError("logout : impossible d'enregistrer ta partie sur cet ordinateur (stockage indisponible). La session reste ouverte.");
+	term.echo("Session fermée. À bientôt, " + (PROFIL.prenom || JOUEUR) + ".");
+	window.location.reload();
 	return "";
 };
 
@@ -1622,7 +1611,7 @@ Shell.sorts.help = function(args, io){
 	lignes.push("Ton journal de quêtes : " + C.vert("quetes") + ". Ton expérience et ta note : " + C.vert("xp") + ". Ton relevé de compétences : " + C.vert("bulletin") + ".");
 	lignes.push("Bloqué ? " + C.vert("indice") + " donne un coup de pouce, de plus en plus précis (les paliers payants coûtent des points sur la note).");
 	lignes.push("Tes succès : " + C.vert("succes") + ". Ton temps de jeu, étape par étape : " + C.vert("chrono") + ". Les chapitres : " + C.vert("chapitre") + ". Le son : " + C.vert("son") + ". La carte des lieux visités : " + C.vert("carte") + ". Le vieil écran : " + C.vert("crt on") + " ou " + C.vert("crt off") + ".");
-	lignes.push("Laisser la place au joueur suivant (ta partie est gardée) : " + C.vert("logout") + ". Repartir de zéro : " + C.vert("recommencer") + ".");
+	lignes.push("Fermer ta session (ta partie reste dans ton compte) : " + C.vert("logout") + ". Repartir de zéro, avec le même compte : " + C.vert("recommencer") + ".");
 	lignes.push(C.gris("Astuces : la touche Tab complète les noms, la flèche du haut rappelle tes derniers sorts."));
 	return lignes.join("\n");
 };
@@ -1655,7 +1644,8 @@ Shell.sorts.quetes = function(args, io){
 };
 
 Shell.sorts.recommencer = function(args, io){
-	term.demander("Tout effacer et repartir de zéro ? Tape oui pour confirmer : ", false, function(reponse){
+	term.demander((COMPTE_ACTIF ? "Recommencer une partie neuve ? Ton compte (" + COMPTE_ACTIF + ") et ton mot de passe sont gardés, mais toute ta progression sera effacée. Tape oui pour confirmer : " :
+		"Tout effacer et repartir de zéro ? Tape oui pour confirmer : "), false, function(reponse){
 		if (reponse.trim().toLowerCase() === "oui"){
 			state.reset();
 			window.location.reload();

@@ -25,7 +25,7 @@
  * demonsMorts, nomLu, victoire, fin -- le combat final
  */
 
-var CLE_SAUVEGARDE = "terminus-cybersup";
+var CLE_SAUVEGARDE = COMPTE_ACTIF ? "terminus-cybersup-partie-" + COMPTE_ACTIF : "terminus-cybersup";
 var VERSION_SAUVEGARDE = 3;
 
 /* Barème de l'expérience. */
@@ -1489,42 +1489,97 @@ GameState.prototype.load = function(){
 	}
 };
 
-/*
- * Les parties mises de côté par logout : une liste, car deux joueurs peuvent porter le même
- * prénom sur un ordinateur partagé. Chaque entrée garde un résumé (niveau, note, date) pour que
- * le joueur reconnaisse la sienne. Au-delà de 90 jours, une partie mise de côté est oubliée.
- */
+/* ------------------------------------------------------------------ */
+/* Les comptes : un identifiant, un mot de passe, une partie            */
+/* ------------------------------------------------------------------ */
+
+/* Les anciennes parties (avant les comptes) attendent ici qu'on les réclame en créant le compte. */
 var CLE_SESSIONS = "terminus-cybersup-sessions";
-var DUREE_SESSIONS_MS = 90 * 24 * 3600 * 1000;
 
-function lireSessions(){
+function lireComptes(){
+	try { return JSON.parse(window.localStorage.getItem(CLE_COMPTES)) || {}; }
+	catch (e){ return {}; }
+}
+function ecrireComptes(comptes){
+	window.localStorage.setItem(CLE_COMPTES, JSON.stringify(comptes));
+}
+
+/* Le mot de passe n'est jamais gardé tel quel : seulement son empreinte SHA-256, salée. */
+function empreinteMotDePasse(sel, motDePasse){
+	return sha256(sel + ":" + motDePasse);
+}
+
+function verifierMotDePasse(id, motDePasse){
+	var c = lireComptes()[id];
+	return !!c && c.empreinte === empreinteMotDePasse(c.sel, motDePasse);
+}
+
+/* Les anciennes parties à ce nom, d'avant les comptes : elles reviendront au compte créé sous ce nom. */
+function anciennesParties(id){
 	var liste;
-	try { liste = JSON.parse(window.localStorage.getItem(CLE_SESSIONS)); }
-	catch (e){ liste = null; }
+	try { liste = JSON.parse(window.localStorage.getItem(CLE_SESSIONS)); } catch (e){ liste = null; }
 	if (!liste) return [];
-	// Ancien format : un objet { identifiant: partie }.
 	if (!Array.isArray(liste)) liste = Object.keys(liste).map(function(k){ var x = liste[k]; x.id = x.id || k; return x; });
-	var maintenant = Date.now();
-	return liste.filter(function(x){ return x && x.profil && (!x.date || maintenant - x.date < DUREE_SESSIONS_MS); });
+	return liste.filter(function(x){ return x && x.id === id && x.profil; });
 }
 
-function ecrireSessions(liste){
-	window.localStorage.setItem(CLE_SESSIONS, JSON.stringify(liste));
-}
-
-function mettreSessionDeCote(){
+/* Avant les comptes, une partie unique vivait sans nom de compte : elle devient une ancienne partie à réclamer. */
+function rangerPartieSansCompte(){
+	if (COMPTE_ACTIF || !PROFIL.prenom) return false;
 	try {
-		state.save();
-		var liste = lireSessions();
-		liste.push({
-			id: JOUEUR, prenom: PROFIL.prenom || JOUEUR, date: Date.now(),
-			chapitre: state.chapitreEnCours(), niveau: NIVEAUX[state.niveau() - 1].titre,
-			note: state.noteTexte(state.chapitreEnCours()),
-			profil: window.localStorage.getItem(CLE_PROFIL), sauvegarde: window.localStorage.getItem(CLE_SAUVEGARDE)
-		});
-		ecrireSessions(liste);
-		window.localStorage.removeItem(CLE_SAUVEGARDE);
+		var liste = [];
+		try { liste = JSON.parse(window.localStorage.getItem(CLE_SESSIONS)) || []; } catch (e){ liste = []; }
+		if (!Array.isArray(liste)) liste = [];
+		liste.push({ id: identifiantDepuisPrenom(PROFIL.prenom), prenom: PROFIL.prenom, date: Date.now(),
+			profil: window.localStorage.getItem(CLE_PROFIL), sauvegarde: window.localStorage.getItem(CLE_SAUVEGARDE) });
+		window.localStorage.setItem(CLE_SESSIONS, JSON.stringify(liste));
 		window.localStorage.removeItem(CLE_PROFIL);
+		window.localStorage.removeItem(CLE_SAUVEGARDE);
+		return true;
+	} catch (e){
+		return false;
+	}
+}
+
+/*
+ * Crée le compte et y range la partie : soit l'ancienne partie retrouvée à ce nom, soit la partie
+ * neuve en cours. Renvoie "ancienne" (il faut recharger la page), "neuve", ou null si c'est impossible.
+ */
+function creerCompte(prenom, motDePasse){
+	var id = identifiantDepuisPrenom(prenom);
+	try {
+		var comptes = lireComptes();
+		var sel = base64Aleatoire("sel-" + id + "-" + Date.now() + "-" + Math.random(), 12);
+		comptes[id] = { prenom: String(prenom).trim(), sel: sel, empreinte: empreinteMotDePasse(sel, motDePasse), creation: Date.now() };
+		var ancienne = anciennesParties(id).pop();
+		if (ancienne){
+			window.localStorage.setItem("terminus-cybersup-profil-" + id, ancienne.profil);
+			if (ancienne.sauvegarde) window.localStorage.setItem("terminus-cybersup-partie-" + id, ancienne.sauvegarde);
+			var liste = JSON.parse(window.localStorage.getItem(CLE_SESSIONS)) || [];
+			if (Array.isArray(liste)) window.localStorage.setItem(CLE_SESSIONS, JSON.stringify(liste.filter(function(x){ return !(x.id === id && x.profil === ancienne.profil); })));
+		}
+		ecrireComptes(comptes);
+		window.localStorage.setItem(CLE_ACTIF, id);
+		if (ancienne){ Shell.sauvegardeBloquee = true; return "ancienne"; }
+		// La partie neuve en cours passe sous le nom du compte.
+		COMPTE_ACTIF = id;
+		var ancienProfil = CLE_PROFIL, ancienneSauvegarde = CLE_SAUVEGARDE;
+		CLE_PROFIL = "terminus-cybersup-profil-" + id;
+		CLE_SAUVEGARDE = "terminus-cybersup-partie-" + id;
+		enregistrerProfil();
+		state.save();
+		window.localStorage.removeItem(ancienProfil);
+		window.localStorage.removeItem(ancienneSauvegarde);
+		return "neuve";
+	} catch (e){
+		return null;
+	}
+}
+
+/* Se connecter à un compte existant : sa partie se charge (la page se recharge). */
+function ouvrirSession(id){
+	try {
+		window.localStorage.setItem(CLE_ACTIF, id);
 		Shell.sauvegardeBloquee = true;
 		return true;
 	} catch (e){
@@ -1532,27 +1587,14 @@ function mettreSessionDeCote(){
 	}
 }
 
-/* Les parties mises de côté sous ce prénom (sans tenir compte des accents ni des majuscules). */
-function sessionsDuPrenom(prenom){
-	var id = identifiantDepuisPrenom(prenom);
-	if (!id) return [];
-	return lireSessions().filter(function(x){ return x.id === id; });
-}
-
-function decrireSession(x){
-	var d = x.date ? new Date(x.date) : null;
-	var quand = d ? deuxChiffres(d.getDate()) + "/" + deuxChiffres(d.getMonth() + 1) + " à " + deuxChiffres(d.getHours()) + "h" + deuxChiffres(d.getMinutes()) : "date inconnue";
-	return x.prenom + ", chapitre " + (x.chapitre || 1) + (x.niveau ? ", niveau " + x.niveau : "") + (x.note ? ", " + x.note : "") + ", mise de côté le " + quand;
-}
-
-/* Rend sa partie à un joueur : elle redevient la partie active de cet ordinateur. */
-function reprendreSession(session){
+/* Fermer sa session : la partie reste enregistrée dans le compte, l'écran revient à la connexion. */
+function fermerSession(){
 	try {
-		var liste = lireSessions();
-		window.localStorage.setItem(CLE_PROFIL, session.profil);
-		if (session.sauvegarde) window.localStorage.setItem(CLE_SAUVEGARDE, session.sauvegarde);
-		else window.localStorage.removeItem(CLE_SAUVEGARDE);
-		ecrireSessions(liste.filter(function(x){ return !(x.id === session.id && x.date === session.date && x.profil === session.profil); }));
+		state.save();
+		window.localStorage.removeItem(CLE_ACTIF);
+		window.localStorage.removeItem("terminus-cybersup-profil");
+		window.localStorage.removeItem("terminus-cybersup");
+		try { window.sessionStorage.setItem("terminus-sans-intro", "1"); } catch (e){}
 		Shell.sauvegardeBloquee = true;
 		return true;
 	} catch (e){
@@ -1561,10 +1603,17 @@ function reprendreSession(session){
 }
 
 GameState.prototype.reset = function(){
+	// Plus rien ne doit être enregistré d'ici le rechargement de la page, sinon l'ancienne partie reviendrait.
+	Shell.sauvegardeBloquee = true;
 	try {
 		window.localStorage.removeItem(CLE_SAUVEGARDE);
-		// Nouvelle partie : nouvelle graine, et le prénom sera redemandé.
-		window.localStorage.removeItem(CLE_PROFIL);
+		if (COMPTE_ACTIF){
+			// Le compte reste (identifiant et mot de passe) : seule la partie repart de zéro, avec une nouvelle graine.
+			window.localStorage.setItem(CLE_PROFIL, JSON.stringify({ graine: 1 + Math.floor(Math.random() * 2147483645), prenom: PROFIL.prenom, chapitre: 1, aChoisir: true }));
+			try { window.sessionStorage.setItem("terminus-sans-intro", "1"); } catch (e){}
+		} else {
+			window.localStorage.removeItem(CLE_PROFIL);
+		}
 	} catch (e){}
 };
 

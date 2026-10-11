@@ -10,7 +10,17 @@
  * solution du voisin ne suffit pas.
  */
 
-var CLE_PROFIL = "terminus-cybersup-profil";
+/*
+ * Les comptes : chaque joueur se connecte avec un identifiant et un mot de passe, et retrouve
+ * sa partie. Le compte connecté (CLE_ACTIF) choisit où se lisent son profil et sa sauvegarde.
+ * Sans compte connecté, on est à l'écran de connexion.
+ */
+var CLE_COMPTES = "terminus-cybersup-comptes";
+var CLE_ACTIF = "terminus-cybersup-actif";
+var COMPTE_ACTIF = (function(){
+	try { return window.localStorage.getItem(CLE_ACTIF) || null; } catch (e){ return null; }
+})();
+var CLE_PROFIL = "terminus-cybersup-profil" + (COMPTE_ACTIF ? "-" + COMPTE_ACTIF : "");
 
 /* Les petits sons du jeu : remplacés par de vrais bips dans Game.js (navigateur seulement). */
 function jouerSon(nom){}

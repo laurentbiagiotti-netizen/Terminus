@@ -335,11 +335,20 @@ function demarrer(){
 	Shell.narration = [];
 
 	montrerImage("./static/img/titlescreen_cybersup.gif", "");
-	if (!PROFIL.prenom){
-		intro(function(){
-			demanderPrenom();
-			document.getElementById("saisie").focus();
-		});
+	// Une partie d'avant les comptes attend qu'on la réclame en créant son compte.
+	if (rangerPartieSansCompte()){ window.location.reload(); return; }
+	var sansIntro = false;
+	try { sansIntro = window.sessionStorage.getItem("terminus-sans-intro") === "1"; window.sessionStorage.removeItem("terminus-sans-intro"); } catch (e){}
+	if (!COMPTE_ACTIF){
+		var connexion = function(){ demanderPrenom(); document.getElementById("saisie").focus(); };
+		if (sansIntro) connexion(); else intro(connexion);
+	} else if (PROFIL.aChoisir){
+		// recommencer : même compte, partie neuve, on rechoisit son parcours.
+		delete PROFIL.aChoisir;
+		enregistrerProfil();
+		state.save();
+		term.echo(C.vert(C.gras("TERMINUS")) + C.gris("  édition Cybersup") + "\n\nPartie neuve pour " + C.gras(PROFIL.prenom) + ". Ton compte et ton mot de passe n'ont pas changé.\n");
+		demanderParcours();
 	} else {
 		accueillir();
 	}
@@ -350,60 +359,89 @@ function demarrer(){
 	document.getElementById("saisie").focus();
 }
 
-/* Premier lancement : le prénom remplace « apprenti » partout sur le système. */
+/*
+ * L'écran de connexion : un identifiant (le prénom), puis un mot de passe.
+ * Un identifiant inconnu crée un compte ; un identifiant connu demande son mot de passe.
+ */
 function demanderPrenom(){
 	term.echo(C.vert(C.gras("TERMINUS")) + C.gris("  édition Cybersup") + "\n\n" +
-		"Un terminal s'allume. Quelque part, un serveur attend un nouvel utilisateur.\n" +
-		C.gris("Connecte-toi avec ton prénom : il deviendra ton identifiant sur le système.") + "\n");
+		"Un terminal s'allume. Quelque part, un serveur attend un utilisateur.\n" +
+		C.gris("Première fois ? Tape ton prénom : il deviendra ton identifiant, puis choisis un mot de passe.\n" +
+		"Déjà venu ? Ton identifiant, puis ton mot de passe : tu retrouves ta partie.") + "\n");
+	demanderLogin();
+}
+
+function demanderLogin(){
 	term.demander("terminus login: ", false, function(reponse){
 		var refus = prenomRefuse(reponse);
 		if (refus){
 			term.echo(C.jaune(refus));
-			demanderPrenom();
+			demanderLogin();
 			return;
 		}
-		var anciennes = sessionsDuPrenom(reponse);
-		if (anciennes.length){
-			proposerReprise(reponse, anciennes);
-			return;
-		}
-		nouvellePartie(reponse);
+		var id = identifiantDepuisPrenom(reponse);
+		if (lireComptes()[id]) demanderMotDePasse(id, 1);
+		else creerNouveauCompte(String(reponse).trim(), id);
 	});
 }
 
-function nouvellePartie(prenom){
+function demanderMotDePasse(id, essai){
+	term.demander("Password: ", true, function(motDePasse){
+		if (verifierMotDePasse(id, motDePasse)){
+			term.echo("Bienvenue, " + lireComptes()[id].prenom + ". On recharge ta partie...");
+			if (ouvrirSession(id)) window.location.reload();
+			else term.echo(C.jaune("Impossible d'ouvrir la session (stockage indisponible)."));
+			return;
+		}
+		term.echo("\nLogin incorrect" + (essai >= 3 ? "\n" + C.gris("(Mot de passe oublié ? Seul ton formateur peut effacer les comptes de cet ordinateur. Tu peux aussi créer un autre identifiant, par exemple ton prénom suivi d'une initiale.)") : ""));
+		demanderLoginApres(essai);
+	});
+}
+function demanderLoginApres(essai){
+	term.demander("terminus login: ", false, function(reponse){
+		var refus = prenomRefuse(reponse);
+		if (refus){ term.echo(C.jaune(refus)); demanderLoginApres(essai); return; }
+		var id = identifiantDepuisPrenom(reponse);
+		if (lireComptes()[id]) demanderMotDePasse(id, essai + 1);
+		else creerNouveauCompte(String(reponse).trim(), id);
+	});
+}
+
+function creerNouveauCompte(prenom, id){
+	var ancienne = anciennesParties(id).length > 0;
+	term.echo("\nNouvel utilisateur : " + C.vert(id) + (ancienne ? C.gris("  (une partie d'avant à ce nom a été retrouvée : elle sera rangée dans ce compte)") : "") + "\n" +
+		C.gris("Choisis un mot de passe (4 caractères au moins). Il te servira à retrouver ta partie : retiens-le."));
+	term.demander("Nouveau mot de passe : ", true, function(premier){
+		if (String(premier).length < 4){
+			term.echo(C.jaune("Trop court : 4 caractères au moins."));
+			creerNouveauCompte(prenom, id);
+			return;
+		}
+		term.demander("Retape le mot de passe : ", true, function(second){
+			if (second !== premier){
+				term.echo(C.jaune("Les deux mots de passe ne sont pas identiques. On recommence."));
+				creerNouveauCompte(prenom, id);
+				return;
+			}
+			if (ancienne){
+				if (creerCompte(prenom, premier) === "ancienne"){ term.echo("Compte créé. On recharge ta partie..."); window.location.reload(); }
+				else term.echo(C.jaune("Impossible de créer le compte (stockage indisponible)."));
+				return;
+			}
+			nouvellePartie(prenom, premier);
+		});
+	});
+}
+
+function nouvellePartie(prenom, motDePasse){
 	var identifiant = adopterPrenom(prenom);
-	term.echo("\nEnchanté, " + C.gras(PROFIL.prenom) + ". Sur ce système, tu seras " + C.vert(identifiant) +
+	if (motDePasse !== undefined && creerCompte(prenom, motDePasse) === null){
+		term.echo(C.jaune("Impossible d'enregistrer ton compte sur cet ordinateur : la partie se joue quand même, mais ne sera pas retenue."));
+	}
+	term.echo("\nCompte créé. Enchanté, " + C.gras(PROFIL.prenom) + ". Sur ce système, tu seras " + C.vert(identifiant) +
 		C.gris(" (c'est ce que répondra le sort whoami)") + ".\n");
 	state.save();
 	demanderParcours();
-}
-
-/* Des parties à ce prénom attendent sur cet ordinateur : on demande avant d'en reprendre une. */
-function proposerReprise(prenom, anciennes){
-	var texte = "\n" + (anciennes.length === 1 ? "Une partie à ce prénom a été mise de côté sur cet ordinateur :" : "Des parties à ce prénom ont été mises de côté sur cet ordinateur :") + "\n";
-	anciennes.forEach(function(x, i){ texte += "  " + C.vert(String(i + 1)) + "  " + decrireSession(x) + "\n"; });
-	texte += "  " + C.vert("n") + "  ce n'est pas la mienne : commencer une nouvelle partie\n";
-	term.echo(texte);
-	term.demander(anciennes.length === 1 ? "Tape 1 pour la reprendre, ou n : " : "Tape le numéro de ta partie, ou n : ", false, function(reponse){
-		var choix = String(reponse).trim().toLowerCase();
-		var n = parseInt(choix, 10);
-		if (n >= 1 && n <= anciennes.length){
-			if (reprendreSession(anciennes[n - 1])){
-				term.echo("On reprend ta partie...");
-				window.location.reload();
-			} else {
-				term.echo(C.jaune("Impossible de reprendre cette partie (stockage indisponible)."));
-			}
-			return;
-		}
-		if (choix === "n" || choix === "non" || choix === "nouvelle"){
-			nouvellePartie(prenom);
-			return;
-		}
-		term.echo(C.jaune("Réponds par un numéro de la liste, ou n."));
-		proposerReprise(prenom, anciennes);
-	});
 }
 
 /* Les deux enveloppes, à choisir au clavier (1 ou 2) ou d'un clic. */
