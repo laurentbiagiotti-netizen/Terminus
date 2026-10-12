@@ -223,7 +223,7 @@ function afficherIp(objet, action, reste, h, stats, bref, io){
 		if (stats && objet === "link" && estHotePanne(h)) GameEvents.fire({ type: "ipStats", host: h });
 		if (h === "poste-b" && io.tty && !bref){
 			var p = state.panne;
-			if (!p.lien) sortie += "\n" + C.gris("(eth0 n'a pas le mot UP entre ses chevrons : la carte est éteinte. On l'allume avec sudo ip link set eth0 up.)");
+			if (!p.lien) sortie += "\n" + C.gris("(eth0 n'a pas le mot UP entre ses chevrons : la carte est éteinte, la boîte aux lettres est fermée. On l'allume avec sudo ip link set eth0 up.)");
 			else if (objet === "addr" && !p.adresses.length) sortie += "\n" + C.gris("(Aucune ligne inet sur eth0 : le poste n'a pas d'adresse.)");
 		}
 		return sortie;
@@ -1726,7 +1726,7 @@ Shell.sorts.arping = function(args, io){
 		lignes.push("Sent " + combien + " probes (" + combien + " broadcast(s))", "Received 0 response(s)");
 		if (io.tty){
 			if (doublon) lignes.push(C.vert("(Personne d'autre ne porte cette adresse dans la rue : pas de conflit, elle est libre.)"));
-			else if (!memeRue) lignes.push(C.gris("(Le cri ne traverse jamais la Tour : arping ne parle qu'aux machines de ta rue, ici " + reseauDe(adresse.ip, adresse.prefixe) + ". Au-delà, c'est ping.)"));
+			else if (!memeRue) lignes.push(C.gris("(L'appel ne sort jamais de la rue : arping ne parle qu'aux maisons de ta rue, ici " + reseauDe(adresse.ip, adresse.prefixe) + ". Au-delà, c'est ping.)"));
 			else lignes.push(C.gris("(Personne ne porte cette adresse dans ta rue.)"));
 		}
 	}
@@ -1759,7 +1759,7 @@ Shell.sorts.tracepath = function(args, io){
 		for (var k = 1; k <= 3; k++) lignes.push(completerGauche(t.sauts.length + k, 2) + ":  no reply");
 		lignes.push("     Too many hops: pmtu " + pmtu, "     Resume: pmtu " + pmtu);
 	}
-	if (io.tty && pmtu < 1500) lignes.push(C.gris("(La liaison vers Lille passe dans un tunnel chiffré : chaque messager y perd un peu de place. pmtu 1400 : la taille maximale d'un paquet sur tout le chemin.)"));
+	if (io.tty && pmtu < 1500) lignes.push(C.gris("(La liaison vers Lille passe dans un tunnel chiffré : chaque lettre y perd un peu de place. pmtu 1400 : la taille maximale d'un paquet sur tout le chemin.)"));
 	GameEvents.fire({ type: "tracepath", ok: t.ok, cible: r.ip, pmtu: pmtu });
 	if (t.ok && r.ip === IP_LILLE) quetePanne("s_r_tracepath");
 	return lignes.join("\n");
@@ -1790,7 +1790,7 @@ Shell.sorts.getent = function(args, io){
 	if (!lignes.length && io.tty) return C.gris("(getent ne dit rien quand il ne trouve pas : ce nom n'est ni dans /etc/hosts ni au DNS, ou le DNS ne répond pas.)");
 	GameEvents.fire({ type: "getent", host: h, raccourci: deRaccourci });
 	if (deRaccourci) quetePanne("s_r_getent");
-	return lignes.join("\n") + (deRaccourci && io.tty ? "\n" + C.gris("(Ce nom vient de /etc/hosts : getent lit les raccourcis avant de consulter l'Oracle, comme tous les programmes. dig, lui, ne demande qu'au DNS.)") : "");
+	return lignes.join("\n") + (deRaccourci && io.tty ? "\n" + C.gris("(Ce nom vient de /etc/hosts : getent lit les raccourcis avant de consulter l'Annuaire, comme tous les programmes. dig, lui, ne demande qu'au DNS.)") : "");
 };
 
 Shell.sorts.uptime = function(args, io){
@@ -1871,7 +1871,7 @@ function regleNft(r){
 
 Shell.sorts.nft = function(args, io){
 	var phrase = args.join(" ");
-	if (!/^list\s+(ruleset|tables|table\s+ip\s+filter)$/.test(phrase)) throw new ShellError("nft : ici, la Nouvelle Herse se lit seulement : sudo nft list ruleset (ou nft list tables).\n" +
+	if (!/^list\s+(ruleset|tables|table\s+ip\s+filter)$/.test(phrase)) throw new ShellError("nft : ici, le Nouveau Règlement du gardien se lit seulement : sudo nft list ruleset (ou nft list tables).\n" +
 		C.gris("(iptables et nft partagent les mêmes règles : pour en changer une, iptables suffit.)"));
 	if (!io.sudo) throw new ShellError("Error: Could not process rule: Operation not permitted\n" + C.gris("(sudo nft " + phrase + ")"));
 	var h = Shell.hote();

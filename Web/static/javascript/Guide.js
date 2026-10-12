@@ -193,9 +193,9 @@ function brancherGuide(){
 
 var SCENES = {
 	r_batiment: { image: "loc_batimentb.gif", titre: "Chapitre 2 · La panne", chapitre: 2,
-		lignes: ["Pendant l'épreuve, le réseau de l'école est tombé.", "Radia t'attend au bâtiment B.", "On répare de bas en haut : la tour des sept étages."] },
+		lignes: ["Ici, une adresse postale s'écrit 10.0.93.20 : le réseau, c'est la poste.", "Plus une lettre ne sort du bâtiment B. Radia t'y attend.", "On répare de bas en haut : la Grande Poste aux sept étages."] },
 	r_annexe: { image: "loc_annexe.gif", titre: "Chapitre 2 · Acte II : l'Annexe", chapitre: 2,
-		lignes: ["Le bâtiment B tient. La cafétéria, non.", "Plus de Wi-Fi, un écran noir, un jumeau dans les ondes.", "Même méthode : du câble jusqu'au web."] },
+		lignes: ["Le bâtiment B tient. La cafétéria, non.", "Plus de Wi-Fi, un écran noir, une fausse boîte aux lettres.", "Même méthode : du câble jusqu'au web."] },
 	c_crypte: { image: "loc_crypte.gif", titre: "Chapitre 3 · La Crypte", chapitre: 3,
 		lignes: ["Un mage noir s'est glissé dans la Citadelle.", "Ses sorts dorment dans le donjon, sous tes pieds.", "Grace te guide à la radio. La chasse est ouverte."] }
 };

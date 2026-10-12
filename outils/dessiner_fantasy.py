@@ -698,7 +698,7 @@ def maison(d, x, y, w=22, h=22, num=None, c=B):
 
 
 def plan_rue():
-    """Une adresse IP comme une adresse postale : la rue 10.0.93, les maisons, le panneau .0, le crieur .255, la Tour .254."""
+    """Une adresse IP comme une adresse postale : la rue 10.0.93, les maisons, le panneau .0, le crieur .255, le Bureau de Poste .254."""
     im, d = toile()
     d.rectangle([22, 4, 154, 20], fill=B)
     texte_centre(d, 8, "RUE 10.0.93.0/24", N)
@@ -707,13 +707,16 @@ def plan_rue():
         d.rectangle([x, 138, x + 8, 140], fill=B)              # les pointillés
     d.rectangle([4, 46, 6, 74], fill=B)                        # le panneau de la rue, .0
     d.rectangle([0, 38, 20, 48], fill=B); d.text((4, 38), ".0", fill=N)
-    for i, (x, num) in enumerate([(14, ".1"), (44, ".2"), (78, ".20"), (110, ".253")]):
+    for i, (x, num) in enumerate([(10, ".1"), (38, ".2"), (70, ".20"), (102, ".253")]):
         maison(d, x, 88, w=28 if num == ".253" else 24, h=24, num=num)
-    d.text((68, 98), "..", fill=B); d.text((102, 98), "..", fill=B)
-    briques(d, 146, 40, 172, 112)                              # la Tour, la passerelle .254
-    creneaux(d, 146, 172, 40, h=6, w=5)
-    d.rectangle([152, 92, 166, 112], fill=N)
-    d.rectangle([116, 44, 144, 54], fill=N); d.text((118, 44), ".254", fill=B)
+    d.text((62, 98), "..", fill=B); d.text((94, 98), "..", fill=B)
+    # le Bureau de Poste, la passerelle .254 : un toit, une enseigne, une boîte jaune... en vert
+    d.polygon([(136, 52), (154, 36), (172, 52)], fill=B)
+    d.rectangle([138, 52, 170, 112], fill=B)
+    d.rectangle([134, 58, 174, 68], fill=V); d.text((138, 58), "POSTE", fill=N)
+    d.rectangle([148, 92, 160, 112], fill=N)
+    d.rectangle([142, 74, 150, 84], fill=N); d.rectangle([158, 74, 166, 84], fill=N)
+    d.rectangle([108, 38, 132, 48], fill=N); d.text((109, 38), ".254", fill=B)
     # le crieur public, .255 : ce qu'on lui dit, toute la rue l'entend
     d.ellipse([76, 146, 86, 156], fill=B)
     d.rectangle([77, 156, 85, 168], fill=B)

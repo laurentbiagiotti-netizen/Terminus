@@ -4,7 +4,7 @@
  * Une fois le bâtiment B réparé, Radia envoie la recrue à l'Annexe, la cafétéria des étudiants :
  * le stagiaire est passé là aussi. On y répare, toujours de bas en haut :
  *   la radio coupée (rfkill), le vrai réseau Wi-Fi face à un jumeau (iw, nmcli),
- *   la Source de l'Annexe dont la plage sort du réseau (ipcalc, dhcpd.conf), le passage de la
+ *   la mairie de l'Annexe (le DHCP) dont la plage sort de la rue (ipcalc, dhcpd.conf), le passage de la
  *   borne (sysctl ip_forward), la zone DNS de l'Annexe (named-checkzone), un port du switch
  *   éteint (ip link, lldpctl) et un programme qui avale tout le débit (iftop, nethogs).
  * Et dans la boîte à outils de Vint : arp-scan, fping, whois, chronyc, smbclient, vnstat, conntrack.
@@ -126,8 +126,8 @@ function refusAnnexe(nom){
 	};
 }
 
-var Borne = machine3("borne", "La Tour des Ondes, la borne Wi-Fi de l'Annexe : elle relie le Wi-Fi et le switch de la cafétéria (10.0.94.0/26) au cœur du réseau de l'école. \
-À son pied coule la Source de l'Annexe (son serveur DHCP).", "loc_borne.gif");
+var Borne = machine3("borne", "Le Relais sans fil, la borne Wi-Fi de l'Annexe : il relie le Wi-Fi et le switch de la cafétéria (la rue 10.0.94.0/26) au reste de la ville. \
+La petite mairie de l'Annexe y tient aussi son guichet : elle attribue les adresses (son serveur DHCP).", "loc_borne.gif");
 var BorneEtc = dossier3(Borne, "etc", "La configuration de la borne.", { image: "loc_etc.gif" });
 var BorneDhcp = dossier3(BorneEtc, "dhcp", "La configuration du serveur DHCP de l'Annexe.", { image: "loc_etc.gif" });
 fichier(BorneEtc, "hostname", "borne");
@@ -147,7 +147,7 @@ var SysctlBorne = fichier(BorneEtc, "sysctl.conf",
 fichier(Borne, "NoticeDeLaBorne",
 	"NOTICE DE LA BORNE (Vint)\n" +
 	"br0 (10.0.94.1) : le Wi-Fi et le switch de l'Annexe. eth0 (10.0.92.94) : l'école.\n" +
-	"Elle donne les adresses (isc-dhcp-server) et fait passer les messagers (ip_forward).\n\n" +
+	"Elle attribue les adresses (isc-dhcp-server) et transmet le courrier d'une rue à l'autre (ip_forward).\n\n" +
 	"  sudo iftop        QUI consomme le débit, en direct\n" +
 	"  sudo nethogs      QUEL programme consomme, sur la machine où on le lance\n" +
 	"  vnstat            la consommation, jour par jour\n" +
@@ -155,7 +155,7 @@ fichier(Borne, "NoticeDeLaBorne",
 	"Config : /etc/dhcp/dhcpd.conf et /etc/sysctl.conf.",
 	{ enseigne: ["iftop", "nethogs", "vnstat", "conntrack"], revele: ["s_r_vnstat", "s_r_conntrack"], image: "item_manuscript.gif" });
 
-var Switch = machine3("switch", "Le Carrefour des Prises, le switch de l'Annexe : huit ports, huit câbles possibles. Ses voyants clignotent... sauf deux.", "loc_switch.gif");
+var Switch = machine3("switch", "La Rangée de Boîtes, le switch de l'Annexe : huit ports, comme huit boîtes aux lettres au bout de huit câbles. Ses voyants clignotent... sauf deux.", "loc_switch.gif");
 fichier(Switch, "CarnetDuSwitch",
 	"LE CARNET DU SWITCH (Vint)\n\n" +
 	"  port1        la borne\n" +
@@ -256,7 +256,7 @@ function confDhcpBorne(){
 	if (a === base || b === base + 63) return { erreur: "Address range " + r[1] + " to " + r[2] + " includes the network or broadcast address of 10.0.94.0/26!" };
 	return { debut: a, fin: b };
 }
-/* L'adresse que la Source de l'Annexe donne au portable : la première libre de la plage. */
+/* L'adresse que la mairie de l'Annexe donne au portable : la première libre de la plage. */
 function adresseOfferte(){
 	var c = confDhcpBorne();
 	if (c.erreur) return null;
@@ -723,7 +723,7 @@ Shell.sorts.nmcli = function(args, io){
 			return "Device 'wlan0' successfully activated with '" + sha256("faux").substring(0, 8) + "-…'." + (io.tty ? "\n" + C.jaune("Connecté à " + SSID_FAUX + "... un réseau ouvert, et une adresse en 192.168.66 : ce n'est pas le réseau de l'école ! Ce boîtier voit tout ce que tu envoies. Reconnecte-toi au vrai : " + SSID_BON + ".") : "");
 		}
 		if (!ok) return "Error: Connection activation failed: IP configuration could not be reserved (no available address, timeout, etc.)." +
-			(io.tty ? "\n" + C.gris("(La radio est bien associée à la borne (iw dev wlan0 link), mais personne ne donne d'adresse : la Source de l'Annexe est muette. Elle coule sur la borne.)") : "");
+			(io.tty ? "\n" + C.gris("(La radio est bien associée à la borne (iw dev wlan0 link), mais personne ne donne d'adresse : la mairie de l'Annexe ne répond pas. Son guichet est sur la borne.)") : "");
 		return "Device 'wlan0' successfully activated with '" + sha256("bon").substring(0, 8) + "-…'." + (io.tty ? "\n" + C.gris("(Connecté, et une adresse reçue du DHCP de la borne : " + an.adresse + ".)") : "");
 	}
 	if (/^(g|ge|gen|general)$/.test(objet)) return "STATE      CONNECTIVITY  WIFI-HW  WIFI      WWAN-HW  WWAN\n" + completerDroite(etat === "connecté" ? "connecté" : "déconnecté", 11) + completerDroite(an.ssid === SSID_BON && an.adresse && an.forward ? "complète" : (an.adresse ? "limitée" : "aucune"), 14) + "activé   " + completerDroite(an.rfkill ? "désactivé" : "activé", 10) + "absent   absent";
@@ -749,7 +749,7 @@ Shell.sorts.dhclient = function(args, io){
 	if (!bailPortable()){
 		lignes.push("DHCPDISCOVER on wlan0 to 255.255.255.255 port 67 interval 7", "DHCPDISCOVER on wlan0 to 255.255.255.255 port 67 interval 12", "No DHCPOFFERS received.");
 		GameEvents.fire({ type: "dhclientAnnexe", ok: false });
-		return lignes.join("\n") + (io.tty ? "\n" + C.gris("(La borne est là, mais sa Source (le DHCP) ne répond pas. Va voir son service : ssh borne.)") : "");
+		return lignes.join("\n") + (io.tty ? "\n" + C.gris("(La borne est là, mais sa mairie (le DHCP) ne répond pas. Va voir son service : ssh borne.)") : "");
 	}
 	lignes.push("DHCPOFFER of " + an.adresse + " from " + source, "DHCPREQUEST for " + an.adresse + " on wlan0 to 255.255.255.255 port 67",
 		"DHCPACK of " + an.adresse + " from " + source, "bound to " + an.adresse + " -- renewal in 1800 seconds.");
@@ -1196,7 +1196,7 @@ var QUETES_ANNEXE = [
 	  indice: "Sur le Portable de l'Annexe (cd Portable), wlan0 refuse de s'allumer. rfkill list dit pourquoi." },
 	{ id: "r_ssid", titre: "Se connecter au vrai Wi-Fi de l'école",
 	  indice: "Deux réseaux portent presque le même nom. L'AfficheWifi de l'Annexe donne le bon, et son mot de passe : nmcli device wifi connect." },
-	{ id: "r_plan", titre: "Réparer la Source de l'Annexe (le DHCP de la borne)",
+	{ id: "r_plan", titre: "Rouvrir la mairie de l'Annexe (le DHCP de la borne)",
 	  indice: "Sur la borne (ssh borne, depuis le Poste du BatimentB), la plage de /etc/dhcp/dhcpd.conf sort du réseau 10.0.94.0/26. ipcalc dit quelles adresses sont permises." },
 	{ id: "r_forward", titre: "Rouvrir le passage de la borne (ip_forward)",
 	  indice: "Le portable parle à la borne, pas plus loin. Sur la borne : sysctl net.ipv4.ip_forward." },
@@ -1246,9 +1246,9 @@ INDICES_PANNE.r_debit = ["iftop, sur la borne : affichage télécharge des vidé
 TALKIE.r_annexe = "Le bâtiment B tient ! Mais Gaspard, à l'Annexe, n'a plus de Wi-Fi depuis hier soir : le stagiaire est passé là-bas aussi. cd ~/Cybersup/Annexe.";
 TALKIE.r_wifi = "Assieds-toi au Portable de la cafétéria (cd Portable). ip link : wlan0 refuse de s'allumer ? rfkill list te dira pourquoi. Le CarnetDeLAnnexe aide.";
 TALKIE.r_ssid = "La radio est rallumée. Regarde les réseaux autour : sudo iw dev wlan0 scan. Le bon est sur l'AfficheWifi, avec son mot de passe. Méfie-toi des jumeaux.";
-TALKIE.r_plan = "Connecté, mais sans adresse : la Source de l'Annexe est muette. Depuis le Poste du BatimentB, ssh borne : son service DHCP, son journal. ipcalc 10.0.94.0/26 dit quelles adresses sont permises.";
+TALKIE.r_plan = "Connecté, mais sans adresse : la mairie de l'Annexe ne répond pas. Depuis le Poste du BatimentB, ssh borne : son service DHCP, son journal. ipcalc 10.0.94.0/26 dit quelles adresses sont permises.";
 TALKIE.r_forward = "Le portable a une adresse ! Il parle à la borne (ping 10.0.94.1), mais pas plus loin (ping intranet). Sur la borne : sysctl net.ipv4.ip_forward.";
-TALKIE.r_zone = "Les messagers sortent de l'Annexe ! Mais dig affichage ne trouve rien. La zone de l'Annexe est sur le routeur, dans /etc/bind : named-checkzone dit où est la faute.";
+TALKIE.r_zone = "Les lettres sortent de l'Annexe ! Mais dig affichage ne trouve rien. La page de l'annuaire de l'Annexe (sa zone) est sur le routeur, dans /etc/bind : named-checkzone dit où est la faute.";
 TALKIE.r_prise = "affichage a un nom, mais ne répond pas (ping affichage). L'écran est branché sur le switch de l'Annexe : ssh switch, ip link, et le CarnetDuSwitch.";
 TALKIE.r_debit = "L'écran est rallumé... et tout le Wi-Fi rame (iperf3 -c intranet, depuis le portable). Sur la borne, sudo iftop : QUI consomme. Puis sudo nethogs sur le coupable : QUOI.";
 TALKIE.r_fin = "Plus un voyant orange, ni au bâtiment B, ni à l'Annexe. Reviens me voir au BatimentB : cat Radia.";
@@ -1261,13 +1261,13 @@ ETAGE_OSI.r_zone = "Étage 7 (Application)";
 ETAGE_OSI.r_prise = "Étages 1 et 2 (Physique, Liaison)";
 ETAGE_OSI.r_debit = "Étages 4 et 7 (Transport, Application)";
 
-NOTIONS.r_wifi = "Le Wi-Fi, c'est un câble invisible : une radio. Et une radio peut être coupée par logiciel, comme en mode avion.";
-NOTIONS.r_ssid = "Une borne annonce son nom (le SSID). N'importe qui peut annoncer le même : on vérifie toujours le nom ET la sécurité.";
-NOTIONS.r_plan = "L'Annexe a son propre réseau, un /26 : 64 adresses. Sa Source (le DHCP de la borne) doit distribuer des adresses DE ce réseau.";
-NOTIONS.r_forward = "Une machine à deux cartes ne fait pas passer les messagers de l'une à l'autre, sauf si on le lui dit : net.ipv4.ip_forward.";
-NOTIONS.r_zone = "Les noms de l'Annexe ont leur propre registre, servi par le routeur. Une seule faute dedans, et tout le registre est refusé.";
-NOTIONS.r_prise = "Un switch relie les câbles d'un même réseau, chacun sur son port. Un port éteint, et la machine au bout disparaît.";
-NOTIONS.r_debit = "Le débit se partage : une seule machine gourmande, et tout le monde rame.";
+NOTIONS.r_wifi = "Le Wi-Fi, c'est une boîte aux lettres sans câble : une radio. Et une radio peut être coupée par logiciel, comme en mode avion.";
+NOTIONS.r_ssid = "Un relais sans fil affiche son enseigne (le SSID). N'importe qui peut poser une fausse boîte aux lettres avec la même enseigne : on vérifie toujours le nom ET le cadenas (WPA2).";
+NOTIONS.r_plan = "L'Annexe est une petite rue à part : un quartier de 64 adresses (un /26). Sa mairie (le DHCP de la borne) doit attribuer des adresses DE cette rue, pas d'une autre.";
+NOTIONS.r_forward = "Une maison à deux boîtes aux lettres ne fait pas suivre le courrier de l'une à l'autre, sauf si on le lui dit : net.ipv4.ip_forward.";
+NOTIONS.r_zone = "Les noms de l'Annexe ont leur propre page dans l'Annuaire, imprimée par le routeur. Une seule faute dedans, et toute la page est refusée.";
+NOTIONS.r_prise = "Un switch est une rangée de boîtes aux lettres, une par câble (ses ports). Un port éteint, et la maison au bout disparaît.";
+NOTIONS.r_debit = "Le courrier se partage : un seul gros expéditeur, et tout le monde attend son tour.";
 
 A_RETENIR.r_wifi = "rfkill coupe les radios par logiciel (le mode avion). rfkill list les montre, sudo rfkill unblock wifi rallume le Wi-Fi.";
 A_RETENIR.r_ssid = "Un Wi-Fi ouvert qui imite le vrai est un faux point d'accès : il voit tout ce qui passe. On vérifie le nom ET la sécurité (WPA2) avant de se connecter.";
@@ -1311,7 +1311,7 @@ function pannesAnnexe(){
 	var an = annexe(), l = [];
 	if (an.rfkill || !an.wlan) l.push("la radio Wi-Fi du portable de l'Annexe est coupée");
 	else if (an.ssid !== SSID_BON) l.push("le portable de l'Annexe n'est pas sur le vrai Wi-Fi");
-	if (!dhcpBorneActif()) l.push("la Source de l'Annexe (le DHCP de la borne) est arrêtée");
+	if (!dhcpBorneActif()) l.push("la mairie de l'Annexe (le DHCP de la borne) est arrêtée");
 	if (!an.forward) l.push("la borne ne fait plus passer les paquets");
 	if (!an.zone || !HOTES.routeur.services.named.actif) l.push("la zone DNS de l'Annexe n'est pas chargée (named, sur le routeur)");
 	if (!an.ports[7]) l.push("le port de l'écran (port7) est éteint");

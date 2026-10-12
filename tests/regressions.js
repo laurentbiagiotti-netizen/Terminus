@@ -491,7 +491,7 @@ contient(q3.taper("sudo arping -D -c 2 10.0.93.20"), "Received 0 response", "arp
 verifier(q3.lire("state.quests.s_r_arping") === true, "quête arping");
 q3.taper("sudo ip addr add 10.0.93.20/24 dev eth0");
 contient(q3.taper("sudo arping -c 2 10.0.93.254"), "52:54:00:5D:FE:01", "arping trouve la MAC du routeur");
-contient(q3.taper("sudo arping -c 1 10.0.92.53"), "ne traverse jamais la Tour", "arping ne sort pas de la rue");
+contient(q3.taper("sudo arping -c 1 10.0.92.53"), "ne sort jamais de la rue", "arping ne sort pas de la rue");
 contient(q3.taper("arp -n"), "52:54:00:5d:fe:01", "arp montre le voisin");
 contient(q3.taper("route -n"), "Pas de route par défaut", "route signale l'absence de passerelle");
 q3.taper("sudo ip route add default via 10.0.93.254");
@@ -539,7 +539,7 @@ verifier(!q5.lire("state.quests.s_r_osi"), "les étages dans le désordre ne val
 q5.taper("echo physique liaison reseau transport session presentation application > ~/osi.txt");
 verifier(q5.lire("state.quests.s_r_osi") === true, "les sept étages, sans accents, valident");
 contient(q5.taper("cat Radia"), "étages 1 et 2", "Radia situe l'étape dans la tour OSI");
-contient(q5.taper("schema"), "LA TOUR OSI DU POSTE", "le schema montre la tour OSI");
+contient(q5.taper("schema"), "LES 7 ÉTAGES DU POSTE", "le schema montre la tour OSI");
 verifier(q5.lire("etagesOSI().length") === 7, "sept voyants, un par étage");
 q5.taper("cd Poste");
 var sortieLien = q5.taper("sudo ip link set eth0 up");

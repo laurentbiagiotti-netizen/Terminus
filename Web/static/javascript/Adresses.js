@@ -14,22 +14,23 @@ function num(t){ return C.jaune(t); }
 
 var PlanDesAdresses = new Item("PlanDesAdresses",
 	C.gras("LE PLAN DES ADRESSES (Nour, au tableau blanc)") + "\n\n" +
-	"Une adresse IP, c'est une adresse postale : d'abord la RUE, puis le NUMÉRO de la maison.\n\n" +
+	"Dans notre monde, une adresse postale s'écrit en quatre nombres : c'est l'adresse IP.\n" +
+	"D'abord la RUE, puis le NUMÉRO de la maison.\n\n" +
 	"        " + rue("10.0.93") + " . " + num("20") + "\n" +
 	"        " + rue("└─rue─┘") + "   " + num("└┘ maison") + "\n\n" +
 	"Le MASQUE dit où s'arrête le nom de la rue. Il s'écrit de deux façons :\n" +
 	"  " + rue("/24") + "              les 24 premiers bits (sur 32) nomment la rue\n" +
 	"  " + rue("255.255.255") + "." + num("0") + "    pareil en quatre nombres : 255 = rue, 0 = maison\n\n" +
 	"La rue " + rue("10.0.93") + ", vue d'en haut :\n\n" +
-	"   " + C.gris("[panneau]") + "  " + num("[.1] [.2] ... [.20] ... [.253]") + "  " + C.gris("[Tour]") + "  " + C.gris("[crieur]") + "\n" +
+	"   " + C.gris("[panneau]") + "  " + num("[.1] [.2] ... [.20] ... [.253]") + "  " + C.gris("[Poste]") + "  " + C.gris("[crieur]") + "\n" +
 	"     " + rue(".0") + "             " + num("les maisons : .1 à .253") + "         " + rue(".254") + "    " + rue(".255") + "\n\n" +
 	"  " + rue(".0") + "    le panneau de la rue : l'adresse DU RÉSEAU. Personne n'y habite.\n" +
 	"  " + rue(".255") + "  le crieur public : l'adresse de DIFFUSION. Ce qu'on lui dit, toute la rue l'entend.\n" +
-	"  " + rue(".254") + "  ici, la Tour : la PASSERELLE, la seule porte vers les autres rues.\n" +
-	"  De .1 à .254 : les machines (la Tour en est une). 256 - 2 = 254 adresses utilisables.\n\n" +
+	"  " + rue(".254") + "  ici, le Bureau de Poste : la PASSERELLE, la seule porte vers les autres rues.\n" +
+	"  De .1 à .254 : les machines (le Bureau de Poste en est une). 256 - 2 = 254 adresses utilisables.\n\n" +
 	"Deux règles, et tout le réseau s'explique :\n" +
 	"  " + C.gras("Même rue") + "   on frappe directement à la porte du voisin (ip neigh connaît son adresse MAC).\n" +
-	"  " + C.gras("Autre rue") + "  on confie la lettre à la Tour, qui sait où aller (ip r : default via).\n\n" +
+	"  " + C.gras("Autre rue") + "  on confie la lettre au Bureau de Poste, qui sait où aller (ip r : default via).\n\n" +
 	"La suite, quand une rue est trop grande : cat Quartiers.",
 	"item_plan_rue.gif");
 
@@ -55,7 +56,7 @@ var Quartiers = new Item("Quartiers",
 	"Pour trouver le quartier d'une adresse : le multiple de 64 juste en dessous.\n" +
 	"  10.0.94." + num("37") + "  est dans le quartier " + rue("10.0.94.0") + "   (0 <= 37 < 64)\n" +
 	"  10.0.94." + num("150") + " est dans le quartier " + rue("10.0.94.128") + " (128 <= 150 < 192)\n\n" +
-	"À l'Annexe, le sort ipcalc fera ces calculs pour toi. Mais un mage les fait d'abord de tête.",
+	"À l'Annexe, le sort ipcalc fera ces calculs pour toi. Mais un bon facteur les fait d'abord de tête.",
 	"item_quartiers.gif");
 
 /* Les cinq colles de Nour : l'identifiant de la quête, la question, la bonne réponse, et l'aide en cas d'erreur. */
@@ -75,7 +76,7 @@ var COLLES_DE_NOUR = [
 function texteDeNour(){
 	var faites = COLLES_DE_NOUR.filter(function(c){ return state.quests[c.id]; }).length;
 	if (faites === COLLES_DE_NOUR.length){
-		return "Nour range ses feutres. « Cinq sur cinq. Tu lis une adresse comme une carte, maintenant : la rue, la maison, la Tour.\n" +
+		return "Nour range ses feutres. « Cinq sur cinq. Tu lis une adresse comme une carte, maintenant : la rue, la maison, le Bureau de Poste.\n" +
 			"Garde le PlanDesAdresses en tête. À l'Annexe, on coupe vraiment une rue en quartiers, et un stagiaire s'est trompé de quartier. »";
 	}
 	var lignes = COLLES_DE_NOUR.map(function(c, i){
@@ -122,15 +123,8 @@ GameEvents.addListener("echo", function(e){
 	if (visee) say("Nour secoue la tête. " + visee.aide);
 });
 
-/* Le lexique de Radia gagne les mots du plan. */
-Lexique.setText(Lexique.getText().replace("La rue                    le réseau, défini par le masque (/24, /26)\n",
-	"La rue                    le réseau, défini par le masque (/24, /26)\n" +
-	"Le panneau de la rue      l'adresse du réseau (la première, .0)\n" +
-	"Le crieur                 l'adresse de diffusion (la dernière, .255)\n" +
-	"Les quartiers             les sous-réseaux (un /24 coupé en /26)\n"));
-
 /* Radia y renvoie, au moment de poser l'adresse du poste. */
-TALKIE.r_ip += " Une adresse, ça se lit comme une adresse postale : Nour, la Cartographe du BatimentB, te l'explique en dessins.";
+TALKIE.r_ip += " Lire une adresse, sa rue et son numéro : Nour, la Cartographe du BatimentB, te l'explique en dessins.";
 
 /* Le monde est complet : les objets créés après ce point (en cours de partie) n'ont plus d'identifiant fixe. */
 World.fige = true;
