@@ -3,7 +3,7 @@
  *
  * Dans ce monde, le courrier ne s'adresse pas comme chez nous : une adresse postale s'écrit en
  * quatre nombres, 10.0.93.20 (la rue, puis la maison). Le réseau de l'école devient donc un
- * service postal : les paquets sont des lettres, le routeur le bureau de poste, le DNS l'annuaire,
+ * service postal : les paquets sont des lettres, le routeur le bureau de poste, le DNS l'Oracle des Noms,
  * le DHCP la mairie, les ports les guichets, le pare-feu le gardien. Chaque sort réseau porte un
  * nom imagé et rapporte quelque chose quand on le lance pour la première fois : une image de ce
  * qu'il fait, et souvent un lieu du plan qui sort de la brume.
@@ -24,10 +24,10 @@ var SORTS_RPG = {
 	nano:        { nom: "le Stylo",                  image: "Tu reprends au stylo un formulaire de la machine." },
 	curl:        { nom: "la Lettre Express",         image: "Ta lettre part au guichet d'un site, et la réponse revient aussitôt." },
 	wget:        { nom: "le Colis",                  image: "Le colis arrive : le fichier est livré sur ta machine." },
-	dig:         { nom: "l'Annuaire",                image: "Tu cherches un nom dans l'Annuaire (le DNS) : quelle adresse porte-t-il ?" },
-	host:        { nom: "l'Annuaire de Poche",       image: "L'annuaire de poche répond en une seule ligne." },
-	nslookup:    { nom: "le Vieil Annuaire",         image: "Le vieil annuaire, celui des anciens, répond à sa façon." },
-	resolvectl:  { nom: "la Fiche des Annuaires",    image: "La fiche montre quel annuaire la machine consulte vraiment." },
+	dig:         { nom: "l'Oracle",                  image: "Tu interroges l'Oracle des Noms (le DNS) : à quelle adresse habite ce nom ?" },
+	host:        { nom: "le Petit Oracle",           image: "Le Petit Oracle répond en une seule ligne." },
+	nslookup:    { nom: "le Vieil Oracle",           image: "Le Vieil Oracle, celui des anciens, répond à sa façon." },
+	resolvectl:  { nom: "la Boussole des Noms",     image: "La boussole montre quel oracle la machine interroge vraiment." },
 	systemctl:   { nom: "le Chef de Service",        image: "Tu ouvres, fermes ou condamnes les guichets (les services) et leurs employés." },
 	journalctl:  { nom: "le Cahier de Bord",         image: "Le cahier raconte ce que chaque employé a fait, et à quelle heure." },
 	ss:          { nom: "le Tableau des Guichets",   image: "Le tableau dit quels guichets (les ports) sont ouverts, et qui les tient." },
@@ -47,7 +47,7 @@ var SORTS_RPG = {
 	netstat:     { nom: "l'Ancien Tableau",          image: "Les guichets ouverts et leurs employés, comme ss, mais dans la langue d'avant." },
 	arping:      { nom: "l'Appel dans la Rue",       image: "Tu demandes dans ta rue « qui habite au 20 ? » : l'habitant répond, avec le nom de sa boîte." },
 	tracepath:   { nom: "le Petit Suivi",            image: "Un suivi plus léger : il mesure aussi la taille des lettres qui passent." },
-	getent:      { nom: "le Carnet d'Adresses",      image: "Tu cherches un nom comme le font les programmes : ton carnet perso, puis l'Annuaire." },
+	getent:      { nom: "le Carnet d'Adresses",      image: "Tu cherches un nom comme le font les programmes : ton carnet perso, puis l'Oracle des Noms." },
 	uptime:      { nom: "l'Horloge d'Ouverture",     image: "L'horloge dit depuis quand la maison est ouverte, et combien elle travaille." },
 	iperf3:      { nom: "la Course des Facteurs",    image: "Tes facteurs courent jusqu'à un serveur et reviennent : tu mesures le débit." },
 	nft:         { nom: "le Nouveau Règlement",      image: "Le règlement du gardien, écrit dans la langue moderne du noyau (nftables)." },
@@ -55,7 +55,7 @@ var SORTS_RPG = {
 	iw:          { nom: "l'Écoute des Relais",       image: "Tu entends les relais postaux sans fil annoncer leur enseigne, et leur force." },
 	ipcalc:      { nom: "la Règle du Cadastre",      image: "La règle mesure une rue : son panneau, son crieur, et toutes les maisons entre les deux." },
 	sysctl:      { nom: "les Consignes du Relais",   image: "Tu changes une consigne du relais : transmettre le courrier à la rue d'à côté, ou non." },
-	"named-checkzone": { nom: "la Relecture de l'Annuaire", image: "Tu relis la page de l'annuaire ligne à ligne, avant que l'imprimeur ne la refuse." },
+	"named-checkzone": { nom: "la Relecture du Registre", image: "Tu relis le registre de l'Oracle ligne à ligne, avant qu'il ne le refuse." },
 	lldpctl:     { nom: "l'Étiquette du Câble",      image: "Chaque câble te dit le nom de celui qui est au bout." },
 	iftop:       { nom: "le Compteur du Tri",        image: "Au centre de tri, tu vois qui envoie le plus de courrier." },
 	nethogs:     { nom: "le Gros Expéditeur",        image: "Dans une maison, tu montres du doigt le programme qui inonde la poste." },
@@ -85,7 +85,7 @@ var ETAGES_DU_SORT = {
 var LIEUX_RPG = {
 	poste:    { nom: "la Maison de l'accueil",   vrai: "poste-b" },
 	routeur:  { nom: "le Bureau de Poste",       vrai: "routeur" },
-	dns:      { nom: "l'Annuaire",               vrai: "dns" },
+	dns:      { nom: "l'Oracle des Noms",        vrai: "dns" },
 	intranet: { nom: "la Bibliothèque",          vrai: "intranet" },
 	mail:     { nom: "le Centre du Courrier",    vrai: "mail" },
 	parefeu:  { nom: "la Loge du Gardien",       vrai: "parefeu" },
@@ -101,7 +101,7 @@ var RELIQUES = {
 	r_lien:       "la Boîte Rouverte",
 	r_ip:         "la Plaque d'Adresse",
 	r_passerelle: "la Clé du Bureau de Poste",
-	r_dns:        "l'Annuaire Corrigé",
+	r_dns:        "l'Œil de l'Oracle",
 	r_dhcp:       "le Tampon de la Mairie",
 	r_netplan:    "l'Acte du Cadastre",
 	r_web:        "la Lanterne de la Bibliothèque",
@@ -113,7 +113,7 @@ var RELIQUES = {
 	r_ssid:       "la Vraie Enseigne",
 	r_plan:       "la Règle du Quartier",
 	r_forward:    "la Consigne du Relais",
-	r_zone:       "la Page d'Annuaire Corrigée",
+	r_zone:       "le Registre de l'Oracle Corrigé",
 	r_prise:      "la Boîte Retrouvée",
 	r_debit:      "le Gros Expéditeur Calmé"
 };

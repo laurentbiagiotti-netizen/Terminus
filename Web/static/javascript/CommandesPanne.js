@@ -1790,7 +1790,7 @@ Shell.sorts.getent = function(args, io){
 	if (!lignes.length && io.tty) return C.gris("(getent ne dit rien quand il ne trouve pas : ce nom n'est ni dans /etc/hosts ni au DNS, ou le DNS ne répond pas.)");
 	GameEvents.fire({ type: "getent", host: h, raccourci: deRaccourci });
 	if (deRaccourci) quetePanne("s_r_getent");
-	return lignes.join("\n") + (deRaccourci && io.tty ? "\n" + C.gris("(Ce nom vient de /etc/hosts : getent lit les raccourcis avant de consulter l'Annuaire, comme tous les programmes. dig, lui, ne demande qu'au DNS.)") : "");
+	return lignes.join("\n") + (deRaccourci && io.tty ? "\n" + C.gris("(Ce nom vient de /etc/hosts : getent lit les raccourcis avant de consulter l'Oracle des Noms, comme tous les programmes. dig, lui, ne demande qu'au DNS.)") : "");
 };
 
 Shell.sorts.uptime = function(args, io){

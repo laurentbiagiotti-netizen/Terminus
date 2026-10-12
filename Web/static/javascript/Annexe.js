@@ -1248,7 +1248,7 @@ TALKIE.r_wifi = "Assieds-toi au Portable de la cafétéria (cd Portable). ip lin
 TALKIE.r_ssid = "La radio est rallumée. Regarde les réseaux autour : sudo iw dev wlan0 scan. Le bon est sur l'AfficheWifi, avec son mot de passe. Méfie-toi des jumeaux.";
 TALKIE.r_plan = "Connecté, mais sans adresse : la mairie de l'Annexe ne répond pas. Depuis le Poste du BatimentB, ssh borne : son service DHCP, son journal. ipcalc 10.0.94.0/26 dit quelles adresses sont permises.";
 TALKIE.r_forward = "Le portable a une adresse ! Il parle à la borne (ping 10.0.94.1), mais pas plus loin (ping intranet). Sur la borne : sysctl net.ipv4.ip_forward.";
-TALKIE.r_zone = "Les lettres sortent de l'Annexe ! Mais dig affichage ne trouve rien. La page de l'annuaire de l'Annexe (sa zone) est sur le routeur, dans /etc/bind : named-checkzone dit où est la faute.";
+TALKIE.r_zone = "Les lettres sortent de l'Annexe ! Mais dig affichage ne trouve rien. Le registre que l'Oracle des Noms tient pour l'Annexe (sa zone) est sur le routeur, dans /etc/bind : named-checkzone dit où est la faute.";
 TALKIE.r_prise = "affichage a un nom, mais ne répond pas (ping affichage). L'écran est branché sur le switch de l'Annexe : ssh switch, ip link, et le CarnetDuSwitch.";
 TALKIE.r_debit = "L'écran est rallumé... et tout le Wi-Fi rame (iperf3 -c intranet, depuis le portable). Sur la borne, sudo iftop : QUI consomme. Puis sudo nethogs sur le coupable : QUOI.";
 TALKIE.r_fin = "Plus un voyant orange, ni au bâtiment B, ni à l'Annexe. Reviens me voir au BatimentB : cat Radia.";
@@ -1265,7 +1265,7 @@ NOTIONS.r_wifi = "Le Wi-Fi, c'est une boîte aux lettres sans câble : une radio
 NOTIONS.r_ssid = "Un relais sans fil affiche son enseigne (le SSID). N'importe qui peut poser une fausse boîte aux lettres avec la même enseigne : on vérifie toujours le nom ET le cadenas (WPA2).";
 NOTIONS.r_plan = "L'Annexe est une petite rue à part : un quartier de 64 adresses (un /26). Sa mairie (le DHCP de la borne) doit attribuer des adresses DE cette rue, pas d'une autre.";
 NOTIONS.r_forward = "Une maison à deux boîtes aux lettres ne fait pas suivre le courrier de l'une à l'autre, sauf si on le lui dit : net.ipv4.ip_forward.";
-NOTIONS.r_zone = "Les noms de l'Annexe ont leur propre page dans l'Annuaire, imprimée par le routeur. Une seule faute dedans, et toute la page est refusée.";
+NOTIONS.r_zone = "Les noms de l'Annexe ont leur propre page dans le registre de l'Oracle des Noms, tenu par le routeur. Une seule faute dedans, et l'Oracle refuse toute la page.";
 NOTIONS.r_prise = "Un switch est une rangée de boîtes aux lettres, une par câble (ses ports). Un port éteint, et la maison au bout disparaît.";
 NOTIONS.r_debit = "Le courrier se partage : un seul gros expéditeur, et tout le monde attend son tour.";
 

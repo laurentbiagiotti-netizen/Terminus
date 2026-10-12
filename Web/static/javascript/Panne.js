@@ -97,7 +97,7 @@ var Lexique = new Item("Lexique",
 	"Le nom sur la boîte         l'adresse MAC\n" +
 	"Le Bureau de Poste          la passerelle (le routeur)\n" +
 	"L'itinéraire                la route (et la route par défaut)\n" +
-	"L'Annuaire                  le DNS : un nom vers une adresse\n" +
+	"L'Oracle des Noms           le DNS : il connaît l'adresse de chaque nom\n" +
 	"La Mairie                   le DHCP : adresse, passerelle, DNS\n" +
 	"Les guichets                les ports : 22 ssh, 25 mails, 53 DNS, 80 web\n" +
 	"Les employés                les services (systemctl)\n" +
@@ -878,7 +878,7 @@ var INDICES_PANNE = {
 		"ip r ne montre aucune ligne « default » : le poste ne sait pas à qui confier les lettres pour les autres rues. Le Bureau de Poste (la passerelle) est le routeur, " + IP_ROUTEUR + ".",
 		"Sur le Poste : sudo ip route add default via " + IP_ROUTEUR],
 	r_dns: [
-		"cat /etc/resolv.conf : l'annuaire noté là, " + IP_DNS_FAUX + ", n'existe pas. Le bon est sur l'Etiquette. dig @" + IP_DNS + " intranet le prouve.",
+		"cat /etc/resolv.conf : l'oracle noté là, " + IP_DNS_FAUX + ", n'existe pas. Le bon est sur l'Etiquette. dig @" + IP_DNS + " intranet le prouve.",
 		"Sur le Poste : sudo nano /etc/resolv.conf, remplace " + IP_DNS_FAUX + " par " + IP_DNS + ", Ctrl+O, Ctrl+X (ou : sudo resolvectl dns eth0 " + IP_DNS + ")"],
 	r_dhcp: [
 		"Sur le routeur, systemctl status isc-dhcp-server montre la Mairie fermée ET désactivée. Il faut les deux : l'ouvrir (start), et la rouvrir à chaque démarrage (enable).",
@@ -950,7 +950,7 @@ var TALKIE = {
 	r_lien: "La Grande Poste, tu l'as en tête. Maintenant, le Poste de l'accueil, derrière le comptoir (cd Poste), étage 1 : ip link. Sa boîte aux lettres, eth0, est-elle ouverte (UP) ?",
 	r_ip: "La boîte aux lettres est ouverte (eth0 est UP) ! Mais la maison n'a pas d'adresse : ip a. L'AideMemoire du Poste (cat AideMemoire) t'apprend à la demander à la Mairie (sudo dhclient eth0). Si la Mairie ne répond pas, l'Etiquette du poste donne l'adresse à poser à la main.",
 	r_passerelle: "Le Poste a une adresse. Écris au Bureau de Poste et attends l'accusé de réception (ping " + IP_ROUTEUR + "). Mais pour écrire hors de la rue, il faut l'itinéraire vers le bureau : ip r, et l'Etiquette.",
-	r_dns: "Les lettres circulent ! Mais ping intranet échoue : le Poste consulte un annuaire qui n'existe pas. cat /etc/resolv.conf, et le MemoDNS, dans /etc.",
+	r_dns: "Les lettres circulent ! Mais ping intranet échoue : le Poste interroge un oracle qui n'existe pas. cat /etc/resolv.conf, et le MemoDNS, dans /etc.",
 	r_dhcp: "Tout marche... à la main. Pourquoi la Mairie n'a rien répondu ? Elle tient son guichet au Bureau de Poste : ssh routeur, et lis le CahierDuRouteur.",
 	r_netplan: "La Mairie a rouvert. Mais au prochain sommeil (redémarrage), le Poste oubliera tout ce que tu as fait avec ip. Ce qui doit durer s'inscrit au cadastre : /etc/netplan. L'AideMemoire explique.",
 	r_web: "Le bâtiment B est reconnecté pour de bon. La Bibliothèque, maintenant : curl http://intranet/ affiche n'importe quoi. Va voir sur place : ssh intranet.",
@@ -975,7 +975,7 @@ var NOTIONS_LIEN = "Étage 1, la route : le câble et la carte réseau, ta boît
 var NOTIONS = {
 	r_ip: "Sans ADRESSE IP, une machine est une maison sans adresse postale : personne ne peut lui écrire. D'habitude, la Mairie (le DHCP) en attribue une toute seule.",
 	r_passerelle: "Le Poste écrit directement à ses voisins de rue. Pour écrire plus loin, il confie la lettre au Bureau de Poste (la PASSERELLE) : il lui faut un itinéraire par défaut (la route par défaut).",
-	r_dns: "Les humains retiennent des noms, les machines des adresses. L'Annuaire (le DNS) donne l'adresse quand on connaît le nom.",
+	r_dns: "Dans cette ville, personne ne retient les adresses : on demande à l'Oracle des Noms (le DNS). Tu lui dis « intranet », il te répond la rue et le numéro. Si le Poste interroge un faux oracle, plus aucun nom ne mène nulle part.",
 	r_dhcp: "La Mairie est un SERVICE : un programme qui tient un guichet. Il doit être ouvert (start) ET rouvrir à chaque démarrage (enable).",
 	r_netplan: "Ce qu'on règle avec ip s'efface au redémarrage, comme une adresse écrite au crayon. Ce qui doit durer s'inscrit au cadastre : /etc/netplan.",
 	r_web: "Un serveur est un immeuble à plusieurs GUICHETS numérotés (les PORTS) : 22 pour ssh, 80 pour le web. Un guichet n'a qu'un seul employé.",
@@ -1104,7 +1104,7 @@ function texteSchema(){
 		"  " + lieu("routeur", "routeur", "Bureau de Poste"),
 		connu("routeur") ? "    " + voyant(v.dhcp, "Mairie (DHCP)") + "  " + voyant(v.telnet, "guichet 23 fermé") : null,
 		"      " + ok(true, "│"),
-		"      " + branche("dns", v.noms, "├─") + " " + lieu("dns", "dns", "Annuaire"),
+		"      " + branche("dns", v.noms, "├─") + " " + lieu("dns", "dns", "Oracle des Noms"),
 		"      " + branche("intranet", v.web, "├─") + " " + lieu("intranet", "intranet", "Bibliothèque"),
 		connu("intranet") ? "      │    " + voyant(v.web, "web") + "  " + voyant(v.heure, "cachet https") : null,
 		"      " + branche("mail", v.mail, "├─") + " " + lieu("mail", "mail", "Centre du Courrier"),
