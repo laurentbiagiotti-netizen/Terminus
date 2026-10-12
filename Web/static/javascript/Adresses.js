@@ -82,8 +82,8 @@ function texteDeNour(){
 	var lignes = COLLES_DE_NOUR.map(function(c, i){
 		return "  " + (state.quests[c.id] ? C.vert("[x]") : "[ ]") + " " + (i + 1) + ". " + c.question;
 	});
-	return "« Nour, B3 réseau. Pendant que Radia répare, moi je dessine le plan. Une adresse IP, c'est une adresse postale :\n" +
-		"lis le PlanDesAdresses, puis les Quartiers. Avec ça, tu lis n'importe quelle adresse.\n\n" +
+	return "« Nour, B3 réseau. Pendant que Radia répare, moi je dessine le plan. Une adresse IP, c'est une adresse postale.\n" +
+		"Lis le PlanDesAdresses, puis les Quartiers. Avec ça, tu lis n'importe quelle adresse.\n\n" +
 		"Ensuite, mes cinq colles. Réponds-moi à voix haute, ici : echo TA_REPONSE\n\n" +
 		lignes.join("\n") + "\n\n" +
 		"Une erreur ne coûte rien : je te dirai où regarder. »";
