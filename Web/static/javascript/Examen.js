@@ -18,9 +18,26 @@
  */
 
 /* Le code d'accès n'est pas écrit en clair : seulement son empreinte. */
-var EMPREINTE_CODE_EXAMEN = "00000000";
+/* Le code d'accès et le mot de passe du formateur ne sont jamais écrits en clair : seulement une empreinte lente
+   (SHA-256 répété 5000 fois), qu'on ne peut pas retourner et qu'on ne devine pas à la main.
+   Pour les changer : node outils/code_examen.js NOUVEAU-CODE et node outils/mot_de_passe_formateur.js MOT-DE-PASSE */
+var EMPREINTE_CODE_EXAMEN = "0491b53adcd6d0c0edc68c2009433c886d53e2838bbee6c209c456f7a690c427";
+var EMPREINTE_FORMATEUR = "7cbc03ac0b7dcf139babfee644a1fd65920355d8188d758a0b78838c2440f4c8";
+function empreinteLente(texte){
+	var h = "terminus-cybersup|" + texte;
+	for (var i = 0; i < 5000; i++) h = sha256(h + "|" + i);
+	return h;
+}
 function codeExamenValide(code){
-	return sommeDeControle(String(code || "").trim().toUpperCase() + "|examen|terminus-cybersup") === EMPREINTE_CODE_EXAMEN;
+	return empreinteLente("examen|" + String(code || "").trim().toUpperCase()) === EMPREINTE_CODE_EXAMEN;
+}
+function motDePasseFormateurValide(mdp){
+	return empreinteLente("formateur|" + String(mdp || "")) === EMPREINTE_FORMATEUR;
+}
+/* Le sceau du formateur : une signature que seul celui qui connaît son mot de passe peut produire.
+   L'étudiant ne peut pas la fabriquer chez lui, même en lisant tout le code du jeu. */
+function sceauDuFormateur(mdp, charge){
+	return sha256(String(mdp) + "|" + sha256(String(mdp) + "|" + charge + "|sceau-du-mage")).substring(0, 16).toUpperCase();
 }
 
 function modeExamen(){ return !!(typeof PROFIL !== "undefined" && PROFIL.modeExamen); }
@@ -987,6 +1004,8 @@ function texteDiplomeExamen(){
 		"  Signé : Laurent, le Mage Rouxblanc, Directeur Pédagogique de Cybersup",
 		"  Proclamé par : Laurana la Flamboyante, héraut de Cybersup",
 		"========================================",
+		e.sceau ? "  Sceau du formateur  : ✓ copie scellée" : "  Sceau du formateur  : pas encore (le formateur tape sceller ici)",
+		"========================================",
 		"  Code de vérification, à remettre au formateur :",
 		"  " + codeDiplomeExamen(),
 		"========================================");
@@ -1007,21 +1026,23 @@ function codeDiplomeExamen(){
 		(e.commandesFin !== undefined ? e.commandesFin : state.nbCommandes) - (e.commandesDebut || 0),
 		e.fin === "victoire" ? "V" : "K", masqueExamen(e.reussies), masqueExamen(e.defaites), masqueExamen(e.indices),
 		e.dateFin || dateDuJour(), PROFIL.graine, e.tajineTue ? "T" : "-", detailQuiz].join("|");
-	return versBase64Url(charge) + "." + sommeDeControle(charge + "|" + SEL_DIPLOME);
+	var code = versBase64Url(charge) + "." + sommeDeControle(charge + "|" + SEL_DIPLOME);
+	return e.sceau && e.chargeScellee === charge ? code + "." + e.sceau : code;
 }
 function lireCodeExamen(code){
 	var morceaux = String(code).trim().split(".");
-	if (morceaux.length !== 2) return null;
+	if (morceaux.length !== 2 && morceaux.length !== 3) return null;
 	var charge;
 	try { charge = depuisBase64Url(morceaux[0]); } catch (x){ return null; }
 	var c = charge.split("|");
+	if (c[0] !== "E3" && morceaux.length === 3) return null;
 	var q = c[0] === "E1" ? 2 : 4;
 	if (!((c[0] === "E1" && c.length === 16) || (c[0] === "E2" && c.length === 17) || (c[0] === "E3" && c.length === 18))) return null;
 	function bits(h){ var n = parseInt(h, 16) || 0; return EPREUVES_EXAMEN.map(function(ep, i){ return Math.floor(n / Math.pow(2, i)) % 2 === 1; }); }
 	return { valide: sommeDeControle(charge + "|" + SEL_DIPLOME) === morceaux[1].toUpperCase(),
 		prenom: c[1], note: +c[2] / q, base: +c[3] / q, bonus: +c[4] / q, malusErreurs: +c[5] / q, malusIndices: +c[6] / q, tajine: c[16] === "T",
 		erreurs: +c[7], minutes: +c[8], commandes: +c[9], fin: c[10], reussies: bits(c[11]), defaites: bits(c[12]), indices: bits(c[13]),
-		date: c[14], graine: +c[15],
+		date: c[14], graine: +c[15], charge: charge, sceau: morceaux[2] ? morceaux[2].toUpperCase() : null,
 		quiz: (c[17] || "").split(",").filter(function(x){ return x; }).map(function(x){ var m = /^(\d+)([+\-.])([A-D]?)$/.exec(x); return m ? { id: +m[1], etat: m[2], lettre: m[3] } : null; }).filter(function(x){ return x; }) };
 }
 
@@ -1034,7 +1055,11 @@ function terminerExamen(fin){
 	e.tempsFin = state.tempsMs;
 	e.finHorloge = Date.now();
 	e.commandesFin = state.nbCommandes;
-	// Laurana porte le diplôme : une copie dans ~/rapport, pour le recopier sans erreur.
+	terminerExamenEcrireDiplome();
+	state.save();
+}
+/* Laurana porte le diplôme : une copie dans ~/rapport, pour le recopier sans erreur. */
+function terminerExamenEcrireDiplome(){
 	var texte = sansAnsi(texteDiplomeExamen()) + "\n";
 	var copie = RapportExamen.getItemFromName("diplome.txt");
 	if (copie === -1){
@@ -1203,11 +1228,40 @@ Shell.sorts.kamikaze = function(args, io){
 	return "";
 };
 
+/* Le formateur scelle la copie, sur le poste de l'étudiant, avec son mot de passe : le code devient infalsifiable. */
+Shell.sorts.sceller = function(args, io){
+	if (!examenEnCours()) return "sceller sert au formateur, à la fin de l'épreuve finale, sur le poste de l'étudiant.";
+	var e = state.examen;
+	if (!e.fini) return "La copie n'est pas encore rendue : on scelle après la fin (Forteresse reprise, ou kamikaze).";
+	term.demander("Mot de passe du formateur : ", true, function(mdp){
+		if (!motDePasseFormateurValide(mdp)){ jouerSon("erreur"); term.echo(C.rouge("Ce n'est pas le mot de passe du formateur. La copie n'est pas scellée.")); return; }
+		e.sceau = null;
+		var nu = codeDiplomeExamen(), charge = depuisBase64Url(nu.split(".")[0]);
+		e.chargeScellee = charge;
+		e.sceau = sceauDuFormateur(mdp, charge);
+		terminerExamenEcrireDiplome();
+		state.save();
+		jouerSon("niveau");
+		term.echo(C.vert("Copie scellée par le formateur.") + " Le code ci-dessous porte maintenant le sceau : il ne peut plus être fabriqué ailleurs.\n\n  " + codeDiplomeExamen());
+	});
+	return "";
+};
+
 /* Le formateur vérifie un code de diplôme, de certificat ou d'épreuve finale. */
 Shell.sorts.verifier = function(args, io){
 	if (!args.length) throw new ShellError("verifier : quel code ? Utilisation : verifier CODE (le code imprimé sur un diplôme ou un certificat)");
 	var ex = lireCodeExamen(args.join(""));
-	if (ex) return rapportCodeExamen(ex);
+	if (ex && ex.sceau){
+		term.demander("Ce code porte un sceau. Mot de passe du formateur pour le contrôler : ", true, function(mdp){
+			var statut;
+			if (!motDePasseFormateurValide(mdp)) statut = C.jaune("? Sceau non contrôlé : ce n'est pas le mot de passe du formateur.");
+			else if (sceauDuFormateur(mdp, ex.charge) === ex.sceau) statut = C.vert(C.gras("✓ SCELLÉ PAR LE FORMATEUR : la copie est authentique."));
+			else statut = C.rouge(C.gras("✗ SCEAU FAUX : ce code a été fabriqué ou modifié. Ne pas en tenir compte."));
+			term.echo(statut + "\n" + rapportCodeExamen(ex));
+		});
+		return "";
+	}
+	if (ex) return C.jaune("⚠ Code NON SCELLÉ : il peut avoir été fabriqué. Pour une note officielle, scelle la copie sur le poste de l'étudiant (sceller).") + "\n" + rapportCodeExamen(ex);
 	var lu = lireCode(args.join(""));
 	if (!lu) return C.rouge("Code illisible.") + " Ce n'est pas un code de Terminus, ou il est incomplet.";
 	var quoi = { 1: "Diplôme du chapitre 1 (Terminus)", 2: "Certificat cyber (la Crypte)", 3: "Certificat réseau (la panne)", 4: "Épreuve finale (ancien code)" }[lu.chapitre] || "Chapitre " + lu.chapitre;
@@ -1618,7 +1672,7 @@ function accueillirExamen(){
 }
 
 /* Les commandes du jeu ajoutées par l'épreuve. */
-["examen", "kamikaze", "verifier"].forEach(function(s){ if (SORTS_DU_JEU.indexOf(s) === -1) SORTS_DU_JEU.push(s); });
+["examen", "kamikaze", "verifier", "sceller"].forEach(function(s){ if (SORTS_DU_JEU.indexOf(s) === -1) SORTS_DU_JEU.push(s); });
 COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 2, 0,
 	["examen", "l'épreuve finale (avec le code du formateur)"],
 	["verifier CODE", "vérifier un code de diplôme ou de certificat"]);
@@ -1626,4 +1680,6 @@ MANUEL_DU_JEU.examen = "examen n'est PAS une commande Linux : c'est une commande
 	"Hors épreuve : demande le code de ton formateur et ouvre l'épreuve finale, dans une partie à part.\n" +
 	"Pendant l'épreuve : examen montre le bilan ; examen quitter ramène à ta partie normale.";
 MANUEL_DU_JEU.kamikaze = "kamikaze n'est PAS une commande Linux : pendant l'épreuve finale, il rend ta copie.\nTa note est celle de ce que tu as accompli, et ton diplôme porte son code.";
+MANUEL_DU_JEU.sceller = "sceller n'est PAS une commande Linux : à la fin de l'épreuve finale, le formateur la tape sur le poste de l'étudiant,\n" +
+	"avec son mot de passe. Le code du diplôme porte alors un sceau que personne ne peut fabriquer sans ce mot de passe.";
 MANUEL_DU_JEU.verifier = "verifier n'est PAS une commande Linux : il lit un code de diplôme ou de certificat\net dit s'il est authentique (verifier CODE).";

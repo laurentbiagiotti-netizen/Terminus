@@ -7,19 +7,23 @@ var ok = 0, ko = 0;
 function verifier(c, m){ if (c) ok++; else { ko++; console.log("ÉCHEC : " + m); } }
 function contient(t, m, msg){ verifier(String(t).indexOf(m) > -1, (msg || "") + " : « " + m + " » absent de\n" + t); }
 
+/* Le vrai code d'accès et le mot de passe du formateur ne sont pas dans le dépôt : les tests posent les leurs. */
+var SECRETS_DE_TEST = "EMPREINTE_CODE_EXAMEN = empreinteLente('examen|TEST-1234'); EMPREINTE_FORMATEUR = empreinteLente('formateur|mot-de-passe-de-test');";
 function examen(graine){
 	var stockage = { "terminus-cybersup-profil": JSON.stringify({ graine: graine || 4242, prenom: "Ada", chapitre: 1, modeExamen: true }) };
 	var jeu = monde.nouveauMonde(stockage);
-	jeu.lire("state.nom = 'Ada'; demarrerExamen(); Shell.narration = [];");
+	jeu.lire(SECRETS_DE_TEST + " state.nom = 'Ada'; demarrerExamen(); Shell.narration = [];");
 	jeu.stockage = stockage;
 	return jeu;
 }
 
 /* --- 1. Le code d'accès --- */
 var normal = monde.nouveauMonde();
-verifier(normal.lire("codeExamenValide('CODE-RETIRE')"), "le code CODE-RETIRE ouvre l'épreuve");
-verifier(normal.lire("codeExamenValide(' rouxblanc-7351 ')"), "le code se tape sans souci de casse");
-verifier(!normal.lire("codeExamenValide('CODE-RETIRE-2')"), "un mauvais code n'ouvre rien");
+normal.lire(SECRETS_DE_TEST);
+verifier(normal.lire("codeExamenValide('TEST-1234')"), "le code d'accès ouvre l'épreuve");
+verifier(normal.lire("codeExamenValide(' test-1234 ')"), "le code se tape sans souci de casse");
+verifier(!normal.lire("codeExamenValide('TEST-1235')"), "un mauvais code n'ouvre rien");
+verifier(normal.lire("EMPREINTE_CODE_EXAMEN.length") === 64, "l'empreinte du code est un SHA-256, pas une somme de 8 caractères");
 contient(normal.taper("examen", "FAUX"), "pas le bon code", "examen refuse un faux code");
 contient(normal.taper("kamikaze"), "n'a de sens que pendant", "kamikaze hors épreuve");
 verifier(!normal.lire("examenEnCours()"), "hors examen, la partie normale est intacte");
@@ -192,6 +196,18 @@ contient(rapport, "Code authentique", "verifier");
 contient(rapport, "cassée une fois en route", "verifier montre l'épreuve cassée par le sortilège");
 contient(rapport, "QUESTIONS POUR UN LINUX  3 sur 3", "verifier montre le quiz");
 contient(normal.taper("verifier " + code), "Restaurer la proclamation", "verifier marche aussi hors de l'épreuve");
+contient(normal.taper("verifier " + code), "NON SCELLÉ", "un code non scellé est signalé");
+contient(jeu.taper("sceller", "mauvais"), "pas le mot de passe du formateur", "sceller refuse un faux mot de passe");
+var scelle = jeu.taper("sceller", "mot-de-passe-de-test");
+contient(scelle, "Copie scellée", "le formateur scelle la copie");
+var codeScelle = scelle.trim().split("\n").pop().trim();
+verifier(codeScelle.split(".").length === 3, "le code scellé a trois morceaux : " + codeScelle);
+contient(jeu.taper("cat ~/rapport/diplome.txt"), "✓ copie scellée", "le diplôme dit qu'il est scellé");
+contient(normal.taper("verifier " + codeScelle, "mot-de-passe-de-test"), "SCELLÉ PAR LE FORMATEUR", "le sceau se contrôle");
+var morceauxFaux = codeScelle.split(".");
+var chargeFausse = normal.lire("versBase64Url(depuisBase64Url(" + JSON.stringify(morceauxFaux[0]) + ").replace(/^E3\\|Ada\\|\\d+/, 'E3|Ada|60'))");
+var fauxCode = chargeFausse + "." + normal.lire("sommeDeControle(depuisBase64Url(" + JSON.stringify(chargeFausse) + ") + '|' + SEL_DIPLOME)") + "." + morceauxFaux[2];
+contient(normal.taper("verifier " + fauxCode, "mot-de-passe-de-test"), "SCEAU FAUX", "une note retouchée, même avec la bonne somme de contrôle, trahit le sceau");
 contient(jeu.taper("verifier " + code.replace(/.$/, function(c){ return c === "A" ? "B" : "A"; })), "", "");
 contient(jeu.taper("kamikaze"), "terminée", "kamikaze après la fin");
 contient(jeu.taper("examen"), "DIPLÔME", "examen réimprime le diplôme");
