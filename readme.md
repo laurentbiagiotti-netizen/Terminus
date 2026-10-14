@@ -134,7 +134,7 @@ Le code est du JavaScript sans dépendance ni étape de construction.
 | `Web/static/javascript/CommandesCyber.js` | les commandes du réseau et de l'analyse (sed, awk, nmap, systemctl, gpg...) et l'éditeur `vim` côté shell |
 | `Web/static/javascript/Reseau.js` | les machines du réseau de l'école, les quêtes et les leçons de vim de la Crypte |
 | `Web/static/javascript/Panne.js` | la panne (chapitre 2) : le bâtiment B, le poste, le routeur, l'intranet, l'état du réseau et qui joint qui, les quêtes, Radia |
-| `Web/static/javascript/Examen.js` | l'épreuve finale : la Forteresse, ses treize épreuves, la note, `examen`, `kamikaze` et `verifier` |
+| `Web/static/javascript/Examen.js` | l'épreuve finale : la Forteresse, ses trente-trois épreuves et ses personnages, le quiz de Steve, la note, `examen`, `kamikaze` et `verifier` |
 | `Web/static/javascript/CommandesPanne.js` | les sorts de la panne (ip, dhclient, netplan, dig, systemctl, iptables, tcpdump, curl, openssl...), qui suivent l'état du réseau |
 | `Web/static/javascript/Annexe.js` | le second acte de la panne : l'Annexe, son Wi-Fi, sa borne, son switch et son écran, et leurs sorts (rfkill, iw, ipcalc, sysctl, named-checkzone, lldpctl, iftop, nethogs...) |
 | `Web/static/javascript/RpgPanne.js` | l'habillage jeu de rôle de la panne : le nom imagé de chaque sort, la carte qui sort de la brume, les badges et la commande badges |

@@ -7,7 +7,8 @@
  * écoute aux portes (le port qui écoute), et David, l'ogre des steppes, glouton et bavard (le
  * guichet telnet, la Bibliothèque endormie). Le Mage, enfermé dehors, a glissé un ordre de mission
  * dans les quartiers de la recrue, où Aidan, l'elfe aux pieds de hobbit, s'est fait enfermer aussi :
- * il fait rire, il n'aide pas. Les trois sceaux de Myriam se brisent épreuve par épreuve. Treize épreuves
+ * il fait rire, il n'aide pas. D'autres fidèles parlent et conseillent (Manon, Wissam, Jean-Baptiste, Gabriel, Cheb Timour),
+ * Laurana le héraut est changée en pierre, et Steve anime un quiz dans /dev/random. Six sceaux, trente-trois épreuves
  * reprennent les trois missions : le terminal (chapitre 1), le réseau (la panne) et la cyber (la
  * Crypte). La note sur 20 se calcule sur ce qui est accompli, que la recrue aille au bout ou
  * qu'elle rende sa copie avant (sort kamikaze). Le diplôme porte un code que le formateur
@@ -319,7 +320,7 @@ var ManonChatelaine = personnageExamen(Forteresse, "Manon", "item_manon.gif", fu
 	var debut = "Manon la Châtelaine, intendante de la Forteresse, le trousseau de clés à la ceinture. Myriam n'a pas osé la chasser :\n" +
 		"personne ne sait où sont rangées les choses, sauf elle.\n\n";
 	if (!e) return debut + "« Le registre est vide. Reviens quand l'épreuve aura commencé. »";
-	var sceaux = [1, 2, 3, 4].map(function(s){
+	var sceaux = Object.keys(NOMS_DES_SCEAUX).map(Number).map(function(s){
 		var liste = EPREUVES_EXAMEN.filter(function(ep){ return ep.sceau === s; });
 		var faites = liste.filter(function(ep){ return e.reussies[ep.id]; }).length;
 		return "  " + completerDroite(NOMS_DES_SCEAUX[s], 24) + faites + " sur " + liste.length + (faites === liste.length ? "  brisé" : "");
@@ -403,7 +404,9 @@ var GabrielComposants = personnageExamen(AtelierComposants, "Gabriel", "item_gab
 		return debut + "« Avant de parler de processus, montre-moi ce qui tourne. Lance ps, ou top, et reviens me voir. »";
 	}
 	var tajine = Forteresse.procs.some(function(p){ return p.pid === PID_TAJINE; });
-	return debut + "« Bien. Écoute, c'est la seule leçon que je donne :\n" +
+	var psMent = state.alias && state.alias.ps;
+	return debut + (psMent ? "« ps t'a répondu que rien ne tourne ? Alors c'est ps qui ment, pas la Forteresse : quelqu'un l'a ensorcelé.\n" +
+		"top, lui, dit encore la vérité. »\n\n" : "") + "« Bien. Écoute, c'est la seule leçon que je donne :\n" +
 		"  - Le processeur (CPU), c'est le cuisinier : il fait une chose après l'autre, très vite. La colonne %CPU dit combien\n" +
 		"    de son temps un processus lui prend.\n" +
 		"  - La mémoire vive (RAM), c'est le plan de travail : tout ce qui tourne y est posé. %MEM dit quelle place il prend.\n" +
@@ -789,14 +792,14 @@ function texteOrdreDeMission(){
 		"",
 		"Libère Laurana : un héraut libre communique ce qui reste à faire.",
 		"",
-		"Myriam tient la Forteresse par cinq sceaux. Le cinquième est le registre de Manon, déchiré cette nuit : remplis-le. Et un sixième t'attend dans /dev/random, sous les projecteurs de Steve. Brise-les dans l'ordre que tu veux.",
+		"Myriam tient la Forteresse par six sceaux. Le cinquième est le registre de Manon, déchiré cette nuit : remplis-le. Le sixième t'attend dans /dev/random, sous les projecteurs de Steve. Brise-les dans l'ordre que tu veux.",
 		"Chaque épreuve accomplie compte, même si tu ne vas pas au bout. Tu as trois heures.",
 		""
 	];
 	var textes = {
 		ordre: "Tu as trouvé cet ordre, caché dans tes quartiers : c'était la première épreuve.",
 		assaillant: "Avant d'entrer, Myriam a frappé à la porte des dizaines de fois depuis sa\n        Tour Noire : les journaux s'en souviennent. Inscris l'adresse de la Tour, seule,\n        dans ~/rapport/assaillant.txt",
-		rempart: "Je t'ai laissé une arme, ~/arsenal/rempart.sh. Elle refuse de servir : rends-la exécutable.",
+		rempart: "Je t'ai laissé une arme, ~/arsenal/rempart.sh. Elle refuse de servir : rends-la exécutable, puis lève le rempart en la lançant.",
 		fragment: "Aidan a joué à cache-cache avec le fragment-du-sceau de mon bâton : il est\n        quelque part sous /srv. Retrouve-le et range-le dans ~/rapport.",
 		oracle: "Myriam a ensorcelé la Forteresse : elle interroge un faux Oracle des Noms. Rends-lui le vrai :\n        son adresse est écrite dans le registre local des noms de la machine.",
 		mairie: "Myriam a brouillé la plage de la Mairie (le service isc-dhcp-server) : ses adresses\n        sortent de la rue, et la Mairie refuse d'ouvrir. Corrige-la, puis rouvre-la.",
@@ -872,7 +875,7 @@ TEXTE_ENTREE_EXAMEN = TEXTE_ENTREE_EXAMEN.replace(/([^\n])\n(?=[^\n])/g, "$1 ");
 
 /* Ouvre une épreuve neuve : tous les sorts, la Forteresse, et le silence. */
 function demarrerExamen(){
-	state.examen = { debut: state.tempsMs || 0, reussies: {}, ordreLu: false, fini: false, fin: null, dateFin: null, tempsFin: null, commandesDebut: state.nbCommandes, lieu: null, erreurs: 0, indices: {}, defaites: {}, sceaux: {} };
+	state.examen = { debut: state.tempsMs || 0, reussies: {}, ordreLu: false, fini: false, fin: null, dateFin: null, tempsFin: null, commandesDebut: state.nbCommandes, lieu: null, erreurs: 0, indices: {}, defaites: {}, sceaux: {}, rencontres: { aidan: true } };
 	[SORTS_DE_DEPART, ORDRE_DES_SORTS, ORDRE_DES_SORTS_2, ORDRE_DES_SORTS_3].forEach(function(liste){
 		(liste || []).forEach(function(s){ state.spells[s] = true; state.usages[s] = true; });
 	});
@@ -1067,7 +1070,9 @@ function verifierExamen(){
 			"Ce soir, tu as battu toute une troupe. Myriam et moi, nous jouons ce tour à chaque promotion. La sorcière, l'acrobate, l'ogre et l'elfe :\n" +
 			"tous avaient un rôle cette nuit. Même Laurana, qui fut l'élève de Myriam avant d'être ma voix. Le tien était le plus dur.\n" +
 			"Ce que tu viens de faire, tu le referas pour de vrai, un jour, sur une vraie machine. Félicitations. »\n\n" +
-			"Laurana monte sur le balcon de la Tour, souffle dans sa trompette d'argent, et proclame ton nom aux sept campus.\n\n" +
+			"Laurana monte sur le balcon de la Tour, souffle dans sa trompette d'argent, et proclame ton nom aux sept campus.\n" +
+			"Manon le recopie au propre dans son registre, Wissam lève sa tasse, Jean-Baptiste ajoute ta maison sur son plan, Gabriel et Timour\n" +
+			"servent le tajine, et Steve, au micro : « Et c'est un sans-faute pour la Forteresse ! Je n'ai pas de blague. Si. Non. »\n\n" +
 			texteDiplomeExamen());
 	}
 }
@@ -1209,7 +1214,7 @@ function rapportCodeExamen(c){
 var INDICES_EXAMEN = {
 	ordre: "Les fichiers dont le nom commence par un point ne se montrent qu'avec ls -a.",
 	assaillant: "Les connexions ratées sont dans /var/log/auth.log. grep, cut, sort et uniq -c comptent qui frappe le plus souvent.",
-	rempart: "Un script ne se lance que s'il a le droit x. ls -l pour voir, chmod pour changer.",
+	rempart: "Un script ne se lance que s'il a le droit x (ls -l pour voir, chmod pour changer). Ensuite, on le lance par son chemin.",
 	fragment: "find cherche par nom dans tout un dossier et ses sous-dossiers.",
 	oracle: "L'adresse du vrai Oracle se lit dans /etc/hosts. Le serveur de noms utilisé se règle dans /etc/resolv.conf (avec sudo nano).",
 	mairie: "systemctl status et journalctl -u disent pourquoi un service refuse de démarrer. Un /26 va de .0 à .63.",
@@ -1238,7 +1243,8 @@ var INDICES_EXAMEN = {
 	passwd: "Il y a un sort qui porte le nom exact de ce qu'il change.",
 	ping: "ping -c 1 ADRESSE envoie un seul accusé de réception.",
 	diff: "diff FICHIER1 FICHIER2 montre les lignes qui changent. Les lignes en > ou < sont celles en plus.",
-	trompette: "sudo apt install PAQUET, puis cowsay TEXTE."
+	trompette: "sudo apt install PAQUET, puis cowsay TEXTE.",
+	quiz: "Steve ne souffle jamais : sur le plateau, pas d'indice."
 };
 function indiceExamen(args){
 	var e = state.examen;
