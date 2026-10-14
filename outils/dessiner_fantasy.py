@@ -774,7 +774,7 @@ def cartographe():
 
 
 def forteresse():
-    """La Forteresse de l'épreuve finale : un donjon noir sur un rocher, la bannière du Corbeau, trois sceaux verts."""
+    """La Forteresse de l'épreuve finale : un donjon sur un rocher, la bannière de la sorcière Myriam, trois sceaux verts."""
     im, d = toile()
     etoiles(d, n=22, graine=9, ymax=70)
     lune(d, 150, 20, r=9)
@@ -789,12 +789,34 @@ def forteresse():
         briques(d, x, 44, x + 12, 106)                                       # les tours d'angle
         creneaux(d, x, x + 12, 44, h=6, w=4)
     arche(d, 78, 82, 98, 106, fill=N)                                        # la porte
-    d.line([(88, 26), (88, 6)], fill=B, width=2)                             # la bannière du Corbeau
-    d.polygon([(89, 6), (110, 10), (89, 16)], fill=N, outline=B)
-    d.polygon([(95, 9), (100, 11), (95, 13)], fill=B)
+    d.line([(88, 26), (88, 4)], fill=B, width=2)                             # la bannière de Myriam : un chapeau pointu
+    d.polygon([(89, 4), (114, 6), (114, 18), (89, 16)], fill=N, outline=B)
+    d.polygon([(97, 15), (102, 7), (107, 15)], fill=V)
+    d.line([(95, 15), (109, 15)], fill=V, width=2)
     for i, x in enumerate((54, 116, 88)):                                    # les trois sceaux
         y = 72 if i < 2 else 40
         d.ellipse([x - 5, y - 5, x + 5, y + 5], fill=V, outline=N)
+    return im
+
+
+def elfe():
+    """Steve, l'elfe rigolo : de très longues oreilles, un bonnet à grelot, un grand sourire."""
+    im, d = toile()
+    d.ellipse([62, 30, 114, 84], fill=B)                                        # le visage
+    d.polygon([(62, 52), (14, 26), (64, 66)], fill=B, outline=N)                 # l'oreille gauche
+    d.polygon([(114, 52), (162, 26), (112, 66)], fill=B, outline=N)              # l'oreille droite
+    d.polygon([(58, 38), (88, -2), (126, 18), (118, 38)], fill=V)                # le bonnet
+    d.ellipse([120, 12, 132, 24], fill=B, outline=N)                             # le grelot
+    d.rectangle([58, 34, 118, 42], fill=B, outline=N)
+    d.ellipse([72, 50, 82, 60], fill=N); d.ellipse([94, 50, 104, 60], fill=N)    # les yeux
+    d.ellipse([75, 52, 78, 55], fill=B); d.ellipse([97, 52, 100, 55], fill=B)
+    d.chord([72, 58, 104, 78], 0, 180, fill=N)                                   # le grand sourire
+    d.rectangle([78, 66, 98, 69], fill=B)
+    d.polygon([(52, 92), (124, 92), (138, 160), (38, 160)], fill=V)              # la tunique
+    d.rectangle([80, 84, 96, 94], fill=B)
+    d.polygon([(70, 92), (88, 112), (106, 92)], fill=B)                          # le col
+    d.rectangle([40, 128, 136, 134], fill=N)                                     # la ceinture
+    d.rectangle([82, 126, 94, 136], fill=B, outline=N)
     return im
 
 
@@ -808,7 +830,7 @@ DESSINS = {
     "loc_sauvegarde.gif": sauvegarde, "loc_imprimante.gif": imprimante, "loc_badgeuse.gif": badgeuse, "loc_poste.gif": poste,
     "item_gaspard.gif": gaspard, "item_boitier.gif": boitier,
     "item_plan_rue.gif": plan_rue, "item_quartiers.gif": quartiers, "item_cartographe.gif": cartographe,
-    "loc_forteresse.gif": forteresse,
+    "loc_forteresse.gif": forteresse, "item_elfe.gif": elfe,
 }
 
 if __name__ == "__main__":
