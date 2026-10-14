@@ -456,7 +456,7 @@ var LIEUX_DES_EPREUVES = {
 	uid0: "les comptes, /etc", droits: "le balcon de la Tour, /var/www/html", hosts: "le registre local des noms, /etc",
 	journal: "ton historique", chronique: "les journaux, /var/log", frappes: "les journaux, /var/log", preuves: "ton rapport, ~/rapport",
 	identite: "toi-même", disque: "la place prise sur le disque", piege: "/tmp", alias: "tes propres commandes", maitre: "ton environnement",
-	balcon: "tes quartiers", passwd: "ton compte", ping: "le réseau", diff: "les sauvegardes, /srv", trompette: "les paquets (apt)"
+	balcon: "tes quartiers", passwd: "ton compte", ping: "le réseau", diff: "les sauvegardes, /srv", trompette: "les paquets (apt)", quiz: "le plateau, /dev/random"
 };
 function communiqueDeLaurana(){
 	var e = state.examen;
@@ -472,6 +472,11 @@ function communiqueDeLaurana(){
 		"~/rapport/diplome.txt, pour que tu n'aies qu'à le recopier. »");
 	return lignes.join("\n");
 }
+
+/* /dev/random : le plateau de « Questions pour un Linux », présenté par Steve. */
+var FortDev = lieuExamen(Forteresse, "dev", "Les périphériques de la Forteresse. Un néon clignote au fond : ON AIR.", { image: "loc_bin.gif" });
+var PlateauQuiz = lieuExamen(FortDev, "random", "Le plateau de « Questions pour un Linux » : trois pupitres, des buzzers, des projecteurs. Ici, tout est tiré au hasard.", { image: "loc_plateau.gif" });
+var SteveAnimateur = personnageExamen(PlateauQuiz, "Steve", "item_steve.gif", function(){ return texteDeSteve(); });
 
 World.fige = true;
 
@@ -571,6 +576,140 @@ EPREUVES_EXAMEN.push(
 	{ id: "trompette", sceau: 5, points: 1, titre: "Rendre sa trompette à Laurana (apt), et la faire sonner : Oyez",
 	  fait: function(){ return !!(state.paquets && state.paquets.cowsay) && !!state.examen.trompette; } }
 );
+/* « Questions pour un Linux » : cinquante questions sur les trois chapitres. Steve en tire trois au hasard pour chaque recrue.
+   b : l'indice de la bonne réponse dans c (avant mélange). */
+var QUESTIONS_POUR_UN_LINUX = [
+	{ ch: 1, q: "Quelle commande affiche le lieu (le dossier) où tu te trouves ?", c: ["pwd", "cd", "ls", "whoami"], b: 0, e: "pwd : print working directory." },
+	{ ch: 1, q: "Que montre ls -a de plus que ls ?", c: ["Les fichiers cachés, dont le nom commence par un point", "Les droits de chaque fichier", "La taille des fichiers", "Les fichiers supprimés"], b: 0, e: "-a comme all : même les noms qui commencent par un point." },
+	{ ch: 1, q: "Comment rendre un script exécutable ?", c: ["chmod +x script.sh", "chown +x script.sh", "exec script.sh", "sudo script.sh"], b: 0, e: "Le droit x (exécution) se donne avec chmod." },
+	{ ch: 1, q: "Les droits rwxr-xr-x s'écrivent en chiffres :", c: ["755", "644", "777", "700"], b: 0, e: "rwx = 4+2+1 = 7, r-x = 4+1 = 5." },
+	{ ch: 1, q: "Quelle commande déplace (ou renomme) un fichier ?", c: ["mv", "cp", "ln", "rm"], b: 0, e: "mv déplace ; cp copie et laisse l'original en place." },
+	{ ch: 1, q: "Que fait echo bonjour > note.txt ?", c: ["Écrit bonjour dans note.txt, en écrasant son contenu", "Ajoute bonjour à la fin de note.txt", "Lit note.txt", "Affiche bonjour à l'écran seulement"], b: 0, e: "> écrase, >> ajoute à la fin." },
+	{ ch: 1, q: "Que fait >> dans une commande ?", c: ["Ajoute la sortie à la fin d'un fichier", "Écrase le fichier", "Envoie la sortie à la commande suivante", "Lit un fichier"], b: 0, e: ">> ajoute sans effacer ce qui était déjà là." },
+	{ ch: 1, q: "À quoi sert grep ?", c: ["Garder les lignes qui contiennent un motif", "Trier des lignes", "Compter des lignes", "Couper des colonnes"], b: 0, e: "grep filtre ; sort trie ; wc compte ; cut coupe." },
+	{ ch: 1, q: "Que compte wc -l ?", c: ["Les lignes", "Les mots", "Les caractères", "Les fichiers"], b: 0, e: "-l comme lines." },
+	{ ch: 1, q: "Dans sort | uniq -c, que fait uniq -c ?", c: ["Compte combien de fois chaque ligne revient", "Supprime les fichiers en double", "Trie à l'envers", "Numérote toutes les lignes"], b: 0, e: "uniq -c regroupe les lignes identiques qui se suivent, d'où le sort avant." },
+	{ ch: 1, q: "Que fait kill -9 PID ?", c: ["Arrête le processus sans qu'il puisse refuser", "Lui demande poliment de s'arrêter", "Le met en pause", "Le redémarre"], b: 0, e: "9 = KILL, il ne s'ignore pas. Le signal par défaut, 15 (TERM), peut l'être." },
+	{ ch: 1, q: "À quoi sert ps ?", c: ["Lister les processus qui tournent", "Changer un mot de passe", "Afficher l'espace disque", "Lister les ports ouverts"], b: 0, e: "ps : process status." },
+	{ ch: 1, q: "Qu'est-ce qu'un PID ?", c: ["Le numéro d'un processus", "Le numéro d'un utilisateur", "Le numéro d'un port", "Une adresse IP"], b: 0, e: "Process IDentifier. Le numéro d'utilisateur, c'est l'UID." },
+	{ ch: 1, q: "À quoi sert sudo ?", c: ["Lancer une commande avec les droits de root", "Changer d'ordinateur", "Installer Linux", "Supprimer le compte root"], b: 0, e: "sudo : faire une commande en tant que superutilisateur, le temps d'une ligne." },
+	{ ch: 1, q: "Que montre crontab -l ?", c: ["Les tâches planifiées", "Les fichiers récents", "Les connexions en cours", "Les paquets installés"], b: 0, e: "La crontab relance des commandes à heure fixe." },
+	{ ch: 1, q: "Que crée ln -s CIBLE NOM ?", c: ["Un raccourci (lien symbolique) vers la cible", "Une copie de la cible", "Une archive", "Un nouveau dossier vide"], b: 0, e: "Le lien pointe vers la cible ; il ne la copie pas." },
+	{ ch: 1, q: "Que fait tar -xf archive.tar ?", c: ["Extrait le contenu de l'archive", "Crée l'archive", "Liste son contenu sans extraire", "La supprime"], b: 0, e: "-x extrait, -c crée, -t liste, -f nomme l'archive." },
+	{ ch: 1, q: "Que fait find / -name rapport.txt ?", c: ["Cherche rapport.txt dans toute l'arborescence", "Cherche le mot rapport dans les fichiers", "Renomme rapport.txt", "Supprime rapport.txt"], b: 0, e: "find cherche des fichiers par leur nom ; grep cherche dans leur contenu." },
+	{ ch: 1, q: "Que change chown ?", c: ["Le propriétaire d'un fichier", "Les droits d'un fichier", "Le nom d'un fichier", "La date d'un fichier"], b: 0, e: "chown : change owner. Les droits, c'est chmod." },
+	{ ch: 1, q: "Que fait alias ll='ls -l' ?", c: ["Crée un raccourci de commande : ll lancera ls -l", "Crée une variable ll", "Crée un fichier ll", "Lance un processus ll"], b: 0, e: "unalias ll le retire." },
+	{ ch: 1, q: "Que fait export MAITRE=Mage ?", c: ["Définit une variable d'environnement", "Exporte un fichier vers une clé USB", "Imprime Mage", "Envoie Mage au serveur"], b: 0, e: "env liste toutes les variables ; echo $MAITRE en affiche une." },
+	{ ch: 1, q: "Que montre head -n 3 journal.log ?", c: ["Les 3 premières lignes", "Les 3 dernières lignes", "La ligne 3 seulement", "3 fichiers de journaux"], b: 0, e: "head le début, tail la fin." },
+	{ ch: 1, q: "Quelle commande mesure ce que pèse un dossier ?", c: ["du", "df", "ps", "wc"], b: 0, e: "du : disk usage d'un dossier ; df : la place libre sur tout le disque." },
+	{ ch: 1, q: "Que supprime rmdir ?", c: ["Un dossier vide", "Un dossier et tout son contenu", "Un fichier", "Un utilisateur"], b: 0, e: "rmdir refuse un dossier plein, par prudence." },
+	{ ch: 2, q: "Dans 10.0.93.20/24, quelle est l'adresse du réseau (la rue) ?", c: ["10.0.93.0", "10.0.93.255", "10.0.0.0", "10.0.93.1"], b: 0, e: "Un /24 garde les trois premiers nombres pour la rue ; le panneau est en .0." },
+	{ ch: 2, q: "Quelle est l'adresse de diffusion (le crieur) de 10.0.93.0/24 ?", c: ["10.0.93.255", "10.0.93.0", "10.0.93.254", "255.255.255.0"], b: 0, e: "Le crieur habite au dernier numéro de la rue." },
+	{ ch: 2, q: "Combien de machines peut-on loger dans un /26 ?", c: ["62", "64", "30", "126"], b: 0, e: "32 - 26 = 6 bits : 64 adresses, moins le réseau et la diffusion." },
+	{ ch: 2, q: "Quel est le masque d'un /24 ?", c: ["255.255.255.0", "255.255.0.0", "255.255.255.255", "255.0.0.0"], b: 0, e: "24 bits à 1 : trois fois 255, puis 0." },
+	{ ch: 2, q: "À quoi sert la passerelle (le Bureau de Poste) ?", c: ["À envoyer les paquets vers les autres réseaux", "À traduire les noms en adresses", "À distribuer les adresses", "À chiffrer les messages"], b: 0, e: "Même rue : on frappe chez le voisin. Autre rue : on passe par la passerelle." },
+	{ ch: 2, q: "Que fait le DNS (l'Oracle des Noms) ?", c: ["Il traduit un nom en adresse IP", "Il distribue les adresses IP", "Il chiffre les connexions", "Il relie les câbles"], b: 0, e: "Comme un annuaire : un nom, une adresse." },
+	{ ch: 2, q: "Que fait le DHCP (la Mairie) ?", c: ["Il attribue automatiquement une adresse aux machines", "Il traduit les noms en adresses", "Il bloque les ports", "Il garde les journaux"], b: 0, e: "La Mairie donne un numéro de maison à chaque nouvel arrivant." },
+	{ ch: 2, q: "Dans quel fichier Linux note-t-il le serveur DNS à interroger ?", c: ["/etc/resolv.conf", "/etc/hosts", "/etc/passwd", "/etc/hostname"], b: 0, e: "La ligne nameserver de /etc/resolv.conf." },
+	{ ch: 2, q: "À quoi sert /etc/hosts ?", c: ["À associer des noms à des adresses, sur la machine elle-même", "À lister les utilisateurs", "À ranger les clés SSH", "À démarrer les services"], b: 0, e: "Le registre local des noms : il passe avant le DNS." },
+	{ ch: 2, q: "À quoi sert ping ?", c: ["À vérifier qu'une machine répond", "À télécharger un fichier", "À changer d'adresse IP", "À chiffrer une connexion"], b: 0, e: "Un accusé de réception : la machine répond, ou pas." },
+	{ ch: 2, q: "Que montre ip a ?", c: ["Les interfaces réseau et leurs adresses", "La route par défaut", "Les processus", "Le serveur DNS"], b: 0, e: "ip a pour les adresses, ip r pour les routes." },
+	{ ch: 2, q: "Quelle commande montre la route par défaut (default via) ?", c: ["ip r", "ip a", "ping", "dig"], b: 0, e: "ip r : la table de routage, dont la passerelle par défaut." },
+	{ ch: 2, q: "Que montre traceroute ?", c: ["Le chemin, routeur par routeur, jusqu'à une machine", "Seulement le temps total", "Le nom de la machine", "Les ports ouverts"], b: 0, e: "Le suivi du colis, étape par étape." },
+	{ ch: 2, q: "Combien de couches (d'étages) compte le modèle OSI ?", c: ["7", "4", "5", "9"], b: 0, e: "De la couche physique (1) à l'application (7)." },
+	{ ch: 2, q: "Qui interroge dig cybersup.lan ?", c: ["Le serveur DNS", "Le serveur DHCP", "Le pare-feu", "Le serveur web"], b: 0, e: "dig pose la question à l'Oracle des Noms." },
+	{ ch: 2, q: "Pour joindre une machine d'un autre réseau, ta machine passe par :", c: ["La passerelle", "Le DNS", "L'adresse de diffusion", "Le DHCP"], b: 0, e: "La passerelle est la seule porte vers les autres rues." },
+	{ ch: 3, q: "À quoi sert sha256sum ?", c: ["À calculer une empreinte pour vérifier qu'un fichier n'a pas changé", "À chiffrer un fichier", "À compresser un fichier", "À signer un courriel"], b: 0, e: "Un octet change, et l'empreinte change entièrement." },
+	{ ch: 3, q: "base64, c'est :", c: ["Un encodage : tout le monde peut le décoder", "Un chiffrement fort", "Une compression", "Une empreinte"], b: 0, e: "base64 -d le décode, sans clé. Ce n'est pas un secret." },
+	{ ch: 3, q: "Que signifie le s dans rwsr-xr-x (le bit SUID) ?", c: ["Le programme s'exécute avec les droits de son propriétaire", "Le fichier est caché", "Le fichier est supprimé au redémarrage", "Le fichier est en lecture seule"], b: 0, e: "Un SUID root qui n'a rien à faire là, c'est une porte dérobée." },
+	{ ch: 3, q: "Que montre ss -tlnp ?", c: ["Les ports en écoute et le processus derrière chacun", "Les processus qui consomment le plus", "Seulement les connexions SSH", "Les règles du pare-feu"], b: 0, e: "t : TCP, l : en écoute, n : numéros, p : processus." },
+	{ ch: 3, q: "Que contient ~/.ssh/authorized_keys ?", c: ["Les clés publiques autorisées à se connecter", "Les clés privées", "Les mots de passe", "Les journaux de connexion"], b: 0, e: "Une ligne par clé ; une clé de trop, c'est une porte ouverte." },
+	{ ch: 3, q: "Que fait-on de sa clé privée SSH ?", c: ["On ne la partage jamais", "On la copie sur le serveur", "On l'envoie au RSSI par courriel", "On la publie sur le site de l'école"], b: 0, e: "La clé publique se distribue ; la privée reste chez soi." },
+	{ ch: 3, q: "Où Linux note-t-il les tentatives de connexion SSH ratées ?", c: ["/var/log/auth.log", "/etc/passwd", "/var/www", "/tmp"], b: 0, e: "Failed password for... : les journaux d'authentification." },
+	{ ch: 3, q: "Pourquoi telnet est-il dangereux ?", c: ["Tout y passe en clair, mots de passe compris", "Il est trop lent", "Il ne marche qu'en local", "Il est payant"], b: 0, e: "SSH fait la même chose, mais chiffré." },
+	{ ch: 3, q: "Un fichier suspect sert de preuve. Que fait-on ?", c: ["On le met en quarantaine, sans le modifier", "On le supprime tout de suite", "On l'exécute pour voir", "On le renomme en .txt"], b: 0, e: "Une preuve se déplace, elle ne se détruit pas." },
+	{ ch: 3, q: "Que fait journalctl -u nginx ?", c: ["Affiche le journal du service nginx", "Redémarre nginx", "Désactive nginx", "Liste les ports de nginx"], b: 0, e: "-u comme unit : le journal d'un service." }
+];
+
+EPREUVES_EXAMEN.push({ id: "quiz", sceau: 6, points: 3, titre: "Questions pour un Linux : trois questions de Steve (/dev/random)",
+	fait: function(){ var z = state.examen.quiz; return !!z && z.reponses.length === z.ids.length; },
+	score: function(){ var z = state.examen.quiz; return z ? z.reponses.filter(function(r){ return r.juste; }).length : 0; } });
+
+var LETTRES_QUIZ = ["A", "B", "C", "D"];
+/* Steve fait des jeux de mots. Et des blagues. Pas drôles. Il le sait, et il continue. */
+var BLAGUES_DE_STEVE = [
+	"Tu connais la blague du chmod ? Non ? Normal : elle n'est pas exécutable.",
+	"Pourquoi le DNS est-il toujours zen ? Parce qu'il résout tout. ... Résout. Résoudre. Les noms. Bon.",
+	"Je voulais te faire une blague sur UDP, mais je ne suis pas sûr que tu l'aurais reçue.",
+	"Mon chat s'appelle Grep. Il trouve tout ce qu'il cherche. Sauf ses croquettes.",
+	"Quel est le légume préféré d'un administrateur ? L'échalote. Le shell-ot. ... Le public applaudit. Enfin, Aidan.",
+	"Pourquoi les fichiers cachés sont-ils timides ? Parce qu'ils ont un point devant le nez !",
+	"Mon mot de passe, c'est « incorrect ». Comme ça, quand je l'oublie, l'ordinateur me le rappelle.",
+	"Le sudo, c'est comme la harissa de Timour : on en met partout, et après on pleure.",
+	"Ma femme m'a dit : tu passes trop de temps dans le terminal. Alors j'ai fait cd .. et je suis sorti.",
+	"Comment on arrête Steve ? kill -9. Et encore, je reviens au prochain démarrage : je suis dans la crontab.",
+	"Un paquet TCP entre dans une taverne : « Je voudrais une bière. » « Vous voulez une bière ? » « Oui, je veux une bière. »",
+	"Le tajine de Timour, c'est un démon : il tourne en arrière-plan et personne n'ose le tuer."
+];
+var BRAVO_DE_STEVE = ["TOP ! Tu es root de l'ambiance !", "TOP ! Je suis grep-té d'admiration !", "TOP ! Tu mérites un sudo d'honneur !",
+	"TOP ! Ta réponse a un bit... euh, un but : gagner !", "TOP ! Même Dylan n'aurait pas esquivé celle-là !"];
+var RATE_DE_STEVE = ["Aïe ! Erreur 404 : bonne réponse introuvable.", "Raté ! Mais ne fais pas un kill -9 sur ton moral.",
+	"Oh non ! Ce n'était pas la bonne. Allez, on tape exit sur la déception.", "Perdu ! Comme un paquet UDP : envoyé, jamais reçu."];
+function blagueDeSteve(n){ return BLAGUES_DE_STEVE[Math.abs(n) % BLAGUES_DE_STEVE.length]; }
+function melanger(liste){
+	var t = liste.slice();
+	for (var i = t.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var x = t[i]; t[i] = t[j]; t[j] = x; }
+	return t;
+}
+/* Trois questions tirées au hasard parmi les cinquante, une par chapitre si possible, et leurs réponses mélangées. */
+function tirerQuiz(){
+	var parChapitre = [1, 2, 3].map(function(ch){ return melanger(QUESTIONS_POUR_UN_LINUX.map(function(x, i){ return i; }).filter(function(i){ return QUESTIONS_POUR_UN_LINUX[i].ch === ch; }))[0]; });
+	return { ids: melanger(parChapitre), ordres: parChapitre.map(function(){ return melanger([0, 1, 2, 3]); }), reponses: [] };
+}
+function questionDuQuiz(z, k){
+	var Q = QUESTIONS_POUR_UN_LINUX[z.ids[k]];
+	var ordre = z.ordres[z.ids.indexOf(z.ids[k])] || [0, 1, 2, 3];
+	return { q: Q, ordre: ordre, bonne: LETTRES_QUIZ[ordre.indexOf(Q.b)] };
+}
+function texteDeSteve(){
+	var e = typeof state !== "undefined" && state ? state.examen : null;
+	var debut = "Steve, costume à paillettes et micro doré, sous les projecteurs de /dev/random.\n" +
+		"« Bonsoir, bonsoir ! Bienvenue dans QUESTIONS POUR UN LINUX ! Trois questions, tirées au hasard parmi cinquante,\n" +
+		"sur tout ce que tu as vu : le terminal, le réseau, la Crypte. Chaque bonne réponse vaut un point dans ta note.\n" +
+		"Une seule réponse par question, pas de joker, pas d'indice : Steve ne souffle jamais. »\n" +
+		C.gris("« Et pour détendre l'atmosphère : " + blagueDeSteve(e && e.quiz ? e.quiz.reponses.length * 5 + (state.nbCommandes % 3) : state.nbCommandes) + " »") + "\n\n";
+	if (!e) return debut + "« Le plateau ouvre pendant l'épreuve finale. »";
+	if (!e.quiz){ e.quiz = tirerQuiz(); }
+	var z = e.quiz, k = z.reponses.length;
+	if (k >= z.ids.length){
+		var justes = z.reponses.filter(function(r){ return r.juste; }).length;
+		return debut + "« C'est terminé ! " + justes + " bonne" + (justes > 1 ? "s" : "") + " réponse" + (justes > 1 ? "s" : "") + " sur " + z.ids.length + ". " +
+			(justes === 3 ? "Un sans-faute, le public est debout ! Enfin, Aidan est debout. Il est tout seul, mais il est debout." :
+			(justes === 2 ? "Très joli parcours ! Deux sur trois, c'est comme un /26 : pas tout, mais pas rien." :
+			(justes === 1 ? "On s'accroche, on s'accroche ! Un point, c'est déjà un point. Comme dans une adresse IP." :
+			"Zéro ! Mais zéro, c'est l'UID de root. Tu vois, tu es quand même au sommet."))) + " »";
+	}
+	var qq = questionDuQuiz(z, k);
+	return debut + C.gras("QUESTION " + (k + 1) + " SUR " + z.ids.length) + C.gris("  (chapitre " + qq.q.ch + ")") + "\n" + qq.q.q + "\n\n" +
+		qq.ordre.map(function(i, n){ return "  " + LETTRES_QUIZ[n] + ".  " + qq.q.c[i]; }).join("\n") +
+		"\n\n« Ta réponse, ici sur le plateau : echo A, echo B, echo C ou echo D. »";
+}
+GameEvents.addListener("echo", function(ev){
+	if (!examenEnCours() || ev.room !== PlateauQuiz || state.examen.fini) return;
+	var dit = String(ev.text || "").trim().toUpperCase();
+	if (LETTRES_QUIZ.indexOf(dit) === -1) return;
+	var e = state.examen;
+	if (!e.quiz){ say("Steve : « Doucement ! Je n'ai pas encore posé la question. Viens me voir : cat Steve. »"); return; }
+	var z = e.quiz, k = z.reponses.length;
+	if (k >= z.ids.length){ say("Steve : « Le jeu est fini, champion. Les buzzers sont éteints. »"); return; }
+	var qq = questionDuQuiz(z, k), juste = dit === qq.bonne;
+	z.reponses.push({ lettre: dit, juste: juste });
+	var n = state.nbCommandes;
+	say((juste ? C.vert("Steve : « " + BRAVO_DE_STEVE[n % BRAVO_DE_STEVE.length] + " " + dit + ", c'est la bonne réponse ! »") :
+		C.rouge("Steve : « " + RATE_DE_STEVE[n % RATE_DE_STEVE.length] + " La bonne réponse était " + qq.bonne + " : " + qq.q.c[qq.q.b] + ". »")) +
+		C.gris("  " + qq.q.e) + "\n" + (z.reponses.length < z.ids.length ? "(Question suivante : cat Steve.)" : "(C'est fini : cat Steve pour le score.)"));
+});
+
 function texteRapport(nom){ var f = RapportExamen.getItemFromName(nom); return f === -1 ? null : f.getText(); }
 function heuresDesFrappes(){
 	var lignes = AuthLogExamen.getText().split("\n").filter(function(l){ return l.indexOf(IP_ASSAILLANT_EXAMEN) > -1; });
@@ -580,9 +719,9 @@ function proclamationAffichee(){ var f = FortHtml.getItemFromName("index.html");
 function sortilegeActif(){
 	return ((state.cron && state.cron.myriam) || []).some(function(l){ return l.indexOf("/var/www/html/index.html") > -1; });
 }
-var NOMS_DES_SCEAUX = { 1: "LE SCEAU DU TERMINAL", 2: "LE SCEAU DES LETTRES", 3: "LE SCEAU DE LA CRYPTE", 4: "LE SCEAU DU HÉRAUT", 5: "LE SCEAU DU REGISTRE" };
+var NOMS_DES_SCEAUX = { 1: "LE SCEAU DU TERMINAL", 2: "LE SCEAU DES LETTRES", 3: "LE SCEAU DE LA CRYPTE", 4: "LE SCEAU DU HÉRAUT", 5: "LE SCEAU DU REGISTRE", 6: "LE SCEAU DU PLATEAU" };
 var CHIFFRES_ROMAINS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII",
-	"XIX", "XX", "XXI", "XXII", "XXIII", "XXIV", "XXV", "XXVI", "XXVII", "XXVIII", "XXIX", "XXX", "XXXI", "XXXII"];
+	"XIX", "XX", "XXI", "XXII", "XXIII", "XXIV", "XXV", "XXVI", "XXVII", "XXVIII", "XXIX", "XXX", "XXXI", "XXXII", "XXXIII"];
 var POINTS_MAX_EXAMEN = EPREUVES_EXAMEN.reduce(function(t, e){ return t + e.points; }, 0);
 
 /* Le barème : la note de base vient des épreuves (sur 20, au demi-point), puis un bonus si tout est fini tôt,
@@ -607,7 +746,7 @@ function noteExamen(){ return Math.max(0, Math.min(20, noteDeBaseExamen() + bonu
 function ecrireNote(n){ return String(n).replace(".", ","); }
 
 function pointsExamen(){
-	return EPREUVES_EXAMEN.reduce(function(t, e){ return t + (state.examen.reussies[e.id] ? e.points : 0); }, 0);
+	return EPREUVES_EXAMEN.reduce(function(t, e){ return t + (state.examen.reussies[e.id] ? (e.score ? e.score() : e.points) : 0); }, 0);
 }
 function nbReussiesExamen(){
 	return EPREUVES_EXAMEN.filter(function(e){ return state.examen.reussies[e.id]; }).length;
@@ -650,7 +789,7 @@ function texteOrdreDeMission(){
 		"",
 		"Libère Laurana : un héraut libre communique ce qui reste à faire.",
 		"",
-		"Myriam tient la Forteresse par cinq sceaux. Le cinquième est le registre de Manon, déchiré cette nuit : remplis-le. Brise-les dans l'ordre que tu veux.",
+		"Myriam tient la Forteresse par cinq sceaux. Le cinquième est le registre de Manon, déchiré cette nuit : remplis-le. Et un sixième t'attend dans /dev/random, sous les projecteurs de Steve. Brise-les dans l'ordre que tu veux.",
 		"Chaque épreuve accomplie compte, même si tu ne vas pas au bout. Tu as trois heures.",
 		""
 	];
@@ -686,7 +825,8 @@ function texteOrdreDeMission(){
 		passwd: "David a crié ton mot de passe au guichet : toute la Forteresse l'a entendu. Change-le.",
 		ping: "Le vrai Oracle des Noms (10.0.92.53) est-il bien vivant ? Vérifie qu'il répond.",
 		diff: "Laurana a gardé une copie du registre des noms dans /srv/sauvegardes. Compare-la à /etc/hosts : la ligne en trop, dans ~/rapport/ajout.txt.",
-		trompette: "Laurana a perdu sa trompette : installe le paquet cowsay, et fais-lui dire Oyez."
+		trompette: "Laurana a perdu sa trompette : installe le paquet cowsay, et fais-lui dire Oyez.",
+		quiz: "Sur le plateau de /dev/random, Steve présente Questions pour un Linux : trois questions au hasard, un point par bonne réponse. Sans indice."
 	};
 	var sceau = 0;
 	EPREUVES_EXAMEN.forEach(function(e, i){
@@ -778,7 +918,7 @@ function texteDiplomeExamen(){
 	var sceau = 0;
 	EPREUVES_EXAMEN.forEach(function(ep, i){
 		if (ep.sceau !== sceau){ sceau = ep.sceau; lignes.push("  " + NOMS_DES_SCEAUX[sceau]); }
-		lignes.push("    " + signeEpreuve(e, ep.id) + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 7) + completerDroite((e.reussies[ep.id] ? ep.points : 0) + "/" + ep.points, 5) + ep.titre +
+		lignes.push("    " + signeEpreuve(e, ep.id) + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 7) + completerDroite((e.reussies[ep.id] ? (ep.score ? ep.score() : ep.points) : 0) + "/" + ep.points, 5) + ep.titre +
 			(e.indices && e.indices[ep.id] ? "  (indice)" : ""));
 	});
 	lignes.push("    (✓ réussie, ✗ pas faite, ! réussie puis défaite)", "",
@@ -809,11 +949,12 @@ function masqueExamen(table){
 }
 function codeDiplomeExamen(){
 	var e = state.examen;
-	var charge = ["E2", String(state.nom || JOUEUR).replace(/\|/g, "/"), noteExamen() * 4, noteDeBaseExamen() * 4, bonusTempsExamen() * 4,
+	var z = e.quiz, detailQuiz = z ? z.ids.map(function(id, k){ var r = z.reponses[k]; return id + (r ? (r.juste ? "+" : "-") + r.lettre : "."); }).join(",") : "";
+	var charge = ["E3", String(state.nom || JOUEUR).replace(/\|/g, "/"), noteExamen() * 4, noteDeBaseExamen() * 4, bonusTempsExamen() * 4,
 		malusErreursExamen() * 4, malusIndicesExamen() * 4, e.erreurs || 0, minutesExamen(),
 		(e.commandesFin !== undefined ? e.commandesFin : state.nbCommandes) - (e.commandesDebut || 0),
 		e.fin === "victoire" ? "V" : "K", masqueExamen(e.reussies), masqueExamen(e.defaites), masqueExamen(e.indices),
-		e.dateFin || dateDuJour(), PROFIL.graine, e.tajineTue ? "T" : "-"].join("|");
+		e.dateFin || dateDuJour(), PROFIL.graine, e.tajineTue ? "T" : "-", detailQuiz].join("|");
 	return versBase64Url(charge) + "." + sommeDeControle(charge + "|" + SEL_DIPLOME);
 }
 function lireCodeExamen(code){
@@ -822,13 +963,14 @@ function lireCodeExamen(code){
 	var charge;
 	try { charge = depuisBase64Url(morceaux[0]); } catch (x){ return null; }
 	var c = charge.split("|");
-	var q = c[0] === "E2" ? 4 : 2;
-	if (!((c[0] === "E1" && c.length === 16) || (c[0] === "E2" && c.length === 17))) return null;
+	var q = c[0] === "E1" ? 2 : 4;
+	if (!((c[0] === "E1" && c.length === 16) || (c[0] === "E2" && c.length === 17) || (c[0] === "E3" && c.length === 18))) return null;
 	function bits(h){ var n = parseInt(h, 16) || 0; return EPREUVES_EXAMEN.map(function(ep, i){ return Math.floor(n / Math.pow(2, i)) % 2 === 1; }); }
 	return { valide: sommeDeControle(charge + "|" + SEL_DIPLOME) === morceaux[1].toUpperCase(),
 		prenom: c[1], note: +c[2] / q, base: +c[3] / q, bonus: +c[4] / q, malusErreurs: +c[5] / q, malusIndices: +c[6] / q, tajine: c[16] === "T",
 		erreurs: +c[7], minutes: +c[8], commandes: +c[9], fin: c[10], reussies: bits(c[11]), defaites: bits(c[12]), indices: bits(c[13]),
-		date: c[14], graine: +c[15] };
+		date: c[14], graine: +c[15],
+		quiz: (c[17] || "").split(",").filter(function(x){ return x; }).map(function(x){ var m = /^(\d+)([+\-.])([A-D]?)$/.exec(x); return m ? { id: +m[1], etat: m[2], lettre: m[3] } : null; }).filter(function(x){ return x; }) };
 }
 
 function terminerExamen(fin){
@@ -882,7 +1024,8 @@ function verifierExamen(){
 			e.reussies[ep.id] = true;
 			if (ep.id === "oreille") montrerImage("./static/img/item_dylan.gif", "Dylan le Saltimbanque, dans le filet");
 			jouerSon("quete");
-			say(C.jaune("★ Épreuve " + CHIFFRES_ROMAINS[i] + " accomplie : " + ep.titre) + C.gris("  +" + ep.points + " pt" + (ep.points > 1 ? "s" : "")));
+			var gagnes = ep.score ? ep.score() : ep.points;
+			say(C.jaune("★ Épreuve " + CHIFFRES_ROMAINS[i] + " accomplie : " + ep.titre) + C.gris("  +" + gagnes + " pt" + (gagnes > 1 ? "s" : "") + (ep.score ? " sur " + ep.points : "")));
 		} else if (!ok && e.reussies[ep.id]){
 			// Une épreuve défaite (un service rallumé, une clé remise) ne compte plus.
 			delete e.reussies[ep.id];
@@ -891,7 +1034,7 @@ function verifierExamen(){
 			say(C.rouge("✗ Épreuve " + CHIFFRES_ROMAINS[i] + " défaite : " + ep.titre));
 		}
 	});
-	[1, 2, 3, 4, 5].forEach(function(s){
+	[1, 2, 3, 4, 5, 6].forEach(function(s){
 		var toutes = EPREUVES_EXAMEN.filter(function(ep){ return ep.sceau === s; }).every(function(ep){ return e.reussies[ep.id]; });
 		e.sceaux = e.sceaux || {};
 		if (toutes && !e.sceaux[s]){
@@ -900,6 +1043,7 @@ function verifierExamen(){
 				1: "Aidan, depuis tes quartiers : « Un sceau ! Le Mage va être content. Moi, je danse. Pieds nus. »",
 				2: "Aidan : « Le guichet se tait, la Bibliothèque se réveille. David boude dans /tmp. Myriam fait une de ces têtes. »",
 				3: "Aidan : « Le Sceau de la Crypte ! Dylan le Saltimbanque a lâché ses balles. Il ne lâche jamais ses balles. »",
+				6: "Les projecteurs s'éteignent sur /dev/random. Steve range ses fiches : « Merci d'avoir joué à Questions pour un Linux ! »",
 				5: "Manon referme son registre, enfin complet : « Tout y est, recrue. Le journal, les preuves, les frappes, ton nom.\n" +
 					"Le jury n'aura rien à redire. » Aidan : « Elle a souri. Manon a souri ! Je l'écris dans MON journal. »",
 				4: "Dans la Tour des Proclamations, la pierre se fend : Laurana la Flamboyante secoue sa crinière rousse et lève sa trompette.\n" +
@@ -915,7 +1059,7 @@ function verifierExamen(){
 		say("\n" + C.vert(C.gras("LA FORTERESSE EST REPRISE")) + "\n\n" +
 			"Le dernier sceau se brise dans un éclat vert. Les sortilèges de Myriam s'éteignent un à un, et la grande porte s'ouvre.\n" +
 			"Une lueur rousse et blanche emplit la Forteresse : Laurent, le Mage Rouxblanc, entre en lissant sa barbe.\n\n" +
-			"Myriam baisse son bâton et éclate de rire. « Trente-deux sur trente-deux, Mage. Ta recrue est meilleure que tes gardes. »\n" +
+			"Myriam baisse son bâton et éclate de rire. « Trente-trois sur trente-trois, Mage. Ta recrue est meilleure que tes gardes. »\n" +
 			"Dylan le Saltimbanque descend des remparts d'un saut périlleux et rattrape ses balles. David remonte de /tmp avec un sac\n" +
 			"de la Taverne aux Arches d'Or : « David a pris des Galettes du Roi Gras pour tout le monde. » Et Aidan surgit de sous\n" +
 			"ton lit de camp, pieds poilus en avant : « Je le savais ! Enfin non. Mais j'y croyais très fort. »\n\n" +
@@ -1022,7 +1166,8 @@ Shell.sorts.verifier = function(args, io){
 
 /* Ce que le formateur lit dans un code d'épreuve finale : la note, son détail, et chaque épreuve. */
 function rapportCodeExamen(c){
-	var points = EPREUVES_EXAMEN.reduce(function(t, ep, i){ return t + (c.reussies[i] ? ep.points : 0); }, 0);
+	var justesQuiz = (c.quiz || []).filter(function(x){ return x.etat === "+"; }).length;
+	var points = EPREUVES_EXAMEN.reduce(function(t, ep, i){ return t + (c.reussies[i] ? (ep.id === "quiz" ? justesQuiz : ep.points) : 0); }, 0);
 	var nb = c.reussies.filter(function(x){ return x; }).length;
 	var lignes = [
 		c.valide ? C.vert("✓ Code authentique") : C.rouge("✗ Code RETOUCHÉ : la somme de contrôle ne correspond pas. Ne pas en tenir compte."),
@@ -1047,6 +1192,15 @@ function rapportCodeExamen(c){
 		lignes.push("    " + signe + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 7) + ep.titre + (c.indices[i] ? C.gris("  (avec indice)") : "") +
 			(c.reussies[i] && c.defaites[i] ? C.gris("  (cassée une fois en route, puis réparée)") : ""));
 	});
+	if (c.quiz && c.quiz.length){
+		lignes.push("", "  " + C.gras("QUESTIONS POUR UN LINUX") + "  " + justesQuiz + " sur " + c.quiz.length);
+		c.quiz.forEach(function(x){
+			var Q = QUESTIONS_POUR_UN_LINUX[x.id];
+			if (!Q) return;
+			lignes.push("    " + (x.etat === "+" ? C.vert("✓") : (x.etat === "-" ? C.rouge("✗") : C.gris("·"))) + " " + C.gris("(ch. " + Q.ch + ") ") + Q.q +
+				"\n        " + C.gris("réponse attendue : " + Q.c[Q.b] + (x.etat === "." ? "   (pas répondu)" : "")));
+		});
+	}
 	lignes.push("", C.gris("  « défaite » : l'épreuve a été réussie, puis l'étudiant l'a cassée (un service rallumé, un fichier abîmé...)."));
 	return lignes.join("\n");
 }
@@ -1101,6 +1255,7 @@ function indiceExamen(args){
 		if (!cible) return "Tout est fait : pas besoin d'indice.";
 	}
 	var num = CHIFFRES_ROMAINS[EPREUVES_EXAMEN.indexOf(cible)];
+	if (cible.id === "quiz") return "Pas d'indice sur le plateau : Steve ne souffle jamais. (Rien ne t'a été retiré.)";
 	if (e.indices[cible.id]) return "Indice (déjà payé), épreuve " + num + " : " + INDICES_EXAMEN[cible.id];
 	if (e.reussies[cible.id]) return "L'épreuve " + num + " est déjà réussie : garde tes quarts de point.";
 	if (nbIndicesExamen() >= INDICES_MAX_EXAMEN) return "Tu as déjà pris tes " + INDICES_MAX_EXAMEN + " indices. Il reste man, et ta tête.";
@@ -1231,6 +1386,8 @@ var RENCONTRES_EXAMEN = [
 	  texte: "Au milieu de la Tour, une statue aux cheveux de flamme, trompette à la main : Laurana, le héraut. (cat Laurana)" },
 	{ id: "gabriel", lieu: function(){ return AtelierComposants; }, image: "item_gabriel.gif", nom: "Gabriel et Cheb Timour",
 	  texte: "Dans l'Atelier, Gabriel lève une barrette de mémoire à la lumière ; derrière lui, Cheb Timour surveille un tajine. (cat Gabriel, cat Timour)" },
+	{ id: "steve", lieu: function(){ return PlateauQuiz; }, image: "item_steve.gif", nom: "Steve, présentateur",
+	  texte: "Les projecteurs s'allument, un jingle retentit : Steve, micro doré à la main. « Bienvenue sur /dev/random, là où même les questions sont aléatoires... et mes blagues aussi ! » (cat Steve)" },
 	{ id: "david", lieu: function(){ return FortTmp; }, image: "item_david.gif", nom: "David, l'ogre des steppes",
 	  texte: "Assis sur des sacs de la Taverne aux Arches d'Or, un ogre maigre mâche une Galette du Roi Gras : David. (cat David)" }
 ];

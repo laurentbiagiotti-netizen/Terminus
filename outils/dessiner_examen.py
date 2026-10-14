@@ -814,8 +814,65 @@ def timour():
     return im
 
 
+def steve():
+    """Steve, le présentateur de Questions pour un Linux : costume à paillettes, noeud papillon, cheveux gominés,
+    grand sourire de plateau, micro doré dans une main, fiches de questions dans l'autre."""
+    im, d = toile()
+    # la veste à paillettes et le pantalon
+    veste = [(62, 80), (114, 80), (122, 140), (54, 140)]
+    d.polygon(veste, fill=V)
+    test = dans_polygone(veste)
+    pois(d, (56, 84, 120, 138), 26, 31, motif=lambda d, x, y: d.point((x, y), fill=B), dans=test)
+    d.polygon([(76, 80), (88, 104), (100, 80)], fill=B)                           # la chemise
+    d.polygon([(66, 80), (80, 80), (88, 104), (80, 120)], fill=N)                 # les revers
+    d.polygon([(110, 80), (96, 80), (88, 104), (96, 120)], fill=N)
+    d.line([(66, 80), (80, 120)], fill=B); d.line([(110, 80), (96, 120)], fill=B)
+    d.polygon([(80, 82), (88, 86), (96, 82), (96, 92), (88, 88), (80, 92)], fill=N)   # le noeud papillon
+    d.ellipse([86, 85, 90, 89], fill=V)
+    for y in (106, 116, 126):
+        d.ellipse([86, y, 90, y + 4], fill=B)
+    d.rectangle([62, 140, 84, 158], fill=N, outline=B); d.rectangle([92, 140, 114, 158], fill=N, outline=B)
+    d.polygon([(58, 156), (84, 156), (86, 162), (56, 162)], fill=B)
+    d.polygon([(92, 156), (118, 156), (120, 162), (90, 162)], fill=B)
+    # le visage et le sourire de plateau
+    d.ellipse([72, 36, 104, 74], fill=B)
+    yeux(d, 88, 54, ecart=7, sourcils=-1)
+    d.line([(88, 57), (86, 62), (89, 62)], fill=N)
+    d.chord([77, 60, 99, 72], 0, 180, fill=N)
+    d.rectangle([80, 63, 96, 66], fill=B)
+    d.line([(84, 63), (84, 66)], fill=N); d.line([(88, 63), (88, 66)], fill=N); d.line([(92, 63), (92, 66)], fill=N)
+    d.ellipse([68, 48, 74, 58], fill=B, outline=N); d.ellipse([102, 48, 108, 58], fill=B, outline=N)
+    # les cheveux gominés, la mèche brillante
+    d.chord([71, 32, 105, 52], 180, 360, fill=V)
+    d.polygon([(72, 42), (74, 32), (82, 24), (96, 20), (106, 26), (100, 28), (92, 30), (84, 34), (78, 44)], fill=V)
+    d.line([(84, 28), (96, 23)], fill=B)
+    d.point([(80, 32), (98, 25)], fill=B)
+    # le micro doré, levé
+    d.polygon([(110, 84), (124, 70), (130, 74), (118, 90)], fill=V, outline=N)
+    d.ellipse([124, 64, 136, 76], fill=B, outline=N)
+    d.line([(132, 66), (142, 50)], fill=B, width=3)
+    d.ellipse([136, 38, 150, 52], fill=B, outline=N)
+    tramer(d, 138, 40, 148, 50, c=N, pas=2)
+    for k in range(3):
+        d.arc([148 + 4 * k, 32 - 4 * k, 156 + 4 * k, 48 - 4 * k], 300, 60, fill=B)
+    # les fiches de questions, dans l'autre main
+    d.polygon([(66, 84), (50, 102), (56, 108), (70, 94)], fill=V, outline=N)
+    d.polygon([(30, 96), (52, 92), (56, 116), (34, 120)], fill=B, outline=N)
+    for k in range(4):
+        d.line([(35, 101 + 4 * k), (51, 98 + 4 * k)], fill=N)
+    d.text((38, 104), "?", fill=V)
+    d.ellipse([46, 104, 58, 116], fill=B, outline=N)
+    # les projecteurs du plateau
+    for x in (14, 162):
+        d.polygon([(x - 6, 0), (x + 6, 0), (x + 3, 10), (x - 3, 10)], fill=B)
+        tramer(d, x - 12, 12, x + 12, 40, c=V, pas=4)
+    etincelle(d, 24, 70, 3); etincelle(d, 158, 96, 2)
+    sol(d, 30, 150, 164)
+    return im
+
+
 DESSINS = {"item_myriam.gif": myriam, "item_dylan.gif": dylan, "item_elfe.gif": steve, "item_rouxblanc.gif": rouxblanc, "item_david.gif": david, "item_laurana.gif": laurana,
-    "item_manon.gif": manon, "item_wissam.gif": wissam, "item_jeanbaptiste.gif": jeanbaptiste, "item_gabriel.gif": gabriel, "item_timour.gif": timour}
+    "item_manon.gif": manon, "item_wissam.gif": wissam, "item_jeanbaptiste.gif": jeanbaptiste, "item_gabriel.gif": gabriel, "item_timour.gif": timour, "item_steve.gif": steve}
 
 if __name__ == "__main__":
     noms = sys.argv[1:] or list(DESSINS)

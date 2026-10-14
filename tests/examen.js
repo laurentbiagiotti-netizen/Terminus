@@ -151,7 +151,21 @@ contient(jeu.taper("diff /srv/sauvegardes/hosts /etc/hosts | grep proclamations 
 contient(jeu.taper("cowsay Oyez"), "", "");
 jeu.taper("sudo apt install cowsay", mdp);
 contient(jeu.taper("cowsay Oyez oyez"), "Épreuve XXXII", "épreuve XXXII : apt et cowsay");
-verifier(jeu.lire("Object.keys(state.examen.reussies).length") === 31, "31 épreuves avant la dernière : " + jeu.lire("Object.keys(state.examen.reussies).join(',')"));
+/* Le Sceau du Plateau : Questions pour un Linux */
+jeu.taper("cd /dev/random");
+contient(jeu.taper("cat Steve"), "QUESTION 1 SUR 3", "Steve pose la première question");
+verifier(jeu.lire("state.examen.quiz.ids.map(function(i){ return QUESTIONS_POUR_UN_LINUX[i].ch; }).sort().join()") === "1,2,3", "une question par chapitre");
+contient(jeu.taper("indice 33"), "Steve ne souffle jamais", "pas d'indice sur le plateau");
+for (var qk = 0; qk < 3; qk++){
+	jeu.taper("cat Steve");
+	var bonne = jeu.lire("questionDuQuiz(state.examen.quiz, " + qk + ").bonne");
+	var rep = jeu.taper("echo " + bonne);
+	contient(rep, "TOP", "bonne réponse " + (qk + 1));
+	if (qk === 2) contient(rep, "Épreuve XXXIII", "épreuve XXXIII : le quiz");
+}
+verifier(jeu.lire("pointsExamen()") === jeu.lire("POINTS_MAX_EXAMEN") - 1, "45 points moins le registre des noms");
+jeu.taper("cd ~");
+verifier(jeu.lire("Object.keys(state.examen.reussies).length") === 32, "32 épreuves avant la dernière : " + jeu.lire("Object.keys(state.examen.reussies).join(',')"));
 jeu.editer("function(t){ return t.split('\\n').filter(function(l){ return l.indexOf('proclamations') === -1; }).join('\\n'); }");
 var fin = jeu.taper("sudo nano /etc/hosts", mdp);
 contient(fin, "Épreuve XVIII", "épreuve XVIII");
@@ -169,6 +183,7 @@ verifier(lu && lu.valide && lu.note === 20 && lu.fin === "V" && lu.erreurs >= 1 
 var rapport = jeu.taper("verifier " + code);
 contient(rapport, "Code authentique", "verifier");
 contient(rapport, "cassée une fois en route", "verifier montre l'épreuve cassée par le sortilège");
+contient(rapport, "QUESTIONS POUR UN LINUX  3 sur 3", "verifier montre le quiz");
 contient(normal.taper("verifier " + code), "Restaurer la proclamation", "verifier marche aussi hors de l'épreuve");
 contient(jeu.taper("verifier " + code.replace(/.$/, function(c){ return c === "A" ? "B" : "A"; })), "", "");
 contient(jeu.taper("kamikaze"), "terminée", "kamikaze après la fin");
@@ -194,7 +209,7 @@ contient(k.taper("kamikaze", "non"), "continue", "kamikaze se confirme");
 verifier(!k.lire("examenFini()"), "non : on continue");
 var sortie = k.taper("kamikaze", "oui");
 contient(sortie, "KAMIKAZE", "le sacrifice");
-contient(sortie, "NOTE FINALE         : 0,75 / 20", "la note de ce qui est fait : 2 points sur 42 (1 / 20) moins un indice à 0,25");
+contient(sortie, "NOTE FINALE         : 0,75 / 20", "la note de ce qui est fait : 2 points sur 45 (1 / 20) moins un indice à 0,25");
 contient(sortie, "Ajourné", "la mention");
 var codeK = sortie.split("Code de vérification, à remettre au formateur :")[1].split("\n")[1].trim();
 var luK = k.lire("lireCodeExamen(" + JSON.stringify(codeK) + ")");

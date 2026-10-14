@@ -293,8 +293,38 @@ def chambre_myriam():
     return im
 
 
+def plateau():
+    """Le plateau de Questions pour un Linux (/dev/random) : un grand écran, trois pupitres et leurs buzzers,
+    des projecteurs, un public d'ombres au premier rang."""
+    im, d = toile()
+    piece(d, 22, 14, 154, 104)
+    # les projecteurs et leurs faisceaux
+    for x in (30, 88, 146):
+        d.polygon([(x - 5, 14), (x + 5, 14), (x + 3, 20), (x - 3, 20)], fill=B)
+        tramer(d, x - 10, 22, x + 10, 100, c=V, pas=5)
+    # le grand écran et son titre
+    d.rectangle([40, 20, 136, 62], fill=B)
+    d.rectangle([44, 24, 132, 58], fill=N)
+    d.text((54, 28), "QUESTIONS", fill=V)
+    d.text((60, 38), "POUR UN", fill=B)
+    d.text((62, 48), "LINUX", fill=V)
+    for k in range(6):
+        d.point([(46 + 16 * k, 26), (52 + 16 * k, 56)], fill=B)
+    # trois pupitres avec leurs buzzers
+    for k, x in enumerate((30, 74, 118)):
+        d.polygon([(x, 90), (x + 30, 90), (x + 34, 126), (x - 4, 126)], fill=B)
+        d.rectangle([x + 4, 100, x + 26, 118], fill=V if k == 1 else N)
+        d.text((x + 11, 104), "ABC"[k], fill=B if k == 1 else V)
+        d.chord([x + 9, 82, x + 21, 94], 180, 360, fill=V if k != 1 else B, outline=B)
+    # le public, en ombres, au premier rang
+    for k, x in enumerate(range(6, 176, 14)):
+        d.ellipse([x, 142 + (k % 2) * 3, x + 10, 152 + (k % 2) * 3], fill=N, outline=B)
+        d.chord([x - 3, 150 + (k % 2) * 3, x + 13, 172], 180, 360, fill=N, outline=B)
+    return im
+
+
 DESSINS = {"loc_quartiers.gif": quartiers, "loc_couloir.gif": couloir, "loc_proclamations.gif": proclamations,
-           "loc_atelier.gif": atelier, "loc_gardiens.gif": gardiens, "loc_horloge.gif": horloge, "loc_chambre_myriam.gif": chambre_myriam}
+           "loc_atelier.gif": atelier, "loc_gardiens.gif": gardiens, "loc_horloge.gif": horloge, "loc_chambre_myriam.gif": chambre_myriam, "loc_plateau.gif": plateau}
 
 if __name__ == "__main__":
     noms = sys.argv[1:] or list(DESSINS)
