@@ -196,6 +196,14 @@ contient(jeu.taper("verifier " + code.replace(/.$/, function(c){ return c === "A
 contient(jeu.taper("kamikaze"), "terminée", "kamikaze après la fin");
 contient(jeu.taper("examen"), "DIPLÔME", "examen réimprime le diplôme");
 
+/* --- 2 bis. Le temps est celui de l'horloge : une pause de 50 minutes compte --- */
+(function(){
+	var h = examen(55);
+	h.lire("state.examen.debutHorloge -= 50 * 60000");
+	verifier(h.lire("minutesExamen()") === 50, "50 minutes à l'horloge : " + h.lire("minutesExamen()"));
+	contient(h.taper("cat /Manon"), "Il reste 1 h 25 pour gagner le bonus de +2", "Manon compte à l'horloge");
+})();
+
 /* --- 3. La sauvegarde de l'examen garde l'avancée --- */
 verifier(!!jeu.stockage["terminus-cybersup-examen"], "l'épreuve a sa propre sauvegarde");
 var repris = monde.nouveauMonde(jeu.stockage);

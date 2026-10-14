@@ -796,9 +796,17 @@ function pointsExamen(){
 function nbReussiesExamen(){
 	return EPREUVES_EXAMEN.filter(function(e){ return state.examen.reussies[e.id]; }).length;
 }
+/* Le temps de l'épreuve est celui de l'horloge, comme dans une salle d'examen : les pauses comptent.
+   (Le temps « actif » du jeu normal ne compte pas les silences de plus de deux minutes, ce qui gonflerait le bonus.)
+   Une ancienne épreuve sans horloge garde l'ancien calcul. */
 function minutesExamen(){
-	var fin = state.examen.fini ? state.examen.tempsFin : state.tempsMs;
-	return Math.max(0, Math.round((fin - state.examen.debut) / 60000));
+	var e = state.examen;
+	if (e.debutHorloge){
+		var fin = e.fini && e.finHorloge ? e.finHorloge : Date.now();
+		return Math.max(0, Math.floor((fin - e.debutHorloge) / 60000));
+	}
+	var finJeu = e.fini ? e.tempsFin : state.tempsMs;
+	return Math.max(0, Math.round((finJeu - e.debut) / 60000));
 }
 function dureeExamen(minutes){ return minutes < 60 ? minutes + " min" : Math.floor(minutes / 60) + " h " + deuxChiffres(minutes % 60); }
 function mentionExamen(note){
@@ -917,7 +925,7 @@ TEXTE_ENTREE_EXAMEN = TEXTE_ENTREE_EXAMEN.replace(/([^\n])\n(?=[^\n])/g, "$1 ");
 
 /* Ouvre une épreuve neuve : tous les sorts, la Forteresse, et le silence. */
 function demarrerExamen(){
-	state.examen = { debut: state.tempsMs || 0, reussies: {}, ordreLu: false, fini: false, fin: null, dateFin: null, tempsFin: null, commandesDebut: state.nbCommandes, lieu: null, erreurs: 0, indices: {}, defaites: {}, sceaux: {}, rencontres: {} };
+	state.examen = { debutHorloge: Date.now(), debut: state.tempsMs || 0, reussies: {}, ordreLu: false, fini: false, fin: null, dateFin: null, tempsFin: null, commandesDebut: state.nbCommandes, lieu: null, erreurs: 0, indices: {}, defaites: {}, sceaux: {}, rencontres: {} };
 	[SORTS_DE_DEPART, ORDRE_DES_SORTS, ORDRE_DES_SORTS_2, ORDRE_DES_SORTS_3].forEach(function(liste){
 		(liste || []).forEach(function(s){ state.spells[s] = true; state.usages[s] = true; });
 	});
@@ -1024,6 +1032,7 @@ function terminerExamen(fin){
 	e.fin = fin;
 	e.dateFin = dateDuJour();
 	e.tempsFin = state.tempsMs;
+	e.finHorloge = Date.now();
 	e.commandesFin = state.nbCommandes;
 	// Laurana porte le diplôme : une copie dans ~/rapport, pour le recopier sans erreur.
 	var texte = sansAnsi(texteDiplomeExamen()) + "\n";
@@ -1040,6 +1049,7 @@ function terminerExamen(fin){
 function verifierExamen(){
 	var e = state.examen;
 	if (!e) return;
+	isolerExamen();
 	if (racineDe(current_room) === Forteresse) e.lieu = cheminForteresse(current_room);
 	if (e.fini) return;
 	// Le sortilège de Myriam : tant que sa ligne de cron vit, la proclamation de Laurana est recouverte à la « minute » suivante.
