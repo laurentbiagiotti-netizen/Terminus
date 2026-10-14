@@ -629,6 +629,7 @@ function texteOrdreDeMission(){
 		lignes.push("  " + coche + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 6) + textes[e.id].replace(/\n\s+/g, "\n            ") + "  (" + e.points + " pt" + (e.points > 1 ? "s" : "") + ")");
 	});
 	lignes.push("",
+		"LA CARTE : tree / dessine la Forteresse, ses lieux et ceux qui y vivent (tree -L 3 / pour descendre plus loin).",
 		"Ton mot de passe sudo : " + MOT_DE_PASSE_SUDO + ". Pas de radio : man reste ton meilleur allié.",
 		"LE BARÈME : la note vient des épreuves réussies. Tout fini en moins de 2 h : +2 ; en moins de 2 h 30 : +1.",
 		"Les fausses manœuvres (une ligne qui échoue) : les " + ERREURS_GRATUITES_EXAMEN + " premières sont gratuites, puis -0,5 toutes les " + ERREURS_PAR_DEMI_POINT + " (au plus -" + MALUS_MAX_EXAMEN + ").",
@@ -654,7 +655,8 @@ var TEXTE_ENTREE_EXAMEN =
 	"et le Mage, enfermé dehors, n'a pu glisser qu'un ordre de mission sous ta porte. Tu as trois heures.\n\n" +
 	"Tu as appris le terminal à Terminus, réparé le réseau avec Radia, traqué l'intrus avec Grace.\n" +
 	"Cette fois, personne ne te guidera. Sauf, peut-être, Aidan, l'elfe aux pieds poilus enfermé avec toi. Mais non.\n" +
-	"Ton ordre de mission est caché dans tes quartiers. Trouve-le.";
+	"Ton ordre de mission est caché dans tes quartiers. Trouve-le.\n\n" +
+	"Pour commencer, regarde la carte de la Forteresse : tree /";
 
 /* Ouvre une épreuve neuve : tous les sorts, la Forteresse, et le silence. */
 function demarrerExamen(){
@@ -1097,6 +1099,14 @@ Shell.sorts.pwd = function(args, io){
 	return cheminForteresse(current_room);
 };
 
+/* La carte de la Forteresse : pendant l'épreuve, tree s'arrête à deux niveaux si on ne lui dit pas plus. */
+var TREE_HORS_EXAMEN = Shell.sorts.tree;
+Shell.sorts.tree = function(args, io){
+	if (!examenEnCours() || args.some(function(a){ return a === "-L" || /^-L\d/.test(a); })) return TREE_HORS_EXAMEN.apply(this, arguments);
+	var sortie = TREE_HORS_EXAMEN.call(this, ["-L", "2"].concat(args), io);
+	return sortie + (io.tty ? "\n" + C.gris("(La carte s'arrête à deux niveaux. tree -L 3 / pour descendre plus loin.)") : "");
+};
+
 /* Les ports de la Forteresse : ceux des services allumés, et Dylan le Saltimbanque, l'oreille de Myriam. */
 var PRISES_HORS_EXAMEN = prisesDe;
 prisesDe = function(hote){
@@ -1151,7 +1161,8 @@ GameState.prototype.queteEnCours = function(){
 	if (this.examen && modeExamen()){
 		return { id: "examen", titre: this.examen.fini ? "Épreuve finale terminée · " + ecrireNote(noteExamen()) + " / 20" :
 			"Épreuve finale · " + nbReussiesExamen() + " sur " + EPREUVES_EXAMEN.length + " · " + ecrireNote(noteExamen()) + " / 20",
-			indice: this.examen.fini ? "examen : ton diplôme et son code. examen quitter : revenir à ta partie." : "Ton ordre de mission est dans tes quartiers. examen : le bilan. indice : un coup de pouce (-0,25). kamikaze : rendre ta copie." };
+			indice: this.examen.fini ? "examen : ton diplôme et son code. examen quitter : revenir à ta partie." : (this.examen.ordreLu ? "tree / : la carte de la Forteresse. examen : le bilan. indice : un coup de pouce (-0,25). kamikaze : rendre ta copie." :
+				"Commence par la carte : tree /. Ton ordre de mission est caché dans tes quartiers (ls -a)." ) };
 	}
 	return QUETE_HORS_EXAMEN.apply(this, arguments);
 };
