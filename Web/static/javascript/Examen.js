@@ -286,6 +286,11 @@ var ArchiveProclamation = objetExamen(FortSauvegardes, "proclamations.tar",
 	"(Une archive tar : ses octets ne se lisent pas tels quels. tar -tf la liste, tar -xf l'extrait.)", { image: "item_box.gif" });
 ArchiveProclamation.archive = [{ n: "index.html", x: PROCLAMATION_LAURANA }];
 objetExamen(FortSauvegardes, "hosts", "127.0.0.1\tlocalhost\n127.0.1.1\tforteresse\n" + IP_VRAI_ORACLE + "\toracle dns.cybersup.lan\n10.0.92.20\tintranet\n10.0.97.1\tmairie\n", { image: "item_manuscript.gif" });
+var PASSWD_HIER = "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\n" +
+	"sshd:x:105:65534::/run/sshd:/usr/sbin/nologin\n" + JOUEUR + ":x:1000:1000:Recrue de l'épreuve finale:/home/" + JOUEUR + ":/bin/bash\n" +
+	"aidan:x:1001:1001:Aidan, elfe:/home/aidan:/bin/bash\n";
+objetExamen(FortSauvegardes, "passwd.hier", PASSWD_HIER, { image: "item_manuscript.gif" });
+objetExamen(FortSauvegardes, "passwd.cette-nuit", PASSWD_HIER + "myriam:x:0:0:Myriam, sorcière:/home/myriam:/bin/bash\n", { image: "item_manuscript.gif" });
 objetExamen(FortSauvegardes, "LISEZMOI",
 	"Sauvegarde de la Tour des Proclamations, faite chaque soir par Laurana.\n" +
 	"Une sauvegarde jamais restaurée n'est pas une sauvegarde.\n", { image: "item_sign.gif" });
@@ -359,7 +364,7 @@ var WissamSage = personnageExamen(FortHome, "Wissam", "item_wissam.gif", functio
 	var n = e ? state.nbCommandes : 0;
 	var ici = typeof current_room !== "undefined" && current_room && racineDe(current_room) === Forteresse ? cheminForteresse(current_room) : "";
 	var duLieu = CONSEILS_DU_LIEU.filter(function(c){ return ici === c[0] || ici.indexOf(c[0] + "/") === 0; })[0];
-	return "Wissam le Sage, assis en tailleur au milieu du couloir des quartiers, une théière à ses pieds.\n" +
+	return "Wissam le Sage, assis en tailleur au milieu du couloir des quartiers, une théière à ses pieds.\n\n" +
 		"« Mes conseils ne coûtent rien. Ce sont les plus chers à ne pas suivre. »\n\n" +
 		"« " + CONSEILS_DE_WISSAM[n % CONSEILS_DE_WISSAM.length] + " »" +
 		(duLieu ? "\n\nEt, pour l'endroit d'où tu viens (" + duLieu[0] + ") : « " + duLieu[1] + " »" : "\n\n(Reviens me voir d'ailleurs : j'ai un conseil pour chaque coin de la Forteresse.)");
@@ -483,6 +488,23 @@ var SteveAnimateur = personnageExamen(PlateauQuiz, "Steve", "item_steve.gif", fu
 
 World.fige = true;
 
+/* Les répliques coulent en paragraphes : c'est le terminal qui coupe les lignes selon sa largeur (ordinateur ou téléphone).
+   Les lignes en retrait (listes, choix A B C D, sceaux) gardent leur place. */
+function couler(texte){ return String(texte).replace(/([^\n])\n(?=[^\n ])/g, "$1 "); }
+(function(){
+	function parcourir(lieu){
+		lieu.items.forEach(function(item){
+			if (!item.person) return;
+			var d = Object.getOwnPropertyDescriptor(item.cmd_text, "less");
+			if (!d || !d.get) return;
+			var origine = d.get;
+			Object.defineProperty(item.cmd_text, "less", { get: function(){ return couler(origine.call(this)); }, set: function(){}, enumerable: true, configurable: true });
+		});
+		lieu.children.forEach(parcourir);
+	}
+	parcourir(Forteresse);
+})();
+
 /* La plage de la Mairie : null si elle est juste, sinon la plainte du serveur. */
 function verdictDhcpExamen(){
 	var texte = DhcpdExamen.getText();
@@ -574,8 +596,8 @@ EPREUVES_EXAMEN.push(
 	  fait: function(){ return !!state.examen.passwdChange; } },
 	{ id: "ping", sceau: 5, points: 1, titre: "Vérifier que le vrai Oracle répond (ping)",
 	  fait: function(){ return !!state.examen.oraclePing; } },
-	{ id: "diff", sceau: 5, points: 1, titre: "Comparer le registre des noms à sa sauvegarde (~/rapport/ajout.txt)",
-	  fait: function(){ var t = texteRapport("ajout.txt"); return t !== null && t.indexOf(IP_ASSAILLANT_EXAMEN) > -1 && t.indexOf("proclamations") > -1; } },
+	{ id: "diff", sceau: 5, points: 1, titre: "Trouver le compte ajouté cette nuit (diff, ~/rapport/ajout.txt)",
+	  fait: function(){ var t = texteRapport("ajout.txt"); return t !== null && t.indexOf("myriam:x:0:0") > -1; } },
 	{ id: "trompette", sceau: 5, points: 1, titre: "Rendre sa trompette à Laurana (apt), et la faire sonner : Oyez",
 	  fait: function(){ return !!(state.paquets && state.paquets.cowsay) && !!state.examen.trompette; } }
 );
@@ -676,10 +698,10 @@ function questionDuQuiz(z, k){
 }
 function texteDeSteve(){
 	var e = typeof state !== "undefined" && state ? state.examen : null;
-	var debut = "Steve, costume à paillettes et micro doré, sous les projecteurs de /dev/random.\n" +
+	var debut = "Steve, costume à paillettes et micro doré, sous les projecteurs de /dev/random.\n\n" +
 		"« Bonsoir, bonsoir ! Bienvenue dans QUESTIONS POUR UN LINUX ! Trois questions, tirées au hasard parmi cinquante,\n" +
 		"sur tout ce que tu as vu : le terminal, le réseau, la Crypte. Chaque bonne réponse vaut un point dans ta note.\n" +
-		"Une seule réponse par question, pas de joker, pas d'indice : Steve ne souffle jamais. »\n" +
+		"Une seule réponse par question, pas de joker, pas d'indice : Steve ne souffle jamais. »\n\n" +
 		C.gris("« Et pour détendre l'atmosphère : " + blagueDeSteve(e && e.quiz ? e.quiz.reponses.length * 5 + (state.nbCommandes % 3) : state.nbCommandes) + " »") + "\n\n";
 	if (!e) return debut + "« Le plateau ouvre pendant l'épreuve finale. »";
 	if (!e.quiz){ e.quiz = tirerQuiz(); }
@@ -693,7 +715,7 @@ function texteDeSteve(){
 			"Zéro ! Mais zéro, c'est l'UID de root. Tu vois, tu es quand même au sommet."))) + " »";
 	}
 	var qq = questionDuQuiz(z, k);
-	return debut + C.gras("QUESTION " + (k + 1) + " SUR " + z.ids.length) + C.gris("  (chapitre " + qq.q.ch + ")") + "\n" + qq.q.q + "\n\n" +
+	return debut + C.gras("QUESTION " + (k + 1) + " SUR " + z.ids.length) + C.gris("  (chapitre " + qq.q.ch + ")") + "\n\n" + C.gras(qq.q.q) + "\n\n" +
 		qq.ordre.map(function(i, n){ return "  " + LETTRES_QUIZ[n] + ".  " + qq.q.c[i]; }).join("\n") +
 		"\n\n« Ta réponse, ici sur le plateau : echo A, echo B, echo C ou echo D. »";
 }
@@ -827,7 +849,7 @@ function texteOrdreDeMission(){
 		balcon: "Laurana aimerait te voir souvent : trace dans tes quartiers un raccourci vers le balcon de la Tour (/var/www/html).",
 		passwd: "David a crié ton mot de passe au guichet : toute la Forteresse l'a entendu. Change-le.",
 		ping: "Le vrai Oracle des Noms (10.0.92.53) est-il bien vivant ? Vérifie qu'il répond.",
-		diff: "Laurana a gardé une copie du registre des noms dans /srv/sauvegardes. Compare-la à /etc/hosts : la ligne en trop, dans ~/rapport/ajout.txt.",
+		diff: "Manon garde deux sauvegardes du registre des comptes dans /srv/sauvegardes : celle d'hier et celle de cette nuit. Compare-les : la ligne ajoutée, dans ~/rapport/ajout.txt.",
 		trompette: "Laurana a perdu sa trompette : installe le paquet cowsay, et fais-lui dire Oyez.",
 		quiz: "Sur le plateau de /dev/random, Steve présente Questions pour un Linux : trois questions au hasard, un point par bonne réponse. Sans indice."
 	};
@@ -908,9 +930,9 @@ function signeEpreuve(e, id){ return e.reussies[id] ? "✓" : (e.defaites && e.d
 function texteDiplomeExamen(){
 	var e = state.examen, minutes = minutesExamen();
 	var lignes = [
-		"=================================================================",
+		"========================================",
 		"       CYBERSUP · DIPLÔME DE L'ÉPREUVE FINALE",
-		"=================================================================",
+		"========================================",
 		"",
 		"  Décerné à : " + (state.nom || JOUEUR),
 		"  " + (e.fin === "victoire" ? "qui a repris la Forteresse à la sorcière Myriam et rendu sa voix à Laurana." :
@@ -936,10 +958,10 @@ function texteDiplomeExamen(){
 		"",
 		"  Signé : Laurent, le Mage Rouxblanc, Directeur Pédagogique de Cybersup",
 		"  Proclamé par : Laurana la Flamboyante, héraut de Cybersup",
-		"=================================================================",
+		"========================================",
 		"  Code de vérification, à remettre au formateur :",
 		"  " + codeDiplomeExamen(),
-		"=================================================================");
+		"========================================");
 	return lignes.join("\n");
 }
 
@@ -1058,7 +1080,7 @@ function verifierExamen(){
 		terminerExamen("victoire");
 		jouerSon("victoire");
 		montrerImage("./static/img/item_rouxblanc.gif", "Laurent, le Mage Rouxblanc");
-		say("\n" + C.vert(C.gras("LA FORTERESSE EST REPRISE")) + "\n\n" +
+		say("\n" + C.vert(C.gras("LA FORTERESSE EST REPRISE")) + "\n\n" + couler(
 			"Le dernier sceau se brise dans un éclat vert. Les sortilèges de Myriam s'éteignent un à un, et la grande porte s'ouvre.\n" +
 			"Une lueur rousse et blanche emplit la Forteresse : Laurent, le Mage Rouxblanc, entre en lissant sa barbe.\n\n" +
 			"Myriam baisse son bâton et éclate de rire. « Trente-trois sur trente-trois, Mage. Ta recrue est meilleure que tes gardes. »\n" +
@@ -1071,7 +1093,7 @@ function verifierExamen(){
 			"Ce que tu viens de faire, tu le referas pour de vrai, un jour, sur une vraie machine. Félicitations. »\n\n" +
 			"Laurana monte sur le balcon de la Tour, souffle dans sa trompette d'argent, et proclame ton nom aux sept campus.\n" +
 			"Manon le recopie au propre dans son registre, Wissam lève sa tasse, Jean-Baptiste ajoute ta maison sur son plan, Gabriel et Timour\n" +
-			"servent le tajine, et Steve, au micro : « Et c'est un sans-faute pour la Forteresse ! Je n'ai pas de blague. Si. Non. »\n\n" +
+			"servent le tajine, et Steve, au micro : « Et c'est un sans-faute pour la Forteresse ! Je n'ai pas de blague. Si. Non. »\n\n") +
 			texteDiplomeExamen());
 	}
 }
@@ -1140,11 +1162,11 @@ Shell.sorts.kamikaze = function(args, io){
 		terminerExamen("kamikaze");
 		jouerSon("niveau");
 		montrerImage("./static/img/item_elfe.gif", "Aidan, qui t'a rattrapé(e)");
-		term.echo(C.rouge(C.gras("KAMIKAZE")) + "\n\n" +
+		term.echo(C.rouge(C.gras("KAMIKAZE")) + "\n\n" + couler(
 			"Tu lèves les deux mains et prononces le dernier sort. Un éclair blanc traverse la Forteresse :\n" +
 			"les écrans s'éteignent, Myriam hurle, Dylan le Saltimbanque tombe de son monocycle, David lâche sa galette,\n" +
 			"et toi, tu tombes. Aidan te rattrape juste avant le sol : « Pas mal, pour un sacrifice. Je note 7 sur 10 pour le style. »\n" +
-			"Avant le noir, ton rapport passe sous la grande porte, jusqu'aux mains du Mage Rouxblanc. Rien de ce que tu as accompli n'est perdu.\n\n" + texteDiplomeExamen());
+			"Avant le noir, ton rapport passe sous la grande porte, jusqu'aux mains du Mage Rouxblanc. Rien de ce que tu as accompli n'est perdu.\n\n") + texteDiplomeExamen());
 		if (typeof majEtat === "function") majEtat();
 	});
 	return "";
@@ -1241,7 +1263,7 @@ var INDICES_EXAMEN = {
 	balcon: "ln -s CIBLE NOM trace un raccourci. La cible s'écrit en chemin complet.",
 	passwd: "Il y a un sort qui porte le nom exact de ce qu'il change.",
 	ping: "ping -c 1 ADRESSE envoie un seul accusé de réception.",
-	diff: "diff FICHIER1 FICHIER2 montre les lignes qui changent. Les lignes en > ou < sont celles en plus.",
+	diff: "diff FICHIER1 FICHIER2 montre les lignes qui changent : une ligne précédée de > n'existe que dans le second.",
 	trompette: "sudo apt install PAQUET, puis cowsay TEXTE.",
 	quiz: "Steve ne souffle jamais : sur le plateau, pas d'indice."
 };

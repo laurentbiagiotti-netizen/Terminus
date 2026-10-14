@@ -147,8 +147,8 @@ verifier(lien.indexOf("Cybersup") === -1, "les chemins s'écrivent comme sur la 
 contient(jeu.taper("passwd", ["Une phrase bien longue 42", "Une phrase bien longue 42"]), "Épreuve XXIX", "épreuve XXIX : passwd");
 verifier(jeu.taper("passwd", ["Une autre phrase longue 43", "Une autre phrase longue 43"]).indexOf("RSSI") === -1, "le RSSI du chapitre 1 se tait");
 contient(jeu.taper("ping -c 1 10.0.92.53"), "Épreuve XXX", "épreuve XXX : ping");
-contient(jeu.taper("diff /srv/sauvegardes/hosts /etc/hosts"), "proclamations", "diff montre l'ajout");
-contient(jeu.taper("diff /srv/sauvegardes/hosts /etc/hosts | grep proclamations > ~/rapport/ajout.txt"), "Épreuve XXXI", "épreuve XXXI : diff");
+contient(jeu.taper("diff /srv/sauvegardes/passwd.hier /srv/sauvegardes/passwd.cette-nuit"), "myriam", "diff montre le compte ajouté");
+contient(jeu.taper("diff /srv/sauvegardes/passwd.hier /srv/sauvegardes/passwd.cette-nuit | grep myriam > ~/rapport/ajout.txt"), "Épreuve XXXI", "épreuve XXXI : diff");
 contient(jeu.taper("cowsay Oyez"), "", "");
 jeu.taper("sudo apt install cowsay", mdp);
 contient(jeu.taper("cowsay Oyez oyez"), "Épreuve XXXII", "épreuve XXXII : apt et cowsay");
@@ -221,6 +221,61 @@ contient(k.taper("chmod +x ~/rapport"), "", "");
 verifier(k.lire("pointsExamen()") === 2, "plus rien ne compte après la copie rendue");
 var faux = codeK.replace(/^(.)/, function(c){ return c === "R" ? "S" : "R"; });
 contient(k.taper("verifier " + faux), "", "");
+
+
+/* --- 5. Dans le désordre : aucune épreuve ne devient impossible selon l'ordre choisi --- */
+(function(){
+	var d = examen(99);
+	var m = d.lire("MOT_DE_PASSE_SUDO"), ip = d.lire("IP_ASSAILLANT_EXAMEN"), mot = d.lire("MOT_DE_MYRIAM");
+	function nano(f, fonction){ d.editer(fonction); return d.taper("sudo nano " + f, m); }
+	var pas = {
+		hosts: function(){ nano("/etc/hosts", "function(t){ return t.split('\\n').filter(function(l){ return l.indexOf('proclamations') === -1; }).join('\\n'); }"); },
+		uid0: function(){ nano("/etc/passwd", "function(t){ return t.split('\\n').filter(function(l){ return l.indexOf('myriam:') !== 0; }).join('\\n'); }"); },
+		diff: function(){ d.taper("diff /srv/sauvegardes/passwd.hier /srv/sauvegardes/passwd.cette-nuit | grep myriam > ~/rapport/ajout.txt"); },
+		droits: function(){ d.taper("sudo chown root /var/www/html/index.html", m); d.taper("sudo chmod 644 /var/www/html/index.html", m); },
+		proclamation: function(){ d.taper("cd ~"); d.taper("tar -xf /srv/sauvegardes/proclamations.tar"); d.taper("sudo cp index.html /var/www/html/index.html", m); },
+		sortilege: function(){ d.taper("sudo crontab -u myriam -r", m); },
+		cle: function(){ nano("/root/.ssh/authorized_keys", "function(t){ return t.split('\\n').filter(function(l){ return l.indexOf('myriam@tour-noire') === -1; }).join('\\n'); }"); },
+		oreille: function(){ d.taper("sudo kill -9 " + d.lire("PID_OREILLE"), m); },
+		suid: function(){ d.taper("sudo chmod u-s /usr/local/lib/.passe-muraille", m); },
+		signature: function(){ d.taper("echo " + mot + " > ~/rapport/signature.txt"); },
+		gardien: function(){ d.taper("sudo mv /opt/gardiens/vigile /quarantaine/", m); },
+		nginx: function(){ d.taper("sudo systemctl enable --now nginx", m); },
+		telnet: function(){ d.taper("sudo systemctl disable --now telnet", m); },
+		mairie: function(){ nano("/etc/dhcp/dhcpd.conf", "function(t){ return t.replace('10.0.97.100 10.0.97.150', '10.0.97.10 10.0.97.60'); }"); d.taper("sudo systemctl start isc-dhcp-server", m); },
+		oracle: function(){ nano("/etc/resolv.conf", "function(t){ return t.replace('10.0.66.53', '10.0.92.53'); }"); },
+		fragment: function(){ d.taper("mv " + d.taper("find /srv -name fragment-du-sceau").trim().split("\n")[0] + " ~/rapport"); },
+		rempart: function(){ d.taper("chmod 755 ~/arsenal/rempart.sh"); d.taper("bash ~/arsenal/rempart.sh"); },
+		assaillant: function(){ d.taper("echo " + ip + " > ~/rapport/assaillant.txt"); },
+		ordre: function(){ d.taper("cat ~/.ordre-de-mission"); },
+		trompette: function(){ d.taper("sudo apt install cowsay", m); d.taper("cowsay oyez"); },
+		ping: function(){ d.taper("ping -c 1 10.0.92.53"); },
+		passwd: function(){ d.taper("passwd", ["Encore une phrase longue 44", "Encore une phrase longue 44"]); },
+		balcon: function(){ d.taper("cd ~"); d.taper("ln -s /var/www/html balcon"); },
+		maitre: function(){ d.taper("export MAITRE=rouxblanc"); },
+		alias: function(){ d.taper("unalias ps"); d.taper("alias carte='tree -L 2 /'"); },
+		piege: function(){ d.taper("rmdir /tmp/piege"); },
+		disque: function(){ d.taper("echo log > ~/rapport/disque.txt"); },
+		identite: function(){ d.taper("id > ~/rapport/identite.txt"); d.taper("hostname >> ~/rapport/identite.txt"); },
+		preuves: function(){ d.taper("mkdir ~/rapport/preuves"); d.taper("touch ~/rapport/preuves/SCELLE"); d.taper("cp /var/log/auth.log ~/rapport/preuves/auth.log"); },
+		frappes: function(){ d.taper("grep -c " + ip + " /var/log/auth.log > ~/rapport/frappes.txt"); },
+		chronique: function(){ var h = d.lire("heuresDesFrappes()"); d.taper("echo " + h.premiere + " " + h.derniere + " > ~/rapport/chronique.txt"); },
+		journal: function(){ d.taper("date > ~/rapport/journal.txt"); d.taper("history >> ~/rapport/journal.txt"); },
+		quiz: function(){ d.taper("cd /dev/random"); for (var k = 0; k < 3; k++){ d.taper("cat Steve"); d.taper("echo " + (k === 1 ? "A" : d.lire("questionDuQuiz(state.examen.quiz, " + k + ").bonne"))); } d.taper("cd ~"); }
+	};
+	var ordre = ["hosts", "uid0", "diff", "droits", "proclamation", "sortilege", "quiz", "journal", "chronique", "frappes", "preuves", "identite", "disque", "piege",
+		"alias", "maitre", "balcon", "passwd", "ping", "trompette", "cle", "oreille", "suid", "signature", "gardien", "nginx", "telnet", "mairie", "oracle",
+		"fragment", "rempart", "assaillant", "ordre"];
+	var echecs = [];
+	ordre.forEach(function(id){
+		pas[id]();
+		if (id !== "proclamation" && id !== "droits" && !d.lire("!!state.examen.reussies['" + id + "']")) echecs.push(id);
+	});
+	verifier(!echecs.length, "dans le désordre, chaque épreuve passe à son tour : " + echecs.join(", "));
+	verifier(d.lire("state.examen.fini && state.examen.fin === 'victoire'"), "dans le désordre, la Forteresse est reprise : " +
+		d.lire("EPREUVES_EXAMEN.filter(function(e){ return !state.examen.reussies[e.id]; }).map(function(e){ return e.id; }).join(',')"));
+	verifier(d.lire("noteExamen()") >= 19, "la note avec une mauvaise réponse au quiz : " + d.lire("noteExamen()"));
+})();
 
 console.log("Épreuve finale : " + ok + " vérifications réussies, " + ko + " échecs.");
 process.exit(ko ? 1 : 0);
