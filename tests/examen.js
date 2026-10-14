@@ -34,6 +34,12 @@ verifier(!normal.lire("codeExamenValide('TEST-1235')"), "un mauvais code n'ouvre
 verifier(normal.lire("EMPREINTE_CODE_EXAMEN.length") === 64, "l'empreinte du code est un SHA-256, pas une somme de 8 caractères");
 contient(normal.taper("examen", "FAUX"), "pas le bon code", "examen refuse un faux code");
 contient(normal.taper("kamikaze"), "n'a de sens que pendant", "kamikaze hors épreuve");
+contient(normal.taper("examen", ["TEST-1234", "non"]), "Aucun badge ici", "l'entrée prévient quand la partie n'a aucun badge");
+normal.lire("state.quests.r_osi = true; state.set('platine_cyber');");
+var entree = normal.taper("examen", ["TEST-1234", "non"]);
+contient(entree, "2 sur " + TOUS_LES_BADGES.length, "l'entrée annonce les badges qui seront relevés");
+verifier(entree.indexOf("Aucun badge") === -1, "pas d'alerte quand il y a des badges");
+normal.lire("delete state.quests.r_osi; delete state.flags.platine_cyber;");
 verifier(!normal.lire("examenEnCours()"), "hors examen, la partie normale est intacte");
 
 /* --- 2. Toute l'épreuve --- */
@@ -44,6 +50,7 @@ var ip = jeu.lire("IP_ASSAILLANT_EXAMEN");
 var mot = jeu.lire("MOT_DE_MYRIAM");
 var pid = jeu.lire("PID_OREILLE");
 contient(jeu.taper("pwd"), "/home/", "pwd dans les quartiers");
+contient(jeu.taper("cat /Manon"), "tes badges de compétence, ceux de ton parcours : " + TOUS_LES_BADGES.length, "Manon recopie les badges");
 contient(jeu.taper("indice 4", "non"), "0,25 point", "un indice se paie, et se confirme");
 verifier(jeu.lire("nbIndicesExamen()") === 0, "non : pas d'indice pris");
 contient(jeu.taper("ssh web"), "coupée", "ssh bloqué");

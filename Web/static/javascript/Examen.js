@@ -355,7 +355,8 @@ var ManonChatelaine = personnageExamen(Forteresse, "Manon", "item_manon.gif", fu
 		(m < BONUS_UN_POINT ? "Le bonus de +2 est passé ; il reste " + dureeExamen(BONUS_UN_POINT - m) + " pour le +1." :
 		(m < 180 ? "Plus de bonus de temps, mais il reste " + dureeExamen(180 - m) + " sur les trois heures." : "Les trois heures sont passées. Le Mage attend ta copie."));
 	return debut + "« Myriam a déchiré mon registre cette nuit. Le cinquième sceau, c'est toi qui le rempliras : ton journal, tes preuves,\n" +
-		"ton nom, tout ce qu'un administrateur doit savoir faire dès sa première année. Voici ce que j'ai déjà noté.\n\n" + sceaux.join("\n") + "\n\n" + horloge +
+		"ton nom, tout ce qu'un administrateur doit savoir faire dès sa première année. Voici ce que j'ai déjà noté.\n\n" + sceaux.join("\n") + "\n\n" +
+		"J'ai aussi recopié tes badges de compétence, ceux de ton parcours : " + nbBadgesExamen() + " sur " + BADGES_DU_PARCOURS.length + ". Ils pèsent 20 % de ta note finale.\n" + horloge +
 		"\nCe que tu déposes dans ~/rapport, je le lis par mon raccourci, /var/registre." +
 		"\nEt n'oublie pas : Wissam donne ses conseils pour rien, dans le couloir des quartiers. Les indices du Mage, eux, se paient. »";
 });
@@ -865,6 +866,10 @@ function masqueBadgesExamen(){
 	BADGES_DU_PARCOURS.forEach(function(id, i){ if (b[id]) m += Math.pow(2, i); });
 	return m.toString(16);
 }
+/* Hors de l'épreuve : les badges de la partie en cours (ceux qui seront relevés à l'entrée). */
+function badgesDeLaPartieCourante(){
+	return BADGES_DU_PARCOURS.filter(function(id){ return /^platine_/.test(id) ? state.has(id) : !!state.quests[id]; }).length;
+}
 function texteBaremeBadges(){
 	return "Note finale : " + Math.round(POIDS_EPREUVE * 100) + " % l'épreuve, " + Math.round(POIDS_BADGES * 100) + " % tes badges de compétence des chapitres 2 et 3 (" +
 		(state.examen ? nbBadgesExamen() : 0) + " sur " + BADGES_DU_PARCOURS.length + ", relevés à ton entrée dans la Forteresse).";
@@ -943,7 +948,7 @@ function texteOrdreDeMission(){
 	lignes.push("",
 		"LA CARTE : tree / dessine la Forteresse, ses lieux et ceux qui y vivent (tree -L 3 / pour descendre plus loin).",
 		"Ton mot de passe sudo : " + MOT_DE_PASSE_SUDO + ". Pas de radio : man reste ton meilleur allié.",
-		"LE BARÈME : la note vient des épreuves réussies. Tout fini en moins de " + dureeExamen(BONUS_DEUX_POINTS) + " : +2 ; en moins de " + dureeExamen(BONUS_UN_POINT) + " : +1.",
+		"LE BARÈME : la note de l'épreuve vient des épreuves réussies. Tout fini en moins de " + dureeExamen(BONUS_DEUX_POINTS) + " : +2 ; en moins de " + dureeExamen(BONUS_UN_POINT) + " : +1.",
 		"Les fausses manœuvres (une ligne qui échoue) : les " + ERREURS_GRATUITES_EXAMEN + " premières sont gratuites, puis -0,5 toutes les " + ERREURS_PAR_DEMI_POINT + " (au plus -" + MALUS_MAX_EXAMEN + ").",
 		"indice : un coup de pouce sur une épreuve, -0,25 chacun, " + INDICES_MAX_EXAMEN + " au plus (indice 7 : sur l'épreuve VII).",
 		texteBaremeBadges(),
@@ -1218,7 +1223,7 @@ function bilanExamen(){
 		if (ep.sceau !== sceau){ sceau = ep.sceau; lignes.push(C.gras(NOMS_DES_SCEAUX[sceau])); }
 		lignes.push("  " + (e.reussies[ep.id] ? C.vert("[x]") : "[ ]") + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 9) + ep.titre + C.gris("  (" + ep.points + ")"));
 	});
-	lignes.push("", "Note provisoire : " + C.gras(ecrireNote(noteExamen()) + " / 20") +
+	lignes.push("", "Note de l'épreuve (provisoire) : " + C.gras(ecrireNote(noteExamen()) + " / 20") +
 		C.gris("  (épreuves " + ecrireNote(noteDeBaseExamen()) + ", indices -" + ecrireNote(malusIndicesExamen()) + ", fausses manœuvres " + (e.erreurs || 0) + " : -" + ecrireNote(malusErreursExamen()) +
 		", bonus de temps si tout est fini en moins de " + dureeExamen(BONUS_UN_POINT) + ")"),
 		"Badges du parcours : " + nbBadgesExamen() + " sur " + BADGES_DU_PARCOURS.length + " (" + ecrireNote(noteBadgesExamen()) + " / 20) · note finale provisoire : " +
@@ -1253,6 +1258,10 @@ Shell.sorts.examen = function(args, io){
 			term.echo("Le sceau reste froid. Ce n'est pas le bon code.");
 			return;
 		}
+		var n = badgesDeLaPartieCourante();
+		term.echo("Tes badges de compétence dans cette partie : " + C.gras(n + " sur " + BADGES_DU_PARCOURS.length) +
+			" (20 % de ta note finale). Ils sont relevés à ta première entrée dans la Forteresse : ceux gagnés ensuite ne compteront pas." +
+			(n ? "" : "\n" + C.jaune("⚠ Aucun badge ici. Ta partie est gardée dans ce navigateur : si tu as joué les chapitres 2 et 3 sur un autre ordinateur ou un autre navigateur, passe l'épreuve là-bas.")));
 		term.demander("Le sceau s'illumine. L'épreuve finale se joue dans une partie à part : ta partie actuelle t'attendra, intacte. Entrer dans la Forteresse ? Tape oui pour confirmer : ", false, function(r){
 			if (String(r).trim().toLowerCase() !== "oui"){ term.echo("Le sceau s'éteint. Reviens quand tu seras prêt(e)."); return; }
 			state.save();

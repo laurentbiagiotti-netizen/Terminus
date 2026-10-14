@@ -1054,7 +1054,7 @@ Dans `vim rapport.txt`, pour chacune des quatre lignes à compléter : s'y place
 
 ## L'épreuve finale : la Forteresse (mission spéciale)
 
-Une partie à part, ouverte avec `examen` et un code d'accès que le formateur donne le jour de l'épreuve. Trente-trois épreuves sur les trois chapitres, en six sceaux, notées sur 20 (bonus si tout est fini tôt, petit malus au-delà de 30 fausses manœuvres, indices à -0,25), plus le quiz de Steve dans `/dev/random`. La note finale compte aussi le parcours : 80 % la note de l'épreuve, 20 % les badges de compétence gagnés dans la partie normale (chapitres 2 et 3, 42 badges platines compris), relevés à l'entrée dans l'épreuve ; `verifier` liste les badges gagnés et ceux qui manquent. `kamikaze` rend la copie à tout moment.
+Une partie à part, ouverte avec `examen` et un code d'accès que le formateur donne le jour de l'épreuve. Trente-trois épreuves sur les trois chapitres, en six sceaux, notées sur 20 (bonus si tout est fini tôt, petit malus au-delà de 30 fausses manœuvres, indices à -0,25), plus le quiz de Steve dans `/dev/random`. La note finale compte aussi le parcours : 80 % la note de l'épreuve, 20 % les badges de compétence gagnés dans la partie normale (chapitres 2 et 3, 42 badges platines compris), relevés à l'entrée dans l'épreuve ; `verifier` liste les badges gagnés et ceux qui manquent. La partie est gardée dans le navigateur : l'épreuve se passe sur le poste et le navigateur où l'on a joué, sinon le jeu prévient qu'il ne trouve aucun badge. `kamikaze` rend la copie à tout moment.
 
 **Le corrigé de l'épreuve finale n'est pas dans ce dépôt public**, pas plus que le code d'accès ni le mot de passe du formateur : seul le formateur les a.
 
