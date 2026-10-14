@@ -378,7 +378,8 @@ var CONSEILS_DU_LIEU = [
 	["/var/www", "Ce qui est affiché au balcon, toute la ville le lit. Qui en est propriétaire, et qui peut le lire ?"],
 	["/srv", "Les sauvegardes et les archives dorment ici. Une archive se liste avant de s'extraire."],
 	["/tmp", "Dans /tmp, tout le monde écrit. N'y laisse rien d'important, et ne crois pas tout ce que tu y lis."],
-	["/root", "Chez root, chaque ligne compte. Retire seulement ce qui est de trop."]
+	["/root", "Chez root, chaque ligne compte. Retire seulement ce qui est de trop."],
+	["/dev", "Dans /dev, même le hasard a son fichier. Steve y a posé ses projecteurs."]
 ];
 var WissamSage = personnageExamen(FortHome, "Wissam", "item_wissam.gif", function(){
 	var e = examenOuvert();
@@ -1089,6 +1090,15 @@ function verifierExamen(){
 			say(C.rouge("À la minute pile, une main invisible recolle la proclamation de Myriam sur le balcon de la Tour."));
 		}
 	} else e.minuteSortilege = 0;
+	var minutes = minutesExamen();
+	if (minutes >= 170 && !e.alerte170){
+		e.alerte170 = true;
+		say(C.jaune("Manon, depuis le hall : « Il reste dix minutes sur les trois heures. Si tu n'as pas fini, pense à rendre ta copie : kamikaze. »"));
+	}
+	if (minutes >= 180 && !e.alerte180){
+		e.alerte180 = true;
+		say(C.rouge("Manon : « Les trois heures sont passées. Rends ta copie maintenant : kamikaze. Ce qui est fait est fait, et compte. »"));
+	}
 	if (!e.tajineTue && !Forteresse.procs.some(function(p){ return p.pid === PID_TAJINE; })){
 		e.tajineTue = true;
 		e.erreurs = (e.erreurs || 0) + 5;
@@ -1687,7 +1697,8 @@ function accueillirExamen(){
 ["examen", "kamikaze", "verifier", "sceller"].forEach(function(s){ if (SORTS_DU_JEU.indexOf(s) === -1) SORTS_DU_JEU.push(s); });
 COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 2, 0,
 	["examen", "l'épreuve finale (avec le code du formateur)"],
-	["verifier CODE", "vérifier un code de diplôme ou de certificat"]);
+	["kamikaze", "pendant l'épreuve finale : rendre sa copie"],
+	["verifier", "vérifier un code de diplôme : verifier CODE"]);
 MANUEL_DU_JEU.examen = "examen n'est PAS une commande Linux : c'est une commande du jeu.\n" +
 	"Hors épreuve : demande le code de ton formateur et ouvre l'épreuve finale, dans une partie à part.\n" +
 	"Pendant l'épreuve : examen montre le bilan ; examen quitter ramène à ta partie normale.";

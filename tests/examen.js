@@ -218,6 +218,11 @@ contient(jeu.taper("examen"), "DIPLÔME", "examen réimprime le diplôme");
 	h.lire("state.examen.debutHorloge -= 50 * 60000");
 	verifier(h.lire("minutesExamen()") === 50, "50 minutes à l'horloge : " + h.lire("minutesExamen()"));
 	contient(h.taper("cat /Manon"), "Il reste 1 h 25 pour gagner le bonus de +2", "Manon compte à l'horloge");
+	h.lire("state.examen.debutHorloge -= 121 * 60000");
+	contient(h.taper("pwd"), "Il reste dix minutes", "Manon prévient à 2 h 50");
+	h.lire("state.examen.debutHorloge -= 10 * 60000");
+	contient(h.taper("pwd"), "Les trois heures sont passées", "Manon prévient à 3 h");
+	verifier(h.taper("pwd").indexOf("trois heures") === -1, "chaque alerte ne sonne qu'une fois");
 })();
 
 /* --- 3. La sauvegarde de l'examen garde l'avancée --- */
