@@ -138,8 +138,9 @@ var FragmentDuSceau = objetExamen(fragmentPlace, "fragment-du-sceau",
 /* Le réseau : le faux Oracle, le registre local des noms, la Mairie fautive. */
 var ResolvExamen = objetExamen(FortEtc, "resolv.conf",
 	"# Généré par NetworkManager\nnameserver " + IP_FAUX_ORACLE + "\nsearch cybersup.lan\n");
-objetExamen(FortEtc, "hosts",
-	"127.0.0.1\tlocalhost\n127.0.1.1\tforteresse\n" + IP_VRAI_ORACLE + "\toracle dns.cybersup.lan\n10.0.92.20\tintranet\n10.0.97.1\tmairie\n");
+var HostsExamen = objetExamen(FortEtc, "hosts",
+	"127.0.0.1\tlocalhost\n127.0.1.1\tforteresse\n" + IP_VRAI_ORACLE + "\toracle dns.cybersup.lan\n10.0.92.20\tintranet\n10.0.97.1\tmairie\n" +
+	IP_ASSAILLANT_EXAMEN + "\tproclamations.cybersup.lan\n");
 objetExamen(FortEtc, "hostname", "forteresse\n");
 var DhcpdExamen = objetExamen(FortDhcp, "dhcpd.conf",
 	"# isc-dhcp-server : les adresses de la Forteresse\n" +
@@ -148,9 +149,10 @@ var DhcpdExamen = objetExamen(FortDhcp, "dhcpd.conf",
 	"  option routers 10.0.97.1;\n" +
 	"  option domain-name-servers " + IP_VRAI_ORACLE + ";\n" +
 	"}\n");
-objetExamen(FortEtc, "passwd",
+var PasswdExamen = objetExamen(FortEtc, "passwd",
 	"root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\n" +
-	"sshd:x:105:65534::/run/sshd:/usr/sbin/nologin\n" + JOUEUR + ":x:1000:1000:Recrue de l'épreuve finale:/home/" + JOUEUR + ":/bin/bash\n");
+	"sshd:x:105:65534::/run/sshd:/usr/sbin/nologin\n" + JOUEUR + ":x:1000:1000:Recrue de l'épreuve finale:/home/" + JOUEUR + ":/bin/bash\n" +
+	"aidan:x:1001:1001:Aidan, elfe:/home/aidan:/bin/bash\nmyriam:x:0:0:Myriam, sorcière:/home/myriam:/bin/bash\n");
 
 /* Les gardiens : l'un d'eux a été ensorcelé, et porte le message de Myriam. */
 var TEXTES_GARDIENS = {
@@ -267,6 +269,46 @@ objetExamen(FortTmp, "sac-de-la-taverne",
 	"Client : David, l'ogre des steppes. Merci de votre visite, et à tout à l'heure.\n",
 	{ mode: "rw-rw-rw-", owner: "nobody", image: "item_david.gif" });
 
+/* La Tour des Proclamations (/var/www) et Laurana, le héraut changé en pierre. */
+var TourProclamations = lieuExamen(FortVar, "www", "La Tour des Proclamations : d'ici, la voix de Cybersup porte jusqu'aux sept campus.", { image: "loc_web.gif" });
+var FortHtml = lieuExamen(TourProclamations, "html", "Le balcon de la Tour : la proclamation affichée ici est celle que lit toute la ville (le site de l'école).", { image: "loc_web.gif" });
+var PROCLAMATION_LAURANA = "<!doctype html>\n<title>Proclamations de Cybersup</title>\n<h1>Oyez, oyez !</h1>\n" +
+	"<p>Par la voix de Laurana, héraut de Cybersup : les diplômes de la Forteresse seront remis à celles et ceux qui les ont mérités.</p>\n";
+var PROCLAMATION_MYRIAM = "<!doctype html>\n<title>LA TOUR NOIRE</title>\n<h1>La Forteresse appartient à Myriam.</h1>\n" +
+	"<p>Le héraut se tait. Les diplômes sont à moi.</p>\n";
+objetExamen(FortHtml, "index.html", PROCLAMATION_MYRIAM, { owner: "myriam", mode: "rw-------", image: "item_sign.gif" });
+var FortSauvegardes = lieuExamen(FortSrv, "sauvegardes", "Les sauvegardes de la Forteresse : ce qu'on y range survit aux sortilèges.", { image: "loc_sauvegarde.gif" });
+var ArchiveProclamation = objetExamen(FortSauvegardes, "proclamations.tar.gz",
+	"(Une archive tar compressée : ses octets ne se lisent pas tels quels.)", { image: "item_box.gif" });
+ArchiveProclamation.archive = [{ n: "index.html", x: PROCLAMATION_LAURANA }];
+objetExamen(FortSauvegardes, "LISEZMOI",
+	"Sauvegarde de la Tour des Proclamations, faite chaque soir par Laurana.\n" +
+	"Une sauvegarde jamais restaurée n'est pas une sauvegarde.\n", { image: "item_sign.gif" });
+var FortHomeMyriam = lieuExamen(FortHome, "myriam", "La chambre de Myriam : un chaudron froid, une odeur de soufre.", { owner: "myriam", mode: "rwxr-x---", image: "loc_caveau.gif" });
+objetExamen(FortHomeMyriam, ".proclamation", PROCLAMATION_MYRIAM, { owner: "myriam", mode: "rw-------", image: "item_sign.gif" });
+var FortCronD = lieuExamen(FortEtc, "cron.d", "Les tâches planifiées de la Forteresse : ce qui revient tout seul, à heure fixe.", { image: "loc_etc.gif" });
+var SortilegeCron = objetExamen(FortCronD, "sortilege",
+	"# Ma Tour des Proclamations restera à moi. Myriam\n" +
+	"* * * * * root cp /home/myriam/.proclamation /var/www/html/index.html && chown myriam /var/www/html/index.html && chmod 600 /var/www/html/index.html\n",
+	{ image: "item_manuscript.gif", permis: ["sudo-rm"] });
+objetExamen(FortCronD, "logrotate", "# Rotation des journaux, chaque nuit\n0 3 * * * root /usr/sbin/logrotate /etc/logrotate.conf\n", { image: "item_manuscript.gif" });
+
+var StatueLaurana = new Item("Laurana", "", "item_laurana.gif").personnage();
+Object.defineProperty(StatueLaurana.cmd_text, "less", { get: function(){
+	var libre = typeof state !== "undefined" && state && state.examen && state.examen.sceaux && state.examen.sceaux[4];
+	if (libre){
+		return "Laurana la Flamboyante s'étire et secoue sa crinière rousse. La pierre tombe de ses épaules en poussière.\n\n" +
+			"« Merci, recrue. Myriam m'a tout appris à la Tour Noire, sauf une chose : on ne fait pas taire un héraut.\n" +
+			"Pour le reste, je ne dirai rien, le Mage a été clair : pas d'aide. Mais j'accorde déjà ma trompette pour ta proclamation. »";
+	}
+	return "Une statue de pierre au milieu de la Tour des Proclamations : une jeune femme aux cheveux de flamme figés dans le vent,\n" +
+		"une trompette d'argent à la main. Sur le socle : LAURANA LA FLAMBOYANTE, HÉRAUT DE CYBERSUP.\n\n" +
+		"On raconte qu'elle est née dans les forges de la Tour Noire et qu'elle fut l'apprentie de Myriam, qui lui apprit à faire porter\n" +
+		"sa voix jusqu'aux sept campus. Un jour, elle a choisi le Mage Rouxblanc : depuis, c'est elle qui proclame les diplômes sur la\n" +
+		"grande place. Myriam ne le lui a jamais pardonné. Cette nuit, elle l'a changée en pierre et a placardé sa propre proclamation.";
+}, set: function(){}, enumerable: true, configurable: true });
+TourProclamations.addItem(StatueLaurana);
+
 World.fige = true;
 
 /* La plage de la Mairie : null si elle est juste, sinon la plainte du serveur. */
@@ -285,7 +327,7 @@ function verdictDhcpExamen(){
 }
 
 /* ------------------------------------------------------------------ */
-/* Les treize épreuves                                                  */
+/* Les dix-huit épreuves                                                */
 /* ------------------------------------------------------------------ */
 
 var EPREUVES_EXAMEN = [
@@ -314,10 +356,50 @@ var EPREUVES_EXAMEN = [
 	{ id: "oreille", sceau: 3, points: 2, titre: "Faire tomber Dylan le Saltimbanque (le port qui écoute)",
 	  fait: function(){ return !Forteresse.procs.some(function(p){ return p.pid === PID_OREILLE; }); } },
 	{ id: "cle", sceau: 3, points: 2, titre: "Retirer la clé de Myriam chez root, et seulement elle",
-	  fait: function(){ var t = AuthorizedKeysExamen.getText(); return t.indexOf("myriam@tour-noire") === -1 && t.indexOf(CLE_LAURENT_EXAMEN) > -1 && t.indexOf(CLE_ADMIN_EXAMEN) > -1; } }
+	  fait: function(){ var t = AuthorizedKeysExamen.getText(); return t.indexOf("myriam@tour-noire") === -1 && t.indexOf(CLE_LAURENT_EXAMEN) > -1 && t.indexOf(CLE_ADMIN_EXAMEN) > -1; } },
+	{ id: "proclamation", sceau: 4, points: 2, titre: "Restaurer la proclamation de Laurana depuis la sauvegarde",
+	  fait: function(){ var f = proclamationAffichee(); return f !== null && f.getText().trim() === PROCLAMATION_LAURANA.trim(); } },
+	{ id: "sortilege", sceau: 4, points: 2, titre: "Briser le sortilège qui revient chaque minute (cron)",
+	  fait: function(){ return !sortilegeActif(); } },
+	{ id: "uid0", sceau: 4, points: 2, titre: "Retirer à Myriam son compte aux pouvoirs de root (UID 0)",
+	  fait: function(){
+		var lignes = PasswdExamen.getText().split("\n").filter(function(l){ return l.trim() !== ""; });
+		var zero = lignes.filter(function(l){ return l.split(":")[2] === "0"; }).map(function(l){ return l.split(":")[0]; });
+		return zero.length === 1 && zero[0] === "root" && lignes.some(function(l){ return l.split(":")[0] === JOUEUR; });
+	  } },
+	{ id: "droits", sceau: 4, points: 1, titre: "Rendre la proclamation lisible par toute la ville",
+	  fait: function(){ var f = proclamationAffichee(); return f !== null && f.owner !== "myriam" && f.mode.charAt(6) === "r" && f.getText().trim() === PROCLAMATION_LAURANA.trim(); } },
+	{ id: "hosts", sceau: 4, points: 1, titre: "Ne plus envoyer les passants de la Tour vers la Tour Noire",
+	  fait: function(){ var t = HostsExamen.getText(); return t.indexOf(IP_ASSAILLANT_EXAMEN) === -1 && t.indexOf(IP_VRAI_ORACLE) > -1; } }
 ];
-var NOMS_DES_SCEAUX = { 1: "LE SCEAU DU TERMINAL", 2: "LE SCEAU DES LETTRES", 3: "LE SCEAU DE LA CRYPTE" };
-var CHIFFRES_ROMAINS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII"];
+function proclamationAffichee(){ var f = FortHtml.getItemFromName("index.html"); return f === -1 ? null : f; }
+function sortilegeActif(){
+	if (!FortCronD.hasItem(SortilegeCron)) return false;
+	return SortilegeCron.getText().split("\n").some(function(l){ return l.trim() !== "" && l.trim().charAt(0) !== "#" && l.indexOf("/var/www/html/index.html") > -1; });
+}
+var NOMS_DES_SCEAUX = { 1: "LE SCEAU DU TERMINAL", 2: "LE SCEAU DES LETTRES", 3: "LE SCEAU DE LA CRYPTE", 4: "LE SCEAU DU HÉRAUT" };
+var CHIFFRES_ROMAINS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII"];
+var POINTS_MAX_EXAMEN = EPREUVES_EXAMEN.reduce(function(t, e){ return t + e.points; }, 0);
+
+/* Le barème : la note de base vient des épreuves (sur 20, au demi-point), puis un bonus si tout est fini tôt,
+   et un petit malus au-delà de 30 fausses manœuvres (une ligne qui échoue). La note reste entre 0 et 20. */
+var ERREURS_GRATUITES_EXAMEN = 30, ERREURS_PAR_DEMI_POINT = 15, MALUS_MAX_EXAMEN = 2;
+function noteDeBaseExamen(){ return Math.round(pointsExamen() / POINTS_MAX_EXAMEN * 20 * 2) / 2; }
+function bonusTempsExamen(){
+	var e = state.examen;
+	if (!e || e.fin !== "victoire") return 0;
+	var m = minutesExamen();
+	return m <= 120 ? 2 : (m <= 150 ? 1 : 0);
+}
+function malusErreursExamen(){
+	var n = (state.examen && state.examen.erreurs) || 0;
+	return Math.min(MALUS_MAX_EXAMEN, Math.floor(Math.max(0, n - ERREURS_GRATUITES_EXAMEN) / ERREURS_PAR_DEMI_POINT) * 0.5);
+}
+var INDICES_MAX_EXAMEN = 5;
+function nbIndicesExamen(){ return Object.keys((state.examen && state.examen.indices) || {}).length; }
+function malusIndicesExamen(){ return nbIndicesExamen() * 0.5; }
+function noteExamen(){ return Math.max(0, Math.min(20, noteDeBaseExamen() + bonusTempsExamen() - malusErreursExamen() - malusIndicesExamen())); }
+function ecrireNote(n){ return String(n).replace(".", ","); }
 
 function pointsExamen(){
 	return EPREUVES_EXAMEN.reduce(function(t, e){ return t + (state.examen.reussies[e.id] ? e.points : 0); }, 0);
@@ -350,11 +432,13 @@ function texteOrdreDeMission(){
 		"les diplômes de l'école, et elle m'a fermé la porte au nez. Elle est venue avec sa troupe :",
 		"Dylan le Saltimbanque, l'acrobate qui écoute aux portes et esquive les coups polis,",
 		"et David, l'ogre des steppes, qui tient son guichet en criant tout, la bouche pleine.",
+		"Laurana la Flamboyante, mon héraut aux cheveux de feu, a voulu lui barrer la route :",
+		"Myriam, son ancienne maîtresse, l'a changée en pierre dans la Tour des Proclamations.",
 		"Radia et Grace sont injoignables. Avec toi, il ne reste qu'Aidan, l'elfe aux pieds",
 		"de hobbit, enfermé dans tes quartiers : il te fera rire, il ne t'aidera pas.",
 		"",
-		"Myriam tient la Forteresse par trois sceaux. Brise-les dans l'ordre que tu veux.",
-		"Chaque épreuve accomplie compte, même si tu ne vas pas au bout. C'est ton épreuve finale.",
+		"Myriam tient la Forteresse par quatre sceaux. Brise-les dans l'ordre que tu veux.",
+		"Chaque épreuve accomplie compte, même si tu ne vas pas au bout. Tu as trois heures.",
 		""
 	];
 	var textes = {
@@ -370,7 +454,12 @@ function texteOrdreDeMission(){
 		signature: "Le traître porte un message caché. Déchiffre-le et inscris la signature\n        de Myriam, seule, dans ~/rapport/signature.txt",
 		suid: "Myriam s'est percé une porte dérobée qui donne les pleins pouvoirs à qui la franchit.\n        Trouve-la et désarme-la.",
 		oreille: "Dylan le Saltimbanque écoute la Forteresse pour Myriam, sur un port que personne\n        n'explique. Il esquive les coups polis : fais-le tomber.",
-		cle: "Myriam a glissé sa clé parmi celles qui ouvrent la porte de root. Retire-la, et seulement elle."
+		cle: "Myriam a glissé sa clé parmi celles qui ouvrent la porte de root. Retire-la, et seulement elle.",
+		proclamation: "Sur le balcon de la Tour (/var/www/html), Myriam a placardé sa proclamation à la place\n        de celle de Laurana. Laurana sauvegardait tout, chaque soir. Rends-lui sa proclamation.",
+		sortilege: "Méfie-toi : ce que tu répares sur la Tour, un sortilège le défait à chaque minute.\n        Trouve ce qui revient tout seul, et brise-le.",
+		uid0: "Myriam s'est fabriqué un compte qui a tous les pouvoirs de root. Retire-le,\n        sans toucher aux autres.",
+		droits: "Sa proclamation rendue, Laurana doit être lue de toute la ville : qu'elle n'appartienne\n        plus à Myriam, et que tout le monde puisse la lire.",
+		hosts: "Les passants qui demandent la Tour des Proclamations par son nom sont envoyés tout droit\n        à la Tour Noire. Répare le registre local des noms."
 	};
 	var sceau = 0;
 	EPREUVES_EXAMEN.forEach(function(e, i){
@@ -379,7 +468,10 @@ function texteOrdreDeMission(){
 		lignes.push("  " + coche + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 6) + textes[e.id].replace(/\n\s+/g, "\n            ") + "  (" + e.points + " pt" + (e.points > 1 ? "s" : "") + ")");
 	});
 	lignes.push("",
-		"Ton mot de passe sudo : " + MOT_DE_PASSE_SUDO + ". Pas d'indice, pas de radio : man reste ton seul allié.",
+		"Ton mot de passe sudo : " + MOT_DE_PASSE_SUDO + ". Pas de radio : man reste ton meilleur allié.",
+		"LE BARÈME : la note vient des épreuves réussies. Tout fini en moins de 2 h : +2 ; en moins de 2 h 30 : +1.",
+		"Les fausses manœuvres (une ligne qui échoue) : les " + ERREURS_GRATUITES_EXAMEN + " premières sont gratuites, puis -0,5 toutes les " + ERREURS_PAR_DEMI_POINT + " (au plus -" + MALUS_MAX_EXAMEN + ").",
+		"indice : un coup de pouce sur une épreuve, -0,5 chacun, " + INDICES_MAX_EXAMEN + " au plus (indice 7 : sur l'épreuve VII).",
 		"examen : où tu en es.   kamikaze : tout arrêter et rendre ta copie.",
 		"",
 		"Que tes commandes soient justes. Je t'attends de l'autre côté de la porte.",
@@ -397,14 +489,15 @@ var TEXTE_ENTREE_EXAMEN =
 	"où Laurent garde les diplômes de l'école. Oui, Laurent : le Sorcier Noir que tu as battu à Terminus, le jour de ta rentrée.\n" +
 	"Il a rendu sa robe noire, on l'appelle désormais le Mage Rouxblanc. Cette nuit, la sorcière Myriam a volé la robe et pris la Forteresse.\n" +
 	"Dylan le Saltimbanque fait des cabrioles sur les remparts, David l'ogre des steppes crie au guichet la bouche pleine,\n" +
-	"et le Mage, enfermé dehors, n'a pu glisser qu'un ordre de mission sous ta porte.\n\n" +
+	"Laurana la Flamboyante, le héraut aux cheveux de feu, est changée en pierre dans sa Tour des Proclamations,\n" +
+	"et le Mage, enfermé dehors, n'a pu glisser qu'un ordre de mission sous ta porte. Tu as trois heures.\n\n" +
 	"Tu as appris le terminal à Terminus, réparé le réseau avec Radia, traqué l'intrus avec Grace.\n" +
 	"Cette fois, personne ne te guidera. Sauf, peut-être, Aidan, l'elfe aux pieds poilus enfermé avec toi. Mais non.\n" +
 	"Ton ordre de mission est caché dans tes quartiers. Trouve-le.";
 
 /* Ouvre une épreuve neuve : tous les sorts, la Forteresse, et le silence. */
 function demarrerExamen(){
-	state.examen = { debut: state.tempsMs || 0, reussies: {}, ordreLu: false, fini: false, fin: null, dateFin: null, tempsFin: null, commandesDebut: state.nbCommandes, lieu: null };
+	state.examen = { debut: state.tempsMs || 0, reussies: {}, ordreLu: false, fini: false, fin: null, dateFin: null, tempsFin: null, commandesDebut: state.nbCommandes, lieu: null, erreurs: 0, indices: {}, defaites: {}, sceaux: {} };
 	[SORTS_DE_DEPART, ORDRE_DES_SORTS, ORDRE_DES_SORTS_2, ORDRE_DES_SORTS_3].forEach(function(liste){
 		(liste || []).forEach(function(s){ state.spells[s] = true; state.usages[s] = true; });
 	});
@@ -418,31 +511,38 @@ function demarrerExamen(){
 }
 
 /* Le texte du diplôme de l'épreuve finale. */
+function signeEpreuve(e, id){ return e.reussies[id] ? "✓" : (e.defaites && e.defaites[id] ? "!" : "✗"); }
 function texteDiplomeExamen(){
-	var e = state.examen, points = pointsExamen(), minutes = minutesExamen();
+	var e = state.examen, minutes = minutesExamen();
 	var lignes = [
 		"=================================================================",
 		"       CYBERSUP · DIPLÔME DE L'ÉPREUVE FINALE",
 		"=================================================================",
 		"",
 		"  Décerné à : " + (state.nom || JOUEUR),
-		"  " + (e.fin === "victoire" ? "qui a repris la Forteresse à la sorcière Myriam et à sa troupe, seul(e) et sans aide." :
+		"  " + (e.fin === "victoire" ? "qui a repris la Forteresse à la sorcière Myriam et rendu sa voix à Laurana." :
 			"qui a affronté la sorcière Myriam dans la Forteresse, puis rendu sa copie (kamikaze)."),
 		""
 	];
 	var sceau = 0;
 	EPREUVES_EXAMEN.forEach(function(ep, i){
 		if (ep.sceau !== sceau){ sceau = ep.sceau; lignes.push("  " + NOMS_DES_SCEAUX[sceau]); }
-		lignes.push("    " + (e.reussies[ep.id] ? "✓" : "✗") + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 6) + completerDroite((e.reussies[ep.id] ? ep.points : 0) + "/" + ep.points, 5) + ep.titre);
+		lignes.push("    " + signeEpreuve(e, ep.id) + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 7) + completerDroite((e.reussies[ep.id] ? ep.points : 0) + "/" + ep.points, 5) + ep.titre +
+			(e.indices && e.indices[ep.id] ? "  (indice)" : ""));
 	});
-	lignes.push("",
-		"  ÉPREUVES RÉUSSIES   : " + nbReussiesExamen() + " sur " + EPREUVES_EXAMEN.length,
-		"  NOTE                : " + points + " / 20",
-		"  Mention             : " + mentionExamen(points),
+	lignes.push("    (✓ réussie, ✗ pas faite, ! réussie puis défaite)", "",
+		"  ÉPREUVES RÉUSSIES   : " + nbReussiesExamen() + " sur " + EPREUVES_EXAMEN.length + "  (" + pointsExamen() + " points sur " + POINTS_MAX_EXAMEN + ")",
+		"  Note des épreuves   : " + ecrireNote(noteDeBaseExamen()) + " / 20",
+		"  Bonus de temps      : +" + ecrireNote(bonusTempsExamen()) + (e.fin === "victoire" ? "" : "  (seulement si tout est fini)"),
+		"  Indices             : " + nbIndicesExamen() + "  (-" + ecrireNote(malusIndicesExamen()) + ")",
+		"  Fausses manœuvres   : " + (e.erreurs || 0) + "  (-" + ecrireNote(malusErreursExamen()) + ")",
+		"  NOTE FINALE         : " + ecrireNote(noteExamen()) + " / 20",
+		"  Mention             : " + mentionExamen(noteExamen()),
 		"  Temps               : " + dureeExamen(minutes),
 		"  Fin de l'épreuve    : " + (e.fin === "victoire" ? "Forteresse reprise" : "kamikaze"),
 		"",
 		"  Signé : Laurent, le Mage Rouxblanc, Directeur Pédagogique de Cybersup",
+		"  Proclamé par : Laurana la Flamboyante, héraut de Cybersup",
 		"=================================================================",
 		"  Code de vérification, à remettre au formateur :",
 		"  " + codeDiplomeExamen(),
@@ -450,15 +550,33 @@ function texteDiplomeExamen(){
 	return lignes.join("\n");
 }
 
+/* Le code de l'épreuve finale : tout ce qu'il faut au formateur, signé comme les autres diplômes. */
+function masqueExamen(table){
+	var m = 0;
+	EPREUVES_EXAMEN.forEach(function(ep, i){ if (table && table[ep.id]) m += Math.pow(2, i); });
+	return m.toString(16);
+}
 function codeDiplomeExamen(){
 	var e = state.examen;
-	return fabriquerCode({
-		prenom: String(state.nom || JOUEUR).replace(/\|/g, "/"),
-		score: pointsExamen(), max: 20, note: pointsExamen(),
-		commandes: (e.commandesFin !== undefined ? e.commandesFin : state.nbCommandes) - (e.commandesDebut || 0),
-		minutes: minutesExamen(), indices: e.fin === "kamikaze" ? 1 : 0, chapitre: 4,
-		date: e.dateFin || dateDuJour(), graine: PROFIL.graine
-	});
+	var charge = ["E1", String(state.nom || JOUEUR).replace(/\|/g, "/"), noteExamen() * 2, noteDeBaseExamen() * 2, bonusTempsExamen() * 2,
+		malusErreursExamen() * 2, malusIndicesExamen() * 2, e.erreurs || 0, minutesExamen(),
+		(e.commandesFin !== undefined ? e.commandesFin : state.nbCommandes) - (e.commandesDebut || 0),
+		e.fin === "victoire" ? "V" : "K", masqueExamen(e.reussies), masqueExamen(e.defaites), masqueExamen(e.indices),
+		e.dateFin || dateDuJour(), PROFIL.graine].join("|");
+	return versBase64Url(charge) + "." + sommeDeControle(charge + "|" + SEL_DIPLOME);
+}
+function lireCodeExamen(code){
+	var morceaux = String(code).trim().split(".");
+	if (morceaux.length !== 2) return null;
+	var charge;
+	try { charge = depuisBase64Url(morceaux[0]); } catch (x){ return null; }
+	var c = charge.split("|");
+	if (c[0] !== "E1" || c.length !== 16) return null;
+	function bits(h){ var n = parseInt(h, 16) || 0; return EPREUVES_EXAMEN.map(function(ep, i){ return Math.floor(n / Math.pow(2, i)) % 2 === 1; }); }
+	return { valide: sommeDeControle(charge + "|" + SEL_DIPLOME) === morceaux[1].toUpperCase(),
+		prenom: c[1], note: +c[2] / 2, base: +c[3] / 2, bonus: +c[4] / 2, malusErreurs: +c[5] / 2, malusIndices: +c[6] / 2,
+		erreurs: +c[7], minutes: +c[8], commandes: +c[9], fin: c[10], reussies: bits(c[11]), defaites: bits(c[12]), indices: bits(c[13]),
+		date: c[14], graine: +c[15] };
 }
 
 function terminerExamen(fin){
@@ -478,6 +596,18 @@ function verifierExamen(){
 	if (!e) return;
 	if (racineDe(current_room) === Forteresse) e.lieu = cheminForteresse(current_room);
 	if (e.fini) return;
+	// Le sortilège de Myriam : tant que sa ligne de cron vit, la proclamation de Laurana est recouverte à la « minute » suivante.
+	var affichee = proclamationAffichee();
+	if (sortilegeActif() && affichee && affichee.getText().trim() !== PROCLAMATION_MYRIAM.trim()){
+		e.minuteSortilege = (e.minuteSortilege || 0) + 1;
+		if (e.minuteSortilege >= 3){
+			e.minuteSortilege = 0;
+			affichee.setText(PROCLAMATION_MYRIAM);
+			affichee.owner = "myriam";
+			affichee.mode = "rw-------";
+			say(C.rouge("À la minute pile, une main invisible recolle la proclamation de Myriam sur le balcon de la Tour."));
+		}
+	} else e.minuteSortilege = 0;
 	EPREUVES_EXAMEN.forEach(function(ep, i){
 		var ok = false;
 		try { ok = !!ep.fait(); } catch (x){ ok = false; }
@@ -489,10 +619,12 @@ function verifierExamen(){
 		} else if (!ok && e.reussies[ep.id]){
 			// Une épreuve défaite (un service rallumé, une clé remise) ne compte plus.
 			delete e.reussies[ep.id];
+			e.defaites = e.defaites || {};
+			e.defaites[ep.id] = true;
 			say(C.rouge("✗ Épreuve " + CHIFFRES_ROMAINS[i] + " défaite : " + ep.titre));
 		}
 	});
-	[1, 2, 3].forEach(function(s){
+	[1, 2, 3, 4].forEach(function(s){
 		var toutes = EPREUVES_EXAMEN.filter(function(ep){ return ep.sceau === s; }).every(function(ep){ return e.reussies[ep.id]; });
 		e.sceaux = e.sceaux || {};
 		if (toutes && !e.sceaux[s]){
@@ -500,7 +632,10 @@ function verifierExamen(){
 			say(C.vert("◆ " + NOMS_DES_SCEAUX[s] + " est brisé.") + "\n" + C.gris({
 				1: "Aidan, depuis tes quartiers : « Un sceau ! Le Mage va être content. Moi, je danse. Pieds nus. »",
 				2: "Aidan : « Le guichet se tait, la Bibliothèque se réveille. David boude dans /tmp. Myriam fait une de ces têtes. »",
-				3: "Aidan : « Le Sceau de la Crypte ! Dylan le Saltimbanque a lâché ses balles. Il ne lâche jamais ses balles. »" }[s]));
+				3: "Aidan : « Le Sceau de la Crypte ! Dylan le Saltimbanque a lâché ses balles. Il ne lâche jamais ses balles. »",
+				4: "Dans la Tour des Proclamations, la pierre se fend : Laurana la Flamboyante secoue sa crinière rousse et lève sa trompette.\n" +
+					"Aidan : « Elle est réveillée ! Et elle est encore plus rousse que le Mage. Ne lui dis pas que j'ai dit ça. »" }[s]));
+			if (s === 4) montrerImage("./static/img/item_laurana.gif", "Laurana la Flamboyante, libérée");
 		}
 	});
 	if (nbReussiesExamen() === EPREUVES_EXAMEN.length){
@@ -510,14 +645,15 @@ function verifierExamen(){
 		say("\n" + C.vert(C.gras("LA FORTERESSE EST REPRISE")) + "\n\n" +
 			"Le dernier sceau se brise dans un éclat vert. Les sortilèges de Myriam s'éteignent un à un, et la grande porte s'ouvre.\n" +
 			"Une lueur rousse et blanche emplit la Forteresse : Laurent, le Mage Rouxblanc, entre en lissant sa barbe.\n\n" +
-			"Myriam baisse son bâton et éclate de rire. « Treize sur treize, Mage. Ta recrue est meilleure que tes gardes. »\n" +
+			"Myriam baisse son bâton et éclate de rire. « Dix-huit sur dix-huit, Mage. Ta recrue est meilleure que tes gardes. »\n" +
 			"Dylan le Saltimbanque descend des remparts d'un saut périlleux et rattrape ses balles. David remonte de /tmp avec un sac\n" +
 			"de la Taverne aux Arches d'Or : « David a pris des Galettes du Roi Gras pour tout le monde. » Et Aidan surgit de sous\n" +
 			"ton lit de camp, pieds poilus en avant : « Je le savais ! Enfin non. Mais j'y croyais très fort. »\n\n" +
 			"Myriam lui rend sa vieille robe noire, pliée. Le Mage sourit : « À Terminus, tu as battu le Sorcier Noir le jour de ta rentrée.\n" +
 			"Ce soir, tu as battu toute une troupe. Myriam et moi, nous jouons ce tour à chaque promotion. La sorcière, l'acrobate, l'ogre et l'elfe :\n" +
-			"tous avaient un rôle cette nuit. Le tien était le plus dur, et tu l'as tenu sans indice ni radio.\n" +
+			"tous avaient un rôle cette nuit. Même Laurana, qui fut l'élève de Myriam avant d'être ma voix. Le tien était le plus dur.\n" +
 			"Ce que tu viens de faire, tu le referas pour de vrai, un jour, sur une vraie machine. Félicitations. »\n\n" +
+			"Laurana monte sur le balcon de la Tour, souffle dans sa trompette d'argent, et proclame ton nom aux sept campus.\n\n" +
 			texteDiplomeExamen());
 	}
 }
@@ -533,7 +669,10 @@ function bilanExamen(){
 		if (ep.sceau !== sceau){ sceau = ep.sceau; lignes.push(C.gras(NOMS_DES_SCEAUX[sceau])); }
 		lignes.push("  " + (e.reussies[ep.id] ? C.vert("[x]") : "[ ]") + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 6) + ep.titre + C.gris("  (" + ep.points + ")"));
 	});
-	lignes.push("", "Note provisoire : " + C.gras(pointsExamen() + " / 20") + C.gris("  · l'ordre de mission détaillé : cat ~/.ordre-de-mission · kamikaze pour rendre ta copie"));
+	lignes.push("", "Note provisoire : " + C.gras(ecrireNote(noteExamen()) + " / 20") +
+		C.gris("  (épreuves " + ecrireNote(noteDeBaseExamen()) + ", indices -" + ecrireNote(malusIndicesExamen()) + ", fausses manœuvres " + (e.erreurs || 0) + " : -" + ecrireNote(malusErreursExamen()) +
+		", bonus de temps si tout est fini en moins de 2 h 30)"),
+		C.gris("cat ~/.ordre-de-mission : l'ordre détaillé · indice : un coup de pouce (-0,5) · kamikaze : rendre ta copie"));
 	return lignes.join("\n");
 }
 
@@ -578,7 +717,7 @@ Shell.sorts.examen = function(args, io){
 Shell.sorts.kamikaze = function(args, io){
 	if (!examenEnCours()) return "kamikaze n'a de sens que pendant l'épreuve finale. " + C.gris("(Le sort examen et le code de ton formateur y mènent.)");
 	if (examenFini()) return "L'épreuve est terminée : ta copie est rendue. examen pour revoir ton diplôme.";
-	term.demander("Le dernier sort. Tu rends ta copie maintenant : ta note sera celle de ce que tu as accompli (" + pointsExamen() + " / 20). Tape oui pour confirmer : ", false, function(r){
+	term.demander("Le dernier sort. Tu rends ta copie maintenant : ta note sera celle de ce que tu as accompli (" + ecrireNote(noteExamen()) + " / 20). Tape oui pour confirmer : ", false, function(r){
 		if (String(r).trim().toLowerCase() !== "oui"){ term.echo("Tu baisses la main. Le combat continue."); return; }
 		terminerExamen("kamikaze");
 		jouerSon("niveau");
@@ -596,18 +735,118 @@ Shell.sorts.kamikaze = function(args, io){
 /* Le formateur vérifie un code de diplôme, de certificat ou d'épreuve finale. */
 Shell.sorts.verifier = function(args, io){
 	if (!args.length) throw new ShellError("verifier : quel code ? Utilisation : verifier CODE (le code imprimé sur un diplôme ou un certificat)");
+	var ex = lireCodeExamen(args.join(""));
+	if (ex) return rapportCodeExamen(ex);
 	var lu = lireCode(args.join(""));
 	if (!lu) return C.rouge("Code illisible.") + " Ce n'est pas un code de Terminus, ou il est incomplet.";
-	var quoi = { 1: "Diplôme du chapitre 1 (Terminus)", 2: "Certificat cyber (la Crypte)", 3: "Certificat réseau (la panne)", 4: "Épreuve finale (la Forteresse)" }[lu.chapitre] || "Chapitre " + lu.chapitre;
+	var quoi = { 1: "Diplôme du chapitre 1 (Terminus)", 2: "Certificat cyber (la Crypte)", 3: "Certificat réseau (la panne)", 4: "Épreuve finale (ancien code)" }[lu.chapitre] || "Chapitre " + lu.chapitre;
 	return (lu.valide ? C.vert("✓ Code authentique") : C.rouge("✗ Code RETOUCHÉ : la somme de contrôle ne correspond pas")) + "\n\n" +
 		"  " + completerDroite("Document", 14) + quoi + "\n" +
 		"  " + completerDroite("Nom", 14) + lu.prenom + "\n" +
-		"  " + completerDroite("Note", 14) + lu.note + " / 20" + (lu.chapitre === 4 ? "" : "   (" + lu.score + " XP sur " + lu.max + ")") + "\n" +
+		"  " + completerDroite("Note", 14) + lu.note + " / 20   (" + lu.score + " XP sur " + lu.max + ")\n" +
 		"  " + completerDroite("Temps", 14) + dureeExamen(lu.minutes) + "\n" +
 		"  " + completerDroite("Commandes", 14) + lu.commandes + "\n" +
-		(lu.chapitre === 4 ? "  " + completerDroite("Fin", 14) + (lu.indices ? "kamikaze (copie rendue avant la fin)" : "Forteresse reprise") + "\n" :
-			"  " + completerDroite("Indices", 14) + lu.indices + "\n") +
+		"  " + completerDroite("Indices", 14) + lu.indices + "\n" +
 		"  " + completerDroite("Date", 14) + lu.date;
+};
+
+/* Ce que le formateur lit dans un code d'épreuve finale : la note, son détail, et chaque épreuve. */
+function rapportCodeExamen(c){
+	var points = EPREUVES_EXAMEN.reduce(function(t, ep, i){ return t + (c.reussies[i] ? ep.points : 0); }, 0);
+	var nb = c.reussies.filter(function(x){ return x; }).length;
+	var lignes = [
+		c.valide ? C.vert("✓ Code authentique") : C.rouge("✗ Code RETOUCHÉ : la somme de contrôle ne correspond pas. Ne pas en tenir compte."),
+		"",
+		"  " + completerDroite("Document", 20) + "Épreuve finale (la Forteresse)",
+		"  " + completerDroite("Nom", 20) + c.prenom,
+		"  " + completerDroite("Date", 20) + c.date,
+		"  " + completerDroite("NOTE FINALE", 20) + C.gras(ecrireNote(c.note) + " / 20") + "   " + mentionExamen(c.note),
+		"  " + completerDroite("  épreuves", 20) + ecrireNote(c.base) + " / 20   (" + nb + " sur " + EPREUVES_EXAMEN.length + ", " + points + " points sur " + POINTS_MAX_EXAMEN + ")",
+		"  " + completerDroite("  bonus de temps", 20) + "+" + ecrireNote(c.bonus),
+		"  " + completerDroite("  indices", 20) + "-" + ecrireNote(c.malusIndices),
+		"  " + completerDroite("  fausses manœuvres", 20) + "-" + ecrireNote(c.malusErreurs) + "   (" + c.erreurs + " lignes en échec)",
+		"  " + completerDroite("Fin", 20) + (c.fin === "V" ? "Forteresse reprise (tout fini)" : "kamikaze (copie rendue avant la fin)"),
+		"  " + completerDroite("Temps", 20) + dureeExamen(c.minutes) + "   ·   " + c.commandes + " commandes",
+		""
+	];
+	var sceau = 0;
+	EPREUVES_EXAMEN.forEach(function(ep, i){
+		if (ep.sceau !== sceau){ sceau = ep.sceau; lignes.push("  " + C.gras(NOMS_DES_SCEAUX[sceau])); }
+		var signe = c.reussies[i] ? C.vert("✓ réussie ") : (c.defaites[i] ? C.jaune("! défaite ") : C.rouge("✗ pas faite"));
+		lignes.push("    " + signe + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 7) + ep.titre + (c.indices[i] ? C.gris("  (avec indice)") : "") +
+			(c.reussies[i] && c.defaites[i] ? C.gris("  (cassée une fois en route, puis réparée)") : ""));
+	});
+	lignes.push("", C.gris("  « défaite » : l'épreuve a été réussie, puis l'étudiant l'a cassée (un service rallumé, un fichier abîmé...)."));
+	return lignes.join("\n");
+}
+
+/* Les indices de l'épreuve : un coup de pouce, pas la solution. Chacun coûte un demi-point, cinq au plus. */
+var INDICES_EXAMEN = {
+	ordre: "Les fichiers dont le nom commence par un point ne se montrent qu'avec ls -a.",
+	assaillant: "Les connexions ratées sont dans /var/log/auth.log. grep, cut, sort et uniq -c comptent qui frappe le plus souvent.",
+	rempart: "Un script ne se lance que s'il a le droit x. ls -l pour voir, chmod pour changer.",
+	fragment: "find cherche par nom dans tout un dossier et ses sous-dossiers.",
+	oracle: "L'adresse du vrai Oracle se lit dans /etc/hosts. Le serveur de noms utilisé se règle dans /etc/resolv.conf (avec sudo nano).",
+	mairie: "systemctl status et journalctl -u disent pourquoi un service refuse de démarrer. Un /26 va de .0 à .63.",
+	telnet: "Arrêter un service ne l'empêche pas de revenir au prochain démarrage : il y a deux choses à faire avec systemctl.",
+	nginx: "Démarré maintenant ET à chaque démarrage : systemctl sait faire les deux d'un coup.",
+	gardien: "Dans /opt/gardiens, le fichier SHA256SUMS dit à quoi chaque gardien devrait ressembler : sha256sum -c compare. On déplace, on ne détruit pas.",
+	signature: "Lis le gardien ensorcelé : une ligne y porte un message encodé en base64.",
+	suid: "find / -perm -4000 liste les programmes SUID. passwd l'est, et c'est normal.",
+	oreille: "ss -tlnp montre qui écoute sur quel port. Certains processus esquivent le signal par défaut de kill.",
+	cle: "Les clés qui ouvrent la porte de root sont dans /root/.ssh/authorized_keys, une ligne par clé.",
+	proclamation: "Les sauvegardes dorment sous /srv. tar -tzf liste une archive, tar -xzf l'extrait. Ensuite, sudo cp.",
+	sortilege: "Ce qui revient toutes les minutes vient d'une tâche planifiée : regarde du côté de /etc/cron.d.",
+	uid0: "Dans /etc/passwd, le troisième champ est l'UID. Seul root doit avoir l'UID 0.",
+	droits: "ls -l montre le propriétaire et les droits. chown et chmod les changent.",
+	hosts: "/etc/hosts associe des noms à des adresses. L'un de ces noms mène à la Tour Noire."
+};
+function indiceExamen(args){
+	var e = state.examen;
+	e.indices = e.indices || {};
+	if (e.fini) return "L'épreuve est terminée : plus besoin d'indice.";
+	var cible = null;
+	if (args.length){
+		var n = String(args[0]).toUpperCase(), i = CHIFFRES_ROMAINS.indexOf(n);
+		if (i === -1 && /^\d+$/.test(n)) i = parseInt(n, 10) - 1;
+		if (i < 0 || i >= EPREUVES_EXAMEN.length) throw new ShellError("indice : quelle épreuve ? Par exemple indice 7, ou indice VII (il y en a " + EPREUVES_EXAMEN.length + ").");
+		cible = EPREUVES_EXAMEN[i];
+	} else {
+		cible = EPREUVES_EXAMEN.filter(function(ep){ return !e.reussies[ep.id]; })[0];
+		if (!cible) return "Tout est fait : pas besoin d'indice.";
+	}
+	var num = CHIFFRES_ROMAINS[EPREUVES_EXAMEN.indexOf(cible)];
+	if (e.indices[cible.id]) return "Indice (déjà payé), épreuve " + num + " : " + INDICES_EXAMEN[cible.id];
+	if (e.reussies[cible.id]) return "L'épreuve " + num + " est déjà réussie : garde tes demi-points.";
+	if (nbIndicesExamen() >= INDICES_MAX_EXAMEN) return "Tu as déjà pris tes " + INDICES_MAX_EXAMEN + " indices. Il reste man, et ta tête.";
+	term.demander("Un indice sur l'épreuve " + num + " (« " + cible.titre + " ») coûte 0,5 point. Il t'en reste " + (INDICES_MAX_EXAMEN - nbIndicesExamen()) + ". Tape oui pour le prendre : ", false, function(r){
+		if (String(r).trim().toLowerCase() !== "oui"){ term.echo("Tu gardes ton demi-point."); return; }
+		e.indices[cible.id] = true;
+		state.save();
+		term.echo(C.jaune("Indice, épreuve " + num + " : ") + INDICES_EXAMEN[cible.id] + C.gris("  (-0,5 · " + nbIndicesExamen() + " sur " + INDICES_MAX_EXAMEN + ")"));
+		if (typeof majEtat === "function") majEtat();
+	});
+	return "";
+}
+
+/* Les fausses manœuvres : une ligne dont un sort a échoué. */
+var TUYAU_HORS_EXAMEN = Shell.tuyau;
+Shell.tuyau = function(){
+	var ok = TUYAU_HORS_EXAMEN.apply(this, arguments);
+	if (ok === false && examenEnCours()) Shell.ligneRateeExamen = true;
+	return ok;
+};
+var EXECUTER_HORS_EXAMEN = Shell.executer;
+Shell.executer = function(ligne){
+	Shell.ligneRateeExamen = false;
+	var r = EXECUTER_HORS_EXAMEN.apply(this, arguments);
+	if (Shell.ligneRateeExamen && examenEnCours() && !state.examen.fini){
+		state.examen.erreurs = (state.examen.erreurs || 0) + 1;
+		state.save();
+		if (typeof majEtat === "function") majEtat();
+	}
+	Shell.ligneRateeExamen = false;
+	return r;
 };
 
 /* ------------------------------------------------------------------ */
@@ -622,7 +861,8 @@ function refusExamen(message){
 		};
 	};
 }
-Shell.sorts.indice = refusExamen("Pas d'indice pendant l'épreuve finale. man reste ton seul allié.")(Shell.sorts.indice);
+var INDICE_HORS_EXAMEN = Shell.sorts.indice;
+Shell.sorts.indice = function(args, io){ return examenEnCours() ? indiceExamen(args) : INDICE_HORS_EXAMEN.apply(this, arguments); };
 Shell.sorts.recommencer = refusExamen("L'épreuve finale ne se recommence pas. kamikaze rend ta copie ; examen quitter te ramène à ta partie normale.")(Shell.sorts.recommencer);
 Shell.sorts.chapitre = refusExamen("Pendant l'épreuve finale, il n'y a que la Forteresse.")(Shell.sorts.chapitre);
 var QUETES_HORS_EXAMEN = Shell.sorts.quetes;
@@ -729,9 +969,9 @@ GameState.prototype.chapitreEnCours = function(){ if (this.examen && modeExamen(
 var QUETE_HORS_EXAMEN = GameState.prototype.queteEnCours;
 GameState.prototype.queteEnCours = function(){
 	if (this.examen && modeExamen()){
-		return { id: "examen", titre: this.examen.fini ? "Épreuve finale terminée · " + pointsExamen() + " / 20" :
-			"Épreuve finale · " + nbReussiesExamen() + " sur " + EPREUVES_EXAMEN.length + " · " + pointsExamen() + " / 20",
-			indice: this.examen.fini ? "examen : ton diplôme et son code. examen quitter : revenir à ta partie." : "Pas d'aide : ton ordre de mission est dans tes quartiers. examen : le bilan. kamikaze : rendre ta copie." };
+		return { id: "examen", titre: this.examen.fini ? "Épreuve finale terminée · " + ecrireNote(noteExamen()) + " / 20" :
+			"Épreuve finale · " + nbReussiesExamen() + " sur " + EPREUVES_EXAMEN.length + " · " + ecrireNote(noteExamen()) + " / 20",
+			indice: this.examen.fini ? "examen : ton diplôme et son code. examen quitter : revenir à ta partie." : "Ton ordre de mission est dans tes quartiers. examen : le bilan. indice : un coup de pouce (-0,5). kamikaze : rendre ta copie." };
 	}
 	return QUETE_HORS_EXAMEN.apply(this, arguments);
 };
@@ -752,8 +992,8 @@ function majEtatExamen(){
 	if (!examenEnCours() || typeof document === "undefined") return false;
 	var niveau = document.getElementById("etat-niveau");
 	niveau.textContent = state.examen.fini ? "Épreuve finale · copie rendue" : "Épreuve finale · " + nbReussiesExamen() + " / " + EPREUVES_EXAMEN.length + " épreuves";
-	if (typeof remplirBarre === "function") remplirBarre(pointsExamen());
-	document.getElementById("etat-xp").textContent = pointsExamen() + " / 20 · " + dureeExamen(minutesExamen());
+	if (typeof remplirBarre === "function") remplirBarre(noteExamen());
+	document.getElementById("etat-xp").textContent = ecrireNote(noteExamen()) + " / 20 · " + dureeExamen(minutesExamen());
 	document.getElementById("etat").title = "L'épreuve finale. Tape examen pour le bilan.";
 	document.getElementById("etat").classList.toggle("etat-alerte", !state.examen.fini);
 	return true;

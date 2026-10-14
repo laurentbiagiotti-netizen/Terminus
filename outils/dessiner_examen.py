@@ -480,7 +480,68 @@ def david():
     return im
 
 
-DESSINS = {"item_myriam.gif": myriam, "item_dylan.gif": dylan, "item_elfe.gif": steve, "item_rouxblanc.gif": rouxblanc, "item_david.gif": david}
+# ------------------------------------------------------------------
+# Laurana la Flamboyante, le héraut
+# ------------------------------------------------------------------
+
+def laurana():
+    """Laurana la Flamboyante : longue chevelure de feu (verte, comme la barbe rousse du Mage), tabard du héraut,
+    trompette d'argent levée, d'où pend la bannière de Cybersup."""
+    im, d = toile()
+    # la chevelure de feu, très longue, qui flotte au vent derrière elle
+    d.polygon([(64, 34), (56, 60), (46, 96), (38, 132), (50, 126), (54, 140), (66, 120), (70, 92), (72, 60)], fill=V)
+    d.polygon([(104, 34), (114, 54), (120, 84), (132, 110), (122, 108), (126, 126), (110, 104), (104, 74)], fill=V)
+    for pts in ([(60, 50), (52, 90), (44, 124)], [(66, 60), (60, 100), (54, 130)], [(108, 48), (116, 80), (126, 104)]):
+        pli(d, pts)
+    # la robe longue et le tabard du héraut, frappé d'un soleil
+    robe = [(70, 82), (100, 82), (108, 120), (118, 160), (52, 160), (62, 120)]
+    d.polygon(robe, fill=V)
+    pli(d, [(76, 120), (70, 158)])
+    pli(d, [(96, 120), (102, 158)])
+    d.polygon([(74, 84), (96, 84), (98, 140), (85, 150), (72, 140)], fill=B)
+    d.ellipse([79, 100, 91, 112], fill=V)
+    for k in range(8):
+        a = math.radians(k * 45)
+        d.line([(85 + round(8 * math.cos(a)), 106 + round(8 * math.sin(a))), (85 + round(11 * math.cos(a)), 106 + round(11 * math.sin(a)))], fill=V)
+    d.rectangle([66, 118, 104, 122], fill=N)
+    # le visage, de face, avec des taches de rousseur
+    d.ellipse([70, 34, 100, 68], fill=B)
+    d.chord([66, 26, 104, 56], 180, 360, fill=V)                 # la frange
+    d.polygon([(66, 42), (70, 36), (74, 50)], fill=V)
+    d.polygon([(104, 42), (100, 36), (96, 50)], fill=V)
+    d.ellipse([76, 46, 82, 52], fill=N)
+    d.ellipse([88, 46, 94, 52], fill=N)
+    d.point([(77, 47), (89, 47)], fill=B)
+    d.line([(75, 43), (82, 44)], fill=N)
+    d.line([(95, 43), (88, 44)], fill=N)
+    d.line([(85, 52), (84, 57), (86, 57)], fill=N)
+    d.arc([79, 56, 91, 64], 20, 160, fill=N)
+    for x, y in ((75, 55), (77, 57), (79, 55), (91, 55), (93, 57), (95, 55)):
+        d.point((x, y), fill=V)
+    d.rectangle([80, 68, 90, 76], fill=B)                          # le cou
+    # un diadème en flamme
+    d.polygon([(78, 30), (81, 22), (85, 28), (89, 20), (92, 30)], fill=B, outline=N)
+    # le bras levé et la trompette d'argent, et la bannière qui en pend
+    d.polygon([(98, 86), (112, 72), (120, 56), (126, 60), (118, 78), (104, 94)], fill=V)
+    d.ellipse([118, 50, 128, 60], fill=B)
+    d.line([(120, 54), (150, 30)], fill=B, width=3)
+    d.polygon([(148, 22), (162, 16), (160, 40), (150, 34)], fill=B, outline=N)
+    d.ellipse([116, 52, 122, 58], fill=B, outline=N)
+    d.polygon([(128, 46), (144, 34), (148, 62), (138, 70), (132, 60)], fill=V)
+    d.line([(128, 46), (144, 34)], fill=B)
+    d.polygon([(133, 54), (138, 48), (140, 56)], fill=B)
+    for k, (x, y) in enumerate(((158, 50), (164, 34), (166, 10), (152, 8))):
+        d.arc([x - 4, y - 4, x + 4, y + 4], 200 + 30 * k, 340 + 30 * k, fill=B)
+    # l'autre main, sur la hanche
+    d.polygon([(70, 88), (58, 104), (64, 114), (72, 102)], fill=V)
+    d.ellipse([58, 106, 68, 116], fill=B)
+    etincelle(d, 30, 40, 3)
+    etincelle(d, 140, 96, 2)
+    sol(d, 30, 150, 163)
+    return im
+
+
+DESSINS = {"item_myriam.gif": myriam, "item_dylan.gif": dylan, "item_elfe.gif": steve, "item_rouxblanc.gif": rouxblanc, "item_david.gif": david, "item_laurana.gif": laurana}
 
 if __name__ == "__main__":
     noms = sys.argv[1:] or list(DESSINS)
