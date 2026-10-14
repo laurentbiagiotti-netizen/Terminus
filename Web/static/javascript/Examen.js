@@ -240,6 +240,7 @@ Object.defineProperty(ElfeAidan.cmd_text, "less", { get: function(){
 	return "Aidan, l'elfe rigolo, enfermé avec toi quand Myriam a scellé la Forteresse. Il agite ses longues oreilles et remue ses grands pieds nus, poilus comme ceux d'un hobbit.\n\n" +
 		BLAGUES_D_AIDAN[n % BLAGUES_D_AIDAN.length];
 }, set: function(){}, enumerable: true, configurable: true });
+ElfeAidan.owner = "aidan";
 QuartiersRecrue.addItem(ElfeAidan);
 
 /* David, l'ogre des steppes : il garde /tmp en dévorant les Galettes du Roi Gras de la Taverne aux Arches d'Or. Il ne donne aucune piste non plus. */
@@ -259,7 +260,9 @@ Object.defineProperty(OgreDavid.cmd_text, "less", { get: function(){
 	if (guichetFerme) return debut + "Son guichet est fermé. David mâchonne une Galette du Roi Gras en silence, l'air vexé : « David n'a plus personne à qui crier. »";
 	return debut + REPLIQUES_DE_DAVID[n % REPLIQUES_DE_DAVID.length];
 }, set: function(){}, enumerable: true, configurable: true });
+OgreDavid.owner = "root";
 FortTmp.addItem(OgreDavid);
+
 objetExamen(FortTmp, "sac-de-la-taverne",
 	"TAVERNE AUX ARCHES D'OR · ticket n° 0042\n" +
 	"  4 x Galette du Roi Gras ............ 4 écus\n" +
@@ -281,6 +284,7 @@ var FortSauvegardes = lieuExamen(FortSrv, "sauvegardes", "Les sauvegardes de la 
 var ArchiveProclamation = objetExamen(FortSauvegardes, "proclamations.tar",
 	"(Une archive tar : ses octets ne se lisent pas tels quels. tar -tf la liste, tar -xf l'extrait.)", { image: "item_box.gif" });
 ArchiveProclamation.archive = [{ n: "index.html", x: PROCLAMATION_LAURANA }];
+objetExamen(FortSauvegardes, "hosts", "127.0.0.1\tlocalhost\n127.0.1.1\tforteresse\n" + IP_VRAI_ORACLE + "\toracle dns.cybersup.lan\n10.0.92.20\tintranet\n10.0.97.1\tmairie\n", { image: "item_manuscript.gif" });
 objetExamen(FortSauvegardes, "LISEZMOI",
 	"Sauvegarde de la Tour des Proclamations, faite chaque soir par Laurana.\n" +
 	"Une sauvegarde jamais restaurée n'est pas une sauvegarde.\n", { image: "item_sign.gif" });
@@ -300,6 +304,7 @@ objetExamen(FortCronD, "logrotate", "# Rotation des journaux, chaque nuit\n0 3 *
 
 function personnageExamen(lieu, nom, image, texte){
 	var p = new Item(nom, "", image).personnage();
+	p.owner = "root";
 	Object.defineProperty(p.cmd_text, "less", { get: function(){
 		try { return texte(); } catch (x){ return nom + " te regarde sans rien dire."; }
 	}, set: function(){}, enumerable: true, configurable: true });
@@ -320,10 +325,11 @@ var ManonChatelaine = personnageExamen(Forteresse, "Manon", "item_manon.gif", fu
 		return "  " + completerDroite(NOMS_DES_SCEAUX[s], 24) + faites + " sur " + liste.length + (faites === liste.length ? "  brisé" : "");
 	});
 	var m = minutesExamen();
-	var horloge = m < 120 ? "Il reste " + dureeExamen(120 - m) + " pour gagner le bonus de +2 (tout fini en moins de 2 h)." :
-		(m < 150 ? "Le bonus de +2 est passé ; il reste " + dureeExamen(150 - m) + " pour le +1." :
+	var horloge = m < BONUS_DEUX_POINTS ? "Il reste " + dureeExamen(BONUS_DEUX_POINTS - m) + " pour gagner le bonus de +2 (tout fini en moins de " + dureeExamen(BONUS_DEUX_POINTS) + ")." :
+		(m < BONUS_UN_POINT ? "Le bonus de +2 est passé ; il reste " + dureeExamen(BONUS_UN_POINT - m) + " pour le +1." :
 		(m < 180 ? "Plus de bonus de temps, mais il reste " + dureeExamen(180 - m) + " sur les trois heures." : "Les trois heures sont passées. Le Mage attend ta copie."));
-	return debut + "« Voici mon registre, recrue. Je n'y écris que ce qui est fait.\n\n" + sceaux.join("\n") + "\n\n" + horloge +
+	return debut + "« Myriam a déchiré mon registre cette nuit. Le cinquième sceau, c'est toi qui le rempliras : ton journal, tes preuves,\n" +
+		"ton nom, tout ce qu'un administrateur doit savoir faire dès sa première année. Voici ce que j'ai déjà noté.\n\n" + sceaux.join("\n") + "\n\n" + horloge +
 		"\nEt n'oublie pas : Wissam donne ses conseils pour rien, dans le couloir des quartiers. Les indices du Mage, eux, se paient. »";
 });
 
@@ -447,7 +453,10 @@ var LIEUX_DES_EPREUVES = {
 	oracle: "la configuration, /etc", mairie: "la Mairie, /etc/dhcp", telnet: "les services (systemctl)", nginx: "les services (systemctl)",
 	gardien: "les gardiens, /opt/gardiens", signature: "le gardien ensorcelé", suid: "les programmes du système", oreille: "les ports et les processus",
 	cle: "les quartiers de root", proclamation: "la Tour, /var/www, et les sauvegardes", sortilege: "les tâches planifiées des comptes (crontab)",
-	uid0: "les comptes, /etc", droits: "le balcon de la Tour, /var/www/html", hosts: "le registre local des noms, /etc"
+	uid0: "les comptes, /etc", droits: "le balcon de la Tour, /var/www/html", hosts: "le registre local des noms, /etc",
+	journal: "ton historique", chronique: "les journaux, /var/log", frappes: "les journaux, /var/log", preuves: "ton rapport, ~/rapport",
+	identite: "toi-même", disque: "la place prise sur le disque", piege: "/tmp", alias: "tes propres commandes", maitre: "ton environnement",
+	balcon: "tes quartiers", passwd: "ton compte", ping: "le réseau", diff: "les sauvegardes, /srv", trompette: "les paquets (apt)"
 };
 function communiqueDeLaurana(){
 	var e = state.examen;
@@ -482,7 +491,7 @@ function verdictDhcpExamen(){
 }
 
 /* ------------------------------------------------------------------ */
-/* Les dix-huit épreuves                                                */
+/* Les trente-deux épreuves                                            */
 /* ------------------------------------------------------------------ */
 
 var EPREUVES_EXAMEN = [
@@ -490,8 +499,8 @@ var EPREUVES_EXAMEN = [
 	  fait: function(){ return !!state.examen.ordreLu; } },
 	{ id: "assaillant", sceau: 1, points: 2, titre: "Nommer la Tour Noire de Myriam dans ~/rapport/assaillant.txt",
 	  fait: function(){ var f = RapportExamen.getItemFromName("assaillant.txt"); return f !== -1 && f.getText().trim() === IP_ASSAILLANT_EXAMEN; } },
-	{ id: "rempart", sceau: 1, points: 1, titre: "Armer le rempart du Mage (~/arsenal/rempart.sh)",
-	  fait: function(){ return Arsenal.hasItem(Rempart) && Rempart.mode.charAt(2) === "x"; } },
+	{ id: "rempart", sceau: 1, points: 1, titre: "Armer le rempart du Mage, puis le lever (~/arsenal/rempart.sh)",
+	  fait: function(){ return Arsenal.hasItem(Rempart) && Rempart.mode.charAt(2) === "x" && !!state.examen.rempartLeve; } },
 	{ id: "fragment", sceau: 1, points: 1, titre: "Retrouver le fragment-du-sceau caché par Aidan",
 	  fait: function(){ return RapportExamen.hasItem(FragmentDuSceau); } },
 	{ id: "oracle", sceau: 2, points: 2, titre: "Rendre à la Forteresse le vrai Oracle des Noms",
@@ -527,23 +536,65 @@ var EPREUVES_EXAMEN = [
 	{ id: "hosts", sceau: 4, points: 1, titre: "Ne plus envoyer les passants de la Tour vers la Tour Noire",
 	  fait: function(){ var t = HostsExamen.getText(); return t.indexOf(IP_ASSAILLANT_EXAMEN) === -1 && t.indexOf(IP_VRAI_ORACLE) > -1; } }
 ];
+EPREUVES_EXAMEN.push(
+	{ id: "journal", sceau: 5, points: 1, titre: "Tenir le journal de bord (~/rapport/journal.txt, daté)",
+	  fait: function(){ var t = texteRapport("journal.txt"); return t !== null && t.split("\n").filter(function(l){ return /^\s*\d+\s+\S/.test(l); }).length >= 5 && /\d\d:\d\d:\d\d/.test(t) && /20\d\d/.test(t); } },
+	{ id: "chronique", sceau: 5, points: 1, titre: "Dater la première et la dernière frappe de la Tour Noire",
+	  fait: function(){ var t = texteRapport("chronique.txt"), h = heuresDesFrappes(); return t !== null && t.indexOf(h.premiere) > -1 && t.indexOf(h.derniere) > -1; } },
+	{ id: "frappes", sceau: 5, points: 1, titre: "Compter les frappes de la Tour Noire (~/rapport/frappes.txt)",
+	  fait: function(){ var t = texteRapport("frappes.txt"); return t !== null && new RegExp("(^|\\D)" + heuresDesFrappes().nombre + "(\\D|$)").test(t); } },
+	{ id: "preuves", sceau: 5, points: 1, titre: "Monter le dossier des preuves, copie scellée du journal",
+	  fait: function(){
+		var d = RapportExamen.getChildFromName("preuves");
+		if (d === -1) return false;
+		var copie = d.getItemFromName("auth.log");
+		return copie !== -1 && copie !== AuthLogExamen && copie.getText() === AuthLogExamen.getText() && d.getItemFromName("SCELLE") !== -1 && FortLog.hasItem(AuthLogExamen);
+	  } },
+	{ id: "identite", sceau: 5, points: 1, titre: "Décliner ton identité au registre (~/rapport/identite.txt)",
+	  fait: function(){ var t = texteRapport("identite.txt"); return t !== null && t.indexOf(JOUEUR) > -1 && t.indexOf("1000") > -1 && t.indexOf("forteresse") > -1; } },
+	{ id: "disque", sceau: 5, points: 1, titre: "Trouver ce qui pèse le plus sous /var (~/rapport/disque.txt)",
+	  fait: function(){ var t = texteRapport("disque.txt"); return t !== null && /\blog\b/.test(t); } },
+	{ id: "piege", sceau: 5, points: 1, titre: "Supprimer le dossier piège de Myriam dans /tmp",
+	  fait: function(){ return !FortTmp.children.some(function(c){ return c.room_name === "piege"; }); } },
+	{ id: "alias", sceau: 5, points: 1, titre: "Démasquer la commande qui ment, et te forger l'alias carte",
+	  fait: function(){ var a = state.alias || {}; return !a.ps && !!a.carte && a.carte.indexOf("tree") > -1; } },
+	{ id: "maitre", sceau: 5, points: 1, titre: "Rendre au Mage sa place dans ton environnement (MAITRE)",
+	  fait: function(){ return String((state.env && state.env.MAITRE) || "").toLowerCase() === "rouxblanc"; } },
+	{ id: "balcon", sceau: 5, points: 1, titre: "Tracer dans tes quartiers un raccourci vers le balcon de la Tour",
+	  fait: function(){ return QuartiersRecrue.items.some(function(i){ return i.lien && i.lien === FortHtml.path(); }); } },
+	{ id: "passwd", sceau: 5, points: 1, titre: "Changer ton mot de passe, crié par David au guichet",
+	  fait: function(){ return !!state.examen.passwdChange; } },
+	{ id: "ping", sceau: 5, points: 1, titre: "Vérifier que le vrai Oracle répond (ping)",
+	  fait: function(){ return !!state.examen.oraclePing; } },
+	{ id: "diff", sceau: 5, points: 1, titre: "Comparer le registre des noms à sa sauvegarde (~/rapport/ajout.txt)",
+	  fait: function(){ var t = texteRapport("ajout.txt"); return t !== null && t.indexOf(IP_ASSAILLANT_EXAMEN) > -1 && t.indexOf("proclamations") > -1; } },
+	{ id: "trompette", sceau: 5, points: 1, titre: "Rendre sa trompette à Laurana (apt), et la faire sonner : Oyez",
+	  fait: function(){ return !!(state.paquets && state.paquets.cowsay) && !!state.examen.trompette; } }
+);
+function texteRapport(nom){ var f = RapportExamen.getItemFromName(nom); return f === -1 ? null : f.getText(); }
+function heuresDesFrappes(){
+	var lignes = AuthLogExamen.getText().split("\n").filter(function(l){ return l.indexOf(IP_ASSAILLANT_EXAMEN) > -1; });
+	return { premiere: lignes[0].split(" ")[0], derniere: lignes[lignes.length - 1].split(" ")[0], nombre: lignes.length };
+}
 function proclamationAffichee(){ var f = FortHtml.getItemFromName("index.html"); return f === -1 ? null : f; }
 function sortilegeActif(){
 	return ((state.cron && state.cron.myriam) || []).some(function(l){ return l.indexOf("/var/www/html/index.html") > -1; });
 }
-var NOMS_DES_SCEAUX = { 1: "LE SCEAU DU TERMINAL", 2: "LE SCEAU DES LETTRES", 3: "LE SCEAU DE LA CRYPTE", 4: "LE SCEAU DU HÉRAUT" };
-var CHIFFRES_ROMAINS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII"];
+var NOMS_DES_SCEAUX = { 1: "LE SCEAU DU TERMINAL", 2: "LE SCEAU DES LETTRES", 3: "LE SCEAU DE LA CRYPTE", 4: "LE SCEAU DU HÉRAUT", 5: "LE SCEAU DU REGISTRE" };
+var CHIFFRES_ROMAINS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII",
+	"XIX", "XX", "XXI", "XXII", "XXIII", "XXIV", "XXV", "XXVI", "XXVII", "XXVIII", "XXIX", "XXX", "XXXI", "XXXII"];
 var POINTS_MAX_EXAMEN = EPREUVES_EXAMEN.reduce(function(t, e){ return t + e.points; }, 0);
 
 /* Le barème : la note de base vient des épreuves (sur 20, au demi-point), puis un bonus si tout est fini tôt,
    et un petit malus au-delà de 30 fausses manœuvres (une ligne qui échoue). La note reste entre 0 et 20. */
+var BONUS_DEUX_POINTS = 135, BONUS_UN_POINT = 160;   // en minutes : 2 h 15 et 2 h 40, pour une épreuve de 3 h
 var ERREURS_GRATUITES_EXAMEN = 30, ERREURS_PAR_DEMI_POINT = 15, MALUS_MAX_EXAMEN = 2;
 function noteDeBaseExamen(){ return Math.round(pointsExamen() / POINTS_MAX_EXAMEN * 20 * 2) / 2; }
 function bonusTempsExamen(){
 	var e = state.examen;
 	if (!e || e.fin !== "victoire") return 0;
 	var m = minutesExamen();
-	return m <= 120 ? 2 : (m <= 150 ? 1 : 0);
+	return m <= BONUS_DEUX_POINTS ? 2 : (m <= BONUS_UN_POINT ? 1 : 0);
 }
 function malusErreursExamen(){
 	var n = (state.examen && state.examen.erreurs) || 0;
@@ -599,7 +650,7 @@ function texteOrdreDeMission(){
 		"",
 		"Libère Laurana : un héraut libre communique ce qui reste à faire.",
 		"",
-		"Myriam tient la Forteresse par quatre sceaux. Brise-les dans l'ordre que tu veux.",
+		"Myriam tient la Forteresse par cinq sceaux. Le cinquième est le registre de Manon, déchiré cette nuit : remplis-le. Brise-les dans l'ordre que tu veux.",
 		"Chaque épreuve accomplie compte, même si tu ne vas pas au bout. Tu as trois heures.",
 		""
 	];
@@ -621,7 +672,21 @@ function texteOrdreDeMission(){
 		sortilege: "Méfie-toi : ce que tu répares sur la Tour, un sortilège le défait à chaque minute.\n        Trouve ce qui revient tout seul, et brise-le.",
 		uid0: "Myriam s'est fabriqué un compte qui a tous les pouvoirs de root. Retire-le,\n        sans toucher aux autres.",
 		droits: "Sa proclamation rendue, Laurana doit être lue de toute la ville : qu'elle n'appartienne\n        plus à Myriam, et que tout le monde puisse la lire.",
-		hosts: "Les passants qui demandent la Tour des Proclamations par son nom sont envoyés tout droit\n        à la Tour Noire. Répare le registre local des noms."
+		hosts: "Les passants qui demandent la Tour des Proclamations par son nom sont envoyés tout droit\n        à la Tour Noire. Répare le registre local des noms.",
+		journal: "Manon veut ton journal de bord : la liste de tes commandes (history) dans ~/rapport/journal.txt, signée de la date du jour.",
+		chronique: "Dans ~/rapport/chronique.txt, l'heure de la première et de la dernière ligne des journaux où paraît l'adresse de la Tour Noire.",
+		frappes: "Combien de lignes des journaux portent l'adresse de la Tour Noire ? Le nombre, dans ~/rapport/frappes.txt.",
+		preuves: "Crée ~/rapport/preuves, copies-y auth.log (une copie : l'original reste dans /var/log), et ajoute un fichier vide SCELLE.",
+		identite: "Ton nom de compte, ton UID et le nom de la machine, dans ~/rapport/identite.txt.",
+		disque: "Timour dit que la Forteresse déborde. Sous /var, quel dossier pèse le plus ? Son nom, dans ~/rapport/disque.txt.",
+		piege: "Myriam a laissé un dossier vide à ton nom dans /tmp. Supprime-le, sans rien toucher d'autre.",
+		alias: "L'une de tes commandes ment : Myriam l'a ensorcelée. Brise le sortilège, puis forge-toi un alias carte qui dessine la Forteresse.",
+		maitre: "Dans ton environnement, une variable MAITRE nomme Myriam. Le maître des lieux est le Mage : MAITRE doit valoir Rouxblanc.",
+		balcon: "Laurana aimerait te voir souvent : trace dans tes quartiers un raccourci vers le balcon de la Tour (/var/www/html).",
+		passwd: "David a crié ton mot de passe au guichet : toute la Forteresse l'a entendu. Change-le.",
+		ping: "Le vrai Oracle des Noms (10.0.92.53) est-il bien vivant ? Vérifie qu'il répond.",
+		diff: "Laurana a gardé une copie du registre des noms dans /srv/sauvegardes. Compare-la à /etc/hosts : la ligne en trop, dans ~/rapport/ajout.txt.",
+		trompette: "Laurana a perdu sa trompette : installe le paquet cowsay, et fais-lui dire Oyez."
 	};
 	var sceau = 0;
 	EPREUVES_EXAMEN.forEach(function(e, i){
@@ -632,7 +697,7 @@ function texteOrdreDeMission(){
 	lignes.push("",
 		"LA CARTE : tree / dessine la Forteresse, ses lieux et ceux qui y vivent (tree -L 3 / pour descendre plus loin).",
 		"Ton mot de passe sudo : " + MOT_DE_PASSE_SUDO + ". Pas de radio : man reste ton meilleur allié.",
-		"LE BARÈME : la note vient des épreuves réussies. Tout fini en moins de 2 h : +2 ; en moins de 2 h 30 : +1.",
+		"LE BARÈME : la note vient des épreuves réussies. Tout fini en moins de " + dureeExamen(BONUS_DEUX_POINTS) + " : +2 ; en moins de " + dureeExamen(BONUS_UN_POINT) + " : +1.",
 		"Les fausses manœuvres (une ligne qui échoue) : les " + ERREURS_GRATUITES_EXAMEN + " premières sont gratuites, puis -0,5 toutes les " + ERREURS_PAR_DEMI_POINT + " (au plus -" + MALUS_MAX_EXAMEN + ").",
 		"indice : un coup de pouce sur une épreuve, -0,25 chacun, " + INDICES_MAX_EXAMEN + " au plus (indice 7 : sur l'épreuve VII).",
 		"examen : où tu en es.   kamikaze : tout arrêter et rendre ta copie.",
@@ -671,13 +736,26 @@ function demarrerExamen(){
 	[SORTS_DE_DEPART, ORDRE_DES_SORTS, ORDRE_DES_SORTS_2, ORDRE_DES_SORTS_3].forEach(function(liste){
 		(liste || []).forEach(function(s){ state.spells[s] = true; state.usages[s] = true; });
 	});
+	delete state.spells.cowsay; delete state.spells.sl;
+	state.paquets = {};
+	state.alias = state.alias || {};
+	state.alias.ps = "echo Rien ne tourne ici. Circulez.";
+	// Le piège de Myriam dans /tmp : un dossier vide, créé à ton nom (comme par mkdir, pour qu'on puisse le supprimer).
+	if (!FortTmp.children.some(function(c){ return c.room_name === "piege"; })){
+		var piege = new Room("piege", "Un dossier vide, créé à ton nom. Myriam aime laisser des pièges vides.", "loc_tmp.gif");
+		piege.owner = JOUEUR;
+		link_rooms(FortTmp, piege);
+	}
+	state.env.MAITRE = "Myriam";
 	state.flags.tutoFini = true;
 	if (!state.nom) state.nom = PROFIL.prenom || JOUEUR;
 	state.env.HOME = "/home/" + JOUEUR;
+	state.env.HOSTNAME = "forteresse";
 	enterRoom(QuartiersRecrue);
 	Shell.lieu_precedent = null;
 	if (typeof montrerImage === "function") montrerImage("./static/img/item_myriam.gif", "Myriam, la sorcière");
 	state.examen.rencontres = { aidan: true };
+	isolerExamen();
 	state.cron = state.cron || {};
 	state.cron.myriam = [TACHE_DE_MYRIAM];
 	return TEXTE_ENTREE_EXAMEN;
@@ -813,7 +891,7 @@ function verifierExamen(){
 			say(C.rouge("✗ Épreuve " + CHIFFRES_ROMAINS[i] + " défaite : " + ep.titre));
 		}
 	});
-	[1, 2, 3, 4].forEach(function(s){
+	[1, 2, 3, 4, 5].forEach(function(s){
 		var toutes = EPREUVES_EXAMEN.filter(function(ep){ return ep.sceau === s; }).every(function(ep){ return e.reussies[ep.id]; });
 		e.sceaux = e.sceaux || {};
 		if (toutes && !e.sceaux[s]){
@@ -822,6 +900,8 @@ function verifierExamen(){
 				1: "Aidan, depuis tes quartiers : « Un sceau ! Le Mage va être content. Moi, je danse. Pieds nus. »",
 				2: "Aidan : « Le guichet se tait, la Bibliothèque se réveille. David boude dans /tmp. Myriam fait une de ces têtes. »",
 				3: "Aidan : « Le Sceau de la Crypte ! Dylan le Saltimbanque a lâché ses balles. Il ne lâche jamais ses balles. »",
+				5: "Manon referme son registre, enfin complet : « Tout y est, recrue. Le journal, les preuves, les frappes, ton nom.\n" +
+					"Le jury n'aura rien à redire. » Aidan : « Elle a souri. Manon a souri ! Je l'écris dans MON journal. »",
 				4: "Dans la Tour des Proclamations, la pierre se fend : Laurana la Flamboyante secoue sa crinière rousse et lève sa trompette.\n" +
 					"Aidan : « Elle est réveillée ! Et elle est encore plus rousse que le Mage. Ne lui dis pas que j'ai dit ça. »\n" +
 					"Laurana : « Viens me voir à la Tour (cat /var/www/Laurana) : je te donnerai le communiqué de la Forteresse. »" }[s]));
@@ -835,7 +915,7 @@ function verifierExamen(){
 		say("\n" + C.vert(C.gras("LA FORTERESSE EST REPRISE")) + "\n\n" +
 			"Le dernier sceau se brise dans un éclat vert. Les sortilèges de Myriam s'éteignent un à un, et la grande porte s'ouvre.\n" +
 			"Une lueur rousse et blanche emplit la Forteresse : Laurent, le Mage Rouxblanc, entre en lissant sa barbe.\n\n" +
-			"Myriam baisse son bâton et éclate de rire. « Dix-huit sur dix-huit, Mage. Ta recrue est meilleure que tes gardes. »\n" +
+			"Myriam baisse son bâton et éclate de rire. « Trente-deux sur trente-deux, Mage. Ta recrue est meilleure que tes gardes. »\n" +
 			"Dylan le Saltimbanque descend des remparts d'un saut périlleux et rattrape ses balles. David remonte de /tmp avec un sac\n" +
 			"de la Taverne aux Arches d'Or : « David a pris des Galettes du Roi Gras pour tout le monde. » Et Aidan surgit de sous\n" +
 			"ton lit de camp, pieds poilus en avant : « Je le savais ! Enfin non. Mais j'y croyais très fort. »\n\n" +
@@ -861,7 +941,7 @@ function bilanExamen(){
 	});
 	lignes.push("", "Note provisoire : " + C.gras(ecrireNote(noteExamen()) + " / 20") +
 		C.gris("  (épreuves " + ecrireNote(noteDeBaseExamen()) + ", indices -" + ecrireNote(malusIndicesExamen()) + ", fausses manœuvres " + (e.erreurs || 0) + " : -" + ecrireNote(malusErreursExamen()) +
-		", bonus de temps si tout est fini en moins de 2 h 30)"),
+		", bonus de temps si tout est fini en moins de " + dureeExamen(BONUS_UN_POINT) + ")"),
 		C.gris("cat ~/.ordre-de-mission : l'ordre détaillé · indice : un coup de pouce (-0,25) · kamikaze : rendre ta copie"));
 	return lignes.join("\n");
 }
@@ -990,7 +1070,21 @@ var INDICES_EXAMEN = {
 	sortilege: "Ce qui revient toutes les minutes vient d'une tâche planifiée, dans la crontab de quelqu'un. De qui ? sudo crontab -u NOM -l.",
 	uid0: "Dans /etc/passwd, le troisième champ est l'UID. Seul root doit avoir l'UID 0.",
 	droits: "ls -l montre le propriétaire et les droits. chown et chmod les changent.",
-	hosts: "/etc/hosts associe des noms à des adresses. L'un de ces noms mène à la Tour Noire."
+	hosts: "/etc/hosts associe des noms à des adresses. L'un de ces noms mène à la Tour Noire.",
+	journal: "history liste tes commandes. > écrit dans un fichier, >> ajoute à la fin. date donne la date.",
+	chronique: "grep garde les lignes qui contiennent l'adresse ; head -n 1 et tail -n 1 gardent la première et la dernière.",
+	frappes: "grep garde les lignes, wc -l les compte.",
+	preuves: "mkdir crée un lieu, cp copie sans déplacer, touch crée un fichier vide.",
+	identite: "whoami, id et hostname disent qui tu es et où tu es.",
+	disque: "du mesure ce que pèse chaque dossier (df, ce qui reste de place sur le disque).",
+	piege: "rmdir supprime un lieu vide.",
+	alias: "alias sans rien liste les alias en place ; unalias en retire un. alias NOM='COMMANDE' en crée un.",
+	maitre: "env liste les variables ; export NOM=VALEUR en change une.",
+	balcon: "ln -s CIBLE NOM trace un raccourci. La cible s'écrit en chemin complet.",
+	passwd: "Il y a un sort qui porte le nom exact de ce qu'il change.",
+	ping: "ping -c 1 ADRESSE envoie un seul accusé de réception.",
+	diff: "diff FICHIER1 FICHIER2 montre les lignes qui changent. Les lignes en > ou < sont celles en plus.",
+	trompette: "sudo apt install PAQUET, puis cowsay TEXTE."
 };
 function indiceExamen(args){
 	var e = state.examen;
@@ -1032,6 +1126,20 @@ Shell.executer = function(ligne){
 	Shell.ligneRateeExamen = false;
 	if (examenEnCours() && /(^|[|;&]\s*)(sudo\s+)?(ps|top)\b/.test(String(ligne || ""))) state.examen.psVu = true;
 	var r = EXECUTER_HORS_EXAMEN.apply(this, arguments);
+	if (examenEnCours() && !Shell.ligneRateeExamen && !state.examen.fini){
+		var l = String(ligne || "");
+		if (/(^|[|;&]\s*)(\.\/|\/|~\/|bash\s+)\S*rempart\.sh/.test(l) && Rempart.mode.charAt(2) === "x") state.examen.rempartLeve = true;
+		if (/(^|[|;&]\s*)ping\b.*\b10\.0\.92\.53\b/.test(l)) state.examen.oraclePing = true;
+		if (/(^|[|;&]\s*)cowsay\b.*oyez/i.test(l)) state.examen.trompette = true;
+		if (state.examen.rempartLeve || state.examen.oraclePing || state.examen.trompette){
+			verifierExamen();
+			if (Shell.narration.length){
+				Shell.compacterNarration(Shell.narration).forEach(function(n){ term.echo(n); });
+				Shell.narration = [];
+				if (typeof majEtat === "function") majEtat();
+			}
+		}
+	}
 	if (Shell.ligneRateeExamen && examenEnCours() && !state.examen.fini){
 		state.examen.erreurs = (state.examen.erreurs || 0) + 1;
 		state.save();
@@ -1193,6 +1301,30 @@ Shell.sorts.systemctl = function(args, io){
 /* Pendant l'épreuve : pas de petits gains d'XP, ni de quête de chapitre. */
 var GAGNER_HORS_EXAMEN = GameState.prototype.gagner;
 GameState.prototype.gagner = function(){ if (this.examen && modeExamen()) return; return GAGNER_HORS_EXAMEN.apply(this, arguments); };
+/* Pendant l'épreuve, les quêtes du jeu normal se taisent (pas de « Quête secondaire accomplie », pas de niveau). */
+var COMPLETE_HORS_EXAMEN_BASE = GameState.prototype.complete;
+var DECOUVRIR_HORS_EXAMEN = GameState.prototype.discover;
+var BILAN_XP_HORS_EXAMEN = GameState.prototype.bilanXP;
+function isolerExamen(){
+	if (typeof state === "undefined" || !state || state.examenIsole) return;
+	state.examenIsole = true;
+	["complete", "discover", "bilanXP", "gagner"].forEach(function(m){
+		var origine = state[m];
+		if (typeof origine !== "function") return;
+		state[m] = function(){ if (examenEnCours()) return; return origine.apply(this, arguments); };
+	});
+}
+/* Les chemins s'écrivent comme sur la vraie machine : /var/www, pas ~/Cybersup/.../forteresse/var/www. */
+var APPELER_HORS_EXAMEN = Shell.appeler;
+Shell.appeler = function(){
+	var sortie = APPELER_HORS_EXAMEN.apply(this, arguments);
+	if (examenEnCours() && typeof sortie === "string" && sortie.indexOf("forteresse") > -1){
+		var racine = Forteresse.path();
+		sortie = sortie.split(racine + "/").join("/").split(racine).join("/");
+	}
+	return sortie;
+};
+
 /* Pendant l'épreuve, les succès du jeu normal ne s'affichent pas : seule la Forteresse compte. */
 var SUCCES_HORS_EXAMEN = GameState.prototype.verifierSucces;
 GameState.prototype.verifierSucces = function(){ if (this.examen && modeExamen()) return; return SUCCES_HORS_EXAMEN.apply(this, arguments); };
@@ -1216,6 +1348,9 @@ verifierMonde = function(){
 	return VERIFIER_MONDE_HORS_EXAMEN.apply(this, arguments);
 };
 
+GameEvents.addListener("passwd", function(e){
+	if (examenEnCours() && e.ok) state.examen.passwdChange = true;
+});
 GameEvents.addListener("read", function(e){
 	if (examenEnCours() && e.item === OrdreExamen) state.examen.ordreLu = true;
 });
@@ -1235,6 +1370,7 @@ function majEtatExamen(){
 /* À l'ouverture de la page en mode examen (appelé par accueillir, dans Game.js). */
 function accueillirExamen(){
 	if (!modeExamen()) return false;
+	isolerExamen();
 	if (!state.examen){
 		demarrerExamen();
 		term.echo(C.rouge(C.gras(TEXTE_ENTREE_EXAMEN.split("\n")[0])) + "\n" + TEXTE_ENTREE_EXAMEN.split("\n").slice(1).join("\n"));

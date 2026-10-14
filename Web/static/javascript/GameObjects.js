@@ -1686,7 +1686,7 @@ De temps en temps il crache une étincelle, l'air très content de lui.");
     state.complete("s_script");
 });
 GameEvents.addListener("passwd", function(e){
-    if (!e.ok) return;
+    if (!e.ok || (typeof examenEnCours === "function" && examenEnCours())) return;
     if (!state.quests["s_passwd"]) say("Le RSSI hoche la tête, presque ému. « Long, varié, et rien qu'à toi. Si seulement tout le monde faisait pareil. »");
     state.complete("s_passwd");
 });
