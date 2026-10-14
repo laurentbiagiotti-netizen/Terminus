@@ -835,6 +835,41 @@ function mentionExamen(note){
 	return "Ajourné";
 }
 
+/* Les badges du parcours : les badges de compétence gagnés dans la partie normale (chapitres 2 et 3, platines compris),
+   relevés à l'entrée dans l'épreuve. La note finale : 80 % la note de l'épreuve, 20 % celle des badges. */
+var POIDS_EPREUVE = 0.8, POIDS_BADGES = 0.2;
+var BADGES_DU_PARCOURS = Object.keys(typeof RELIQUES !== "undefined" ? RELIQUES : {})
+	.concat(Object.keys(typeof TROPHEES_CRYPTE !== "undefined" ? TROPHEES_CRYPTE : {}), ["platine_reseau", "platine_cyber"]);
+function lireBadgesDuParcours(){
+	var gagnes = {};
+	try {
+		var brut = window.localStorage.getItem(String(CLE_SAUVEGARDE).replace(/-examen$/, ""));
+		var d = brut ? JSON.parse(brut) : null;
+		if (d) BADGES_DU_PARCOURS.forEach(function(id){
+			if (/^platine_/.test(id) ? (d.flags && d.flags[id] === true) : (d.quests && d.quests[id])) gagnes[id] = true;
+		});
+	} catch (x){}
+	return gagnes;
+}
+function badgesExamen(){
+	var e = state.examen;
+	if (!e.badges) e.badges = lireBadgesDuParcours();
+	return e.badges;
+}
+function nbBadgesExamen(){ var b = badgesExamen(); return BADGES_DU_PARCOURS.filter(function(id){ return b[id]; }).length; }
+function noteBadgesExamen(n){ return Math.round((n === undefined ? nbBadgesExamen() : n) / BADGES_DU_PARCOURS.length * 20 * 2) / 2; }
+function combinerNotesExamen(epreuve, badges){ return Math.round((POIDS_EPREUVE * epreuve + POIDS_BADGES * badges) * 4) / 4; }
+function noteGlobaleExamen(){ return combinerNotesExamen(noteExamen(), noteBadgesExamen()); }
+function masqueBadgesExamen(){
+	var b = badgesExamen(), m = 0;
+	BADGES_DU_PARCOURS.forEach(function(id, i){ if (b[id]) m += Math.pow(2, i); });
+	return m.toString(16);
+}
+function texteBaremeBadges(){
+	return "Note finale : " + Math.round(POIDS_EPREUVE * 100) + " % l'épreuve, " + Math.round(POIDS_BADGES * 100) + " % tes badges de compétence des chapitres 2 et 3 (" +
+		(state.examen ? nbBadgesExamen() : 0) + " sur " + BADGES_DU_PARCOURS.length + ", relevés à ton entrée dans la Forteresse).";
+}
+
 function texteOrdreDeMission(){
 	var lignes = [
 		"ORDRE DE MISSION · SCELLÉ PAR LAURENT, LE MAGE ROUXBLANC",
@@ -911,6 +946,7 @@ function texteOrdreDeMission(){
 		"LE BARÈME : la note vient des épreuves réussies. Tout fini en moins de " + dureeExamen(BONUS_DEUX_POINTS) + " : +2 ; en moins de " + dureeExamen(BONUS_UN_POINT) + " : +1.",
 		"Les fausses manœuvres (une ligne qui échoue) : les " + ERREURS_GRATUITES_EXAMEN + " premières sont gratuites, puis -0,5 toutes les " + ERREURS_PAR_DEMI_POINT + " (au plus -" + MALUS_MAX_EXAMEN + ").",
 		"indice : un coup de pouce sur une épreuve, -0,25 chacun, " + INDICES_MAX_EXAMEN + " au plus (indice 7 : sur l'épreuve VII).",
+		texteBaremeBadges(),
 		"examen : où tu en es.   kamikaze : tout arrêter et rendre ta copie.",
 		"",
 		"Que tes commandes soient justes. Je t'attends de l'autre côté de la porte.",
@@ -943,7 +979,8 @@ TEXTE_ENTREE_EXAMEN = TEXTE_ENTREE_EXAMEN.replace(/([^\n])\n(?=[^\n])/g, "$1 ");
 
 /* Ouvre une épreuve neuve : tous les sorts, la Forteresse, et le silence. */
 function demarrerExamen(){
-	state.examen = { debutHorloge: Date.now(), debut: state.tempsMs || 0, reussies: {}, ordreLu: false, fini: false, fin: null, dateFin: null, tempsFin: null, commandesDebut: state.nbCommandes, lieu: null, erreurs: 0, indices: {}, defaites: {}, sceaux: {}, rencontres: {} };
+	state.examen = { debutHorloge: Date.now(), debut: state.tempsMs || 0, reussies: {}, ordreLu: false, fini: false, fin: null, dateFin: null, tempsFin: null, commandesDebut: state.nbCommandes, lieu: null, erreurs: 0, indices: {}, defaites: {}, sceaux: {}, rencontres: {},
+		badges: lireBadgesDuParcours() };
 	[SORTS_DE_DEPART, ORDRE_DES_SORTS, ORDRE_DES_SORTS_2, ORDRE_DES_SORTS_3].forEach(function(liste){
 		(liste || []).forEach(function(s){ state.spells[s] = true; state.usages[s] = true; });
 	});
@@ -997,8 +1034,10 @@ function texteDiplomeExamen(){
 		"  Bonus de temps      : +" + ecrireNote(bonusTempsExamen()) + (e.fin === "victoire" ? "" : "  (seulement si tout est fini)"),
 		"  Indices             : " + nbIndicesExamen() + "  (-" + ecrireNote(malusIndicesExamen()) + ")",
 		"  Fausses manœuvres   : " + (e.erreurs || 0) + "  (-" + ecrireNote(malusErreursExamen()) + ")" + (e.tajineTue ? "  dont 5 pour le tajine de Timour" : ""),
-		"  NOTE FINALE         : " + ecrireNote(noteExamen()) + " / 20",
-		"  Mention             : " + mentionExamen(noteExamen()),
+		"  Note de l'épreuve   : " + ecrireNote(noteExamen()) + " / 20",
+		"  Badges du parcours  : " + nbBadgesExamen() + " sur " + BADGES_DU_PARCOURS.length + "  (" + ecrireNote(noteBadgesExamen()) + " / 20)",
+		"  NOTE FINALE         : " + ecrireNote(noteGlobaleExamen()) + " / 20  (" + Math.round(POIDS_EPREUVE * 100) + " % épreuve, " + Math.round(POIDS_BADGES * 100) + " % badges)",
+		"  Mention             : " + mentionExamen(noteGlobaleExamen()),
 		"  Temps               : " + dureeExamen(minutes),
 		"  Fin de l'épreuve    : " + (e.fin === "victoire" ? "Forteresse reprise" : "kamikaze"),
 		"",
@@ -1022,11 +1061,12 @@ function masqueExamen(table){
 function codeDiplomeExamen(){
 	var e = state.examen;
 	var z = e.quiz, detailQuiz = z ? z.ids.map(function(id, k){ var r = z.reponses[k]; return id + (r ? (r.juste ? "+" : "-") + r.lettre : "."); }).join(",") : "";
-	var charge = ["E3", String(state.nom || JOUEUR).replace(/\|/g, "/"), noteExamen() * 4, noteDeBaseExamen() * 4, bonusTempsExamen() * 4,
+	var charge = ["E4", String(state.nom || JOUEUR).replace(/\|/g, "/"), noteExamen() * 4, noteDeBaseExamen() * 4, bonusTempsExamen() * 4,
 		malusErreursExamen() * 4, malusIndicesExamen() * 4, e.erreurs || 0, minutesExamen(),
 		(e.commandesFin !== undefined ? e.commandesFin : state.nbCommandes) - (e.commandesDebut || 0),
 		e.fin === "victoire" ? "V" : "K", masqueExamen(e.reussies), masqueExamen(e.defaites), masqueExamen(e.indices),
-		e.dateFin || dateDuJour(), PROFIL.graine, e.tajineTue ? "T" : "-", detailQuiz].join("|");
+		e.dateFin || dateDuJour(), PROFIL.graine, e.tajineTue ? "T" : "-", detailQuiz,
+		noteGlobaleExamen() * 4, nbBadgesExamen(), masqueBadgesExamen()].join("|");
 	var code = versBase64Url(charge) + "." + sommeDeControle(charge + "|" + SEL_DIPLOME);
 	return e.sceau && e.chargeScellee === charge ? code + "." + e.sceau : code;
 }
@@ -1036,11 +1076,14 @@ function lireCodeExamen(code){
 	var charge;
 	try { charge = depuisBase64Url(morceaux[0]); } catch (x){ return null; }
 	var c = charge.split("|");
-	if (c[0] !== "E3" && morceaux.length === 3) return null;
+	if (c[0] !== "E3" && c[0] !== "E4" && morceaux.length === 3) return null;
 	var q = c[0] === "E1" ? 2 : 4;
-	if (!((c[0] === "E1" && c.length === 16) || (c[0] === "E2" && c.length === 17) || (c[0] === "E3" && c.length === 18))) return null;
-	function bits(h){ var n = parseInt(h, 16) || 0; return EPREUVES_EXAMEN.map(function(ep, i){ return Math.floor(n / Math.pow(2, i)) % 2 === 1; }); }
+	if (!((c[0] === "E1" && c.length === 16) || (c[0] === "E2" && c.length === 17) || (c[0] === "E3" && c.length === 18) || (c[0] === "E4" && c.length === 21))) return null;
+	function bits(h, liste){ var n = parseInt(h, 16) || 0; return (liste || EPREUVES_EXAMEN).map(function(ep, i){ return Math.floor(n / Math.pow(2, i)) % 2 === 1; }); }
+	var avecBadges = c[0] === "E4";
 	return { valide: sommeDeControle(charge + "|" + SEL_DIPLOME) === morceaux[1].toUpperCase(),
+		noteGlobale: avecBadges ? +c[18] / 4 : +c[2] / q, badges: avecBadges ? +c[19] : null,
+		badgesGagnes: avecBadges ? bits(c[20], BADGES_DU_PARCOURS) : null,
 		prenom: c[1], note: +c[2] / q, base: +c[3] / q, bonus: +c[4] / q, malusErreurs: +c[5] / q, malusIndices: +c[6] / q, tajine: c[16] === "T",
 		erreurs: +c[7], minutes: +c[8], commandes: +c[9], fin: c[10], reussies: bits(c[11]), defaites: bits(c[12]), indices: bits(c[13]),
 		date: c[14], graine: +c[15], charge: charge, sceau: morceaux[2] ? morceaux[2].toUpperCase() : null,
@@ -1178,6 +1221,8 @@ function bilanExamen(){
 	lignes.push("", "Note provisoire : " + C.gras(ecrireNote(noteExamen()) + " / 20") +
 		C.gris("  (épreuves " + ecrireNote(noteDeBaseExamen()) + ", indices -" + ecrireNote(malusIndicesExamen()) + ", fausses manœuvres " + (e.erreurs || 0) + " : -" + ecrireNote(malusErreursExamen()) +
 		", bonus de temps si tout est fini en moins de " + dureeExamen(BONUS_UN_POINT) + ")"),
+		"Badges du parcours : " + nbBadgesExamen() + " sur " + BADGES_DU_PARCOURS.length + " (" + ecrireNote(noteBadgesExamen()) + " / 20) · note finale provisoire : " +
+			C.gras(ecrireNote(noteGlobaleExamen()) + " / 20") + C.gris("  (" + Math.round(POIDS_EPREUVE * 100) + " % épreuve, " + Math.round(POIDS_BADGES * 100) + " % badges)"),
 		C.gris("cat ~/.ordre-de-mission : l'ordre détaillé · indice : un coup de pouce (-0,25) · kamikaze : rendre ta copie"));
 	return lignes.join("\n");
 }
@@ -1223,7 +1268,7 @@ Shell.sorts.examen = function(args, io){
 Shell.sorts.kamikaze = function(args, io){
 	if (!examenEnCours()) return "kamikaze n'a de sens que pendant l'épreuve finale. " + C.gris("(Le sort examen et le code de ton formateur y mènent.)");
 	if (examenFini()) return "L'épreuve est terminée : ta copie est rendue. examen pour revoir ton diplôme.";
-	term.demander("Le dernier sort. Tu rends ta copie maintenant : ta note sera celle de ce que tu as accompli (" + ecrireNote(noteExamen()) + " / 20). Tape oui pour confirmer : ", false, function(r){
+	term.demander("Le dernier sort. Tu rends ta copie maintenant : ta note sera celle de ce que tu as accompli (épreuve " + ecrireNote(noteExamen()) + " / 20, note finale avec tes badges " + ecrireNote(noteGlobaleExamen()) + " / 20). Tape oui pour confirmer : ", false, function(r){
 		if (String(r).trim().toLowerCase() !== "oui"){ term.echo("Tu baisses la main. Le combat continue."); return; }
 		terminerExamen("kamikaze");
 		jouerSon("niveau");
@@ -1309,6 +1354,18 @@ function rapportCodeExamen(c, verdictSceau){
 				"\n        " + C.gris("réponse attendue : " + Q.c[Q.b] + (x.etat === "." ? "   (pas répondu)" : "")));
 		});
 	}
+	if (c.badgesGagnes){
+		lignes.push("", "  " + C.gras("BADGES DU PARCOURS") + "  " + c.badges + " sur " + BADGES_DU_PARCOURS.length + C.gris("  (partie normale, relevés à l'entrée dans l'épreuve)"));
+		[["RÉSEAU (chapitre 2)", function(id){ return /^r_|platine_reseau/.test(id); }], ["CYBER (chapitre 3)", function(id){ return /^c_|platine_cyber/.test(id); }]].forEach(function(ch){
+			var ids = BADGES_DU_PARCOURS.filter(ch[1]);
+			var gagnes = ids.filter(function(id){ return c.badgesGagnes[BADGES_DU_PARCOURS.indexOf(id)]; });
+			var manquants = ids.filter(function(id){ return !c.badgesGagnes[BADGES_DU_PARCOURS.indexOf(id)]; });
+			function noms(liste){ return liste.map(function(id){ return (typeof COMPETENCES !== "undefined" && COMPETENCES[id]) || id; }).join(", "); }
+			lignes.push("    " + completerDroite(ch[0], 20) + gagnes.length + " sur " + ids.length);
+			if (gagnes.length) lignes.push("      " + C.vert("✓ ") + noms(gagnes));
+			if (manquants.length) lignes.push("      " + C.gris("✗ " + noms(manquants)));
+		});
+	}
 	// Le bulletin : la note, son détail, et le verdict d'authenticité, en dernier.
 	var parSceau = Object.keys(NOMS_DES_SCEAUX).map(Number).map(function(s){
 		var idx = EPREUVES_EXAMEN.map(function(ep, i){ return ep.sceau === s ? i : -1; }).filter(function(i){ return i > -1; });
@@ -1319,8 +1376,12 @@ function rapportCodeExamen(c, verdictSceau){
 		C.gras("  BULLETIN · " + String(c.prenom).toUpperCase()) + C.gris("   " + c.date),
 		"========================================",
 		"",
-		"  " + C.gras("NOTE FINALE : " + ecrireNote(c.note) + " / 20") + "   " + C.gras(mentionExamen(c.note)),
+		"  " + C.gras("NOTE FINALE : " + ecrireNote(c.noteGlobale) + " / 20") + "   " + C.gras(mentionExamen(c.noteGlobale)),
 		"",
+		c.badges === null ? "    " + C.gris("(ancien code : sans les badges du parcours, la note finale est celle de l'épreuve)") :
+			"    " + completerDroite("épreuve (" + Math.round(POIDS_EPREUVE * 100) + " %)", 20) + ecrireNote(c.note) + " / 20\n" +
+			"    " + completerDroite("badges (" + Math.round(POIDS_BADGES * 100) + " %)", 20) + ecrireNote(noteBadgesExamen(c.badges)) + " / 20   (" + c.badges + " badges sur " + BADGES_DU_PARCOURS.length + ")\n",
+		"  Le détail de l'épreuve :",
 		"    " + completerDroite("épreuves", 20) + ecrireNote(c.base) + " / 20   (" + nb + " sur " + EPREUVES_EXAMEN.length + ", " + points + " points sur " + POINTS_MAX_EXAMEN + ")",
 		"    " + completerDroite("bonus de temps", 20) + "+" + ecrireNote(c.bonus),
 		"    " + completerDroite("indices", 20) + "-" + ecrireNote(c.malusIndices),
@@ -1639,7 +1700,7 @@ GameState.prototype.chapitreEnCours = function(){ if (this.examen && modeExamen(
 var QUETE_HORS_EXAMEN = GameState.prototype.queteEnCours;
 GameState.prototype.queteEnCours = function(){
 	if (this.examen && modeExamen()){
-		return { id: "examen", titre: this.examen.fini ? "Épreuve finale terminée · " + ecrireNote(noteExamen()) + " / 20" :
+		return { id: "examen", titre: this.examen.fini ? "Épreuve finale terminée · " + ecrireNote(noteGlobaleExamen()) + " / 20" :
 			"Épreuve finale · " + nbReussiesExamen() + " sur " + EPREUVES_EXAMEN.length + " · " + ecrireNote(noteExamen()) + " / 20",
 			indice: this.examen.fini ? "examen : ton diplôme et son code. examen quitter : revenir à ta partie." : (this.examen.ordreLu ? "tree / : la carte de la Forteresse. examen : le bilan. indice : un coup de pouce (-0,25). kamikaze : rendre ta copie." :
 				"Commence par la carte : tree /. Ton ordre de mission est caché dans tes quartiers (ls -a)." ) };
@@ -1667,7 +1728,7 @@ function majEtatExamen(){
 	var niveau = document.getElementById("etat-niveau");
 	niveau.textContent = state.examen.fini ? "Épreuve finale · copie rendue" : "Épreuve finale · " + nbReussiesExamen() + " / " + EPREUVES_EXAMEN.length + " épreuves";
 	if (typeof remplirBarre === "function") remplirBarre(noteExamen());
-	document.getElementById("etat-xp").textContent = ecrireNote(noteExamen()) + " / 20 · " + dureeExamen(minutesExamen());
+	document.getElementById("etat-xp").textContent = ecrireNote(state.examen && state.examen.fini ? noteGlobaleExamen() : noteExamen()) + " / 20 · " + dureeExamen(minutesExamen());
 	document.getElementById("etat").title = "L'épreuve finale. Tape examen pour le bilan.";
 	document.getElementById("etat").classList.toggle("etat-alerte", !state.examen.fini);
 	return true;

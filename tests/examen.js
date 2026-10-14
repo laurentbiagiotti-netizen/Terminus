@@ -9,8 +9,16 @@ function contient(t, m, msg){ verifier(String(t).indexOf(m) > -1, (msg || "") + 
 
 /* Le vrai code d'accès et le mot de passe du formateur ne sont pas dans le dépôt : les tests posent les leurs. */
 var SECRETS_DE_TEST = "EMPREINTE_CODE_EXAMEN = empreinteLente('examen|TEST-1234'); EMPREINTE_FORMATEUR = empreinteLente('formateur|mot-de-passe-de-test');";
-function examen(graine){
+/* La partie normale de l'étudiant : ses badges de compétence comptent pour 20 % de la note finale. */
+function partieNormale(badges){
+	var quests = {}, flags = {};
+	(badges || []).forEach(function(id){ if (/^platine_/.test(id)) flags[id] = true; else quests[id] = true; });
+	return JSON.stringify({ v: 0, quests: quests, flags: flags });
+}
+var TOUS_LES_BADGES = monde.nouveauMonde().lire("BADGES_DU_PARCOURS.slice()");
+function examen(graine, badges){
 	var stockage = { "terminus-cybersup-profil": JSON.stringify({ graine: graine || 4242, prenom: "Ada", chapitre: 1, modeExamen: true }) };
+	if (badges) stockage["terminus-cybersup"] = partieNormale(badges);
 	var jeu = monde.nouveauMonde(stockage);
 	jeu.lire(SECRETS_DE_TEST + " state.nom = 'Ada'; demarrerExamen(); Shell.narration = [];");
 	jeu.stockage = stockage;
@@ -29,7 +37,8 @@ contient(normal.taper("kamikaze"), "n'a de sens que pendant", "kamikaze hors ép
 verifier(!normal.lire("examenEnCours()"), "hors examen, la partie normale est intacte");
 
 /* --- 2. Toute l'épreuve --- */
-var jeu = examen();
+var jeu = examen(undefined, TOUS_LES_BADGES);
+verifier(jeu.lire("nbBadgesExamen()") === TOUS_LES_BADGES.length, "les badges de la partie normale sont relevés à l'entrée : " + jeu.lire("nbBadgesExamen()"));
 var mdp = jeu.lire("MOT_DE_PASSE_SUDO");
 var ip = jeu.lire("IP_ASSAILLANT_EXAMEN");
 var mot = jeu.lire("MOT_DE_MYRIAM");
@@ -190,7 +199,7 @@ contient(jeu.taper("cat /tmp/David"), "plus personne à qui crier", "David boude
 verifier(jeu.lire("examenFini()"), "l'épreuve est finie");
 var code = fin.split("Code de vérification, à remettre au formateur :")[1].split("\n")[1].trim();
 var lu = jeu.lire("lireCodeExamen(" + JSON.stringify(code) + ")");
-verifier(lu && lu.valide && lu.note === 20 && lu.fin === "V" && lu.erreurs >= 1 && lu.reussies.every(function(x){ return x; }), "le code se relit : " + JSON.stringify(lu));
+verifier(lu && lu.valide && lu.note === 20 && lu.noteGlobale === 20 && lu.badges === TOUS_LES_BADGES.length && lu.fin === "V" && lu.erreurs >= 1 && lu.reussies.every(function(x){ return x; }), "le code se relit : " + JSON.stringify(lu));
 var rapport = jeu.taper("verifier " + code);
 contient(rapport, "NOTE FINALE : 20 / 20", "verifier : la note dans le bulletin");
 contient(rapport, "cassée une fois", "verifier montre l'épreuve cassée par le sortilège");
@@ -205,7 +214,7 @@ verifier(codeScelle.split(".").length === 3, "le code scellé a trois morceaux :
 contient(jeu.taper("cat ~/rapport/diplome.txt"), "✓ copie scellée", "le diplôme dit qu'il est scellé");
 contient(normal.taper("verifier " + codeScelle, "mot-de-passe-de-test"), "SCELLÉ PAR LE FORMATEUR", "le sceau se contrôle");
 var morceauxFaux = codeScelle.split(".");
-var chargeFausse = normal.lire("versBase64Url(depuisBase64Url(" + JSON.stringify(morceauxFaux[0]) + ").replace(/^E3\\|Ada\\|\\d+/, 'E3|Ada|60'))");
+var chargeFausse = normal.lire("versBase64Url(depuisBase64Url(" + JSON.stringify(morceauxFaux[0]) + ").replace(/^E4\\|Ada\\|\\d+/, 'E4|Ada|60'))");
 var fauxCode = chargeFausse + "." + normal.lire("sommeDeControle(depuisBase64Url(" + JSON.stringify(chargeFausse) + ") + '|' + SEL_DIPLOME)") + "." + morceauxFaux[2];
 contient(normal.taper("verifier " + fauxCode, "mot-de-passe-de-test"), "SCEAU FAUX", "une note retouchée, même avec la bonne somme de contrôle, trahit le sceau");
 contient(jeu.taper("verifier " + code.replace(/.$/, function(c){ return c === "A" ? "B" : "A"; })), "", "");
@@ -223,6 +232,29 @@ contient(jeu.taper("examen"), "DIPLÔME", "examen réimprime le diplôme");
 	h.lire("state.examen.debutHorloge -= 10 * 60000");
 	contient(h.taper("pwd"), "Les trois heures sont passées", "Manon prévient à 3 h");
 	verifier(h.taper("pwd").indexOf("trois heures") === -1, "chaque alerte ne sonne qu'une fois");
+})();
+
+/* --- 2 ter. Les badges du parcours : 80 % épreuve, 20 % badges --- */
+(function(){
+	var moitie = TOUS_LES_BADGES.filter(function(id, i){ return i % 2 === 0; });
+	var b = examen(91, moitie);
+	verifier(b.lire("nbBadgesExamen()") === moitie.length, "la moitié des badges : " + b.lire("nbBadgesExamen()"));
+	verifier(b.lire("noteBadgesExamen()") === Math.round(moitie.length / TOUS_LES_BADGES.length * 40) / 2, "la note des badges sur 20");
+	verifier(b.lire("combinerNotesExamen(15, 10)") === 14, "15 à l'épreuve, 10 aux badges : 14");
+	verifier(b.lire("combinerNotesExamen(13.5, 7)") === 12.25, "au quart de point : 12,25");
+	contient(b.taper("cat ~/.ordre-de-mission"), "20 % tes badges de compétence", "l'ordre de mission annonce le barème");
+	contient(b.taper("examen"), "note finale provisoire", "le bilan donne la note finale provisoire");
+	var s = b.taper("kamikaze", "oui");
+	var c = s.split("Code de vérification, à remettre au formateur :")[1].split("\n")[1].trim();
+	var r = b.taper("verifier " + c);
+	contient(r, "BADGES DU PARCOURS  " + moitie.length + " sur " + TOUS_LES_BADGES.length, "verifier liste les badges");
+	contient(r, "badges (20 %)", "verifier pondère les badges");
+	contient(r, "RÉSEAU (chapitre 2)", "verifier sépare réseau et cyber");
+	var lu = b.lire("lireCodeExamen(" + JSON.stringify(c) + ")");
+	verifier(lu.badges === moitie.length && lu.badgesGagnes[0] && !lu.badgesGagnes[1], "le code garde quels badges : " + JSON.stringify(lu.badgesGagnes));
+	verifier(lu.noteGlobale === b.lire("noteGlobaleExamen()"), "la note finale du code");
+	var s2 = b.taper("verifier " + c, "x");
+	verifier(s2.indexOf("ancien code") === -1, "un code E4 n'est pas un ancien code");
 })();
 
 /* --- 3. La sauvegarde de l'examen garde l'avancée --- */
@@ -245,11 +277,13 @@ contient(k.taper("kamikaze", "non"), "continue", "kamikaze se confirme");
 verifier(!k.lire("examenFini()"), "non : on continue");
 var sortie = k.taper("kamikaze", "oui");
 contient(sortie, "KAMIKAZE", "le sacrifice");
-contient(sortie, "NOTE FINALE         : 0,75 / 20", "la note de ce qui est fait : 2 points sur 45 (1 / 20) moins un indice à 0,25");
+contient(sortie, "Note de l'épreuve   : 0,75 / 20", "la note de ce qui est fait : 2 points sur 45 (1 / 20) moins un indice à 0,25");
+contient(sortie, "Badges du parcours  : 0 sur", "sans partie normale, pas de badge");
+contient(sortie, "NOTE FINALE         : 0,5 / 20", "la note finale : 80 % de 0,75, arrondie au quart de point");
 contient(sortie, "Ajourné", "la mention");
 var codeK = sortie.split("Code de vérification, à remettre au formateur :")[1].split("\n")[1].trim();
 var luK = k.lire("lireCodeExamen(" + JSON.stringify(codeK) + ")");
-verifier(luK && luK.valide && luK.note === 0.75 && luK.base === 1 && luK.malusIndices === 0.25 && luK.fin === "K" && luK.indices[1], "le code kamikaze : " + JSON.stringify(luK));
+verifier(luK && luK.valide && luK.noteGlobale === 0.5 && luK.badges === 0 && luK.note === 0.75 && luK.base === 1 && luK.malusIndices === 0.25 && luK.fin === "K" && luK.indices[1], "le code kamikaze : " + JSON.stringify(luK));
 contient(k.taper("verifier " + codeK), "kamikaze", "verifier lit la fin kamikaze");
 contient(k.taper("verifier " + codeK), "tajine de Timour", "verifier signale le tajine");
 contient(k.taper("chmod +x ~/rapport"), "", "");
