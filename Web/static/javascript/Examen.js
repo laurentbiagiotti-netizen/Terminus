@@ -1093,7 +1093,7 @@ function verifierExamen(){
 		e.sceaux = e.sceaux || {};
 		if (toutes && !e.sceaux[s]){
 			e.sceaux[s] = true;
-			say(C.vert("◆ " + NOMS_DES_SCEAUX[s] + " est brisé.") + "\n" + C.gris({
+			say(C.vert("⚔ " + NOMS_DES_SCEAUX[s] + " est brisé.") + "\n" + C.gris({
 				1: "Aidan, depuis tes quartiers : « Un sceau ! Le Mage va être content. Moi, je danse. Pieds nus. »",
 				2: "Aidan : « Le guichet se tait, la Bibliothèque se réveille. David boude dans /tmp. Myriam fait une de ces têtes. »",
 				3: "Aidan : « Le Sceau de la Crypte ! Dylan le Saltimbanque a lâché ses balles. Il ne lâche jamais ses balles. »",
@@ -1236,7 +1236,7 @@ function rapportCodeExamen(c){
 		"  " + completerDroite("  épreuves", 20) + ecrireNote(c.base) + " / 20   (" + nb + " sur " + EPREUVES_EXAMEN.length + ", " + points + " points sur " + POINTS_MAX_EXAMEN + ")",
 		"  " + completerDroite("  bonus de temps", 20) + "+" + ecrireNote(c.bonus),
 		"  " + completerDroite("  indices", 20) + "-" + ecrireNote(c.malusIndices),
-		"  " + completerDroite("  fausses manœuvres", 20) + "-" + ecrireNote(c.malusErreurs) + "   (" + c.erreurs + " lignes en échec)",
+		"  " + completerDroite("  fausses manœuvres", 20) + "-" + ecrireNote(c.malusErreurs) + "   (" + c.erreurs + " ligne" + (c.erreurs > 1 ? "s" : "") + " en échec)",
 		"  " + completerDroite("Fin", 20) + (c.fin === "V" ? "Forteresse reprise (tout fini)" : "kamikaze (copie rendue avant la fin)"),
 		"  " + completerDroite("Temps", 20) + dureeExamen(c.minutes) + "   ·   " + c.commandes + " commandes",
 		c.tajine ? "  " + C.jaune("! A tué un processus innocent (le tajine de Timour) : +5 fausses manœuvres.") : "",
@@ -1245,7 +1245,8 @@ function rapportCodeExamen(c){
 	var sceau = 0;
 	EPREUVES_EXAMEN.forEach(function(ep, i){
 		if (ep.sceau !== sceau){ sceau = ep.sceau; lignes.push("  " + C.gras(NOMS_DES_SCEAUX[sceau])); }
-		var signe = c.reussies[i] ? C.vert("✓ réussie ") : (c.defaites[i] ? C.jaune("! défaite ") : C.rouge("✗ pas faite"));
+		var signe = ep.id === "quiz" ? (c.reussies[i] ? (justesQuiz ? C.vert("✓ joué 1/3  ".replace("1", justesQuiz)) : C.jaune("! joué 0/3  ")) : C.rouge("✗ pas faite ")) :
+			(c.reussies[i] ? C.vert("✓ réussie   ") : (c.defaites[i] ? C.jaune("! défaite   ") : C.rouge("✗ pas faite ")));
 		lignes.push("    " + signe + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 9) + ep.titre + (c.indices[i] ? C.gris("  (avec indice)") : "") +
 			(c.reussies[i] && c.defaites[i] ? C.gris("  (cassée une fois en route, puis réparée)") : ""));
 	});
