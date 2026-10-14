@@ -66,6 +66,7 @@ Forteresse.removeCommand("cd");
 Forteresse.addCmdText("cd", "La Forteresse ne s'ouvre qu'aux recrues de l'épreuve finale.");
 
 var FortHome = lieuExamen(Forteresse, "home", "Le couloir des quartiers : une porte par compte, des torches, et un long tapis où Wissam s'est assis.", { image: "loc_couloir.gif" });
+var ChambreAidan = lieuExamen(FortHome, "aidan", "La chambre d'Aidan, vide : Myriam l'a scellée, alors il dort sous ton lit de camp.", { owner: "aidan", mode: "rwx------", image: "loc_quartiers.gif" });
 var QuartiersRecrue = lieuExamen(FortHome, JOUEUR, "Tes quartiers : un lit de camp, une lampe, et le silence.", { owner: JOUEUR, image: "loc_quartiers.gif" });
 var Arsenal = lieuExamen(QuartiersRecrue, "arsenal", "Ton arsenal : ce que l'école t'a laissé pour te défendre.", { owner: JOUEUR, image: "loc_backroom.gif" });
 var RapportExamen = lieuExamen(QuartiersRecrue, "rapport", "Ton rapport d'épreuve : ce que tu y déposes sera relu par le jury.", { owner: JOUEUR, image: "loc_library.gif" });
@@ -153,7 +154,8 @@ var DhcpdExamen = objetExamen(FortDhcp, "dhcpd.conf",
 var PasswdExamen = objetExamen(FortEtc, "passwd",
 	"root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\n" +
 	"sshd:x:105:65534::/run/sshd:/usr/sbin/nologin\n" + JOUEUR + ":x:1000:1000:Recrue de l'épreuve finale:/home/" + JOUEUR + ":/bin/bash\n" +
-	"aidan:x:1001:1001:Aidan, elfe:/home/aidan:/bin/bash\nmyriam:x:0:0:Myriam, sorcière:/home/myriam:/bin/bash\n");
+	"aidan:x:1001:1001:Aidan, elfe:/home/aidan:/bin/bash\ntimour:x:1003:1003:Cheb Timour, assistant:/opt/atelier:/bin/bash\n" +
+	"david:x:1004:1004:David, ogre des steppes:/tmp:/bin/bash\nmyriam:x:0:0:Myriam, sorcière:/home/myriam:/bin/bash\n");
 
 /* Les gardiens : l'un d'eux a été ensorcelé, et porte le message de Myriam. */
 var TEXTES_GARDIENS = {
@@ -274,7 +276,7 @@ objetExamen(FortTmp, "sac-de-la-taverne",
 	{ mode: "rw-rw-rw-", owner: "nobody", image: "item_david.gif" });
 
 /* La Tour des Proclamations (/var/www) et Laurana, le héraut changé en pierre. */
-var TourProclamations = lieuExamen(FortVar, "www", "La Tour des Proclamations : d'ici, la voix de Cybersup porte jusqu'aux sept campus.", { image: "loc_proclamations.gif" });
+var TourProclamations = lieuExamen(FortVar, "www", "La Tour des Proclamations : d'ici, la voix de Cybersup porte jusqu'à Lille et Marseille.", { image: "loc_proclamations.gif" });
 var FortHtml = lieuExamen(TourProclamations, "html", "Le balcon de la Tour : la proclamation affichée ici est celle que lit toute la ville (le site de l'école).", { image: "loc_proclamations.gif" });
 var PROCLAMATION_LAURANA = "<!doctype html>\n<title>Proclamations de Cybersup</title>\n<h1>Oyez, oyez !</h1>\n" +
 	"<p>Par la voix de Laurana, héraut de Cybersup : les diplômes de la Forteresse seront remis à celles et ceux qui les ont mérités.</p>\n";
@@ -288,7 +290,8 @@ ArchiveProclamation.archive = [{ n: "index.html", x: PROCLAMATION_LAURANA }];
 objetExamen(FortSauvegardes, "hosts", "127.0.0.1\tlocalhost\n127.0.1.1\tforteresse\n" + IP_VRAI_ORACLE + "\toracle dns.cybersup.lan\n10.0.92.20\tintranet\n10.0.97.1\tmairie\n", { image: "item_manuscript.gif" });
 var PASSWD_HIER = "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\n" +
 	"sshd:x:105:65534::/run/sshd:/usr/sbin/nologin\n" + JOUEUR + ":x:1000:1000:Recrue de l'épreuve finale:/home/" + JOUEUR + ":/bin/bash\n" +
-	"aidan:x:1001:1001:Aidan, elfe:/home/aidan:/bin/bash\n";
+	"aidan:x:1001:1001:Aidan, elfe:/home/aidan:/bin/bash\ntimour:x:1003:1003:Cheb Timour, assistant:/opt/atelier:/bin/bash\n" +
+	"david:x:1004:1004:David, ogre des steppes:/tmp:/bin/bash\n";
 objetExamen(FortSauvegardes, "passwd.hier", PASSWD_HIER, { image: "item_manuscript.gif" });
 objetExamen(FortSauvegardes, "passwd.cette-nuit", PASSWD_HIER + "myriam:x:0:0:Myriam, sorcière:/home/myriam:/bin/bash\n", { image: "item_manuscript.gif" });
 objetExamen(FortSauvegardes, "LISEZMOI",
@@ -299,7 +302,7 @@ objetExamen(FortHomeMyriam, ".proclamation", PROCLAMATION_MYRIAM, { owner: "myri
 var FortCronD = lieuExamen(FortEtc, "cron.d", "Les tâches planifiées de la Forteresse : ce qui revient tout seul, à heure fixe.", { image: "loc_horloge.gif" });
 /* Le sortilège de Myriam est une ligne de SA crontab (vue au chapitre 1 : sudo crontab -u NOM -l, puis -r). */
 var TACHE_DE_MYRIAM = "* * * * * cp /home/myriam/.proclamation /var/www/html/index.html && chown myriam /var/www/html/index.html && chmod 600 /var/www/html/index.html";
-if (typeof UTILISATEURS !== "undefined"){ UTILISATEURS.myriam = 1002; UTILISATEURS.aidan = 1001; UTILISATEURS.timour = 1003; }
+if (typeof UTILISATEURS !== "undefined"){ UTILISATEURS.myriam = 1002; UTILISATEURS.aidan = 1001; UTILISATEURS.timour = 1003; UTILISATEURS.david = 1004; }
 objetExamen(FortCronD, "logrotate", "# Rotation des journaux, chaque nuit\n0 3 * * * root /usr/sbin/logrotate /etc/logrotate.conf\n", { image: "item_manuscript.gif" });
 
 /* ------------------------------------------------------------------ */
@@ -336,6 +339,7 @@ var ManonChatelaine = personnageExamen(Forteresse, "Manon", "item_manon.gif", fu
 		(m < 180 ? "Plus de bonus de temps, mais il reste " + dureeExamen(180 - m) + " sur les trois heures." : "Les trois heures sont passées. Le Mage attend ta copie."));
 	return debut + "« Myriam a déchiré mon registre cette nuit. Le cinquième sceau, c'est toi qui le rempliras : ton journal, tes preuves,\n" +
 		"ton nom, tout ce qu'un administrateur doit savoir faire dès sa première année. Voici ce que j'ai déjà noté.\n\n" + sceaux.join("\n") + "\n\n" + horloge +
+		"\nCe que tu déposes dans ~/rapport, je le lis par mon raccourci, /var/registre." +
 		"\nEt n'oublie pas : Wissam donne ses conseils pour rien, dans le couloir des quartiers. Les indices du Mage, eux, se paient. »";
 });
 
@@ -449,7 +453,7 @@ Object.defineProperty(StatueLaurana.cmd_text, "less", { get: function(){
 	return "Une statue de pierre au milieu de la Tour des Proclamations : une jeune femme aux cheveux de flamme figés dans le vent,\n" +
 		"une trompette d'argent à la main. Sur le socle : LAURANA LA FLAMBOYANTE, HÉRAUT DE CYBERSUP.\n\n" +
 		"On raconte qu'elle est née dans les forges de la Tour Noire et qu'elle fut l'apprentie de Myriam, qui lui apprit à faire porter\n" +
-		"sa voix jusqu'aux sept campus. Un jour, elle a choisi le Mage Rouxblanc : depuis, c'est elle qui proclame les diplômes sur la\n" +
+		"sa voix jusqu'à Lille et Marseille. Un jour, elle a choisi le Mage Rouxblanc : depuis, c'est elle qui proclame les diplômes sur la\n" +
 		"grande place. Myriam ne le lui a jamais pardonné. Cette nuit, elle l'a changée en pierre et a placardé sa propre proclamation.";
 }, set: function(){}, enumerable: true, configurable: true });
 TourProclamations.addItem(StatueLaurana);
@@ -469,7 +473,7 @@ var LIEUX_DES_EPREUVES = {
 function communiqueDeLaurana(){
 	var e = state.examen;
 	var reste = EPREUVES_EXAMEN.filter(function(ep){ return !e.reussies[ep.id]; });
-	var lignes = ["Laurana la Flamboyante, libérée, la trompette d'argent à la main. Sa voix porte jusqu'aux sept campus.",
+	var lignes = ["Laurana la Flamboyante, libérée, la trompette d'argent à la main. Sa voix porte jusqu'à Lille et Marseille.",
 		"« Merci, recrue. Myriam m'a tout appris à la Tour Noire, sauf une chose : on ne fait pas taire un héraut.",
 		"Je ne ferai pas ton travail, le Mage l'a interdit. Mais communiquer, c'est mon métier. Voici le communiqué de la Forteresse : »", ""];
 	if (!reste.length) lignes.push("  « Tout est accompli. Il ne reste qu'à proclamer ton nom. »");
@@ -485,6 +489,21 @@ function communiqueDeLaurana(){
 var FortDev = lieuExamen(Forteresse, "dev", "Les périphériques de la Forteresse. Un néon clignote au fond : ON AIR.", { image: "loc_bin.gif" });
 var PlateauQuiz = lieuExamen(FortDev, "random", "Le plateau de « Questions pour un Linux » : trois pupitres, des buzzers, des projecteurs. Ici, tout est tiré au hasard.", { image: "loc_plateau.gif" });
 var SteveAnimateur = personnageExamen(PlateauQuiz, "Steve", "item_steve.gif", function(){ return texteDeSteve(); });
+
+/* Des raccourcis (ln -s) comme sur une vraie machine : /bin vers /usr/bin, la dernière sauvegarde,
+   et le raccourci de Manon vers ton rapport (elle lit ton travail sans quitter le hall). */
+function raccourciExamen(lieu, nom, cible, dossierDeLaCible){
+	var lien = new Item(nom, "");
+	lien.lien = cible instanceof Room ? cible.path() : dossierDeLaCible.path() + "/" + cible.itemname;
+	lien.owner = "root";
+	lien.mode = "rwxrwxrwx";
+	lien.picturename = cible instanceof Room ? cible.room_pic : cible.picturename;
+	lieu.addItem(lien);
+	return lien;
+}
+raccourciExamen(Forteresse, "bin", FortUsrBin);
+raccourciExamen(FortVar, "registre", RapportExamen);
+raccourciExamen(FortSauvegardes, "derniere", ArchiveProclamation, FortSauvegardes);
 
 World.fige = true;
 
@@ -701,7 +720,8 @@ function texteDeSteve(){
 	var debut = "Steve, costume à paillettes et micro doré, sous les projecteurs de /dev/random.\n\n" +
 		"« Bonsoir, bonsoir ! Bienvenue dans QUESTIONS POUR UN LINUX ! Trois questions, tirées au hasard parmi cinquante,\n" +
 		"sur tout ce que tu as vu : le terminal, le réseau, la Crypte. Chaque bonne réponse vaut un point dans ta note.\n" +
-		"Une seule réponse par question, pas de joker, pas d'indice : Steve ne souffle jamais. »\n\n" +
+		"Une seule réponse par question, pas de joker, pas d'indice : Steve ne souffle jamais.\n" +
+		"Myriam adore mon émission : elle m'a confié son sixième sceau. Il ne se brise qu'en jouant, et il se brise même avec zéro. »\n\n" +
 		C.gris("« Et pour détendre l'atmosphère : " + blagueDeSteve(e && e.quiz ? e.quiz.reponses.length * 5 + (state.nbCommandes % 3) : state.nbCommandes) + " »") + "\n\n";
 	if (!e) return debut + "« Le plateau ouvre pendant l'épreuve finale. »";
 	if (!e.quiz){ e.quiz = tirerQuiz(); }
@@ -814,7 +834,7 @@ function texteOrdreDeMission(){
 		"",
 		"Libère Laurana : un héraut libre communique ce qui reste à faire.",
 		"",
-		"Myriam tient la Forteresse par six sceaux. Le cinquième est le registre de Manon, déchiré cette nuit : remplis-le. Le sixième t'attend dans /dev/random, sous les projecteurs de Steve. Brise-les dans l'ordre que tu veux.",
+		"Myriam tient la Forteresse par six sceaux. Le cinquième, c'est le registre de Manon qu'elle a déchiré : tant qu'il n'est pas rempli, la Forteresse reste à elle. Le sixième, elle l'a confié à Steve, le présentateur de son émission préférée, sur son plateau de /dev/random. Brise-les dans l'ordre que tu veux.",
 		"Chaque épreuve accomplie compte, même si tu ne vas pas au bout. Tu as trois heures.",
 		""
 	];
@@ -1091,9 +1111,10 @@ function verifierExamen(){
 			"Ce soir, tu as battu toute une troupe. Myriam et moi, nous jouons ce tour à chaque promotion. La sorcière, l'acrobate, l'ogre et l'elfe :\n" +
 			"tous avaient un rôle cette nuit. Même Laurana, qui fut l'élève de Myriam avant d'être ma voix. Le tien était le plus dur.\n" +
 			"Ce que tu viens de faire, tu le referas pour de vrai, un jour, sur une vraie machine. Félicitations. »\n\n" +
-			"Laurana monte sur le balcon de la Tour, souffle dans sa trompette d'argent, et proclame ton nom aux sept campus.\n" +
+			"Laurana monte sur le balcon de la Tour, souffle dans sa trompette d'argent, et proclame ton nom de Puteaux à Marseille.\n" +
 			"Manon le recopie au propre dans son registre, Wissam lève sa tasse, Jean-Baptiste ajoute ta maison sur son plan, Gabriel et Timour\n" +
-			"servent le tajine, et Steve, au micro : « Et c'est un sans-faute pour la Forteresse ! Je n'ai pas de blague. Si. Non. »\n\n") +
+			"servent le tajine, et Steve, au micro : « " + (noteExamen() >= 20 ? "Et c'est un sans-faute pour la Forteresse !" : "Et la Forteresse est reprise !") +
+			" Je n'ai pas de blague. Si. Non. »\n\n") +
 			texteDiplomeExamen());
 	}
 }
@@ -1369,6 +1390,11 @@ Shell.sorts.ssh = function(args, io){
 /* ~ désigne tes quartiers dans la Forteresse. */
 var CHERCHER_HORS_EXAMEN = Shell.chercherDepuis;
 Shell.chercherDepuis = function(depart, chemin, io, cmd){
+	// Un raccourci (ln -s) garde le chemin du monde vers sa cible : on le ramène au / de la Forteresse.
+	if (examenEnCours() && typeof chemin === "string" && chemin.indexOf(Forteresse.path()) === 0){
+		chemin = "/" + chemin.substring(Forteresse.path().length).replace(/^\/+/, "");
+		if (!racineDe(depart)) depart = QuartiersRecrue;
+	}
 	if (examenEnCours() && typeof chemin === "string" && chemin.charAt(0) === "~"){
 		chemin = "/home/" + JOUEUR + chemin.substring(1);
 		if (!racineDe(depart)) depart = QuartiersRecrue;
