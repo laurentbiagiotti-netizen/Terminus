@@ -1257,11 +1257,11 @@ Shell.sorts.verifier = function(args, io){
 			if (!motDePasseFormateurValide(mdp)) statut = C.jaune("? Sceau non contrôlé : ce n'est pas le mot de passe du formateur.");
 			else if (sceauDuFormateur(mdp, ex.charge) === ex.sceau) statut = C.vert(C.gras("✓ SCELLÉ PAR LE FORMATEUR : la copie est authentique."));
 			else statut = C.rouge(C.gras("✗ SCEAU FAUX : ce code a été fabriqué ou modifié. Ne pas en tenir compte."));
-			term.echo(statut + "\n" + rapportCodeExamen(ex));
+			term.echo(rapportCodeExamen(ex, statut));
 		});
 		return "";
 	}
-	if (ex) return C.jaune("⚠ Code NON SCELLÉ : il peut avoir été fabriqué. Pour une note officielle, scelle la copie sur le poste de l'étudiant (sceller).") + "\n" + rapportCodeExamen(ex);
+	if (ex) return rapportCodeExamen(ex);
 	var lu = lireCode(args.join(""));
 	if (!lu) return C.rouge("Code illisible.") + " Ce n'est pas un code de Terminus, ou il est incomplet.";
 	var quoi = { 1: "Diplôme du chapitre 1 (Terminus)", 2: "Certificat cyber (la Crypte)", 3: "Certificat réseau (la panne)", 4: "Épreuve finale (ancien code)" }[lu.chapitre] || "Chapitre " + lu.chapitre;
@@ -1276,33 +1276,19 @@ Shell.sorts.verifier = function(args, io){
 };
 
 /* Ce que le formateur lit dans un code d'épreuve finale : la note, son détail, et chaque épreuve. */
-function rapportCodeExamen(c){
+function rapportCodeExamen(c, verdictSceau){
 	var justesQuiz = (c.quiz || []).filter(function(x){ return x.etat === "+"; }).length;
 	var points = EPREUVES_EXAMEN.reduce(function(t, ep, i){ return t + (c.reussies[i] ? (ep.id === "quiz" ? justesQuiz : ep.points) : 0); }, 0);
 	var nb = c.reussies.filter(function(x){ return x; }).length;
-	var lignes = [
-		c.valide ? C.vert("✓ Code authentique") : C.rouge("✗ Code RETOUCHÉ : la somme de contrôle ne correspond pas. Ne pas en tenir compte."),
-		"",
-		"  " + completerDroite("Document", 20) + "Épreuve finale (la Forteresse)",
-		"  " + completerDroite("Nom", 20) + c.prenom,
-		"  " + completerDroite("Date", 20) + c.date,
-		"  " + completerDroite("NOTE FINALE", 20) + C.gras(ecrireNote(c.note) + " / 20") + "   " + mentionExamen(c.note),
-		"  " + completerDroite("  épreuves", 20) + ecrireNote(c.base) + " / 20   (" + nb + " sur " + EPREUVES_EXAMEN.length + ", " + points + " points sur " + POINTS_MAX_EXAMEN + ")",
-		"  " + completerDroite("  bonus de temps", 20) + "+" + ecrireNote(c.bonus),
-		"  " + completerDroite("  indices", 20) + "-" + ecrireNote(c.malusIndices),
-		"  " + completerDroite("  fausses manœuvres", 20) + "-" + ecrireNote(c.malusErreurs) + "   (" + c.erreurs + " ligne" + (c.erreurs > 1 ? "s" : "") + " en échec)",
-		"  " + completerDroite("Fin", 20) + (c.fin === "V" ? "Forteresse reprise (tout fini)" : "kamikaze (copie rendue avant la fin)"),
-		"  " + completerDroite("Temps", 20) + dureeExamen(c.minutes) + "   ·   " + c.commandes + " commandes",
-		c.tajine ? "  " + C.jaune("! A tué un processus innocent (le tajine de Timour) : +5 fausses manœuvres.") : "",
-		""
-	].filter(function(l, i){ return l !== "" || i > 1; });
+	// D'abord le détail, épreuve par épreuve ; la note vient à la fin, pour rester sous les yeux du formateur.
+	var lignes = [C.gras("DÉTAIL DE LA COPIE DE " + String(c.prenom).toUpperCase()) + C.gris("  (✓ réussie, ✗ pas faite, ! réussie puis cassée)")];
 	var sceau = 0;
 	EPREUVES_EXAMEN.forEach(function(ep, i){
 		if (ep.sceau !== sceau){ sceau = ep.sceau; lignes.push("  " + C.gras(NOMS_DES_SCEAUX[sceau])); }
-		var signe = ep.id === "quiz" ? (c.reussies[i] ? (justesQuiz ? C.vert("✓ joué 1/3  ".replace("1", justesQuiz)) : C.jaune("! joué 0/3  ")) : C.rouge("✗ pas faite ")) :
-			(c.reussies[i] ? C.vert("✓ réussie   ") : (c.defaites[i] ? C.jaune("! défaite   ") : C.rouge("✗ pas faite ")));
+		var signe = ep.id === "quiz" ? (c.reussies[i] ? (justesQuiz ? C.vert("✓ " + justesQuiz + "/3") : C.jaune("! 0/3")) : C.rouge("✗    ")) :
+			(c.reussies[i] ? C.vert("✓    ") : (c.defaites[i] ? C.jaune("!    ") : C.rouge("✗    ")));
 		lignes.push("    " + signe + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 9) + ep.titre + (c.indices[i] ? C.gris("  (avec indice)") : "") +
-			(c.reussies[i] && c.defaites[i] ? C.gris("  (cassée une fois en route, puis réparée)") : ""));
+			(c.reussies[i] && c.defaites[i] ? C.gris("  (cassée une fois, puis réparée)") : ""));
 	});
 	if (c.quiz && c.quiz.length){
 		lignes.push("", "  " + C.gras("QUESTIONS POUR UN LINUX") + "  " + justesQuiz + " sur " + c.quiz.length);
@@ -1313,7 +1299,33 @@ function rapportCodeExamen(c){
 				"\n        " + C.gris("réponse attendue : " + Q.c[Q.b] + (x.etat === "." ? "   (pas répondu)" : "")));
 		});
 	}
-	lignes.push("", C.gris("  « défaite » : l'épreuve a été réussie, puis l'étudiant l'a cassée (un service rallumé, un fichier abîmé...)."));
+	// Le bulletin : la note, son détail, et le verdict d'authenticité, en dernier.
+	var parSceau = Object.keys(NOMS_DES_SCEAUX).map(Number).map(function(s){
+		var idx = EPREUVES_EXAMEN.map(function(ep, i){ return ep.sceau === s ? i : -1; }).filter(function(i){ return i > -1; });
+		return "    " + completerDroite(NOMS_DES_SCEAUX[s], 24) + idx.filter(function(i){ return c.reussies[i]; }).length + " sur " + idx.length;
+	});
+	lignes.push("",
+		"========================================",
+		C.gras("  BULLETIN · " + String(c.prenom).toUpperCase()) + C.gris("   " + c.date),
+		"========================================",
+		"",
+		"  " + C.gras("NOTE FINALE : " + ecrireNote(c.note) + " / 20") + "   " + C.gras(mentionExamen(c.note)),
+		"",
+		"    " + completerDroite("épreuves", 20) + ecrireNote(c.base) + " / 20   (" + nb + " sur " + EPREUVES_EXAMEN.length + ", " + points + " points sur " + POINTS_MAX_EXAMEN + ")",
+		"    " + completerDroite("bonus de temps", 20) + "+" + ecrireNote(c.bonus),
+		"    " + completerDroite("indices", 20) + "-" + ecrireNote(c.malusIndices),
+		"    " + completerDroite("fausses manœuvres", 20) + "-" + ecrireNote(c.malusErreurs) + "   (" + c.erreurs + " ligne" + (c.erreurs > 1 ? "s" : "") + " en échec)",
+		"",
+		"    " + completerDroite("Fin", 20) + (c.fin === "V" ? "Forteresse reprise (tout fini)" : "kamikaze (copie rendue avant la fin)"),
+		"    " + completerDroite("Temps", 20) + dureeExamen(c.minutes) + "   ·   " + c.commandes + " commandes",
+		"",
+		"  Par sceau :");
+	lignes = lignes.concat(parSceau);
+	if (c.tajine) lignes.push("", "  " + C.jaune("! A tué un processus innocent (le tajine de Timour) : +5 fausses manœuvres."));
+	lignes.push("",
+		"  " + (c.valide ? C.vert("✓ Code lisible et non retouché") : C.rouge("✗ Code RETOUCHÉ : la somme de contrôle ne correspond pas. Ne pas en tenir compte.")),
+		"  " + (verdictSceau || C.jaune("⚠ Code NON SCELLÉ : il peut avoir été fabriqué. Pour une note officielle, scelle la copie sur le poste de l'étudiant (sceller).")),
+		"========================================");
 	return lignes.join("\n");
 }
 

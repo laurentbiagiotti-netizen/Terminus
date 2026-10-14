@@ -192,8 +192,8 @@ var code = fin.split("Code de vérification, à remettre au formateur :")[1].spl
 var lu = jeu.lire("lireCodeExamen(" + JSON.stringify(code) + ")");
 verifier(lu && lu.valide && lu.note === 20 && lu.fin === "V" && lu.erreurs >= 1 && lu.reussies.every(function(x){ return x; }), "le code se relit : " + JSON.stringify(lu));
 var rapport = jeu.taper("verifier " + code);
-contient(rapport, "Code authentique", "verifier");
-contient(rapport, "cassée une fois en route", "verifier montre l'épreuve cassée par le sortilège");
+contient(rapport, "NOTE FINALE : 20 / 20", "verifier : la note dans le bulletin");
+contient(rapport, "cassée une fois", "verifier montre l'épreuve cassée par le sortilège");
 contient(rapport, "QUESTIONS POUR UN LINUX  3 sur 3", "verifier montre le quiz");
 contient(normal.taper("verifier " + code), "Restaurer la proclamation", "verifier marche aussi hors de l'épreuve");
 contient(normal.taper("verifier " + code), "NON SCELLÉ", "un code non scellé est signalé");
