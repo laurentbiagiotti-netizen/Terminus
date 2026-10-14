@@ -269,6 +269,25 @@ verifier(!!jeu.stockage["terminus-cybersup-examen"], "l'épreuve a sa propre sau
 var repris = monde.nouveauMonde(jeu.stockage);
 verifier(repris.lire("examenFini() && pointsExamen() === POINTS_MAX_EXAMEN && noteExamen() === 20"), "l'épreuve se retrouve après rechargement");
 
+/* --- 3 bis. Une sauvegarde d'une version plus ancienne, qui ne connaissait pas encore les personnages --- */
+(function(){
+	var v = examen(321);
+	v.taper("cd /etc"); v.taper("cd ~"); v.lire("state.save()");
+	var d = JSON.parse(v.stockage["terminus-cybersup-examen"]);
+	["i:Jean-Baptiste", "i:Manon", "i:Steve"].forEach(function(id){
+		delete d.objets[id];
+		Object.keys(d.lieux).forEach(function(l){ d.lieux[l].it = d.lieux[l].it.filter(function(x){ return x !== id; }); });
+	});
+	v.stockage["terminus-cybersup-examen"] = JSON.stringify(d);
+	var w = monde.nouveauMonde(v.stockage);
+	w.taper("cd /etc");
+	contient(w.taper("ls"), "Jean-Baptiste", "un personnage ajouté depuis la sauvegarde est bien dans /etc");
+	contient(w.taper("cat Jean-Baptiste"), "Maître des Adresses", "et il répond à cat");
+	contient(w.taper("cat /Manon"), "registre", "Manon aussi");
+	w.taper("cd /dev/random");
+	contient(w.taper("cat Steve"), "Steve", "Steve aussi");
+})();
+
 /* --- 4. Kamikaze en cours de route --- */
 var k = examen(777);
 k.taper("cat ~/.ordre-de-mission");

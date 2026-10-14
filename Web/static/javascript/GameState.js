@@ -1509,7 +1509,11 @@ function restaurerObjet(item, o){
 	return item;
 }
 
-function restaurerLieu(lieu, o){
+/* connus : les identifiants présents dans la sauvegarde. Un lieu ou un objet ajouté au monde depuis
+   (une nouvelle version du jeu : un personnage, un fichier) n'y figure pas : il reste là où le monde l'a posé,
+   au lieu de disparaître parce que la vieille sauvegarde ne le connaissait pas. */
+function restaurerLieu(lieu, o, connus){
+	var enfantsAvant = lieu.children.slice(), objetsAvant = lieu.items.slice();
 	lieu.room_name = o.n;
 	lieu.intro_text = o.i;
 	lieu.room_pic = o.p;
@@ -1522,7 +1526,7 @@ function restaurerLieu(lieu, o){
 	lieu.children = [];
 	lieu.items = [];
 	for (var i = 0; i < o.k.length; i++){
-		var enfant = typeof o.k[i] === "string" ? World.rooms[o.k[i]] : restaurerLieu(new Room(o.k[i].n), o.k[i]);
+		var enfant = typeof o.k[i] === "string" ? World.rooms[o.k[i]] : restaurerLieu(new Room(o.k[i].n), o.k[i], connus);
 		if (!enfant) continue;
 		lieu.children.push(enfant);
 		enfant.parents[0] = lieu;
@@ -1530,6 +1534,14 @@ function restaurerLieu(lieu, o){
 	for (var j = 0; j < o.it.length; j++){
 		var item = typeof o.it[j] === "string" ? World.items[o.it[j]] : restaurerObjet(new Item(o.it[j].n, ""), o.it[j]);
 		if (item) lieu.items.push(item);
+	}
+	if (connus){
+		enfantsAvant.forEach(function(enfant){
+			if (enfant.id && !connus.lieux.hasOwnProperty(enfant.id) && lieu.children.indexOf(enfant) === -1){ lieu.children.push(enfant); enfant.parents[0] = lieu; }
+		});
+		objetsAvant.forEach(function(item){
+			if (item.id && !connus.objets.hasOwnProperty(item.id) && lieu.items.indexOf(item) === -1) lieu.items.push(item);
+		});
 	}
 	return lieu;
 }
@@ -1601,7 +1613,7 @@ GameState.prototype.load = function(){
 			if (World.items[id]) restaurerObjet(World.items[id], donnees.objets[id]);
 		}
 		for (id in donnees.lieux){
-			if (World.rooms[id]) restaurerLieu(World.rooms[id], donnees.lieux[id]);
+			if (World.rooms[id]) restaurerLieu(World.rooms[id], donnees.lieux[id], { lieux: donnees.lieux, objets: donnees.objets });
 		}
 		this.flags = donnees.flags || {};
 		this.spells = donnees.spells || {};
