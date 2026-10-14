@@ -41,7 +41,7 @@ contient(jeu.taper("cat Aidan"), "pieds nus, poilus", "Aidan est là, pieds poil
 contient(jeu.taper("cat /tmp/David"), "Taverne aux Arches d'Or", "David garde /tmp");
 contient(jeu.taper("cat ~/.ordre-de-mission | head -n 1"), "MAGE ROUXBLANC", "l'ordre est scellé par le Mage Rouxblanc");
 verifier(jeu.lire("state.examen.reussies.ordre"), "lire l'ordre, même par un tuyau, accomplit l'épreuve I");
-contient(jeu.taper("cat .ordre-de-mission"), "Aidan, l'elfe rigolo", "l'ordre présente Aidan");
+contient(jeu.taper("cat .ordre-de-mission"), "Aidan, l'elfe aux pieds", "l'ordre présente Aidan");
 contient(jeu.taper("grep Failed /var/log/auth.log | cut -d' ' -f9 | sort | uniq -c | sort -rn"), ip, "l'assaillant se compte");
 contient(jeu.taper("echo " + ip + " > ~/rapport/assaillant.txt"), "Épreuve II", "épreuve II");
 contient(jeu.taper("chmod +x ~/arsenal/rempart.sh"), "Épreuve III", "épreuve III");
@@ -77,7 +77,8 @@ var fin = jeu.taper("sudo nano /root/.ssh/authorized_keys", mdp);
 contient(fin, "Épreuve XIII", "épreuve XIII");
 contient(fin, "LA FORTERESSE EST REPRISE", "la victoire");
 contient(fin, "20 / 20", "la note");
-contient(fin, "Myriam, Dylan, Aidan et David", "la fin réunit les quatre complices");
+contient(fin, "La sorcière, l'acrobate, l'ogre et l'elfe", "la fin réunit toute la troupe");
+contient(jeu.taper("cat /tmp/David"), "plus personne à qui crier", "David boude quand son guichet est fermé");
 verifier(jeu.lire("examenFini()"), "l'épreuve est finie");
 var code = fin.split("Code de vérification, à remettre au formateur :")[1].split("\n")[1].trim();
 var lu = jeu.lire("lireCode(" + JSON.stringify(code) + ")");

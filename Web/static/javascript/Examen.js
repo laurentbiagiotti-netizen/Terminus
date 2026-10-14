@@ -1,9 +1,13 @@
 /**
  * Examen.js : la mission spéciale, l'épreuve finale.
  *
- * Une partie à part, ouverte par un code que donne le formateur (sort examen) : la recrue est
- * seule dans la Forteresse, un serveur pris par la sorcière Myriam et gardé par Dylan le Saltimbanque,
- * avec Aidan l'elfe rigolo pour seule compagnie (il fait rire, il n'aide pas). Treize épreuves
+ * Une partie à part, ouverte par un code que donne le formateur (sort examen). L'histoire : la
+ * Forteresse garde les diplômes de Cybersup sous la protection de Laurent, le Mage Rouxblanc.
+ * Cette nuit, la sorcière Myriam l'a prise avec sa troupe : Dylan le Saltimbanque, l'acrobate qui
+ * écoute aux portes (le port qui écoute), et David, l'ogre des steppes, glouton et bavard (le
+ * guichet telnet, la Bibliothèque endormie). Le Mage, enfermé dehors, a glissé un ordre de mission
+ * dans les quartiers de la recrue, où Aidan, l'elfe aux pieds de hobbit, s'est fait enfermer aussi :
+ * il fait rire, il n'aide pas. Les trois sceaux de Myriam se brisent épreuve par épreuve. Treize épreuves
  * reprennent les trois missions : le terminal (chapitre 1), le réseau (la panne) et la cyber (la
  * Crypte). La note sur 20 se calcule sur ce qui est accompli, que la recrue aille au bout ou
  * qu'elle rende sa copie avant (sort kamikaze). Le diplôme porte un code que le formateur
@@ -208,7 +212,7 @@ decrireHote("forteresse", { ip: IP_FORTERESSE, arrivee: function(){ return Forte
 Object.defineProperty(HOTES["forteresse"], "journal", { configurable: true, get: function(){
 	var j = [["02:47", "systemd", "Started telnet.service - Telnet Server."],
 		["02:48", "systemd", "nginx.service: Deactivated successfully."],
-		["02:48", "sudo", "myriam : COMMAND=/usr/bin/systemctl disable --now nginx"],
+		["02:48", "sudo", "david : COMMAND=/usr/bin/systemctl disable --now nginx"],
 		["02:49", "sudo", "myriam : COMMAND=/usr/bin/nano /etc/dhcp/dhcpd.conf"]];
 	var verdict = verdictDhcpExamen();
 	if (verdict) j.push(["02:51", "isc-dhcp-server", verdict]);
@@ -219,8 +223,10 @@ Object.defineProperty(HOTES["forteresse"], "journal", { configurable: true, get:
 var BLAGUES_D_AIDAN = [
 	"« Tu sais pourquoi les elfes ne font jamais de sudo ? Parce qu'ils sont déjà au-dessus de tout le monde. Bon. Je sors. »",
 	"« Dylan le Saltimbanque jongle avec sept torches. Moi, avec une seule, j'ai brûlé mon bonnet. »",
+	"« Le fragment du sceau du Mage ? Ah. Oui. On jouait à cache-cache, lui et moi. Il a très bien gagné. »",
 	"« Myriam m'a transformé en grenouille, une fois. J'ai trouvé ça très reposant. »",
 	"« Un elfe entre dans un serveur. Le serveur dit : Permission denied. Fin de l'histoire. C'est la mienne, d'ailleurs. »",
+	"« Le Mage Rouxblanc, avant, c'était le Sorcier Noir. Il dit qu'il a changé. Il a surtout changé de barbe. »",
 	"« Je t'aiderais bien, mais le Mage Rouxblanc a dit : pas d'aide. Et il a une barbe qui fait peur quand il est fâché. »",
 	"« Mon plus grand exploit ? J'ai fait un ls dans une pièce vide. Très émouvant. »",
 	"« Des chaussures ? Pour quoi faire ? Mes pieds ont plus de poils que Dylan n'a de balles. »",
@@ -229,7 +235,7 @@ var BLAGUES_D_AIDAN = [
 var ElfeAidan = new Item("Aidan", "", "item_elfe.gif").personnage();
 Object.defineProperty(ElfeAidan.cmd_text, "less", { get: function(){
 	var n = state && state.examen ? nbReussiesExamen() + (state.nbCommandes % BLAGUES_D_AIDAN.length) : 0;
-	return "Aidan, l'elfe rigolo, coincé ici depuis que Myriam a fermé la Forteresse. Il agite ses longues oreilles et remue ses grands pieds nus, poilus comme ceux d'un hobbit.\n\n" +
+	return "Aidan, l'elfe rigolo, enfermé avec toi quand Myriam a scellé la Forteresse. Il agite ses longues oreilles et remue ses grands pieds nus, poilus comme ceux d'un hobbit.\n\n" +
 		BLAGUES_D_AIDAN[n % BLAGUES_D_AIDAN.length];
 }, set: function(){}, enumerable: true, configurable: true });
 QuartiersRecrue.addItem(ElfeAidan);
@@ -238,15 +244,18 @@ QuartiersRecrue.addItem(ElfeAidan);
 var REPLIQUES_DE_DAVID = [
 	"« GROUMF. Galette. » Il te tend un cornet de frites dorées, puis se ravise et le mange.",
 	"« Taverne aux Arches d'Or, ouverte jour et nuit. Comme la Forteresse. Mais avec de la sauce. »",
-	"« David a vu passer Myriam. David a eu peur. David a commandé un menu Géant pour se remettre. »",
+	"« Myriam a dit : David, tiens le guichet. Alors David tient le guichet. Et il crie tout ce qu'il entend, en clair. »",
+	"« La Bibliothèque faisait trop de bruit. David s'est assis dessus. Elle dort, maintenant. »",
 	"« Dans /tmp, tout le monde peut écrire. Alors David écrit : MIAM. »",
 	"« Une Galette du Roi Gras, deux Galettes du Roi Gras... David compte mieux les galettes que les adresses IP. »"
 ];
 var OgreDavid = new Item("David", "", "item_david.gif").personnage();
 Object.defineProperty(OgreDavid.cmd_text, "less", { get: function(){
 	var n = state && typeof state.nbCommandes === "number" ? state.nbCommandes : 0;
-	return "David, l'ogre des steppes, assis sur une pile de sacs de la Taverne aux Arches d'Or. Il garde /tmp, la bouche pleine.\n\n" +
-		REPLIQUES_DE_DAVID[n % REPLIQUES_DE_DAVID.length];
+	var guichetFerme = state && state.reseau && !servicePanne("forteresse", "telnet").actif;
+	var debut = "David, l'ogre des steppes, maigre comme un bâton malgré tout ce qu'il avale, assis sur une pile de sacs de la Taverne aux Arches d'Or. Myriam l'a mis à garder /tmp et à tenir le guichet bavard de la Forteresse.\n\n";
+	if (guichetFerme) return debut + "Son guichet est fermé. David mâchonne une Galette du Roi Gras en silence, l'air vexé : « David n'a plus personne à qui crier. »";
+	return debut + REPLIQUES_DE_DAVID[n % REPLIQUES_DE_DAVID.length];
 }, set: function(){}, enumerable: true, configurable: true });
 FortTmp.addItem(OgreDavid);
 objetExamen(FortTmp, "sac-de-la-taverne",
@@ -282,29 +291,29 @@ function verdictDhcpExamen(){
 var EPREUVES_EXAMEN = [
 	{ id: "ordre", sceau: 1, points: 1, titre: "Trouver l'ordre de mission caché",
 	  fait: function(){ return !!state.examen.ordreLu; } },
-	{ id: "assaillant", sceau: 1, points: 2, titre: "Nommer l'assaillant dans ~/rapport/assaillant.txt",
+	{ id: "assaillant", sceau: 1, points: 2, titre: "Nommer la Tour Noire de Myriam dans ~/rapport/assaillant.txt",
 	  fait: function(){ var f = RapportExamen.getItemFromName("assaillant.txt"); return f !== -1 && f.getText().trim() === IP_ASSAILLANT_EXAMEN; } },
-	{ id: "rempart", sceau: 1, points: 1, titre: "Rendre ~/arsenal/rempart.sh exécutable",
+	{ id: "rempart", sceau: 1, points: 1, titre: "Armer le rempart du Mage (~/arsenal/rempart.sh)",
 	  fait: function(){ return Arsenal.hasItem(Rempart) && Rempart.mode.charAt(2) === "x"; } },
-	{ id: "fragment", sceau: 1, points: 1, titre: "Ranger le fragment-du-sceau dans ~/rapport",
+	{ id: "fragment", sceau: 1, points: 1, titre: "Retrouver le fragment-du-sceau caché par Aidan",
 	  fait: function(){ return RapportExamen.hasItem(FragmentDuSceau); } },
 	{ id: "oracle", sceau: 2, points: 2, titre: "Rendre à la Forteresse le vrai Oracle des Noms",
 	  fait: function(){ var t = ResolvExamen.getText(); return new RegExp("^\\s*nameserver\\s+" + IP_VRAI_ORACLE.replace(/\./g, "\\.") + "\\s*$", "m").test(t) && t.indexOf(IP_FAUX_ORACLE) === -1; } },
 	{ id: "mairie", sceau: 2, points: 2, titre: "Corriger la plage de la Mairie (DHCP) et la rouvrir",
 	  fait: function(){ return verdictDhcpExamen() === null && servicePanne("forteresse", "isc-dhcp-server").actif; } },
-	{ id: "telnet", sceau: 2, points: 1, titre: "Fermer pour de bon le guichet bavard (telnet)",
+	{ id: "telnet", sceau: 2, points: 1, titre: "Fermer pour de bon le guichet bavard de David (telnet)",
 	  fait: function(){ var s = servicePanne("forteresse", "telnet"); return !s.actif && !s.auto; } },
-	{ id: "nginx", sceau: 2, points: 1, titre: "Réveiller la Bibliothèque (nginx), à chaque démarrage aussi",
+	{ id: "nginx", sceau: 2, points: 1, titre: "Réveiller la Bibliothèque endormie par David (nginx)",
 	  fait: function(){ var s = servicePanne("forteresse", "nginx"); return s.actif && s.auto; } },
-	{ id: "gardien", sceau: 3, points: 2, titre: "Mettre le gardien trafiqué en /quarantaine, intact",
+	{ id: "gardien", sceau: 3, points: 2, titre: "Mettre le gardien ensorcelé en /quarantaine, intact",
 	  fait: function(){ return Quarantaine.hasItem(GardienTrafique) && !Gardiens.hasItem(GardienTrafique); } },
 	{ id: "signature", sceau: 3, points: 1, titre: "Inscrire la signature de Myriam dans ~/rapport/signature.txt",
 	  fait: function(){ var f = RapportExamen.getItemFromName("signature.txt"); return f !== -1 && f.getText().trim().toUpperCase() === MOT_DE_MYRIAM; } },
-	{ id: "suid", sceau: 3, points: 2, titre: "Désarmer la porte dérobée SUID",
+	{ id: "suid", sceau: 3, points: 2, titre: "Désarmer la porte dérobée SUID de Myriam",
 	  fait: function(){ return !FortUsrLocalLib.hasItem(PasseMuraille) || PasseMuraille.mode.charAt(2) !== "s"; } },
 	{ id: "oreille", sceau: 3, points: 2, titre: "Faire tomber Dylan le Saltimbanque (le port qui écoute)",
 	  fait: function(){ return !Forteresse.procs.some(function(p){ return p.pid === PID_OREILLE; }); } },
-	{ id: "cle", sceau: 3, points: 2, titre: "Retirer la clé de trop chez root, et seulement elle",
+	{ id: "cle", sceau: 3, points: 2, titre: "Retirer la clé de Myriam chez root, et seulement elle",
 	  fait: function(){ var t = AuthorizedKeysExamen.getText(); return t.indexOf("myriam@tour-noire") === -1 && t.indexOf(CLE_LAURENT_EXAMEN) > -1 && t.indexOf(CLE_ADMIN_EXAMEN) > -1; } }
 ];
 var NOMS_DES_SCEAUX = { 1: "LE SCEAU DU TERMINAL", 2: "LE SCEAU DES LETTRES", 3: "LE SCEAU DE LA CRYPTE" };
@@ -334,30 +343,34 @@ function texteOrdreDeMission(){
 		"ORDRE DE MISSION · SCELLÉ PAR LAURENT, LE MAGE ROUXBLANC",
 		"",
 		"Recrue,",
-		"Cette nuit, la sorcière Myriam a pris la Forteresse, le serveur qui garde",
-		"les diplômes de l'école. Sur ses remparts bondit Dylan le Saltimbanque, son",
-		"acrobate, qui esquive tous les coups polis. Radia et Grace sont injoignables :",
-		"tu es seule ou seul face à eux. Seul Aidan, l'elfe rigolo, est resté coincé",
-		"dans tes quartiers. Il te fera rire ; il ne t'aidera pas. C'est ton épreuve finale.",
+		"Tu te souviens du Sorcier Noir, à Terminus, le jour de ta rentrée ? C'était moi,",
+		"et tu m'as battu. Depuis, j'ai rendu la robe noire : on m'appelle le Mage Rouxblanc,",
+		"et je garde les diplômes de ceux qui, comme toi, ont traversé Terminus.",
+		"Cette nuit, la sorcière Myriam, ma vieille rivale, a volé ma robe noire et pris la Forteresse où je garde",
+		"les diplômes de l'école, et elle m'a fermé la porte au nez. Elle est venue avec sa troupe :",
+		"Dylan le Saltimbanque, l'acrobate qui écoute aux portes et esquive les coups polis,",
+		"et David, l'ogre des steppes, qui tient son guichet en criant tout, la bouche pleine.",
+		"Radia et Grace sont injoignables. Avec toi, il ne reste qu'Aidan, l'elfe aux pieds",
+		"de hobbit, enfermé dans tes quartiers : il te fera rire, il ne t'aidera pas.",
 		"",
-		"Trois sceaux tiennent la Forteresse sous l'emprise de Myriam. Brise-les dans l'ordre",
-		"que tu veux. Chaque épreuve accomplie compte, même si tu ne vas pas au bout.",
+		"Myriam tient la Forteresse par trois sceaux. Brise-les dans l'ordre que tu veux.",
+		"Chaque épreuve accomplie compte, même si tu ne vas pas au bout. C'est ton épreuve finale.",
 		""
 	];
 	var textes = {
 		ordre: "Tu as trouvé cet ordre, caché dans tes quartiers : c'était la première épreuve.",
-		assaillant: "Dans les journaux de la Forteresse, une adresse a frappé à la porte des\n        dizaines de fois. Inscris-la, seule, dans ~/rapport/assaillant.txt",
-		rempart: "Ton arme, ~/arsenal/rempart.sh, refuse de servir : rends-la exécutable.",
-		fragment: "Un fragment-du-sceau s'est perdu quelque part sous /srv.\n        Retrouve-le et range-le dans ~/rapport.",
-		oracle: "La Forteresse interroge un faux Oracle des Noms. Rends-lui le vrai :\n        son adresse est écrite dans le registre local des noms de la machine.",
-		mairie: "La Mairie (le service isc-dhcp-server) refuse d'ouvrir : sa plage\n        d'adresses sort de la rue. Corrige-la, puis rouvre la Mairie.",
-		telnet: "Un guichet bavard parle en clair à qui veut l'entendre : ferme-le,\n        et qu'il ne rouvre pas au prochain démarrage.",
-		nginx: "La Bibliothèque (nginx) dort : réveille-la, maintenant et à chaque démarrage.",
-		gardien: "L'un des gardiens de /opt/gardiens a été trafiqué. Démasque-le et mets-le\n        dans /quarantaine. Ne détruis aucune preuve.",
+		assaillant: "Avant d'entrer, Myriam a frappé à la porte des dizaines de fois depuis sa\n        Tour Noire : les journaux s'en souviennent. Inscris l'adresse de la Tour, seule,\n        dans ~/rapport/assaillant.txt",
+		rempart: "Je t'ai laissé une arme, ~/arsenal/rempart.sh. Elle refuse de servir : rends-la exécutable.",
+		fragment: "Aidan a joué à cache-cache avec le fragment-du-sceau de mon bâton : il est\n        quelque part sous /srv. Retrouve-le et range-le dans ~/rapport.",
+		oracle: "Myriam a ensorcelé la Forteresse : elle interroge un faux Oracle des Noms. Rends-lui le vrai :\n        son adresse est écrite dans le registre local des noms de la machine.",
+		mairie: "Myriam a brouillé la plage de la Mairie (le service isc-dhcp-server) : ses adresses\n        sortent de la rue, et la Mairie refuse d'ouvrir. Corrige-la, puis rouvre-la.",
+		telnet: "David tient le guichet bavard de la Forteresse et crie tout en clair, mots de passe\n        compris. Ferme ce guichet, et qu'il ne rouvre pas au prochain démarrage.",
+		nginx: "David s'est assis sur la Bibliothèque (nginx) et l'a endormie : réveille-la,\n        maintenant et à chaque démarrage.",
+		gardien: "Myriam a ensorcelé l'un des gardiens de /opt/gardiens. Démasque-le et mets-le\n        dans /quarantaine. Ne détruis aucune preuve.",
 		signature: "Le traître porte un message caché. Déchiffre-le et inscris la signature\n        de Myriam, seule, dans ~/rapport/signature.txt",
-		suid: "Une porte dérobée donne les pleins pouvoirs à qui la franchit.\n        Trouve-la et désarme-la.",
+		suid: "Myriam s'est percé une porte dérobée qui donne les pleins pouvoirs à qui la franchit.\n        Trouve-la et désarme-la.",
 		oreille: "Dylan le Saltimbanque écoute la Forteresse pour Myriam, sur un port que personne\n        n'explique. Il esquive les coups polis : fais-le tomber.",
-		cle: "Une clé de trop ouvre la porte de root. Retire-la, et seulement elle."
+		cle: "Myriam a glissé sa clé parmi celles qui ouvrent la porte de root. Retire-la, et seulement elle."
 	};
 	var sceau = 0;
 	EPREUVES_EXAMEN.forEach(function(e, i){
@@ -369,7 +382,7 @@ function texteOrdreDeMission(){
 		"Ton mot de passe sudo : " + MOT_DE_PASSE_SUDO + ". Pas d'indice, pas de radio : man reste ton seul allié.",
 		"examen : où tu en es.   kamikaze : tout arrêter et rendre ta copie.",
 		"",
-		"Que tes commandes soient justes. On compte sur toi.",
+		"Que tes commandes soient justes. Je t'attends de l'autre côté de la porte.",
 		"                                   Laurent, le Mage Rouxblanc");
 	return lignes.join("\n");
 }
@@ -380,11 +393,14 @@ function texteOrdreDeMission(){
 
 var TEXTE_ENTREE_EXAMEN =
 	"MISSION SPÉCIALE · L'ÉPREUVE FINALE\n\n" +
-	"La nuit est tombée sur Cybersup. Dans la salle des serveurs, une seule machine clignote encore :\n" +
-	"la Forteresse, celle qui garde les diplômes de l'école. La sorcière Myriam s'en est emparée,\net Dylan le Saltimbanque fait des cabrioles sur ses remparts.\n\n" +
+	"La nuit est tombée sur Cybersup. Dans la salle des serveurs, une seule machine clignote encore : la Forteresse,\n" +
+	"où Laurent garde les diplômes de l'école. Oui, Laurent : le Sorcier Noir que tu as battu à Terminus, le jour de ta rentrée.\n" +
+	"Il a rendu sa robe noire, on l'appelle désormais le Mage Rouxblanc. Cette nuit, la sorcière Myriam a volé la robe et pris la Forteresse.\n" +
+	"Dylan le Saltimbanque fait des cabrioles sur les remparts, David l'ogre des steppes crie au guichet la bouche pleine,\n" +
+	"et le Mage, enfermé dehors, n'a pu glisser qu'un ordre de mission sous ta porte.\n\n" +
 	"Tu as appris le terminal à Terminus, réparé le réseau avec Radia, traqué l'intrus avec Grace.\n" +
-	"Cette fois, personne ne te guidera. Ton ordre de mission est caché dans tes quartiers.\n" +
-	"Trouve-le.";
+	"Cette fois, personne ne te guidera. Sauf, peut-être, Aidan, l'elfe aux pieds poilus enfermé avec toi. Mais non.\n" +
+	"Ton ordre de mission est caché dans tes quartiers. Trouve-le.";
 
 /* Ouvre une épreuve neuve : tous les sorts, la Forteresse, et le silence. */
 function demarrerExamen(){
@@ -410,7 +426,7 @@ function texteDiplomeExamen(){
 		"=================================================================",
 		"",
 		"  Décerné à : " + (state.nom || JOUEUR),
-		"  " + (e.fin === "victoire" ? "qui a repris la Forteresse à la sorcière Myriam, seul(e) et sans aide." :
+		"  " + (e.fin === "victoire" ? "qui a repris la Forteresse à la sorcière Myriam et à sa troupe, seul(e) et sans aide." :
 			"qui a affronté la sorcière Myriam dans la Forteresse, puis rendu sa copie (kamikaze)."),
 		""
 	];
@@ -482,8 +498,8 @@ function verifierExamen(){
 		if (toutes && !e.sceaux[s]){
 			e.sceaux[s] = true;
 			say(C.vert("◆ " + NOMS_DES_SCEAUX[s] + " est brisé.") + "\n" + C.gris({
-				1: "Aidan, depuis tes quartiers : « Un sceau ! Je danse. Enfin, intérieurement. »",
-				2: "Aidan : « Deux sceaux ! Myriam fait une tête, tu verrais ça. Moi, je l'ai vue. C'était génial. »",
+				1: "Aidan, depuis tes quartiers : « Un sceau ! Le Mage va être content. Moi, je danse. Pieds nus. »",
+				2: "Aidan : « Le guichet se tait, la Bibliothèque se réveille. David boude dans /tmp. Myriam fait une de ces têtes. »",
 				3: "Aidan : « Le Sceau de la Crypte ! Dylan le Saltimbanque a lâché ses balles. Il ne lâche jamais ses balles. »" }[s]));
 		}
 	});
@@ -492,12 +508,15 @@ function verifierExamen(){
 		jouerSon("victoire");
 		montrerImage("./static/img/item_rouxblanc.gif", "Laurent, le Mage Rouxblanc");
 		say("\n" + C.vert(C.gras("LA FORTERESSE EST REPRISE")) + "\n\n" +
-			"Le dernier sceau se brise dans un éclat vert. Sur l'écran, les sortilèges de Myriam s'éteignent un à un.\n" +
-			"La sorcière baisse son bâton et éclate de rire. Derrière elle, Dylan le Saltimbanque salue d'un saut périlleux, et Aidan\n" +
-			"surgit de sous ton lit de camp, pieds poilus en avant : « Je le savais ! Enfin non. Mais j'y croyais très fort. »\n" +
-			"David, l'ogre des steppes, remonte de /tmp avec un sac de la Taverne aux Arches d'Or : « David a pris des Galettes du Roi Gras pour tout le monde. »\n\n" +
-			"Une lueur rousse et blanche emplit la pièce : Laurent, le Mage Rouxblanc, entre en lissant sa barbe.\n" +
-			"« Treize sur treize. Sans indice, sans radio. Myriam, Dylan, Aidan et David ont joué le jeu pour toi cette nuit.\n" +
+			"Le dernier sceau se brise dans un éclat vert. Les sortilèges de Myriam s'éteignent un à un, et la grande porte s'ouvre.\n" +
+			"Une lueur rousse et blanche emplit la Forteresse : Laurent, le Mage Rouxblanc, entre en lissant sa barbe.\n\n" +
+			"Myriam baisse son bâton et éclate de rire. « Treize sur treize, Mage. Ta recrue est meilleure que tes gardes. »\n" +
+			"Dylan le Saltimbanque descend des remparts d'un saut périlleux et rattrape ses balles. David remonte de /tmp avec un sac\n" +
+			"de la Taverne aux Arches d'Or : « David a pris des Galettes du Roi Gras pour tout le monde. » Et Aidan surgit de sous\n" +
+			"ton lit de camp, pieds poilus en avant : « Je le savais ! Enfin non. Mais j'y croyais très fort. »\n\n" +
+			"Myriam lui rend sa vieille robe noire, pliée. Le Mage sourit : « À Terminus, tu as battu le Sorcier Noir le jour de ta rentrée.\n" +
+			"Ce soir, tu as battu toute une troupe. Myriam et moi, nous jouons ce tour à chaque promotion. La sorcière, l'acrobate, l'ogre et l'elfe :\n" +
+			"tous avaient un rôle cette nuit. Le tien était le plus dur, et tu l'as tenu sans indice ni radio.\n" +
 			"Ce que tu viens de faire, tu le referas pour de vrai, un jour, sur une vraie machine. Félicitations. »\n\n" +
 			texteDiplomeExamen());
 	}
@@ -566,9 +585,9 @@ Shell.sorts.kamikaze = function(args, io){
 		montrerImage("./static/img/item_elfe.gif", "Aidan, qui t'a rattrapé(e)");
 		term.echo(C.rouge(C.gras("KAMIKAZE")) + "\n\n" +
 			"Tu lèves les deux mains et prononces le dernier sort. Un éclair blanc traverse la Forteresse :\n" +
-			"les écrans s'éteignent, Myriam hurle, Dylan le Saltimbanque tombe de son monocycle, et toi, tu tombes.\n" +
-			"Aidan te rattrape juste avant le sol : « Pas mal, pour un sacrifice. Je note 7 sur 10 pour le style. »\n" +
-			"Avant le noir, ton rapport s'envole jusqu'à la tour du Mage Rouxblanc. Rien de ce que tu as accompli n'est perdu.\n\n" + texteDiplomeExamen());
+			"les écrans s'éteignent, Myriam hurle, Dylan le Saltimbanque tombe de son monocycle, David lâche sa galette,\n" +
+			"et toi, tu tombes. Aidan te rattrape juste avant le sol : « Pas mal, pour un sacrifice. Je note 7 sur 10 pour le style. »\n" +
+			"Avant le noir, ton rapport passe sous la grande porte, jusqu'aux mains du Mage Rouxblanc. Rien de ce que tu as accompli n'est perdu.\n\n" + texteDiplomeExamen());
 		if (typeof majEtat === "function") majEtat();
 	});
 	return "";
