@@ -69,7 +69,7 @@ contient(jeu.taper("echo " + mot + " > ~/rapport/signature.txt"), "Épreuve X", 
 contient(jeu.taper("sudo find / -perm -4000", mdp), ".passe-muraille", "find -perm -4000");
 contient(jeu.taper("sudo rm /usr/local/lib/.passe-muraille", mdp), "Épreuve XI", "épreuve XI");
 contient(jeu.taper("sudo ss -tlnp", mdp), "31337", "l'oreille écoute");
-contient(jeu.taper("sudo kill " + pid, mdp), "encaisse", "TERM encaissé");
+contient(jeu.taper("sudo kill " + pid, mdp), "esquive", "TERM esquivé");
 contient(jeu.taper("sudo kill -9 " + pid, mdp), "Épreuve XII", "épreuve XII");
 jeu.editer("function(t){ return t.split('\\n').filter(function(l){ return l.indexOf('myriam@tour-noire') === -1; }).join('\\n'); }");
 var fin = jeu.taper("sudo nano /root/.ssh/authorized_keys", mdp);

@@ -147,77 +147,97 @@ def myriam():
 
 
 # ------------------------------------------------------------------
-# Dylan, le Saltank
+# Dylan, le Saltimbanque
 # ------------------------------------------------------------------
 
-def rivets(d, points):
-    for x, y in points:
-        d.point([(x, y), (x + 1, y), (x, y + 1), (x + 1, y + 1)], fill=B)
+def massue(d, x, y, angle, flamme=False):
+    """Une massue de jongleur (ou une torche enflammée), vue en biais."""
+    a = math.radians(angle)
+    dx, dy = math.cos(a), math.sin(a)
+    x1, y1 = x + 16 * dx, y + 16 * dy
+    d.line([(x, y), (x1, y1)], fill=B, width=3)
+    d.ellipse([x - 2, y - 2, x + 2, y + 2], fill=B)
+    if flamme:
+        d.polygon([(x1 - 6 * dy - 1, y1 + 6 * dx), (x1 + 12 * dx, y1 + 12 * dy - 4), (x1 + 6 * dy + 1, y1 - 6 * dx)], fill=V)
+        d.polygon([(x1 - 3 * dy, y1 + 3 * dx), (x1 + 7 * dx, y1 + 7 * dy - 2), (x1 + 3 * dy, y1 - 3 * dx)], fill=B)
+    else:
+        d.ellipse([x1 - 6, y1 - 6, x1 + 6, y1 + 6], fill=B, outline=N)
+        d.line([(x1 - 4, y1), (x1 + 4, y1)], fill=V, width=2)
 
 
 def dylan():
-    """Dylan le Saltank : un chevalier-char d'assaut, heaume à fente, épaulières massives, chenilles à la place des jambes."""
+    """Dylan le Saltimbanque : bonnet de bouffon à grelots, costume en losanges, fraise, il jongle debout sur une grosse balle."""
     im, d = toile()
-    # les chenilles
-    d.rounded_rectangle([34, 136, 142, 160], radius=11, fill=B)
-    d.rounded_rectangle([38, 140, 138, 156], radius=8, fill=N)
-    for x in range(46, 134, 12):
-        d.ellipse([x - 5, 143, x + 5, 153], fill=V, outline=B)
-        d.point((x, 148), fill=N)
-    for x in range(38, 140, 6):
-        d.line([(x, 136), (x + 2, 136)], fill=N)
-        d.line([(x, 160), (x + 2, 160)], fill=N)
-    # le bassin sur sa tourelle
-    d.rectangle([62, 122, 114, 138], fill=V)
-    d.line([(62, 130), (114, 130)], fill=N)
-    rivets(d, [(66, 125), (76, 125), (99, 125), (109, 125)])
-    # le torse : une plaque bombée, avec le S du Saltank
-    torse = [(52, 74), (124, 74), (120, 104), (110, 124), (66, 124), (56, 104)]
-    d.polygon(torse, fill=V)
-    pli(d, [(88, 76), (88, 122)])
-    pli(d, [(58, 100), (118, 100)])
-    d.polygon([(76, 82), (100, 82), (98, 98), (88, 104), (78, 98)], fill=B)
-    d.polygon([(79, 84), (97, 84), (95, 97), (88, 101), (81, 97)], fill=N)
-    d.line([(94, 87), (85, 87)], fill=B, width=2)
-    d.line([(84, 87), (84, 91)], fill=B, width=2)
-    d.line([(85, 91), (92, 92)], fill=B, width=2)
-    d.line([(93, 92), (93, 96)], fill=B, width=2)
-    d.line([(92, 96), (82, 96)], fill=B, width=2)
-    rivets(d, [(58, 80), (116, 80), (62, 112), (112, 112)])
-    # les épaulières, énormes, à trois lames
-    for x0, x1 in ((24, 64), (112, 152)):
-        d.ellipse([x0, 62, x1, 96], fill=V, outline=N)
-        d.chord([x0 + 2, 64, x1 - 2, 94], 180, 360, fill=V)
-        for k, y in enumerate((72, 79, 86)):
-            d.arc([x0 + 3, y - 8, x1 - 3, y + 10], 200, 340, fill=N)
-        d.line([(x0 + 8, 70), (x0 + 16, 66)], fill=B)
-        rivets(d, [((x0 + x1) // 2 - 1, 64)])
-    # les bras, en tuyaux de poêle, et les poings
-    for x in (28, 136):
-        d.rectangle([x, 94, x + 14, 124], fill=V)
-        for y in (102, 110, 118):
-            d.line([(x, y), (x + 14, y)], fill=N)
-        d.rounded_rectangle([x - 2, 122, x + 16, 136], radius=4, fill=B)
-        d.line([(x + 2, 128), (x + 12, 128)], fill=N)
-        d.line([(x + 7, 124), (x + 7, 128)], fill=N)
-    # le gorgerin
-    d.rectangle([74, 64, 102, 76], fill=V)
-    d.line([(74, 68), (102, 68)], fill=N)
-    d.line([(74, 72), (102, 72)], fill=N)
-    # le heaume, tout rond, avec sa fente et son panache
-    d.ellipse([62, 18, 114, 68], fill=V)
-    d.chord([62, 18, 114, 68], 200, 340, fill=V)
-    d.line([(88, 20), (88, 44)], fill=N)
-    d.rectangle([68, 40, 108, 47], fill=N)                # la fente
-    d.rectangle([72, 42, 80, 45], fill=B)                 # le regard qui luit
-    d.rectangle([96, 42, 104, 45], fill=B)
+    # la grosse balle à quartiers, sous ses pieds
+    d.ellipse([54, 124, 122, 166], fill=B, outline=B)
+    d.ellipse([66, 124, 110, 166], fill=V)
+    d.ellipse([78, 124, 98, 166], fill=B)
+    d.ellipse([54, 124, 122, 166], outline=N)
+    d.arc([60, 130, 84, 150], 200, 250, fill=N)
+    # les jambes en collant losangé, pointes de pied tendues
+    for x0, x1, pied in ((74, 84, -1), (92, 102, 1)):
+        d.polygon([(x0, 100), (x1, 100), (x1 - 1 if pied < 0 else x1 + 2, 128), (x0 - 2 if pied < 0 else x0 + 1, 128)], fill=V)
+        for y in range(104, 128, 8):
+            d.polygon([(x0 + 4, y), (x0 + 7, y + 4), (x0 + 4, y + 8), (x0 + 1, y + 4)], fill=B)
+    d.polygon([(70, 126), (84, 126), (84, 131), (66, 131), (62, 127)], fill=N, outline=B)
+    d.point([(61, 126), (60, 125)], fill=B)
+    d.polygon([(92, 126), (106, 126), (114, 127), (110, 131), (92, 131)], fill=N, outline=B)
+    d.point([(115, 126), (116, 125)], fill=B)
+    # le pourpoint à losanges verts et blancs, avec ses pointes à grelots
+    corps = [(66, 72), (110, 72), (114, 92), (118, 104), (108, 100), (98, 106), (88, 100), (78, 106), (68, 100), (58, 104), (62, 92)]
+    d.polygon(corps, fill=V)
+    test = dans_polygone(corps)
+    for y in range(74, 104, 8):
+        for x in range(62 + (y // 8 % 2) * 6, 116, 12):
+            losange = [(x, y - 4), (x + 4, y), (x, y + 4), (x - 4, y)]
+            if all(test(px, py) for px, py in losange):
+                d.polygon(losange, fill=B)
+    for x, y in ((58, 104), (78, 106), (98, 106), (118, 104)):
+        d.ellipse([x - 2, y, x + 2, y + 4], fill=B)
+    d.line([(64, 92), (114, 92)], fill=N)
+    # la fraise plissée autour du cou
+    for x in range(66, 112, 6):
+        d.ellipse([x - 4, 66, x + 4, 76], fill=B, outline=N)
+    # les bras levés qui jonglent
+    d.polygon([(66, 76), (52, 64), (44, 50), (50, 46), (58, 58), (72, 72)], fill=V)
+    d.polygon([(110, 76), (124, 64), (132, 50), (126, 46), (118, 58), (104, 72)], fill=V)
+    for x, y in ((50, 60), (126, 60)):
+        d.polygon([(x - 3, y - 3), (x, y), (x - 3, y + 3), (x - 6, y)], fill=B)
+    d.ellipse([40, 40, 50, 50], fill=B)
+    d.ellipse([126, 40, 136, 50], fill=B)
+    # les massues en l'air, en arc de cercle, et deux torches enflammées
+    for x in range(30, 148, 5):
+        y = 34 - math.sqrt(max(0, 59 ** 2 - (x - 88) ** 2)) * 0.5
+        d.point((x, round(y)), fill=B)
+    massue(d, 24, 30, -70, flamme=True)
+    massue(d, 50, 16, -110)
+    massue(d, 126, 16, -70)
+    massue(d, 152, 30, -110, flamme=True)
+    # le visage blanc, avec ses pommettes en losange et son grand sourire
+    d.ellipse([72, 34, 104, 68], fill=B)
+    d.polygon([(76, 54), (79, 51), (82, 54), (79, 57)], fill=V)
+    d.polygon([(94, 54), (97, 51), (100, 54), (97, 57)], fill=V)
+    d.arc([76, 42, 86, 52], 200, 340, fill=N)
+    d.arc([90, 42, 100, 52], 200, 340, fill=N)
+    d.point([(80, 47), (81, 47), (94, 47), (95, 47)], fill=N)
+    d.line([(88, 50), (87, 56), (89, 56)], fill=N)
+    d.chord([79, 54, 97, 66], 0, 180, fill=N)
+    d.rectangle([82, 59, 94, 61], fill=B)
+    # le bonnet de bouffon : trois pointes molles et leurs grelots
+    d.rectangle([70, 32, 106, 40], fill=V)
     for x in range(72, 106, 6):
-        d.point([(x, 54), (x + 1, 54), (x, 58), (x + 1, 58)], fill=N)   # la grille de souffle
-    d.arc([66, 22, 110, 64], 210, 260, fill=B)            # un reflet
-    rivets(d, [(64, 42), (110, 42)])
-    d.polygon([(86, 18), (82, 4), (90, 8), (96, 0), (98, 10), (106, 6), (94, 20)], fill=B)   # le panache
-    pli(d, [(90, 10), (90, 18)])
-    sol(d, 22, 154, 164)
+        d.polygon([(x, 33), (x + 3, 36), (x, 39), (x - 3, 36)], fill=B)
+    d.polygon([(72, 34), (56, 18), (50, 28), (60, 26)], fill=V)
+    d.polygon([(84, 32), (88, 16), (94, 32)], fill=V)
+    d.polygon([(104, 34), (120, 18), (126, 28), (116, 26)], fill=V)
+    pli(d, [(70, 34), (58, 22)])
+    pli(d, [(106, 34), (118, 22)])
+    for x, y in ((48, 28), (88, 13), (128, 28)):
+        d.ellipse([x - 3, y - 3, x + 3, y + 3], fill=B, outline=N)
+        d.point((x, y + 1), fill=N)
+    etincelle(d, 148, 90, 3)
+    etincelle(d, 26, 96, 2)
+    sol(d, 30, 150, 166)
     return im
 
 
@@ -226,7 +246,7 @@ def dylan():
 # ------------------------------------------------------------------
 
 def steve():
-    """Steve, l'elfe rigolo : immenses oreilles, bonnet à grelot qui retombe, grand sourire, il jongle."""
+    """Steve, l'elfe rigolo : immenses oreilles, bonnet à grelot qui retombe, grand sourire, un panneau HA HA."""
     im, d = toile()
     # les jambes en collant rayé et les souliers à pointe recourbée
     for x in (72, 94):
@@ -255,13 +275,15 @@ def steve():
     d.ellipse([40, 58, 52, 70], fill=B)
     for k in range(4):
         d.line([(41 + 3 * k, 58), (40 + 3 * k, 52)], fill=B)
-    d.polygon([(110, 94), (124, 102), (134, 96), (136, 102), (124, 110), (108, 102)], fill=V)
-    d.ellipse([132, 92, 142, 102], fill=B)
-    for (x, y) in ((126, 70), (140, 58), (152, 76)):
-        d.ellipse([x - 5, y - 5, x + 5, y + 5], fill=V, outline=B)
-        d.arc([x - 3, y - 3, x + 3, y + 3], 200, 290, fill=B)
-    d.arc([118, 50, 158, 100], 200, 340, fill=B)
-    d.point([(120, 84), (158, 84)], fill=B)
+    d.polygon([(110, 94), (124, 102), (132, 98), (134, 104), (124, 110), (108, 102)], fill=V)
+    d.ellipse([130, 94, 140, 104], fill=B)
+    # le panneau qu'il brandit : HA HA
+    d.line([(136, 96), (136, 90)], fill=B, width=2)
+    d.rectangle([122, 68, 168, 90], fill=B)
+    d.rectangle([124, 70, 166, 88], outline=N)
+    for x0 in (128, 147):
+        d.line([(x0, 74), (x0, 84)], fill=N, width=2); d.line([(x0 + 6, 74), (x0 + 6, 84)], fill=N, width=2); d.line([(x0, 79), (x0 + 6, 79)], fill=N)
+        d.line([(x0 + 9, 84), (x0 + 11, 74)], fill=N); d.line([(x0 + 11, 74), (x0 + 13, 84)], fill=N); d.line([(x0 + 10, 80), (x0 + 12, 80)], fill=N)
     # les oreilles, immenses, en lames
     d.polygon([(70, 58), (18, 34), (24, 42), (66, 70)], fill=V, outline=B)
     pli(d, [(30, 40), (64, 62)])

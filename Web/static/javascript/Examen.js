@@ -2,7 +2,7 @@
  * Examen.js : la mission spéciale, l'épreuve finale.
  *
  * Une partie à part, ouverte par un code que donne le formateur (sort examen) : la recrue est
- * seule dans la Forteresse, un serveur pris par la sorcière Myriam et gardé par Dylan le Saltank,
+ * seule dans la Forteresse, un serveur pris par la sorcière Myriam et gardé par Dylan le Saltimbanque,
  * avec Steve l'elfe rigolo pour seule compagnie (il fait rire, il n'aide pas). Treize épreuves
  * reprennent les trois missions : le terminal (chapitre 1), le réseau (la panne) et la cyber (la
  * Crypte). La note sur 20 se calcule sur ce qui est accompli, que la recrue aille au bout ou
@@ -184,13 +184,13 @@ var CLE_ADMIN_EXAMEN = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI" + base64Aleatoire
 var CLE_MYRIAM_EXAMEN = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI" + base64Aleatoire("examen-cle-myriam", 43) + " myriam@tour-noire";
 var AuthorizedKeysExamen = objetExamen(FortRootSsh, "authorized_keys", CLE_LAURENT_EXAMEN + "\n" + CLE_MYRIAM_EXAMEN + "\n" + CLE_ADMIN_EXAMEN + "\n", { mode: "rw-------", image: "item_locker.gif" });
 
-/* Les processus : sshd et telnet (services), et Dylan le Saltank, l'oreille de Myriam, qui encaisse les signaux polis. */
+/* Les processus : sshd et telnet (services), et Dylan le Saltimbanque, l'oreille de Myriam, qui esquive les signaux polis. */
 var PID_OREILLE = aleaEntier("examen-pid-oreille", 2100, 2999);
 Forteresse.addProc(612, "sshd", "root", { service: "sshd", cpu: 0.1, protege: "Couper sshd sur la Forteresse, ce serait fermer ta propre porte." });
 Forteresse.addProc(733, "in.telnetd", "root", { service: "telnet", cpu: 0.1 });
 Forteresse.addProc(PID_OREILLE, "systemd-netlogd", "root", { cpu: 3.4, sig9: true,
-	ignoreText: "Le processus " + PID_OREILLE + " (systemd-netlogd) encaisse ton signal sans broncher : Dylan le Saltank, l'armure de Myriam, ne cède pas aux demandes polies.",
-	killText: "Le processus " + PID_OREILLE + " (systemd-netlogd) s'effondre : Dylan le Saltank pose un genou à terre. Myriam vient de perdre son oreille." });
+	ignoreText: "Le processus " + PID_OREILLE + " (systemd-netlogd) voit venir ton signal et l'esquive d'une pirouette : Dylan le Saltimbanque, l'acrobate de Myriam, se rit des demandes polies.",
+	killText: "Le processus " + PID_OREILLE + " (systemd-netlogd) s'arrête net : Dylan le Saltimbanque rate sa pirouette et retombe dans le filet. Myriam vient de perdre son oreille." });
 // Le vrai nom du faux : systemd-netlogd existe, mais n'écoute jamais sur un port.
 var syslogExamen = FortLog.getItemFromName("syslog");
 syslogExamen.setText(syslogExamen.getText().replace("systemd-netlogd[0]", "systemd-netlogd[" + PID_OREILLE + "]"));
@@ -218,7 +218,7 @@ Object.defineProperty(HOTES["forteresse"], "journal", { configurable: true, get:
 /* Steve, l'elfe rigolo : il fait rire, il ne donne aucune piste. */
 var BLAGUES_DE_STEVE = [
 	"« Tu sais pourquoi les elfes ne font jamais de sudo ? Parce qu'ils sont déjà au-dessus de tout le monde. Bon. Je sors. »",
-	"« Dylan le Saltank, il a deux vitesses : immobile, et un peu moins immobile. »",
+	"« Dylan le Saltimbanque jongle avec sept torches. Moi, avec une seule, j'ai brûlé mon bonnet. »",
 	"« Myriam m'a transformé en grenouille, une fois. J'ai trouvé ça très reposant. »",
 	"« Un elfe entre dans un serveur. Le serveur dit : Permission denied. Fin de l'histoire. C'est la mienne, d'ailleurs. »",
 	"« Je t'aiderais bien, mais le Mage Rouxblanc a dit : pas d'aide. Et il a une barbe qui fait peur quand il est fâché. »",
@@ -276,7 +276,7 @@ var EPREUVES_EXAMEN = [
 	  fait: function(){ var f = RapportExamen.getItemFromName("signature.txt"); return f !== -1 && f.getText().trim().toUpperCase() === MOT_DE_MYRIAM; } },
 	{ id: "suid", sceau: 3, points: 2, titre: "Désarmer la porte dérobée SUID",
 	  fait: function(){ return !FortUsrLocalLib.hasItem(PasseMuraille) || PasseMuraille.mode.charAt(2) !== "s"; } },
-	{ id: "oreille", sceau: 3, points: 2, titre: "Faire tomber Dylan le Saltank (le port qui écoute)",
+	{ id: "oreille", sceau: 3, points: 2, titre: "Faire tomber Dylan le Saltimbanque (le port qui écoute)",
 	  fait: function(){ return !Forteresse.procs.some(function(p){ return p.pid === PID_OREILLE; }); } },
 	{ id: "cle", sceau: 3, points: 2, titre: "Retirer la clé de trop chez root, et seulement elle",
 	  fait: function(){ var t = AuthorizedKeysExamen.getText(); return t.indexOf("myriam@tour-noire") === -1 && t.indexOf(CLE_LAURENT_EXAMEN) > -1 && t.indexOf(CLE_ADMIN_EXAMEN) > -1; } }
@@ -309,8 +309,8 @@ function texteOrdreDeMission(){
 		"",
 		"Recrue,",
 		"Cette nuit, la sorcière Myriam a pris la Forteresse, le serveur qui garde",
-		"les diplômes de l'école. Devant sa porte veille Dylan le Saltank, son armure",
-		"vivante, qu'aucun coup poli n'ébranle. Radia et Grace sont injoignables :",
+		"les diplômes de l'école. Sur ses remparts bondit Dylan le Saltimbanque, son",
+		"acrobate, qui esquive tous les coups polis. Radia et Grace sont injoignables :",
 		"tu es seule ou seul face à eux. Seul Steve, l'elfe rigolo, est resté coincé",
 		"dans tes quartiers. Il te fera rire ; il ne t'aidera pas. C'est ton épreuve finale.",
 		"",
@@ -330,7 +330,7 @@ function texteOrdreDeMission(){
 		gardien: "L'un des gardiens de /opt/gardiens a été trafiqué. Démasque-le et mets-le\n        dans /quarantaine. Ne détruis aucune preuve.",
 		signature: "Le traître porte un message caché. Déchiffre-le et inscris la signature\n        de Myriam, seule, dans ~/rapport/signature.txt",
 		suid: "Une porte dérobée donne les pleins pouvoirs à qui la franchit.\n        Trouve-la et désarme-la.",
-		oreille: "Dylan le Saltank écoute la Forteresse pour Myriam, sur un port que personne\n        n'explique. Il encaisse les coups polis : fais-le tomber.",
+		oreille: "Dylan le Saltimbanque écoute la Forteresse pour Myriam, sur un port que personne\n        n'explique. Il esquive les coups polis : fais-le tomber.",
 		cle: "Une clé de trop ouvre la porte de root. Retire-la, et seulement elle."
 	};
 	var sceau = 0;
@@ -355,7 +355,7 @@ function texteOrdreDeMission(){
 var TEXTE_ENTREE_EXAMEN =
 	"MISSION SPÉCIALE · L'ÉPREUVE FINALE\n\n" +
 	"La nuit est tombée sur Cybersup. Dans la salle des serveurs, une seule machine clignote encore :\n" +
-	"la Forteresse, celle qui garde les diplômes de l'école. La sorcière Myriam s'en est emparée,\net Dylan le Saltank en garde la porte.\n\n" +
+	"la Forteresse, celle qui garde les diplômes de l'école. La sorcière Myriam s'en est emparée,\net Dylan le Saltimbanque fait des cabrioles sur ses remparts.\n\n" +
 	"Tu as appris le terminal à Terminus, réparé le réseau avec Radia, traqué l'intrus avec Grace.\n" +
 	"Cette fois, personne ne te guidera. Ton ordre de mission est caché dans tes quartiers.\n" +
 	"Trouve-le.";
@@ -441,7 +441,7 @@ function verifierExamen(){
 		try { ok = !!ep.fait(); } catch (x){ ok = false; }
 		if (ok && !e.reussies[ep.id]){
 			e.reussies[ep.id] = true;
-			if (ep.id === "oreille") montrerImage("./static/img/item_dylan.gif", "Dylan le Saltank, à terre");
+			if (ep.id === "oreille") montrerImage("./static/img/item_dylan.gif", "Dylan le Saltimbanque, dans le filet");
 			jouerSon("quete");
 			say(C.jaune("★ Épreuve " + CHIFFRES_ROMAINS[i] + " accomplie : " + ep.titre) + C.gris("  +" + ep.points + " pt" + (ep.points > 1 ? "s" : "")));
 		} else if (!ok && e.reussies[ep.id]){
@@ -458,7 +458,7 @@ function verifierExamen(){
 			say(C.vert("◆ " + NOMS_DES_SCEAUX[s] + " est brisé.") + "\n" + C.gris({
 				1: "Steve, depuis tes quartiers : « Un sceau ! Je danse. Enfin, intérieurement. »",
 				2: "Steve : « Deux sceaux ! Myriam fait une tête, tu verrais ça. Moi, je l'ai vue. C'était génial. »",
-				3: "Steve : « Le Sceau de la Crypte ! Dylan le Saltank vient de s'asseoir. Il ne s'assoit jamais. »" }[s]));
+				3: "Steve : « Le Sceau de la Crypte ! Dylan le Saltimbanque a lâché ses balles. Il ne lâche jamais ses balles. »" }[s]));
 		}
 	});
 	if (nbReussiesExamen() === EPREUVES_EXAMEN.length){
@@ -467,7 +467,7 @@ function verifierExamen(){
 		montrerImage("./static/img/item_rouxblanc.gif", "Laurent, le Mage Rouxblanc");
 		say("\n" + C.vert(C.gras("LA FORTERESSE EST REPRISE")) + "\n\n" +
 			"Le dernier sceau se brise dans un éclat vert. Sur l'écran, les sortilèges de Myriam s'éteignent un à un.\n" +
-			"La sorcière baisse son bâton et éclate de rire. Derrière elle, Dylan le Saltank retire son heaume, et Steve\n" +
+			"La sorcière baisse son bâton et éclate de rire. Derrière elle, Dylan le Saltimbanque salue d'un saut périlleux, et Steve\n" +
 			"surgit de sous ton lit de camp : « Je le savais ! Enfin non. Mais j'y croyais très fort. »\n\n" +
 			"Une lueur rousse et blanche emplit la pièce : Laurent, le Mage Rouxblanc, entre en lissant sa barbe.\n" +
 			"« Treize sur treize. Sans indice, sans radio. Myriam, Dylan et Steve ont joué le jeu pour toi cette nuit.\n" +
@@ -539,7 +539,7 @@ Shell.sorts.kamikaze = function(args, io){
 		montrerImage("./static/img/item_elfe.gif", "Steve, qui t'a rattrapé(e)");
 		term.echo(C.rouge(C.gras("KAMIKAZE")) + "\n\n" +
 			"Tu lèves les deux mains et prononces le dernier sort. Un éclair blanc traverse la Forteresse :\n" +
-			"les écrans s'éteignent, Myriam hurle, Dylan le Saltank vacille, et toi, tu tombes.\n" +
+			"les écrans s'éteignent, Myriam hurle, Dylan le Saltimbanque tombe de son monocycle, et toi, tu tombes.\n" +
 			"Steve te rattrape juste avant le sol : « Pas mal, pour un sacrifice. Je note 7 sur 10 pour le style. »\n" +
 			"Avant le noir, ton rapport s'envole jusqu'à la tour du Mage Rouxblanc. Rien de ce que tu as accompli n'est perdu.\n\n" + texteDiplomeExamen());
 		if (typeof majEtat === "function") majEtat();
@@ -631,7 +631,7 @@ Shell.sorts.pwd = function(args, io){
 	return cheminForteresse(current_room);
 };
 
-/* Les ports de la Forteresse : ceux des services allumés, et Dylan le Saltank, l'oreille de Myriam. */
+/* Les ports de la Forteresse : ceux des services allumés, et Dylan le Saltimbanque, l'oreille de Myriam. */
 var PRISES_HORS_EXAMEN = prisesDe;
 prisesDe = function(hote){
 	if (hote !== "forteresse") return PRISES_HORS_EXAMEN(hote);
