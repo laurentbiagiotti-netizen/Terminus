@@ -242,21 +242,25 @@ def dylan():
 
 
 # ------------------------------------------------------------------
-# Steve, l'elfe rigolo
+# Aidan, l'elfe rigolo
 # ------------------------------------------------------------------
 
 def steve():
-    """Steve, l'elfe rigolo : immenses oreilles, bonnet à grelot qui retombe, grand sourire, un panneau HA HA."""
+    """Aidan, l'elfe rigolo : immenses oreilles, bonnet à grelot qui retombe, grand sourire, pieds nus poilus de hobbit, un panneau HA HA."""
     im, d = toile()
-    # les jambes en collant rayé et les souliers à pointe recourbée
+    # les jambes en collant rayé et les grands pieds nus, poilus comme ceux d'un hobbit
     for x in (72, 94):
-        d.rectangle([x, 128, x + 10, 152], fill=B)
-        for y in range(130, 152, 5):
+        d.rectangle([x, 128, x + 10, 148], fill=B)
+        for y in range(130, 148, 5):
             d.line([(x, y), (x + 10, y)], fill=V, width=2)
-    d.polygon([(70, 152), (84, 152), (84, 160), (60, 160), (56, 154)], fill=V)
-    d.point([(55, 153), (54, 152)], fill=B)
-    d.polygon([(92, 152), (106, 152), (122, 154), (118, 160), (92, 160)], fill=V)
-    d.point([(123, 153), (124, 152)], fill=B)
+    for x0, x1, sens in ((52, 86, -1), (90, 124, 1)):
+        d.ellipse([x0, 146, x1, 162], fill=B, outline=N)
+        orteils = range(x0 + 1, x0 + 14, 4) if sens < 0 else range(x1 - 14, x1 - 1, 4)
+        for x in orteils:
+            d.ellipse([x, 155, x + 4, 162], fill=B, outline=N)
+        for x in range(x0 + 6, x1 - 4, 3):
+            d.line([(x, 146), (x + sens, 141)], fill=V)
+            d.line([(x + 1, 149), (x + 1 + sens, 144)], fill=V)
     # la tunique, en pointes, avec la ceinture
     tunique = [(68, 92), (110, 92), (116, 116), (122, 134), (112, 130), (104, 136), (96, 130), (88, 136),
                (80, 130), (72, 136), (64, 130), (56, 134), (62, 116)]
@@ -394,7 +398,89 @@ def rouxblanc():
     return im
 
 
-DESSINS = {"item_myriam.gif": myriam, "item_dylan.gif": dylan, "item_elfe.gif": steve, "item_rouxblanc.gif": rouxblanc}
+# ------------------------------------------------------------------
+# David, l'ogre des steppes
+# ------------------------------------------------------------------
+
+def david():
+    """David, l'ogre des steppes : grand et maigre comme un bâton, chapka de fourrure, longue tresse, petites défenses,
+    une Galette du Roi Gras dans une main et un cornet de frites dans l'autre."""
+    im, d = toile()
+    # les longues jambes maigres et les bottes de cavalier
+    for x in (76, 94):
+        d.rectangle([x, 118, x + 6, 152], fill=V)
+        d.line([(x + 3, 120), (x + 3, 150)], fill=N)
+        d.polygon([(x - 3, 150), (x + 8, 150), (x + 10, 160), (x - 6, 160)], fill=B, outline=N)
+    d.polygon([(73, 160), (68, 156), (70, 152)], fill=B)
+    # le manteau long et étroit, croisé, ceinturé
+    corps = [(74, 74), (102, 74), (106, 96), (108, 124), (68, 124), (70, 96)]
+    d.polygon(corps, fill=V)
+    d.polygon([(78, 74), (98, 74), (88, 90)], fill=B)
+    d.line([(78, 74), (96, 98)], fill=N, width=2)
+    d.rectangle([68, 100, 108, 104], fill=N)
+    d.rectangle([84, 99, 92, 105], fill=B)
+    pli(d, [(74, 108), (72, 122)])
+    pli(d, [(102, 108), (104, 122)])
+    # le cou, long et fin
+    d.rectangle([84, 62, 92, 76], fill=V)
+    d.line([(86, 66), (88, 70)], fill=N)
+    # les bras en fil de fer
+    d.line([(74, 78), (58, 96), (50, 112)], fill=V, width=5)
+    d.line([(102, 78), (118, 92), (126, 78)], fill=V, width=5)
+    pli(d, [(58, 96), (60, 98)])
+    # la tête étroite et longue
+    d.ellipse([70, 20, 106, 68], fill=V)
+    d.ellipse([64, 36, 72, 48], fill=V, outline=N)                # les oreilles
+    d.ellipse([104, 36, 112, 48], fill=V, outline=N)
+    d.polygon([(76, 54), (78, 64), (80, 54)], fill=N)               # les joues creuses
+    d.polygon([(96, 54), (98, 64), (100, 54)], fill=N)
+    d.ellipse([75, 37, 85, 47], fill=B)                              # les yeux ronds et ravis
+    d.ellipse([91, 37, 101, 47], fill=B)
+    d.ellipse([79, 40, 83, 45], fill=N)
+    d.ellipse([93, 40, 97, 45], fill=N)
+    d.line([(74, 34), (84, 36)], fill=N, width=2)
+    d.line([(102, 34), (92, 36)], fill=N, width=2)
+    d.polygon([(88, 44), (85, 54), (91, 54)], fill=N)               # le long nez
+    d.line([(80, 58), (88, 62), (98, 56)], fill=N, width=2)          # le sourire en coin
+    d.polygon([(82, 59), (83, 55), (85, 60)], fill=B)                # les petites défenses
+    d.polygon([(93, 59), (95, 55), (96, 59)], fill=B)
+    # la chapka, et la longue tresse qui tombe dans le dos
+    d.chord([70, 2, 106, 36], 180, 360, fill=V)
+    pli(d, [(88, 4), (88, 18)])
+    d.rounded_rectangle([66, 16, 110, 26], radius=5, fill=B)
+    for x in range(68, 108, 4):
+        d.point([(x, 18), (x + 2, 22)], fill=N)
+    d.ellipse([84, -2, 92, 6], fill=B, outline=N)
+    for k in range(7):
+        y = 30 + 9 * k
+        d.ellipse([108 + (k % 2), y, 116 + (k % 2), y + 9], fill=B, outline=N)
+    d.polygon([(110, 93), (114, 102), (118, 93)], fill=V)
+    # la Galette du Roi Gras, plus grosse que sa tête
+    d.ellipse([120, 70, 132, 82], fill=V, outline=N)
+    d.chord([112, 46, 164, 76], 180, 360, fill=B, outline=N)
+    for x, y in ((124, 52), (134, 50), (144, 53), (152, 58)):
+        d.point((x, y), fill=N)
+    d.polygon([(110, 62), (166, 62), (162, 67), (114, 67)], fill=V)
+    for x in range(112, 164, 6):
+        d.polygon([(x, 66), (x + 3, 70), (x + 6, 66)], fill=V)
+    d.rectangle([112, 68, 164, 73], fill=N)
+    d.line([(112, 68), (164, 68)], fill=B)
+    d.rectangle([112, 74, 164, 77], fill=B)
+    d.chord([112, 72, 164, 88], 0, 180, fill=B, outline=N)
+    # le cornet de frites dorées, couronné du Roi Gras
+    d.ellipse([42, 106, 56, 120], fill=V, outline=N)
+    for k, x in enumerate(range(28, 56, 4)):
+        h = 12 + (k * 7) % 9
+        d.rectangle([x, 96 - h, x + 2, 98], fill=B, outline=N)
+    d.polygon([(26, 96), (58, 96), (52, 122), (32, 122)], fill=V, outline=B)
+    d.polygon([(35, 112), (35, 104), (39, 108), (42, 102), (45, 108), (49, 104), (49, 112)], fill=B)
+    etincelle(d, 150, 30, 2)
+    etincelle(d, 20, 70, 2)
+    sol(d, 30, 150, 163)
+    return im
+
+
+DESSINS = {"item_myriam.gif": myriam, "item_dylan.gif": dylan, "item_elfe.gif": steve, "item_rouxblanc.gif": rouxblanc, "item_david.gif": david}
 
 if __name__ == "__main__":
     noms = sys.argv[1:] or list(DESSINS)

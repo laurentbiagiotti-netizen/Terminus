@@ -3,7 +3,7 @@
  *
  * Une partie à part, ouverte par un code que donne le formateur (sort examen) : la recrue est
  * seule dans la Forteresse, un serveur pris par la sorcière Myriam et gardé par Dylan le Saltimbanque,
- * avec Steve l'elfe rigolo pour seule compagnie (il fait rire, il n'aide pas). Treize épreuves
+ * avec Aidan l'elfe rigolo pour seule compagnie (il fait rire, il n'aide pas). Treize épreuves
  * reprennent les trois missions : le terminal (chapitre 1), le réseau (la panne) et la cyber (la
  * Crypte). La note sur 20 se calcule sur ce qui est accompli, que la recrue aille au bout ou
  * qu'elle rende sa copie avant (sort kamikaze). Le diplôme porte un code que le formateur
@@ -215,22 +215,48 @@ Object.defineProperty(HOTES["forteresse"], "journal", { configurable: true, get:
 	return lignesDeJournal(j);
 } });
 
-/* Steve, l'elfe rigolo : il fait rire, il ne donne aucune piste. */
-var BLAGUES_DE_STEVE = [
+/* Aidan, l'elfe rigolo aux pieds poilus de hobbit : il fait rire, il ne donne aucune piste. */
+var BLAGUES_D_AIDAN = [
 	"« Tu sais pourquoi les elfes ne font jamais de sudo ? Parce qu'ils sont déjà au-dessus de tout le monde. Bon. Je sors. »",
 	"« Dylan le Saltimbanque jongle avec sept torches. Moi, avec une seule, j'ai brûlé mon bonnet. »",
 	"« Myriam m'a transformé en grenouille, une fois. J'ai trouvé ça très reposant. »",
 	"« Un elfe entre dans un serveur. Le serveur dit : Permission denied. Fin de l'histoire. C'est la mienne, d'ailleurs. »",
 	"« Je t'aiderais bien, mais le Mage Rouxblanc a dit : pas d'aide. Et il a une barbe qui fait peur quand il est fâché. »",
-	"« Mon plus grand exploit ? J'ai fait un ls dans une pièce vide. Très émouvant. »"
+	"« Mon plus grand exploit ? J'ai fait un ls dans une pièce vide. Très émouvant. »",
+	"« Des chaussures ? Pour quoi faire ? Mes pieds ont plus de poils que Dylan n'a de balles. »",
+	"« David, l'ogre de /tmp, a mangé onze Galettes du Roi Gras depuis minuit. Je compte, c'est mon seul travail. »"
 ];
-var ElfeSteve = new Item("Steve", "", "item_elfe.gif").personnage();
-Object.defineProperty(ElfeSteve.cmd_text, "less", { get: function(){
-	var n = state && state.examen ? nbReussiesExamen() + (state.nbCommandes % BLAGUES_DE_STEVE.length) : 0;
-	return "Steve, l'elfe rigolo, coincé ici depuis que Myriam a fermé la Forteresse. Il agite ses longues oreilles.\n\n" +
-		BLAGUES_DE_STEVE[n % BLAGUES_DE_STEVE.length];
+var ElfeAidan = new Item("Aidan", "", "item_elfe.gif").personnage();
+Object.defineProperty(ElfeAidan.cmd_text, "less", { get: function(){
+	var n = state && state.examen ? nbReussiesExamen() + (state.nbCommandes % BLAGUES_D_AIDAN.length) : 0;
+	return "Aidan, l'elfe rigolo, coincé ici depuis que Myriam a fermé la Forteresse. Il agite ses longues oreilles et remue ses grands pieds nus, poilus comme ceux d'un hobbit.\n\n" +
+		BLAGUES_D_AIDAN[n % BLAGUES_D_AIDAN.length];
 }, set: function(){}, enumerable: true, configurable: true });
-QuartiersRecrue.addItem(ElfeSteve);
+QuartiersRecrue.addItem(ElfeAidan);
+
+/* David, l'ogre des steppes : il garde /tmp en dévorant les Galettes du Roi Gras de la Taverne aux Arches d'Or. Il ne donne aucune piste non plus. */
+var REPLIQUES_DE_DAVID = [
+	"« GROUMF. Galette. » Il te tend un cornet de frites dorées, puis se ravise et le mange.",
+	"« Taverne aux Arches d'Or, ouverte jour et nuit. Comme la Forteresse. Mais avec de la sauce. »",
+	"« David a vu passer Myriam. David a eu peur. David a commandé un menu Géant pour se remettre. »",
+	"« Dans /tmp, tout le monde peut écrire. Alors David écrit : MIAM. »",
+	"« Une Galette du Roi Gras, deux Galettes du Roi Gras... David compte mieux les galettes que les adresses IP. »"
+];
+var OgreDavid = new Item("David", "", "item_david.gif").personnage();
+Object.defineProperty(OgreDavid.cmd_text, "less", { get: function(){
+	var n = state && typeof state.nbCommandes === "number" ? state.nbCommandes : 0;
+	return "David, l'ogre des steppes, assis sur une pile de sacs de la Taverne aux Arches d'Or. Il garde /tmp, la bouche pleine.\n\n" +
+		REPLIQUES_DE_DAVID[n % REPLIQUES_DE_DAVID.length];
+}, set: function(){}, enumerable: true, configurable: true });
+FortTmp.addItem(OgreDavid);
+objetExamen(FortTmp, "sac-de-la-taverne",
+	"TAVERNE AUX ARCHES D'OR · ticket n° 0042\n" +
+	"  4 x Galette du Roi Gras ............ 4 écus\n" +
+	"  3 x Cornet de frites dorées ........ 2 écus\n" +
+	"  1 x Potion pétillante (géante) ..... 1 écu\n" +
+	"  TOTAL .............................. 7 écus\n" +
+	"Client : David, l'ogre des steppes. Merci de votre visite, et à tout à l'heure.\n",
+	{ mode: "rw-rw-rw-", owner: "nobody", image: "item_david.gif" });
 
 World.fige = true;
 
@@ -311,7 +337,7 @@ function texteOrdreDeMission(){
 		"Cette nuit, la sorcière Myriam a pris la Forteresse, le serveur qui garde",
 		"les diplômes de l'école. Sur ses remparts bondit Dylan le Saltimbanque, son",
 		"acrobate, qui esquive tous les coups polis. Radia et Grace sont injoignables :",
-		"tu es seule ou seul face à eux. Seul Steve, l'elfe rigolo, est resté coincé",
+		"tu es seule ou seul face à eux. Seul Aidan, l'elfe rigolo, est resté coincé",
 		"dans tes quartiers. Il te fera rire ; il ne t'aidera pas. C'est ton épreuve finale.",
 		"",
 		"Trois sceaux tiennent la Forteresse sous l'emprise de Myriam. Brise-les dans l'ordre",
@@ -456,9 +482,9 @@ function verifierExamen(){
 		if (toutes && !e.sceaux[s]){
 			e.sceaux[s] = true;
 			say(C.vert("◆ " + NOMS_DES_SCEAUX[s] + " est brisé.") + "\n" + C.gris({
-				1: "Steve, depuis tes quartiers : « Un sceau ! Je danse. Enfin, intérieurement. »",
-				2: "Steve : « Deux sceaux ! Myriam fait une tête, tu verrais ça. Moi, je l'ai vue. C'était génial. »",
-				3: "Steve : « Le Sceau de la Crypte ! Dylan le Saltimbanque a lâché ses balles. Il ne lâche jamais ses balles. »" }[s]));
+				1: "Aidan, depuis tes quartiers : « Un sceau ! Je danse. Enfin, intérieurement. »",
+				2: "Aidan : « Deux sceaux ! Myriam fait une tête, tu verrais ça. Moi, je l'ai vue. C'était génial. »",
+				3: "Aidan : « Le Sceau de la Crypte ! Dylan le Saltimbanque a lâché ses balles. Il ne lâche jamais ses balles. »" }[s]));
 		}
 	});
 	if (nbReussiesExamen() === EPREUVES_EXAMEN.length){
@@ -467,10 +493,11 @@ function verifierExamen(){
 		montrerImage("./static/img/item_rouxblanc.gif", "Laurent, le Mage Rouxblanc");
 		say("\n" + C.vert(C.gras("LA FORTERESSE EST REPRISE")) + "\n\n" +
 			"Le dernier sceau se brise dans un éclat vert. Sur l'écran, les sortilèges de Myriam s'éteignent un à un.\n" +
-			"La sorcière baisse son bâton et éclate de rire. Derrière elle, Dylan le Saltimbanque salue d'un saut périlleux, et Steve\n" +
-			"surgit de sous ton lit de camp : « Je le savais ! Enfin non. Mais j'y croyais très fort. »\n\n" +
+			"La sorcière baisse son bâton et éclate de rire. Derrière elle, Dylan le Saltimbanque salue d'un saut périlleux, et Aidan\n" +
+			"surgit de sous ton lit de camp, pieds poilus en avant : « Je le savais ! Enfin non. Mais j'y croyais très fort. »\n" +
+			"David, l'ogre des steppes, remonte de /tmp avec un sac de la Taverne aux Arches d'Or : « David a pris des Galettes du Roi Gras pour tout le monde. »\n\n" +
 			"Une lueur rousse et blanche emplit la pièce : Laurent, le Mage Rouxblanc, entre en lissant sa barbe.\n" +
-			"« Treize sur treize. Sans indice, sans radio. Myriam, Dylan et Steve ont joué le jeu pour toi cette nuit.\n" +
+			"« Treize sur treize. Sans indice, sans radio. Myriam, Dylan, Aidan et David ont joué le jeu pour toi cette nuit.\n" +
 			"Ce que tu viens de faire, tu le referas pour de vrai, un jour, sur une vraie machine. Félicitations. »\n\n" +
 			texteDiplomeExamen());
 	}
@@ -536,11 +563,11 @@ Shell.sorts.kamikaze = function(args, io){
 		if (String(r).trim().toLowerCase() !== "oui"){ term.echo("Tu baisses la main. Le combat continue."); return; }
 		terminerExamen("kamikaze");
 		jouerSon("niveau");
-		montrerImage("./static/img/item_elfe.gif", "Steve, qui t'a rattrapé(e)");
+		montrerImage("./static/img/item_elfe.gif", "Aidan, qui t'a rattrapé(e)");
 		term.echo(C.rouge(C.gras("KAMIKAZE")) + "\n\n" +
 			"Tu lèves les deux mains et prononces le dernier sort. Un éclair blanc traverse la Forteresse :\n" +
 			"les écrans s'éteignent, Myriam hurle, Dylan le Saltimbanque tombe de son monocycle, et toi, tu tombes.\n" +
-			"Steve te rattrape juste avant le sol : « Pas mal, pour un sacrifice. Je note 7 sur 10 pour le style. »\n" +
+			"Aidan te rattrape juste avant le sol : « Pas mal, pour un sacrifice. Je note 7 sur 10 pour le style. »\n" +
 			"Avant le noir, ton rapport s'envole jusqu'à la tour du Mage Rouxblanc. Rien de ce que tu as accompli n'est perdu.\n\n" + texteDiplomeExamen());
 		if (typeof majEtat === "function") majEtat();
 	});

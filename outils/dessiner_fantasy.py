@@ -800,7 +800,7 @@ def forteresse():
 
 
 def elfe():
-    """Steve, l'elfe rigolo : de très longues oreilles, un bonnet à grelot, un grand sourire."""
+    """Aidan, l'elfe rigolo : de très longues oreilles, un bonnet à grelot, un grand sourire."""
     im, d = toile()
     d.ellipse([62, 30, 114, 84], fill=B)                                        # le visage
     d.polygon([(62, 52), (14, 26), (64, 66)], fill=B, outline=N)                 # l'oreille gauche
