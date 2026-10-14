@@ -773,6 +773,31 @@ def cartographe():
     return im
 
 
+def forteresse():
+    """La Forteresse de l'épreuve finale : un donjon noir sur un rocher, la bannière du Corbeau, trois sceaux verts."""
+    im, d = toile()
+    etoiles(d, n=22, graine=9, ymax=70)
+    lune(d, 150, 20, r=9)
+    colline(d, [(0, 140), (40, 128), (88, 122), (136, 128), (176, 138)])
+    d.polygon([(30, 132), (52, 104), (124, 104), (146, 132)], fill=B)          # le rocher
+    tramer(d, 34, 112, 140, 130, c=N, pas=3)
+    briques(d, 44, 60, 132, 106)                                             # le mur
+    creneaux(d, 44, 132, 60, h=8, w=8)
+    briques(d, 74, 26, 102, 60)                                              # le donjon
+    creneaux(d, 74, 102, 26, h=7, w=5)
+    for x in (34, 132):
+        briques(d, x, 44, x + 12, 106)                                       # les tours d'angle
+        creneaux(d, x, x + 12, 44, h=6, w=4)
+    arche(d, 78, 82, 98, 106, fill=N)                                        # la porte
+    d.line([(88, 26), (88, 6)], fill=B, width=2)                             # la bannière du Corbeau
+    d.polygon([(89, 6), (110, 10), (89, 16)], fill=N, outline=B)
+    d.polygon([(95, 9), (100, 11), (95, 13)], fill=B)
+    for i, x in enumerate((54, 116, 88)):                                    # les trois sceaux
+        y = 72 if i < 2 else 40
+        d.ellipse([x - 5, y - 5, x + 5, y + 5], fill=V, outline=N)
+    return im
+
+
 DESSINS = {
     "loc_batimentb.gif": lambda: batimentb(False), "loc_batimentb_ok.gif": lambda: batimentb(True),
     "loc_posteb.gif": posteb, "loc_routeur.gif": routeur, "loc_intranet.gif": intranet,
@@ -783,6 +808,7 @@ DESSINS = {
     "loc_sauvegarde.gif": sauvegarde, "loc_imprimante.gif": imprimante, "loc_badgeuse.gif": badgeuse, "loc_poste.gif": poste,
     "item_gaspard.gif": gaspard, "item_boitier.gif": boitier,
     "item_plan_rue.gif": plan_rue, "item_quartiers.gif": quartiers, "item_cartographe.gif": cartographe,
+    "loc_forteresse.gif": forteresse,
 }
 
 if __name__ == "__main__":

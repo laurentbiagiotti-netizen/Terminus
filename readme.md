@@ -112,6 +112,8 @@ Le déroulé complet, avec la solution de chaque étape et le barème, se trouve
 
 Repères pour la notation : finir la quête principale au plus court donne 10 sur 20 ; la solution complète donne 20 sur 20. Le diplôme final (`cat Diplome` dans la Citadelle) et les certificats des chapitres 2 et 3 (`cat CertificatReseau` et `cat CertificatCyber` dans la Maison) affichent le prénom du joueur, son score, sa note, sa mention, son temps de jeu, les indices payants utilisés, et un **code de vérification**. Ce code résume la partie et porte une somme de contrôle : une page de classement le décode, repère un code retouché et classe la promo, chapitre par chapitre.
 
+**L'épreuve finale** : une mission spéciale, la Forteresse, regroupe les trois chapitres (terminal, réseau, cyber) en treize épreuves notées sur 20, sans aide. L'étudiant, connecté à son compte, tape `examen` et le code d'accès donné par le formateur ; l'épreuve a sa propre sauvegarde. Il peut rendre sa copie à tout moment avec `kamikaze` : la note compte ce qui est fait, et le diplôme porte un code. Le formateur le contrôle avec `verifier CODE`. Le code d'accès et la solution sont dans [docs/solution.md](docs/solution.md) ; pour le changer : `node outils/code_examen.js NOUVEAU-CODE`.
+
 **Séances séparées** : pour une séance consacrée au réseau Linux, les étudiants choisissent le ticket d'incident au démarrage (ou tapent `chapitre 2` avant d'avoir franchi la première étape) et arrivent directement au bâtiment B. Pour une séance de trois heures consacrée à la sécurité, ils choisissent l'ordre de mission (ou tapent `chapitre 3`). Dans l'histoire, ils reçoivent un ordre de mission : les B1 ont battu le Sorcier Noir le matin même, un intrus bien réel est entré pendant la correction, et Grace les attend à la WarRoom pour le briefing avant de les envoyer à la Citadelle par `ssh`. Le chapitre 1 n'est pas noté pour eux.
 
 **Des aides pour les débutants** : un sort inconnu dit où il s'apprend, `cd..` et `ls-l` sont repérés (il manque une espace), les accents aussi (`ForêtOuest`), et l'apostrophe de `echo Le Sorcier s'appelle Laurent` est expliquée. `indice` signale aussi ce qui coince sans qu'on le voie : des rouages creux, un alias qui masque un sort, une clé SSH grillée ou effacée, et les sorts qui manquent pour suivre l'indice.
@@ -132,6 +134,7 @@ Le code est du JavaScript sans dépendance ni étape de construction.
 | `Web/static/javascript/CommandesCyber.js` | les commandes du réseau et de l'analyse (sed, awk, nmap, systemctl, gpg...) et l'éditeur `vim` côté shell |
 | `Web/static/javascript/Reseau.js` | les machines du réseau de l'école, les quêtes et les leçons de vim de la Crypte |
 | `Web/static/javascript/Panne.js` | la panne (chapitre 2) : le bâtiment B, le poste, le routeur, l'intranet, l'état du réseau et qui joint qui, les quêtes, Radia |
+| `Web/static/javascript/Examen.js` | l'épreuve finale : la Forteresse, ses treize épreuves, la note, `examen`, `kamikaze` et `verifier` |
 | `Web/static/javascript/CommandesPanne.js` | les sorts de la panne (ip, dhclient, netplan, dig, systemctl, iptables, tcpdump, curl, openssl...), qui suivent l'état du réseau |
 | `Web/static/javascript/Annexe.js` | le second acte de la panne : l'Annexe, son Wi-Fi, sa borne, son switch et son écran, et leurs sorts (rfkill, iw, ipcalc, sysctl, named-checkzone, lldpctl, iftop, nethogs...) |
 | `Web/static/javascript/RpgPanne.js` | l'habillage jeu de rôle de la panne : le nom imagé de chaque sort, la carte qui sort de la brume, les badges et la commande badges |
@@ -144,6 +147,7 @@ Le code est du JavaScript sans dépendance ni étape de construction.
 | `outils/dessiner_lieux.py`, `outils/dessiner_panne.py`, `outils/dessiner_fantasy.py`, `outils/dessiner_badges.py` | génèrent les illustrations ajoutées (les lieux des chapitres 2 et 3 dans le style épais du chapitre 1) et les médailles des badges |
 | `tests/parcours.js` | joue une partie complète et vérifie chaque étape (plus de 600 vérifications, les trois chapitres compris) |
 | `tests/solution.js` | rejoue les commandes de `docs/solution.md` et vérifie qu'elles mènent à 20 sur 20 aux trois chapitres |
+| `tests/examen.js` | joue l'épreuve finale de bout en bout, puis un kamikaze, et vérifie la note et le code du diplôme |
 | `tests/regressions.js` | rejoue chaque bug trouvé lors de l'audit, pour qu'il ne revienne pas |
 | `tests/robustesse.js` | envoie 20 000 lignes aléatoires à l'interpréteur et vérifie qu'aucune ne le fait planter |
 
@@ -152,6 +156,7 @@ Lancer les tests après toute modification :
 ```
 node tests/parcours.js
 node tests/solution.js
+node tests/examen.js
 node tests/robustesse.js
 ```
 

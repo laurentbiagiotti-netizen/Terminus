@@ -313,6 +313,7 @@ function majEtat(){
 	var niveau = document.getElementById("etat-niveau");
 	if (!niveau) return;
 	majObjectif();
+	if (typeof majEtatExamen === "function" && majEtatExamen()) return;
 	var pr = state.progression();
 	var etat = document.getElementById("etat");
 	var radio = document.getElementById("radio");
@@ -489,7 +490,7 @@ function demarrer(){
 	if (!COMPTE_ACTIF){
 		var connexion = function(){ demanderPrenom(); document.getElementById("saisie").focus(); };
 		if (sansIntro) connexion(); else intro(connexion);
-	} else if (PROFIL.aChoisir){
+	} else if (PROFIL.aChoisir && !PROFIL.modeExamen){
 		// recommencer : même compte, partie neuve, on rechoisit son parcours.
 		delete PROFIL.aChoisir;
 		enregistrerProfil();
@@ -690,6 +691,7 @@ function demanderParcours(){
 }
 
 function accueillir(){
+	if (typeof accueillirExamen === "function" && accueillirExamen()) return;
 	if (partieRestauree){
 		term.echo(C.vert(C.gras("TERMINUS")) + C.gris("  édition Cybersup") + "\n\n" +
 			"Content de te revoir, " + PROFIL.prenom + ". Ta partie a été retrouvée : tu es dans " + current_room.toString() + ".\n" +

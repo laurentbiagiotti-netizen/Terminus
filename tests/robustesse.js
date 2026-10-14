@@ -9,6 +9,13 @@ var fs = require("fs");
 var path = require("path");
 var nouveauMonde = require("./monde.js").nouveauMonde;
 
+// Un monde en mode épreuve finale (la Forteresse), pour la bombarder aussi.
+function mondeExamen(){
+	var j = nouveauMonde({ "terminus-cybersup-profil": JSON.stringify({ graine: 4242, prenom: "Ada", chapitre: 1, modeExamen: true }) });
+	j.lire("state.nom = 'Ada'; demarrerExamen(); Shell.narration = [];");
+	return j;
+}
+
 var combien = parseInt(process.argv[2], 10) || 20000;
 var graine = parseInt(process.argv[3], 10) || 12345;
 function hasard(){ graine = (graine * 48271) % 2147483647; return graine / 2147483647; }
@@ -31,13 +38,13 @@ var sorts = ["ls", "cd", "pwd", "less", "help", "man", "clear", "exit", "mv", "c
 	"which", "uname", "dmesg", "journalctl", "last", "who", "lsof", "pgrep", "pkill", "systemctl", "userdel", "usermod", "groups", "visudo",
 	"ip", "traceroute", "dig", "nmap", "nc", "curl", "ufw", "scp", "ssh-copy-id", "gpg", "vi", "logout",
 	"ethtool", "hostnamectl", "dhclient", "nmcli", "netplan", "reboot", "wget", "host", "nslookup", "resolvectl", "iptables", "tcpdump",
-	"mtr", "openssl", "timedatectl", "telnet", "carte"];
+	"mtr", "openssl", "timedatectl", "telnet", "carte", "examen", "kamikaze", "verifier"];
 var options = ["-a", "-l", "-la", "-r", "-rf", "-n", "-n 3", "-9", "-s", "-c", "-i", "-v", "-u", "-d:", "-f1", "-f", "-x", "-tf", "-xf", "-cf",
 	"--help", "-", "--", "-z", "-c", "-d", "-tlnp", "-perm -4000", "-perm /u=s", "-perm", "-user root", "2>/dev/null", "2>err", "2>>err", "2>&1", "u-s", "4755", "+t", "-1", "-0", "-99999", "+x", "-x", "755", "000", "u+rwx", "o-r", "a=", "999", "-name", "-type", "d", "f", "-L", "-u sorcier"];
 var noms = [".", "..", "~", "/", "*", "?", ".*", "~/", "../..", "./.", "//", "a/b/c", "~/Village", "Marche", "Boite", "Cage", "Portail",
 	"Rocher", "Stele", "Certificat", ".Phylactere", "SorcierNoir", "Laurent", "Diplome", "LivreDOr", "Registre", "remonter.sh",
 	"Mannequin*", "rouage*", "x", "X", "Truc", ".cache", "nouveau", "copie", "Chaumiere", "Planche", "Rouage", "EpiDeMais", "TrollMoche",
-	"~/Cybersup", "~/Cybersup/BureauDeLaurent", "BureauDeLaurent/Agenda", "sauvegarde-lundi.tar", "archive.tar", "terminus", "cybersup",
+	"~/Cybersup", "~/Cybersup/BureauDeLaurent", "/opt/gardiens/vigile", "/quarantaine", "~/rapport", "/etc/resolv.conf", "/root/.ssh/authorized_keys", "examen", "kamikaze", "isc-dhcp-server", "telnet", "nginx", "BureauDeLaurent/Agenda", "sauvegarde-lundi.tar", "archive.tar", "terminus", "cybersup",
 	"citadelle", "apprenti", "root", "sorcier", "66", "404", "1", "1337", "0", "-5", "abc", "é", "$USER", "$PWD", "${HOME}", "$", "$$",
 	"A=b", "ll='ls -l'", "z=", "=x", "\"deux mots\"", "'apostrophe'", "\"", "'", "\\", "[", "(", "a(b", "*.log", "motdepasse=", "vrai_nom",
 	"cowsay", "tree", "install", "update", "list", "<b>", "Crypte", "bin", "Caveau", "Racine", ".ssh", ".ssh/authorized_keys", "SHA256SUMS",
@@ -74,8 +81,8 @@ var lignesJouees = 0;
 for (var i = 0; i < combien; i++){
 	// On repart régulièrement d'un monde neuf, tantôt vierge, tantôt entièrement débloqué.
 	if (i % 400 === 0){
-		jeu = nouveauMonde({});
-		if ((i / 400) % 2 === 1){
+		jeu = (i / 400) % 3 === 2 ? mondeExamen() : nouveauMonde({});
+		if ((i / 400) % 3 === 1){
 			var jusque = Math.floor(hasard() * solution.length);
 			for (var s = 0; s <= jusque; s++){
 				jeu.jouerSolution(solution[s]);

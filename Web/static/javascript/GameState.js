@@ -25,7 +25,7 @@
  * demonsMorts, nomLu, victoire, fin -- le combat final
  */
 
-var CLE_SAUVEGARDE = COMPTE_ACTIF ? "terminus-cybersup-partie-" + COMPTE_ACTIF : "terminus-cybersup";
+var CLE_SAUVEGARDE = (COMPTE_ACTIF ? "terminus-cybersup-partie-" + COMPTE_ACTIF : "terminus-cybersup") + (PROFIL.modeExamen ? "-examen" : "");
 var VERSION_SAUVEGARDE = 3;
 
 /* Barème de l'expérience. */
@@ -1559,7 +1559,7 @@ GameState.prototype.save = function(){
 			xp2: this.xp2, malus2: this.malus2, cles: this.clesGenerees, pub: this.clePublique, priv: this.clePrivee,
 			grillee: this.cleGrillee, debut2: this.debutChapitre2, dateVictoire2: this.dateVictoire2, codesFiges: this.codesFiges || {},
 			succes: this.succes, chronos: this.chronos, reseau: this.reseau,
-			xp3: this.xp3, malus3: this.malus3, debut3: this.debutChapitre3, dateVictoire3: this.dateVictoire3, panne: this.panne,
+			xp3: this.xp3, malus3: this.malus3, debut3: this.debutChapitre3, dateVictoire3: this.dateVictoire3, panne: this.panne, examen: this.examen || null,
 			ici: current_room.path(),
 			avant: Shell.lieu_precedent ? Shell.lieu_precedent.path() : null,
 			ssh: Shell.pile_ssh.map(function(lieu){ return lieu.path(); }),
@@ -1649,6 +1649,7 @@ GameState.prototype.load = function(){
 		this.panne = typeof etatPanneInitial === "function" ? etatPanneInitial() : {};
 		if (donnees.panne) for (var cle in donnees.panne){ if (donnees.panne.hasOwnProperty(cle)) this.panne[cle] = donnees.panne[cle]; }
 		this.chronos = donnees.chronos || {};
+		this.examen = donnees.examen || null;
 		if (donnees.cron) this.cron = donnees.cron;
 		Shell.pile_ssh = (donnees.ssh || []).map(lieuParChemin);
 		this.currentRoom = lieuParChemin(donnees.ici || "~");
@@ -1706,7 +1707,7 @@ function creerCompte(prenom, motDePasse, nomComplet, email){
 		COMPTE_ACTIF = id;
 		var ancienProfil = CLE_PROFIL, ancienneSauvegarde = CLE_SAUVEGARDE;
 		CLE_PROFIL = "terminus-cybersup-profil-" + id;
-		CLE_SAUVEGARDE = "terminus-cybersup-partie-" + id;
+		CLE_SAUVEGARDE = "terminus-cybersup-partie-" + id + (PROFIL.modeExamen ? "-examen" : "");
 		enregistrerProfil();
 		state.save();
 		window.localStorage.removeItem(ancienProfil);
