@@ -278,8 +278,8 @@ var PROCLAMATION_MYRIAM = "<!doctype html>\n<title>LA TOUR NOIRE</title>\n<h1>La
 	"<p>Le héraut se tait. Les diplômes sont à moi.</p>\n";
 objetExamen(FortHtml, "index.html", PROCLAMATION_MYRIAM, { owner: "myriam", mode: "rw-------", image: "item_sign.gif" });
 var FortSauvegardes = lieuExamen(FortSrv, "sauvegardes", "Les sauvegardes de la Forteresse : ce qu'on y range survit aux sortilèges.", { image: "loc_sauvegarde.gif" });
-var ArchiveProclamation = objetExamen(FortSauvegardes, "proclamations.tar.gz",
-	"(Une archive tar compressée : ses octets ne se lisent pas tels quels.)", { image: "item_box.gif" });
+var ArchiveProclamation = objetExamen(FortSauvegardes, "proclamations.tar",
+	"(Une archive tar : ses octets ne se lisent pas tels quels. tar -tf la liste, tar -xf l'extrait.)", { image: "item_box.gif" });
 ArchiveProclamation.archive = [{ n: "index.html", x: PROCLAMATION_LAURANA }];
 objetExamen(FortSauvegardes, "LISEZMOI",
 	"Sauvegarde de la Tour des Proclamations, faite chaque soir par Laurana.\n" +
@@ -287,10 +287,9 @@ objetExamen(FortSauvegardes, "LISEZMOI",
 var FortHomeMyriam = lieuExamen(FortHome, "myriam", "La chambre de Myriam : un chaudron qui bouillonne encore, une odeur de soufre.", { owner: "myriam", mode: "rwxr-x---", image: "loc_chambre_myriam.gif" });
 objetExamen(FortHomeMyriam, ".proclamation", PROCLAMATION_MYRIAM, { owner: "myriam", mode: "rw-------", image: "item_sign.gif" });
 var FortCronD = lieuExamen(FortEtc, "cron.d", "Les tâches planifiées de la Forteresse : ce qui revient tout seul, à heure fixe.", { image: "loc_horloge.gif" });
-var SortilegeCron = objetExamen(FortCronD, "sortilege",
-	"# Ma Tour des Proclamations restera à moi. Myriam\n" +
-	"* * * * * root cp /home/myriam/.proclamation /var/www/html/index.html && chown myriam /var/www/html/index.html && chmod 600 /var/www/html/index.html\n",
-	{ image: "item_manuscript.gif", permis: ["sudo-rm"] });
+/* Le sortilège de Myriam est une ligne de SA crontab (vue au chapitre 1 : sudo crontab -u NOM -l, puis -r). */
+var TACHE_DE_MYRIAM = "* * * * * cp /home/myriam/.proclamation /var/www/html/index.html && chown myriam /var/www/html/index.html && chmod 600 /var/www/html/index.html";
+if (typeof UTILISATEURS !== "undefined"){ UTILISATEURS.myriam = 1002; UTILISATEURS.aidan = 1001; UTILISATEURS.timour = 1003; }
 objetExamen(FortCronD, "logrotate", "# Rotation des journaux, chaque nuit\n0 3 * * * root /usr/sbin/logrotate /etc/logrotate.conf\n", { image: "item_manuscript.gif" });
 
 /* ------------------------------------------------------------------ */
@@ -332,7 +331,7 @@ var ManonChatelaine = personnageExamen(Forteresse, "Manon", "item_manon.gif", fu
 var CONSEILS_DE_WISSAM = [
 	"Lis avant d'agir : ls -l avant chmod, cat avant nano. Un administrateur qui lit se trompe deux fois moins.",
 	"Quand un sort échoue, lis le message jusqu'au bout : il dit presque toujours ce qui manque.",
-	"man est gratuit, lui aussi. Et dans man, / cherche un mot.",
+	"man est gratuit, lui aussi : man NOM_DU_SORT montre ses options, avec des exemples.",
 	"sudo !! relance ta dernière ligne avec sudo. Pratique, quand on a oublié.",
 	"Une ligne qui échoue n'est pas grave. Trente, ça commence à se voir dans la note.",
 	"Avant de supprimer, demande-toi si c'est une preuve. Une preuve se déplace, elle ne se détruit pas.",
@@ -395,7 +394,7 @@ var GabrielComposants = personnageExamen(AtelierComposants, "Gabriel", "item_gab
 	var e = examenOuvert();
 	var debut = "Gabriel, le Maître des Composants. Il démonte une barrette de mémoire les yeux fermés et la remonte en sifflant.\n\n";
 	if (e && !e.psVu){
-		return debut + "« Avant de parler de processus, montre-moi ce qui tourne. Lance ps aux, ou top, et reviens me voir. »";
+		return debut + "« Avant de parler de processus, montre-moi ce qui tourne. Lance ps, ou top, et reviens me voir. »";
 	}
 	var tajine = Forteresse.procs.some(function(p){ return p.pid === PID_TAJINE; });
 	return debut + "« Bien. Écoute, c'est la seule leçon que je donne :\n" +
@@ -424,7 +423,7 @@ var ChebTimour = personnageExamen(AtelierComposants, "Timour", "item_timour.gif"
 		"« Le secret d'un bon tajine, c'est comme un bon serveur : on le laisse tourner, on ne soulève pas le couvercle toutes\n" +
 		"les deux minutes. Ah, et celui qui tourne dans ps, PID " + PID_TAJINE + ", c'est le mien. Touche pas. »",
 		"« Gabriel dit que je prends 40 % du processeur avec mon tajine. Moi je dis que c'est le seul processus utile de la\n" +
-		"Forteresse. Si tu veux trouver qui consomme, trie ps par %CPU. Mais le premier, c'est moi, et j'ai le droit. »",
+		"Forteresse. Si tu veux voir qui consomme, top classe tout le monde par %CPU. Le premier, c'est moi, et j'ai le droit. »",
 		"« L'an prochain, je fais l'épreuve finale à Marrakech. La Forteresse au milieu de la palmeraie, le Mage en djellaba,\n" +
 		"et un tajine par sceau brisé. Tu viendras ? »"][r];
 });
@@ -447,7 +446,7 @@ var LIEUX_DES_EPREUVES = {
 	ordre: "tes quartiers", assaillant: "les journaux, /var/log", rempart: "ton arsenal", fragment: "les archives, sous /srv",
 	oracle: "la configuration, /etc", mairie: "la Mairie, /etc/dhcp", telnet: "les services (systemctl)", nginx: "les services (systemctl)",
 	gardien: "les gardiens, /opt/gardiens", signature: "le gardien ensorcelé", suid: "les programmes du système", oreille: "les ports et les processus",
-	cle: "les quartiers de root", proclamation: "la Tour, /var/www, et les sauvegardes", sortilege: "ce qui revient à heure fixe, /etc",
+	cle: "les quartiers de root", proclamation: "la Tour, /var/www, et les sauvegardes", sortilege: "les tâches planifiées des comptes (crontab)",
 	uid0: "les comptes, /etc", droits: "le balcon de la Tour, /var/www/html", hosts: "le registre local des noms, /etc"
 };
 function communiqueDeLaurana(){
@@ -530,8 +529,7 @@ var EPREUVES_EXAMEN = [
 ];
 function proclamationAffichee(){ var f = FortHtml.getItemFromName("index.html"); return f === -1 ? null : f; }
 function sortilegeActif(){
-	if (!FortCronD.hasItem(SortilegeCron)) return false;
-	return SortilegeCron.getText().split("\n").some(function(l){ return l.trim() !== "" && l.trim().charAt(0) !== "#" && l.indexOf("/var/www/html/index.html") > -1; });
+	return ((state.cron && state.cron.myriam) || []).some(function(l){ return l.indexOf("/var/www/html/index.html") > -1; });
 }
 var NOMS_DES_SCEAUX = { 1: "LE SCEAU DU TERMINAL", 2: "LE SCEAU DES LETTRES", 3: "LE SCEAU DE LA CRYPTE", 4: "LE SCEAU DU HÉRAUT" };
 var CHIFFRES_ROMAINS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII"];
@@ -584,18 +582,21 @@ function texteOrdreDeMission(){
 		"Tu te souviens du Sorcier Noir, à Terminus, le jour de ta rentrée ? C'était moi,",
 		"et tu m'as battu. Depuis, j'ai rendu la robe noire : on m'appelle le Mage Rouxblanc,",
 		"et je garde les diplômes de ceux qui, comme toi, ont traversé Terminus.",
-		"Cette nuit, la sorcière Myriam, ma vieille rivale, a volé ma robe noire et pris la Forteresse où je garde",
-		"les diplômes de l'école, et elle m'a fermé la porte au nez. Elle est venue avec sa troupe :",
+		"",
+		"Cette nuit, la sorcière Myriam, ma vieille rivale, a volé ma robe noire, pris la Forteresse",
+		"et m'a fermé la porte au nez. Elle est venue avec sa troupe :",
 		"Dylan le Saltimbanque, l'acrobate qui écoute aux portes et esquive les coups polis,",
 		"et David, l'ogre des steppes, qui tient son guichet en criant tout, la bouche pleine.",
 		"Laurana la Flamboyante, mon héraut aux cheveux de feu, a voulu lui barrer la route :",
 		"Myriam, son ancienne maîtresse, l'a changée en pierre dans la Tour des Proclamations.",
+		"",
 		"Radia et Grace sont injoignables. Avec toi, il reste Aidan, l'elfe aux pieds de hobbit,",
 		"enfermé dans tes quartiers : il te fera rire, il ne t'aidera pas. Et quelques fidèles, à qui",
 		"tu peux parler (cat NOM) : Manon la Châtelaine (/), qui tient le registre et l'horloge ;",
 		"Wissam le Sage (/home), qui donne ses conseils pour rien ; Jean-Baptiste, Maître des Adresses",
 		"et fils de l'Oracle (/etc), qui n'aide que ceux qui répondent à sa colle ; Gabriel, Maître",
 		"des Composants, et son assistant Cheb Timour (/opt/atelier), qui savent tout des processus.",
+		"",
 		"Libère Laurana : un héraut libre communique ce qui reste à faire.",
 		"",
 		"Myriam tient la Forteresse par quatre sceaux. Brise-les dans l'ordre que tu veux.",
@@ -626,7 +627,7 @@ function texteOrdreDeMission(){
 	EPREUVES_EXAMEN.forEach(function(e, i){
 		if (e.sceau !== sceau){ sceau = e.sceau; lignes.push(NOMS_DES_SCEAUX[sceau]); }
 		var coche = state.examen && state.examen.reussies[e.id] ? "[x]" : "[ ]";
-		lignes.push("  " + coche + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 6) + textes[e.id].replace(/\n\s+/g, "\n            ") + "  (" + e.points + " pt" + (e.points > 1 ? "s" : "") + ")");
+		lignes.push("  " + coche + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 6) + textes[e.id].replace(/\n\s+/g, " ") + "  (" + e.points + " pt" + (e.points > 1 ? "s" : "") + ")");
 	});
 	lignes.push("",
 		"LA CARTE : tree / dessine la Forteresse, ses lieux et ceux qui y vivent (tree -L 3 / pour descendre plus loin).",
@@ -638,7 +639,11 @@ function texteOrdreDeMission(){
 		"",
 		"Que tes commandes soient justes. Je t'attends de l'autre côté de la porte.",
 		"                                   Laurent, le Mage Rouxblanc");
-	return lignes.join("\n");
+	// Le récit du Mage coule en paragraphes : c'est le terminal qui coupe les lignes, selon sa largeur.
+	var texte = lignes.join("\n"), debut = texte.indexOf("Recrue,\n") + 8, fin = texte.indexOf(NOMS_DES_SCEAUX[1]);
+	var recit = texte.substring(debut, fin).replace(/([^\n])\n(?=[^\n])/g, "$1 ");
+	return texte.substring(0, debut) + recit + texte.substring(fin).replace("\n                                   Laurent, le Mage Rouxblanc", "\n                    Laurent, le Mage Rouxblanc");
+
 }
 
 /* ------------------------------------------------------------------ */
@@ -658,6 +663,8 @@ var TEXTE_ENTREE_EXAMEN =
 	"Ton ordre de mission est caché dans tes quartiers. Trouve-le.\n\n" +
 	"Pour commencer, regarde la carte de la Forteresse : tree /";
 
+TEXTE_ENTREE_EXAMEN = TEXTE_ENTREE_EXAMEN.replace(/([^\n])\n(?=[^\n])/g, "$1 ");
+
 /* Ouvre une épreuve neuve : tous les sorts, la Forteresse, et le silence. */
 function demarrerExamen(){
 	state.examen = { debut: state.tempsMs || 0, reussies: {}, ordreLu: false, fini: false, fin: null, dateFin: null, tempsFin: null, commandesDebut: state.nbCommandes, lieu: null, erreurs: 0, indices: {}, defaites: {}, sceaux: {} };
@@ -670,6 +677,9 @@ function demarrerExamen(){
 	enterRoom(QuartiersRecrue);
 	Shell.lieu_precedent = null;
 	if (typeof montrerImage === "function") montrerImage("./static/img/item_myriam.gif", "Myriam, la sorcière");
+	state.examen.rencontres = { aidan: true };
+	state.cron = state.cron || {};
+	state.cron.myriam = [TACHE_DE_MYRIAM];
 	return TEXTE_ENTREE_EXAMEN;
 }
 
@@ -976,8 +986,8 @@ var INDICES_EXAMEN = {
 	suid: "find / -perm -4000 liste les programmes SUID. passwd l'est, et c'est normal.",
 	oreille: "ss -tlnp montre qui écoute sur quel port. Certains processus esquivent le signal par défaut de kill.",
 	cle: "Les clés qui ouvrent la porte de root sont dans /root/.ssh/authorized_keys, une ligne par clé.",
-	proclamation: "Les sauvegardes dorment sous /srv. tar -tzf liste une archive, tar -xzf l'extrait. Ensuite, sudo cp.",
-	sortilege: "Ce qui revient toutes les minutes vient d'une tâche planifiée : regarde du côté de /etc/cron.d.",
+	proclamation: "Les sauvegardes dorment sous /srv. tar -tf liste une archive, tar -xf l'extrait. Ensuite, sudo cp.",
+	sortilege: "Ce qui revient toutes les minutes vient d'une tâche planifiée, dans la crontab de quelqu'un. De qui ? sudo crontab -u NOM -l.",
 	uid0: "Dans /etc/passwd, le troisième champ est l'UID. Seul root doit avoir l'UID 0.",
 	droits: "ls -l montre le propriétaire et les droits. chown et chmod les changent.",
 	hosts: "/etc/hosts associe des noms à des adresses. L'un de ces noms mène à la Tour Noire."
@@ -1099,6 +1109,35 @@ Shell.sorts.pwd = function(args, io){
 	return cheminForteresse(current_room);
 };
 
+/* Les rencontres : la première fois qu'on entre là où vit un personnage, son portrait s'affiche et il se présente. */
+var RENCONTRES_EXAMEN = [
+	{ id: "aidan", lieu: function(){ return QuartiersRecrue; }, image: "item_elfe.gif", nom: "Aidan, l'elfe aux pieds de hobbit",
+	  texte: "Sous le lit de camp, deux grands pieds poilus remuent. Aidan, l'elfe rigolo, enfermé avec toi. (cat Aidan)" },
+	{ id: "manon", lieu: function(){ return Forteresse; }, image: "item_manon.gif", nom: "Manon la Châtelaine",
+	  texte: "Dans le grand hall, une femme au trousseau de clés note tout dans un registre : Manon la Châtelaine. (cat Manon)" },
+	{ id: "wissam", lieu: function(){ return FortHome; }, image: "item_wissam.gif", nom: "Wissam le Sage",
+	  texte: "Au milieu du couloir, un homme en turban sert le thé à personne : Wissam le Sage, et ses conseils gratuits. (cat Wissam)" },
+	{ id: "jeanbaptiste", lieu: function(){ return FortEtc; }, image: "item_jeanbaptiste.gif", nom: "Jean-Baptiste, Maître des Adresses",
+	  texte: "Entre les fichiers de configuration, un cartographe déroule un plan de rue : Jean-Baptiste, fils de l'Oracle. (cat Jean-Baptiste)" },
+	{ id: "laurana", lieu: function(){ return TourProclamations; }, image: "item_laurana.gif", nom: "Laurana la Flamboyante",
+	  texte: "Au milieu de la Tour, une statue aux cheveux de flamme, trompette à la main : Laurana, le héraut. (cat Laurana)" },
+	{ id: "gabriel", lieu: function(){ return AtelierComposants; }, image: "item_gabriel.gif", nom: "Gabriel et Cheb Timour",
+	  texte: "Dans l'Atelier, Gabriel lève une barrette de mémoire à la lumière ; derrière lui, Cheb Timour surveille un tajine. (cat Gabriel, cat Timour)" },
+	{ id: "david", lieu: function(){ return FortTmp; }, image: "item_david.gif", nom: "David, l'ogre des steppes",
+	  texte: "Assis sur des sacs de la Taverne aux Arches d'Or, un ogre maigre mâche une Galette du Roi Gras : David. (cat David)" }
+];
+GameEvents.addListener("enter", function(ev){
+	if (!examenEnCours()) return;
+	var e = state.examen;
+	e.rencontres = e.rencontres || {};
+	RENCONTRES_EXAMEN.forEach(function(r){
+		if (e.rencontres[r.id] || ev.room !== r.lieu()) return;
+		e.rencontres[r.id] = true;
+		montrerImage("./static/img/" + r.image, r.nom);
+		say(C.jaune("Rencontre : ") + r.texte);
+	});
+});
+
 /* La carte de la Forteresse : pendant l'épreuve, tree s'arrête à deux niveaux si on ne lui dit pas plus. */
 var TREE_HORS_EXAMEN = Shell.sorts.tree;
 Shell.sorts.tree = function(args, io){
@@ -1154,6 +1193,9 @@ Shell.sorts.systemctl = function(args, io){
 /* Pendant l'épreuve : pas de petits gains d'XP, ni de quête de chapitre. */
 var GAGNER_HORS_EXAMEN = GameState.prototype.gagner;
 GameState.prototype.gagner = function(){ if (this.examen && modeExamen()) return; return GAGNER_HORS_EXAMEN.apply(this, arguments); };
+/* Pendant l'épreuve, les succès du jeu normal ne s'affichent pas : seule la Forteresse compte. */
+var SUCCES_HORS_EXAMEN = GameState.prototype.verifierSucces;
+GameState.prototype.verifierSucces = function(){ if (this.examen && modeExamen()) return; return SUCCES_HORS_EXAMEN.apply(this, arguments); };
 var CHAPITRE_HORS_EXAMEN = GameState.prototype.chapitreEnCours;
 GameState.prototype.chapitreEnCours = function(){ if (this.examen && modeExamen()) return 4; return CHAPITRE_HORS_EXAMEN.apply(this, arguments); };
 var QUETE_HORS_EXAMEN = GameState.prototype.queteEnCours;
