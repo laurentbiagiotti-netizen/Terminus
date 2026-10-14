@@ -469,7 +469,7 @@ function communiqueDeLaurana(){
 		"Je ne ferai pas ton travail, le Mage l'a interdit. Mais communiquer, c'est mon métier. Voici le communiqué de la Forteresse : »", ""];
 	if (!reste.length) lignes.push("  « Tout est accompli. Il ne reste qu'à proclamer ton nom. »");
 	reste.forEach(function(ep){
-		lignes.push("  · " + completerDroite(CHIFFRES_ROMAINS[EPREUVES_EXAMEN.indexOf(ep)] + ".", 7) + ep.titre + C.gris("  (du côté de " + LIEUX_DES_EPREUVES[ep.id] + ")"));
+		lignes.push("  · " + completerDroite(CHIFFRES_ROMAINS[EPREUVES_EXAMEN.indexOf(ep)] + ".", 9) + ep.titre + C.gris("  (du côté de " + LIEUX_DES_EPREUVES[ep.id] + ")"));
 	});
 	lignes.push("", "« Et quand tu auras fini, ou rendu ta copie, je porterai ton diplôme et son code au formateur : je l'écrirai aussi dans",
 		"~/rapport/diplome.txt, pour que tu n'aies qu'à le recopier. »");
@@ -835,7 +835,7 @@ function texteOrdreDeMission(){
 	EPREUVES_EXAMEN.forEach(function(e, i){
 		if (e.sceau !== sceau){ sceau = e.sceau; lignes.push(NOMS_DES_SCEAUX[sceau]); }
 		var coche = state.examen && state.examen.reussies[e.id] ? "[x]" : "[ ]";
-		lignes.push("  " + coche + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 6) + textes[e.id].replace(/\n\s+/g, " ") + "  (" + e.points + " pt" + (e.points > 1 ? "s" : "") + ")");
+		lignes.push("  " + coche + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 9) + textes[e.id].replace(/\n\s+/g, " ") + "  (" + e.points + " pt" + (e.points > 1 ? "s" : "") + ")");
 	});
 	lignes.push("",
 		"LA CARTE : tree / dessine la Forteresse, ses lieux et ceux qui y vivent (tree -L 3 / pour descendre plus loin).",
@@ -875,7 +875,7 @@ TEXTE_ENTREE_EXAMEN = TEXTE_ENTREE_EXAMEN.replace(/([^\n])\n(?=[^\n])/g, "$1 ");
 
 /* Ouvre une épreuve neuve : tous les sorts, la Forteresse, et le silence. */
 function demarrerExamen(){
-	state.examen = { debut: state.tempsMs || 0, reussies: {}, ordreLu: false, fini: false, fin: null, dateFin: null, tempsFin: null, commandesDebut: state.nbCommandes, lieu: null, erreurs: 0, indices: {}, defaites: {}, sceaux: {}, rencontres: { aidan: true } };
+	state.examen = { debut: state.tempsMs || 0, reussies: {}, ordreLu: false, fini: false, fin: null, dateFin: null, tempsFin: null, commandesDebut: state.nbCommandes, lieu: null, erreurs: 0, indices: {}, defaites: {}, sceaux: {}, rencontres: {} };
 	[SORTS_DE_DEPART, ORDRE_DES_SORTS, ORDRE_DES_SORTS_2, ORDRE_DES_SORTS_3].forEach(function(liste){
 		(liste || []).forEach(function(s){ state.spells[s] = true; state.usages[s] = true; });
 	});
@@ -897,7 +897,6 @@ function demarrerExamen(){
 	enterRoom(QuartiersRecrue);
 	Shell.lieu_precedent = null;
 	if (typeof montrerImage === "function") montrerImage("./static/img/item_myriam.gif", "Myriam, la sorcière");
-	state.examen.rencontres = { aidan: true };
 	isolerExamen();
 	state.cron = state.cron || {};
 	state.cron.myriam = [TACHE_DE_MYRIAM];
@@ -921,7 +920,7 @@ function texteDiplomeExamen(){
 	var sceau = 0;
 	EPREUVES_EXAMEN.forEach(function(ep, i){
 		if (ep.sceau !== sceau){ sceau = ep.sceau; lignes.push("  " + NOMS_DES_SCEAUX[sceau]); }
-		lignes.push("    " + signeEpreuve(e, ep.id) + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 7) + completerDroite((e.reussies[ep.id] ? (ep.score ? ep.score() : ep.points) : 0) + "/" + ep.points, 5) + ep.titre +
+		lignes.push("    " + signeEpreuve(e, ep.id) + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 9) + completerDroite((e.reussies[ep.id] ? (ep.score ? ep.score() : ep.points) : 0) + "/" + ep.points, 5) + ep.titre +
 			(e.indices && e.indices[ep.id] ? "  (indice)" : ""));
 	});
 	lignes.push("    (✓ réussie, ✗ pas faite, ! réussie puis défaite)", "",
@@ -1086,7 +1085,7 @@ function bilanExamen(){
 	var sceau = 0;
 	EPREUVES_EXAMEN.forEach(function(ep, i){
 		if (ep.sceau !== sceau){ sceau = ep.sceau; lignes.push(C.gras(NOMS_DES_SCEAUX[sceau])); }
-		lignes.push("  " + (e.reussies[ep.id] ? C.vert("[x]") : "[ ]") + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 6) + ep.titre + C.gris("  (" + ep.points + ")"));
+		lignes.push("  " + (e.reussies[ep.id] ? C.vert("[x]") : "[ ]") + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 9) + ep.titre + C.gris("  (" + ep.points + ")"));
 	});
 	lignes.push("", "Note provisoire : " + C.gras(ecrireNote(noteExamen()) + " / 20") +
 		C.gris("  (épreuves " + ecrireNote(noteDeBaseExamen()) + ", indices -" + ecrireNote(malusIndicesExamen()) + ", fausses manœuvres " + (e.erreurs || 0) + " : -" + ecrireNote(malusErreursExamen()) +
@@ -1194,7 +1193,7 @@ function rapportCodeExamen(c){
 	EPREUVES_EXAMEN.forEach(function(ep, i){
 		if (ep.sceau !== sceau){ sceau = ep.sceau; lignes.push("  " + C.gras(NOMS_DES_SCEAUX[sceau])); }
 		var signe = c.reussies[i] ? C.vert("✓ réussie ") : (c.defaites[i] ? C.jaune("! défaite ") : C.rouge("✗ pas faite"));
-		lignes.push("    " + signe + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 7) + ep.titre + (c.indices[i] ? C.gris("  (avec indice)") : "") +
+		lignes.push("    " + signe + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 9) + ep.titre + (c.indices[i] ? C.gris("  (avec indice)") : "") +
 			(c.reussies[i] && c.defaites[i] ? C.gris("  (cassée une fois en route, puis réparée)") : ""));
 	});
 	if (c.quiz && c.quiz.length){
@@ -1287,6 +1286,15 @@ Shell.executer = function(ligne){
 	Shell.ligneRateeExamen = false;
 	if (examenEnCours() && /(^|[|;&]\s*)(sudo\s+)?(ps|top)\b/.test(String(ligne || ""))) state.examen.psVu = true;
 	var r = EXECUTER_HORS_EXAMEN.apply(this, arguments);
+	if (examenEnCours() && !state.examen.fini && current_room === QuartiersRecrue && /^\s*(ls|tree|ll)\b/.test(String(ligne || ""))){
+		state.examen.rencontres = state.examen.rencontres || {};
+		if (!state.examen.rencontres.aidan){
+			state.examen.rencontres.aidan = true;
+			var ra = RENCONTRES_EXAMEN[0];
+			montrerImage("./static/img/" + ra.image, ra.nom);
+			term.echo(C.jaune("Rencontre : ") + ra.texte);
+		}
+	}
 	if (examenEnCours() && !Shell.ligneRateeExamen && !state.examen.fini){
 		var l = String(ligne || "");
 		if (/(^|[|;&]\s*)(\.\/|\/|~\/|bash\s+)\S*rempart\.sh/.test(l) && Rempart.mode.charAt(2) === "x") state.examen.rempartLeve = true;
@@ -1380,7 +1388,7 @@ Shell.sorts.pwd = function(args, io){
 
 /* Les rencontres : la première fois qu'on entre là où vit un personnage, son portrait s'affiche et il se présente. */
 var RENCONTRES_EXAMEN = [
-	{ id: "aidan", lieu: function(){ return QuartiersRecrue; }, image: "item_elfe.gif", nom: "Aidan, l'elfe aux pieds de hobbit",
+	{ id: "aidan", lieu: function(){ return null; }, image: "item_elfe.gif", nom: "Aidan, l'elfe aux pieds de hobbit",
 	  texte: "Sous le lit de camp, deux grands pieds poilus remuent. Aidan, l'elfe rigolo, enfermé avec toi. (cat Aidan)" },
 	{ id: "manon", lieu: function(){ return Forteresse; }, image: "item_manon.gif", nom: "Manon la Châtelaine",
 	  texte: "Dans le grand hall, une femme au trousseau de clés note tout dans un registre : Manon la Châtelaine. (cat Manon)" },

@@ -43,6 +43,7 @@ verifier(jeu.taper("cd /").indexOf("Rencontre") === -1, "une rencontre n'a lieu 
 contient(jeu.taper("ls"), "quarantaine", "la racine de la Forteresse");
 jeu.taper("cd ~");
 contient(jeu.taper("ls -a"), ".ordre-de-mission", "l'ordre caché se voit avec ls -a");
+verifier(jeu.lire("state.examen.rencontres.aidan === true"), "on rencontre Aidan au premier regard dans les quartiers");
 contient(jeu.taper("cat Aidan"), "pieds nus, poilus", "Aidan est là, pieds poilus");
 contient(jeu.taper("cat /Manon"), "LE SCEAU DU HÉRAUT", "Manon tient le registre des sceaux");
 contient(jeu.taper("cat /Manon"), "pour gagner le bonus de +2", "Manon tient l'horloge");
