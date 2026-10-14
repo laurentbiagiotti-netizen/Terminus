@@ -64,8 +64,8 @@ Forteresse.racineHote = "forteresse";
 Forteresse.removeCommand("cd");
 Forteresse.addCmdText("cd", "La Forteresse ne s'ouvre qu'aux recrues de l'épreuve finale.");
 
-var FortHome = lieuExamen(Forteresse, "home", "Les quartiers des comptes de la Forteresse.");
-var QuartiersRecrue = lieuExamen(FortHome, JOUEUR, "Tes quartiers : un lit de camp, une lampe, et le silence.", { owner: JOUEUR, image: "loc_forteresse.gif" });
+var FortHome = lieuExamen(Forteresse, "home", "Le couloir des quartiers : une porte par compte, des torches, et un long tapis où Wissam s'est assis.", { image: "loc_couloir.gif" });
+var QuartiersRecrue = lieuExamen(FortHome, JOUEUR, "Tes quartiers : un lit de camp, une lampe, et le silence.", { owner: JOUEUR, image: "loc_quartiers.gif" });
 var Arsenal = lieuExamen(QuartiersRecrue, "arsenal", "Ton arsenal : ce que l'école t'a laissé pour te défendre.", { owner: JOUEUR, image: "loc_backroom.gif" });
 var RapportExamen = lieuExamen(QuartiersRecrue, "rapport", "Ton rapport d'épreuve : ce que tu y déposes sera relu par le jury.", { owner: JOUEUR, image: "loc_library.gif" });
 var FortEtc = lieuExamen(Forteresse, "etc", "La configuration de la Forteresse.", { image: "loc_etc.gif" });
@@ -74,7 +74,7 @@ var FortVar = lieuExamen(Forteresse, "var", "Les données de la Forteresse.", { 
 var FortLog = lieuExamen(FortVar, "log", "Les journaux de la Forteresse : tout ce qui s'y passe y laisse une trace.", { image: "loc_journaux.gif" });
 var FortSrv = lieuExamen(Forteresse, "srv", "Les archives servies par la Forteresse.", { image: "loc_library.gif" });
 var FortOpt = lieuExamen(Forteresse, "opt", "Les programmes ajoutés à la Forteresse.", { image: "loc_bin.gif" });
-var Gardiens = lieuExamen(FortOpt, "gardiens", "Les gardiens de la Forteresse : des programmes qui veillent sur ses portes. L'un d'eux a changé de camp.", { image: "loc_bin.gif" });
+var Gardiens = lieuExamen(FortOpt, "gardiens", "Les gardiens de la Forteresse : des programmes qui veillent sur ses portes. L'un d'eux a changé de camp.", { image: "loc_gardiens.gif" });
 var Quarantaine = lieuExamen(Forteresse, "quarantaine", "La quarantaine : ce qui est suspect y est mis à l'écart, intact, pour l'enquête.", { image: "loc_caveau.gif" });
 var FortUsr = lieuExamen(Forteresse, "usr", "Les programmes du système.", { image: "loc_bin.gif" });
 var FortUsrBin = lieuExamen(FortUsr, "bin", "Les programmes de tous les jours.", { image: "loc_bin.gif" });
@@ -270,8 +270,8 @@ objetExamen(FortTmp, "sac-de-la-taverne",
 	{ mode: "rw-rw-rw-", owner: "nobody", image: "item_david.gif" });
 
 /* La Tour des Proclamations (/var/www) et Laurana, le héraut changé en pierre. */
-var TourProclamations = lieuExamen(FortVar, "www", "La Tour des Proclamations : d'ici, la voix de Cybersup porte jusqu'aux sept campus.", { image: "loc_web.gif" });
-var FortHtml = lieuExamen(TourProclamations, "html", "Le balcon de la Tour : la proclamation affichée ici est celle que lit toute la ville (le site de l'école).", { image: "loc_web.gif" });
+var TourProclamations = lieuExamen(FortVar, "www", "La Tour des Proclamations : d'ici, la voix de Cybersup porte jusqu'aux sept campus.", { image: "loc_proclamations.gif" });
+var FortHtml = lieuExamen(TourProclamations, "html", "Le balcon de la Tour : la proclamation affichée ici est celle que lit toute la ville (le site de l'école).", { image: "loc_proclamations.gif" });
 var PROCLAMATION_LAURANA = "<!doctype html>\n<title>Proclamations de Cybersup</title>\n<h1>Oyez, oyez !</h1>\n" +
 	"<p>Par la voix de Laurana, héraut de Cybersup : les diplômes de la Forteresse seront remis à celles et ceux qui les ont mérités.</p>\n";
 var PROCLAMATION_MYRIAM = "<!doctype html>\n<title>LA TOUR NOIRE</title>\n<h1>La Forteresse appartient à Myriam.</h1>\n" +
@@ -284,23 +284,155 @@ ArchiveProclamation.archive = [{ n: "index.html", x: PROCLAMATION_LAURANA }];
 objetExamen(FortSauvegardes, "LISEZMOI",
 	"Sauvegarde de la Tour des Proclamations, faite chaque soir par Laurana.\n" +
 	"Une sauvegarde jamais restaurée n'est pas une sauvegarde.\n", { image: "item_sign.gif" });
-var FortHomeMyriam = lieuExamen(FortHome, "myriam", "La chambre de Myriam : un chaudron froid, une odeur de soufre.", { owner: "myriam", mode: "rwxr-x---", image: "loc_caveau.gif" });
+var FortHomeMyriam = lieuExamen(FortHome, "myriam", "La chambre de Myriam : un chaudron qui bouillonne encore, une odeur de soufre.", { owner: "myriam", mode: "rwxr-x---", image: "loc_chambre_myriam.gif" });
 objetExamen(FortHomeMyriam, ".proclamation", PROCLAMATION_MYRIAM, { owner: "myriam", mode: "rw-------", image: "item_sign.gif" });
-var FortCronD = lieuExamen(FortEtc, "cron.d", "Les tâches planifiées de la Forteresse : ce qui revient tout seul, à heure fixe.", { image: "loc_etc.gif" });
+var FortCronD = lieuExamen(FortEtc, "cron.d", "Les tâches planifiées de la Forteresse : ce qui revient tout seul, à heure fixe.", { image: "loc_horloge.gif" });
 var SortilegeCron = objetExamen(FortCronD, "sortilege",
 	"# Ma Tour des Proclamations restera à moi. Myriam\n" +
 	"* * * * * root cp /home/myriam/.proclamation /var/www/html/index.html && chown myriam /var/www/html/index.html && chmod 600 /var/www/html/index.html\n",
 	{ image: "item_manuscript.gif", permis: ["sudo-rm"] });
 objetExamen(FortCronD, "logrotate", "# Rotation des journaux, chaque nuit\n0 3 * * * root /usr/sbin/logrotate /etc/logrotate.conf\n", { image: "item_manuscript.gif" });
 
+/* ------------------------------------------------------------------ */
+/* Les fidèles du Mage, restés dans la Forteresse                       */
+/* Ils parlent (cat NOM), ils réagissent à ce que tu fais, ils ne font   */
+/* pas le travail à ta place.                                           */
+/* ------------------------------------------------------------------ */
+
+function personnageExamen(lieu, nom, image, texte){
+	var p = new Item(nom, "", image).personnage();
+	Object.defineProperty(p.cmd_text, "less", { get: function(){
+		try { return texte(); } catch (x){ return nom + " te regarde sans rien dire."; }
+	}, set: function(){}, enumerable: true, configurable: true });
+	lieu.addItem(p);
+	return p;
+}
+function examenOuvert(){ return typeof state !== "undefined" && state && state.examen; }
+
+/* Manon la Châtelaine : l'intendante de la Forteresse. Elle tient le registre des sceaux et l'horloge. */
+var ManonChatelaine = personnageExamen(Forteresse, "Manon", "item_manon.gif", function(){
+	var e = examenOuvert();
+	var debut = "Manon la Châtelaine, intendante de la Forteresse, le trousseau de clés à la ceinture. Myriam n'a pas osé la chasser :\n" +
+		"personne ne sait où sont rangées les choses, sauf elle.\n\n";
+	if (!e) return debut + "« Le registre est vide. Reviens quand l'épreuve aura commencé. »";
+	var sceaux = [1, 2, 3, 4].map(function(s){
+		var liste = EPREUVES_EXAMEN.filter(function(ep){ return ep.sceau === s; });
+		var faites = liste.filter(function(ep){ return e.reussies[ep.id]; }).length;
+		return "  " + completerDroite(NOMS_DES_SCEAUX[s], 24) + faites + " sur " + liste.length + (faites === liste.length ? "  brisé" : "");
+	});
+	var m = minutesExamen();
+	var horloge = m < 120 ? "Il reste " + dureeExamen(120 - m) + " pour gagner le bonus de +2 (tout fini en moins de 2 h)." :
+		(m < 150 ? "Le bonus de +2 est passé ; il reste " + dureeExamen(150 - m) + " pour le +1." :
+		(m < 180 ? "Plus de bonus de temps, mais il reste " + dureeExamen(180 - m) + " sur les trois heures." : "Les trois heures sont passées. Le Mage attend ta copie."));
+	return debut + "« Voici mon registre, recrue. Je n'y écris que ce qui est fait.\n\n" + sceaux.join("\n") + "\n\n" + horloge +
+		"\nEt n'oublie pas : Wissam donne ses conseils pour rien, dans le couloir des quartiers. Les indices du Mage, eux, se paient. »";
+});
+
+/* Wissam le Sage du Couloir : des conseils de méthode, gratuits, qui changent selon l'endroit où tu te tiens. */
+var CONSEILS_DE_WISSAM = [
+	"Lis avant d'agir : ls -l avant chmod, cat avant nano. Un administrateur qui lit se trompe deux fois moins.",
+	"Quand un sort échoue, lis le message jusqu'au bout : il dit presque toujours ce qui manque.",
+	"man est gratuit, lui aussi. Et dans man, / cherche un mot.",
+	"sudo !! relance ta dernière ligne avec sudo. Pratique, quand on a oublié.",
+	"Une ligne qui échoue n'est pas grave. Trente, ça commence à se voir dans la note.",
+	"Avant de supprimer, demande-toi si c'est une preuve. Une preuve se déplace, elle ne se détruit pas.",
+	"Les tuyaux | enchaînent les sorts : grep trie le bon grain, sort range, uniq -c compte.",
+	"Quand quelque chose revient tout seul, ne t'acharne pas dessus : cherche qui le relance."
+];
+var CONSEILS_DU_LIEU = [
+	["/etc", "Ici, tout est configuration : lis le fichier, copie-le si tu as peur, puis modifie avec sudo nano."],
+	["/var/log", "Les journaux se lisent à l'envers : la fin raconte le plus récent. tail et grep sont tes amis."],
+	["/opt/gardiens", "Une liste d'empreintes à côté de programmes, c'est une invitation à comparer."],
+	["/var/www", "Ce qui est affiché au balcon, toute la ville le lit. Qui en est propriétaire, et qui peut le lire ?"],
+	["/srv", "Les sauvegardes et les archives dorment ici. Une archive se liste avant de s'extraire."],
+	["/tmp", "Dans /tmp, tout le monde écrit. N'y laisse rien d'important, et ne crois pas tout ce que tu y lis."],
+	["/root", "Chez root, chaque ligne compte. Retire seulement ce qui est de trop."]
+];
+var WissamSage = personnageExamen(FortHome, "Wissam", "item_wissam.gif", function(){
+	var e = examenOuvert();
+	var n = e ? state.nbCommandes : 0;
+	var ici = typeof current_room !== "undefined" && current_room && racineDe(current_room) === Forteresse ? cheminForteresse(current_room) : "";
+	var duLieu = CONSEILS_DU_LIEU.filter(function(c){ return ici === c[0] || ici.indexOf(c[0] + "/") === 0; })[0];
+	return "Wissam le Sage, assis en tailleur au milieu du couloir des quartiers, une théière à ses pieds.\n" +
+		"« Mes conseils ne coûtent rien. Ce sont les plus chers à ne pas suivre. »\n\n" +
+		"« " + CONSEILS_DE_WISSAM[n % CONSEILS_DE_WISSAM.length] + " »" +
+		(duLieu ? "\n\nEt, pour l'endroit d'où tu viens (" + duLieu[0] + ") : « " + duLieu[1] + " »" : "\n\n(Reviens me voir d'ailleurs : j'ai un conseil pour chaque coin de la Forteresse.)");
+});
+
+/* Jean-Baptiste, le Maître des Adresses, fils de l'Oracle des Noms : il pose une colle, et la récompense est une piste. */
+var COLLE_DE_JEAN_BAPTISTE = { question: "Dans la rue 10.0.97.0/26, quelle est l'adresse du crieur (la diffusion) ?", reponse: "10.0.97.63" };
+var JeanBaptiste = personnageExamen(FortEtc, "Jean-Baptiste", "item_jeanbaptiste.gif", function(){
+	var e = examenOuvert();
+	var debut = "Jean-Baptiste, le Maître des Adresses, fils de l'Oracle des Noms. Il connaît chaque rue et chaque maison de Cybersup,\n" +
+		"et il est furieux que Myriam ait fait passer un imposteur pour son père.\n\n";
+	if (e && e.colleJB){
+		return debut + "« Tu as répondu juste, alors je tiens parole. Mon père, le vrai Oracle, n'a jamais changé d'adresse :\n" +
+			"elle est écrite dans le registre local des noms de cette machine. Et la Mairie distribue des maisons dans la rue\n" +
+			"10.0.97.0/26 : de .1 à .62, jamais au-delà. Le reste, c'est ton travail. »";
+	}
+	return debut + "« Je n'aide que ceux qui savent lire une adresse. Une colle, et si tu réponds juste, je te dirai ce que je sais.\n\n" +
+		"  " + COLLE_DE_JEAN_BAPTISTE.question + "\n\n" +
+		"Réponds-moi ici, à voix haute : echo TA_REPONSE. Une erreur ne te coûte rien d'autre qu'une fausse manœuvre. »";
+});
+GameEvents.addListener("echo", function(ev){
+	if (!examenEnCours() || ev.room !== FortEtc || state.examen.colleJB) return;
+	var dit = String(ev.text || "").trim();
+	if (!/^\d+\.\d+\.\d+\.\d+$/.test(dit)) return;
+	if (dit === COLLE_DE_JEAN_BAPTISTE.reponse){
+		state.examen.colleJB = true;
+		say("Jean-Baptiste hoche la tête. « " + dit + ". Mon père serait fier. Viens, je te dois une piste : cat Jean-Baptiste. »");
+	} else {
+		say("Jean-Baptiste fronce les sourcils. « Non. Un /26, c'est 64 adresses. Le crieur habite tout au bout de la rue. »");
+		state.examen.erreurs = (state.examen.erreurs || 0) + 1;
+	}
+});
+
+/* Gabriel, le Maître des Composants, et son assistant Cheb Timour, dans l'Atelier. */
+var AtelierComposants = lieuExamen(FortOpt, "atelier", "L'Atelier des Composants : des barrettes de mémoire en rang, un processeur sous verre, et une odeur de tajine.", { image: "loc_atelier.gif" });
+var PID_TAJINE = aleaEntier("examen-pid-tajine", 3100, 3999);
+Forteresse.addProc(PID_TAJINE, "tajine", "timour", { cpu: 41.7 });
+var GabrielComposants = personnageExamen(AtelierComposants, "Gabriel", "item_gabriel.gif", function(){
+	var e = examenOuvert();
+	var debut = "Gabriel, le Maître des Composants. Il démonte une barrette de mémoire les yeux fermés et la remonte en sifflant.\n\n";
+	if (e && !e.psVu){
+		return debut + "« Avant de parler de processus, montre-moi ce qui tourne. Lance ps aux, ou top, et reviens me voir. »";
+	}
+	var tajine = Forteresse.procs.some(function(p){ return p.pid === PID_TAJINE; });
+	return debut + "« Bien. Écoute, c'est la seule leçon que je donne :\n" +
+		"  - Le processeur (CPU), c'est le cuisinier : il fait une chose après l'autre, très vite. La colonne %CPU dit combien\n" +
+		"    de son temps un processus lui prend.\n" +
+		"  - La mémoire vive (RAM), c'est le plan de travail : tout ce qui tourne y est posé. %MEM dit quelle place il prend.\n" +
+		"    Quand la machine s'éteint, le plan de travail est débarrassé : rien n'y reste.\n" +
+		"  - Chaque processus a un numéro, le PID, et un propriétaire, le USER. kill envoie un signal à un PID.\n" +
+		"    Le signal par défaut (15, TERM) demande poliment de s'arrêter. Le 9 (KILL) ne se discute pas.\n" +
+		"  - Et ss -tlnp te dit quel processus écoute sur quel port. Un processus qui écoute sans raison, c'est louche.\n\n" +
+		(tajine ? "Ah, et le processus qui mange 40 % du processeur, là, c'est le tajine de Timour. Il est à lui, il est innocent.\n" +
+			"Avant de tuer un processus, regarde à qui il est et ce qu'il fait. »" :
+			"Quant au tajine de Timour... Tu l'as tué. Il n'avait rien fait. Regarde toujours à qui est un processus avant de le tuer. »");
+});
+var ChebTimour = personnageExamen(AtelierComposants, "Timour", "item_timour.gif", function(){
+	var e = examenOuvert();
+	var tajine = Forteresse.procs.some(function(p){ return p.pid === PID_TAJINE; });
+	var debut = "Cheb Timour, l'assistant de Gabriel. Français jusqu'au bout des ongles, marocain de cœur : il parle de Marrakech\n" +
+		"comme d'une vieille amie, et un tajine mijote toujours quelque part dans la Forteresse.\n\n";
+	if (!tajine){
+		return debut + "Timour fixe le plat vide. « Mon tajine... Quatre heures de cuisson, des citrons confits de Fès, et quelqu'un l'a tué\n" +
+			"d'un kill. Gabriel me l'a toujours dit : on regarde le USER avant de tirer. Toi, tu as tiré. »";
+	}
+	var r = e ? state.nbCommandes % 3 : 0;
+	return debut + [
+		"« Le secret d'un bon tajine, c'est comme un bon serveur : on le laisse tourner, on ne soulève pas le couvercle toutes\n" +
+		"les deux minutes. Ah, et celui qui tourne dans ps, PID " + PID_TAJINE + ", c'est le mien. Touche pas. »",
+		"« Gabriel dit que je prends 40 % du processeur avec mon tajine. Moi je dis que c'est le seul processus utile de la\n" +
+		"Forteresse. Si tu veux trouver qui consomme, trie ps par %CPU. Mais le premier, c'est moi, et j'ai le droit. »",
+		"« L'an prochain, je fais l'épreuve finale à Marrakech. La Forteresse au milieu de la palmeraie, le Mage en djellaba,\n" +
+		"et un tajine par sceau brisé. Tu viendras ? »"][r];
+});
+
 var StatueLaurana = new Item("Laurana", "", "item_laurana.gif").personnage();
 Object.defineProperty(StatueLaurana.cmd_text, "less", { get: function(){
 	var libre = typeof state !== "undefined" && state && state.examen && state.examen.sceaux && state.examen.sceaux[4];
-	if (libre){
-		return "Laurana la Flamboyante s'étire et secoue sa crinière rousse. La pierre tombe de ses épaules en poussière.\n\n" +
-			"« Merci, recrue. Myriam m'a tout appris à la Tour Noire, sauf une chose : on ne fait pas taire un héraut.\n" +
-			"Pour le reste, je ne dirai rien, le Mage a été clair : pas d'aide. Mais j'accorde déjà ma trompette pour ta proclamation. »";
-	}
+	if (libre) return communiqueDeLaurana();
 	return "Une statue de pierre au milieu de la Tour des Proclamations : une jeune femme aux cheveux de flamme figés dans le vent,\n" +
 		"une trompette d'argent à la main. Sur le socle : LAURANA LA FLAMBOYANTE, HÉRAUT DE CYBERSUP.\n\n" +
 		"On raconte qu'elle est née dans les forges de la Tour Noire et qu'elle fut l'apprentie de Myriam, qui lui apprit à faire porter\n" +
@@ -308,6 +440,30 @@ Object.defineProperty(StatueLaurana.cmd_text, "less", { get: function(){
 		"grande place. Myriam ne le lui a jamais pardonné. Cette nuit, elle l'a changée en pierre et a placardé sa propre proclamation.";
 }, set: function(){}, enumerable: true, configurable: true });
 TourProclamations.addItem(StatueLaurana);
+
+/* Libérée, Laurana fait ce qu'elle sait faire : communiquer. Elle donne le communiqué de la Forteresse (ce qui reste, et où),
+   et, à la fin, elle porte ton diplôme et son code jusqu'au formateur. */
+var LIEUX_DES_EPREUVES = {
+	ordre: "tes quartiers", assaillant: "les journaux, /var/log", rempart: "ton arsenal", fragment: "les archives, sous /srv",
+	oracle: "la configuration, /etc", mairie: "la Mairie, /etc/dhcp", telnet: "les services (systemctl)", nginx: "les services (systemctl)",
+	gardien: "les gardiens, /opt/gardiens", signature: "le gardien ensorcelé", suid: "les programmes du système", oreille: "les ports et les processus",
+	cle: "les quartiers de root", proclamation: "la Tour, /var/www, et les sauvegardes", sortilege: "ce qui revient à heure fixe, /etc",
+	uid0: "les comptes, /etc", droits: "le balcon de la Tour, /var/www/html", hosts: "le registre local des noms, /etc"
+};
+function communiqueDeLaurana(){
+	var e = state.examen;
+	var reste = EPREUVES_EXAMEN.filter(function(ep){ return !e.reussies[ep.id]; });
+	var lignes = ["Laurana la Flamboyante, libérée, la trompette d'argent à la main. Sa voix porte jusqu'aux sept campus.",
+		"« Merci, recrue. Myriam m'a tout appris à la Tour Noire, sauf une chose : on ne fait pas taire un héraut.",
+		"Je ne ferai pas ton travail, le Mage l'a interdit. Mais communiquer, c'est mon métier. Voici le communiqué de la Forteresse : »", ""];
+	if (!reste.length) lignes.push("  « Tout est accompli. Il ne reste qu'à proclamer ton nom. »");
+	reste.forEach(function(ep){
+		lignes.push("  · " + completerDroite(CHIFFRES_ROMAINS[EPREUVES_EXAMEN.indexOf(ep)] + ".", 7) + ep.titre + C.gris("  (du côté de " + LIEUX_DES_EPREUVES[ep.id] + ")"));
+	});
+	lignes.push("", "« Et quand tu auras fini, ou rendu ta copie, je porterai ton diplôme et son code au formateur : je l'écrirai aussi dans",
+		"~/rapport/diplome.txt, pour que tu n'aies qu'à le recopier. »");
+	return lignes.join("\n");
+}
 
 World.fige = true;
 
@@ -397,7 +553,7 @@ function malusErreursExamen(){
 }
 var INDICES_MAX_EXAMEN = 5;
 function nbIndicesExamen(){ return Object.keys((state.examen && state.examen.indices) || {}).length; }
-function malusIndicesExamen(){ return nbIndicesExamen() * 0.5; }
+function malusIndicesExamen(){ return nbIndicesExamen() * 0.25; }
 function noteExamen(){ return Math.max(0, Math.min(20, noteDeBaseExamen() + bonusTempsExamen() - malusErreursExamen() - malusIndicesExamen())); }
 function ecrireNote(n){ return String(n).replace(".", ","); }
 
@@ -434,8 +590,13 @@ function texteOrdreDeMission(){
 		"et David, l'ogre des steppes, qui tient son guichet en criant tout, la bouche pleine.",
 		"Laurana la Flamboyante, mon héraut aux cheveux de feu, a voulu lui barrer la route :",
 		"Myriam, son ancienne maîtresse, l'a changée en pierre dans la Tour des Proclamations.",
-		"Radia et Grace sont injoignables. Avec toi, il ne reste qu'Aidan, l'elfe aux pieds",
-		"de hobbit, enfermé dans tes quartiers : il te fera rire, il ne t'aidera pas.",
+		"Radia et Grace sont injoignables. Avec toi, il reste Aidan, l'elfe aux pieds de hobbit,",
+		"enfermé dans tes quartiers : il te fera rire, il ne t'aidera pas. Et quelques fidèles, à qui",
+		"tu peux parler (cat NOM) : Manon la Châtelaine (/), qui tient le registre et l'horloge ;",
+		"Wissam le Sage (/home), qui donne ses conseils pour rien ; Jean-Baptiste, Maître des Adresses",
+		"et fils de l'Oracle (/etc), qui n'aide que ceux qui répondent à sa colle ; Gabriel, Maître",
+		"des Composants, et son assistant Cheb Timour (/opt/atelier), qui savent tout des processus.",
+		"Libère Laurana : un héraut libre communique ce qui reste à faire.",
 		"",
 		"Myriam tient la Forteresse par quatre sceaux. Brise-les dans l'ordre que tu veux.",
 		"Chaque épreuve accomplie compte, même si tu ne vas pas au bout. Tu as trois heures.",
@@ -471,7 +632,7 @@ function texteOrdreDeMission(){
 		"Ton mot de passe sudo : " + MOT_DE_PASSE_SUDO + ". Pas de radio : man reste ton meilleur allié.",
 		"LE BARÈME : la note vient des épreuves réussies. Tout fini en moins de 2 h : +2 ; en moins de 2 h 30 : +1.",
 		"Les fausses manœuvres (une ligne qui échoue) : les " + ERREURS_GRATUITES_EXAMEN + " premières sont gratuites, puis -0,5 toutes les " + ERREURS_PAR_DEMI_POINT + " (au plus -" + MALUS_MAX_EXAMEN + ").",
-		"indice : un coup de pouce sur une épreuve, -0,5 chacun, " + INDICES_MAX_EXAMEN + " au plus (indice 7 : sur l'épreuve VII).",
+		"indice : un coup de pouce sur une épreuve, -0,25 chacun, " + INDICES_MAX_EXAMEN + " au plus (indice 7 : sur l'épreuve VII).",
 		"examen : où tu en es.   kamikaze : tout arrêter et rendre ta copie.",
 		"",
 		"Que tes commandes soient justes. Je t'attends de l'autre côté de la porte.",
@@ -535,7 +696,7 @@ function texteDiplomeExamen(){
 		"  Note des épreuves   : " + ecrireNote(noteDeBaseExamen()) + " / 20",
 		"  Bonus de temps      : +" + ecrireNote(bonusTempsExamen()) + (e.fin === "victoire" ? "" : "  (seulement si tout est fini)"),
 		"  Indices             : " + nbIndicesExamen() + "  (-" + ecrireNote(malusIndicesExamen()) + ")",
-		"  Fausses manœuvres   : " + (e.erreurs || 0) + "  (-" + ecrireNote(malusErreursExamen()) + ")",
+		"  Fausses manœuvres   : " + (e.erreurs || 0) + "  (-" + ecrireNote(malusErreursExamen()) + ")" + (e.tajineTue ? "  dont 5 pour le tajine de Timour" : ""),
 		"  NOTE FINALE         : " + ecrireNote(noteExamen()) + " / 20",
 		"  Mention             : " + mentionExamen(noteExamen()),
 		"  Temps               : " + dureeExamen(minutes),
@@ -558,11 +719,11 @@ function masqueExamen(table){
 }
 function codeDiplomeExamen(){
 	var e = state.examen;
-	var charge = ["E1", String(state.nom || JOUEUR).replace(/\|/g, "/"), noteExamen() * 2, noteDeBaseExamen() * 2, bonusTempsExamen() * 2,
-		malusErreursExamen() * 2, malusIndicesExamen() * 2, e.erreurs || 0, minutesExamen(),
+	var charge = ["E2", String(state.nom || JOUEUR).replace(/\|/g, "/"), noteExamen() * 4, noteDeBaseExamen() * 4, bonusTempsExamen() * 4,
+		malusErreursExamen() * 4, malusIndicesExamen() * 4, e.erreurs || 0, minutesExamen(),
 		(e.commandesFin !== undefined ? e.commandesFin : state.nbCommandes) - (e.commandesDebut || 0),
 		e.fin === "victoire" ? "V" : "K", masqueExamen(e.reussies), masqueExamen(e.defaites), masqueExamen(e.indices),
-		e.dateFin || dateDuJour(), PROFIL.graine].join("|");
+		e.dateFin || dateDuJour(), PROFIL.graine, e.tajineTue ? "T" : "-"].join("|");
 	return versBase64Url(charge) + "." + sommeDeControle(charge + "|" + SEL_DIPLOME);
 }
 function lireCodeExamen(code){
@@ -571,10 +732,11 @@ function lireCodeExamen(code){
 	var charge;
 	try { charge = depuisBase64Url(morceaux[0]); } catch (x){ return null; }
 	var c = charge.split("|");
-	if (c[0] !== "E1" || c.length !== 16) return null;
+	var q = c[0] === "E2" ? 4 : 2;
+	if (!((c[0] === "E1" && c.length === 16) || (c[0] === "E2" && c.length === 17))) return null;
 	function bits(h){ var n = parseInt(h, 16) || 0; return EPREUVES_EXAMEN.map(function(ep, i){ return Math.floor(n / Math.pow(2, i)) % 2 === 1; }); }
 	return { valide: sommeDeControle(charge + "|" + SEL_DIPLOME) === morceaux[1].toUpperCase(),
-		prenom: c[1], note: +c[2] / 2, base: +c[3] / 2, bonus: +c[4] / 2, malusErreurs: +c[5] / 2, malusIndices: +c[6] / 2,
+		prenom: c[1], note: +c[2] / q, base: +c[3] / q, bonus: +c[4] / q, malusErreurs: +c[5] / q, malusIndices: +c[6] / q, tajine: c[16] === "T",
 		erreurs: +c[7], minutes: +c[8], commandes: +c[9], fin: c[10], reussies: bits(c[11]), defaites: bits(c[12]), indices: bits(c[13]),
 		date: c[14], graine: +c[15] };
 }
@@ -587,6 +749,14 @@ function terminerExamen(fin){
 	e.dateFin = dateDuJour();
 	e.tempsFin = state.tempsMs;
 	e.commandesFin = state.nbCommandes;
+	// Laurana porte le diplôme : une copie dans ~/rapport, pour le recopier sans erreur.
+	var texte = sansAnsi(texteDiplomeExamen()) + "\n";
+	var copie = RapportExamen.getItemFromName("diplome.txt");
+	if (copie === -1){
+		copie = new Item("diplome.txt", texte, "item_grad.gif");
+		copie.owner = JOUEUR;
+		RapportExamen.addItem(copie);
+	} else copie.setText(texte);
 	state.save();
 }
 
@@ -608,6 +778,13 @@ function verifierExamen(){
 			say(C.rouge("À la minute pile, une main invisible recolle la proclamation de Myriam sur le balcon de la Tour."));
 		}
 	} else e.minuteSortilege = 0;
+	if (!e.tajineTue && !Forteresse.procs.some(function(p){ return p.pid === PID_TAJINE; })){
+		e.tajineTue = true;
+		e.erreurs = (e.erreurs || 0) + 5;
+		montrerImage("./static/img/item_timour.gif", "Cheb Timour, devant son tajine");
+		say(C.rouge("Un cri monte de l'Atelier : « MON TAJINE ! » Le processus " + PID_TAJINE + " appartenait à Timour, et il n'avait rien fait.") + "\n" +
+			C.gris("(Tuer un processus innocent : 5 fausses manœuvres d'un coup. Regarde toujours le USER avant kill.)"));
+	}
 	EPREUVES_EXAMEN.forEach(function(ep, i){
 		var ok = false;
 		try { ok = !!ep.fait(); } catch (x){ ok = false; }
@@ -634,7 +811,8 @@ function verifierExamen(){
 				2: "Aidan : « Le guichet se tait, la Bibliothèque se réveille. David boude dans /tmp. Myriam fait une de ces têtes. »",
 				3: "Aidan : « Le Sceau de la Crypte ! Dylan le Saltimbanque a lâché ses balles. Il ne lâche jamais ses balles. »",
 				4: "Dans la Tour des Proclamations, la pierre se fend : Laurana la Flamboyante secoue sa crinière rousse et lève sa trompette.\n" +
-					"Aidan : « Elle est réveillée ! Et elle est encore plus rousse que le Mage. Ne lui dis pas que j'ai dit ça. »" }[s]));
+					"Aidan : « Elle est réveillée ! Et elle est encore plus rousse que le Mage. Ne lui dis pas que j'ai dit ça. »\n" +
+					"Laurana : « Viens me voir à la Tour (cat /var/www/Laurana) : je te donnerai le communiqué de la Forteresse. »" }[s]));
 			if (s === 4) montrerImage("./static/img/item_laurana.gif", "Laurana la Flamboyante, libérée");
 		}
 	});
@@ -672,7 +850,7 @@ function bilanExamen(){
 	lignes.push("", "Note provisoire : " + C.gras(ecrireNote(noteExamen()) + " / 20") +
 		C.gris("  (épreuves " + ecrireNote(noteDeBaseExamen()) + ", indices -" + ecrireNote(malusIndicesExamen()) + ", fausses manœuvres " + (e.erreurs || 0) + " : -" + ecrireNote(malusErreursExamen()) +
 		", bonus de temps si tout est fini en moins de 2 h 30)"),
-		C.gris("cat ~/.ordre-de-mission : l'ordre détaillé · indice : un coup de pouce (-0,5) · kamikaze : rendre ta copie"));
+		C.gris("cat ~/.ordre-de-mission : l'ordre détaillé · indice : un coup de pouce (-0,25) · kamikaze : rendre ta copie"));
 	return lignes.join("\n");
 }
 
@@ -767,8 +945,9 @@ function rapportCodeExamen(c){
 		"  " + completerDroite("  fausses manœuvres", 20) + "-" + ecrireNote(c.malusErreurs) + "   (" + c.erreurs + " lignes en échec)",
 		"  " + completerDroite("Fin", 20) + (c.fin === "V" ? "Forteresse reprise (tout fini)" : "kamikaze (copie rendue avant la fin)"),
 		"  " + completerDroite("Temps", 20) + dureeExamen(c.minutes) + "   ·   " + c.commandes + " commandes",
+		c.tajine ? "  " + C.jaune("! A tué un processus innocent (le tajine de Timour) : +5 fausses manœuvres.") : "",
 		""
-	];
+	].filter(function(l, i){ return l !== "" || i > 1; });
 	var sceau = 0;
 	EPREUVES_EXAMEN.forEach(function(ep, i){
 		if (ep.sceau !== sceau){ sceau = ep.sceau; lignes.push("  " + C.gras(NOMS_DES_SCEAUX[sceau])); }
@@ -780,7 +959,7 @@ function rapportCodeExamen(c){
 	return lignes.join("\n");
 }
 
-/* Les indices de l'épreuve : un coup de pouce, pas la solution. Chacun coûte un demi-point, cinq au plus. */
+/* Les indices de l'épreuve : un coup de pouce, pas la solution. Chacun coûte un quart de point, cinq au plus. */
 var INDICES_EXAMEN = {
 	ordre: "Les fichiers dont le nom commence par un point ne se montrent qu'avec ls -a.",
 	assaillant: "Les connexions ratées sont dans /var/log/auth.log. grep, cut, sort et uniq -c comptent qui frappe le plus souvent.",
@@ -817,13 +996,13 @@ function indiceExamen(args){
 	}
 	var num = CHIFFRES_ROMAINS[EPREUVES_EXAMEN.indexOf(cible)];
 	if (e.indices[cible.id]) return "Indice (déjà payé), épreuve " + num + " : " + INDICES_EXAMEN[cible.id];
-	if (e.reussies[cible.id]) return "L'épreuve " + num + " est déjà réussie : garde tes demi-points.";
+	if (e.reussies[cible.id]) return "L'épreuve " + num + " est déjà réussie : garde tes quarts de point.";
 	if (nbIndicesExamen() >= INDICES_MAX_EXAMEN) return "Tu as déjà pris tes " + INDICES_MAX_EXAMEN + " indices. Il reste man, et ta tête.";
-	term.demander("Un indice sur l'épreuve " + num + " (« " + cible.titre + " ») coûte 0,5 point. Il t'en reste " + (INDICES_MAX_EXAMEN - nbIndicesExamen()) + ". Tape oui pour le prendre : ", false, function(r){
-		if (String(r).trim().toLowerCase() !== "oui"){ term.echo("Tu gardes ton demi-point."); return; }
+	term.demander("Un indice sur l'épreuve " + num + " (« " + cible.titre + " ») coûte 0,25 point. Il t'en reste " + (INDICES_MAX_EXAMEN - nbIndicesExamen()) + ". Tape oui pour le prendre : ", false, function(r){
+		if (String(r).trim().toLowerCase() !== "oui"){ term.echo("Tu gardes ton quart de point."); return; }
 		e.indices[cible.id] = true;
 		state.save();
-		term.echo(C.jaune("Indice, épreuve " + num + " : ") + INDICES_EXAMEN[cible.id] + C.gris("  (-0,5 · " + nbIndicesExamen() + " sur " + INDICES_MAX_EXAMEN + ")"));
+		term.echo(C.jaune("Indice, épreuve " + num + " : ") + INDICES_EXAMEN[cible.id] + C.gris("  (-0,25 · " + nbIndicesExamen() + " sur " + INDICES_MAX_EXAMEN + ")"));
 		if (typeof majEtat === "function") majEtat();
 	});
 	return "";
@@ -839,6 +1018,7 @@ Shell.tuyau = function(){
 var EXECUTER_HORS_EXAMEN = Shell.executer;
 Shell.executer = function(ligne){
 	Shell.ligneRateeExamen = false;
+	if (examenEnCours() && /(^|[|;&]\s*)(sudo\s+)?(ps|top)\b/.test(String(ligne || ""))) state.examen.psVu = true;
 	var r = EXECUTER_HORS_EXAMEN.apply(this, arguments);
 	if (Shell.ligneRateeExamen && examenEnCours() && !state.examen.fini){
 		state.examen.erreurs = (state.examen.erreurs || 0) + 1;
@@ -971,7 +1151,7 @@ GameState.prototype.queteEnCours = function(){
 	if (this.examen && modeExamen()){
 		return { id: "examen", titre: this.examen.fini ? "Épreuve finale terminée · " + ecrireNote(noteExamen()) + " / 20" :
 			"Épreuve finale · " + nbReussiesExamen() + " sur " + EPREUVES_EXAMEN.length + " · " + ecrireNote(noteExamen()) + " / 20",
-			indice: this.examen.fini ? "examen : ton diplôme et son code. examen quitter : revenir à ta partie." : "Ton ordre de mission est dans tes quartiers. examen : le bilan. indice : un coup de pouce (-0,5). kamikaze : rendre ta copie." };
+			indice: this.examen.fini ? "examen : ton diplôme et son code. examen quitter : revenir à ta partie." : "Ton ordre de mission est dans tes quartiers. examen : le bilan. indice : un coup de pouce (-0,25). kamikaze : rendre ta copie." };
 	}
 	return QUETE_HORS_EXAMEN.apply(this, arguments);
 };
