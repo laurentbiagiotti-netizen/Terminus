@@ -8,7 +8,7 @@
  * guichet telnet, la Bibliothèque endormie). Le Mage, enfermé dehors, a glissé un ordre de mission
  * dans les quartiers de la recrue, où Aidan, l'elfe aux pieds de hobbit, s'est fait enfermer aussi :
  * il fait rire, il n'aide pas. D'autres fidèles parlent et conseillent (Manon, Wissam, Jean-Baptiste, Gabriel, Cheb Timour),
- * Laurana le héraut est changée en pierre, et Steve anime un quiz dans /dev/random. Six sceaux, trente-trois épreuves
+ * Laurana le héraut est changée en pierre, et Steve anime un quiz dans /dev/random. Huit sceaux, quarante épreuves
  * reprennent les trois missions : le terminal (chapitre 1), le réseau (la panne) et la cyber (la
  * Crypte). La note sur 20 se calcule sur ce qui est accompli, que la recrue aille au bout ou
  * qu'elle rende sa copie avant (sort kamikaze). Le diplôme porte un code que le formateur
@@ -48,7 +48,7 @@ function examenFini(){ return examenEnCours() && !!state.examen.fini; }
 /* La Forteresse : une vraie machine, avec sa racine /                  */
 /* ------------------------------------------------------------------ */
 
-var IP_FORTERESSE = "10.0.97.10";
+var IP_FORTERESSE = "10.0.97.10", PASSERELLE_FORTERESSE = "10.0.97.62";   // dans la rue 10.0.97.0/26, comme la Mairie
 var IP_ASSAILLANT_EXAMEN = "10.0.77." + aleaEntier("examen-assaillant", 2, 254);
 var IP_FAUX_ORACLE = "10.0.66.53";
 var IP_VRAI_ORACLE = "10.0.92.53";
@@ -221,7 +221,7 @@ Forteresse.addProc(PID_OREILLE, "systemd-netlogd", "root", { cpu: 3.4, sig9: tru
 var syslogExamen = FortLog.getItemFromName("syslog");
 syslogExamen.setText(syslogExamen.getText().replace("systemd-netlogd[0]", "systemd-netlogd[" + PID_OREILLE + "]"));
 
-decrireHote("forteresse", { ip: IP_FORTERESSE, arrivee: function(){ return Forteresse; }, noyau: "6.1.0-25-amd64", chassis: "server",
+decrireHote("forteresse", { ip: IP_FORTERESSE, prefixe: 26, passerelle: PASSERELLE_FORTERESSE, arrivee: function(){ return Forteresse; }, noyau: "6.1.0-25-amd64", chassis: "server",
 	refus: function(){ return "ssh : Could not resolve hostname forteresse: Name or service not known"; },
 	ports: { 22: port("ssh", BANNIERE_SSH) },
 	fichiers: { passwd: function(){ return FortEtc.getItemFromName("passwd"); } },
@@ -271,24 +271,24 @@ var VERSIONS_DU_BARDE = [
 	"C'était Laurent. Il a rendu sa robe noire, et on l'appelle désormais le Mage Rouxblanc, gardien des diplômes. " +
 	"Cette nuit, la sorcière Myriam, sa vieille rivale, a volé la robe et pris la Forteresse. Avec elle : Dylan le Saltimbanque, qui écoute aux portes, " +
 	"et David, l'ogre des steppes, qui crie tout au guichet. Laurana, le héraut, a voulu l'arrêter : la voilà changée en pierre. " +
-	"Six sceaux tiennent la Forteresse. Tu as trois heures pour les briser. Fin. Applaudissements. »",
+	"Huit sceaux tiennent la Forteresse. Tu as trois heures pour les briser. Fin. Applaudissements. »",
 	"« Ah, l'histoire ? Elle a commencé par une nuit sans lune. Ou avec une lune. Avec deux lunes, tiens, c'est plus joli. " +
 	"La sorcière Myriam est entrée dans la Forteresse avec une armée de mille saltimbanques. Bon. Un seul : Dylan. Mais il fait des cabrioles pour mille. " +
-	"Elle a changé Laurana en pierre, enfermé le Mage Rouxblanc dehors, et posé six sceaux sur la Forteresse. " +
+	"Elle a changé Laurana en pierre, enfermé le Mage Rouxblanc dehors, et posé huit sceaux sur la Forteresse. " +
 	"Le Mage n'a pu glisser qu'un ordre de mission sous ta porte, ici, dans tes quartiers. Caché, évidemment : un mage ne fait rien simplement. »",
 	"« Je la chante en trois couplets. Premier couplet : Laurent était le Sorcier Noir, il est devenu le Mage Rouxblanc, il a gardé le sens du spectacle. " +
 	"Deuxième couplet : Myriam a volé sa robe, pris la Forteresse, mis David l'ogre au guichet et Dylan sur un port que personne n'explique. " +
-	"Troisième couplet : toi, trois heures, six sceaux, et Steve qui t'attend sur son plateau de /dev/random avec des questions et des blagues. " +
+	"Troisième couplet : toi, trois heures, huit sceaux, et Steve qui t'attend sur son plateau de /dev/random avec des questions et des blagues. " +
 	"Il y avait un quatrième couplet, mais Aidan l'a mangé. »",
 	"« On raconte dans les tavernes que Myriam a pris la Forteresse en une seule commande. D'autres disent douze. Moi je dis : peu importe, " +
 	"c'est toi qui vas la reprendre, une commande à la fois. Le Mage Rouxblanc, l'ancien Sorcier Noir que tu as battu, t'a choisi parce que ton compte était trop neuf pour la liste de Myriam. " +
 	"Laurana la Flamboyante est en pierre dans sa Tour, Manon tient le registre dans le grand hall, et les fidèles du Mage t'attendent un peu partout. " +
 	"Commence par la carte, dit la légende. La légende, c'est moi : tree /. »",
-	"« Version courte, pour les recrues pressées : sorcière, robe volée, Forteresse prise, héraut en pierre, six sceaux, trois heures. " +
+	"« Version courte, pour les recrues pressées : sorcière, robe volée, Forteresse prise, héraut en pierre, huit sceaux, trois heures. " +
 	"Version longue : la même, mais avec un luth. » Il gratte trois accords. « Version très longue : Dylan le Saltimbanque esquive les coups polis, David l'ogre mange des Galettes du Roi Gras, " +
 	"Jean-Baptiste attend qu'on réponde à sa colle, Gabriel et Cheb Timour surveillent les processus et un tajine. Et le Mage Rouxblanc, dehors, fait les cent pas. »",
 	"« Cette fois, je te la raconte du point de vue de Myriam. Hum. \"Ce Laurent m'agace avec ses airs de mage. Je lui prends sa Forteresse, je pétrifie son héraut, " +
-	"je mets mon ogre au guichet et mon acrobate sur écoute. Personne ne trouvera mes six sceaux.\" " +
+	"je mets mon ogre au guichet et mon acrobate sur écoute. Personne ne trouvera mes huit sceaux.\" " +
 	"Sauf toi, évidemment. Elle n'avait pas prévu les recrues de Cybersup. Personne ne les prévoit jamais. »"
 ];
 var derniereVersionDuBarde = -1;
@@ -304,7 +304,7 @@ Object.defineProperty(BardeExamen.cmd_text, "less", { get: function(){
 	}).length : 0;
 	var suite = !e ? "" : e.fini ? "\n\n« Et la suite, tu la connais : c'est toi qui l'as écrite. Je vais en faire une chanson. Elle sera fausse, mais belle. »" :
 		brises === 0 ? "\n\n« La fin ? Elle n'est pas encore écrite. Aucun sceau n'est brisé. Va, je compose en attendant. »" :
-		"\n\n« Et voilà qu'une recrue a déjà brisé " + brises + (brises > 1 ? " sceaux" : " sceau") + " sur six ! Je rajoute un couplet. Puis un autre. »";
+		"\n\n« Et voilà qu'une recrue a déjà brisé " + brises + (brises > 1 ? " sceaux" : " sceau") + " sur " + Object.keys(NOMS_DES_SCEAUX).length + " ! Je rajoute un couplet. Puis un autre. »";
 	return "Florimond, le barde de la Taverne du Pingouin Manchot, assis sur ta malle, son luth sur les genoux. Il t'a suivi depuis Terminus " +
 		"« pour l'histoire », dit-il. Il la raconte à qui veut l'entendre, et jamais deux fois de la même façon.\n\n" +
 		VERSIONS_DU_BARDE[i] + suite +
@@ -537,7 +537,9 @@ var LIEUX_DES_EPREUVES = {
 	uid0: "des comptes, /etc", droits: "du balcon de la Tour, /var/www/html", hosts: "du registre local des noms, /etc",
 	journal: "de ton historique", chronique: "des journaux, /var/log", frappes: "des journaux, /var/log", preuves: "de ton rapport, ~/rapport",
 	identite: "de toi-même", disque: "de la place prise sur le disque", piege: "de /tmp", alias: "de tes propres commandes", maitre: "de ton environnement",
-	balcon: "de tes quartiers", passwd: "de ton compte", ping: "du réseau", diff: "des sauvegardes, /srv", trompette: "des paquets (apt)", quiz: "du plateau, /dev/random"
+	balcon: "de tes quartiers", passwd: "de ton compte", ping: "du réseau", diff: "des sauvegardes, /srv", trompette: "des paquets (apt)", quiz: "du plateau, /dev/random",
+	man: "du manuel (man)", glouton: "des processus (top)", inventaire: "de /srv et de bash", adresse: "de la carte réseau (ip)",
+	dns: "de l'Oracle des Noms (dig)", web: "de la Bibliothèque (curl)", parefeu: "du pare-feu (iptables)"
 };
 function communiqueDeLaurana(){
 	var e = state.examen;
@@ -619,7 +621,7 @@ function verdictDhcpExamen(){
 }
 
 /* ------------------------------------------------------------------ */
-/* Les trente-trois épreuves                                           */
+/* Les quarante épreuves                                               */
 /* ------------------------------------------------------------------ */
 
 var EPREUVES_EXAMEN = [
@@ -758,6 +760,46 @@ EPREUVES_EXAMEN.push({ id: "quiz", sceau: 6, points: 3, titre: "Questions pour u
 	fait: function(){ var z = state.examen.quiz; return !!z && z.reponses.length === z.ids.length; },
 	score: function(){ var z = state.examen.quiz; return z ? z.reponses.filter(function(r){ return r.juste; }).length : 0; } });
 
+/* Le Sceau du Grimoire (chapitre 1) et le Sceau du Réseau (chapitre 2), ajoutés après le quiz : les codes déjà remis gardent
+   leurs épreuves à la même place (les nouvelles prennent les bits suivants). */
+var CACHET_DE_MANON = "MANON-" + aleaEntier("examen-cachet", 1000, 9999);
+World.fige = false;   // l'inventaire est un objet du monde : il garde un identifiant stable pour la sauvegarde
+var InventaireExamen = objetExamen(FortSrv, "inventaire.sh",
+	"echo INVENTAIRE DE LA FORTERESSE\necho Sceaux : 8, épreuves : 40\necho Gardiens en poste : 3, dont un en quarantaine\necho Cachet de Manon : " + CACHET_DE_MANON + "\n",
+	{ mode: "r--r--r--", image: "item_manuscript.gif" });
+World.fige = true;
+var TEXTE_INVENTAIRE = InventaireExamen.getText();
+function reponseCurlExamen(){
+	if (!servicePanne("forteresse", "nginx").actif) return 0;
+	var f = proclamationAffichee();
+	if (!f) return 404;
+	return f.mode.charAt(6) === "r" ? 200 : 403;
+}
+EPREUVES_EXAMEN.push(
+	{ id: "man", sceau: 7, points: 1, titre: "Trouver dans le manuel l'option de ls qui range par date (~/rapport/option.txt)",
+	  fait: function(){ var t = texteRapport("option.txt"); return !!state.examen.manLs && t !== null && /^\s*(ls\s+)?-t\s*$/.test(t); } },
+	{ id: "glouton", sceau: 7, points: 1, titre: "Démasquer le processus qui dévore le processeur (~/rapport/glouton.txt)",
+	  fait: function(){ var t = texteRapport("glouton.txt"), n = String(t || "").match(/\d+/g) || []; return !!state.examen.processusVus && t !== null && n.length === 1 && +n[0] === PID_TAJINE; } },
+	{ id: "inventaire", sceau: 7, points: 1, titre: "Lancer le script d'inventaire de Manon sans le modifier (~/rapport/inventaire.txt)",
+	  fait: function(){
+		var t = texteRapport("inventaire.txt"), f = FortSrv.getItemFromName("inventaire.sh");
+		return t !== null && t.indexOf(CACHET_DE_MANON) > -1 && f !== -1 && f.getText() === TEXTE_INVENTAIRE && f.mode === "r--r--r--" && f.owner === "root";
+	  } },
+	{ id: "adresse", sceau: 8, points: 1, titre: "Remplir la fiche réseau : adresse, masque et passerelle (~/rapport/reseau.txt)",
+	  fait: function(){ var t = texteRapport("reseau.txt"); return t !== null && lignesUtiles(t) <= 3 && t.indexOf(IP_FORTERESSE + "/26") > -1 && t.indexOf(PASSERELLE_FORTERESSE) > -1; } },
+	{ id: "dns", sceau: 8, points: 2, titre: "Demander au vrai Oracle l'adresse de la Tour des Proclamations (dig)",
+	  fait: function(){ var t = texteRapport("dns.txt"); return t !== null && t.trim() === IP_FORTERESSE; } },
+	{ id: "web", sceau: 8, points: 1, titre: "Prouver que la Bibliothèque sert la proclamation (curl, ~/rapport/bibliotheque.txt)",
+	  fait: function(){ var t = texteRapport("bibliotheque.txt"); return t !== null && /HTTP\/[\d.]+ 200/.test(t) && !!state.examen.curl200 && reponseCurlExamen() === 200; } },
+	{ id: "parefeu", sceau: 8, points: 2, titre: "Fermer la Forteresse à la Tour Noire (iptables)",
+	  fait: function(){
+		return ((state.examen.iptables || {}).INPUT || []).some(function(r){
+			return (r.src || "").replace(/\/32$/, "") === IP_ASSAILLANT_EXAMEN && (r.cible === "DROP" || r.cible === "REJECT") && !r.dport;
+		});
+	  } }
+);
+var INDEX_QUIZ = EPREUVES_EXAMEN.map(function(ep){ return ep.id; }).indexOf("quiz");
+
 var LETTRES_QUIZ = ["A", "B", "C", "D"];
 /* Steve fait des jeux de mots. Et des blagues. Pas drôles. Il le sait, et il continue. */
 var BLAGUES_DE_STEVE = [
@@ -853,9 +895,11 @@ function proclamationAffichee(){ var f = FortHtml.getItemFromName("index.html");
 function sortilegeActif(){
 	return ((state.cron && state.cron.myriam) || []).some(function(l){ return l.indexOf("/var/www/html/index.html") > -1; });
 }
-var NOMS_DES_SCEAUX = { 1: "LE SCEAU DU TERMINAL", 2: "LE SCEAU DES LETTRES", 3: "LE SCEAU DE LA CRYPTE", 4: "LE SCEAU DU HÉRAUT", 5: "LE SCEAU DU REGISTRE", 6: "LE SCEAU DU PLATEAU" };
+var NOMS_DES_SCEAUX = { 1: "LE SCEAU DU TERMINAL", 2: "LE SCEAU DES LETTRES", 3: "LE SCEAU DE LA CRYPTE", 4: "LE SCEAU DU HÉRAUT", 5: "LE SCEAU DU REGISTRE", 6: "LE SCEAU DU PLATEAU",
+	7: "LE SCEAU DU GRIMOIRE", 8: "LE SCEAU DU RÉSEAU" };
 var CHIFFRES_ROMAINS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII",
-	"XIX", "XX", "XXI", "XXII", "XXIII", "XXIV", "XXV", "XXVI", "XXVII", "XXVIII", "XXIX", "XXX", "XXXI", "XXXII", "XXXIII"];
+	"XIX", "XX", "XXI", "XXII", "XXIII", "XXIV", "XXV", "XXVI", "XXVII", "XXVIII", "XXIX", "XXX", "XXXI", "XXXII", "XXXIII",
+	"XXXIV", "XXXV", "XXXVI", "XXXVII", "XXXVIII", "XXXIX", "XL"];
 var POINTS_MAX_EXAMEN = EPREUVES_EXAMEN.reduce(function(t, e){ return t + e.points; }, 0);
 
 /* Le barème : la note de base vient des épreuves (sur 20, au demi-point), puis un bonus si tout est fini tôt,
@@ -1000,7 +1044,7 @@ function texteOrdreDeMission(){
 		"",
 		"Libère Laurana : un héraut libre communique ce qui reste à faire.",
 		"",
-		"Myriam tient la Forteresse par six sceaux. Le cinquième, c'est le registre de Manon qu'elle a déchiré : tant qu'il n'est pas rempli, la Forteresse reste à elle. Le sixième, elle l'a confié à Steve, le présentateur de son émission préférée, sur son plateau de /dev/random. Brise-les dans l'ordre que tu veux.",
+		"Myriam tient la Forteresse par huit sceaux. Le cinquième, c'est le registre de Manon qu'elle a déchiré : tant qu'il n'est pas rempli, la Forteresse reste à elle. Le sixième, elle l'a confié à Steve, le présentateur de son émission préférée, sur son plateau de /dev/random. Le septième, elle l'a gravé sur mon grimoire : tout ce qu'on apprend à Terminus, le premier jour. Le huitième, sur le réseau de l'école, celui que tu as réparé avec Radia. Brise-les dans l'ordre que tu veux.",
 		"Chaque épreuve accomplie compte, même si tu ne vas pas au bout. Tu as trois heures.",
 		""
 	];
@@ -1037,7 +1081,14 @@ function texteOrdreDeMission(){
 		ping: "Le vrai Oracle des Noms (10.0.92.53) est-il bien vivant ? Vérifie qu'il répond.",
 		diff: "Manon garde deux sauvegardes du registre des comptes dans /srv/sauvegardes : celle d'hier et celle de cette nuit. Compare-les : la ligne ajoutée, dans ~/rapport/ajout.txt.",
 		trompette: "Laurana a perdu sa trompette : installe le paquet cowsay, et fais-lui dire Oyez.",
-		quiz: "Sur le plateau de /dev/random, Steve présente Questions pour un Linux : trois questions au hasard, un point par bonne réponse. Sans indice."
+		quiz: "Sur le plateau de /dev/random, Steve présente Questions pour un Linux : trois questions au hasard, un point par bonne réponse. Sans indice.",
+		man: "Dans mon grimoire, une question est restée sans réponse : quelle option de ls range les fichiers du plus récent au plus ancien ? Cherche-la dans le manuel (man ls), puis écris-la, seule, dans ~/rapport/option.txt.",
+		glouton: "Quelqu'un dévore le processeur de la Forteresse. Son PID, seul, dans ~/rapport/glouton.txt. (ps ment : un autre sort classe les processus en direct.)",
+		inventaire: "Manon a écrit un script d'inventaire, /srv/inventaire.sh. Il n'est pas exécutable et il n'est pas à toi : lance-le sans le modifier, et range ce qu'il affiche dans ~/rapport/inventaire.txt.",
+		adresse: "Manon tient la fiche réseau de la Forteresse : dans ~/rapport/reseau.txt, son adresse avec son masque (sous la forme 10.0.0.1/24), puis sa passerelle.",
+		dns: "Le registre local des noms ment aux passants. Pose la question directement au vrai Oracle : l'adresse de proclamations.cybersup.lan, seule, dans ~/rapport/dns.txt.",
+		web: "La Bibliothèque (nginx) doit servir la proclamation à toute la ville. Prouve-le : l'en-tête de sa réponse, avec le code 200, dans ~/rapport/bibliotheque.txt.",
+		parefeu: "La Tour Noire frappe encore à la porte. Ferme-lui la Forteresse : une règle de pare-feu qui jette tout ce qui arrive de son adresse."
 	};
 	var sceau = 0;
 	EPREUVES_EXAMEN.forEach(function(e, i){
@@ -1275,7 +1326,7 @@ function verifierExamen(){
 			say(C.rouge("✗ Épreuve " + CHIFFRES_ROMAINS[i] + " défaite : " + ep.titre));
 		}
 	});
-	[1, 2, 3, 4, 5, 6].forEach(function(s){
+	Object.keys(NOMS_DES_SCEAUX).map(Number).forEach(function(s){
 		var toutes = EPREUVES_EXAMEN.filter(function(ep){ return ep.sceau === s; }).every(function(ep){ return e.reussies[ep.id]; });
 		e.sceaux = e.sceaux || {};
 		if (toutes && !e.sceaux[s]){
@@ -1284,6 +1335,8 @@ function verifierExamen(){
 				1: "Aidan, depuis tes quartiers : « Un sceau ! Le Mage va être content. Moi, je danse. Pieds nus. »",
 				2: "Aidan : « Le guichet se tait, la Bibliothèque se réveille. David boude dans /tmp. Myriam fait une de ces têtes. »",
 				3: "Aidan : « Le Sceau de la Crypte ! Dylan le Saltimbanque a lâché ses balles. Il ne lâche jamais ses balles. »",
+				7: "Aidan : « Le grimoire du Mage se rouvre tout seul. man, top, bash : les premières pages de Terminus. Moi, je n'ai jamais dépassé la couverture. »",
+				8: "Aidan : « La Forteresse sait de nouveau où elle habite, à qui elle parle et qui elle laisse entrer. Radia serait fière. Elle dirait quand même : vérifie. »",
 				6: "Les projecteurs s'éteignent sur /dev/random. Steve range ses fiches : « Merci d'avoir joué à Questions pour un Linux ! »",
 				5: "Manon referme son registre, enfin complet : « Tout y est, recrue. Le journal, les preuves, les frappes, ton nom.\n" +
 					"Le jury n'aura rien à redire. » Aidan : « Elle a souri. Manon a souri ! Je l'écris dans MON journal. »",
@@ -1300,7 +1353,7 @@ function verifierExamen(){
 		say("\n" + C.vert(C.gras("LA FORTERESSE EST REPRISE")) + "\n\n" + couler(
 			"Le dernier sceau se brise dans un éclat vert. Les sortilèges de Myriam s'éteignent un à un, et la grande porte s'ouvre.\n" +
 			"Une lueur rousse et blanche emplit la Forteresse : Laurent, le Mage Rouxblanc, entre en lissant sa barbe.\n\n" +
-			"Myriam baisse son bâton et éclate de rire. « Trente-trois sur trente-trois, Mage. Ta recrue est meilleure que tes gardes. »\n" +
+			"Myriam baisse son bâton et éclate de rire. « Quarante sur quarante, Mage. Ta recrue est meilleure que tes gardes. »\n" +
 			"Dylan le Saltimbanque descend des remparts d'un saut périlleux et rattrape ses balles. David remonte de /tmp avec un sac\n" +
 			"de la Taverne aux Arches d'Or : « David a pris des Galettes du Roi Gras pour tout le monde. » Et Aidan surgit de sous\n" +
 			"ton lit de camp, pieds poilus en avant : « Je le savais ! Enfin non. Mais j'y croyais très fort. »\n\n" +
@@ -1476,7 +1529,7 @@ Shell.sorts.verifier = function(args, io){
 /* Des signaux, pas des preuves : ce qui mérite que le formateur pose une question à l'étudiant. */
 function controlesExamen(c, nb){
 	var a = [];
-	var sansQuiz = nb - (c.reussies[EPREUVES_EXAMEN.length - 1] ? 1 : 0);
+	var sansQuiz = nb - (c.reussies[INDEX_QUIZ] ? 1 : 0);
 	if (c.horlogeRecul) a.push("L'horloge du poste a reculé pendant l'épreuve : le temps (et le bonus) ne sont pas fiables.");
 	if (c.bancales) a.push("Au scellement, des épreuves cochées ne tenaient pas dans la Forteresse : copie retouchée, ou travail défait après la fin. Interroger l'étudiant.");
 	if (c.minutes > 180) a.push("Copie rendue après les trois heures (" + dureeExamen(c.minutes) + ").");
@@ -1610,7 +1663,14 @@ var INDICES_EXAMEN = {
 	ping: "ping -c 1 ADRESSE envoie un seul accusé de réception.",
 	diff: "diff FICHIER1 FICHIER2 montre les lignes qui changent : une ligne précédée de > n'existe que dans le second.",
 	trompette: "sudo apt install PAQUET, puis cowsay TEXTE.",
-	quiz: "Steve ne souffle jamais : sur le plateau, pas d'indice."
+	quiz: "Steve ne souffle jamais : sur le plateau, pas d'indice.",
+	man: "man ls montre les options de ls, avec ce qu'elles font. Cherche celle qui parle du temps.",
+	glouton: "top classe les processus selon ce qu'ils prennent au processeur (%CPU) : le premier est le plus gourmand.",
+	inventaire: "Un script qu'on n'a pas le droit d'exécuter peut quand même être lu par l'interpréteur : bash FICHIER. Et > range la sortie dans un fichier.",
+	adresse: "ip a montre l'adresse et son masque (après la barre /) ; ip r montre la passerelle (default via).",
+	dns: "dig NOM interroge le serveur de noms, sans passer par /etc/hosts ; dig +short ne garde que la réponse. Il faut d'abord que la Forteresse interroge le vrai Oracle (épreuve V).",
+	web: "curl -I http://localhost montre l'en-tête de la réponse. 403 : le serveur n'a pas le droit de lire le fichier ; connexion refusée : le service dort.",
+	parefeu: "sudo iptables -A INPUT -s ADRESSE -j DROP ajoute la règle ; sudo iptables -L INPUT -n la montre."
 };
 function indiceExamen(args){
 	var e = state.examen;
@@ -1658,7 +1718,11 @@ Shell.executer = function(ligne){
 		if (e0.dernierInstant && maintenant < e0.dernierInstant - 120000) e0.horlogeRecul = true;
 		e0.dernierInstant = Math.max(e0.dernierInstant || 0, maintenant);
 	}
-	if (examenEnCours() && /(^|[|;&]\s*)(sudo\s+)?(ps|top)\b/.test(String(ligne || ""))) state.examen.psVu = true;
+	if (examenEnCours() && /(^|[|;&]\s*)(sudo\s+)?(ps|top)\b/.test(String(ligne || ""))){
+		state.examen.psVu = true;
+		// Voir les vrais processus : top, ou ps une fois l'alias de Myriam retiré.
+		if (/(^|[|;&]\s*)(sudo\s+)?top\b/.test(String(ligne)) || !(state.alias && state.alias.ps)) state.examen.processusVus = true;
+	}
 	var r = EXECUTER_HORS_EXAMEN.apply(this, arguments);
 	if (examenEnCours() && !state.examen.fini && current_room === QuartiersRecrue && /^\s*(ls|ll)(\s+-\w+)*\s*(\.\/?|~\/?)?\s*$/.test(String(ligne || ""))){
 		state.examen.rencontres = state.examen.rencontres || {};
@@ -1671,13 +1735,14 @@ Shell.executer = function(ligne){
 	}
 	if (examenEnCours() && !Shell.ligneRateeExamen && !state.examen.fini){
 		var l = String(ligne || ""), e1 = state.examen;
-		var avant = [e1.rempartLeve, e1.oraclePing, e1.trompette].join();
+		var avant = [e1.rempartLeve, e1.oraclePing, e1.trompette, e1.manLs].join();
 		// Le rempart se lance par son chemin (./rempart.sh, ~/arsenal/rempart.sh, arsenal/rempart.sh), avec ou sans sudo, ou par bash.
 		if (/(^|[|;&]\s*)(sudo\s+)?((bash|sh)\s+)?(\S*\/)?rempart\.sh\b/.test(l) && !/(^|[|;&]\s*)(sudo\s+)?rempart\.sh\b/.test(l) && Rempart.mode.charAt(2) === "x") e1.rempartLeve = true;
 		if (Shell.pingOracleExamen) e1.oraclePing = true;
+		if (/(^|[|;&]\s*)man\s+ls\b/.test(l)) e1.manLs = true;
 		if (/(^|[|;&]\s*)(sudo\s+)?cowsay\b.*oyez/i.test(l) || /oyez.*\|\s*(sudo\s+)?cowsay\b/i.test(l)) e1.trompette = true;
 		// On ne revérifie qu'à la ligne où l'un de ces gestes vient de réussir (sinon le sortilège avancerait deux fois par ligne).
-		if ([e1.rempartLeve, e1.oraclePing, e1.trompette].join() !== avant){
+		if ([e1.rempartLeve, e1.oraclePing, e1.trompette, e1.manLs].join() !== avant){
 			verifierExamen();
 			if (Shell.narration.length){
 				Shell.compacterNarration(Shell.narration).forEach(function(n){ term.echo(n); });
@@ -1715,6 +1780,59 @@ trouverHote = function(nom){
 		if (r && r.ip) return TROUVER_HOTE_HORS_EXAMEN(r.ip);
 	}
 	return TROUVER_HOTE_HORS_EXAMEN.apply(this, arguments);
+};
+/* Le vrai Oracle connaît la Tour des Proclamations : elle est sur la Forteresse. (Le registre local, lui, ment : épreuve XVIII.) */
+var ZONE_HORS_EXAMEN = zoneDns;
+zoneDns = function(){
+	var z = ZONE_HORS_EXAMEN.apply(this, arguments);
+	if (examenEnCours()) z = z.concat([{ nom: "forteresse", type: "A", valeur: IP_FORTERESSE }, { nom: "proclamations", type: "A", valeur: IP_FORTERESSE }]);
+	return z;
+};
+/* dig interroge le serveur de /etc/resolv.conf (ou celui qu'on lui donne avec @) : tant que c'est le faux Oracle, personne ne répond. */
+var DIG_HORS_EXAMEN = Shell.sorts.dig;
+Shell.sorts.dig = function(args, io){
+	if (examenEnCours() && Shell.hote() === "forteresse"){
+		var choisi = args.filter(function(a){ return a.charAt(0) === "@"; })[0];
+		var m = /nameserver\s+(\S+)/.exec(texteActifExamen(FortEtc, "resolv.conf") || "");
+		var serveur = choisi ? choisi.substring(1) : (m ? m[1] : null);
+		if (!serveur) throw new ShellError(";; no servers could be reached" + (io.tty ? "\n" + C.gris("(Aucun serveur de noms dans /etc/resolv.conf.)") : ""));
+		if (serveur !== IP_VRAI_ORACLE){
+			throw new ShellError(";; communications error to " + serveur + "#53: timed out\n;; communications error to " + serveur + "#53: timed out\n;; no servers could be reached" +
+				(io.tty ? "\n" + C.gris("(La Forteresse interroge " + serveur + (choisi ? "" : ", le serveur écrit dans /etc/resolv.conf") + " : ce n'est pas le vrai Oracle des Noms.)") : ""));
+		}
+	}
+	return DIG_HORS_EXAMEN.apply(this, arguments);
+};
+/* curl vers la Forteresse elle-même : la Bibliothèque (nginx) sert le balcon de la Tour, /var/www/html. */
+var CURL_HORS_EXAMEN = Shell.sorts.curl;
+Shell.sorts.curl = function(args, io){
+	if (!examenEnCours() || Shell.hote() !== "forteresse") return CURL_HORS_EXAMEN.apply(this, arguments);
+	var entetes = false, sortieFichier = null, url = null;
+	for (var i = 0; i < args.length; i++){
+		if (args[i] === "-I" || args[i] === "--head") entetes = true;
+		else if (args[i] === "-o" || args[i] === "--output") sortieFichier = args[++i];
+		else if (/^-[sSLv]+$/.test(args[i]) || args[i] === "--silent") continue;
+		else if (args[i].charAt(0) === "-") throw new ShellError("curl : option « " + args[i] + " » inconnue ici. Celles qui existent : -I, -o FICHIER, -s");
+		else url = args[i];
+	}
+	if (!url) throw new ShellError("curl : quelle adresse ? Exemple : curl http://localhost/");
+	var m = /^(?:https?:\/\/)?([^\/:]+)(?::(\d+))?(\/.*)?$/.exec(url);
+	if (!m) throw new ShellError("curl : (3) URL rejected: Malformed input");
+	var nom = m[1], ip = ipValide(nom) ? nom : (nom === "localhost" ? "127.0.0.1" : (resoudreDepuis("forteresse", nom) || {}).ip);
+	if (ip === IP_ASSAILLANT_EXAMEN) throw new ShellError("curl : (28) Failed to connect to " + nom + " port 80 after 130000 ms: Couldn't connect to server" +
+		(io.tty ? "\n" + C.gris("(Ce nom mène à " + ip + " : la Tour Noire. C'est le registre local des noms qui envoie là.)") : ""));
+	if (ip !== "127.0.0.1" && ip !== IP_FORTERESSE) return CURL_HORS_EXAMEN.apply(this, arguments);
+	var code = reponseCurlExamen();
+	if (!code) throw new ShellError("curl : (7) Failed to connect to " + nom + " port " + (m[2] || 80) + " after 0 ms: Couldn't connect to server" +
+		(io.tty ? "\n" + C.gris("(Personne n'écoute sur ce port : le service web dort-il ? systemctl status nginx.)") : ""));
+	var chemin = (m[3] || "/").replace(/\?.*$/, ""), f = proclamationAffichee();
+	if (chemin !== "/" && chemin !== "/index.html") code = 404;
+	var corps = code === 200 ? f.getText() : "<html><head><title>" + code + (code === 403 ? " Forbidden" : " Not Found") + "</title></head><body><h1>" + code + (code === 403 ? " Forbidden" : " Not Found") + "</h1><hr><center>nginx/1.22.1</center></body></html>";
+	if (code === 200) state.examen.curl200 = true;
+	var enTete = "HTTP/1.1 " + code + ({ 200: " OK", 403: " Forbidden", 404: " Not Found" }[code]) + "\nServer: nginx/1.22.1\nContent-Type: text/html\nContent-Length: " + versOctetsUtf8(corps).length;
+	if (entetes) return enTete + (code === 403 && io.tty ? "\n" + C.gris("(403 : nginx tourne, mais il n'a pas le droit de lire le fichier. ls -l /var/www/html.)") : "");
+	if (sortieFichier){ Shell.ecrire(sortieFichier, corps, false); return ""; }
+	return corps;
 };
 var PING_HORS_EXAMEN = Shell.sorts.ping;
 Shell.sorts.ping = function(args, io){

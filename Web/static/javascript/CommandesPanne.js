@@ -117,7 +117,7 @@ function interfacesDe(h){
 			{ nom: "eth1", up: true, mac: "52:54:00:5d:fe:02", adresses: [{ ip: IP_ROUTEUR_COEUR, prefixe: 24 }] }];
 	}
 	var ipHote = infoHote(h).ip || "10.0.0.1";
-	return [lo, { nom: "eth0", up: true, mac: macDe(ipHote), adresses: [{ ip: ipHote, prefixe: 24 }] }];
+	return [lo, { nom: "eth0", up: true, mac: macDe(ipHote), adresses: [{ ip: ipHote, prefixe: infoHote(h).prefixe || 24 }] }];
 }
 function diffusion(ip, prefixe){
 	var bloc = Math.pow(2, 32 - prefixe), n = Math.floor(nombreIp(ip) / bloc) * bloc + bloc - 1;
@@ -160,9 +160,9 @@ function texteRoutes(h){
 		lignes.push("10.0.92.0/24 dev eth1 proto kernel scope link src " + IP_ROUTEUR_COEUR, "10.0.93.0/24 dev eth0 proto kernel scope link src " + IP_ROUTEUR);
 		return lignes;
 	}
-	var ipHote = infoHote(h).ip || "10.0.0.1";
-	lignes.push("default via " + (h === "intranet" ? IP_ROUTEUR_COEUR : ipHote.replace(/\.\d+$/, ".254")) + " dev eth0",
-		ipHote.replace(/\.\d+$/, ".0") + "/24 dev eth0 proto kernel scope link src " + ipHote);
+	var ipHote = infoHote(h).ip || "10.0.0.1", prefixe = infoHote(h).prefixe || 24;
+	lignes.push("default via " + (h === "intranet" ? IP_ROUTEUR_COEUR : (infoHote(h).passerelle || ipHote.replace(/\.\d+$/, ".254"))) + " dev eth0",
+		reseauDe(ipHote, prefixe) + " dev eth0 proto kernel scope link src " + ipHote);
 	return lignes;
 }
 
@@ -1013,7 +1013,9 @@ function regleSpec(r){
 Shell.sorts.iptables = function(args, io){
 	if (!io.sudo) throw new ShellError("iptables v1.8.9 (nf_tables): Could not fetch rule set generation id: Permission denied (you must be root)\n" + C.gris("(sudo iptables ...)"));
 	var h = Shell.hote();
-	var tables = h === "routeur" ? state.panne.iptables : { INPUT: [], FORWARD: [], OUTPUT: [] };
+	// Le routeur du bâtiment B garde ses règles ; la Forteresse de l'épreuve finale aussi (dans la copie de l'épreuve).
+	var tables = h === "routeur" ? state.panne.iptables :
+		(h === "forteresse" && state.examen ? (state.examen.iptables = state.examen.iptables || { INPUT: [], FORWARD: [], OUTPUT: [] }) : { INPUT: [], FORWARD: [], OUTPUT: [] });
 	var numerique = false, bavard = false, numeros = false, action = null, chaine = null, position = null, regle = {}, i;
 	for (i = 0; i < args.length; i++){
 		var a = args[i];
@@ -1059,7 +1061,7 @@ Shell.sorts.iptables = function(args, io){
 		GameEvents.fire({ type: "iptables", action: "L", bavard: bavard, host: h, chaine: chaine });
 		return sortie.join("\n");
 	}
-	if (h !== "routeur") throw new ShellError("iptables : sur " + h + ", personne ne filtre rien avec iptables, et ce n'est pas le moment de commencer. Le filtrage du bâtiment B se fait sur le routeur.");
+	if (h !== "routeur" && !(h === "forteresse" && state.examen)) throw new ShellError("iptables : sur " + h + ", personne ne filtre rien avec iptables, et ce n'est pas le moment de commencer. Le filtrage du bâtiment B se fait sur le routeur.");
 	if (!chaine && action === "F"){
 		["INPUT", "FORWARD", "OUTPUT"].forEach(function(c){ tables[c].length = 0; });
 		GameEvents.fire({ type: "iptables", action: "F" });

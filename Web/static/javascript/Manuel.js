@@ -34,7 +34,10 @@ var MANUEL = {
 "  ls LIEU         ce qu'il y a dans LIEU\n" +
 "  ls -a           tout montrer, y compris ce qui est caché (les noms commençant par un point)\n" +
 "  ls -l           le détail : droits, propriétaire, taille\n" +
-"  ls -la          les deux à la fois\n\n" +
+"  ls -la          les deux à la fois\n" +
+"  ls -t           du plus récent au plus ancien (t comme time, le temps)\n" +
+"  ls -lt          le détail, les plus récents en premier\n" +
+"  ls -r           à l'envers (ls -ltr : les plus récents en dernier)\n\n" +
 "Lire une ligne de ls -l :\n" +
 "  drwxr-xr-x  terminus   3  Grotte/\n" +
 "  │└┬┘└┬┘└┬┘\n" +

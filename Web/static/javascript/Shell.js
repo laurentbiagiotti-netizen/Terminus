@@ -533,6 +533,13 @@ Shell.listerLieu = function(lieu, opts, io){
 	for (i = 0; i < lieu.items.length; i++){
 		if (opts.a || !lieu.items[i].isHidden()) objets.push(lieu.items[i]);
 	}
+	// -t : du plus récent au plus ancien (l'âge en jours, puis l'heure ; à égalité, le dernier arrivé d'abord). -r renverse.
+	function parDate(liste, tous){
+		return liste.map(function(n){ return { n: n, a: n.age === undefined ? 40 : n.age, h: n.heure || "09:00", k: tous.indexOf(n) }; })
+			.sort(function(x, y){ return x.a - y.a || (x.h < y.h ? 1 : x.h > y.h ? -1 : 0) || y.k - x.k; }).map(function(x){ return x.n; });
+	}
+	if (opts.t){ lieux = parDate(lieux, lieu.children); objets = parDate(objets, lieu.items); }
+	if (opts.r){ lieux.reverse(); objets.reverse(); }
 	var lignes = [];
 	if (opts.l){
 		if (opts.a){
@@ -568,7 +575,7 @@ Shell.listerLieu = function(lieu, opts, io){
 };
 
 Shell.sorts.ls = function(args, io){
-	var p = lireOptions(args.filter(function(a){ return a !== "-1"; }), "alhAF", "ls");
+	var p = lireOptions(args.filter(function(a){ return a !== "-1"; }), "alhAFtr", "ls");
 	if (p.opts.A) p.opts.a = true;
 	var cibles = p.reste.length ? p.reste : ["."];
 	var blocs = [];

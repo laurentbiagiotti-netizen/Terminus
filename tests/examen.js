@@ -196,9 +196,24 @@ for (var qk = 0; qk < 3; qk++){
 	contient(rep, "TOP", "bonne réponse " + (qk + 1));
 	if (qk === 2) contient(rep, "Épreuve XXXIII", "épreuve XXXIII : le quiz");
 }
-verifier(jeu.lire("pointsExamen()") === jeu.lire("POINTS_MAX_EXAMEN") - 1, "45 points moins le registre des noms");
 jeu.taper("cd ~");
-verifier(jeu.lire("Object.keys(state.examen.reussies).length") === 32, "32 épreuves avant la dernière : " + jeu.lire("Object.keys(state.examen.reussies).join(',')"));
+/* Le Sceau du Grimoire : les bases du chapitre 1 (man, top, bash) */
+contient(jeu.taper("man ls"), "ls -t", "le manuel de ls donne -t");
+contient(jeu.taper("echo -t > ~/rapport/option.txt"), "Épreuve XXXIV", "épreuve XXXIV : man");
+contient(jeu.taper("top"), "tajine", "top montre le glouton, même quand ps ment");
+contient(jeu.taper("echo " + jeu.lire("PID_TAJINE") + " > ~/rapport/glouton.txt"), "Épreuve XXXV", "épreuve XXXV : top");
+contient(jeu.taper("/srv/inventaire.sh"), "Permission non accordée", "le script de Manon n'est pas exécutable");
+contient(jeu.taper("bash /srv/inventaire.sh > ~/rapport/inventaire.txt"), "Épreuve XXXVI", "épreuve XXXVI : bash");
+/* Le Sceau du Réseau : l'essentiel du chapitre 2 (ip, dig, curl, iptables) */
+contient(jeu.taper("ip a"), "10.0.97.10/26", "ip a : l'adresse et son masque");
+contient(jeu.taper("ip r"), "default via 10.0.97.62", "ip r : la passerelle, dans le /26");
+jeu.taper("ip a | grep 'inet 10' | cut -d' ' -f6 > ~/rapport/reseau.txt");
+contient(jeu.taper("ip r | grep default | cut -d' ' -f3 >> ~/rapport/reseau.txt"), "Épreuve XXXVII", "épreuve XXXVII : ip");
+contient(jeu.taper("dig +short proclamations.cybersup.lan > ~/rapport/dns.txt"), "Épreuve XXXVIII", "épreuve XXXVIII : dig");
+contient(jeu.taper("curl -I http://localhost > ~/rapport/bibliotheque.txt"), "Épreuve XXXIX", "épreuve XXXIX : curl");
+contient(jeu.taper("sudo iptables -A INPUT -s " + ip + " -j DROP", mdp), "Épreuve XL", "épreuve XL : iptables");
+verifier(jeu.lire("pointsExamen()") === jeu.lire("POINTS_MAX_EXAMEN") - 1, "tous les points moins le registre des noms : " + jeu.lire("pointsExamen()"));
+verifier(jeu.lire("Object.keys(state.examen.reussies).length") === 39, "39 épreuves avant la dernière : " + jeu.lire("Object.keys(state.examen.reussies).join(',')"));
 jeu.editer("function(t){ return t.split('\\n').filter(function(l){ return l.indexOf('proclamations') === -1; }).join('\\n'); }");
 var fin = jeu.taper("sudo nano /etc/hosts", mdp);
 contient(fin, "Épreuve XVIII", "épreuve XVIII");
@@ -431,13 +446,13 @@ contient(k.taper("kamikaze", "non"), "continue", "kamikaze se confirme");
 verifier(!k.lire("examenFini()"), "non : on continue");
 var sortie = k.taper("kamikaze", "oui");
 contient(sortie, "KAMIKAZE", "le sacrifice");
-contient(sortie, "Note de l'épreuve   : 0,75 / 20", "la note de ce qui est fait : 2 points sur 45 (1 / 20) moins un indice à 0,25");
+contient(sortie, "Note de l'épreuve   : 0,25 / 20", "la note de ce qui est fait : 2 points sur 54 (0,5 / 20) moins un indice à 0,25");
 contient(sortie, "Badges du parcours  : 0 sur", "sans partie normale, pas de badge");
-contient(sortie, "NOTE FINALE         : 0,5 / 20", "la note finale : 80 % de 0,75, arrondie au quart de point");
+contient(sortie, "NOTE FINALE         : 0,25 / 20", "la note finale : 80 % de 0,25, arrondie au quart de point");
 contient(sortie, "Ajourné", "la mention");
 var codeK = sortie.split("Code de vérification, à remettre au formateur :")[1].split("\n")[1].trim();
 var luK = k.lire("lireCodeExamen(" + JSON.stringify(codeK) + ")");
-verifier(luK && luK.valide && luK.noteGlobale === 0.5 && luK.badges === 0 && luK.note === 0.75 && luK.base === 1 && luK.malusIndices === 0.25 && luK.fin === "K" && luK.indices[1], "le code kamikaze : " + JSON.stringify(luK));
+verifier(luK && luK.valide && luK.noteGlobale === 0.25 && luK.badges === 0 && luK.note === 0.25 && luK.base === 0.5 && luK.malusIndices === 0.25 && luK.fin === "K" && luK.indices[1], "le code kamikaze : " + JSON.stringify(luK));
 contient(k.taper("verifier " + codeK), "kamikaze", "verifier lit la fin kamikaze");
 contient(k.taper("verifier " + codeK), "tajine de Timour", "verifier signale le tajine");
 contient(k.taper("chmod +x ~/rapport"), "", "");
@@ -484,10 +499,17 @@ contient(k.taper("verifier " + faux), "", "");
 		frappes: function(){ d.taper("grep -c " + ip + " /var/log/auth.log > ~/rapport/frappes.txt"); },
 		chronique: function(){ var h = d.lire("heuresDesFrappes()"); d.taper("echo " + h.premiere + " " + h.derniere + " > ~/rapport/chronique.txt"); },
 		journal: function(){ d.taper("date > ~/rapport/journal.txt"); d.taper("history >> ~/rapport/journal.txt"); },
+		man: function(){ d.taper("man ls"); d.taper("echo ls -t > ~/rapport/option.txt"); },
+		glouton: function(){ d.taper("top"); d.taper("echo PID " + d.lire("PID_TAJINE") + " > ~/rapport/glouton.txt"); },
+		inventaire: function(){ d.taper("cd /srv"); d.taper("bash inventaire.sh > ~/rapport/inventaire.txt"); d.taper("cd ~"); },
+		adresse: function(){ d.taper("echo 10.0.97.10/26 > ~/rapport/reseau.txt"); d.taper("echo 10.0.97.62 >> ~/rapport/reseau.txt"); },
+		dns: function(){ d.taper("dig @10.0.92.53 +short proclamations.cybersup.lan > ~/rapport/dns.txt"); },
+		web: function(){ d.taper("curl -I http://10.0.97.10 > ~/rapport/bibliotheque.txt"); },
+		parefeu: function(){ d.taper("sudo iptables -I INPUT -s " + ip + "/32 -j REJECT", m); },
 		quiz: function(){ d.taper("cd /dev/random"); for (var k = 0; k < 3; k++){ d.taper("cat Steve"); d.taper("echo " + (k === 1 ? "A" : d.lire("questionDuQuiz(state.examen.quiz, " + k + ").bonne"))); } d.taper("cd ~"); }
 	};
-	var ordre = ["hosts", "uid0", "diff", "droits", "proclamation", "sortilege", "quiz", "journal", "chronique", "frappes", "preuves", "identite", "disque", "piege",
-		"alias", "maitre", "balcon", "passwd", "ping", "trompette", "cle", "oreille", "suid", "signature", "gardien", "nginx", "telnet", "mairie", "oracle",
+	var ordre = ["parefeu", "dns", "adresse", "glouton", "inventaire", "man", "hosts", "uid0", "diff", "droits", "proclamation", "sortilege", "quiz", "journal", "chronique", "frappes", "preuves", "identite", "disque", "piege",
+		"alias", "maitre", "balcon", "passwd", "ping", "trompette", "cle", "oreille", "suid", "signature", "gardien", "nginx", "web", "telnet", "mairie", "oracle",
 		"fragment", "rempart", "assaillant", "ordre"];
 	var echecs = [];
 	ordre.forEach(function(id){
