@@ -549,7 +549,7 @@ function communiqueDeLaurana(){
 		"Je ne ferai pas ton travail, le Mage l'a interdit. Mais communiquer, c'est mon métier. Voici le communiqué de la Forteresse : »", ""];
 	if (!reste.length) lignes.push("  « Tout est accompli. Il ne reste qu'à proclamer ton nom. »");
 	reste.forEach(function(ep){
-		lignes.push("  · " + completerDroite(CHIFFRES_ROMAINS[EPREUVES_EXAMEN.indexOf(ep)] + ".", 9) + ep.titre + C.gris("  (du côté " + LIEUX_DES_EPREUVES[ep.id] + ")"));
+		lignes.push("  · " + completerDroite(CHIFFRES_ROMAINS[EPREUVES_EXAMEN.indexOf(ep)] + ".", 10) + ep.titre + C.gris("  (du côté " + LIEUX_DES_EPREUVES[ep.id] + ")"));
 	});
 	lignes.push("", "« Et quand tu auras fini, ou rendu ta copie, je porterai ton diplôme et son code au formateur : je l'écrirai aussi dans",
 		"~/rapport/diplome.txt, pour que tu n'aies qu'à le recopier. »");
@@ -1094,7 +1094,7 @@ function texteOrdreDeMission(){
 	EPREUVES_EXAMEN.forEach(function(e, i){
 		if (e.sceau !== sceau){ sceau = e.sceau; lignes.push(NOMS_DES_SCEAUX[sceau]); }
 		var coche = state.examen && state.examen.reussies[e.id] ? "[x]" : "[ ]";
-		lignes.push("  " + coche + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 9) + textes[e.id].replace(/\n\s+/g, " ") + "  (" + e.points + " pt" + (e.points > 1 ? "s" : "") + ")");
+		lignes.push("  " + coche + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 10) + textes[e.id].replace(/\n\s+/g, " ") + "  (" + e.points + " pt" + (e.points > 1 ? "s" : "") + ")");
 	});
 	lignes.push("",
 		"LA CARTE : tree / dessine la Forteresse, ses lieux et ceux qui y vivent (tree -L 3 / pour descendre plus loin).",
@@ -1181,7 +1181,7 @@ function texteDiplomeExamen(){
 	var sceau = 0;
 	EPREUVES_EXAMEN.forEach(function(ep, i){
 		if (ep.sceau !== sceau){ sceau = ep.sceau; lignes.push("  " + NOMS_DES_SCEAUX[sceau]); }
-		lignes.push("    " + signeEpreuve(e, ep.id) + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 9) + completerDroite((ep.score ? ep.score() : (e.reussies[ep.id] ? ep.points : 0)) + "/" + ep.points, 5) + ep.titre +
+		lignes.push("    " + signeEpreuve(e, ep.id) + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 10) + completerDroite((ep.score ? ep.score() : (e.reussies[ep.id] ? ep.points : 0)) + "/" + ep.points, 5) + ep.titre +
 			(e.indices && e.indices[ep.id] ? "  (indice)" : ""));
 	});
 	lignes.push("    (✓ réussie, ✗ pas faite, ! réussie puis défaite ; le quiz compte chaque bonne réponse)", "",
@@ -1378,7 +1378,7 @@ function bilanExamen(){
 	var sceau = 0;
 	EPREUVES_EXAMEN.forEach(function(ep, i){
 		if (ep.sceau !== sceau){ sceau = ep.sceau; lignes.push(C.gras(NOMS_DES_SCEAUX[sceau])); }
-		lignes.push("  " + (e.reussies[ep.id] ? C.vert("[x]") : "[ ]") + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 9) + ep.titre + C.gris("  (" + ep.points + ")"));
+		lignes.push("  " + (e.reussies[ep.id] ? C.vert("[x]") : "[ ]") + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 10) + ep.titre + C.gris("  (" + ep.points + ")"));
 	});
 	lignes.push("", "Note de l'épreuve (provisoire) : " + C.gras(ecrireNote(noteExamen()) + " / 20") +
 		C.gris("  (épreuves " + ecrireNote(noteDeBaseExamen()) + ", indices -" + ecrireNote(malusIndicesExamen()) + ", fausses manœuvres " + (e.erreurs || 0) + " : -" + ecrireNote(malusErreursExamen()) +
@@ -1564,7 +1564,7 @@ function rapportCodeExamen(c, verdictSceau){
 		var signe = ep.id === "quiz" ? (c.reussies[i] ? (justesQuiz ? C.vert("✓ " + justesQuiz + "/3") : C.jaune("✓ 0/3")) : (justesQuiz ? C.jaune("~ " + justesQuiz + "/3") : C.rouge("✗    "))) :
 			(c.reussies[i] ? C.vert("✓    ") : (c.defaites[i] ? C.jaune("!    ") : C.rouge("✗    ")));
 		var quizEntame = ep.id === "quiz" && !c.reussies[i] && (c.quiz || []).some(function(x){ return x.etat !== "."; });
-		lignes.push("    " + signe + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 9) + ep.titre + (c.indices[i] ? C.gris("  (avec indice)") : "") +
+		lignes.push("    " + signe + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 10) + ep.titre + (c.indices[i] ? C.gris("  (avec indice)") : "") +
 			(quizEntame ? C.gris("  (commencé, pas fini : les bonnes réponses comptent)") : "") +
 			(c.reussies[i] && c.defaites[i] ? C.gris("  (cassée une fois, puis réparée)") : ""));
 	});
