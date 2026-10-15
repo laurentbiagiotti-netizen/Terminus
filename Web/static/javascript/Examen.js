@@ -902,6 +902,33 @@ function lireBadgesDuParcours(){
 	} catch (x){}
 	return gagnes;
 }
+/* Le parcours de la partie normale, relevé avec les badges : le temps de jeu, le nombre de commandes et les notes
+   des chapitres 2 (réseau) et 3 (cyber). Le formateur peut ainsi juger si les badges sont plausibles. */
+function lireParcoursNormal(){
+	var p = { minutes: 0, commandes: 0, reseau: 0, cyber: 0 };
+	try {
+		var brut = window.localStorage.getItem(String(CLE_SAUVEGARDE).replace(/-examen$/, ""));
+		var d = brut ? JSON.parse(brut) : null;
+		if (!d) return p;
+		p.minutes = Math.round((d.temps || 0) / 60000);
+		p.commandes = d.nb || 0;
+		function note(xp, malus, max){ return max > 0 ? Math.round(Math.min(1, Math.max(0, (xp || 0) - (malus || 0)) / max) * 40) / 2 : 0; }
+		p.reseau = note(d.xp3, d.malus3, state.xpMax3());
+		p.cyber = note(d.xp2, d.malus2, state.xpMax2());
+	} catch (x){}
+	return p;
+}
+function parcoursExamen(){
+	var e = state.examen;
+	if (!e.parcours) e.parcours = lireParcoursNormal();
+	return e.parcours;
+}
+function heureDebutExamen(){
+	var e = state.examen;
+	if (!e.debutHorloge) return "";
+	var d = new Date(e.debutHorloge);
+	return deuxChiffres(d.getHours()) + ":" + deuxChiffres(d.getMinutes());
+}
 function badgesExamen(){
 	var e = state.examen;
 	if (!e.badges) e.badges = lireBadgesDuParcours();
@@ -1035,7 +1062,7 @@ TEXTE_ENTREE_EXAMEN = TEXTE_ENTREE_EXAMEN.replace(/([^\n])\n(?=[^\n])/g, "$1 ");
 /* Ouvre une épreuve neuve : tous les sorts, la Forteresse, et le silence. */
 function demarrerExamen(){
 	state.examen = { debutHorloge: Date.now(), debut: state.tempsMs || 0, reussies: {}, ordreLu: false, fini: false, fin: null, dateFin: null, tempsFin: null, commandesDebut: state.nbCommandes, lieu: null, erreurs: 0, indices: {}, defaites: {}, sceaux: {}, rencontres: {},
-		badges: lireBadgesDuParcours() };
+		badges: lireBadgesDuParcours(), parcours: lireParcoursNormal() };
 	[SORTS_DE_DEPART, ORDRE_DES_SORTS, ORDRE_DES_SORTS_2, ORDRE_DES_SORTS_3].forEach(function(liste){
 		(liste || []).forEach(function(s){ state.spells[s] = true; state.usages[s] = true; });
 	});
@@ -1093,7 +1120,7 @@ function texteDiplomeExamen(){
 		"  Badges du parcours  : " + nbBadgesExamen() + " sur " + BADGES_DU_PARCOURS.length + "  (" + ecrireNote(noteBadgesExamen()) + " / 20)",
 		"  NOTE FINALE         : " + ecrireNote(noteGlobaleExamen()) + " / 20  (" + Math.round(POIDS_EPREUVE * 100) + " % épreuve, " + Math.round(POIDS_BADGES * 100) + " % badges)",
 		"  Mention             : " + mentionExamen(noteGlobaleExamen()),
-		"  Temps               : " + dureeExamen(minutes),
+		"  Temps               : " + dureeExamen(minutes) + (heureDebutExamen() ? "  (commencée à " + heureDebutExamen() + ")" : ""),
 		"  Fin de l'épreuve    : " + (e.fin === "victoire" ? "Forteresse reprise" : "kamikaze"),
 		"",
 		"  Signé : Laurent, le Mage Rouxblanc, Directeur Pédagogique de Cybersup",
@@ -1116,12 +1143,14 @@ function masqueExamen(table){
 function codeDiplomeExamen(){
 	var e = state.examen;
 	var z = e.quiz, detailQuiz = z ? z.ids.map(function(id, k){ var r = z.reponses[k]; return id + (r ? (r.juste ? "+" : "-") + r.lettre : "."); }).join(",") : "";
-	var charge = ["E4", String(state.nom || JOUEUR).replace(/\|/g, "/"), noteExamen() * 4, noteDeBaseExamen() * 4, bonusTempsExamen() * 4,
+	var pa = parcoursExamen();
+	var charge = ["E5", String(state.nom || JOUEUR).replace(/\|/g, "/"), noteExamen() * 4, noteDeBaseExamen() * 4, bonusTempsExamen() * 4,
 		malusErreursExamen() * 4, malusIndicesExamen() * 4, e.erreurs || 0, minutesExamen(),
 		(e.commandesFin !== undefined ? e.commandesFin : state.nbCommandes) - (e.commandesDebut || 0),
 		e.fin === "victoire" ? "V" : "K", masqueExamen(e.reussies), masqueExamen(e.defaites), masqueExamen(e.indices),
 		e.dateFin || dateDuJour(), PROFIL.graine, e.tajineTue ? "T" : "-", detailQuiz,
-		noteGlobaleExamen() * 4, nbBadgesExamen(), masqueBadgesExamen()].join("|");
+		noteGlobaleExamen() * 4, nbBadgesExamen(), masqueBadgesExamen(),
+		pa.minutes, pa.commandes, pa.reseau * 2, pa.cyber * 2, heureDebutExamen()].join("|");
 	var code = versBase64Url(charge) + "." + sommeDeControle(charge + "|" + SEL_DIPLOME);
 	return e.sceau && e.chargeScellee === charge ? code + "." + e.sceau : code;
 }
@@ -1131,14 +1160,16 @@ function lireCodeExamen(code){
 	var charge;
 	try { charge = depuisBase64Url(morceaux[0]); } catch (x){ return null; }
 	var c = charge.split("|");
-	if (c[0] !== "E3" && c[0] !== "E4" && morceaux.length === 3) return null;
+	if (c[0] !== "E3" && c[0] !== "E4" && c[0] !== "E5" && morceaux.length === 3) return null;
 	var q = c[0] === "E1" ? 2 : 4;
-	if (!((c[0] === "E1" && c.length === 16) || (c[0] === "E2" && c.length === 17) || (c[0] === "E3" && c.length === 18) || (c[0] === "E4" && c.length === 21))) return null;
+	if (!((c[0] === "E1" && c.length === 16) || (c[0] === "E2" && c.length === 17) || (c[0] === "E3" && c.length === 18) || (c[0] === "E4" && c.length === 21) || (c[0] === "E5" && c.length === 26))) return null;
 	function bits(h, liste){ var n = parseInt(h, 16) || 0; return (liste || EPREUVES_EXAMEN).map(function(ep, i){ return Math.floor(n / Math.pow(2, i)) % 2 === 1; }); }
-	var avecBadges = c[0] === "E4";
+	var avecBadges = c[0] === "E4" || c[0] === "E5", avecParcours = c[0] === "E5";
 	return { valide: sommeDeControle(charge + "|" + SEL_DIPLOME) === morceaux[1].toUpperCase(),
 		noteGlobale: avecBadges ? +c[18] / 4 : +c[2] / q, badges: avecBadges ? +c[19] : null,
 		badgesGagnes: avecBadges ? bits(c[20], BADGES_DU_PARCOURS) : null,
+		parcours: avecParcours ? { minutes: +c[21], commandes: +c[22], reseau: +c[23] / 2, cyber: +c[24] / 2 } : null,
+		heureDebut: avecParcours ? c[25] : "",
 		prenom: c[1], note: +c[2] / q, base: +c[3] / q, bonus: +c[4] / q, malusErreurs: +c[5] / q, malusIndices: +c[6] / q, tajine: c[16] === "T",
 		erreurs: +c[7], minutes: +c[8], commandes: +c[9], fin: c[10], reussies: bits(c[11]), defaites: bits(c[12]), indices: bits(c[13]),
 		date: c[14], graine: +c[15], charge: charge, sceau: morceaux[2] ? morceaux[2].toUpperCase() : null,
@@ -1389,6 +1420,23 @@ Shell.sorts.verifier = function(args, io){
 		"  " + completerDroite("Date", 14) + lu.date;
 };
 
+/* Des signaux, pas des preuves : ce qui mérite que le formateur pose une question à l'étudiant. */
+function controlesExamen(c, nb){
+	var a = [];
+	var sansQuiz = nb - (c.reussies[EPREUVES_EXAMEN.length - 1] ? 1 : 0);
+	if (c.minutes > 180) a.push("Copie rendue après les trois heures (" + dureeExamen(c.minutes) + ").");
+	if (nb >= 20 && c.minutes < 30) a.push(nb + " épreuves en " + dureeExamen(c.minutes) + " : bien trop rapide pour une épreuve de 3 heures.");
+	if (sansQuiz >= 5 && c.commandes < sansQuiz * 2) a.push("Seulement " + c.commandes + " commandes pour " + sansQuiz + " épreuves : chaque épreuve en demande au moins deux.");
+	if (c.parcours && c.badgesGagnes){
+		var reseau = 0, cyber = 0;
+		BADGES_DU_PARCOURS.forEach(function(id, i){ if (!c.badgesGagnes[i]) return; if (/^r_|platine_reseau/.test(id)) reseau++; else cyber++; });
+		if (reseau >= 5 && c.parcours.reseau < 5) a.push(reseau + " badges réseau, mais une note de " + ecrireNote(c.parcours.reseau) + " / 20 au chapitre 2 : demander le certificat réseau.");
+		if (cyber >= 5 && c.parcours.cyber < 5) a.push(cyber + " badges cyber, mais une note de " + ecrireNote(c.parcours.cyber) + " / 20 au chapitre 3 : demander le certificat cyber.");
+		if (c.badges >= 10 && c.parcours.commandes < c.badges * 15) a.push(c.badges + " badges pour " + c.parcours.commandes + " commandes dans toute la partie : bien peu pour autant de compétences.");
+	}
+	return a;
+}
+
 /* Ce que le formateur lit dans un code d'épreuve finale : la note, son détail, et chaque épreuve. */
 function rapportCodeExamen(c, verdictSceau){
 	var justesQuiz = (c.quiz || []).filter(function(x){ return x.etat === "+"; }).length;
@@ -1415,6 +1463,8 @@ function rapportCodeExamen(c, verdictSceau){
 	}
 	if (c.badgesGagnes){
 		lignes.push("", "  " + C.gras("BADGES DU PARCOURS") + "  " + c.badges + " sur " + BADGES_DU_PARCOURS.length + C.gris("  (partie normale, relevés à l'entrée dans l'épreuve)"));
+		if (c.parcours) lignes.push("    " + completerDroite("Partie normale", 20) + "chapitre 2 (réseau) " + ecrireNote(c.parcours.reseau) + " / 20 · chapitre 3 (cyber) " + ecrireNote(c.parcours.cyber) + " / 20 · " +
+			dureeExamen(c.parcours.minutes) + " de jeu · " + c.parcours.commandes + " commandes");
 		[["RÉSEAU (chapitre 2)", function(id){ return /^r_|platine_reseau/.test(id); }], ["CYBER (chapitre 3)", function(id){ return /^c_|platine_cyber/.test(id); }]].forEach(function(ch){
 			var ids = BADGES_DU_PARCOURS.filter(ch[1]);
 			var gagnes = ids.filter(function(id){ return c.badgesGagnes[BADGES_DU_PARCOURS.indexOf(id)]; });
@@ -1452,6 +1502,10 @@ function rapportCodeExamen(c, verdictSceau){
 		"  Par sceau :");
 	lignes = lignes.concat(parSceau);
 	if (c.tajine) lignes.push("", "  " + C.jaune("! A tué un processus innocent (le tajine de Timour) : +5 fausses manœuvres."));
+	var alertes = controlesExamen(c, nb);
+	lignes.push("", "  " + C.gras("Contrôles de vraisemblance") + (c.heureDebut ? C.gris("   (épreuve commencée le " + c.date + " à " + c.heureDebut + ", heure du poste)") : ""));
+	if (!alertes.length) lignes.push("    " + C.vert("✓ Rien d'anormal."));
+	alertes.forEach(function(a){ lignes.push("    " + C.jaune("⚠ " + a)); });
 	lignes.push("",
 		"  " + (c.valide ? C.vert("✓ Code lisible et non retouché") : C.rouge("✗ Code RETOUCHÉ : la somme de contrôle ne correspond pas. Ne pas en tenir compte.")),
 		"  " + (verdictSceau || C.jaune("⚠ Code NON SCELLÉ : il peut avoir été fabriqué. Pour une note officielle, scelle la copie sur le poste de l'étudiant (sceller).")),

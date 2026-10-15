@@ -217,6 +217,10 @@ var rapport = jeu.taper("verifier " + code);
 contient(rapport, "NOTE FINALE : 20 / 20", "verifier : la note dans le bulletin");
 contient(rapport, "cassée une fois", "verifier montre l'épreuve cassée par le sortilège");
 contient(rapport, "QUESTIONS POUR UN LINUX  3 sur 3", "verifier montre le quiz");
+contient(rapport, "Contrôles de vraisemblance", "verifier fait ses contrôles");
+contient(rapport, "bien trop rapide", "33 épreuves en quelques minutes : signalé");
+contient(rapport, "demander le certificat réseau", "des badges sans note au chapitre 2 : signalé");
+contient(rapport, "épreuve commencée le", "verifier donne l'heure du début");
 contient(normal.taper("verifier " + code), "Restaurer la proclamation", "verifier marche aussi hors de l'épreuve");
 contient(normal.taper("verifier " + code), "NON SCELLÉ", "un code non scellé est signalé");
 contient(jeu.taper("sceller", "mauvais"), "pas le mot de passe du formateur", "sceller refuse un faux mot de passe");
@@ -227,7 +231,7 @@ verifier(codeScelle.split(".").length === 3, "le code scellé a trois morceaux :
 contient(jeu.taper("cat ~/rapport/diplome.txt"), "✓ copie scellée", "le diplôme dit qu'il est scellé");
 contient(normal.taper("verifier " + codeScelle, "mot-de-passe-de-test"), "SCELLÉ PAR LE FORMATEUR", "le sceau se contrôle");
 var morceauxFaux = codeScelle.split(".");
-var chargeFausse = normal.lire("versBase64Url(depuisBase64Url(" + JSON.stringify(morceauxFaux[0]) + ").replace(/^E4\\|Ada\\|\\d+/, 'E4|Ada|60'))");
+var chargeFausse = normal.lire("versBase64Url(depuisBase64Url(" + JSON.stringify(morceauxFaux[0]) + ").replace(/^E5\\|Ada\\|\\d+/, 'E5|Ada|60'))");
 var fauxCode = chargeFausse + "." + normal.lire("sommeDeControle(depuisBase64Url(" + JSON.stringify(chargeFausse) + ") + '|' + SEL_DIPLOME)") + "." + morceauxFaux[2];
 contient(normal.taper("verifier " + fauxCode, "mot-de-passe-de-test"), "SCEAU FAUX", "une note retouchée, même avec la bonne somme de contrôle, trahit le sceau");
 contient(jeu.taper("verifier " + code.replace(/.$/, function(c){ return c === "A" ? "B" : "A"; })), "", "");
@@ -268,6 +272,24 @@ contient(jeu.taper("examen"), "DIPLÔME", "examen réimprime le diplôme");
 	verifier(lu.noteGlobale === b.lire("noteGlobaleExamen()"), "la note finale du code");
 	var s2 = b.taper("verifier " + c, "x");
 	verifier(s2.indexOf("ancien code") === -1, "un code E4 n'est pas un ancien code");
+})();
+
+/* --- 2 quater. Un parcours plausible ne déclenche pas d'alerte sur les badges --- */
+(function(){
+	var st = { "terminus-cybersup-profil": JSON.stringify({ graine: 88, prenom: "Ada", chapitre: 1, modeExamen: true }) };
+	var q = {}; TOUS_LES_BADGES.forEach(function(id){ if (!/^platine_/.test(id)) q[id] = true; });
+	var m0 = monde.nouveauMonde();
+	st["terminus-cybersup"] = JSON.stringify({ v: 0, quests: q, flags: {}, temps: 9 * 3600000, nb: 2400, xp2: m0.lire("state.xpMax2()"), xp3: m0.lire("state.xpMax3()") * 0.8 });
+	var p = monde.nouveauMonde(st);
+	p.lire(SECRETS_DE_TEST + " state.nom = 'Ada'; demarrerExamen(); Shell.narration = [];");
+	var pa = p.lire("parcoursExamen()");
+	verifier(pa.cyber === 20 && pa.reseau === 16 && pa.minutes === 540 && pa.commandes === 2400, "le parcours est relevé à l'entrée : " + JSON.stringify(pa));
+	var s = p.taper("kamikaze", "oui");
+	var c = s.split("Code de vérification, à remettre au formateur :")[1].split("\n")[1].trim();
+	var r = p.taper("verifier " + c);
+	contient(r, "chapitre 2 (réseau) 16 / 20", "verifier montre les notes de la partie normale");
+	verifier(r.indexOf("demander le certificat") === -1 && r.indexOf("bien peu pour autant") === -1, "pas d'alerte de badges quand le parcours les justifie");
+	contient(r, "Rien d'anormal", "une copie normale ne lève aucune alerte");
 })();
 
 /* --- 3. La sauvegarde de l'examen garde l'avancée --- */
