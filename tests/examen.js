@@ -292,6 +292,32 @@ contient(jeu.taper("examen"), "DIPLÔME", "examen réimprime le diplôme");
 	contient(r, "Rien d'anormal", "une copie normale ne lève aucune alerte");
 })();
 
+/* --- 2 quinquies. Les raccourcis qui ne doivent pas suffire, et les autres bonnes solutions --- */
+(function(){
+	var t = examen(515), mdp = t.lire("MOT_DE_PASSE_SUDO"), ip = t.lire("IP_ASSAILLANT_EXAMEN");
+	function reussie(id){ t.lire("verifierExamen()"); return !!t.lire("state.examen.reussies." + id); }
+	t.taper("ls /var > ~/rapport/disque.txt");
+	verifier(!reussie("disque"), "disque : recopier ls /var ne suffit pas");
+	t.taper("echo /var/log > ~/rapport/disque.txt");
+	verifier(reussie("disque"), "disque : /var/log est accepté");
+	t.taper("grep " + ip + " /var/log/auth.log > ~/rapport/frappes.txt");
+	verifier(!reussie("frappes"), "frappes : recopier les lignes du journal ne suffit pas");
+	t.taper("grep " + ip + " /var/log/auth.log | wc -l > ~/rapport/frappes.txt");
+	verifier(reussie("frappes"), "frappes : le nombre seul est accepté");
+	t.taper("grep " + ip + " /var/log/auth.log > ~/rapport/chronique.txt");
+	verifier(!reussie("chronique"), "chronique : recopier toutes les lignes ne suffit pas");
+	t.taper("cat /etc/passwd > ~/rapport/ajout.txt");
+	verifier(!reussie("diff"), "diff : recopier /etc/passwd ne suffit pas");
+	t.taper("sudo chmod u-s /usr/local/lib/.passe-muraille", mdp);
+	verifier(reussie("suid"), "suid : chmod u-s est une bonne solution, comme rm");
+	t.lire("state.examen.dernierInstant = Date.now() + 10 * 60000");
+	t.taper("pwd");
+	verifier(t.lire("!!state.examen.horlogeRecul"), "un recul de l'horloge du poste est repéré");
+	var s = t.taper("kamikaze", "oui");
+	var c = s.split("Code de vérification, à remettre au formateur :")[1].split("\n")[1].trim();
+	contient(t.taper("verifier " + c), "L'horloge du poste a reculé", "verifier signale le recul de l'horloge");
+})();
+
 /* --- 3. La sauvegarde de l'examen garde l'avancée --- */
 verifier(!!jeu.stockage["terminus-cybersup-examen"], "l'épreuve a sa propre sauvegarde");
 var repris = monde.nouveauMonde(jeu.stockage);

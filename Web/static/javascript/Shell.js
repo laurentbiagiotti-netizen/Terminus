@@ -1044,8 +1044,11 @@ function joueurDans(lieu){
 
 Shell.supprimerLieu = function(r, cmd, recursif, io){
 	var lieu = r.node;
-	if (lieu.owner !== JOUEUR || lieu.id){
+	if (lieu.owner !== JOUEUR){
 		return cmd + " : impossible de supprimer « " + lieu.room_name + " » : ce lieu ne t'appartient pas.";
+	}
+	if (lieu.id){
+		return cmd + " : « " + lieu.room_name + " » fait partie du monde : il reste en place (seuls les dossiers que tu as créés se suppriment).";
 	}
 	if (joueurDans(lieu)){
 		return cmd + " : tu ne vas pas scier la branche sur laquelle tu es assis. Sors d'abord de " + lieu.room_name + ".";

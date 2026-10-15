@@ -658,9 +658,9 @@ EPREUVES_EXAMEN.push(
 	{ id: "journal", sceau: 5, points: 1, titre: "Tenir le journal de bord (~/rapport/journal.txt, daté)",
 	  fait: function(){ var t = texteRapport("journal.txt"); return t !== null && t.split("\n").filter(function(l){ return /^\s*\d+\s+\S/.test(l); }).length >= 5 && /\d\d:\d\d:\d\d/.test(t) && /20\d\d/.test(t); } },
 	{ id: "chronique", sceau: 5, points: 1, titre: "Dater la première et la dernière frappe de la Tour Noire",
-	  fait: function(){ var t = texteRapport("chronique.txt"), h = heuresDesFrappes(); return t !== null && t.indexOf(h.premiere) > -1 && t.indexOf(h.derniere) > -1; } },
+	  fait: function(){ var t = texteRapport("chronique.txt"), h = heuresDesFrappes(); return t !== null && t.indexOf(h.premiere) > -1 && t.indexOf(h.derniere) > -1 && lignesUtiles(t) <= 3; } },
 	{ id: "frappes", sceau: 5, points: 1, titre: "Compter les frappes de la Tour Noire (~/rapport/frappes.txt)",
-	  fait: function(){ var t = texteRapport("frappes.txt"); return t !== null && new RegExp("(^|\\D)" + heuresDesFrappes().nombre + "(\\D|$)").test(t); } },
+	  fait: function(){ var t = texteRapport("frappes.txt"); return t !== null && lignesUtiles(t) === 1 && new RegExp("^\\s*" + heuresDesFrappes().nombre + "(\\s|$)").test(t); } },
 	{ id: "preuves", sceau: 5, points: 1, titre: "Monter le dossier des preuves, copie scellée du journal",
 	  fait: function(){
 		var d = RapportExamen.getChildFromName("preuves");
@@ -671,7 +671,7 @@ EPREUVES_EXAMEN.push(
 	{ id: "identite", sceau: 5, points: 1, titre: "Décliner ton identité au registre (~/rapport/identite.txt)",
 	  fait: function(){ var t = texteRapport("identite.txt"); return t !== null && t.indexOf(JOUEUR) > -1 && t.indexOf("1000") > -1 && t.indexOf("forteresse") > -1; } },
 	{ id: "disque", sceau: 5, points: 1, titre: "Trouver ce qui pèse le plus sous /var (~/rapport/disque.txt)",
-	  fait: function(){ var t = texteRapport("disque.txt"); return t !== null && /\blog\b/.test(t); } },
+	  fait: function(){ var t = texteRapport("disque.txt"); return t !== null && /\blog\b/.test(t) && !/\b(www|registre)\b/.test(t); } },
 	{ id: "piege", sceau: 5, points: 1, titre: "Supprimer le dossier piège de Myriam dans /tmp",
 	  fait: function(){ return !FortTmp.children.some(function(c){ return c.room_name === "piege"; }); } },
 	{ id: "alias", sceau: 5, points: 1, titre: "Démasquer la commande qui ment, et te forger l'alias carte",
@@ -685,7 +685,7 @@ EPREUVES_EXAMEN.push(
 	{ id: "ping", sceau: 5, points: 1, titre: "Vérifier que le vrai Oracle répond (ping)",
 	  fait: function(){ return !!state.examen.oraclePing; } },
 	{ id: "diff", sceau: 5, points: 1, titre: "Trouver le compte ajouté cette nuit (diff, ~/rapport/ajout.txt)",
-	  fait: function(){ var t = texteRapport("ajout.txt"); return t !== null && t.indexOf("myriam:x:0:0") > -1; } },
+	  fait: function(){ var t = texteRapport("ajout.txt"); return t !== null && t.indexOf("myriam:x:0:0") > -1 && t.indexOf("root:x:0:0") === -1; } },
 	{ id: "trompette", sceau: 5, points: 1, titre: "Rendre sa trompette à Laurana (apt), et la faire sonner : Oyez",
 	  fait: function(){ return !!(state.paquets && state.paquets.cowsay) && !!state.examen.trompette; } }
 );
@@ -824,6 +824,8 @@ GameEvents.addListener("echo", function(ev){
 		C.gris("  " + qq.q.e) + "\n" + (z.reponses.length < z.ids.length ? "(Question suivante : cat Steve.)" : "(C'est fini : cat Steve pour le score.)"));
 });
 
+/* Le nombre de lignes non vides d'un texte : un rapport demande une réponse, pas un journal entier recopié. */
+function lignesUtiles(t){ return String(t || "").split("\n").filter(function(l){ return l.trim() !== ""; }).length; }
 function texteRapport(nom){ var f = RapportExamen.getItemFromName(nom); return f === -1 ? null : f.getText(); }
 function heuresDesFrappes(){
 	var lignes = AuthLogExamen.getText().split("\n").filter(function(l){ return l.indexOf(IP_ASSAILLANT_EXAMEN) > -1; });
@@ -1148,7 +1150,7 @@ function codeDiplomeExamen(){
 		malusErreursExamen() * 4, malusIndicesExamen() * 4, e.erreurs || 0, minutesExamen(),
 		(e.commandesFin !== undefined ? e.commandesFin : state.nbCommandes) - (e.commandesDebut || 0),
 		e.fin === "victoire" ? "V" : "K", masqueExamen(e.reussies), masqueExamen(e.defaites), masqueExamen(e.indices),
-		e.dateFin || dateDuJour(), PROFIL.graine, e.tajineTue ? "T" : "-", detailQuiz,
+		e.dateFin || dateDuJour(), PROFIL.graine, ((e.tajineTue ? "T" : "") + (e.horlogeRecul ? "H" : "")) || "-", detailQuiz,
 		noteGlobaleExamen() * 4, nbBadgesExamen(), masqueBadgesExamen(),
 		pa.minutes, pa.commandes, pa.reseau * 2, pa.cyber * 2, heureDebutExamen()].join("|");
 	var code = versBase64Url(charge) + "." + sommeDeControle(charge + "|" + SEL_DIPLOME);
@@ -1170,7 +1172,7 @@ function lireCodeExamen(code){
 		badgesGagnes: avecBadges ? bits(c[20], BADGES_DU_PARCOURS) : null,
 		parcours: avecParcours ? { minutes: +c[21], commandes: +c[22], reseau: +c[23] / 2, cyber: +c[24] / 2 } : null,
 		heureDebut: avecParcours ? c[25] : "",
-		prenom: c[1], note: +c[2] / q, base: +c[3] / q, bonus: +c[4] / q, malusErreurs: +c[5] / q, malusIndices: +c[6] / q, tajine: c[16] === "T",
+		prenom: c[1], note: +c[2] / q, base: +c[3] / q, bonus: +c[4] / q, malusErreurs: +c[5] / q, malusIndices: +c[6] / q, tajine: /T/.test(c[16] || ""), horlogeRecul: /H/.test(c[16] || ""),
 		erreurs: +c[7], minutes: +c[8], commandes: +c[9], fin: c[10], reussies: bits(c[11]), defaites: bits(c[12]), indices: bits(c[13]),
 		date: c[14], graine: +c[15], charge: charge, sceau: morceaux[2] ? morceaux[2].toUpperCase() : null,
 		quiz: (c[17] || "").split(",").filter(function(x){ return x; }).map(function(x){ var m = /^(\d+)([+\-.])([A-D]?)$/.exec(x); return m ? { id: +m[1], etat: m[2], lettre: m[3] } : null; }).filter(function(x){ return x; }) };
@@ -1424,6 +1426,7 @@ Shell.sorts.verifier = function(args, io){
 function controlesExamen(c, nb){
 	var a = [];
 	var sansQuiz = nb - (c.reussies[EPREUVES_EXAMEN.length - 1] ? 1 : 0);
+	if (c.horlogeRecul) a.push("L'horloge du poste a reculé pendant l'épreuve : le temps (et le bonus) ne sont pas fiables.");
 	if (c.minutes > 180) a.push("Copie rendue après les trois heures (" + dureeExamen(c.minutes) + ").");
 	if (nb >= 20 && c.minutes < 30) a.push(nb + " épreuves en " + dureeExamen(c.minutes) + " : bien trop rapide pour une épreuve de 3 heures.");
 	if (sansQuiz >= 5 && c.commandes < sansQuiz * 2) a.push("Seulement " + c.commandes + " commandes pour " + sansQuiz + " épreuves : chaque épreuve en demande au moins deux.");
@@ -1588,6 +1591,12 @@ Shell.tuyau = function(){
 var EXECUTER_HORS_EXAMEN = Shell.executer;
 Shell.executer = function(ligne){
 	Shell.ligneRateeExamen = false;
+	// L'horloge du poste ne doit jamais reculer pendant l'épreuve : un recul de plus de deux minutes est noté dans le code.
+	if (examenEnCours() && !state.examen.fini){
+		var maintenant = Date.now(), e0 = state.examen;
+		if (e0.dernierInstant && maintenant < e0.dernierInstant - 120000) e0.horlogeRecul = true;
+		e0.dernierInstant = Math.max(e0.dernierInstant || 0, maintenant);
+	}
 	if (examenEnCours() && /(^|[|;&]\s*)(sudo\s+)?(ps|top)\b/.test(String(ligne || ""))) state.examen.psVu = true;
 	var r = EXECUTER_HORS_EXAMEN.apply(this, arguments);
 	if (examenEnCours() && !state.examen.fini && current_room === QuartiersRecrue && /^\s*(ls|ll)(\s+-\w+)*\s*(\.\/?|~\/?)?\s*$/.test(String(ligne || ""))){
