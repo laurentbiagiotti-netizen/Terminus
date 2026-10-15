@@ -263,6 +263,56 @@ Object.defineProperty(ElfeAidan.cmd_text, "less", { get: function(){
 ElfeAidan.owner = "aidan";
 QuartiersRecrue.addItem(ElfeAidan);
 
+/* Florimond, le barde de la Taverne du Pingouin Manchot (chapitre 1), a suivi la recrue jusqu'à la Forteresse.
+   Il raconte l'histoire de l'épreuve, et ne la raconte jamais deux fois pareil : le fond reste juste,
+   les détails enflent à chaque couplet. */
+var VERSIONS_DU_BARDE = [
+	"« Écoute, recrue, la ballade de la Forteresse ! Il était une fois le Sorcier Noir, que tu as vaincu à Terminus le jour de ta rentrée. " +
+	"Il a rendu sa robe noire, et on l'appelle désormais Laurent, le Mage Rouxblanc, gardien des diplômes. " +
+	"Cette nuit, la sorcière Myriam, sa vieille rivale, a volé la robe et pris la Forteresse. Avec elle : Dylan le Saltimbanque, qui écoute aux portes, " +
+	"et David, l'ogre des steppes, qui crie tout au guichet. Laurana, le héraut, a voulu l'arrêter : la voilà changée en pierre. " +
+	"Six sceaux tiennent la Forteresse. Tu as trois heures pour les briser. Fin. Applaudissements. »",
+	"« Ah, l'histoire ? Elle a commencé par une nuit sans lune. Ou avec une lune. Avec deux lunes, tiens, c'est plus joli. " +
+	"La sorcière Myriam est entrée dans la Forteresse avec une armée de mille saltimbanques. Bon. Un seul : Dylan. Mais il fait des cabrioles pour mille. " +
+	"Elle a changé Laurana en pierre, enfermé le Mage Rouxblanc dehors, et posé six sceaux sur la Forteresse. " +
+	"Le Mage n'a pu glisser qu'un ordre de mission sous ta porte, ici, dans tes quartiers. Caché, évidemment : un mage ne fait rien simplement. »",
+	"« Je la chante en trois couplets. Premier couplet : Laurent était le Sorcier Noir, il est devenu le Mage Rouxblanc, il a gardé le sens du spectacle. " +
+	"Deuxième couplet : Myriam a volé sa robe, pris la Forteresse, mis David l'ogre au guichet et Dylan sur un port que personne n'explique. " +
+	"Troisième couplet : toi, trois heures, six sceaux, et Steve qui t'attend sur son plateau de /dev/random avec des questions et des blagues. " +
+	"Il y avait un quatrième couplet, mais Aidan l'a mangé. »",
+	"« On raconte dans les tavernes que Myriam a pris la Forteresse en une seule commande. D'autres disent douze. Moi je dis : peu importe, " +
+	"c'est toi qui vas la reprendre, une commande à la fois. Le Mage Rouxblanc, l'ancien Sorcier Noir que tu as battu, t'a choisi parce que ton compte était trop neuf pour la liste de Myriam. " +
+	"Laurana la Flamboyante est en pierre dans sa Tour, Manon tient le registre dans le grand hall, et les fidèles du Mage t'attendent un peu partout. " +
+	"Commence par la carte, dit la légende. La légende, c'est moi : tree /. »",
+	"« Version courte, pour les recrues pressées : sorcière, robe volée, Forteresse prise, héraut en pierre, six sceaux, trois heures. " +
+	"Version longue : la même, mais avec un luth. » Il gratte trois accords. « Version très longue : Dylan le Saltimbanque esquive les coups polis, David l'ogre mange des Galettes du Roi Gras, " +
+	"Jean-Baptiste attend qu'on réponde à sa colle, Gabriel et Cheb Timour surveillent les processus et un tajine. Et le Mage Rouxblanc, dehors, fait les cent pas. »",
+	"« Cette fois, je te la raconte du point de vue de Myriam. Hum. \"Ce Laurent m'agace avec ses airs de mage. Je lui prends sa Forteresse, je pétrifie son héraut, " +
+	"je mets mon ogre au guichet et mon acrobate sur écoute. Personne ne trouvera mes six sceaux.\" " +
+	"Sauf toi, évidemment. Elle n'avait pas prévu les recrues de Cybersup. Personne ne les prévoit jamais. »"
+];
+var derniereVersionDuBarde = -1;
+var BardeExamen = new Item("Barde", "", "item_florimond.gif").personnage();
+Object.defineProperty(BardeExamen.cmd_text, "less", { get: function(){
+	var i;
+	do { i = Math.floor(Math.random() * VERSIONS_DU_BARDE.length); } while (i === derniereVersionDuBarde && VERSIONS_DU_BARDE.length > 1);
+	derniereVersionDuBarde = i;
+	var e = typeof state !== "undefined" && state && state.examen;
+	var brises = e ? Object.keys(NOMS_DES_SCEAUX).filter(function(s){
+		var liste = EPREUVES_EXAMEN.filter(function(ep){ return ep.sceau === +s; });
+		return liste.every(function(ep){ return e.reussies[ep.id]; });
+	}).length : 0;
+	var suite = !e ? "" : e.fini ? "\n\n« Et la suite, tu la connais : c'est toi qui l'as écrite. Je vais en faire une chanson. Elle sera fausse, mais belle. »" :
+		brises === 0 ? "\n\n« La fin ? Elle n'est pas encore écrite. Aucun sceau n'est brisé. Va, je compose en attendant. »" :
+		"\n\n« Et voilà qu'une recrue a déjà brisé " + brises + (brises > 1 ? " sceaux" : " sceau") + " sur six ! Je rajoute un couplet. Puis un autre. »";
+	return "Florimond, le barde de la Taverne du Pingouin Manchot, assis sur ta malle, son luth sur les genoux. Il t'a suivi depuis Terminus " +
+		"« pour l'histoire », dit-il. Il la raconte à qui veut l'entendre, et jamais deux fois de la même façon.\n\n" +
+		VERSIONS_DU_BARDE[i] + suite +
+		"\n\n(Le fond est vrai, les détails varient. La version officielle : l'ordre de mission caché dans tes quartiers.)";
+}, set: function(){}, enumerable: true, configurable: true });
+BardeExamen.owner = "root";
+QuartiersRecrue.addItem(BardeExamen);
+
 /* David, l'ogre des steppes : il garde /tmp en dévorant les Galettes du Roi Gras de la Taverne aux Arches d'Or. Il ne donne aucune piste non plus. */
 var REPLIQUES_DE_DAVID = [
 	"« GROUMF. Galette. » Il te tend un cornet de frites dorées, puis se ravise et le mange.",
@@ -978,7 +1028,7 @@ var TEXTE_ENTREE_EXAMEN =
 	"Tu as appris le terminal à Terminus, réparé le réseau avec Radia, traqué l'intrus avec Grace.\n" +
 	"Cette fois, personne ne te guidera. Sauf, peut-être, Aidan, l'elfe aux pieds poilus enfermé avec toi. Mais non.\n" +
 	"Ton ordre de mission est caché dans tes quartiers. Trouve-le.\n\n" +
-	"Pour commencer, regarde la carte de la Forteresse : tree /";
+	"Pour commencer, regarde la carte de la Forteresse : tree /. Et si tu veux l'histoire en chanson, Florimond le barde est assis sur ta malle : cat Barde.";
 
 TEXTE_ENTREE_EXAMEN = TEXTE_ENTREE_EXAMEN.replace(/([^\n])\n(?=[^\n])/g, "$1 ");
 
@@ -1594,7 +1644,7 @@ Shell.sorts.pwd = function(args, io){
 /* Les rencontres : la première fois qu'on entre là où vit un personnage, son portrait s'affiche et il se présente. */
 var RENCONTRES_EXAMEN = [
 	{ id: "aidan", lieu: function(){ return null; }, image: "item_elfe.gif", nom: "Aidan, l'elfe aux pieds de hobbit",
-	  texte: "Sous le lit de camp, deux grands pieds poilus remuent. Aidan, l'elfe rigolo, enfermé avec toi. (cat Aidan)" },
+	  texte: "Sous le lit de camp, deux grands pieds poilus remuent. Aidan, l'elfe rigolo, enfermé avec toi. Et sur ta malle, un barde accorde son luth : Florimond, qui jure connaître toute l'histoire. (cat Aidan, cat Barde)" },
 	{ id: "manon", lieu: function(){ return Forteresse; }, image: "item_manon.gif", nom: "Manon la Châtelaine",
 	  texte: "Dans le grand hall, une femme au trousseau de clés note tout dans un registre : Manon la Châtelaine. (cat Manon)" },
 	{ id: "wissam", lieu: function(){ return FortHome; }, image: "item_wissam.gif", nom: "Wissam le Sage",

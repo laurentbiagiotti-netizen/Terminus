@@ -50,6 +50,12 @@ var ip = jeu.lire("IP_ASSAILLANT_EXAMEN");
 var mot = jeu.lire("MOT_DE_MYRIAM");
 var pid = jeu.lire("PID_OREILLE");
 contient(jeu.taper("pwd"), "/home/", "pwd dans les quartiers");
+(function(){
+	var b1 = jeu.taper("cat Barde"), b2 = jeu.taper("cat Barde"), b3 = jeu.taper("cat Barde");
+	contient(b1, "Florimond", "le barde des quartiers raconte l'histoire");
+	verifier(b1 !== b2 && b2 !== b3, "le barde ne raconte jamais deux fois de suite la même version");
+	verifier([b1, b2, b3].every(function(t){ return /Myriam|sorcière/.test(t); }), "chaque version parle de Myriam");
+})();
 contient(jeu.taper("cat /Manon"), "tes badges de compétence, ceux de ton parcours : " + TOUS_LES_BADGES.length, "Manon recopie les badges");
 contient(jeu.taper("indice 4", "non"), "0,25 point", "un indice se paie, et se confirme");
 verifier(jeu.lire("nbIndicesExamen()") === 0, "non : pas d'indice pris");

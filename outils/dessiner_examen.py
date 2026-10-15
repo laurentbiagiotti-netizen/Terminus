@@ -245,7 +245,7 @@ def dylan():
 # Aidan, l'elfe rigolo
 # ------------------------------------------------------------------
 
-def steve():
+def aidan():
     """Aidan, l'elfe rigolo : immenses oreilles, bonnet à grelot qui retombe, grand sourire, pieds nus poilus de hobbit, un panneau HA HA."""
     im, d = toile()
     # les jambes en collant rayé et les grands pieds nus, poilus comme ceux d'un hobbit
@@ -871,8 +871,77 @@ def steve():
     return im
 
 
-DESSINS = {"item_myriam.gif": myriam, "item_dylan.gif": dylan, "item_elfe.gif": steve, "item_rouxblanc.gif": rouxblanc, "item_david.gif": david, "item_laurana.gif": laurana,
-    "item_manon.gif": manon, "item_wissam.gif": wissam, "item_jeanbaptiste.gif": jeanbaptiste, "item_gabriel.gif": gabriel, "item_timour.gif": timour, "item_steve.gif": steve}
+def florimond():
+    """Florimond, le barde de la Taverne : chapeau à large bord et longue plume, boucles, bouche ouverte qui chante,
+    pourpoint à crevés, cape, un luth en travers, et des notes qui s'envolent."""
+    im, d = toile()
+    # la cape, derrière
+    cape = [(52, 78), (124, 78), (136, 158), (40, 158)]
+    d.polygon(cape, fill=V)
+    tramer(d, 40, 120, 136, 158, c=N, pas=3, test=dans_polygone(cape))
+    for pts in ([(56, 90), (46, 156)], [(120, 90), (130, 156)]):
+        pli(d, pts)
+    # les jambes en collants rayés et les bottes à revers
+    for x in (72, 94):
+        d.rectangle([x, 124, x + 10, 150], fill=B)
+        for y in range(126, 150, 4):
+            d.line([(x, y), (x + 10, y)], fill=V)
+        d.polygon([(x - 2, 148), (x + 12, 148), (x + 16, 160), (x - 2, 160)], fill=N, outline=B)
+        d.rectangle([x - 2, 146, x + 12, 149], fill=B)
+    # le pourpoint à crevés
+    pour = [(64, 78), (112, 78), (116, 126), (60, 126)]
+    d.polygon(pour, fill=B, outline=N)
+    for x in (70, 80, 90, 100, 108):
+        d.line([(x, 82), (x - 1, 124)], fill=V, width=3)
+    d.rectangle([60, 112, 116, 117], fill=N)
+    d.rectangle([84, 111, 92, 118], fill=B, outline=N)
+    # le col en dentelle
+    for k in range(7):
+        d.ellipse([66 + 6 * k, 72, 74 + 6 * k, 80], fill=B, outline=N)
+    # le visage qui chante
+    d.ellipse([72, 36, 104, 72], fill=B)
+    yeux(d, 88, 51, ecart=7, sourcils=-1)
+    d.line([(88, 54), (86, 59), (89, 59)], fill=N)
+    d.ellipse([83, 61, 93, 69], fill=N)
+    d.chord([84, 64, 92, 70], 0, 180, fill=V)
+    d.point([(77, 60), (99, 60)], fill=V)
+    # les boucles
+    for x, y in ((68, 46), (66, 56), (70, 64), (106, 46), (108, 56), (104, 64)):
+        d.ellipse([x - 5, y - 5, x + 5, y + 5], fill=V, outline=N)
+        d.arc([x - 3, y - 3, x + 3, y + 3], 0, 270, fill=N)
+    # le chapeau à large bord et sa plume
+    d.ellipse([58, 32, 118, 44], fill=V, outline=N)
+    d.chord([70, 16, 106, 48], 180, 360, fill=V, outline=N)
+    d.rectangle([71, 30, 105, 34], fill=B)
+    plume = [(100, 30), (126, 6), (140, 2), (128, 14), (106, 32)]
+    d.polygon(plume, fill=B, outline=N)
+    for k in range(5):
+        d.line([(106 + 6 * k, 28 - 5 * k), (110 + 6 * k, 22 - 5 * k)], fill=N)
+    # le luth, en travers, et la main qui gratte
+    d.ellipse([86, 88, 126, 124], fill=V, outline=N)
+    d.ellipse([90, 92, 122, 120], outline=N)
+    d.ellipse([102, 100, 112, 110], fill=N)
+    d.polygon([(110, 98), (148, 66), (152, 70), (116, 104)], fill=B, outline=N)
+    d.polygon([(146, 62), (158, 52), (162, 58), (152, 70)], fill=V, outline=N)
+    for k in range(3):
+        d.point([(152 + 3 * k, 56 + 2 * k)], fill=B)
+    for k in range(3):
+        d.line([(100 + k * 2, 112 - k * 2), (148 + k, 68 + k)], fill=N)
+    d.ellipse([64, 96, 76, 108], fill=B, outline=N)
+    d.line([(76, 102), (98, 106)], fill=N)
+    d.ellipse([94, 106, 104, 114], fill=B, outline=N)
+    # les notes qui s'envolent
+    for x, y in ((26, 40), (40, 24), (150, 92), (24, 74)):
+        d.ellipse([x, y + 8, x + 6, y + 13], fill=B)
+        d.line([(x + 6, y), (x + 6, y + 10)], fill=B)
+        d.line([(x + 6, y), (x + 11, y + 3)], fill=B)
+    etincelle(d, 150, 120, 2); etincelle(d, 30, 110, 3)
+    sol(d, 30, 150, 163)
+    return im
+
+
+DESSINS = {"item_myriam.gif": myriam, "item_dylan.gif": dylan, "item_elfe.gif": aidan, "item_rouxblanc.gif": rouxblanc, "item_david.gif": david, "item_laurana.gif": laurana,
+    "item_manon.gif": manon, "item_wissam.gif": wissam, "item_jeanbaptiste.gif": jeanbaptiste, "item_gabriel.gif": gabriel, "item_timour.gif": timour, "item_steve.gif": steve, "item_florimond.gif": florimond}
 
 if __name__ == "__main__":
     noms = sys.argv[1:] or list(DESSINS)

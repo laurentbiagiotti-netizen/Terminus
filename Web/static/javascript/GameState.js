@@ -1047,7 +1047,7 @@ GameState.prototype.texteDuDiplome = function(){
 };
 
 
-/* Le code qui résume la partie : le formateur le vérifie sur la page de classement. */
+/* Le code qui résume la partie : le formateur le vérifie avec verifier CODE. */
 GameState.prototype.codeDuDiplome = function(){
 	var f = this.compteursFiges(1, this.xpNet(), this.nbCommandes, Math.round(this.tempsMs / 60000));
 	return fabriquerCode({

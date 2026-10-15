@@ -109,8 +109,8 @@ function graineDe(sel){
 
 /*
  * Le diplôme porte un code qui résume la partie (prénom, score, note, temps...)
- * et une somme de contrôle. Le formateur colle le code dans la page de
- * classement, qui le décode et vérifie qu'il n'a pas été retouché.
+ * et une somme de contrôle. Le formateur le passe dans verifier CODE (dans
+ * n'importe quelle partie), qui le décode et vérifie qu'il n'a pas été retouché.
  * Ce n'est pas un coffre-fort : le jeu est public et son code aussi. Mais cela
  * suffit à repérer une capture d'écran trafiquée.
  */
