@@ -264,11 +264,11 @@ ElfeAidan.owner = "aidan";
 QuartiersRecrue.addItem(ElfeAidan);
 
 /* Florimond, le barde de la Taverne du Pingouin Manchot (chapitre 1), a suivi la recrue jusqu'à la Forteresse.
-   Il raconte l'histoire de l'épreuve, et ne la raconte jamais deux fois pareil : le fond reste juste,
+   Il raconte l'histoire de l'épreuve, jamais deux fois de suite de la même façon : le fond reste juste,
    les détails enflent à chaque couplet. */
 var VERSIONS_DU_BARDE = [
 	"« Écoute, recrue, la ballade de la Forteresse ! Il était une fois le Sorcier Noir, que tu as vaincu à Terminus le jour de ta rentrée. " +
-	"Il a rendu sa robe noire, et on l'appelle désormais Laurent, le Mage Rouxblanc, gardien des diplômes. " +
+	"C'était Laurent. Il a rendu sa robe noire, et on l'appelle désormais le Mage Rouxblanc, gardien des diplômes. " +
 	"Cette nuit, la sorcière Myriam, sa vieille rivale, a volé la robe et pris la Forteresse. Avec elle : Dylan le Saltimbanque, qui écoute aux portes, " +
 	"et David, l'ogre des steppes, qui crie tout au guichet. Laurana, le héraut, a voulu l'arrêter : la voilà changée en pierre. " +
 	"Six sceaux tiennent la Forteresse. Tu as trois heures pour les briser. Fin. Applaudissements. »",
@@ -398,11 +398,11 @@ var ManonChatelaine = personnageExamen(Forteresse, "Manon", "item_manon.gif", fu
 	var sceaux = Object.keys(NOMS_DES_SCEAUX).map(Number).map(function(s){
 		var liste = EPREUVES_EXAMEN.filter(function(ep){ return ep.sceau === s; });
 		var faites = liste.filter(function(ep){ return e.reussies[ep.id]; }).length;
-		return "  " + completerDroite(NOMS_DES_SCEAUX[s], 24) + faites + " sur " + liste.length + (faites === liste.length ? "  brisé" : "");
+		return "  " + completerDroite(NOMS_DES_SCEAUX[s], 22) + faites + "/" + liste.length + (faites === liste.length ? " brisé" : "");
 	});
 	var m = minutesExamen();
-	var horloge = m < BONUS_DEUX_POINTS ? "Il reste " + dureeExamen(BONUS_DEUX_POINTS - m) + " pour gagner le bonus de +2 (tout fini en moins de " + dureeExamen(BONUS_DEUX_POINTS) + ")." :
-		(m < BONUS_UN_POINT ? "Le bonus de +2 est passé ; il reste " + dureeExamen(BONUS_UN_POINT - m) + " pour le +1." :
+	var horloge = m <= BONUS_DEUX_POINTS ? "Il reste " + dureeExamen(BONUS_DEUX_POINTS - m) + " pour gagner le bonus de +2 (tout fini en " + dureeExamen(BONUS_DEUX_POINTS) + " au plus)." :
+		(m <= BONUS_UN_POINT ? "Le bonus de +2 est passé ; il reste " + dureeExamen(BONUS_UN_POINT - m) + " pour le +1." :
 		(m < 180 ? "Plus de bonus de temps, mais il reste " + dureeExamen(180 - m) + " sur les trois heures." : "Les trois heures sont passées. Le Mage attend ta copie."));
 	return debut + "« Myriam a déchiré mon registre cette nuit. Le cinquième sceau, c'est toi qui le rempliras : ton journal, tes preuves,\n" +
 		"ton nom, tout ce qu'un administrateur doit savoir faire dès sa première année. Voici ce que j'ai déjà noté.\n\n" + sceaux.join("\n") + "\n\n" +
@@ -459,7 +459,7 @@ var JeanBaptiste = personnageExamen(FortEtc, "Jean-Baptiste", "item_jeanbaptiste
 		"Réponds-moi ici, à voix haute : echo TA_REPONSE. Une erreur ne te coûte rien d'autre qu'une fausse manœuvre. »";
 });
 GameEvents.addListener("echo", function(ev){
-	if (!examenEnCours() || ev.room !== FortEtc || state.examen.colleJB) return;
+	if (!examenEnCours() || ev.room !== FortEtc || state.examen.colleJB || state.examen.fini) return;
 	var dit = String(ev.text || "").trim();
 	if (!/^\d+\.\d+\.\d+\.\d+$/.test(dit)) return;
 	if (dit === COLLE_DE_JEAN_BAPTISTE.reponse){
@@ -530,14 +530,14 @@ TourProclamations.addItem(StatueLaurana);
 /* Libérée, Laurana fait ce qu'elle sait faire : communiquer. Elle donne le communiqué de la Forteresse (ce qui reste, et où),
    et, à la fin, elle porte ton diplôme et son code jusqu'au formateur. */
 var LIEUX_DES_EPREUVES = {
-	ordre: "tes quartiers", assaillant: "les journaux, /var/log", rempart: "ton arsenal", fragment: "les archives, sous /srv",
-	oracle: "la configuration, /etc", mairie: "la Mairie, /etc/dhcp", telnet: "les services (systemctl)", nginx: "les services (systemctl)",
-	gardien: "les gardiens, /opt/gardiens", signature: "le gardien ensorcelé", suid: "les programmes du système", oreille: "les ports et les processus",
-	cle: "les quartiers de root", proclamation: "la Tour, /var/www, et les sauvegardes", sortilege: "les tâches planifiées des comptes (crontab)",
-	uid0: "les comptes, /etc", droits: "le balcon de la Tour, /var/www/html", hosts: "le registre local des noms, /etc",
-	journal: "ton historique", chronique: "les journaux, /var/log", frappes: "les journaux, /var/log", preuves: "ton rapport, ~/rapport",
-	identite: "toi-même", disque: "la place prise sur le disque", piege: "/tmp", alias: "tes propres commandes", maitre: "ton environnement",
-	balcon: "tes quartiers", passwd: "ton compte", ping: "le réseau", diff: "les sauvegardes, /srv", trompette: "les paquets (apt)", quiz: "le plateau, /dev/random"
+	ordre: "de tes quartiers", assaillant: "des journaux, /var/log", rempart: "de ton arsenal", fragment: "des archives, sous /srv",
+	oracle: "de la configuration, /etc", mairie: "de la Mairie, /etc/dhcp", telnet: "des services (systemctl)", nginx: "des services (systemctl)",
+	gardien: "des gardiens, /opt/gardiens", signature: "du gardien ensorcelé", suid: "des programmes du système", oreille: "des ports et des processus",
+	cle: "des quartiers de root", proclamation: "de la Tour, /var/www, et des sauvegardes", sortilege: "des tâches planifiées des comptes (crontab)",
+	uid0: "des comptes, /etc", droits: "du balcon de la Tour, /var/www/html", hosts: "du registre local des noms, /etc",
+	journal: "de ton historique", chronique: "des journaux, /var/log", frappes: "des journaux, /var/log", preuves: "de ton rapport, ~/rapport",
+	identite: "de toi-même", disque: "de la place prise sur le disque", piege: "de /tmp", alias: "de tes propres commandes", maitre: "de ton environnement",
+	balcon: "de tes quartiers", passwd: "de ton compte", ping: "du réseau", diff: "des sauvegardes, /srv", trompette: "des paquets (apt)", quiz: "du plateau, /dev/random"
 };
 function communiqueDeLaurana(){
 	var e = state.examen;
@@ -547,7 +547,7 @@ function communiqueDeLaurana(){
 		"Je ne ferai pas ton travail, le Mage l'a interdit. Mais communiquer, c'est mon métier. Voici le communiqué de la Forteresse : »", ""];
 	if (!reste.length) lignes.push("  « Tout est accompli. Il ne reste qu'à proclamer ton nom. »");
 	reste.forEach(function(ep){
-		lignes.push("  · " + completerDroite(CHIFFRES_ROMAINS[EPREUVES_EXAMEN.indexOf(ep)] + ".", 9) + ep.titre + C.gris("  (du côté de " + LIEUX_DES_EPREUVES[ep.id] + ")"));
+		lignes.push("  · " + completerDroite(CHIFFRES_ROMAINS[EPREUVES_EXAMEN.indexOf(ep)] + ".", 9) + ep.titre + C.gris("  (du côté " + LIEUX_DES_EPREUVES[ep.id] + ")"));
 	});
 	lignes.push("", "« Et quand tu auras fini, ou rendu ta copie, je porterai ton diplôme et son code au formateur : je l'écrirai aussi dans",
 		"~/rapport/diplome.txt, pour que tu n'aies qu'à le recopier. »");
@@ -593,9 +593,19 @@ function couler(texte){ return String(texte).replace(/([^\n])\n(?=[^\n ])/g, "$1
 	parcourir(Forteresse);
 })();
 
+/* Le texte qu'un service lit vraiment dans un fichier de configuration : sans les commentaires (# jusqu'au bout de la ligne)
+   ni les lignes vides. On le relit par son nom, pas par l'objet d'origine : un fichier corrigé à part puis remis en place
+   avec sudo mv (ou cp) remplace l'original, et c'est bien lui que le service lira. null si le fichier n'est plus là. */
+function texteActifExamen(lieu, nom){
+	var f = lieu.getItemFromName(nom);
+	if (f === -1) return null;
+	return f.getText().split("\n").map(function(l){ return l.replace(/#.*$/, ""); }).filter(function(l){ return l.trim() !== ""; }).join("\n");
+}
+
 /* La plage de la Mairie : null si elle est juste, sinon la plainte du serveur. */
 function verdictDhcpExamen(){
-	var texte = DhcpdExamen.getText();
+	var texte = texteActifExamen(FortDhcp, "dhcpd.conf");
+	if (texte === null) return "Can't open /etc/dhcp/dhcpd.conf: No such file or directory";
 	var s = /subnet\s+(\d+\.\d+\.\d+\.\d+)\s+netmask\s+(\d+\.\d+\.\d+\.\d+)/.exec(texte);
 	if (!s || s[1] !== "10.0.97.0" || s[2] !== "255.255.255.192") return "No subnet declaration for eth0 (" + IP_FORTERESSE + ").";
 	var r = /range\s+(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)\s*;/.exec(texte);
@@ -609,7 +619,7 @@ function verdictDhcpExamen(){
 }
 
 /* ------------------------------------------------------------------ */
-/* Les trente-deux épreuves                                            */
+/* Les trente-trois épreuves                                           */
 /* ------------------------------------------------------------------ */
 
 var EPREUVES_EXAMEN = [
@@ -622,7 +632,7 @@ var EPREUVES_EXAMEN = [
 	{ id: "fragment", sceau: 1, points: 1, titre: "Retrouver le fragment-du-sceau caché par Aidan",
 	  fait: function(){ return RapportExamen.hasItem(FragmentDuSceau); } },
 	{ id: "oracle", sceau: 2, points: 2, titre: "Rendre à la Forteresse le vrai Oracle des Noms",
-	  fait: function(){ var t = ResolvExamen.getText(); return new RegExp("^\\s*nameserver\\s+" + IP_VRAI_ORACLE.replace(/\./g, "\\.") + "\\s*$", "m").test(t) && t.indexOf(IP_FAUX_ORACLE) === -1; } },
+	  fait: function(){ var t = texteActifExamen(FortEtc, "resolv.conf"); return t !== null && new RegExp("^\\s*nameserver\\s+" + IP_VRAI_ORACLE.replace(/\./g, "\\.") + "\\s*$", "m").test(t) && t.indexOf(IP_FAUX_ORACLE) === -1; } },
 	{ id: "mairie", sceau: 2, points: 2, titre: "Corriger la plage de la Mairie (DHCP) et la rouvrir",
 	  fait: function(){ return verdictDhcpExamen() === null && servicePanne("forteresse", "isc-dhcp-server").actif; } },
 	{ id: "telnet", sceau: 2, points: 1, titre: "Fermer pour de bon le guichet bavard de David (telnet)",
@@ -638,25 +648,25 @@ var EPREUVES_EXAMEN = [
 	{ id: "oreille", sceau: 3, points: 2, titre: "Faire tomber Dylan le Saltimbanque (le port qui écoute)",
 	  fait: function(){ return !Forteresse.procs.some(function(p){ return p.pid === PID_OREILLE; }); } },
 	{ id: "cle", sceau: 3, points: 2, titre: "Retirer la clé de Myriam chez root, et seulement elle",
-	  fait: function(){ var t = AuthorizedKeysExamen.getText(); return t.indexOf("myriam@tour-noire") === -1 && t.indexOf(CLE_LAURENT_EXAMEN) > -1 && t.indexOf(CLE_ADMIN_EXAMEN) > -1; } },
+	  fait: function(){ var t = texteActifExamen(FortRootSsh, "authorized_keys"); return t !== null && t.indexOf("myriam@tour-noire") === -1 && t.indexOf(CLE_LAURENT_EXAMEN) > -1 && t.indexOf(CLE_ADMIN_EXAMEN) > -1; } },
 	{ id: "proclamation", sceau: 4, points: 2, titre: "Restaurer la proclamation de Laurana depuis la sauvegarde",
 	  fait: function(){ var f = proclamationAffichee(); return f !== null && f.getText().trim() === PROCLAMATION_LAURANA.trim(); } },
 	{ id: "sortilege", sceau: 4, points: 2, titre: "Briser le sortilège qui revient chaque minute (cron)",
 	  fait: function(){ return !sortilegeActif(); } },
 	{ id: "uid0", sceau: 4, points: 2, titre: "Retirer à Myriam son compte aux pouvoirs de root (UID 0)",
 	  fait: function(){
-		var lignes = PasswdExamen.getText().split("\n").filter(function(l){ return l.trim() !== ""; });
+		var lignes = String(texteActifExamen(FortEtc, "passwd") || "").split("\n").filter(function(l){ return l.trim() !== ""; });
 		var zero = lignes.filter(function(l){ return l.split(":")[2] === "0"; }).map(function(l){ return l.split(":")[0]; });
 		return zero.length === 1 && zero[0] === "root" && lignes.some(function(l){ return l.split(":")[0] === JOUEUR; });
 	  } },
 	{ id: "droits", sceau: 4, points: 1, titre: "Rendre la proclamation lisible par toute la ville",
 	  fait: function(){ var f = proclamationAffichee(); return f !== null && f.owner !== "myriam" && f.mode.charAt(6) === "r" && f.getText().trim() === PROCLAMATION_LAURANA.trim(); } },
 	{ id: "hosts", sceau: 4, points: 1, titre: "Ne plus envoyer les passants de la Tour vers la Tour Noire",
-	  fait: function(){ var t = HostsExamen.getText(); return t.indexOf(IP_ASSAILLANT_EXAMEN) === -1 && t.indexOf(IP_VRAI_ORACLE) > -1; } }
+	  fait: function(){ var t = texteActifExamen(FortEtc, "hosts"); return t !== null && t.indexOf(IP_ASSAILLANT_EXAMEN) === -1 && t.indexOf(IP_VRAI_ORACLE) > -1; } }
 ];
 EPREUVES_EXAMEN.push(
 	{ id: "journal", sceau: 5, points: 1, titre: "Tenir le journal de bord (~/rapport/journal.txt, daté)",
-	  fait: function(){ var t = texteRapport("journal.txt"); return t !== null && t.split("\n").filter(function(l){ return /^\s*\d+\s+\S/.test(l); }).length >= 5 && /\d\d:\d\d:\d\d/.test(t) && /20\d\d/.test(t); } },
+	  fait: function(){ var t = texteRapport("journal.txt"); return t !== null && t.split("\n").filter(function(l){ return /^\s*\d+\s+\S/.test(l); }).length >= 5 && /20\d\d/.test(t) && (/\d\d:\d\d:\d\d/.test(t) || /\b20\d\d-\d\d-\d\d\b/.test(t) || /\b\d\d?\/\d\d?\/20\d\d\b/.test(t)); } },
 	{ id: "chronique", sceau: 5, points: 1, titre: "Dater la première et la dernière frappe de la Tour Noire",
 	  fait: function(){ var t = texteRapport("chronique.txt"), h = heuresDesFrappes(); return t !== null && t.indexOf(h.premiere) > -1 && t.indexOf(h.derniere) > -1 && lignesUtiles(t) <= 3; } },
 	{ id: "frappes", sceau: 5, points: 1, titre: "Compter les frappes de la Tour Noire (~/rapport/frappes.txt)",
@@ -671,11 +681,11 @@ EPREUVES_EXAMEN.push(
 	{ id: "identite", sceau: 5, points: 1, titre: "Décliner ton identité au registre (~/rapport/identite.txt)",
 	  fait: function(){ var t = texteRapport("identite.txt"); return t !== null && t.indexOf(JOUEUR) > -1 && t.indexOf("1000") > -1 && t.indexOf("forteresse") > -1; } },
 	{ id: "disque", sceau: 5, points: 1, titre: "Trouver ce qui pèse le plus sous /var (~/rapport/disque.txt)",
-	  fait: function(){ var t = texteRapport("disque.txt"); return t !== null && /\blog\b/.test(t) && !/\b(www|registre)\b/.test(t); } },
+	  fait: function(){ var t = texteRapport("disque.txt"); return t !== null && lignesUtiles(t) === 1 && /^\s*(\d+[KMG]?\s+)?(\/?var\/)?log\/?\s*$/m.test(t.trim()); } },
 	{ id: "piege", sceau: 5, points: 1, titre: "Supprimer le dossier piège de Myriam dans /tmp",
 	  fait: function(){ return !FortTmp.children.some(function(c){ return c.room_name === "piege"; }); } },
 	{ id: "alias", sceau: 5, points: 1, titre: "Démasquer la commande qui ment, et te forger l'alias carte",
-	  fait: function(){ var a = state.alias || {}; return !a.ps && !!a.carte && a.carte.indexOf("tree") > -1; } },
+	  fait: function(){ var a = state.alias || {}; return !a.ps && !!a.carte && /^\s*tree\b.*\s\/(\s|$)/.test(a.carte); } },
 	{ id: "maitre", sceau: 5, points: 1, titre: "Rendre au Mage sa place dans ton environnement (MAITRE)",
 	  fait: function(){ return String((state.env && state.env.MAITRE) || "").toLowerCase() === "rouxblanc"; } },
 	{ id: "balcon", sceau: 5, points: 1, titre: "Tracer dans tes quartiers un raccourci vers le balcon de la Tour",
@@ -793,6 +803,11 @@ function texteDeSteve(){
 		"Myriam adore mon émission : elle m'a confié son sixième sceau. Il ne se brise qu'en jouant, et il se brise même avec zéro. »\n\n" +
 		C.gris("« Et pour détendre l'atmosphère : " + blagueDeSteve(e && e.quiz ? e.quiz.reponses.length * 5 + (state.nbCommandes % 3) : state.nbCommandes) + " »") + "\n\n";
 	if (!e) return debut + "« Le plateau ouvre pendant l'épreuve finale. »";
+	if (e.fini && (!e.quiz || e.quiz.reponses.length < e.quiz.ids.length)){
+		var bonnes = e.quiz ? e.quiz.reponses.filter(function(r){ return r.juste; }).length : 0;
+		return debut + "« Les projecteurs sont éteints : ta copie est rendue, le plateau est fermé." +
+			(e.quiz ? " Tu repars avec " + bonnes + " bonne" + (bonnes > 1 ? "s" : "") + " réponse" + (bonnes > 1 ? "s" : "") + " sur " + e.quiz.ids.length + "." : " Tu n'es pas venu jouer : zéro, mais avec le sourire.") + " »";
+	}
 	if (!e.quiz){ e.quiz = tirerQuiz(); }
 	var z = e.quiz, k = z.reponses.length;
 	if (k >= z.ids.length){
@@ -804,6 +819,7 @@ function texteDeSteve(){
 			"Zéro ! Mais zéro, c'est l'UID de root. Tu vois, tu es quand même au sommet."))) + " »";
 	}
 	var qq = questionDuQuiz(z, k);
+	z.posee = k;
 	return debut + C.gras("QUESTION " + (k + 1) + " SUR " + z.ids.length) + C.gris("  (chapitre " + qq.q.ch + ")") + "\n\n" + C.gras(qq.q.q) + "\n\n" +
 		qq.ordre.map(function(i, n){ return "  " + LETTRES_QUIZ[n] + ".  " + qq.q.c[i]; }).join("\n") +
 		"\n\n« Ta réponse, ici sur le plateau : echo A, echo B, echo C ou echo D. »";
@@ -816,6 +832,8 @@ GameEvents.addListener("echo", function(ev){
 	if (!e.quiz){ say("Steve : « Doucement ! Je n'ai pas encore posé la question. Viens me voir : cat Steve. »"); return; }
 	var z = e.quiz, k = z.reponses.length;
 	if (k >= z.ids.length){ say("Steve : « Le jeu est fini, champion. Les buzzers sont éteints. »"); return; }
+	// On ne répond pas à une question qu'on n'a pas vue (une sauvegarde d'avant cette règle n'a pas de z.posee : on laisse jouer).
+	if (z.posee !== undefined && z.posee !== k){ say("Steve : « Doucement ! La question " + (k + 1) + " n'est pas encore posée. Viens la voir : cat Steve. »"); return; }
 	var qq = questionDuQuiz(z, k), juste = dit === qq.bonne;
 	z.reponses.push({ lettre: dit, juste: juste });
 	var n = state.nbCommandes;
@@ -860,9 +878,12 @@ function nbIndicesExamen(){ return Object.keys((state.examen && state.examen.ind
 function malusIndicesExamen(){ return nbIndicesExamen() * 0.25; }
 function noteExamen(){ return Math.max(0, Math.min(20, noteDeBaseExamen() + bonusTempsExamen() - malusErreursExamen() - malusIndicesExamen())); }
 function ecrireNote(n){ return String(n).replace(".", ","); }
+function pluriel(n, mot){ return n + " " + mot + (Math.abs(n) >= 2 ? "s" : ""); }
+/* « de Ada » s'écrit « d'Ada » : on élide devant une voyelle (ou un h). */
+function deOuD(nom){ return /^[aeiouyhàâäéèêëîïôöùûü]/i.test(nom) ? "D'" + nom : "DE " + nom; }
 
 function pointsExamen(){
-	return EPREUVES_EXAMEN.reduce(function(t, e){ return t + (state.examen.reussies[e.id] ? (e.score ? e.score() : e.points) : 0); }, 0);
+	return EPREUVES_EXAMEN.reduce(function(t, e){ return t + (e.score ? e.score() : (state.examen.reussies[e.id] ? e.points : 0)); }, 0);
 }
 function nbReussiesExamen(){
 	return EPREUVES_EXAMEN.filter(function(e){ return state.examen.reussies[e.id]; }).length;
@@ -1027,7 +1048,7 @@ function texteOrdreDeMission(){
 	lignes.push("",
 		"LA CARTE : tree / dessine la Forteresse, ses lieux et ceux qui y vivent (tree -L 3 / pour descendre plus loin).",
 		"Ton mot de passe sudo : " + MOT_DE_PASSE_SUDO + ". Pas de radio : man reste ton meilleur allié.",
-		"LE BARÈME : la note de l'épreuve vient des épreuves réussies. Tout fini en moins de " + dureeExamen(BONUS_DEUX_POINTS) + " : +2 ; en moins de " + dureeExamen(BONUS_UN_POINT) + " : +1.",
+		"LE BARÈME : la note de l'épreuve vient des épreuves réussies. Tout fini en " + dureeExamen(BONUS_DEUX_POINTS) + " au plus : +2 ; en " + dureeExamen(BONUS_UN_POINT) + " au plus : +1.",
 		"Les fausses manœuvres (une ligne qui échoue) : les " + ERREURS_GRATUITES_EXAMEN + " premières sont gratuites, puis -0,5 toutes les " + ERREURS_PAR_DEMI_POINT + " (au plus -" + MALUS_MAX_EXAMEN + ").",
 		"indice : un coup de pouce sur une épreuve, -0,25 chacun, " + INDICES_MAX_EXAMEN + " au plus (indice 7 : sur l'épreuve VII).",
 		texteBaremeBadges(),
@@ -1064,7 +1085,7 @@ TEXTE_ENTREE_EXAMEN = TEXTE_ENTREE_EXAMEN.replace(/([^\n])\n(?=[^\n])/g, "$1 ");
 /* Ouvre une épreuve neuve : tous les sorts, la Forteresse, et le silence. */
 function demarrerExamen(){
 	state.examen = { debutHorloge: Date.now(), debut: state.tempsMs || 0, reussies: {}, ordreLu: false, fini: false, fin: null, dateFin: null, tempsFin: null, commandesDebut: state.nbCommandes, lieu: null, erreurs: 0, indices: {}, defaites: {}, sceaux: {}, rencontres: {},
-		badges: lireBadgesDuParcours(), parcours: lireParcoursNormal() };
+		badges: lireBadgesDuParcours(), parcours: lireParcoursNormal(), tajinePose: true };
 	[SORTS_DE_DEPART, ORDRE_DES_SORTS, ORDRE_DES_SORTS_2, ORDRE_DES_SORTS_3].forEach(function(liste){
 		(liste || []).forEach(function(s){ state.spells[s] = true; state.usages[s] = true; });
 	});
@@ -1087,8 +1108,8 @@ function demarrerExamen(){
 	Shell.lieu_precedent = null;
 	if (typeof montrerImage === "function") montrerImage("./static/img/item_myriam.gif", "Myriam, la sorcière");
 	isolerExamen();
-	state.cron = state.cron || {};
-	state.cron.myriam = [TACHE_DE_MYRIAM];
+	// La Forteresse a ses propres tâches planifiées : seule celle de Myriam (celles du chapitre 1 restent dans la partie normale).
+	state.cron = { myriam: [TACHE_DE_MYRIAM] };
 	return TEXTE_ENTREE_EXAMEN;
 }
 
@@ -1109,11 +1130,11 @@ function texteDiplomeExamen(){
 	var sceau = 0;
 	EPREUVES_EXAMEN.forEach(function(ep, i){
 		if (ep.sceau !== sceau){ sceau = ep.sceau; lignes.push("  " + NOMS_DES_SCEAUX[sceau]); }
-		lignes.push("    " + signeEpreuve(e, ep.id) + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 9) + completerDroite((e.reussies[ep.id] ? (ep.score ? ep.score() : ep.points) : 0) + "/" + ep.points, 5) + ep.titre +
+		lignes.push("    " + signeEpreuve(e, ep.id) + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 9) + completerDroite((ep.score ? ep.score() : (e.reussies[ep.id] ? ep.points : 0)) + "/" + ep.points, 5) + ep.titre +
 			(e.indices && e.indices[ep.id] ? "  (indice)" : ""));
 	});
-	lignes.push("    (✓ réussie, ✗ pas faite, ! réussie puis défaite)", "",
-		"  ÉPREUVES RÉUSSIES   : " + nbReussiesExamen() + " sur " + EPREUVES_EXAMEN.length + "  (" + pointsExamen() + " points sur " + POINTS_MAX_EXAMEN + ")",
+	lignes.push("    (✓ réussie, ✗ pas faite, ! réussie puis défaite ; le quiz compte chaque bonne réponse)", "",
+		"  ÉPREUVES RÉUSSIES   : " + nbReussiesExamen() + " sur " + EPREUVES_EXAMEN.length + "  (" + pluriel(pointsExamen(), "point") + " sur " + POINTS_MAX_EXAMEN + ")",
 		"  Note des épreuves   : " + ecrireNote(noteDeBaseExamen()) + " / 20",
 		"  Bonus de temps      : +" + ecrireNote(bonusTempsExamen()) + (e.fin === "victoire" ? "" : "  (seulement si tout est fini)"),
 		"  Indices             : " + nbIndicesExamen() + "  (-" + ecrireNote(malusIndicesExamen()) + ")",
@@ -1150,7 +1171,7 @@ function codeDiplomeExamen(){
 		malusErreursExamen() * 4, malusIndicesExamen() * 4, e.erreurs || 0, minutesExamen(),
 		(e.commandesFin !== undefined ? e.commandesFin : state.nbCommandes) - (e.commandesDebut || 0),
 		e.fin === "victoire" ? "V" : "K", masqueExamen(e.reussies), masqueExamen(e.defaites), masqueExamen(e.indices),
-		e.dateFin || dateDuJour(), PROFIL.graine, ((e.tajineTue ? "T" : "") + (e.horlogeRecul ? "H" : "")) || "-", detailQuiz,
+		e.dateFin || dateDuJour(), PROFIL.graine, ((e.tajineTue ? "T" : "") + (e.horlogeRecul ? "H" : "") + (e.bancales && e.bancales.length ? "I" : "")) || "-", detailQuiz,
 		noteGlobaleExamen() * 4, nbBadgesExamen(), masqueBadgesExamen(),
 		pa.minutes, pa.commandes, pa.reseau * 2, pa.cyber * 2, heureDebutExamen()].join("|");
 	var code = versBase64Url(charge) + "." + sommeDeControle(charge + "|" + SEL_DIPLOME);
@@ -1172,7 +1193,7 @@ function lireCodeExamen(code){
 		badgesGagnes: avecBadges ? bits(c[20], BADGES_DU_PARCOURS) : null,
 		parcours: avecParcours ? { minutes: +c[21], commandes: +c[22], reseau: +c[23] / 2, cyber: +c[24] / 2 } : null,
 		heureDebut: avecParcours ? c[25] : "",
-		prenom: c[1], note: +c[2] / q, base: +c[3] / q, bonus: +c[4] / q, malusErreurs: +c[5] / q, malusIndices: +c[6] / q, tajine: /T/.test(c[16] || ""), horlogeRecul: /H/.test(c[16] || ""),
+		prenom: c[1], note: +c[2] / q, base: +c[3] / q, bonus: +c[4] / q, malusErreurs: +c[5] / q, malusIndices: +c[6] / q, tajine: /T/.test(c[16] || ""), horlogeRecul: /H/.test(c[16] || ""), bancales: /I/.test(c[16] || ""),
 		erreurs: +c[7], minutes: +c[8], commandes: +c[9], fin: c[10], reussies: bits(c[11]), defaites: bits(c[12]), indices: bits(c[13]),
 		date: c[14], graine: +c[15], charge: charge, sceau: morceaux[2] ? morceaux[2].toUpperCase() : null,
 		quiz: (c[17] || "").split(",").filter(function(x){ return x; }).map(function(x){ var m = /^(\d+)([+\-.])([A-D]?)$/.exec(x); return m ? { id: +m[1], etat: m[2], lettre: m[3] } : null; }).filter(function(x){ return x; }) };
@@ -1222,12 +1243,12 @@ function verifierExamen(){
 		}
 	} else e.minuteSortilege = 0;
 	var minutes = minutesExamen();
-	if (minutes >= 170 && !e.alerte170){
+	if (minutes >= 170 && minutes < 180 && !e.alerte170){
 		e.alerte170 = true;
 		say(C.jaune("Manon, depuis le hall : « Il reste dix minutes sur les trois heures. Si tu n'as pas fini, pense à rendre ta copie : kamikaze. »"));
 	}
 	if (minutes >= 180 && !e.alerte180){
-		e.alerte180 = true;
+		e.alerte180 = e.alerte170 = true;
 		say(C.rouge("Manon : « Les trois heures sont passées. Rends ta copie maintenant : kamikaze. Ce qui est fait est fait, et compte. »"));
 	}
 	if (!e.tajineTue && !Forteresse.procs.some(function(p){ return p.pid === PID_TAJINE; })){
@@ -1289,7 +1310,7 @@ function verifierExamen(){
 			"Ce que tu viens de faire, tu le referas pour de vrai, un jour, sur une vraie machine. Félicitations. »\n\n" +
 			"Laurana monte sur le balcon de la Tour, souffle dans sa trompette d'argent, et proclame ton nom de Puteaux à Marseille.\n" +
 			"Manon le recopie au propre dans son registre, Wissam lève sa tasse, Jean-Baptiste ajoute ta maison sur son plan, Gabriel et Timour\n" +
-			"servent le tajine, et Steve, au micro : « " + (noteExamen() >= 20 ? "Et c'est un sans-faute pour la Forteresse !" : "Et la Forteresse est reprise !") +
+			"servent le tajine, et Steve, au micro : « " + (pointsExamen() === POINTS_MAX_EXAMEN && !nbIndicesExamen() && !malusErreursExamen() ? "Et c'est un sans-faute pour la Forteresse !" : "Et la Forteresse est reprise !") +
 			" Je n'ai pas de blague. Si. Non. »\n\n") +
 			texteDiplomeExamen());
 	}
@@ -1300,7 +1321,7 @@ function verifierExamen(){
 /* ------------------------------------------------------------------ */
 
 function bilanExamen(){
-	var e = state.examen, lignes = [C.gras("ÉPREUVE FINALE") + C.gris("  · " + dureeExamen(minutesExamen()) + " · " + (state.nbCommandes - (e.commandesDebut || 0)) + " commandes"), ""];
+	var e = state.examen, lignes = [C.gras("ÉPREUVE FINALE") + C.gris("  · " + dureeExamen(minutesExamen()) + " · " + pluriel(state.nbCommandes - (e.commandesDebut || 0), "commande")), ""];
 	var sceau = 0;
 	EPREUVES_EXAMEN.forEach(function(ep, i){
 		if (ep.sceau !== sceau){ sceau = ep.sceau; lignes.push(C.gras(NOMS_DES_SCEAUX[sceau])); }
@@ -1308,7 +1329,7 @@ function bilanExamen(){
 	});
 	lignes.push("", "Note de l'épreuve (provisoire) : " + C.gras(ecrireNote(noteExamen()) + " / 20") +
 		C.gris("  (épreuves " + ecrireNote(noteDeBaseExamen()) + ", indices -" + ecrireNote(malusIndicesExamen()) + ", fausses manœuvres " + (e.erreurs || 0) + " : -" + ecrireNote(malusErreursExamen()) +
-		", bonus de temps si tout est fini en moins de " + dureeExamen(BONUS_UN_POINT) + ")"),
+		", bonus de temps si tout est fini en " + dureeExamen(BONUS_UN_POINT) + " au plus)"),
 		"Badges du parcours : " + nbBadgesExamen() + " sur " + BADGES_DU_PARCOURS.length + " (" + ecrireNote(noteBadgesExamen()) + " / 20) · note finale provisoire : " +
 			C.gras(ecrireNote(noteGlobaleExamen()) + " / 20") + C.gris("  (" + Math.round(POIDS_EPREUVE * 100) + " % épreuve, " + Math.round(POIDS_BADGES * 100) + " % badges)"),
 		C.gris("cat ~/.ordre-de-mission : l'ordre détaillé · indice : un coup de pouce (-0,25) · kamikaze : rendre ta copie"));
@@ -1375,13 +1396,43 @@ Shell.sorts.kamikaze = function(args, io){
 	return "";
 };
 
+/* Les épreuves que la copie dit réussies mais que la Forteresse dément : on les rejoue contre le monde tel qu'il est. */
+function epreuvesBancalesExamen(){
+	var e = state.examen;
+	return EPREUVES_EXAMEN.filter(function(ep){
+		if (!e.reussies[ep.id]) return false;
+		var ok = false;
+		try { ok = !!ep.fait(); } catch (x){ ok = false; }
+		return !ok;
+	});
+}
+function heureDuPoste(){ var d = new Date(); return deuxChiffres(d.getHours()) + ":" + deuxChiffres(d.getMinutes()); }
+
 /* Le formateur scelle la copie, sur le poste de l'étudiant, avec son mot de passe : le code devient infalsifiable. */
 Shell.sorts.sceller = function(args, io){
 	if (!examenEnCours()) return "sceller sert au formateur, à la fin de l'épreuve finale, sur le poste de l'étudiant.";
 	var e = state.examen;
 	if (!e.fini) return "La copie n'est pas encore rendue : on scelle après la fin (Forteresse reprise, ou kamikaze).";
-	term.demander("Mot de passe du formateur : ", true, function(mdp){
+	// Avant de signer, le formateur voit ce qu'il signe : la copie, ses contrôles, et ce que la Forteresse en dit vraiment.
+	var c = lireCodeExamen(codeDiplomeExamen()), alertes = controlesExamen(c, c.reussies.filter(function(x){ return x; }).length);
+	var bancales = epreuvesBancalesExamen();
+	var recap = [C.gras("CE QUE TU VAS SCELLER") + C.gris("  (vérifie avant de taper ton mot de passe)"),
+		"  " + completerDroite("Étudiant", 20) + (state.nom || JOUEUR),
+		"  " + completerDroite("Note finale", 20) + ecrireNote(c.noteGlobale) + " / 20  (épreuve " + ecrireNote(c.note) + ", " + c.badges + " badges)",
+		"  " + completerDroite("Épreuves", 20) + nbReussiesExamen() + " sur " + EPREUVES_EXAMEN.length + (e.fin === "victoire" ? ", Forteresse reprise" : ", kamikaze"),
+		"  " + completerDroite("Temps", 20) + dureeExamen(c.minutes) + (c.heureDebut ? ", commencée à " + c.heureDebut + " (heure du poste ; il est " + heureDuPoste() + ")" : "") + " · " + pluriel(c.commandes, "commande")];
+	alertes.forEach(function(a){ recap.push("  " + C.jaune("⚠ " + a)); });
+	if (bancales.length){
+		recap.push("  " + C.rouge(C.gras("⚠ " + bancales.length + " épreuve" + (bancales.length > 1 ? "s cochées" : " cochée") + " dans la copie ne tien" + (bancales.length > 1 ? "nent" : "t") + " pas dans la Forteresse :")) + " " +
+			bancales.map(function(ep){ return CHIFFRES_ROMAINS[EPREUVES_EXAMEN.indexOf(ep)]; }).join(", "),
+			"    " + C.gris("(Copie retouchée à la main, ou travail défait après la fin. Si tu scelles quand même, verifier le signalera.)"));
+	}
+	if (!alertes.length && !bancales.length) recap.push("  " + C.vert("✓ Rien d'anormal."));
+	term.echo(recap.join("\n"));
+	term.demander("Mot de passe du formateur (Entrée seule : ne pas sceller) : ", true, function(mdp){
+		if (!mdp){ term.echo("La copie n'est pas scellée."); return; }
 		if (!motDePasseFormateurValide(mdp)){ jouerSon("erreur"); term.echo(C.rouge("Ce n'est pas le mot de passe du formateur. La copie n'est pas scellée.")); return; }
+		e.bancales = epreuvesBancalesExamen().map(function(ep){ return ep.id; });
 		e.sceau = null;
 		var nu = codeDiplomeExamen(), charge = depuisBase64Url(nu.split(".")[0]);
 		e.chargeScellee = charge;
@@ -1427,6 +1478,7 @@ function controlesExamen(c, nb){
 	var a = [];
 	var sansQuiz = nb - (c.reussies[EPREUVES_EXAMEN.length - 1] ? 1 : 0);
 	if (c.horlogeRecul) a.push("L'horloge du poste a reculé pendant l'épreuve : le temps (et le bonus) ne sont pas fiables.");
+	if (c.bancales) a.push("Au scellement, des épreuves cochées ne tenaient pas dans la Forteresse : copie retouchée, ou travail défait après la fin. Interroger l'étudiant.");
 	if (c.minutes > 180) a.push("Copie rendue après les trois heures (" + dureeExamen(c.minutes) + ").");
 	if (nb >= 20 && c.minutes < 30) a.push(nb + " épreuves en " + dureeExamen(c.minutes) + " : bien trop rapide pour une épreuve de 3 heures.");
 	if (sansQuiz >= 5 && c.commandes < sansQuiz * 2) a.push("Seulement " + c.commandes + " commandes pour " + sansQuiz + " épreuves : chaque épreuve en demande au moins deux.");
@@ -1440,19 +1492,27 @@ function controlesExamen(c, nb){
 	return a;
 }
 
+/* Le code porte la date de fin et l'heure de début : une épreuve commencée à 23 h 30 et rendue après minuit a commencé la veille. */
+function debutLaVeille(c){
+	var m = /^(\d\d):(\d\d)$/.exec(c.heureDebut || "");
+	return !!m && (+m[1]) * 60 + (+m[2]) + (c.minutes || 0) >= 24 * 60;
+}
+
 /* Ce que le formateur lit dans un code d'épreuve finale : la note, son détail, et chaque épreuve. */
 function rapportCodeExamen(c, verdictSceau){
 	var justesQuiz = (c.quiz || []).filter(function(x){ return x.etat === "+"; }).length;
-	var points = EPREUVES_EXAMEN.reduce(function(t, ep, i){ return t + (c.reussies[i] ? (ep.id === "quiz" ? justesQuiz : ep.points) : 0); }, 0);
+	var points = EPREUVES_EXAMEN.reduce(function(t, ep, i){ return t + (ep.id === "quiz" ? justesQuiz : (c.reussies[i] ? ep.points : 0)); }, 0);
 	var nb = c.reussies.filter(function(x){ return x; }).length;
 	// D'abord le détail, épreuve par épreuve ; la note vient à la fin, pour rester sous les yeux du formateur.
-	var lignes = [C.gras("DÉTAIL DE LA COPIE DE " + String(c.prenom).toUpperCase()) + C.gris("  (✓ réussie, ✗ pas faite, ! réussie puis cassée)")];
+	var lignes = [C.gras("DÉTAIL DE LA COPIE " + deOuD(String(c.prenom).toUpperCase())) + C.gris("  (✓ réussie, ✗ pas faite, ! réussie puis cassée ; le quiz : bonnes réponses sur 3)")];
 	var sceau = 0;
 	EPREUVES_EXAMEN.forEach(function(ep, i){
 		if (ep.sceau !== sceau){ sceau = ep.sceau; lignes.push("  " + C.gras(NOMS_DES_SCEAUX[sceau])); }
-		var signe = ep.id === "quiz" ? (c.reussies[i] ? (justesQuiz ? C.vert("✓ " + justesQuiz + "/3") : C.jaune("! 0/3")) : C.rouge("✗    ")) :
+		var signe = ep.id === "quiz" ? (c.reussies[i] ? (justesQuiz ? C.vert("✓ " + justesQuiz + "/3") : C.jaune("✓ 0/3")) : (justesQuiz ? C.jaune("~ " + justesQuiz + "/3") : C.rouge("✗    "))) :
 			(c.reussies[i] ? C.vert("✓    ") : (c.defaites[i] ? C.jaune("!    ") : C.rouge("✗    ")));
+		var quizEntame = ep.id === "quiz" && !c.reussies[i] && (c.quiz || []).some(function(x){ return x.etat !== "."; });
 		lignes.push("    " + signe + " " + completerDroite(CHIFFRES_ROMAINS[i] + ".", 9) + ep.titre + (c.indices[i] ? C.gris("  (avec indice)") : "") +
+			(quizEntame ? C.gris("  (commencé, pas fini : les bonnes réponses comptent)") : "") +
 			(c.reussies[i] && c.defaites[i] ? C.gris("  (cassée une fois, puis réparée)") : ""));
 	});
 	if (c.quiz && c.quiz.length){
@@ -1494,19 +1554,19 @@ function rapportCodeExamen(c, verdictSceau){
 			"    " + completerDroite("épreuve (" + Math.round(POIDS_EPREUVE * 100) + " %)", 20) + ecrireNote(c.note) + " / 20\n" +
 			"    " + completerDroite("badges (" + Math.round(POIDS_BADGES * 100) + " %)", 20) + ecrireNote(noteBadgesExamen(c.badges)) + " / 20   (" + c.badges + " badges sur " + BADGES_DU_PARCOURS.length + ")\n",
 		"  Le détail de l'épreuve :",
-		"    " + completerDroite("épreuves", 20) + ecrireNote(c.base) + " / 20   (" + nb + " sur " + EPREUVES_EXAMEN.length + ", " + points + " points sur " + POINTS_MAX_EXAMEN + ")",
+		"    " + completerDroite("épreuves", 20) + ecrireNote(c.base) + " / 20   (" + nb + " sur " + EPREUVES_EXAMEN.length + ", " + pluriel(points, "point") + " sur " + POINTS_MAX_EXAMEN + ")",
 		"    " + completerDroite("bonus de temps", 20) + "+" + ecrireNote(c.bonus),
 		"    " + completerDroite("indices", 20) + "-" + ecrireNote(c.malusIndices),
 		"    " + completerDroite("fausses manœuvres", 20) + "-" + ecrireNote(c.malusErreurs) + "   (" + c.erreurs + " ligne" + (c.erreurs > 1 ? "s" : "") + " en échec)",
 		"",
 		"    " + completerDroite("Fin", 20) + (c.fin === "V" ? "Forteresse reprise (tout fini)" : "kamikaze (copie rendue avant la fin)"),
-		"    " + completerDroite("Temps", 20) + dureeExamen(c.minutes) + "   ·   " + c.commandes + " commandes",
+		"    " + completerDroite("Temps", 20) + dureeExamen(c.minutes) + "   ·   " + pluriel(c.commandes, "commande"),
 		"",
 		"  Par sceau :");
 	lignes = lignes.concat(parSceau);
 	if (c.tajine) lignes.push("", "  " + C.jaune("! A tué un processus innocent (le tajine de Timour) : +5 fausses manœuvres."));
 	var alertes = controlesExamen(c, nb);
-	lignes.push("", "  " + C.gras("Contrôles de vraisemblance") + (c.heureDebut ? C.gris("   (épreuve commencée le " + c.date + " à " + c.heureDebut + ", heure du poste)") : ""));
+	lignes.push("", "  " + C.gras("Contrôles de vraisemblance") + (c.heureDebut ? C.gris("   (épreuve commencée " + (debutLaVeille(c) ? "la veille du " : "le ") + c.date + " à " + c.heureDebut + ", heure du poste)") : ""));
 	if (!alertes.length) lignes.push("    " + C.vert("✓ Rien d'anormal."));
 	alertes.forEach(function(a){ lignes.push("    " + C.jaune("⚠ " + a)); });
 	lignes.push("",
@@ -1591,6 +1651,7 @@ Shell.tuyau = function(){
 var EXECUTER_HORS_EXAMEN = Shell.executer;
 Shell.executer = function(ligne){
 	Shell.ligneRateeExamen = false;
+	Shell.pingOracleExamen = false;
 	// L'horloge du poste ne doit jamais reculer pendant l'épreuve : un recul de plus de deux minutes est noté dans le code.
 	if (examenEnCours() && !state.examen.fini){
 		var maintenant = Date.now(), e0 = state.examen;
@@ -1609,11 +1670,14 @@ Shell.executer = function(ligne){
 		}
 	}
 	if (examenEnCours() && !Shell.ligneRateeExamen && !state.examen.fini){
-		var l = String(ligne || "");
-		if (/(^|[|;&]\s*)(\.\/|\/|~\/|bash\s+)\S*rempart\.sh/.test(l) && Rempart.mode.charAt(2) === "x") state.examen.rempartLeve = true;
-		if (/(^|[|;&]\s*)ping\b.*\b10\.0\.92\.53\b/.test(l)) state.examen.oraclePing = true;
-		if (/(^|[|;&]\s*)cowsay\b.*oyez/i.test(l)) state.examen.trompette = true;
-		if (state.examen.rempartLeve || state.examen.oraclePing || state.examen.trompette){
+		var l = String(ligne || ""), e1 = state.examen;
+		var avant = [e1.rempartLeve, e1.oraclePing, e1.trompette].join();
+		// Le rempart se lance par son chemin (./rempart.sh, ~/arsenal/rempart.sh, arsenal/rempart.sh), avec ou sans sudo, ou par bash.
+		if (/(^|[|;&]\s*)(sudo\s+)?((bash|sh)\s+)?(\S*\/)?rempart\.sh\b/.test(l) && !/(^|[|;&]\s*)(sudo\s+)?rempart\.sh\b/.test(l) && Rempart.mode.charAt(2) === "x") e1.rempartLeve = true;
+		if (Shell.pingOracleExamen) e1.oraclePing = true;
+		if (/(^|[|;&]\s*)(sudo\s+)?cowsay\b.*oyez/i.test(l) || /oyez.*\|\s*(sudo\s+)?cowsay\b/i.test(l)) e1.trompette = true;
+		// On ne revérifie qu'à la ligne où l'un de ces gestes vient de réussir (sinon le sortilège avancerait deux fois par ligne).
+		if ([e1.rempartLeve, e1.oraclePing, e1.trompette].join() !== avant){
 			verifierExamen();
 			if (Shell.narration.length){
 				Shell.compacterNarration(Shell.narration).forEach(function(n){ term.echo(n); });
@@ -1631,6 +1695,38 @@ Shell.executer = function(ligne){
 	return r;
 };
 
+/* La Forteresse lit son registre local des noms (/etc/hosts) avant de demander à l'Oracle, comme une vraie machine :
+   ping oracle, ping dns.cybersup.lan. Et un ping qui aboutit au vrai Oracle, par son adresse ou par son nom, compte. */
+var RESOUDRE_HORS_EXAMEN = resoudreDepuis;
+resoudreDepuis = function(depuis, nom){
+	if (depuis === "forteresse" && examenEnCours() && typeof nom === "string" && !ipValide(nom)){
+		var lignes = String(texteActifExamen(FortEtc, "hosts") || "").split("\n");
+		for (var i = 0; i < lignes.length; i++){
+			var mots = lignes[i].trim().split(/\s+/);
+			if (mots.length > 1 && ipValide(mots[0]) && mots.slice(1).indexOf(nom) > -1) return { ip: mots[0] };
+		}
+	}
+	return RESOUDRE_HORS_EXAMEN.apply(this, arguments);
+};
+var TROUVER_HOTE_HORS_EXAMEN = trouverHote;
+trouverHote = function(nom){
+	if (examenEnCours() && Shell.hote() === "forteresse" && typeof nom === "string" && !ipValide(nom)){
+		var r = resoudreDepuis("forteresse", nom);
+		if (r && r.ip) return TROUVER_HOTE_HORS_EXAMEN(r.ip);
+	}
+	return TROUVER_HOTE_HORS_EXAMEN.apply(this, arguments);
+};
+var PING_HORS_EXAMEN = Shell.sorts.ping;
+Shell.sorts.ping = function(args, io){
+	var sortie = PING_HORS_EXAMEN.apply(this, arguments);
+	if (examenEnCours() && Shell.hote() === "forteresse"){
+		var cible = args.filter(function(a, i){ return a.charAt(0) !== "-" && args[i - 1] !== "-c"; })[0];
+		var r = cible ? resoudreDepuis("forteresse", cible) : {};
+		if (r.ip === IP_VRAI_ORACLE) Shell.pingOracleExamen = true;
+	}
+	return sortie;
+};
+
 /* ------------------------------------------------------------------ */
 /* Pendant l'épreuve : pas d'aide, et on ne sort pas de la Forteresse   */
 /* ------------------------------------------------------------------ */
@@ -1643,6 +1739,29 @@ function refusExamen(message){
 		};
 	};
 }
+/* help pendant l'épreuve : tous les sorts appris, en colonnes (le détail est dans man), et les commandes du jeu qui servent ici. */
+var HELP_HORS_EXAMEN = Shell.sorts.help;
+Shell.sorts.help = Shell.sorts.aide = Shell.sorts.sorts = function(args, io){
+	if (!examenEnCours() || (args[0] && /^(1|2|3|tout|all)$/i.test(args[0]))) return HELP_HORS_EXAMEN.apply(this, arguments);
+	var sorts = state.knownSpells().slice().sort(), lignes = [C.gras("Tes sorts (" + sorts.length + ") :")], ligne = " ";
+	var large = Math.max.apply(null, sorts.map(function(n){ return n.length; })) + 1;
+	sorts.forEach(function(nom){
+		var case_ = " " + completerDroite(nom, large);
+		if ((ligne + case_).length > 78){ lignes.push(ligne); ligne = " "; }
+		ligne += case_;
+	});
+	lignes.push(ligne, "Pour le détail d'un sort : " + C.vert("man SORT") + " (par exemple man ls). help 1, help 2, help 3 : leurs résumés, chapitre par chapitre.", "",
+		C.gras("Les commandes du JEU pendant l'épreuve") + C.gris(" (elles n'existent pas sous Linux)"));
+	[["examen", "où tu en es (le bilan), puis ton diplôme et son code à la fin"],
+	 ["indice", "un coup de pouce sur une épreuve : -0,25, " + INDICES_MAX_EXAMEN + " au plus (indice 7 : sur l'épreuve VII)"],
+	 ["kamikaze", "rendre ta copie maintenant : ce qui est fait compte"],
+	 ["examen quitter", "revenir à ta partie normale (l'épreuve reste en l'état)"],
+	 ["cat NOM", "parler à un personnage (Manon, Wissam, Jean-Baptiste, Gabriel, Timour, Steve, Aidan, le Barde)"]].forEach(function(c){
+		lignes.push("  " + C.jaune(completerDroite(c[0], 15)) + c[1]);
+	});
+	lignes.push(C.gris("Astuces : la touche Tab complète les noms, la flèche du haut rappelle tes derniers sorts."));
+	return lignes.join("\n");
+};
 var INDICE_HORS_EXAMEN = Shell.sorts.indice;
 Shell.sorts.indice = function(args, io){ return examenEnCours() ? indiceExamen(args) : INDICE_HORS_EXAMEN.apply(this, arguments); };
 Shell.sorts.recommencer = refusExamen("L'épreuve finale ne se recommence pas. kamikaze rend ta copie ; examen quitter te ramène à ta partie normale.")(Shell.sorts.recommencer);
@@ -1760,6 +1879,22 @@ prisesDe = function(hote){
 	return prises;
 };
 
+/* lsof -i voit les ports de la Forteresse comme ss : on lui donne, à chaque appel, les prises de chaque processus. */
+var LSOF_HORS_EXAMEN = Shell.sorts.lsof;
+Shell.sorts.lsof = function(args, io){
+	if (examenEnCours() && Shell.hote() === "forteresse"){
+		var prises = prisesDe("forteresse");
+		Forteresse.procs.forEach(function(p){
+			var f = prises.filter(function(x){ return x.pid === p.pid; }).map(function(x){
+				var port = x.local.split(":")[1];
+				return x.etat === "LISTEN" ? "TCP *:" + port + " (LISTEN)" : "TCP forteresse:" + port + "->" + x.pair + " (ESTABLISHED)";
+			});
+			if (f.length) p.fichiers = f; else delete p.fichiers;
+		});
+	}
+	return LSOF_HORS_EXAMEN.apply(this, arguments);
+};
+
 /* Les services de la Forteresse : la Mairie refuse d'ouvrir tant que sa plage est fausse, et enable --now démarre. */
 var SYSTEMCTL_HORS_EXAMEN = Shell.sorts.systemctl;
 Shell.sorts.systemctl = function(args, io){
@@ -1864,6 +1999,12 @@ function accueillirExamen(){
 		demarrerExamen();
 		term.echo(C.rouge(C.gras(TEXTE_ENTREE_EXAMEN.split("\n")[0])) + "\n" + TEXTE_ENTREE_EXAMEN.split("\n").slice(1).join("\n"));
 	} else {
+		// Une épreuve commencée avant l'arrivée du tajine de Timour : sa sauvegarde ne le connaît pas. On le remet en cuisine,
+		// plutôt que de compter 5 fausses manœuvres pour un processus que l'étudiant n'a jamais vu.
+		if (!state.examen.tajinePose){
+			state.examen.tajinePose = true;
+			if (!state.examen.tajineTue && !Forteresse.procs.some(function(p){ return p.pid === PID_TAJINE; })) Forteresse.addProc(PID_TAJINE, "tajine", "timour", { cpu: 41.7 });
+		}
 		var lieu = null;
 		try { lieu = CHERCHER_HORS_EXAMEN.call(Shell, Forteresse, state.examen.lieu || "/home/" + JOUEUR, { sudo: true }, "").node; } catch (x){ lieu = null; }
 		ENTRER_HORS_EXAMEN(lieu instanceof Room ? lieu : QuartiersRecrue);

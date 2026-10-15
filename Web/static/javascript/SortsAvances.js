@@ -311,9 +311,16 @@ Shell.sorts.date = function(args, io){
 };
 
 Shell.sorts.id = function(args, io){
-	if (io.sudo) return "uid=0(root) gid=0(root) groupes=0(root)";
-	var nom = args.length ? args[0] : JOUEUR;
-	if (!UTILISATEURS.hasOwnProperty(nom)) throw new ShellError("id : « " + nom + " » : utilisateur inconnu");
+	// Les options courtes : -u (l'UID), -g (le GID), -n (le nom plutôt que le numéro), -un, -gn.
+	var options = "", noms = [];
+	args.forEach(function(a){ if (/^-[ugnG]+$/.test(a)) options += a.substring(1); else if (a.charAt(0) === "-") throw new ShellError("id : option invalide « " + a + " ». Celles qui existent ici : -u, -g, -n"); else noms.push(a); });
+	var nom = noms.length ? noms[0] : (io.sudo ? "root" : JOUEUR);
+	if (nom !== "root" && !UTILISATEURS.hasOwnProperty(nom)) throw new ShellError("id : « " + nom + " » : utilisateur inconnu");
+	var numero = nom === "root" ? 0 : UTILISATEURS[nom];
+	if (/[ug]/.test(options)) return /n/.test(options) ? nom : String(numero);
+	if (/n/.test(options)) throw new ShellError("id : -n ne s'utilise qu'avec -u ou -g (par exemple id -un)");
+	if (io.sudo && !noms.length) return "uid=0(root) gid=0(root) groupes=0(root)";
+	if (nom === "root") return "uid=0(root) gid=0(root) groupes=0(root)";
 	var uid = UTILISATEURS[nom];
 	var groupes = uid + "(" + nom + ")";
 	if (nom === JOUEUR && state.has("sudoOK")) groupes += ",27(sudo)";
@@ -543,9 +550,12 @@ Shell.sorts.crontab = function(args, io){
 /* ------------------------------------------------------------------ */
 
 Shell.sorts.tar = function(args, io){
-	var lettres = "", archive = null, fichiers = [];
+	var lettres = "", archive = null, fichiers = [], dossier = null;
 	for (var i = 0; i < args.length; i++){
 		var a = args[i];
+		// -C DOSSIER : extraire ailleurs qu'ici.
+		if (a === "-C"){ dossier = args[++i]; if (dossier === undefined) throw new ShellError("tar : l'option -C attend un dossier"); continue; }
+		if (/^--directory=/.test(a)){ dossier = a.substring(12); continue; }
 		var estOption = (i === 0 && /^-?[ctxvzf]+$/.test(a)) || /^-[ctxvzf]+$/.test(a);
 		if (estOption){
 			var bloc = a.replace(/^-/, "");
@@ -604,10 +614,20 @@ Shell.sorts.tar = function(args, io){
 		GameEvents.fire({ type: "tar", mode: "t", item: source, room: r.dir });
 		return source.archive.map(function(e){ return bavard ? "-rw-r--r-- " + completerGauche(e.x.length, 6) + " " + e.n : e.n; }).join("\n");
 	}
+	var ici = current_room;
+	if (dossier !== null){
+		var d = Shell.versLieu(Shell.chercher(dossier, io, "tar"));
+		if (!(d.node instanceof Room)) throw new ShellError("tar : " + dossier + " : impossible de s'y placer : aucun dossier de ce nom");
+		ici = d.node;
+	}
+	// Sur la Forteresse de l'épreuve finale, une vraie machine : on n'extrait que là où l'on a le droit d'écrire.
+	if (typeof examenEnCours === "function" && examenEnCours() && !Shell.bit(ici, "w", io)){
+		throw new ShellError("tar : impossible d'extraire dans " + (dossier || ici.room_name) + " : Permission non accordée" + (io.tty ? C.gris("  (extrais dans tes quartiers, ou avec sudo)") : ""));
+	}
 	var extraits = [], refuses = [];
 	for (k = 0; k < source.archive.length; k++){
 		var entree = source.archive[k];
-		var existant = current_room.getNode(entree.n);
+		var existant = ici.getNode(entree.n);
 		if (existant !== null){
 			if (existant instanceof Room || existant.owner !== JOUEUR || existant.acquis || existant.lien){
 				refuses.push("tar : " + entree.n + " : impossible d'écraser ce qui existe déjà ici");
@@ -618,14 +638,14 @@ Shell.sorts.tar = function(args, io){
 			var nouveau = new Item(entree.n, entree.x);
 			nouveau.owner = JOUEUR;
 			nouveau.picturename = entree.p || nouveau.picturename;
-			current_room.addItem(nouveau);
+			ici.addItem(nouveau);
 		}
 		extraits.push(entree.n);
 	}
-	GameEvents.fire({ type: "tar", mode: "x", item: source, room: current_room, names: extraits });
+	GameEvents.fire({ type: "tar", mode: "x", item: source, room: ici, names: extraits });
 	var lignes = refuses.slice();
 	if (bavard) lignes = lignes.concat(extraits);
-	else if (io.tty) lignes.push(C.gris("(" + extraits.length + " objet" + (extraits.length > 1 ? "s" : "") + " extrait" + (extraits.length > 1 ? "s" : "") + " ici : " + extraits.join(", ") + ")"));
+	else if (io.tty) lignes.push(C.gris("(" + extraits.length + " objet" + (extraits.length > 1 ? "s" : "") + " extrait" + (extraits.length > 1 ? "s" : "") + (ici === current_room ? " ici" : " dans " + ici.room_name) + " : " + extraits.join(", ") + ")"));
 	return lignes.join("\n");
 };
 

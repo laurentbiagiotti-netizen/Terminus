@@ -64,6 +64,7 @@ Shell.variable = function(nom){
 	if (nom === "PWD") return current_room.path();
 	if (nom === "USER" || nom === "LOGNAME") return JOUEUR;
 	if (nom === "HOSTNAME") return Shell.hote();
+	if (nom === "UID" && !state.env.hasOwnProperty(nom) && typeof UTILISATEURS !== "undefined" && UTILISATEURS.hasOwnProperty(JOUEUR)) return String(UTILISATEURS[JOUEUR]);
 	return state.env.hasOwnProperty(nom) ? state.env[nom] : "";
 };
 
@@ -958,7 +959,10 @@ Shell.sorts.mv = function(args, io){
 			messages.push("mv : ce monde tient trop à « " + item.itemname + " » pour le laisser bouger.");
 			continue;
 		}
-		if (!(item.allows("mv") || (item.owner === JOUEUR && !item.acquis))){
+		// Pendant l'épreuve finale, la Forteresse est une vraie machine : root (sudo) déplace ce qu'il veut, et personne
+		// ne dépose rien dans un dossier où il n'a pas le droit d'écrire.
+		var machine = typeof examenEnCours === "function" && examenEnCours();
+		if (!(item.allows("mv") || (item.owner === JOUEUR && !item.acquis) || (machine && io.sudo && !item.person))){
 			messages.push(item.cmd_text["mv"] || (item.person ?
 				"On ne déplace pas " + item.itemname + " comme un meuble." :
 				"mv : impossible de déplacer « " + item.itemname + " » : cet objet ne t'appartient pas."));
@@ -970,7 +974,7 @@ Shell.sorts.mv = function(args, io){
 			messages.push("mv : « " + item.itemname + " » est déjà là.");
 			continue;
 		}
-		if (!Shell.bit(cible, "w", io) && !item.allows("mv")){
+		if (!Shell.bit(cible, "w", io) && (!item.allows("mv") || machine)){
 			messages.push("mv : impossible de déposer « " + item.itemname + " » dans " + cible.room_name + " : Permission non accordée");
 			continue;
 		}
@@ -1450,7 +1454,7 @@ Shell.sorts.find = function(args, io){
 		if (r.node instanceof Room){
 			if (!Shell.bit(r.node, "r", io)) throw new ShellError("find : « " + racine + " » : Permission non accordée");
 			if (garder(r.node === current_room && racine === "." ? "." : r.node.room_name, true, r.node)) lignes.push(io.tty ? C.bleu(racine) : racine);
-			parcourir(r.node, racine, 0);
+			parcourir(r.node, racine === "/" ? "" : racine, 0);
 		} else if (garder(r.node.itemname, false, r.node)){
 			lignes.push(racine);
 		}
@@ -1737,6 +1741,10 @@ function proposer(ancien, nouveau){
 }
 Shell.sortInconnu = function(nom){
 	// cd.. ou ls-l : il manque l'espace entre le sort et la suite.
+	if (nom === "apt-get" && Shell.sorts.apt){
+		proposer(nom, "apt");
+		return "apt-get : sous Linux, c'est l'ancien nom d'apt. Ici, le sort s'appelle apt : sudo apt install PAQUET";
+	}
 	var colle = /^([a-z][a-z0-9-]*?)(\.\.?|-[A-Za-z0-9-]*|~.*|\.\/.*|\/.*)$/.exec(nom);
 	if (colle && (Shell.sorts.hasOwnProperty(colle[1]) || SORTS_DU_JEU.indexOf(colle[1]) > -1) && !Shell.sorts.hasOwnProperty(nom)){
 		proposer(nom, colle[1] + " " + colle[2]);
@@ -1767,7 +1775,7 @@ Shell.sortInconnu = function(nom){
 var SORTS_APPRIS_EN_ROUTE = {
 	"cp": "Il s'apprend auprès de l'Artisane, à l'Atelier du village, quand on lui apporte un Rouage.",
 	"bash": "Il s'apprend auprès de l'Artisane, à l'Atelier du village, une fois ses rouages copiés.",
-	"cowsay": "Ce n'est pas un sort mais un paquet : il s'installe avec sudo apt install cowsay (l'Affiche de la SalleDeCours explique apt).",
+	"cowsay": "Ce n'est pas un sort mais un paquet : il s'installe avec sudo apt install cowsay (au chapitre 1, l'Affiche de la SalleDeCours explique apt).",
 	"ssh-keygen": "Il s'apprend au chapitre 3, avec les ConsignesDuCoffre qu'Evi pose dans la SalleServeurs de Cybersup.",
 	"tree": "Il s'apprend dans un drapeau caché de la SalleServeurs de Cybersup, ou en cadeau à la fin du chapitre 1."
 };
@@ -2186,7 +2194,9 @@ Shell.executer = function(ligne){
 				state.applyState("sudoOK");
 				Shell.lancer(jetons);
 			} else {
-				term.echo("Désolé, essaie encore.\n" + C.gris("(Le mot de passe sudo se trouve quelque part dans les ArchivesDuNoyau.)"));
+				term.echo("Désolé, essaie encore.\n" + C.gris(typeof examenEnCours === "function" && examenEnCours() ?
+					"(Le mot de passe sudo de l'épreuve est écrit à la fin de ton ordre de mission : cat ~/.ordre-de-mission.)" :
+					"(Le mot de passe sudo se trouve quelque part dans les ArchivesDuNoyau.)"));
 			}
 			Shell.fin();
 		});

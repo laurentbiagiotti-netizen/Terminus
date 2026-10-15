@@ -318,6 +318,80 @@ contient(jeu.taper("examen"), "DIPLÔME", "examen réimprime le diplôme");
 	contient(t.taper("verifier " + c), "L'horloge du poste a reculé", "verifier signale le recul de l'horloge");
 })();
 
+/* --- 2 sexies. Ce que le troisième audit a trouvé : rechargement, fichiers remis en place, copie rendue, quiz --- */
+(function(){
+	var r = examen(616, TOUS_LES_BADGES.slice(0, 6)), m = r.lire("MOT_DE_PASSE_SUDO");
+	r.taper("cat ~/.ordre-de-mission");
+	r.lire("state.save()");
+	// Un rechargement de page : les personnages et l'ordre de mission gardent leur texte vivant.
+	var r2 = monde.nouveauMonde(r.stockage);
+	r2.lire(SECRETS_DE_TEST);
+	contient(r2.taper("cat /Manon"), "6 sur " + TOUS_LES_BADGES.length, "après rechargement, Manon lit le registre et les badges");
+	contient(r2.taper("cat ~/.ordre-de-mission"), "[x]", "après rechargement, l'ordre de mission coche ce qui est fait");
+	r2.taper("cd /dev/random");
+	contient(r2.taper("cat Steve"), "QUESTION 1 SUR 3", "après rechargement, Steve pose sa question");
+	contient(r2.taper("echo " + r2.lire("questionDuQuiz(state.examen.quiz, 0).bonne")), "TOP", "et la réponse compte");
+	contient(r2.taper("echo A"), "pas encore posée", "on ne répond pas à une question qu'on n'a pas vue");
+	verifier(r2.lire("state.examen.quiz.reponses.length") === 1, "la réponse à l'aveugle n'est pas comptée");
+	r2.taper("cat Steve"); r2.taper("echo " + r2.lire("questionDuQuiz(state.examen.quiz, 1).bonne"));
+	verifier(r2.lire("pointsExamen()") === 3, "deux bonnes réponses au quiz, même pas fini, comptent : " + r2.lire("pointsExamen()"));
+	r2.taper("cd ~");
+	// Un fichier corrigé à part, puis remis en place avec sudo mv : c'est lui que le service lit.
+	r2.taper("cp /etc/resolv.conf /tmp/r");
+	r2.lire("FortTmp.getItemFromName('r').setText('#nameserver 10.0.66.53\\nnameserver 10.0.92.53 # le vrai\\n')");
+	contient(r2.taper("sudo mv /tmp/r /etc/resolv.conf", m), "Épreuve V", "resolv.conf remis en place par sudo mv, commentaires ignorés");
+	r2.taper("cp /etc/dhcp/dhcpd.conf /tmp/d");
+	r2.lire("FortTmp.getItemFromName('d').setText(FortTmp.getItemFromName('d').getText().replace('10.0.97.100 10.0.97.150', '10.0.97.10 10.0.97.60'))");
+	r2.taper("sudo mv /tmp/d /etc/dhcp/dhcpd.conf");
+	contient(r2.taper("sudo systemctl start isc-dhcp-server"), "Épreuve VI", "dhcpd.conf remis en place par sudo mv");
+	// D'autres bonnes façons de faire.
+	contient(r2.taper("ping -c 1 oracle"), "Épreuve XXX", "ping par le nom du registre local (/etc/hosts)");
+	r2.taper("chmod +x ~/arsenal/rempart.sh");
+	contient(r2.taper("sudo ~/arsenal/rempart.sh"), "Épreuve III", "le rempart lancé avec sudo compte");
+	r2.taper("sudo apt install cowsay");
+	contient(r2.taper("echo Oyez | cowsay"), "Épreuve XXXII", "Oyez par un tuyau vers cowsay compte");
+	contient(r2.taper("id -u"), "1000", "id -u donne l'UID");
+	contient(r2.taper("echo $UID"), "1000", "$UID existe");
+	verifier(r2.taper("find / -name fragment-du-sceau").indexOf("//") === -1, "find / n'écrit pas de double barre");
+	contient(r2.taper("sudo lsof -i :31337"), "31337 (LISTEN)", "lsof voit l'oreille de Dylan");
+	verifier(r2.taper("sudo crontab -l").indexOf("DragonMecanique") === -1, "la crontab de root du chapitre 1 n'est pas dans la Forteresse");
+	contient(r2.taper("mv /opt/gardiens/vigile /quarantaine"), "Permission non accordée", "sans sudo, on ne dépose rien dans /quarantaine");
+	contient(r2.taper("apt-get install cowsay"), "s'appelle apt", "apt-get renvoie vers apt");
+	contient(r2.taper("help"), "kamikaze", "help pendant l'épreuve donne les commandes de l'épreuve");
+	r2.taper("alias carte=tree");
+	verifier(!r2.lire("verifierExamen(), !!state.examen.reussies.alias"), "un alias carte qui ne dessine pas / ne suffit pas");
+	r2.taper("echo 'je ne sais pas: log, cache, lib' > ~/rapport/disque.txt");
+	verifier(!r2.lire("verifierExamen(), !!state.examen.reussies.disque"), "disque : une liste de noms ne suffit pas");
+	r2.taper("du -s /var/* | sort -n | tail -n 1 > ~/rapport/disque.txt");
+	verifier(r2.lire("verifierExamen(), !!state.examen.reussies.disque"), "disque : la ligne de du du plus gros dossier suffit");
+	r2.taper("history > ~/rapport/journal.txt");
+	contient(r2.taper("date +%F >> ~/rapport/journal.txt"), "Épreuve XIX", "journal : la date seule (date +%F) suffit");
+	// Le sortilège ne recouvre pas plus vite quand le ping ou le rempart sont faits.
+	r2.taper("cd /tmp"); r2.taper("tar -xf /srv/sauvegardes/proclamations.tar");
+	r2.taper("sudo cp index.html /var/www/html/index.html");
+	r2.taper("pwd");
+	verifier(r2.lire("state.examen.minuteSortilege") === 2, "le sortilège avance d'une minute par ligne (cp, puis pwd) : " + r2.lire("state.examen.minuteSortilege"));
+	// Après la copie rendue : plus rien ne bouge, ni le quiz, ni la colle de Jean-Baptiste, ni le sceau.
+	r2.taper("kamikaze", "oui");
+	var avant = r2.lire("codeDiplomeExamen()");
+	r2.taper("cd /dev/random");
+	contient(r2.taper("cat Steve"), "plateau est fermé", "après la copie rendue, Steve ferme le plateau");
+	r2.taper("cd /etc"); r2.taper("echo 10.0.97.1"); r2.taper("echo 10.0.97.2");
+	verifier(r2.lire("codeDiplomeExamen()") === avant, "après la copie rendue, le code ne change plus");
+	var sc = r2.taper("sceller", "mot-de-passe-de-test");
+	contient(sc, "CE QUE TU VAS SCELLER", "sceller montre la copie avant de signer");
+	contient(sc, "Copie scellée", "et la scelle");
+	verifier(sc.indexOf("ne tien") === -1, "une copie honnête n'a pas d'épreuve bancale");
+	// Une copie retouchée dans la console : le scellement la voit.
+	var t = examen(717);
+	t.lire("EPREUVES_EXAMEN.forEach(function(ep){ state.examen.reussies[ep.id] = true; }); state.examen.quiz = { ids: [0, 30, 45], ordres: [[0,1,2,3],[0,1,2,3],[0,1,2,3]], reponses: [{lettre:'A',juste:true},{lettre:'A',juste:true},{lettre:'A',juste:true}] }; terminerExamen('victoire');");
+	var faux = t.taper("sceller", "mot-de-passe-de-test");
+	contient(faux, "ne tiennent pas dans la Forteresse", "sceller repère les épreuves cochées à la main");
+	var codeFaux = faux.trim().split("\n").pop().trim();
+	contient(t.taper("verifier " + codeFaux, "mot-de-passe-de-test"), "Interroger l'étudiant", "verifier le signale ensuite");
+	contient(t.taper("sceller", ""), "pas scellée", "Entrée seule : le formateur renonce à sceller");
+})();
+
 /* --- 3. La sauvegarde de l'examen garde l'avancée --- */
 verifier(!!jeu.stockage["terminus-cybersup-examen"], "l'épreuve a sa propre sauvegarde");
 var repris = monde.nouveauMonde(jeu.stockage);

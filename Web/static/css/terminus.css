@@ -256,6 +256,10 @@ html, body{
     overflow: auto;
     caret-color: var(--vert-clair);
 }
+/* Sur un téléphone, les longues lignes se replient à l'écran (le fichier, lui, garde ses lignes). */
+@media (max-width: 600px){
+    #editeur textarea{ white-space: pre-wrap; overflow-wrap: anywhere; }
+}
 .editeur-message{
     min-height: 1.45em;
     padding: 0 16px;

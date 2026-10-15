@@ -1488,10 +1488,13 @@ function photographierLieu(lieu){
 function restaurerObjet(item, o){
 	item.itemname = o.n;
 	item.picturename = o.p;
-	var texte = item.cmd_text["less"];
+	/* Un texte calculé (un personnage qui réagit, l'ordre de mission) garde son calcul : le lire ici le figerait
+	   à sa valeur du chargement, avant même que l'épreuve ou le chapitre soient restaurés. */
+	var descripteur = Object.getOwnPropertyDescriptor(item.cmd_text, "less");
 	item.cmd_text = copierTextes(o.c, false);
 	if (o.x){ item.modifie = true; }
-	else { item.cmd_text["less"] = texte; }
+	else if (descripteur) Object.defineProperty(item.cmd_text, "less", descripteur);
+	else delete item.cmd_text["less"];
 	item.valid_cmds = o.v.slice();
 	item.mode = o.m;
 	item.owner = o.o;
