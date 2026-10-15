@@ -730,7 +730,7 @@ var QUESTIONS_POUR_UN_LINUX = [
 	{ ch: 2, q: "Quelle commande montre la route par défaut (default via) ?", c: ["ip r", "ip a", "ping", "dig"], b: 0, e: "ip r : la table de routage, dont la passerelle par défaut." },
 	{ ch: 2, q: "Que montre traceroute ?", c: ["Le chemin, routeur par routeur, jusqu'à une machine", "Seulement le temps total", "Le nom de la machine", "Les ports ouverts"], b: 0, e: "Le suivi du colis, étape par étape." },
 	{ ch: 2, q: "Combien de couches (d'étages) compte le modèle OSI ?", c: ["7", "4", "5", "9"], b: 0, e: "De la couche physique (1) à l'application (7)." },
-	{ ch: 2, q: "Qui interroge dig cybersup.lan ?", c: ["Le serveur DNS", "Le serveur DHCP", "Le pare-feu", "Le serveur web"], b: 0, e: "dig pose la question à l'Oracle des Noms." },
+	{ ch: 2, q: "Quel serveur dig cybersup.lan interroge-t-il ?", c: ["Le serveur DNS", "Le serveur DHCP", "Le pare-feu", "Le serveur web"], b: 0, e: "dig pose la question à l'Oracle des Noms." },
 	{ ch: 2, q: "Pour joindre une machine d'un autre réseau, ta machine passe par :", c: ["La passerelle", "Le DNS", "L'adresse de diffusion", "Le DHCP"], b: 0, e: "La passerelle est la seule porte vers les autres rues." },
 	{ ch: 3, q: "À quoi sert sha256sum ?", c: ["À calculer une empreinte pour vérifier qu'un fichier n'a pas changé", "À chiffrer un fichier", "À compresser un fichier", "À signer un courriel"], b: 0, e: "Un octet change, et l'empreinte change entièrement." },
 	{ ch: 3, q: "base64, c'est :", c: ["Un encodage : tout le monde peut le décoder", "Un chiffrement fort", "Une compression", "Une empreinte"], b: 0, e: "base64 -d le décode, sans clé. Ce n'est pas un secret." },
@@ -1095,9 +1095,9 @@ function signeEpreuve(e, id){ return e.reussies[id] ? "✓" : (e.defaites && e.d
 function texteDiplomeExamen(){
 	var e = state.examen, minutes = minutesExamen();
 	var lignes = [
-		"========================================",
+		"==================================",
 		"       CYBERSUP · DIPLÔME DE L'ÉPREUVE FINALE",
-		"========================================",
+		"==================================",
 		"",
 		"  Décerné à : " + (state.nom || JOUEUR),
 		"  " + (e.fin === "victoire" ? "qui a repris la Forteresse à la sorcière Myriam et rendu sa voix à Laurana." :
@@ -1125,12 +1125,12 @@ function texteDiplomeExamen(){
 		"",
 		"  Signé : Laurent, le Mage Rouxblanc, Directeur Pédagogique de Cybersup",
 		"  Proclamé par : Laurana la Flamboyante, héraut de Cybersup",
-		"========================================",
+		"==================================",
 		e.sceau ? "  Sceau du formateur  : ✓ copie scellée" : "  Sceau du formateur  : pas encore (le formateur tape sceller ici)",
-		"========================================",
+		"==================================",
 		"  Code de vérification, à remettre au formateur :",
 		"  " + codeDiplomeExamen(),
-		"========================================");
+		"==================================");
 	return lignes.join("\n");
 }
 
@@ -1481,9 +1481,9 @@ function rapportCodeExamen(c, verdictSceau){
 		return "    " + completerDroite(NOMS_DES_SCEAUX[s], 24) + idx.filter(function(i){ return c.reussies[i]; }).length + " sur " + idx.length;
 	});
 	lignes.push("",
-		"========================================",
+		"==================================",
 		C.gras("  BULLETIN · " + String(c.prenom).toUpperCase()) + C.gris("   " + c.date),
-		"========================================",
+		"==================================",
 		"",
 		"  " + C.gras("NOTE FINALE : " + ecrireNote(c.noteGlobale) + " / 20") + "   " + C.gras(mentionExamen(c.noteGlobale)),
 		"",
@@ -1509,7 +1509,7 @@ function rapportCodeExamen(c, verdictSceau){
 	lignes.push("",
 		"  " + (c.valide ? C.vert("✓ Code lisible et non retouché") : C.rouge("✗ Code RETOUCHÉ : la somme de contrôle ne correspond pas. Ne pas en tenir compte.")),
 		"  " + (verdictSceau || C.jaune("⚠ Code NON SCELLÉ : il peut avoir été fabriqué. Pour une note officielle, scelle la copie sur le poste de l'étudiant (sceller).")),
-		"========================================");
+		"==================================");
 	return lignes.join("\n");
 }
 
@@ -1590,7 +1590,7 @@ Shell.executer = function(ligne){
 	Shell.ligneRateeExamen = false;
 	if (examenEnCours() && /(^|[|;&]\s*)(sudo\s+)?(ps|top)\b/.test(String(ligne || ""))) state.examen.psVu = true;
 	var r = EXECUTER_HORS_EXAMEN.apply(this, arguments);
-	if (examenEnCours() && !state.examen.fini && current_room === QuartiersRecrue && /^\s*(ls|tree|ll)\b/.test(String(ligne || ""))){
+	if (examenEnCours() && !state.examen.fini && current_room === QuartiersRecrue && /^\s*(ls|ll)(\s+-\w+)*\s*(\.\/?|~\/?)?\s*$/.test(String(ligne || ""))){
 		state.examen.rencontres = state.examen.rencontres || {};
 		if (!state.examen.rencontres.aidan){
 			state.examen.rencontres.aidan = true;

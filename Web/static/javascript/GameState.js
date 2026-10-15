@@ -773,9 +773,9 @@ GameState.prototype.tableauXP2 = function(){
 GameState.prototype.texteDuCertificat = function(){
 	var minutes = Math.round((this.tempsMs - (this.debutChapitre2 || 0)) / 60000);
 	return "" +
-		"=================================================================\n" +
+		"==================================\n" +
 		"         CYBERSUP · CERTIFICAT DE DÉFENSE DU SYSTÈME\n" +
-		"=================================================================\n" +
+		"==================================\n" +
 		"\n" +
 		"  Décerné à : " + (this.nom || JOUEUR) + "\n" +
 		"\n" +
@@ -793,10 +793,10 @@ GameState.prototype.texteDuCertificat = function(){
 		"\n" +
 		"  Signé : Laurent, Directeur Pédagogique de Cybersup\n" +
 		"          et Grace, cheffe de quart de la WarRoom\n" +
-		"=================================================================\n" +
+		"==================================\n" +
 		"  Code de vérification (indicatif), à remettre au formateur :\n" +
 		"  " + this.codeDuCertificat() + "\n" +
-		"=================================================================";
+		"==================================";
 };
 
 /*
@@ -836,9 +836,9 @@ function couperEnLignes(texte, largeur, separateur){
 GameState.prototype.texteDuCertificatReseau = function(){
 	var minutes = Math.round((this.tempsMs - (this.debutChapitre3 || 0)) / 60000);
 	return "" +
-		"=================================================================\n" +
+		"==================================\n" +
 		"       CYBERSUP · CERTIFICAT D'ADMINISTRATION RÉSEAU\n" +
-		"=================================================================\n" +
+		"==================================\n" +
 		"\n" +
 		"  Décerné à : " + (this.nom || JOUEUR) + "\n" +
 		"\n" +
@@ -859,10 +859,10 @@ GameState.prototype.texteDuCertificatReseau = function(){
 		"\n" +
 		"  Signé : Laurent, Directeur Pédagogique de Cybersup\n" +
 		"          et Radia, M1 réseau (campus de Marseille)\n" +
-		"=================================================================\n" +
+		"==================================\n" +
 		"  Code de vérification (indicatif), à remettre au formateur :\n" +
 		"  " + this.codeDuCertificatReseau() + "\n" +
-		"=================================================================";
+		"==================================";
 };
 
 GameState.prototype.codeDuCertificatReseau = function(){
@@ -1002,21 +1002,21 @@ GameState.prototype.sectionDuJournal = function(lignes, chapitre, titre, quetes,
 
 GameState.prototype.texteDuDiplome = function(){
 	if (this.has("chapitre1Saute")){
-		return "=================================================================\n" +
+		return "==================================\n" +
 			"            CYBERSUP · DIPLÔME DE MAGE DU TERMINAL\n" +
-			"=================================================================\n\n" +
+			"==================================\n\n" +
 			"  Chapitre 1 non passé : accès direct au chapitre " + (this.has("panneDirecte") ? "2" : "3") + ".\n" +
 			"  Pas de note pour ce chapitre. " + (this.has("panneDirecte") ?
 				"Celle du chapitre 2 figurera sur\n  le CertificatReseau, à gagner au BatimentB de Cybersup.\n\n" :
 				"Celle du chapitre 3 figurera sur\n  le CertificatCyber, à gagner sous la Citadelle (cd Crypte).\n\n") +
-			"=================================================================";
+			"==================================";
 	}
 	var pr = this.progression();
 	var complet = this.xp >= pr.max;
 	return "" +
-		"=================================================================\n" +
+		"==================================\n" +
 		"            CYBERSUP · DIPLÔME DE MAGE DU TERMINAL\n" +
-		"=================================================================\n" +
+		"==================================\n" +
 		"\n" +
 		"  Décerné à : " + (this.nom || JOUEUR) + "\n" +
 		"\n" +
@@ -1038,10 +1038,10 @@ GameState.prototype.texteDuDiplome = function(){
 		"\n" +
 		"  Signé : Laurent, Directeur Pédagogique de Cybersup\n" +
 		"          (et Sorcier Noir à ses heures)\n" +
-		"=================================================================\n" +
+		"==================================\n" +
 		"  Code de vérification (indicatif), à remettre au formateur :\n" +
 		"  " + this.codeDuDiplome() + "\n" +
-		"=================================================================" +
+		"==================================" +
 		(this.nom ? "" : "\n(Pour faire figurer ton nom sur le diplôme, va signer le LivreDOr de la Taverne.)") +
 		(complet ? "" : "\n(La note peut encore monter : le diplôme se met à jour tout seul. Tape xp pour voir où il reste des points à prendre.)");
 };
