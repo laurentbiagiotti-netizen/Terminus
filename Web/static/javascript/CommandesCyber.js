@@ -1114,6 +1114,81 @@ Shell.sorts.vi = Shell.sorts.vim;
 
 function page(resume, titre, texte){ return { resume: resume, titre: titre, page: texte }; }
 
+/*
+ * Les sorts du scripteur (read, printf, seq, basename, dirname, expr, sleep : voir Interpreteur.js).
+ * Aucun chapitre ne les enseigne encore : le chapitre 4 les rangera dans son ORDRE_DES_SORTS.
+ * D'ici là, ils sont « hors barème » : pas d'XP de premier usage (voir Shell.appeler).
+ */
+MANUEL["read"] = page("lire une ligne et la ranger dans des variables", "READ (lire)",
+	"  read NOM               lit une ligne et la range dans la variable NOM\n" +
+	"  read A B C             coupe la ligne en mots : le premier dans A, le deuxième dans B, tout le reste dans C\n" +
+	"  read -r LIGNE          garde les \\ tels quels (le bon réflexe pour lire un fichier)\n" +
+	"  read -p \"Nom ? \" NOM   affiche une question avant de lire\n" +
+	"  read -a T              range chaque mot dans le tableau T (${T[0]}, ${T[1]}...)\n" +
+	"  IFS=: read A B C       coupe sur les : au lieu des espaces\n\n" +
+	"read lit son entrée : un tuyau, un objet (avec <) ou un texte (avec <<<). Il rend le statut 1 quand il\n" +
+	"n'y a plus rien à lire : c'est ce qui arrête la boucle classique, celle qui lit un fichier ligne à ligne :\n\n" +
+	"  while read -r ligne; do\n" +
+	"      echo \"lu : $ligne\"\n" +
+	"  done < fichier\n\n" +
+	"Piège : echo Ada | read nom ne garde rien, car chaque morceau d'un tuyau tourne dans son propre\n" +
+	"sous-shell. Écris plutôt read nom <<< \"Ada\".\n" +
+	"Dans ce monde, read ne lit pas le clavier : donne-lui toujours un tuyau, un objet ou un texte.");
+
+MANUEL["printf"] = page("écrire un texte mis en forme", "PRINT Formatted (écrire avec un format)",
+	"  printf FORMAT ARGUMENTS...\n\n" +
+	"  %s     un texte                    %5s    sur 5 colonnes, calé à droite\n" +
+	"  %d     un nombre entier            %-10s  sur 10 colonnes, calé à gauche\n" +
+	"  %.2f   un nombre à 2 décimales     %03d   sur 3 chiffres : 007\n" +
+	"  %x     un nombre en hexadécimal    %%     le signe % lui-même\n" +
+	"  \\n     un retour à la ligne        \\t     une tabulation\n\n" +
+	"Contrairement à echo, printf n'ajoute pas de retour à la ligne tout seul : pense au \\n.\n" +
+	"S'il y a plus d'arguments que de %, le format resservira :\n" +
+	"  printf \"%s\\n\" un deux trois      un mot par ligne\n" +
+	"  printf \"%-8s %3d\\n\" Ada 42       un petit tableau bien aligné\n" +
+	"  printf -v VAR \"%03d\" 7          range le résultat (007) dans VAR au lieu de l'afficher");
+
+MANUEL["seq"] = page("écrire une suite de nombres", "SEQuence",
+	"  seq 5              1 2 3 4 5, un par ligne\n" +
+	"  seq 2 5            de 2 à 5\n" +
+	"  seq 0 10 100       de 0 à 100, de 10 en 10\n" +
+	"  seq 5 -1 1         à rebours : 5 4 3 2 1\n" +
+	"  seq -s , 3         1,2,3 (le séparateur de ton choix)\n" +
+	"  seq -w 8 10        08 09 10 (tous de la même largeur)\n\n" +
+	"Le compagnon des boucles : for i in $(seq 1 10); do ...; done\n" +
+	"(bash sait aussi l'écrire tout seul : for i in {1..10}, ou for (( i = 1; i <= 10; i++ )).)");
+
+MANUEL["basename"] = page("garder le nom d'un chemin, sans les lieux", "BASE NAME (le nom de base)",
+	"  basename ~/Village/Marche/Panier.txt        Panier.txt\n" +
+	"  basename ~/Village/Marche/Panier.txt .txt   Panier (sans le suffixe)\n" +
+	"  basename -a a/b c/d                          b et d, un par ligne\n\n" +
+	"Son jumeau, dirname, garde l'autre moitié. Dans un script :\n" +
+	"  for f in *.txt; do echo \"$(basename \"$f\" .txt)\"; done\n" +
+	"(bash sait aussi le faire tout seul : ${f##*/} et ${f%.txt}.)");
+
+MANUEL["dirname"] = page("garder les lieux d'un chemin, sans le nom", "DIRectory NAME (le nom du lieu)",
+	"  dirname ~/Village/Marche/Panier.txt    ~/Village/Marche\n" +
+	"  dirname Panier.txt                     . (ici même)\n\n" +
+	"Le jumeau de basename. Pratique dans un script pour savoir où il se trouve : dirname \"$0\".");
+
+MANUEL["expr"] = page("calculer à l'ancienne, ou comparer", "EXPRession",
+	"  expr 2 + 3          5\n" +
+	"  expr 7 / 2          3 (les nombres entiers seulement)\n" +
+	"  expr 6 \\* 7         42 : le * doit être protégé, sinon le shell le prend pour un joker\n" +
+	"  expr length Ada     3\n" +
+	"  expr 3 \\> 2         1 (vrai) ; 0 pour faux\n\n" +
+	"Chaque nombre et chaque opérateur est un argument à part : les espaces comptent.\n" +
+	"C'est l'outil des vieux scripts. Aujourd'hui, bash calcule tout seul : echo $(( 6 * 7 )).");
+
+MANUEL["sleep"] = page("attendre un moment", "SLEEP (dormir)",
+	"  sleep 2       attend 2 secondes\n" +
+	"  sleep 0.5     une demi-seconde\n" +
+	"  sleep 1m      une minute (s, m, h, d)\n\n" +
+	"Utile dans une boucle qui surveille quelque chose : while true; do ...; sleep 5; done\n" +
+	"Dans ce monde, le temps file tout seul : sleep rend la main aussitôt.");
+["read", "printf", "seq", "basename", "dirname", "expr", "sleep"].forEach(function(s){ MANUEL[s].horsBareme = true; });
+
+
 MANUEL["strings"] = page("afficher le texte lisible caché dans un fichier", "STRINGS (les chaînes de caractères)",
 	"  strings FICHIER        affiche chaque suite d'au moins 4 caractères lisibles\n  strings -n 8 FICHIER   au moins 8\n\n" +
 	"Indispensable devant un programme compilé (un binaire) : cat n'y montre que du charabia,\nstrings en sort les adresses, les messages et parfois les mots de passe oubliés là.");

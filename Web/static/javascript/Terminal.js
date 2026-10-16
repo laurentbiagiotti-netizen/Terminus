@@ -10,6 +10,8 @@
  *   term.echo("texte avec couleurs ANSI");
  *   term.onCommande = function(ligne){ ... };
  *   term.onCompletion = function(texteAvantCurseur){ return {valeur, choix}; };
+ *   term.onInterruption = function(){ ... };        Ctrl+C (abandonner une saisie sur plusieurs lignes)
+ *   term.onFinDeSaisie = function(){ return vrai; }  Ctrl+D sur une ligne vide : vrai si la saisie en cours l'a pris
  *   term.demander("Mot de passe : ", true, function(reponse){ ... });
  */
 
@@ -133,6 +135,8 @@ function Terminal(elements){
 			// Ctrl+D hors de la ligne : pas de « ajouter aux favoris », mais la même chose que dans la ligne.
 			e.preventDefault();
 			if (self.saisie.value === "" && !self.question){
+				// Au milieu d'une commande sur plusieurs lignes (invite « > »), Ctrl+D la termine, comme dans bash.
+				if (self.onFinDeSaisie && self.onFinDeSaisie()){ self.defiler(); return; }
 				self.echo(self.texteInvite + "logout");
 				self.onCommande("logout");
 				self.defiler();
@@ -438,6 +442,8 @@ Terminal.prototype.touche = function(e){
 	} else if (e.key === "d" && e.ctrlKey && this.saisie.value === "" && !this.question){
 		// Ctrl+D sur une ligne vide : fin de session, comme dans un vrai terminal.
 		e.preventDefault();
+		// Au milieu d'une commande sur plusieurs lignes (invite « > »), Ctrl+D la termine, comme dans bash.
+		if (this.onFinDeSaisie && this.onFinDeSaisie()){ this.defiler(); return; }
 		this.echo(this.texteInvite + "logout");
 		this.onCommande("logout");
 		this.defiler();
@@ -445,6 +451,8 @@ Terminal.prototype.touche = function(e){
 		e.preventDefault();
 		this.echo(this.texteInvite + this.saisie.value + "^C");
 		this.saisie.value = "";
+		// Une commande commencée sur plusieurs lignes (invite « > ») est abandonnée.
+		if (this.onInterruption) this.onInterruption();
 	}
 };
 

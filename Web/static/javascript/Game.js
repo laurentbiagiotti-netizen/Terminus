@@ -477,6 +477,8 @@ function demarrer(){
 	term.onCommande = Shell.executer;
 	term.onEvenement = banniere;
 	term.onCompletion = Shell.completer;
+	term.onInterruption = Shell.interrompre;
+	term.onFinDeSaisie = Shell.finDeSaisie;
 	term.historique = Shell.historique.slice();
 	term.positionHistorique = term.historique.length;
 

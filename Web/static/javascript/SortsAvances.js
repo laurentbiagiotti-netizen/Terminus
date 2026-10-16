@@ -34,7 +34,7 @@ Shell.definirVariable = function(affectation, cmd){
 	if (VARIABLES_SYSTEME.indexOf(nom) > -1){
 		throw new ShellError(prefixe + "la variable " + nom + " est tenue à jour par le système. Ici, on la lit (echo $" + nom + "), on ne la change pas.");
 	}
-	if (valeur.length > 200) throw new ShellError(prefixe + "cette valeur est bien trop longue.");
+	if (valeur.length > 4000) throw new ShellError(prefixe + "cette valeur est bien trop longue.");
 	state.env[nom] = valeur;
 	GameEvents.fire({ type: "export", name: nom, value: valeur });
 };
@@ -195,6 +195,7 @@ Shell.sorts.diff = function(args, io){
 		return p.opts.s ? "Les objets " + p.reste[0] + " et " + p.reste[1] + " sont identiques" :
 			(io.tty ? C.gris("(aucune différence : diff ne dit rien quand les deux textes sont identiques)") : "");
 	}
+	io.code = 1; // comme le vrai diff : statut 1 quand les textes diffèrent (if diff -q a b; then ...)
 	if (p.opts.q) return "Les objets " + p.reste[0] + " et " + p.reste[1] + " sont différents";
 	function plage(debut, nombre){
 		if (nombre === 0) return String(debut);
@@ -299,11 +300,30 @@ Shell.sorts.cut = function(args, io){
 /* Scripts                                                             */
 /* ------------------------------------------------------------------ */
 
+/*
+ * bash SCRIPT [ARGUMENTS...] lance un script ; bash -c 'sorts' lance un texte écrit sur la ligne.
+ * -x montre chaque commande avant de la lancer, -e arrête à la première erreur, -n vérifie
+ * seulement la syntaxe. sh est un autre nom de bash (voir Interpreteur.js).
+ */
 Shell.sorts.bash = function(args, io){
 	if (args.length === 0){
 		return "Tu es déjà dans bash : c'est lui, le terminal, qui lit tes sorts depuis le début. Pour lancer un script : bash SCRIPT";
 	}
-	return Shell.lancerScript(args[0], io, false);
+	var options = {}, i = 0;
+	while (i < args.length && /^-[xenc]+$/.test(args[i]) && !options.c){
+		for (var k = 1; k < args[i].length; k++) options[args[i].charAt(k)] = true;
+		i++;
+	}
+	if (options.c){
+		if (args[i] === undefined) throw new ShellError("bash : -c : il faut un texte à lancer. Exemple : bash -c 'echo bonjour'", 2);
+		var sortie = Interpreteur.lancerScript(args[i], io, { nom0: args[i + 1] || "bash", positionnels: args.slice(i + 2), nomScript: "bash",
+			x: options.x, e: options.e, n: options.n });
+		GameEvents.fire({ type: "script", item: null, room: current_room, direct: false, nom: "bash -c", args: args.slice(i + 2),
+			statut: io.code || 0, structures: Interpreteur.structures(args[i]) });
+		return sortie;
+	}
+	if (i >= args.length) throw new ShellError("bash : quel script lancer ? Utilisation : bash [-x] SCRIPT [ARGUMENTS...]", 2);
+	return Shell.lancerScript(args[i], io, false, args.slice(i + 1), options);
 };
 
 /* ------------------------------------------------------------------ */

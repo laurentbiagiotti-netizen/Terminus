@@ -1734,6 +1734,8 @@ Shell.sorts.tr = function(args, io){
 		}
 		sortie = r;
 	}
+	// Une sortie qui ne finit pas par un retour à la ligne (tr "\n" " ") le dit au tuyau, comme echo -n.
+	if (sortie !== "" && sortie.charAt(sortie.length - 1) !== "\n") io.sansFin = true;
 	sortie = sansDernierRetour(sortie);
 	GameEvents.fire({ type: "tr", text: sortie, de: p.reste[0], vers: p.reste[1] });
 	return sortie;
