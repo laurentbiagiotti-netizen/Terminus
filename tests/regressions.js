@@ -667,5 +667,14 @@ contient(jr5.taper("rempart"), "LE PLAN DU BASTION", "vieille sauvegarde : rempa
 verifier(jr5.lire("state.chapitreEnCours()") === 6, "vieille sauvegarde : le chapitre en cours est le Bastion");
 verifier(jr5.lire("state.xp2 === state.xpMax2()"), "vieille sauvegarde : la note de la Crypte n'a pas bougé");
 
+// Le compte créé à la connexion : le monde, construit avant, ne garde pas l'identifiant provisoire (passwd, journaux de l'épreuve).
+(function(){
+	var jn = nouveauMonde({});
+	jn.lire("adopterPrenom('Ada')");
+	verifier(/^ada:x:1000/m.test(jn.lire("PasswdExamen.getText()")) && !/apprenti/.test(jn.lire("PasswdExamen.getText()")), "nouveau compte : le passwd de l'épreuve porte le vrai identifiant");
+	verifier(!/apprenti/.test(jn.lire("AuthLogExamen.getText()")) && !/apprenti/.test(jn.lire("PASSWD_HIER")), "nouveau compte : auth.log et passwd.hier de l'épreuve aussi");
+	verifier(jn.lire("(function(){ var c = 0; pourChaqueNoeud(function(x){ if (x.cmd_text && typeof x.cmd_text.less === 'string' && /(^|\\n)apprenti:|\\/home\\/apprenti|apprenti@/.test(x.cmd_text.less)) c++; }); return c; })()") === 0, "nouveau compte : plus aucun fichier ne cite le compte provisoire");
+})();
+
 console.log(verifications + " vérifications, " + echecs + " échec" + (echecs > 1 ? "s" : ""));
 process.exit(echecs ? 1 : 0);

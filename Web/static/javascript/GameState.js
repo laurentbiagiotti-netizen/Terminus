@@ -2025,6 +2025,36 @@ function pourChaqueNoeud(fonction){
  * l'ancien identifiant (apprenti au départ) change de propriétaire, ses
  * processus aussi, et le prénom figure sur la carte étudiante et le diplôme.
  */
+/*
+ * Le monde est construit au chargement de la page, avant la connexion : les fichiers qui citent le compte du joueur
+ * (passwd, shadow, group, journaux, /home/...) portent l'identifiant provisoire. À la création du compte, on le remplace
+ * là où il joue le rôle d'un compte (début de ligne « nom: », /home/nom, « for nom », « nom@ », membre d'un groupe),
+ * jamais dans la prose. Aussi dans les textes gardés en réserve (variables globales, ex. PASSWD_HIER de l'épreuve).
+ */
+function renommerCompteDansLesTextes(ancien, nouveau){
+	if (!ancien || !nouveau || ancien === nouveau) return;
+	var a = ancien.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	var motifs = [
+		[new RegExp("(^|\n)" + a + ":", "g"), "$1" + nouveau + ":"],
+		[new RegExp("/home/" + a + "(?=[/\\s:\"']|$)", "g"), "/home/" + nouveau],
+		[new RegExp("( for | user | acct=| uid=| user=)" + a + "(?=[\\s\"]|$)", "g"), "$1" + nouveau],
+		[new RegExp("(^|[\\s(\"])" + a + "@", "gm"), "$1" + nouveau + "@"],
+		[new RegExp("([:,])" + a + "(?=,|\\n|$)", "g"), "$1" + nouveau]
+	];
+	function changer(t){
+		if (typeof t !== "string" || t.indexOf(ancien) === -1) return t;
+		motifs.forEach(function(m){ t = t.replace(m[0], m[1]); });
+		return t;
+	}
+	pourChaqueNoeud(function(noeud){
+		if (noeud.cmd_text && typeof noeud.cmd_text.less === "string"){
+			var t = changer(noeud.cmd_text.less);
+			if (t !== noeud.cmd_text.less) noeud.cmd_text.less = t;
+		}
+	});
+	if (typeof PASSWD_HIER === "string") PASSWD_HIER = changer(PASSWD_HIER);
+}
+
 function adopterPrenom(prenom){
 	var texte = String(prenom).trim().replace(/\s+/g, " ").substring(0, 30);
 	var ancien = JOUEUR;
@@ -2042,6 +2072,7 @@ function adopterPrenom(prenom){
 		UTILISATEURS[nouveau] = 1000;
 	}
 	JOUEUR = nouveau;
+	renommerCompteDansLesTextes(ancien, nouveau);
 	PROFIL.prenom = texte;
 	enregistrerProfil();
 	state.nom = texte;
