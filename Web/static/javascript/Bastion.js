@@ -773,8 +773,9 @@ function texteRempart(){
 	TOURS_CH5.forEach(function(t){
 		var ok = tourFermeeCh5(t.cle), faites = t.etapes.filter(aFait).length, defis = idsDefisTour(t.cle).filter(aFait).length;
 		var trace = c.traces && c.traces[t.cle] && TRACES_CH5[t.cle] && !TRACES_CH5[t.cle].reparee();
-		lignes.push("  " + (ok ? C.vert : C.rouge)("●") + " " + C.gras(completerDroite(t.nom, 10)) + completerDroite(MAITRES_BASTION[t.cle].nom, 10) +
-			(ok ? C.vert(faites + "/2") : C.gris(faites + "/2")) + C.gris(" · défis " + defis + "/6") + (trace ? C.rouge("  trace de la Nuée") : "") + (current_room === t.lieu ? C.jaune("  ◀ toi") : ""));
+		// Deux lignes par tour, comme le grimoire du chapitre 4 : le nom et le maître, puis les compteurs (lisible sur un téléphone).
+		lignes.push("  " + (ok ? C.vert : C.rouge)("●") + " " + C.gras(completerDroite(t.nom, 10)) + MAITRES_BASTION[t.cle].nom + (current_room === t.lieu ? C.jaune("  ◀ toi") : ""));
+		lignes.push("      " + (ok ? C.vert(faites + " sur 2 étapes") : C.gris(faites + " sur 2 étapes")) + C.gris(" · " + defis + " sur 6 défis") + (trace ? C.rouge(" · trace de la Nuée") : ""));
 	});
 	var fermees = toursFermeesCh5().length;
 	lignes.push("", "  Tours fermées : " + C.gras(fermees + " sur 12"));
