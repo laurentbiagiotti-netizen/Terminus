@@ -2658,7 +2658,7 @@ Shell.sorts.find = function(args, io){
 	var jetons = args.slice(i), k = 0, action = false;
 	var options = { maxdepth: Infinity, mindepth: 0, depth: false };
 	var execsGroupes = [];
-	var CONNUS = "-name, -iname, -path, -type, -user, -perm, -mtime, -mmin, -newer, -size, -empty, -maxdepth, -mindepth, -print, -exec, -delete, -prune, -o, !, \\( \\)";
+	var CONNUS = "-name, -iname, -path, -type, -user, -perm, -mtime, -mmin, -newer, -size, -empty, -maxdepth, -mindepth, -print, -print0, -exec, -delete, -prune, -o, !, \\( \\)";
 	function valeur(nom, exemple){
 		if (jetons[k] === undefined) throw new ShellError("find : " + nom + " attend une valeur, par exemple : " + exemple);
 		return jetons[k++];
@@ -2749,6 +2749,7 @@ Shell.sorts.find = function(args, io){
 		case "-false": return { test: function(){ return false; } };
 		case "-prune": return { prune: true };
 		case "-print": action = true; return { print: true };
+		case "-print0": action = true; return { print: true, nul: true };
 		case "-delete": action = true; options.depth = true; return { supprimer: true };
 		case "-ok":
 			throw new ShellError("find : -ok demande une confirmation pour chaque objet, ce que ce monde ne sait pas faire.\n" +
@@ -2775,7 +2776,8 @@ Shell.sorts.find = function(args, io){
 	if (k < jetons.length) throw new ShellError(jetons[k] === ")" ? "find : parenthèse fermante « ) » sans parenthèse ouvrante" : "find : « " + jetons[k] + " » inattendu ici");
 	if (!action) arbre = arbre ? { et: [arbre, { print: true }] } : { print: true };
 
-	var lignes = [], code = 0, executions = 0;
+	// Ce qu'écrit find : un chemin par ligne, ou suivi d'un caractère nul avec -print0 (pour xargs -0).
+	var lignes = [], code = 0, executions = 0, texteNul = false;
 	var lancees = [];
 	function lancer(argv){
 		if (++executions > XARGS_LANCEMENTS_MAX) throw new ShellError("find : plus de " + XARGS_LANCEMENTS_MAX + " exécutions, j'arrête là.");
@@ -2809,7 +2811,11 @@ Shell.sorts.find = function(args, io){
 		if (n.vrai) return true;
 		if (n.test) return n.test(c);
 		if (n.prune){ c.elaguer = true; return true; }
-		if (n.print){ lignes.push(c.estLieu && io.tty ? C.bleu(c.chemin) : c.chemin); return true; }
+		if (n.print){
+			if (n.nul){ texteNul = true; lignes.push(c.chemin + "\u0000"); }
+			else lignes.push(c.estLieu && io.tty ? C.bleu(c.chemin) : c.chemin);
+			return true;
+		}
 		if (n.supprimer) return supprimer(c);
 		if (n.exec){
 			if (n.plus){ n.chemins.push(c.chemin); return true; }
@@ -2868,7 +2874,7 @@ Shell.sorts.find = function(args, io){
 		}
 	});
 	if (code) io.code = code;
-	var sortie = lignes.join("\n");
+	var sortie = texteNul ? lignes.map(function(l){ return /\u0000$/.test(l) ? l : l + "\n"; }).join("").replace(/\n$/, "") : lignes.join("\n");
 	GameEvents.fire({ type: "find", count: lignes.length, output: sansAnsi(sortie),
 		suid: args.some(function(a, n){ return args[n - 1] === "-perm" && /4000|u=s/.test(a); }),
 		exec: args.indexOf("-exec") > -1, supprime: args.indexOf("-delete") > -1, room: current_room });
