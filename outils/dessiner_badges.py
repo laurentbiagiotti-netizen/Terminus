@@ -1,4 +1,4 @@
-"""Dessine les badges de compétence (chapitres 2 et 3) : des médailles en pixels, une couleur par rang.
+"""Dessine les badges de compétence (chapitres 2, 3 et 4) : des médailles en pixels, une couleur par rang.
 
 Bronze, argent, or et platine, comme les rangs d'un tableau de trophées ; le dessin est propre au jeu :
 une médaille hexagonale, deux rubans, et au centre le sigle de la compétence (OSI, DNS, SUID...).
@@ -29,6 +29,14 @@ BADGES = [
     ('c_dns', 'DNS', 'bronze'), ('c_parefeu', 'UFW', 'bronze'), ('c_compte', 'UID0', 'argent'), ('c_sudo', 'SUDO', 'argent'),
     ('c_cle', 'KEY', 'argent'), ('c_coffre', 'PUB', 'bronze'), ('c_preuves', 'HASH', 'argent'), ('c_gpg', 'GPG', 'or'),
     ('c_corbeau', '!', 'or'), ('platine_cyber', 'SOC', 'platine'),
+    # chapitre 4 : l'Académie des Arcanes
+    ('d_frances', 'AVIS', 'bronze'), ('d_runes_traces', 'GREP', 'bronze'), ('d_runes_ioc', 'IOC', 'argent'),
+    ('d_awk_volume', 'SUM', 'bronze'), ('d_awk_victimes', 'TOP3', 'argent'), ('d_sed_anonymiser', 'RGPD', 'argent'),
+    ('d_sed_desarmer', 'SED', 'argent'), ('d_jq_alertes', 'JQ', 'bronze'), ('d_jq_rapport', 'CSV', 'argent'),
+    ('d_alchimie_fantomes', 'LOCK', 'argent'), ('d_alchimie_quarantaine', 'CAGE', 'argent'), ('d_chrono_bombe', 'T-0', 'or'),
+    ('d_chrono_sauvegarde', 'CRON', 'bronze'), ('d_archives_restaurer', 'SYNC', 'or'), ('d_archives_patch', 'DIFF', 'argent'),
+    ('d_script_nettoyage', 'SH', 'bronze'), ('d_script_arguments', '$1', 'argent'), ('d_corbeau', 'STOP', 'or'),
+    ('platine_ch4', 'IR', 'platine'),
 ]
 NOIR = (0, 0, 0)
 BLANC = (242, 242, 242)
