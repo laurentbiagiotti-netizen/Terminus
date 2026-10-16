@@ -85,6 +85,29 @@ function fermer(jeu, tours){ (tours || ORDRE_TOURS).forEach(function(cle){ jouer
 /* ================================================================== */
 /* 1. Les fichiers, les images, l'écriture                              */
 /* ================================================================== */
+/* Le compte est créé à la connexion, après la construction du monde : bastion prend le bon identifiant. */
+(function(){
+	var jeu = monde.nouveauMonde({});
+	jeu.lire("adopterPrenom('Ada')");
+	jeu.taper("chapitre 5", "oui");
+	jeu.taper("ssh-copy-id bastion"); jeu.taper("ssh bastion");
+	verifier(jeu.taper("grep -c '^ada:' /etc/passwd").trim() === "1", "bastion : le compte du joueur porte son identifiant (ada)");
+	verifier(jeu.taper("grep -c apprenti /etc/passwd /etc/group /etc/shadow").indexOf(":1") === -1, "bastion : plus aucune trace de l'identifiant provisoire");
+	verifier(jeu.taper("ls /home").indexOf("ada/") > -1, "bastion : /home/ada");
+	verifier(jeu.taper("sudo chage -M 90 ada", jeu.lire("MOT_DE_PASSE_SUDO")).indexOf("does not exist") === -1, "bastion : chage trouve le compte du joueur");
+})();
+
+/* Départ direct : sans la Crypte, le joueur n'a pas de clés SSH ; Grace lui en fabrique une paire à l'entrée du Bastion. */
+(function(){
+	var st = {};
+	var jeu = neuf(st);
+	verifier(jeu.lire("Home.getChildFromName('.ssh') !== -1 && Home.getChildFromName('.ssh').getItemFromName('id_ed25519.pub') !== -1"), "départ direct : une paire de clés SSH dans ~/.ssh");
+	verifier(jeu.taper("ssh-copy-id bastion").indexOf("Number of key(s) added: 1") > -1, "départ direct : ssh-copy-id bastion pose la clé");
+	jeu.lire("state.save()");
+	var jeu2 = monde.nouveauMonde(st);
+	verifier(jeu2.lire("Home.getChildFromName('.ssh') !== -1 && Home.getChildFromName('.ssh').getItemFromName('id_ed25519') !== -1"), "la paire de clés survit au rechargement");
+})();
+
 (function(){
 	var index = fs.readFileSync(path.join(RACINE, "Web", "index.html"), "utf8");
 	var iGuet = index.indexOf("SortsGuet.js"), iC5 = index.indexOf("Chapitre5.js"), iB = index.indexOf("/Bastion.js?"), iIntro = index.indexOf("Intro.js");

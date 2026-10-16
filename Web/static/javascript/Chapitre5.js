@@ -1522,9 +1522,65 @@ function refusBastion(){
 	return null;
 }
 
+/* Une paire de clés SSH pour qui n'en a pas : un départ direct (chapitre 4 ou 5) n'a pas fait la Crypte, où on la fabrique.
+   Sans elle, le Pont-levis (PasswordAuthentication no) fermerait la porte derrière le joueur. Même fabrique que ssh-keygen. */
+function clesPourLeBastion(){
+	var dossier = Home.getChildFromName(".ssh");
+	if (dossier !== -1 && dossier.getItemFromName("id_ed25519.pub") !== -1) return false;
+	if (typeof texteClePrivee !== "function" || typeof texteClePublique !== "function") return false;
+	if (dossier === -1){
+		dossier = new Room(".ssh", "Le dossier de tes clés SSH. Rien que les tiennes.", "item_locker.gif");
+		dossier.owner = JOUEUR;
+		dossier.mode = "rwx------";
+		if (typeof libererNom === "function") libererNom(Home, ".ssh");
+		link_rooms(Home, dossier);
+	}
+	var privee = new Item("id_ed25519", texteClePrivee(), "item_locker.gif").droits("rw-------", JOUEUR);
+	var publique = new Item("id_ed25519.pub", texteClePublique(), "item_locker.gif").droits("rw-r--r--", JOUEUR);
+	dossier.addItem(privee);
+	dossier.addItem(publique);
+	state.clePublique = publique.getText();
+	return true;
+}
+
+/* Le joueur choisit son identifiant à la connexion, APRÈS la construction du monde : la machine bastion a été montée
+   avec l'identifiant provisoire (« apprenti »). Quand il change, on le remplace partout sur bastion (comptes, groupes,
+   dossier personnel, fichiers, connexions), comme si l'administrateur avait créé le compte au bon nom. */
+function renommerJoueurBastion(ancien, nouveau){
+	if (!ancien || !nouveau || ancien === nouveau || typeof racineHote !== "function") return;
+	var racine = racineHote(H5);
+	if (!racine) return;
+	var motif = new RegExp("(^|[^A-Za-z0-9_.-])" + ancien.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(?=[^A-Za-z0-9_.-]|$)", "gm");
+	var vus = [];
+	(function visiter(lieu){
+		if (!lieu || vus.indexOf(lieu) > -1) return;
+		vus.push(lieu);
+		if (lieu.room_name === ancien) lieu.room_name = nouveau;
+		(lieu.items || []).forEach(function(it){
+			var t = it.getText ? it.getText() : null;
+			if (typeof t === "string" && motif.test(t)){ motif.lastIndex = 0; it.cmd_text["less"] = t.replace(motif, "$1" + nouveau); }
+			motif.lastIndex = 0;
+		});
+		(lieu.children || []).forEach(visiter);
+	})(racine);
+	if (typeof CONNEXIONS_BASTION !== "undefined" && CONNEXIONS_BASTION[H5]) CONNEXIONS_BASTION[H5].forEach(function(c){ if (c.qui === ancien) c.qui = nouveau; });
+}
+if (typeof adopterPrenom === "function"){
+	var ADOPTER_PRENOM_AVANT_CH5 = adopterPrenom;
+	adopterPrenom = function(){
+		var ancien = JOUEUR;
+		var r = ADOPTER_PRENOM_AVANT_CH5.apply(this, arguments);
+		try { renommerJoueurBastion(ancien, JOUEUR); } catch (e){}
+		return r;
+	};
+}
+
 /* Les événements du chapitre. */
 GameEvents.addListener("enter", function(e){
 	if (e.room === HallBastion && !state.quests["h_entree"] && state.has("ch5Ouvert")){
+		if (clesPourLeBastion() && !state.has("rejeuEnCours")){
+			say(C.gris("(Grace, à la radio : « Tu n'as pas encore de clés SSH, tu n'es pas passé par la Crypte. Je t'en ai fabriqué une paire dans ~/.ssh, comme le ferait ssh-keygen : id_ed25519, la privée, à garder ; id_ed25519.pub, la publique, à poser sur bastion avec ssh-copy-id. »)"));
+		}
 		state.debutChapitre6 = state.tempsMs;
 		if (state.ch5){ state.ch5.dernierNb = state.nbCommandes; if (!state.ch5.base) state.ch5.base = baseNuitCh5(); }
 		state.complete("h_entree");
