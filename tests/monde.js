@@ -73,6 +73,9 @@ function nouveauMonde(stockage, graine){
 				.replace(/<poste>/g, lire("ADRESSE_POSTE_CORBEAU"))
 				.replace(/<wifi>/g, lire("MDP_WIFI"))
 				.replace(/<bssid>/g, lire("BSSID_FAUX"))
+				.replace(/<fantome-cron>/g, function(){ return lire("typeof FANTOME_CRON !== 'undefined' ? FANTOME_CRON : ''"); })
+				.replace(/<ip-nuee>/g, function(){ return lire("typeof IP_NUEE !== 'undefined' ? IP_NUEE[0] : ''"); })
+				.replace(/<volume>/g, function(){ return lire("typeof VOLUME_TOTAL !== 'undefined' ? String(VOLUME_TOTAL) : ''"); })
 				.replace(/<pid-ecoute>/g, function(){ var p = lire("procCorbeau()"); return p ? String(p.pid) : "0"; })
 				.replace(/<pid:([a-z_-]+)>/g, function(tout, nom){
 					return String(lire("(current_room.procs || []).filter(function(p){ return p.name === " + JSON.stringify(nom) + "; }).map(function(p){ return p.pid; })[0]"));

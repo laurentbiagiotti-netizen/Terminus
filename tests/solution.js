@@ -46,6 +46,11 @@ if (jeu.lire("state.xp2") !== jeu.lire("state.xpMax2()")){
 		jeu.lire("ORDRE_DES_SORTS_2.filter(function(x){ return !state.usages[x]; }).join(', ')") + "] ; lieux jamais visités : [" +
 		jeu.lire("lieuxVisitables(2).filter(function(l){ return !state.visited[l.id]; }).map(function(l){ return l.room_name; }).join(', ')") + "]");
 }
+// Le chapitre 4 (l'Académie des Arcanes, numéro 5 dans le code) : la solution doit mener à la victoire.
+if (!jeu.lire("state.quests.d_fin")) problemes.push("le chapitre 4 (l'Académie) n'atteint pas la victoire (d_fin) ; dernier lieu : " + jeu.lire("current_room.room_name"));
+var principales5 = jeu.lire("QUETES_CH4.filter(function(q){ return !state.quests[q.id]; }).map(function(q){ return q.titre; }).join(' ; ')");
+if (principales5) problemes.push("étapes du chapitre 4 manquantes : " + principales5);
+if (jeu.lire("state.xp5 > state.xpMax5()")) problemes.push("le chapitre 4 dépasse son barème : " + jeu.lire("state.xp5") + " sur " + jeu.lire("state.xpMax5()"));
 if (jeu.lire("state.xp") !== jeu.lire("state.xpMax()")){
 	problemes.push("la solution n'atteint pas le score maximal. Sorts jamais lancés : [" +
 		jeu.lire("ORDRE_DES_SORTS.filter(function(x){ return !state.usages[x]; }).join(', ')") + "] ; lieux jamais visités : [" +

@@ -1053,6 +1053,154 @@ Dans `vim rapport.txt`, pour chacune des quatre lignes à compléter : s'y place
 
 À ce stade le chapitre 3 affiche 5625 XP sur 5625, soit 20 sur 20, et le CertificatCyber porte son code de vérification.
 
+## Chapitre 4 : l'Académie des Arcanes (niveau avancé)
+
+Numéro interne 5, affiché 4. Quelques semaines après la Crypte, les notes volées de Frances ont fuité : un groupe de rançonneurs, la Nuée, a repris le nom du Corbeau. En une nuit, la Nuée a exfiltré des données de l'école, posé une bombe logique programmée pour minuit, semé des pièges et laissé un script qui recrée ses fichiers. Tout ce qui est « malveillant » ici est narratif et inerte (comme les charges neutralisées du chapitre 3) : le joueur apprend à mesurer la fuite, notifier (RGPD), éradiquer, restaurer et documenter.
+
+Le chapitre s'ouvre à la fin de la Crypte (après le rapport d'incident) : un escalier apparaît au fond de la SalleServeurs et descend à l'Académie. Huit maîtres, une aile chacun, enseignent les sorts avancés (noms d'inventeurs) : Henry (Runes, `grep`), Alfred (Divination, `awk`), Lee (Transmutation, `sed`), Stephen (Grimoires, `jq`), Doug (Alchimie, `xargs`, `comm`, `join`, `paste`, `column`, `nl`, `fold`, `shuf`), Paul (Chronomancie, `at`, `atq`, `atrm`), Andrew (Archives, `rsync`, `patch`, `tac`, `split`), Brian (Invocation, `read`, `printf`, `seq`, `basename`, `dirname`, `expr`, `sleep`). Frances est l'alliée (`cat Frances`), Grace guide à la radio (`cat Radio`), et une Horloge marque la nuit : chaque commande rapproche de minuit, où la bombe se déclenche si elle n'est pas désamorcée (ce n'est pas une défaite : la restauration devient alors indispensable). Le serveur visé est la machine `archives` (hors du réseau `10.0.92.0/24`), à laquelle on se connecte par `ssh archives`. Les données (journaux, adresses de la Nuée, comptes fantômes, volume) changent d'une partie à l'autre : les valeurs propres à la partie sont écrites `<entre chevrons>`.
+
+| Repère | Où le trouver dans le jeu |
+| --- | --- |
+| `<fantome-cron>` | un des comptes fantômes de `~/academie/fantomes.txt` (celui dont la crontab relance le chiffreur) |
+| `<ip-nuee>` | première adresse de `~/academie/ioc.txt` |
+| `<volume>` | le nombre écrit dans `~/academie/volume.txt` |
+
+### 23. L'Académie, les maîtres et l'avis de la Nuée
+
+On descend à l'Académie, on écoute Frances et on lit l'avis de la Nuée, puis on fait le tour des huit ailes pour apprendre les sorts :
+
+```
+cd ~/Cybersup/SalleServeurs
+cd Academie
+cat Frances
+cat AVIS.txt
+cd Runes
+cat Henry
+cd ../Divination
+cat Alfred
+cd ../Transmutation
+cat Lee
+cd ../Grimoires
+cat Stephen
+cd ../Alchimie
+cat Doug
+cd ../Chronomancie
+cat Paul
+cd ../Archives
+cat Andrew
+cd ../Invocation
+cat Brian
+cd ..
+```
+
+### 24. Runes et Divination : mesurer l'ampleur
+
+Sur le serveur, on isole les traces de la Nuée (sa plage d'adresses), on en tire les indicateurs uniques, puis on mesure au proxy le volume exfiltré et les machines les plus touchées :
+
+```
+ssh archives
+mkdir ~/academie
+grep -E "45\.137\." /var/log/acces.log > ~/academie/traces.log
+grep -oE "45\.137\.[0-9]+\.[0-9]+" /var/log/acces.log | sort -u > ~/academie/ioc.txt
+awk '$3 ~ /^45\.137\./ { s += $4 } END { print s }' /var/log/proxy.log > ~/academie/volume.txt
+awk '$3 ~ /^45\.137\./ { s[$2] += $4 } END { for (m in s) print m, s[m] }' /var/log/proxy.log | sort -k2,2nr | head -3 > ~/academie/victimes.txt
+```
+
+### 25. Transmutation et Grimoires : minimiser, nettoyer, trier
+
+On minimise l'export avant de le transmettre (RGPD), on retire le piège de la configuration, puis on sort du JSON de l'antivirus la liste des machines critiques et un tableau CSV :
+
+```
+sed -E 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/[mail]/g; s/[0-9]{6,8}/ETU-XXXX/g' /srv/edr/export-brut.txt > ~/academie/export-cnil.txt
+sudo sed -i -e '/exec_hook/d' -e 's/^autorise_tout = oui/autorise_tout = non/' /etc/archives.conf
+jq -r '.[] | select(.gravite=="critique") | .machine' /srv/edr/alertes.json | sort -u > ~/academie/machines.txt
+jq -r 'group_by(.machine)[] | [.[0].machine, length] | @csv' /srv/edr/alertes.json > ~/academie/alertes.csv
+```
+
+### 26. Alchimie : comptes fantômes et quarantaine
+
+On croise les comptes du serveur avec le registre du personnel pour démasquer les comptes fantômes, on les verrouille, puis on met en quarantaine tout ce que la Nuée a déposé (repéré par son propriétaire `nuee`) :
+
+```
+cut -d: -f1 /etc/passwd | sort > ~/academie/sys.txt
+cut -d, -f1 /srv/personnel.csv | sort > ~/academie/legit.txt
+comm -23 ~/academie/sys.txt ~/academie/legit.txt > ~/academie/fantomes.txt
+cat ~/academie/fantomes.txt | xargs -I {} sudo usermod -L {}
+sudo find /srv /tmp -user nuee -exec mv {} /quarantaine/ \;
+```
+
+### 27. Chronomancie : désamorcer la bombe, programmer la vraie sauvegarde
+
+La bombe a trois déclencheurs (un timer, une tâche `at`, une ligne de crontab d'un compte fantôme) : on les désamorce tous les trois, puis on programme la vraie sauvegarde nocturne :
+
+```
+sudo systemctl disable --now maj-nocturne.timer
+sudo atrm 1
+sudo crontab -u <fantome-cron> -r
+printf "30 2 * * * /usr/local/bin/sauvegarde.sh\n" | crontab -
+```
+
+### 28. Archives : restaurer et appliquer le correctif
+
+On restaure les archives à l'identique depuis la sauvegarde hors ligne, puis on applique le correctif que Grace a déposé pour le script d'entrée :
+
+```
+sudo rsync -a --delete /srv/sauvegarde-hors-ligne/ /srv/archives/
+cd /usr/local/bin
+sudo patch depot.sh < ~/correctif.diff
+```
+
+### 29. Invocation : le script de nettoyage
+
+On écrit son propre script (une fonction, une boucle, une condition) qui déplace les résidus `*.nuee` vers la quarantaine. On le lance avec un dossier en argument ; sans argument, il refuse de tourner :
+
+```
+cat > ~/academie/nettoyage.sh <<'FIN'
+#!/bin/bash
+set -e
+dossier="$1"
+if [ -z "$dossier" ]; then
+echo "usage: nettoyage.sh DOSSIER" >&2
+exit 1
+fi
+compter() {
+echo "$1 fichier(s) en quarantaine"
+}
+n=0
+for f in $(find "$dossier" -name "*.nuee"); do
+if [ -e "$f" ]; then
+sudo mv "$f" /quarantaine/
+n=$((n + 1))
+fi
+done
+compter "$n"
+FIN
+chmod +x ~/academie/nettoyage.sh
+sudo bash ~/academie/nettoyage.sh /srv/depots
+sudo bash ~/academie/nettoyage.sh
+sudo bash ~/academie/nettoyage.sh /srv/depots
+```
+
+### 30. Le dernier Corbeau, et le retour d'expérience
+
+Le dernier « Corbeau » est le service de la Nuée qui redépose ses résidus : on l'arrête, on finit le ménage, puis on rédige le retour d'expérience et on le dépose dans la boîte de Laurent :
+
+```
+sudo systemctl disable --now nuee-regen
+sudo bash ~/academie/nettoyage.sh /srv/depots
+cat > ~/academie/rex.txt <<'FIN'
+RETOUR D'EXPERIENCE - INCIDENT NUEE
+Chronologie : intrusion dans la nuit, exfiltration puis bombe programmee pour minuit.
+Indicateurs de compromission : <ip-nuee> (les autres dans ioc.txt).
+Volume exfiltre : <volume> octets (mesure au proxy).
+Donnees concernees : comptes etudiants (mails et numeros), minimises pour la CNIL.
+Mesures prises : traces isolees, comptes fantomes verrouilles, fichiers en quarantaine, bombe desamorcee, archives restaurees, correctif applique, script de la Nuee arrete.
+FIN
+cp ~/academie/rex.txt ~/Cybersup/SalleServeurs/Academie/BoiteDeLaurent
+```
+
+Le dossier (indicateurs, chronologie) part aux autorités : les humains de la Nuée sont hors de portée, mais leur script, lui, est battu par le tien. Laurent conclut : « À Terminus, tu tapais des commandes. Ici, tu les fais travailler pour toi. » Le CertificatAvance porte la note du chapitre 4 et son code de vérification.
+
 ## L'épreuve finale : la Forteresse (mission spéciale)
 
 Une partie à part, ouverte avec `examen` et un code d'accès que le formateur donne le jour de l'épreuve. Quarante épreuves sur les trois chapitres, en huit sceaux (dont le Sceau du Grimoire : `man`, `top`, `bash` ; et le Sceau du Réseau : `ip a`, `ip r`, `dig`, `curl`, `iptables`), notées sur 20 (bonus si tout est fini tôt, petit malus au-delà de 30 fausses manœuvres, indices à -0,25), dont le quiz de Steve dans `/dev/random` (chaque bonne réponse compte, même si la copie est rendue avant la troisième question). La note finale compte aussi le parcours : 80 % la note de l'épreuve, 20 % les badges de compétence gagnés dans la partie normale (chapitres 2 et 3, 42 badges platines compris), relevés à l'entrée dans l'épreuve ; `verifier` liste les badges gagnés et ceux qui manquent, avec les notes des chapitres 2 et 3, le temps de jeu et le nombre de commandes de la partie normale (relevés eux aussi à l'entrée), pour juger si les badges sont plausibles. Il termine par des contrôles de vraisemblance : copie rendue après 3 h, horloge du poste reculée pendant l'épreuve, épreuves faites trop vite ou avec trop peu de commandes, badges sans la note de chapitre qui va avec, épreuves cochées que la Forteresse démentait au scellement. Ce sont des signaux à vérifier avec l'étudiant, pas des preuves. La partie est gardée dans le navigateur : l'épreuve se passe sur le poste et le navigateur où l'on a joué, sinon le jeu prévient qu'il ne trouve aucun badge. `kamikaze` rend la copie à tout moment. Dans les quartiers de la recrue, Florimond, le barde de la Taverne du chapitre 1, raconte l'histoire de l'épreuve (`cat Barde`), jamais deux fois de suite de la même façon ; Manon (`/`), Wissam (`/home`), Jean-Baptiste (`/etc`), Gabriel et Cheb Timour (`/opt/atelier`), Laurana (`/var/www`), David (`/tmp`) et Steve (`/dev/random`) parlent aussi avec `cat`.

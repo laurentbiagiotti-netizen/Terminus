@@ -801,9 +801,9 @@ Shell.sorts.mv = function(args, io){
 			messages.push("mv : ce monde tient trop à « " + item.itemname + " » pour le laisser bouger.");
 			continue;
 		}
-		// Pendant l'épreuve finale, la Forteresse est une vraie machine : root (sudo) déplace ce qu'il veut, et personne
-		// ne dépose rien dans un dossier où il n'a pas le droit d'écrire.
-		var machine = typeof examenEnCours === "function" && examenEnCours();
+		// Sur une vraie machine (l'épreuve finale, ou un serveur du réseau comme archives), root (sudo)
+		// déplace ce qu'il veut, et personne ne dépose dans un dossier où il n'a pas le droit d'écrire.
+		var machine = (typeof examenEnCours === "function" && examenEnCours()) || (typeof racineDe === "function" && !!racineDe(current_room));
 		if (!(item.allows("mv") || (item.owner === JOUEUR && !item.acquis) || (machine && io.sudo && !item.person))){
 			messages.push(item.cmd_text["mv"] || (item.person ?
 				"On ne déplace pas " + item.itemname + " comme un meuble." :
