@@ -21,6 +21,8 @@ var FIXTURE = [
 	"World.fige = false;",
 	"var BastionTest = new Room('bastion', 'Le Bastion de test.', 'loc_cluster.gif');",
 	"BastionTest.racineHote = 'bastion'; BastionTest.owner = 'root'; BastionTest.mode = 'rwxr-xr-x'; BastionTest.removeCommand('cd');",
+	// Le chapitre 5 a sa propre machine bastion : ce monde de test la remplace (même nom, même chemin).
+	"if (typeof ServeurBastion !== 'undefined') Machines.children = Machines.children.filter(function(r){ return r !== ServeurBastion; });",
 	"link_rooms(Machines, BastionTest);",
 	"decrireHote('bastion', { ip: '10.0.92.80', ouvert: true, noyau: '6.1.0-bastion', arrivee: function(){ return BastionTest; },",
 	"  services: { ssh: service('bastion', 'ssh', 'OpenBSD Secure Shell server', { procNom: 'sshd' }), apache2: service('bastion', 'apache2', 'The Apache HTTP Server'),",
@@ -873,7 +875,8 @@ egal(t("sudo etckeeper unclean; echo $?"), "0", "etckeeper unclean : 0 s'il rest
 /* --- 14. Le manuel, les droits de sortie, l'XP --- */
 jeu.lire("SORTS_BASTION").forEach(function(sort){
 	verifier(jeu.lire("!!MANUEL[" + JSON.stringify(sort) + "] && MANUEL[" + JSON.stringify(sort) + "].page.length > 80"), "page de manuel pour " + sort);
-	verifier(jeu.lire("MANUEL[" + JSON.stringify(sort) + "].horsBareme === true"), sort + " est hors barème tant qu'aucun chapitre ne l'enseigne");
+	// Le chapitre 5 (le Bastion) les enseigne : ils entrent au barème, rangés dans ORDRE_DES_SORTS_6.
+	verifier(jeu.lire("!MANUEL[" + JSON.stringify(sort) + "].horsBareme && ORDRE_DES_SORTS_6.indexOf(" + JSON.stringify(sort) + ") > -1"), sort + " est enseigné au chapitre 5 (au barème)");
 	verifier(jeu.lire("COMMANDES_REELLES.indexOf(" + JSON.stringify(sort) + ") === -1"), sort + " n'est plus une « vraie commande absente de ce monde »");
 	contient(t("man " + sort), sort, "man " + sort);
 });

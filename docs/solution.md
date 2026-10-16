@@ -9,7 +9,7 @@ Trois repères utiles en salle :
 - un joueur perdu tape `cd` pour rentrer à la Maison, puis `cd -` pour revenir d'où il vient ;
 - un joueur bloqué tape `indice` : deux paliers payants par étape (30 puis 60 XP retirés de la note, pas du niveau), et des remarques gratuites quand quelque chose coince (rouages creux, alias qui masque un sort, clé SSH grillée ou effacée).
 
-Au premier lancement, le jeu affiche `terminus login:` : le prénom devient l'identifiant sur le système et le nom sur le diplôme, puis le joueur choisit un mot de passe qui lui permet de retrouver sa partie après un `logout`. Le jeu propose ensuite quatre enveloppes : la convocation à l'épreuve de première année (chapitre 1, la solution ci-dessous), le ticket d'incident du réseau (chapitre 2 directement, voir la partie 7), l'ordre de mission de la WarRoom (chapitre 3 directement, voir la partie 14) ou le pli de l'Académie (chapitre 4 directement, voir la partie 23).
+Au premier lancement, le jeu affiche `terminus login:` : le prénom devient l'identifiant sur le système et le nom sur le diplôme, puis le joueur choisit un mot de passe qui lui permet de retrouver sa partie après un `logout`. Le jeu propose ensuite cinq enveloppes : la convocation à l'épreuve de première année (chapitre 1, la solution ci-dessous), le ticket d'incident du réseau (chapitre 2 directement, voir la partie 7), l'ordre de mission de la WarRoom (chapitre 3 directement, voir la partie 14), le pli de l'Académie (chapitre 4 directement, voir la partie 23) ou la lettre de l'Inspection (chapitre 5 directement, voir la partie 33).
 
 Chaque partie est différente. Au premier lancement, le jeu tire une graine au hasard qui fixe le mot de passe sudo, le meilleur client de la taverne, l'adresse de l'attaquant, le nombre de sweats du BDE et les numéros de processus. Dans les blocs ci-dessous, ces valeurs sont écrites entre chevrons :
 
@@ -68,6 +68,23 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
   30. [Archives : restaurer et appliquer le correctif](#30-archives--restaurer-et-appliquer-le-correctif)
   31. [Invocation : le script de nettoyage](#31-invocation--le-script-de-nettoyage)
   32. [Le dernier Corbeau, et le retour d'expérience](#32-le-dernier-corbeau-et-le-retour-dexpérience)
+- [Chapitre 5 : le Bastion](#chapitre-5--le-bastion-durcissement-linux)
+  33. [Le Bastion, les maîtres et la Pierre](#33-le-bastion-les-maîtres-et-la-pierre)
+  34. [La Herse des Comptes (Fernando)](#34-la-herse-des-comptes-fernando)
+  35. [Le Sceau du Roi (Butler)](#35-le-sceau-du-roi-butler)
+  36. [Le Pont-levis (Tatu)](#36-le-pont-levis-tatu)
+  37. [Les Portes condamnées (Jean)](#37-les-portes-condamnées-jean)
+  38. [Les Remparts (Vint)](#38-les-remparts-vint)
+  39. [La Salle des Coffres (Evelyn)](#39-la-salle-des-coffres-evelyn)
+  40. [Le Cœur (Edsger)](#40-le-cœur-edsger)
+  41. [La Poterne (Joan)](#41-la-poterne-joan)
+  42. [La Bannière (Robert)](#42-la-bannière-robert)
+  43. [La Tour de Guet (Katherine)](#43-la-tour-de-guet-katherine)
+  44. [Les Sceaux d'intégrité (Ralph)](#44-les-sceaux-dintégrité-ralph)
+  45. [La Garde (Adele)](#45-la-garde-adele)
+  46. [Les défis des maîtres, tour par tour](#46-les-défis-des-maîtres-tour-par-tour)
+  47. [L'aube](#47-laube)
+  48. [Le rapport d'inspection](#48-le-rapport-dinspection)
 - [L'épreuve finale : la Forteresse](#lépreuve-finale--la-forteresse-mission-spéciale)
 
 ## Le barème
@@ -80,7 +97,7 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
 | Première utilisation d'un sort (52) | 5 |
 | Lieu découvert (44) | 5 |
 
-Le total possible est de 3860 XP au chapitre 1. Les autres chapitres ont chacun leur barème, sur le même principe, et leur note sur 20 à part : 5790 XP pour la panne (22 étapes, 50 quêtes secondaires, 50 sorts, 28 lieux), 5625 XP pour la Crypte (22 étapes, 45 quêtes secondaires dont 14 autour de vim, 49 sorts, 48 lieux), et 5175 XP pour le chapitre 4, l'Académie des Arcanes (20 étapes, 50 défis des maîtres, 23 sorts avancés, 26 lieux), noté sur le CertificatAvance. La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
+Le total possible est de 3860 XP au chapitre 1. Les autres chapitres ont chacun leur barème, sur le même principe, et leur note sur 20 à part : 5790 XP pour la panne (22 étapes, 50 quêtes secondaires, 50 sorts, 28 lieux), 5625 XP pour la Crypte (22 étapes, 45 quêtes secondaires dont 14 autour de vim, 49 sorts, 48 lieux), 5175 XP pour le chapitre 4, l'Académie des Arcanes (20 étapes, 50 défis des maîtres, 23 sorts avancés, 26 lieux), noté sur le CertificatAvance, et 7500 XP pour le chapitre 5, le Bastion (29 étapes dont le rapport final à 300 XP, 74 défis, 42 sorts de durcissement, 14 lieux), noté sur le CertificatBastion. La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
 
 Ordres de grandeur : un parcours réduit au strict nécessaire (une quarantaine de commandes, impossible sans connaître la solution) donne 10 sur 20. La solution ci-dessous, dernier chapitre compris, donne 20 sur 20. Les derniers points se gagnent en visitant chaque lieu et en lançant chaque sort au moins une fois : `xp` liste ceux qui n'ont jamais servi.
 
@@ -109,7 +126,9 @@ Le P.S. de Laurent ouvre ensuite le chapitre 2 : pendant l'épreuve, le réseau 
 
 Quelques semaines après la Crypte, le chapitre 4 (l'Académie des Arcanes) s'ouvre : les notes volées de Frances ont fuité, et un groupe de rançonneurs, la Nuée, a repris le nom du Corbeau pour frapper le serveur d'archives de l'école. En une nuit, la recrue mesure la fuite, minimise les données à notifier, éradique les comptes et fichiers de la Nuée, désamorce une bombe programmée pour minuit, restaure les archives et rédige le retour d'expérience. Le message final : à Terminus on tapait des commandes, ici on les fait travailler pour soi (le dernier « Corbeau » est un script, battu par le script de la recrue). Ce qui est « malveillant » reste narratif et inerte, comme au chapitre 3.
 
-Hormis Laurent, tous les personnages sont inventés. Ils portent des prénoms de pionniers de l'informatique (Ada, Grace, Hedy, Dennis, Linus, Margaret, Radia, Vint, Evi, Ken, Barbara, Tim, Annie, Alan).
+Le chapitre 5 (le Bastion) s'ouvre ensuite : la Nuée a juré de revenir, et un serveur neuf, installé « par défaut », doit passer l'inspection de l'aube. En une nuit, la recrue mesure (la Pierre d'Inspection), ferme douze tours (comptes, sudo, SSH, services, pare-feu, droits, noyau, démarrage, Apache et TLS, audit et journaux, intégrité, fail2ban et AppArmor), relit l'aube, puis rend un rapport d'inspection honnête, avec ce qui reste. Frances éprouve chaque mur, sans rien casser. Tout est défensif : la Nuée reste narrative et inerte.
+
+Hormis Laurent, tous les personnages sont inventés. Ils portent des prénoms de pionniers de l'informatique (Ada, Grace, Hedy, Dennis, Linus, Margaret, Radia, Vint, Evi, Ken, Barbara, Tim, Annie, Alan ; au Bastion, Fernando, Butler, Tatu, Jean, Evelyn, Edsger, Joan, Robert, Katherine, Ralph, Adele).
 
 ## Chapitre 1 : Terminus (l'épreuve de première année)
 
@@ -1350,6 +1369,356 @@ cp ~/academie/rex.txt ~/Cybersup/SalleServeurs/Academie/BoiteDeLaurent
 ```
 
 Le dossier (indicateurs, chronologie) part aux autorités : les humains de la Nuée sont hors de portée, mais leur script, lui, est battu par le tien. Laurent conclut : « À Terminus, tu tapais des commandes. Ici, tu les fais travailler pour toi. » Le CertificatAvance porte la note du chapitre 4 et son code de vérification ; le quiz du chapitre (`quiz 4`) s'ouvre, et `badges arcanes` relit les dix-huit leçons.
+
+## Chapitre 5 : le Bastion (durcissement Linux)
+
+Numéro interne 6, affiché 5. Le chapitre s'ouvre à la fin de l'Académie (après le retour d'expérience) : Grace annonce à la radio qu'un passage s'est ouvert au fond de l'Académie, vers le Bastion. On peut aussi y partir directement (la cinquième enveloppe, « Lettre de l'Inspection », ou `chapitre 5` en début de partie) : les sorts des chapitres 1 à 4 sont alors acquis, et le hall du Bastion est au fond de la SalleServeurs.
+
+Le Bastion, c'est le serveur `bastion` (`10.0.96.20`), un Debian tout neuf installé « par défaut » : comptes ouverts, services bavards, rien de surveillé. L'inspection a lieu à l'aube, et la Nuée a juré de revenir avant. Une horloge marque la nuit : il est 22 h à l'entrée, chaque commande avance de 3 minutes (`cat Horloge`, la radio de Grace annonce chaque heure), et l'aube tombe à 6 h. Douze tours, douze maîtres (des prénoms de pionniers) : Fernando (la Herse des Comptes), Butler (le Sceau du Roi, sudo et la planification), Tatu (le Pont-levis, SSH), Jean (les Portes condamnées, les services), Vint (les Remparts, le pare-feu, rentré de vacances), Evelyn (la Salle des Coffres, droits et montages), Edsger (le Cœur, noyau et modules), Joan (la Poterne, GRUB et le démarrage), Robert (la Bannière, Apache et TLS), Katherine (la Tour de Guet, audit et journaux), Ralph (les Sceaux d'intégrité, AIDE et mises à jour) et Adele (la Garde, fail2ban et AppArmor). Chaque maître est vivant comme à l'Académie : il explique son mur par une image et le vrai mot du métier, donne la syntaxe, confie la mission sans dicter la commande, réagit aux erreurs fréquentes (un `reload` sans `sshd -t`, un `sysctl -w` jamais gravé, une règle d'audit écrite mais pas chargée...), puis raconte une anecdote du métier et coche ses six défis. Frances passe derrière le joueur : chaque fois qu'une tour se ferme, elle dit en une phrase que le mur a tenu, et `cat Frances` liste les murs qui cèdent encore. La Pierre d'Inspection (`sudo lynis audit system`, sur bastion) note le durcissement : 38 sur 100 au départ, 92 une fois les douze tours fermées. `cat PierreDInspection` dans le hall rappelle le dernier score et ce qui manque, `rempart` montre le plan des douze tours (rouge ou vert), l'heure, la Pierre et les défis d'honneur.
+
+Tout est validé sur l'état réel de la machine, pas sur la commande tapée : un raccourci est refusé (verrouiller le second root au lieu de le supprimer, `stop` sans `disable`, `sysctl -w` sans fichier, règles d'audit écrites mais pas chargées, `PASS_MAX_DAYS` sans `chage`...), et les variantes légitimes sont acceptées (`ufw` ou `nftables`, `userdel` ou `passwd -l` pour un compte sans mot de passe, `sed -i`, `nano` ou `tee` pour écrire un fichier, `disable --now` ou `mask`...). Une configuration SSH ou Apache rechargée sans test (`sshd -t`, `apachectl configtest`) ne compte pas, et un rechargement refusé laisse l'ancienne configuration en place. À l'aube, la Nuée éprouve chaque mur : une tour encore ouverte cède et la Nuée y laisse une trace inerte (un compte, un fichier de configuration, un binaire modifié), à retrouver dans les journaux et à réparer ; si tout est fermé, l'assaut échoue et la Tour de Guet le note. Rien n'est offensif : le joueur durcit, vérifie, détecte, répare et documente.
+
+| Repère | Où le trouver dans le jeu |
+| --- | --- |
+| `<moi>` | ton identifiant (`whoami`) |
+| `<vint>` | l'adresse du poste de Vint, qu'il donne à la radio quand la Garde le bannit |
+| `<pierre-avant>` | le score de la Pierre à ta première inspection (`sudo lynis audit system`) |
+| `<pierre-apres>` | le score de la Pierre à ta dernière inspection, après l'aube |
+
+Les 74 défis du Bastion (quêtes secondaires `s_h_*`, 50 XP chacun) : six par tour, révélés en lisant le maître, réussis sur bastion ; et deux défis d'honneur, révélés par Laurent : les douze tours fermées avant 4 h, et le rapport remis sans avoir acheté d'indice. La solution ci-dessous ferme d'abord les douze tours (avant 4 h), puis fait les défis, tour par tour, pendant que l'aube approche.
+
+### 33. Le Bastion, les maîtres et la Pierre
+
+On entre dans le hall, on écoute Laurent, on lit l'ordre de mission, la radio, l'horloge, Frances et le bestiaire, puis on fait le tour des douze tours pour apprendre les sorts et découvrir les défis. On pose ensuite sa clé sur bastion (la clé ed25519 du chapitre 3) et on consulte la Pierre : c'est le score de départ.
+
+```
+cd ~/Cybersup/SalleServeurs/Academie/Bastion
+cat Laurent
+cat Mission
+cat Radio
+cat Horloge
+cat Frances
+cat Bestiaire
+rempart
+cd Herse
+cat Fernando
+cd ../Sceau
+cat Butler
+cd ../PontLevis
+cat Tatu
+cd ../Portes
+cat Jean
+cd ../Remparts
+cat Vint
+cd ../Coffres
+cat Evelyn
+cd ../Coeur
+cat Edsger
+cd ../Poterne
+cat Joan
+cd ../Banniere
+cat Robert
+cd ../Guet
+cat Katherine
+cd ../Sceaux
+cat Ralph
+cd ../Garde
+cat Adele
+cd ..
+ssh-copy-id bastion
+ssh bastion
+sudo lynis audit system | grep "Hardening index"
+```
+
+La première étape (`h_pierre`) demande Laurent et l'ordre de mission lus, puis une inspection : son score est retenu comme score de départ.
+
+### 34. La Herse des Comptes (Fernando)
+
+Plus de compte sans mot de passe (`invite`), plus de second root (`depannage`, UID 0) : le verrouiller ne suffit pas, il faut le supprimer ou lui rendre un UID ordinaire. Puis les règles : verrouillage après cinq échecs (`pam_faillock`, la ligne `deny` décommentée), des mots de passe qui expirent à 90 jours (dans `login.defs` ET pour chaque administrateur existant, avec `chage`), et pas de shell pour les comptes de service :
+
+```
+sudo passwd -l invite
+sudo userdel depannage
+sudo sed -i 's/^# deny = 3/deny = 5/' /etc/security/faillock.conf
+sudo sed -i 's/^PASS_MAX_DAYS.*/PASS_MAX_DAYS\t90/' /etc/login.defs
+sudo chage -M 90 <moi>
+sudo chage -M 90 vint
+sudo usermod -s /usr/sbin/nologin sauvegarde
+sudo usermod -s /usr/sbin/nologin deploiement
+```
+
+### 35. Le Sceau du Roi (Butler)
+
+Plus de `NOPASSWD: ALL` (une règle étroite à la place), chaque fichier de `/etc/sudoers.d` en 0440, `sudo` toujours utilisable par le joueur ; puis `cron` et `at` réservés à root et au joueur :
+
+```
+sudo sed -i 's/NOPASSWD: ALL/\/usr\/bin\/systemctl restart apache2/' /etc/sudoers.d/deploiement
+sudo chmod 440 /etc/sudoers.d/deploiement
+printf 'root\n<moi>\n' | sudo tee /etc/cron.allow /etc/at.allow
+```
+
+### 36. Le Pont-levis (Tatu)
+
+Un fichier à soi dans `sshd_config.d` : root ne passe plus, les mots de passe non plus, une liste de voyageurs qui nomme le joueur, trois essais au plus, et des algorithmes modernes. La clé ed25519 est déjà posée (partie 33). `sshd -t` d'abord, `reload` ensuite : un `reload` sans test ne valide pas l'étape, et un `reload` sur une configuration fausse est refusé (l'ancienne reste en place).
+
+```
+printf 'PermitRootLogin no\nPasswordAuthentication no\nAllowUsers <moi>\nMaxAuthTries 3\nCiphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com\nMACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com\nKexAlgorithms curve25519-sha256\n' | sudo tee /etc/ssh/sshd_config.d/50-bastion.conf
+sudo sshd -t
+sudo systemctl reload ssh
+```
+
+### 37. Les Portes condamnées (Jean)
+
+telnet, rpcbind et avahi se taisent, maintenant ET au démarrage (`stop` seul ne suffit pas), le paquet `telnetd` s'en va ; puis Apache dans un bac à sable systemd (un drop-in, `daemon-reload`, une note sous 9) :
+
+```
+sudo systemctl disable --now telnet.socket rpcbind avahi-daemon
+sudo apt purge telnetd
+sudo mkdir -p /etc/systemd/system/apache2.service.d
+printf '[Service]\nNoNewPrivileges=yes\nPrivateTmp=yes\nProtectSystem=full\n' | sudo tee /etc/systemd/system/apache2.service.d/override.conf
+sudo systemctl daemon-reload
+systemd-analyze security apache2 | tail -1
+```
+
+### 38. Les Remparts (Vint)
+
+Tout refuser en entrée, sauf SSH (22) et HTTPS (443), dans le bon ordre (la politique, les exceptions, l'activation). La vieille règle du port 80 de Vint traîne encore : on la retire, on lit la loi (`ufw status verbose`, ou `nft list ruleset` avec nftables), et on l'éprouve depuis le hall plus loin (partie 45). Avec nftables directement (`/etc/nftables.conf`, `policy drop`, `tcp dport { 22, 443 } accept`, `nft -f`), les étapes valident de la même façon.
+
+```
+sudo ufw default deny incoming
+sudo ufw allow 22/tcp
+sudo ufw allow 443/tcp
+sudo ufw enable
+sudo ufw delete allow 80/tcp
+sudo ufw status verbose
+```
+
+### 39. La Salle des Coffres (Evelyn)
+
+`/etc/shadow` en 640, plus de fichier système modifiable par tous, le sticky bit sur `/tmp`, plus de SUID inattendu ; puis la capacité dangereuse retirée, `/tmp` monté en `nodev,nosuid,noexec` (dans `fstab` ET monté), un umask 027 :
+
+```
+sudo chmod 640 /etc/shadow
+sudo chmod o-w /etc/cron.d/rotation-sauvegardes /usr/local/bin/sauver.sh
+sudo chmod 1777 /tmp
+sudo chmod u-s /usr/local/bin/vieil-outil
+sudo setcap -r /usr/bin/python3.11
+echo 'tmpfs /tmp tmpfs defaults,nodev,nosuid,noexec 0 0' | sudo tee -a /etc/fstab
+sudo mount /tmp
+sudo sed -i 's/^UMASK.*/UMASK\t\t027/' /etc/login.defs
+```
+
+### 40. Le Cœur (Edsger)
+
+Sept réglages du noyau, dans un fichier qui passe après les autres, et appliqués (un `sysctl -w` seul est perdu au redémarrage : l'étape vérifie aussi la valeur au démarrage) ; puis `usb-storage` interdit et retiré, `cramfs` sur la liste noire :
+
+```
+printf 'net.ipv4.ip_forward = 0\nnet.ipv4.conf.all.rp_filter = 1\nnet.ipv4.conf.all.accept_redirects = 0\nkernel.dmesg_restrict = 1\nkernel.kptr_restrict = 2\nkernel.randomize_va_space = 2\nfs.protected_symlinks = 1\n' | sudo tee /etc/sysctl.d/99-bastion.conf
+sudo sysctl --system
+printf 'install usb-storage /bin/false\nblacklist cramfs\n' | sudo tee /etc/modprobe.d/bastion.conf
+sudo modprobe -r usb-storage
+```
+
+### 41. La Poterne (Joan)
+
+Un compte `gardien` et l'empreinte de son mot de passe dans `/etc/grub.d/40_custom`, un `grub.cfg` régénéré qui les contient (écrire dans `grub.cfg` à la main ne compte pas), puis Ctrl+Alt+Suppr muré. `grub-mkpasswd-pbkdf2` lit aussi un tuyau, et `awk` garde le dernier mot de la ligne :
+
+```
+echo 'set superusers="gardien"' | sudo tee -a /etc/grub.d/40_custom
+printf 'Gardien-du-Bastion\nGardien-du-Bastion\n' | grub-mkpasswd-pbkdf2 | awk '/grub.pbkdf2/ { print "password_pbkdf2 gardien", $NF }' | sudo tee -a /etc/grub.d/40_custom
+sudo update-grub
+sudo systemctl mask ctrl-alt-del.target
+```
+
+### 42. La Bannière (Robert)
+
+Apache se tait (`ServerTokens Prod`, `ServerSignature Off`, `TraceEnable Off`, plus de listes de dossiers), puis le certificat neuf, TLS 1.2 au minimum et l'en-tête HSTS. `apachectl configtest` avant de recharger ; un module se charge au démarrage, d'où le `restart` :
+
+```
+sudo sed -i -e 's/^ServerTokens OS/ServerTokens Prod/' -e 's/^ServerSignature On/ServerSignature Off/' -e 's/^TraceEnable On/TraceEnable Off/' /etc/apache2/conf-available/security.conf
+sudo a2dismod -f autoindex
+sudo sed -i -e 's#/etc/ssl/certs/bastion.pem#/etc/ssl/certs/bastion-2026.pem#' -e 's/SSLEngine on/SSLEngine on\n\tSSLProtocol -all +TLSv1.2 +TLSv1.3\n\tHeader always set Strict-Transport-Security "max-age=63072000"/' /etc/apache2/sites-available/default-ssl.conf
+sudo a2enmod headers
+apachectl configtest
+sudo systemctl restart apache2
+```
+
+### 43. La Tour de Guet (Katherine)
+
+`/etc/passwd`, `/etc/shadow` et `/etc/sudoers` surveillés par auditd, avec des règles chargées ET permanentes ; puis un journal persistant, une heure synchronisée et une bannière légale sans nom ni version du système :
+
+```
+printf -- '-w /etc/passwd -p wa -k comptes\n-w /etc/shadow -p wa -k comptes\n-w /etc/sudoers -p wa -k sudoers\n' | sudo tee /etc/audit/rules.d/bastion.rules
+sudo augenrules --load
+sudo sed -i 's/^#Storage=auto/Storage=persistent/' /etc/systemd/journald.conf
+sudo systemctl restart systemd-journald
+sudo timedatectl set-ntp true
+echo 'Acces reserve aux personnes autorisees. Toute connexion est surveillee.' | sudo tee /etc/issue /etc/issue.net
+```
+
+### 44. Les Sceaux d'intégrité (Ralph)
+
+La base AIDE fabriquée, mise en place et vérifiée ; puis tout à jour, les mises à jour automatiques en place, et le binaire qui ne correspond plus à son paquet (`/usr/bin/ps`) réinstallé :
+
+```
+sudo aide --init
+sudo cp /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+sudo aide --check
+sudo apt update
+sudo apt upgrade
+sudo apt install unattended-upgrades
+printf 'APT::Periodic::Update-Package-Lists "1";\nAPT::Periodic::Unattended-Upgrade "1";\n' | sudo tee /etc/apt/apt.conf.d/20auto-upgrades
+sudo debsums -s
+sudo apt install --reinstall procps
+```
+
+### 45. La Garde (Adele)
+
+Une prison `sshd` active (cinq essais au plus, dix minutes de bannissement au moins), puis la cellule AppArmor d'Apache fermée. On reconsulte la Pierre, puis on éprouve les Remparts depuis le hall, comme Frances : le port 80 ne répond plus. C'est la dernière tour : les douze sont fermées vers 3 h 20, avant le défi d'honneur de 4 h.
+
+```
+printf '[sshd]\nenabled = true\nmaxretry = 3\nbantime = 1h\n' | sudo tee /etc/fail2ban/jail.local
+sudo fail2ban-client reload
+sudo aa-enforce /etc/apparmor.d/usr.sbin.apache2
+sudo lynis audit system | grep "Hardening index"
+exit
+curl -I http://bastion/
+rempart
+```
+
+### 46. Les défis des maîtres, tour par tour
+
+Les 72 défis des tours, dans l'ordre des maîtres (la solution les fait après les douze tours, pour tenir le défi de 4 h). La Herse : le registre des échecs, le compte qui dort, `pwck` et `grpck`, `pam_wheel`, `TMOUT`. Le Sceau : les droits d'un autre compte, `visudo -c`, une règle étroite écrite avec `visudo -f` (dans vim, on tape `sauvegarde ALL=(root) /usr/bin/rsync`), la crontab de root, un `su` refusé, les timers. Le Pont-levis : `sshd -T`, X11, la bannière, `LoginGraceTime`, `ClientAlive*`, une clé protégée par une phrase de passe. Les Portes : `ss`, `netstat`, `mask`, la note de tous les services, ce qui démarre au boot, cron dans un bac à sable. Les Remparts : les règles numérotées, la journalisation, `limit`, `nft list ruleset`, et depuis le hall, HTTPS et SSH qui passent toujours. Les Coffres : les SUID, les fichiers modifiables par tous, les capacités, `findmnt`, un script de `/tmp` qui ne s'exécute plus, les droits de shadow. Le Cœur : `sysctl -a`, `lsmod`, les vidages mémoire, `modprobe -n -v`, les systèmes de fichiers rares, les protocoles réseau. La Poterne : le disque chiffré (`cryptsetup status`, `luksDump`, `isLuks`), un hash à 200 000 itérations, `grub-mkconfig`, Ctrl+Alt+Suppr vérifié. La Bannière : les dates du vieux certificat, TLS 1.1 refusé, TLS 1.2 accepté, les modules, TRACE refusée, HSTS. La Tour de Guet : `ausearch`, `aureport`, `logger` puis `journalctl -t`, rsyslog vers une machine distante, `logrotate -d`, `auditctl -l`. Les Sceaux : `debsums`, `dpkg -V`, `dpkg -S`, rkhunter, etckeeper, `aide --update`. La Garde : l'état de la prison, une valeur demandée à la sentinelle, Vint libéré (la Garde l'a banni par erreur dès qu'elle a veillé, il donne son adresse à la radio), `aa-status`, tous les profils en enforce. Au passage, quelques sorts du chapitre servent une fois (`umask`, `useradd`, `apache2ctl`, `a2disconf`, `a2ensite`, `rsyslogd`, `apt-get`, `aa-complain`, `aa-disable`, `apparmor_parser`).
+
+```
+ssh bastion
+sudo faillock --user secretariat
+sudo faillock --user secretariat --reset
+lastlog
+sudo passwd -l stagiaire
+sudo pwck -r
+sudo grpck -r
+sudo sed -i 's/^# *auth *required *pam_wheel.so$/auth       required   pam_wheel.so/' /etc/pam.d/su
+printf 'TMOUT=900\nreadonly TMOUT\nexport TMOUT\n' | sudo tee /etc/profile.d/tmout.sh
+umask
+sudo useradd -r -s /usr/sbin/nologin veilleur
+sudo -l -U deploiement
+sudo visudo -c
+sudo visudo -f /etc/sudoers.d/sauvegarde
+sudo chmod 440 /etc/sudoers.d/sauvegarde
+sudo crontab -l
+su invite
+systemctl list-timers --all
+sudo sshd -T | grep -i permitrootlogin
+ssh-keygen -t ed25519 -N 'La phrase du Bastion' -f ~/.ssh/bastion
+printf 'X11Forwarding no\nBanner /etc/issue.net\nLoginGraceTime 30\nClientAliveInterval 300\nClientAliveCountMax 2\n' | sudo tee /etc/ssh/sshd_config.d/40-bastion-plus.conf
+sudo sshd -t
+sudo systemctl reload ssh
+sudo ss -tulpn
+sudo netstat -loptn
+sudo systemctl mask avahi-daemon
+systemd-analyze security
+systemctl list-unit-files --state=enabled
+sudo mkdir -p /etc/systemd/system/cron.service.d
+printf '[Service]\nNoNewPrivileges=yes\nPrivateTmp=yes\nProtectSystem=full\nProtectHome=yes\n' | sudo tee /etc/systemd/system/cron.service.d/override.conf
+sudo systemctl daemon-reload
+sudo systemctl restart cron
+sudo ufw status numbered
+sudo ufw logging on
+sudo ufw limit 22/tcp
+sudo nft list ruleset
+find / -perm -4000 2>/dev/null
+find / -perm -0002 -type f 2>/dev/null
+getcap -r / 2>/dev/null
+findmnt /tmp
+printf '#!/bin/bash\necho essai\n' > /tmp/essai.sh
+chmod +x /tmp/essai.sh
+/tmp/essai.sh
+ls -l /etc/shadow
+sysctl -a | grep redirects
+lsmod
+echo '* hard core 0' | sudo tee -a /etc/security/limits.conf
+modprobe -n -v usb-storage
+printf 'install cramfs /bin/false\ninstall freevxfs /bin/false\ninstall jffs2 /bin/false\ninstall hfs /bin/false\ninstall hfsplus /bin/false\ninstall udf /bin/false\ninstall dccp /bin/false\ninstall sctp /bin/false\ninstall rds /bin/false\ninstall tipc /bin/false\n' | sudo tee /etc/modprobe.d/rares.conf
+sudo cryptsetup status sda3_crypt
+sudo cryptsetup luksDump /dev/sda3
+sudo cryptsetup isLuks -v /dev/sda3
+printf 'Gardien-du-Bastion\nGardien-du-Bastion\n' | grub-mkpasswd-pbkdf2 -c 200000
+sudo grub-mkconfig | grep superusers
+systemctl is-enabled ctrl-alt-del.target
+openssl x509 -in /etc/ssl/certs/bastion.pem -noout -dates
+openssl s_client -connect bastion:443 -tls1_1
+openssl s_client -connect bastion:443 -tls1_2
+apachectl -M
+apache2ctl configtest
+sudo a2disconf charset
+sudo a2enconf charset
+sudo a2dissite 000-default
+sudo a2ensite 000-default
+apachectl configtest
+sudo systemctl reload apache2
+sudo ausearch -k comptes
+sudo aureport
+logger -t essai "bonjour la tour"
+sudo journalctl -t essai
+echo '*.* @@journaux:514' | sudo tee /etc/rsyslog.d/90-distant.conf
+rsyslogd -N1
+sudo systemctl restart rsyslog
+sudo logrotate -d /etc/logrotate.conf
+sudo auditctl -l
+sudo dpkg -V
+dpkg -S /usr/bin/ps
+sudo apt-get update
+sudo rkhunter --check --sk
+sudo etckeeper commit "durcissement de la nuit"
+sudo aide --update
+sudo cp /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+sudo fail2ban-client status sshd
+sudo fail2ban-client get sshd maxretry
+sudo fail2ban-client set sshd unbanip <vint>
+sudo aa-status
+sudo aa-complain /etc/apparmor.d/usr.sbin.chronyd
+sudo aa-disable /etc/apparmor.d/usr.sbin.chronyd
+sudo aa-enforce /etc/apparmor.d/usr.sbin.chronyd
+sudo apparmor_parser -r /etc/apparmor.d/usr.sbin.apache2
+sudo aa-enforce /etc/apparmor.d/usr.sbin.rsyslogd
+exit
+curl -kI https://bastion/
+curl -k -X TRACE https://bastion/
+```
+
+### 47. L'aube
+
+Pendant les défis, 6 h sonne : la Nuée éprouve chaque mur. Ici tous ont tenu : l'assaut échoue, la Tour de Guet a tout noté (une ligne par mur dans le journal, des tentatives refusées dans le registre d'audit et chez fail2ban). L'étape demande de relire les journaux (`journalctl`, `ausearch` ou `aureport`) et de vérifier l'intégrité (`debsums`, `dpkg -V` ou `rkhunter`) après l'assaut, et qu'il ne reste aucune trace de la Nuée. Si des tours étaient encore ouvertes à l'aube, chacune porte une trace inerte, nommée dans le journal (un compte `nuee-trace`, un fichier dans `sudoers.d`, `sshd_config.d`, `rsyslog.d`, `jail.d` ou `grub.d`, un service, une règle de pare-feu, un SUID, un réglage du noyau, une page web, un `/usr/bin/id` modifié) : on la répare (`userdel`, `rm`, `ufw delete`, `apt install --reinstall coreutils`...), puis on ferme la tour. Enfin, la Pierre doit dépasser 85 après l'aube :
+
+```
+ssh bastion
+sudo journalctl -t bastion-garde
+sudo debsums -s
+sudo lynis audit system | grep "Hardening index"
+exit
+```
+
+### 48. Le rapport d'inspection
+
+Le rapport porte cinq rubriques (constats, mesures, score avant, score après, ce qui reste) et les vrais scores de la Pierre. Laurent ne le contresigne que si l'aube est relue et la Pierre au-dessus de 85 : déposé trop tôt, il le garde et dit ce qui reste ; avec des scores faux, il demande les vrais chiffres.
+
+```
+mkdir -p ~/bastion
+cat > ~/bastion/rapport.txt <<'FIN'
+RAPPORT D'INSPECTION - LE BASTION
+Constats : comptes sans mot de passe et second root, NOPASSWD ALL, SSH ouvert a root et aux mots de passe, telnet et rpcbind ouverts, aucun pare-feu, droits trop larges, noyau et GRUB non proteges, Apache bavard et certificat expire, rien de surveille.
+Mesures : douze tours fermees (comptes, sudo, SSH, services, pare-feu, droits, noyau, demarrage, Apache et TLS, audit et journaux, integrite et mises a jour, fail2ban et AppArmor), traces de l'aube relues.
+Score avant : <pierre-avant> / 100
+Score apres : <pierre-apres> / 100
+Ce qui reste : send_redirects et log_martians a regler, protected_hardlinks, une sauvegarde hors ligne de la base AIDE.
+FIN
+cp ~/bastion/rapport.txt BoiteDeLaurent
+cat ~/CertificatBastion
+badges bastion
+```
+
+Laurent contresigne : « Le Bastion a tenu. Pas parce qu'il est imprenable : parce que tu sais ce qui reste. » Le CertificatBastion porte la note du chapitre 5 et son code de vérification (`verifier CODE` le lit) ; le quiz du chapitre (`quiz 5`) s'ouvre, et `badges bastion` relit les seize leçons (une par tour, la Pierre, l'Aube, le Rapport, 4 h) et le platine.
 
 ## L'épreuve finale : la Forteresse (mission spéciale)
 

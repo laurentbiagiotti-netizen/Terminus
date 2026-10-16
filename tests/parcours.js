@@ -1110,6 +1110,37 @@ contient(w("less Laurent"), "cd Crypte", "Laurent envoie à la Crypte une fois l
 	contient(r.taper("cat ~/CertificatAvance"), "CERTIFICAT AVANCÉ", "chapitre 4 rechargé : le certificat est toujours là");
 	contient(r.taper("cat ~/Cybersup/SalleServeurs/Academie/Frances"), "radio", "chapitre 4 rechargé : Frances a grandi");
 	contient(r.taper("cat ~/Cybersup/SalleServeurs/Academie/Radio"), "terminé", "chapitre 4 rechargé : Grace a terminé");
+	// Le chapitre 5 (le Bastion) s'ouvre juste après l'Académie, au fond de l'Académie.
+	verifier(j.lire("state.has('ch5Ouvert')") === true, "chapitre 5 : le Bastion s'ouvre juste après l'Académie");
+	verifier(j.lire("state.has('ch5Direct')") === false, "chapitre 5 : ce n'est pas un départ direct");
+	verifier(j.lire("Academie.getChildFromName('Bastion') !== -1"), "chapitre 5 : un passage mène de l'Académie au Bastion");
+	verifier(j.lire("state.chapitreEnCours()") === 5, "chapitre 5 : tant qu'on n'est pas entré, l'Académie reste le chapitre en cours");
+	for (i++; i < sol.length; i++){
+		j.jouerSolution(sol[i]);
+		if (sol[i] === "cd ~/Cybersup/SalleServeurs/Academie/Bastion") verifier(j.lire("state.chapitreEnCours()") === 6, "chapitre 5 : en entrant, le Bastion devient le chapitre en cours");
+		if (sol[i] === "badges bastion") break;
+	}
+	verifier(j.lire("state.quests.h_rapport") === true, "chapitre 5 : le rapport d'inspection est contresigné");
+	verifier(j.lire("state.has('victoireCh5')") === true, "chapitre 5 : victoire");
+	var cert6 = j.taper("cat ~/CertificatBastion");
+	contient(cert6, "CERTIFICAT DU BASTION", "chapitre 5 : le CertificatBastion est dans la Maison");
+	contient(cert6, "20 / 20", "chapitre 5 : la solution donne 20 sur 20 au certificat");
+	contient(cert6, "74 sur 74", "chapitre 5 : les 74 défis figurent au certificat");
+	var code6 = cert6.split("\n").filter(function(l){ return /^  [A-Za-z0-9_-]+\.[0-9A-F]{8}$/.test(l); })[0];
+	verifier(!!code6, "chapitre 5 : le certificat porte un code de vérification");
+	if (code6){
+		var lu6 = j.lire("lireCode(" + JSON.stringify(code6.trim()) + ")");
+		verifier(lu6.valide && lu6.chapitre === 6, "chapitre 5 : le code est valide et porte le numéro interne 6");
+		contient(j.taper("verifier " + code6.trim()), "le Bastion", "chapitre 5 : verifier nomme le Bastion");
+	}
+	contient(j.taper("badges bastion"), "Maître du Bastion", "chapitre 5 : le badge platine figure dans badges bastion");
+	j.lire("state.save()");
+	var r6 = nouveauMonde(st);
+	verifier(r6.lire("state.quests.h_rapport && state.has('victoireCh5')"), "chapitre 5 rechargé : la victoire est gardée");
+	verifier(r6.lire("state.xp6") === r6.lire("state.xpMax6()"), "chapitre 5 rechargé : l'XP du chapitre est gardée, au maximum");
+	verifier(r6.lire("QUETES_SECONDAIRES_CH5.every(function(q){ return state.quests[q.id]; })"), "chapitre 5 rechargé : les 74 défis restent cochés");
+	verifier(r6.lire("state.has('platine_ch5') && state.has('tour_herse')"), "chapitre 5 rechargé : les badges restent gagnés");
+	verifier(r6.lire("BADGES_DU_PARCOURS.length") === 42, "chapitre 5 : le parcours de l'épreuve finale compte toujours 42 badges");
 })();
 
 console.log(verifications + " vérifications, " + echecs + " échec" + (echecs > 1 ? "s" : ""));

@@ -43,7 +43,11 @@ var sorts = ["ls", "cd", "pwd", "less", "help", "man", "clear", "exit", "mv", "c
 	"jq", "xargs", "paste", "join", "comm", "column", "tac", "shuf", "split", "patch", "rsync", "at", "atq", "atrm",
 	"nl", "fold", "read", "printf", "seq", "basename", "dirname", "expr", "sleep", "grimoire", "badges", "quiz",
 	// Les sorts du Bastion (SortsBastion.js).
-	"faillock", "pwck", "grpck", "su", "useradd", "umask", "sshd", "systemd-analyze", "apt-get", "dpkg", "etckeeper", "chage", "lastlog", "passwd", "netstat", "debsums"];
+	"faillock", "pwck", "grpck", "su", "useradd", "umask", "sshd", "systemd-analyze", "apt-get", "dpkg", "etckeeper", "chage", "lastlog", "passwd", "netstat", "debsums",
+	// Les sorts de la Tour de Guet (SortsGuet.js) et le chapitre 5 (le Bastion) : son plan, ses tours, ses pare-feu.
+	"apachectl", "apache2ctl", "a2enmod", "a2dismod", "a2enconf", "a2disconf", "a2ensite", "a2dissite", "getcap", "setcap", "mount", "findmnt", "lsmod", "modprobe",
+	"grub-mkpasswd-pbkdf2", "update-grub", "grub-mkconfig", "cryptsetup", "auditctl", "augenrules", "ausearch", "aureport", "logger", "rsyslogd", "logrotate",
+	"aa-status", "aa-enforce", "aa-complain", "aa-disable", "apparmor_parser", "lynis", "aide", "nft", "sysctl", "fail2ban-client", "rkhunter", "rempart"];
 var options = ["-a", "-l", "-la", "-r", "-rf", "-n", "-n 3", "-9", "-s", "-c", "-i", "-v", "-u", "-d:", "-f1", "-f", "-x", "-tf", "-xf", "-cf",
 	"--help", "-", "--", "-z", "-c", "-d", "-tlnp", "-perm -4000", "-perm /u=s", "-perm", "-user root", "2>/dev/null", "2>err", "2>>err", "2>&1", "u-s", "4755", "+t", "-1", "-0", "-99999", "+x", "-x", "755", "000", "u+rwx", "o-r", "a=", "999", "-name", "-type", "d", "f", "-L", "-u sorcier",
 	"-exec cat {} \\;", "-exec rm {} +", "-exec", "{}", "\\;", "-delete", "-o", "!", "\\(", "\\)", "-size +1k", "-size -1", "-empty", "-maxdepth 1", "-mindepth 2", "-mmin -5",
@@ -53,7 +57,10 @@ var options = ["-a", "-l", "-la", "-r", "-rf", "-n", "-n 3", "-9", "-s", "-c", "
 	"--user root", "--reset", "-tulpn", "-loptn", "-tulnp4", "security", "security sshd", "mask ctrl-alt-del.target", "unmask ctrl-alt-del.target", "edit sshd", "cat sshd",
 	"daemon-reload", "is-enabled sshd", "list-unit-files --state=enabled", "list-units --type=service", "list --upgradable", "purge telnet", "install --reinstall cowsay",
 	"-V", "-S /usr/bin/ls", "-l", "-ll", "-l -U root", "-c", "-f /etc/sudoers.d/x", "commit 'x'", "vcs log", "vcs status", "-T", "-t", "-M 90", "-E 2026-12-31", "-b 90",
-	"-s /usr/sbin/nologin", "-e 2026-12-31", "-m -G sudo", "027", "-S", "u=rwx,g=,o=", "TMOUT=0", "-t ed25519 -N ''", "-t rsa -b 512"];
+	"-s /usr/sbin/nologin", "-e 2026-12-31", "-m -G sudo", "027", "-S", "u=rwx,g=,o=", "TMOUT=0", "-t ed25519 -N ''", "-t rsa -b 512",
+	"audit system", "--init", "--check", "--update", "default deny incoming", "allow 22/tcp", "enable", "status verbose", "status numbered", "delete 1", "logging on", "limit 22/tcp",
+	"list ruleset", "flush ruleset", "-f /etc/nftables.conf", "-w net.ipv4.ip_forward=0", "--system", "-r usb-storage", "-n -v usb-storage", "-w /etc/passwd -p wa -k comptes",
+	"--load", "-k comptes", "configtest", "-M", "reload", "status sshd", "set sshd unbanip 10.0.92.119", "--check --sk", "-r /", "-r /usr/bin/python3.11", "/tmp", "status sda3_crypt"];
 var noms = [".", "..", "~", "/", "*", "?", ".*", "~/", "../..", "./.", "//", "a/b/c", "~/Village", "Marche", "Boite", "Cage", "Portail",
 	"Rocher", "Stele", "Certificat", ".Phylactere", "SorcierNoir", "Laurent", "Diplome", "LivreDOr", "Registre", "remonter.sh",
 	"Mannequin*", "rouage*", "x", "X", "Truc", ".cache", "nouveau", "copie", "Chaumiere", "Planche", "Rouage", "EpiDeMais", "TrollMoche",
@@ -103,10 +110,12 @@ var lignesJouees = 0;
 for (var i = 0; i < combien; i++){
 	// On repart régulièrement d'un monde neuf, tantôt vierge, tantôt entièrement débloqué.
 	if (i % 400 === 0){
-		var mode = (i / 400) % 4;
+		var mode = (i / 400) % 5;
 		jeu = mode === 2 ? mondeExamen() : nouveauMonde({});
 		// Le départ direct au chapitre 4 : l'Académie, la Nuée et sa bombe, bombardées elles aussi.
 		if (mode === 3) jeu.taper("chapitre 4", "oui");
+		// Le départ direct au chapitre 5 : le Bastion, son horloge et sa machine, sur laquelle on se connecte.
+		if (mode === 4){ jeu.taper("chapitre 5", "oui"); jeu.jouerSolution("ssh-keygen"); jeu.jouerSolution("ssh-copy-id bastion"); jeu.jouerSolution("ssh bastion"); }
 		if (mode === 1){
 			var jusque = Math.floor(hasard() * solution.length);
 			for (var s = 0; s <= jusque; s++){
@@ -114,7 +123,7 @@ for (var i = 0; i < combien; i++){
 			}
 		}
 		// Les sorts avancés (SortsArcanes.js) : on les accorde pour les bombarder aussi, sans attendre les maîtres.
-		if (mode !== 0) jeu.lire("SORTS_ARCANES.concat(SORTS_BASTION).forEach(function(s){ state.spells[s] = true; })");
+		if (mode !== 0) jeu.lire("SORTS_ARCANES.concat(SORTS_BASTION, SORTS_GUET).forEach(function(s){ state.spells[s] = true; })");
 	}
 	var ligne = ligneAleatoire();
 	try {
@@ -128,6 +137,7 @@ for (var i = 0; i < combien; i++){
 		if (jeu.lire("state.xp > state.xpMax()")) plantages.push({ ligne: ligne, erreur: "XP au-dessus du maximum" });
 		if (jeu.lire("state.xp2 > state.xpMax2()")) plantages.push({ ligne: ligne, erreur: "XP du chapitre 2 au-dessus du maximum" });
 		if (jeu.lire("state.xp5 > state.xpMax5()")) plantages.push({ ligne: ligne, erreur: "XP du chapitre 4 (l'Académie) au-dessus du maximum" });
+		if (jeu.lire("state.xp6 > state.xpMax6()")) plantages.push({ ligne: ligne, erreur: "XP du chapitre 5 (le Bastion) au-dessus du maximum" });
 	} catch (e){
 		plantages.push({ ligne: ligne, erreur: String(e && e.message) + "\n" + (e && e.stack ? e.stack.split("\n").slice(0, 6).join("\n") : String(e)) });
 		jeu = nouveauMonde({});
