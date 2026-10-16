@@ -2758,8 +2758,8 @@ Shell.sorts.find = function(args, io){
 			var argv = [], plus = false;
 			while (k < jetons.length && jetons[k] !== ";" && !(jetons[k] === "+" && jetons[k - 1] === "{}")) argv.push(jetons[k++]);
 			if (k >= jetons.length){
-				throw new ShellError("find: missing argument to `" + t + "'\n" +
-					C.gris("(La commande de -exec se termine par \\; (une fois par objet) ou par + (une seule fois pour tous). Exemple : find . -name \"*.tmp\" -exec rm {} \\;)"));
+				throw new ShellError("find: missing argument to `" + t + "'" +
+					astuce(io, "La commande de -exec se termine par \\; (une fois par objet) ou par + (une seule fois pour tous). Exemple : find . -name \"*.tmp\" -exec rm {} \\;"));
 			}
 			plus = jetons[k] === "+";
 			k++;
@@ -2798,7 +2798,7 @@ Shell.sorts.find = function(args, io){
 		else message = Shell.sorts.rm([sansAnsi(c.chemin)], { sudo: io.sudo, tty: false, stdin: null, err: io.err });
 		var apres = c.estLieu ? c.dir.children.indexOf(c.noeud) : c.dir.items.indexOf(c.noeud);
 		if (avant > -1 && apres === -1) return true;
-		io.err("find: cannot delete ‘" + sansAnsi(c.chemin) + "’: Operation not permitted" + (message ? "\n" + C.gris("(" + sansAnsi(message).replace(/^rm : |^find : /, "") + ")") : ""));
+		io.err("find: cannot delete ‘" + sansAnsi(c.chemin) + "’: Operation not permitted" + (message ? astuce(io, sansAnsi(message).replace(/^rm : |^find : /, "")) : ""));
 		code = 1;
 		return false;
 	}
@@ -2990,7 +2990,7 @@ function champsJoin(ligne, sep){
 Shell.sorts.join = function(args, io){
 	var sep = null, champ1 = 1, champ2 = 1, garder = { 1: false, 2: false }, seulement = { 1: false, 2: false }, vide = null, format = null, casse = false, fichiers = [];
 	var nombre = function(v, opt){
-		if (!/^\d+$/.test(v || "") || parseInt(v, 10) < 1) throw new ShellError("join: invalid field number: ‘" + v + "’" + C.gris("  (" + opt + " attend un numéro de champ, à partir de 1)"));
+		if (!/^\d+$/.test(v || "") || parseInt(v, 10) < 1) throw new ShellError("join: invalid field number: ‘" + v + "’" + astuce(io, opt + " attend un numéro de champ, à partir de 1"));
 		return parseInt(v, 10);
 	};
 	for (var i = 0; i < args.length; i++){
@@ -4294,24 +4294,52 @@ Shell.sorts.at = function(args, io){
 		throw new ShellError("syntax error. Last token seen: " + mots[mots.length - 1] + "\nGarbled time" +
 			astuce(io, "Heures comprises : 14:00, 9am, noon, midnight, teatime, now + 10 minutes, now + 2 hours, tomorrow, 14:00 tomorrow, 2026-12-24"));
 	}
+	if (quand.getTime() < Date.now() - 60000) throw new ShellError("at: refusing to create job destined in the past");
 	var commande = fichier !== null ? texteSource(fichier, io, "at") : io.stdin;
 	if (commande === null){
-		throw new ShellError("at : quelle commande planifier ? at la lit sur son entrée standard." +
-			astuce(io, "Exemple : echo \"tar -czf sauvegarde.tgz notes\" | at 23:00, ou at -f script.sh now + 1 hour"));
+		if (!io.tty || !term.demander){
+			throw new ShellError("at : quelle commande planifier ? at la lit sur son entrée standard." +
+				astuce(io, "Exemple : echo \"tar -czf sauvegarde.tgz notes\" | at 23:00, ou at -f script.sh now + 1 hour"));
+		}
+		// Sans tuyau, at demande les commandes une à une (invite « at> ») ; une ligne vide termine (le Ctrl+D du vrai at).
+		var lues = [], sudo = !!io.sudo;
+		var demander = function(){
+			term.demander("at> ", false, function(reponse){
+				if (reponse !== null && reponse !== undefined && reponse.trim() !== "" && lues.length < 20){ lues.push(reponse); demander(); return; }
+				term.echo("at> <EOT>");
+				if (lues.length === 0) term.echo(C.gris("(Aucune commande : rien n'est planifié.)"));
+				else {
+					try {
+						term.echo(planifierAt(quand, lues.join("\n"), sudo));
+					} catch (e){
+						if (!(e instanceof ShellError)) throw e;
+						term.echo(e.message);
+					}
+				}
+				Shell.fin();
+			});
+		};
+		if (io.tty) term.echo(C.gris("(Écris les commandes à lancer, une par ligne ; une ligne vide pour finir, comme Ctrl+D.)"));
+		demander();
+		return "";
 	}
 	if (lignesDe(commande).length === 0) throw new ShellError("at : la commande à planifier est vide.");
-	if (quand.getTime() < Date.now() - 60000) throw new ShellError("at: refusing to create job destined in the past");
+	// Comme le vrai at, l'accusé de réception part sur la sortie d'erreur.
+	io.err(planifierAt(quand, commande, !!io.sudo));
+	return "";
+};
+
+/* Range une tâche dans la file de at ; renvoie l'accusé de réception du vrai at. */
+function planifierAt(quand, commande, sudo){
 	var at = etatArcanes().at;
 	tachesAt();
 	if (at.taches.length >= 50) throw new ShellError("at : 50 tâches en attente, c'est le maximum dans ce monde. atq les liste, atrm les retire.");
-	var tache = { n: at.suivant++, quand: quand.getTime(), commande: commande.replace(/\n$/, ""), user: io.sudo ? "root" : JOUEUR,
+	var tache = { n: at.suivant++, quand: quand.getTime(), commande: commande.replace(/\n$/, ""), user: sudo ? "root" : JOUEUR,
 		dossier: Shell.cheminAffiche(current_room), hote: Shell.hote() };
 	at.taches.push(tache);
-	// Comme le vrai at, l'accusé de réception part sur la sortie d'erreur.
-	io.err("warning: commands will be executed using /bin/sh\njob " + tache.n + " at " + dateAt(quand));
 	GameEvents.fire({ type: "at", tache: tache, quand: tache.quand, commande: tache.commande, room: current_room });
-	return "";
-};
+	return "warning: commands will be executed using /bin/sh\njob " + tache.n + " at " + dateAt(quand);
+}
 
 Shell.sorts.atq = function(args, io){
 	if (args.some(function(a){ return a.charAt(0) === "-" && a !== "-q"; })) throw new ShellError("atq : option inconnue. Utilisation : atq");
