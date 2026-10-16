@@ -233,13 +233,28 @@ function lireListe(liste, cmd){
 }
 
 Shell.sorts.cut = function(args, io){
-	var p = lireOptions(args, "dfcs", "cut", "dfc");
+	// Les options longues de GNU : --complement (tout sauf la liste), --output-delimiter=TEXTE.
+	var complement = false, delimiteurSortie = null, courtes = [];
+	for (var a = 0; a < args.length; a++){
+		if (args[a] === "--complement") complement = true;
+		else if (args[a].indexOf("--output-delimiter=") === 0) delimiteurSortie = args[a].substring(19);
+		else if (args[a] === "--output-delimiter"){ delimiteurSortie = args[++a]; if (delimiteurSortie === undefined) throw new ShellError("cut : --output-delimiter attend un texte"); }
+		else if (args[a] === "--only-delimited") courtes.push("-s");
+		else if (/^--(delimiter|fields|characters|bytes)=/.test(args[a])){
+			var egal = args[a].indexOf("=");
+			courtes.push({ delimiter: "-d", fields: "-f", characters: "-c", bytes: "-b" }[args[a].substring(2, egal)], args[a].substring(egal + 1));
+		}
+		else courtes.push(args[a]);
+	}
+	var p = lireOptions(courtes, "dfcbs", "cut", "dfcb");
+	if (p.opts.b !== undefined) p.opts.c = p.opts.b;
 	if (p.opts.f === undefined && p.opts.c === undefined){
 		throw new ShellError("cut : il faut dire quoi garder. Utilisation : cut -d SEPARATEUR -f CHAMPS OBJET  (par exemple cut -d: -f1 Registre)");
 	}
 	var separateur = p.opts.d === undefined ? "\t" : p.opts.d;
 	if (separateur.length !== 1) throw new ShellError("cut : le séparateur doit être un seul caractère");
-	var retenu = lireListe(p.opts.f !== undefined ? p.opts.f : p.opts.c, "cut");
+	var liste = lireListe(p.opts.f !== undefined ? p.opts.f : p.opts.c, "cut");
+	var retenu = complement ? function(n){ return !liste(n); } : liste;
 	var texte;
 	if (p.reste.length === 0){
 		if (io.stdin === null) throw new ShellError("cut : dans quoi dois-je découper ? Utilisation : cut -d SEPARATEUR -f CHAMPS OBJET");
@@ -258,7 +273,14 @@ Shell.sorts.cut = function(args, io){
 	for (var l = 0; l < lignes.length; l++){
 		var ligne = lignes[l], gardes = [], k;
 		if (p.opts.c !== undefined){
-			for (k = 0; k < ligne.length; k++){ if (retenu(k + 1)) gardes.push(ligne.charAt(k)); }
+			// --output-delimiter sépare les plages de caractères qui ne se touchent pas.
+			var precedent = -2;
+			for (k = 0; k < ligne.length; k++){
+				if (!retenu(k + 1)) continue;
+				if (delimiteurSortie !== null && gardes.length && precedent !== k - 1) gardes.push(delimiteurSortie);
+				gardes.push(ligne.charAt(k));
+				precedent = k;
+			}
 			sortie.push(gardes.join(""));
 			continue;
 		}
@@ -268,7 +290,7 @@ Shell.sorts.cut = function(args, io){
 		}
 		var champs = ligne.split(separateur);
 		for (k = 0; k < champs.length; k++){ if (retenu(k + 1)) gardes.push(champs[k]); }
-		sortie.push(gardes.join(separateur));
+		sortie.push(gardes.join(delimiteurSortie === null ? separateur : delimiteurSortie));
 	}
 	return sortie.join("\n");
 };

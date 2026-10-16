@@ -133,28 +133,43 @@ var MANUEL = {
 	resume: "lire le début d'un texte",
 	titre: "la tête (le début)",
 	page:
-"Utilise « head » pour ne lire que le début d'un texte.\n\n" +
+"Utilise « head » pour ne lire que le début d'un texte.\n" +
+"\n" +
 "  head OBJET          les 10 premières lignes\n" +
-"  head -n 3 OBJET     les 3 premières"
+"  head -n 3 OBJET     les 3 premières (head -3 OBJET aussi)\n" +
+"  head -n -2 OBJET    tout, sauf les 2 dernières\n" +
+"  head -c 20 OBJET    les 20 premiers caractères\n" +
+"  head A B            plusieurs objets : chacun sous un titre ==> A <==\n" +
+"  head -q A B         sans les titres"
 },
 "tail": {
 	resume: "lire la fin d'un texte",
 	titre: "la queue (la fin)",
 	page:
 "Utilise « tail » pour ne lire que la fin d'un texte. Les administrateurs s'en\n" +
-"servent sans arrêt : dans un journal, les dernières nouvelles sont en bas.\n\n" +
+"servent sans arrêt : dans un journal, les dernières nouvelles sont en bas.\n" +
+"\n" +
 "  tail OBJET          les 10 dernières lignes\n" +
-"  tail -n 1 OBJET     seulement la dernière"
+"  tail -n 1 OBJET     seulement la dernière\n" +
+"  tail -n +5 OBJET    à partir de la 5e ligne, jusqu'au bout (pratique pour sauter un en-tête : tail -n +2)\n" +
+"  tail -c 20 OBJET    les 20 derniers caractères\n" +
+"  tail A B            plusieurs objets, chacun sous un titre ==> A <=="
 },
 "wc": {
 	resume: "compter les lignes, les mots, les caractères",
 	titre: "Word Count (compter)",
 	page:
-"Utilise « wc » pour compter sans rien afficher.\n\n" +
-"  wc OBJET         lignes, mots et caractères\n" +
+"Utilise « wc » pour compter sans rien afficher.\n" +
+"\n" +
+"  wc OBJET         lignes, mots et octets, dans cet ordre\n" +
 "  wc -l OBJET      seulement les lignes\n" +
 "  wc -w OBJET      seulement les mots\n" +
-"  ls | wc -l       compte ce que le sort précédent lui envoie par le tuyau"
+"  wc -c OBJET      les octets (une lettre accentuée en pèse deux)\n" +
+"  wc -m OBJET      les caractères\n" +
+"  wc -L OBJET      la longueur de la plus longue ligne\n" +
+"  ls | wc -l       compte ce que le sort précédent lui envoie par le tuyau\n" +
+"\n" +
+"Le retour à la ligne final compte : echo bonjour | wc -c répond 8."
 },
 "history": {
 	resume: "revoir les sorts déjà lancés",
@@ -232,7 +247,8 @@ var MANUEL = {
 	resume: "chercher un mot dans un texte",
 	titre: "ton serviteur Grep (chercher)",
 	page:
-"Utilise « grep » pour ne garder que les lignes d'un texte qui contiennent un mot.\n\n" +
+"Utilise « grep » pour ne garder que les lignes d'un texte qui contiennent un motif.\n" +
+"\n" +
 "  grep MOT OBJET        les lignes de OBJET contenant MOT\n" +
 "  grep MOT *            cherche dans tous les objets d'ici\n" +
 "  grep -r MOT LIEU      fouille un lieu entier, et tout ce qu'il contient\n" +
@@ -240,7 +256,27 @@ var MANUEL = {
 "  grep -n MOT OBJET     indique les numéros de ligne\n" +
 "  grep -v MOT OBJET     l'inverse : les lignes qui ne contiennent PAS le mot\n" +
 "  grep -c MOT OBJET     compte les lignes trouvées\n" +
-"  ps | grep demon       filtre ce qu'un autre sort lui envoie"
+"  grep -o MOTIF OBJET   n'affiche que les morceaux trouvés, un par ligne\n" +
+"  grep -w mot OBJET     le mot entier seulement (mot, mais pas motif)\n" +
+"  grep -x LIGNE OBJET   la ligne entière doit correspondre\n" +
+"  grep -l MOT A B C     seulement le nom des objets où il y a MOT (-L : où il n'y en a pas)\n" +
+"  grep -A 2 MOT OBJET   avec les 2 lignes d'après (-B : d'avant, -C : des deux côtés)\n" +
+"  grep -e un -e deux    plusieurs motifs à la fois\n" +
+"  grep -F 'a.b' OBJET   le motif au pied de la lettre : le point n'est qu'un point\n" +
+"  ps | grep demon       filtre ce qu'un autre sort lui envoie\n" +
+"\n" +
+"Le motif est une expression régulière :\n" +
+"  .  n'importe quel caractère      ^  début de ligne     $  fin de ligne\n" +
+"  *  répète ce qui précède         [abc]  un a, un b ou un c    [0-9]  un chiffre\n" +
+"  [[:digit:]] [[:alpha:]] [[:space:]] [[:upper:]]  les classes de caractères\n" +
+"\n" +
+"Sans -E, grep parle la langue « de base » (BRE) : | ( ) + ? { } y sont des\n" +
+"caractères ordinaires, il faut \\| \\( \\) \\+ \\? \\{ \\} pour s'en servir comme opérateurs.\n" +
+"  grep 'chat\\|chien' F         chat ou chien\n" +
+"  grep -E 'chat|chien' F       pareil, en langue « étendue » (ERE)\n" +
+"  grep -E '[0-9]{3}' F         trois chiffres de suite\n" +
+"\n" +
+"grep répond 0 quand il trouve, 1 quand il ne trouve rien : les scripts s'en servent (grep -q)."
 },
 "echo": {
 	resume: "dire quelque chose à voix haute, ou l'écrire",
@@ -258,21 +294,39 @@ var MANUEL = {
 	resume: "trier des lignes",
 	titre: "trier",
 	page:
-"Utilise « sort » pour trier les lignes d'un texte.\n\n" +
-"  sort OBJET       ordre alphabétique\n" +
-"  sort -r OBJET    ordre inverse\n" +
-"  sort -n OBJET    ordre numérique (2 avant 10)\n" +
-"  sort -u OBJET    trie et retire les doublons"
+"Utilise « sort » pour trier les lignes d'un texte.\n" +
+"\n" +
+"  sort OBJET            ordre alphabétique\n" +
+"  sort -r OBJET         ordre inverse\n" +
+"  sort -n OBJET         ordre numérique (2 avant 10)\n" +
+"  sort -h OBJET         tailles lisibles : 500 avant 1K avant 2M\n" +
+"  sort -u OBJET         trie et retire les doublons\n" +
+"  sort -f OBJET         sans tenir compte des majuscules\n" +
+"  sort -t: -k3,3n F     selon la 3e colonne (séparée par « : »), en nombres\n" +
+"  sort -k2 OBJET        de la 2e colonne jusqu'au bout de la ligne\n" +
+"  sort -k2,2nr -k1,1 F  2e colonne en nombres décroissants, puis la 1re en cas d'égalité\n" +
+"  sort -V OBJET         numéros de version : v1.2 avant v1.10\n" +
+"  sort -o TRI OBJET     écrit le résultat dans TRI (même si c'est OBJET lui-même)\n" +
+"  sort -c OBJET         vérifie seulement que c'est déjà trié\n" +
+"\n" +
+"Sans -t, les colonnes sont séparées par des blancs. Ici, comme avec LC_ALL=C, les\n" +
+"majuscules passent avant les minuscules."
 },
 "uniq": {
 	resume: "retirer les lignes en double",
 	titre: "unique",
 	page:
 "Utilise « uniq » pour fusionner les lignes identiques qui se suivent.\n" +
-"Il faut donc trier d'abord, d'où le tuyau :\n\n" +
+"Il faut donc trier d'abord, d'où le tuyau :\n" +
+"\n" +
 "  sort OBJET | uniq         chaque ligne une seule fois\n" +
 "  sort OBJET | uniq -c      avec le nombre d'apparitions devant\n" +
-"  sort OBJET | uniq -c | sort -n     du plus rare au plus fréquent\n\n" +
+"  sort OBJET | uniq -c | sort -n     du plus rare au plus fréquent\n" +
+"  sort OBJET | uniq -d      seulement les lignes en double\n" +
+"  sort OBJET | uniq -u      seulement les lignes uniques\n" +
+"  uniq -i OBJET             sans tenir compte des majuscules\n" +
+"  uniq -f 1 OBJET           compare en sautant la 1re colonne (-s 3 : les 3 premiers caractères)\n" +
+"\n" +
 "Le tuyau | envoie ce qu'affiche un sort dans le sort suivant.\n" +
 "C'est l'idée la plus puissante de tout le grimoire : de petits sorts\n" +
 "simples, mis bout à bout."
@@ -437,11 +491,17 @@ var MANUEL = {
 	titre: "découper",
 	page:
 "Utilise « cut » pour extraire une colonne dans des lignes dont les champs\n" +
-"sont séparés par un même signe.\n\n" +
+"sont séparés par un même signe.\n" +
+"\n" +
 "  cut -d: -f1 OBJET         le 1er champ, les champs étant séparés par « : »\n" +
 "  cut -d: -f1,3 OBJET       le 1er et le 3e\n" +
 "  cut -d, -f2- OBJET        du 2e jusqu'au dernier, séparés par des virgules\n" +
-"  cut -c1-10 OBJET          les 10 premiers caractères de chaque ligne\n\n" +
+"  cut -d: -f-2 OBJET        du 1er au 2e\n" +
+"  cut -c1-10 OBJET          les 10 premiers caractères de chaque ligne\n" +
+"  cut -d: -f2 --complement OBJET          tout sauf le 2e champ\n" +
+"  cut -d, -f1,3 --output-delimiter=' ' F   les champs gardés, séparés par une espace\n" +
+"  cut -s -d: -f1 OBJET      ignore les lignes qui n'ont aucun « : »\n" +
+"\n" +
 "Il brille dans un tuyau : cut -d: -f1 Registre | sort | uniq -c"
 },
 "top": {

@@ -9,7 +9,7 @@
  *
  * Les valeurs suivent les règles d'awk : un nombre, une chaîne, ou un « nombre-chaîne » (ce qui
  * vient de l'entrée : un champ, une ligne lue) qui compte comme nombre s'il en a l'air.
- * Un garde-fou arrête les boucles sans fin (AWK_PAS_MAX pas).
+ * Un garde-fou arrête les boucles sans fin : AWK_PAS_MAX tours de boucle ou appels de fonction.
  */
 
 var AWK_PAS_MAX = 200000;
@@ -194,7 +194,7 @@ function parserAwk(source){
 	function finDInstruction(){ return est(";") || est("nl") || est("}") || est("eof"); }
 
 	function nomVariable(nom, j){
-		if (locaux && locaux.hasOwnProperty(nom)) return { t: "var", nom: nom, local: locaux[nom], pos: j.pos };
+		if (locaux && locaux[nom] !== undefined) return { t: "var", nom: nom, local: locaux[nom], pos: j.pos };
 		return { t: "var", nom: nom, pos: j.pos };
 	}
 
@@ -621,13 +621,6 @@ function awkNombreDe(texte){
 	var h = /^[ \t]*([-+]?)(inf|infinity|nan)\b/i.exec(texte);
 	if (h && /^[-+]$/.test(h[1])) return h[2].toLowerCase() === "nan" ? NaN : (h[1] === "-" ? -Infinity : Infinity);
 	return 0;
-}
-
-/* Arrondi au plus proche, à égalité vers le pair (comme rint, utilisé par substr). */
-function arrondiPair(x){
-	var r = Math.round(x);
-	if (Math.abs(x % 1) === 0.5 && r % 2 !== 0) r -= 1;
-	return r;
 }
 
 function entierEnTexte(n){
@@ -1097,11 +1090,10 @@ function executerAwk(programme, io, operandes, assignations, source){
 				s = Array.from(txt(evaluer(a[0])));
 				var debut = num(evaluer(a[1]));
 				var longueur = a.length > 2 ? num(evaluer(a[2])) : Infinity;
-				if (isNaN(debut)) debut = 1;
-				var d = arrondiPair(debut), l = longueur === Infinity ? Infinity : arrondiPair(longueur);
-				if (isNaN(l)) l = 0;
-				if (d < 1){ l += d - 1; d = 1; }
-				if (l <= 0) return "";
+				// Comme gawk : une longueur sous 1 ne donne rien, un début sous 1 vaut 1, puis on tronque.
+				if (!(longueur >= 1)) return "";
+				if (!(debut >= 1)) debut = 1;
+				var d = Math.trunc(debut), l = longueur === Infinity ? Infinity : Math.trunc(longueur);
 				return s.slice(d - 1, l === Infinity ? undefined : d - 1 + l).join("");
 			case "index":
 				s = txt(evaluer(a[0]));
@@ -1239,6 +1231,7 @@ function executerAwk(programme, io, operandes, assignations, source){
 	function appeler(n){
 		var f = programme.fonctions[n.nom];
 		if (n.args.length > f.params.length) throw erreurAwk("la fonction « " + n.nom + " » reçoit " + n.args.length + " arguments, mais n'en déclare que " + f.params.length);
+		compter();
 		if (pile.length >= AWK_PROFONDEUR_MAX) throw erreurAwk("trop d'appels imbriqués de « " + n.nom + " » (une récursion sans fin ?)");
 		var vals = [];
 		n.args.forEach(function(arg, i){
@@ -1343,7 +1336,6 @@ function executerAwk(programme, io, operandes, assignations, source){
 	// --- Les instructions ---
 	var CASSER = new SignalAwk("break"), CONTINUER = new SignalAwk("continue");
 	function executer(n){
-		compter();
 		switch (n.t){
 			case "bloc":
 				for (var i = 0; i < n.liste.length; i++){
@@ -1446,7 +1438,6 @@ function executerAwk(programme, io, operandes, assignations, source){
 				try {
 					for (var r = 0; r < programme.regles.length; r++){
 						var regle = programme.regles[r], choisie;
-						compter();
 						if (!regle.motif) choisie = true;
 						else if (!regle.motif2) choisie = vrai(evaluer(regle.motif));
 						else if (actifs[r]){

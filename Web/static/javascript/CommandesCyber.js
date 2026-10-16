@@ -1144,14 +1144,90 @@ MANUEL["gunzip"] = page("décompresser un fichier .gz", "GNU UNZIP",
 MANUEL["zcat"] = page("lire une archive gzip sans la décompresser", "Z CAT",
 	"  zcat FICHIER.gz        affiche le contenu d'origine\n  zcat auth.log.2.gz | grep Accepted\n\nzcat lit toute archive gzip, quel que soit son nom.");
 MANUEL["sed"] = page("filtrer ou transformer un texte ligne par ligne", "Stream EDitor",
-	"  sed -n '5,10p' F         affiche les lignes 5 à 10\n  sed 's/ancien/nouveau/g' F   remplace partout\n  sed '/motif/d' F         supprime les lignes qui contiennent motif\n  sed -i 's/a/b/' F        modifie le fichier sur place\n\nSans -i, sed affiche le résultat et ne touche pas au fichier.");
-MANUEL["awk"] = page("découper un texte en colonnes et trier les lignes", "Aho, Weinberger et Kernighan",
-	"  awk '{ print $1 }' F           la première colonne (séparées par des espaces)\n  awk -F: '{ print $1, $3 }' F   colonnes séparées par des deux-points\n  awk -F: '$3 == 0' /etc/passwd  les lignes dont la 3e colonne vaut 0\n  awk '/ECHEC/ { print $4 }' F   la 4e colonne des lignes qui contiennent ECHEC\n\n$0 est la ligne entière, NR son numéro, NF son nombre de colonnes.");
+	"  sed 's/ancien/nouveau/' F      remplace la 1re occurrence de chaque ligne\n" +
+	"  sed 's/ancien/nouveau/g' F     remplace partout (g : global)\n" +
+	"  sed 's/a/b/2' F                seulement la 2e occurrence ; 2g : à partir de la 2e\n" +
+	"  sed -n '5,10p' F               affiche les lignes 5 à 10 (-n : rien d'autre)\n" +
+	"  sed -n '/début/,/fin/p' F      de la ligne qui contient début à celle qui contient fin\n" +
+	"  sed '/motif/d' F               supprime les lignes qui contiennent motif\n" +
+	"  sed '1d;$d' F                  supprime la première et la dernière ligne ($ : la dernière)\n" +
+	"  sed '/motif/!d' F              garde seulement ces lignes (! : l'inverse)\n" +
+	"  sed -n '1~2p' F                une ligne sur deux ; 2,+3 : la 2e et les 3 suivantes\n" +
+	"  sed '3a texte' F               ajoute une ligne après la 3e (i : avant, c : à la place)\n" +
+	"  sed '/motif/{s/a/b/;s/c/d/}' F plusieurs commandes sur les mêmes lignes\n" +
+	"  sed 'y/abc/xyz/' F             change a en x, b en y, c en z\n" +
+	"  sed '5q' F                     s'arrête après la 5e ligne\n" +
+	"  sed -n '$=' F                  le numéro de la dernière ligne (le nombre de lignes)\n" +
+	"  sed -i 's/a/b/' F              modifie le fichier sur place\n" +
+	"  sed -i.bak 's/a/b/' F          pareil, en gardant l'original dans F.bak\n" +
+	"\n" +
+	"Dans s///, & est le morceau trouvé et \\1 \\2... les groupes \\( \\) :\n" +
+	"  sed 's/[0-9]\\+/[&]/' F                     met le premier nombre entre crochets\n" +
+	"  sed 's/\\(.*\\):\\(.*\\)/\\2:\\1/' F            échange ce qui est avant et après « : »\n" +
+	"  sed -E 's/(.*):(.*)/\\2:\\1/' F              pareil avec -E : ( ) sans barres obliques\n" +
+	"  sed 's/.*/\\U&/' F                          tout en majuscules (\\L : minuscules)\n" +
+	"\n" +
+	"Sans -E, sed parle la langue « de base » (BRE), comme grep : \\( \\) \\{ \\} \\+ \\? \\|.\n" +
+	"Les espaces de réserve, pour les experts : h H (garder), g G (reprendre), x (échanger),\n" +
+	"n N (ligne suivante), P D. Exemple : sed -n '1!G;h;$p' F renverse le fichier.\n" +
+	"\n" +
+	"Sans -i, sed affiche le résultat et ne touche pas au fichier.");
+MANUEL["awk"] = page("découper un texte en colonnes, filtrer, compter, calculer", "Aho, Weinberger et Kernighan",
+	"Un programme awk est une suite de règles « motif { action } » : pour chaque ligne,\n" +
+	"chaque règle dont le motif est vrai lance son action.\n" +
+	"\n" +
+	"  awk '{ print $1 }' F           la première colonne (séparées par des espaces)\n" +
+	"  awk -F: '{ print $1, $3 }' F   colonnes séparées par des deux-points\n" +
+	"  awk -F: '$3 == 0' /etc/passwd  les lignes dont la 3e colonne vaut 0\n" +
+	"  awk '/ECHEC/ { print $4 }' F   la 4e colonne des lignes qui contiennent ECHEC\n" +
+	"  awk 'NR == 2, NR == 5' F       de la 2e à la 5e ligne\n" +
+	"  awk '{ n[$1]++ } END { for (k in n) print k, n[k] }' F    compte chaque valeur de la 1re colonne\n" +
+	"  awk '{ s += $2 } END { print s, s / NR }' F                somme et moyenne de la 2e colonne\n" +
+	"  awk -v seuil=10 '$2 > seuil' F                            une variable venue de la ligne de commande\n" +
+	"  awk '!vu[$0]++' F              retire les doublons sans trier\n" +
+	"\n" +
+	"$0 est la ligne entière, $1 $2... ses colonnes, $NF la dernière, $(NF-1) l'avant-dernière.\n" +
+	"NR est le numéro de la ligne, NF son nombre de colonnes, FILENAME l'objet lu.\n" +
+	"FS et OFS : les séparateurs en entrée et en sortie ; BEGIN { FS = \":\" } équivaut à -F:.\n" +
+	"Changer une colonne ($2 = \"x\") reconstruit la ligne avec OFS.\n" +
+	"\n" +
+	"Le langage : variables, tableaux t[cle], if/else, while, do, for (i = 1; i <= NF; i++),\n" +
+	"for (k in t), next, exit, delete, et les fonctions length, substr, index, split,\n" +
+	"sub, gsub, match, sprintf, toupper, tolower, int, sqrt... et les tiennes :\n" +
+	"  awk 'function carre(x) { return x * x } { print carre($1) }' F\n" +
+	"\n" +
+	"  printf \"%-10s %5.2f\\n\", $1, $2     une sortie bien alignée (%s %d %f %x %c %%)\n" +
+	"  print $1 > \"liste.txt\"              écrit dans un objet (>> : ajoute à la suite)");
 MANUEL["tr"] = page("remplacer ou supprimer des caractères", "TRanslate",
-	"  echo bonjour | tr a-z A-Z       BONJOUR\n  cat F | tr -d ' '               supprime les espaces\n  cat F | tr 'A-Za-z' 'N-ZA-Mn-za-m'   ROT13 : chaque lettre décalée de 13\n\ntr ne lit que l'entrée standard : il faut un tuyau.");
+	"  echo bonjour | tr a-z A-Z            BONJOUR\n" +
+	"  cat F | tr '[:lower:]' '[:upper:]'   pareil, avec les classes de caractères\n" +
+	"  cat F | tr -d ' '                    supprime les espaces\n" +
+	"  cat F | tr -d '[:digit:]'            supprime les chiffres\n" +
+	"  cat F | tr -s ' '                    resserre les espaces répétées en une seule\n" +
+	"  cat F | tr '\\n' ' '                  met tout sur une ligne (\\n : le retour à la ligne, \\t : la tabulation)\n" +
+	"  cat F | tr -c '[:alnum:]\\n' '_'      remplace tout ce qui n'est PAS une lettre ou un chiffre (-c : le complément)\n" +
+	"  cat F | tr -cd '[:print:]'           ne garde que les caractères affichables\n" +
+	"  cat F | tr 'A-Za-z' 'N-ZA-Mn-za-m'   ROT13 : chaque lettre décalée de 13\n" +
+	"\n" +
+	"Les classes : [:upper:] [:lower:] [:alpha:] [:digit:] [:alnum:] [:space:] [:punct:].\n" +
+	"tr ne lit que l'entrée standard : il faut un tuyau, jamais un nom d'objet.");
 MANUEL["rev"] = page("écrire chaque ligne à l'envers", "REVerse", "  rev FICHIER            chaque ligne renversée, de droite à gauche\n  echo bonjour | rev     ruojnob");
 MANUEL["tee"] = page("écrire dans un fichier tout en affichant", "TEE (le raccord en T des plombiers)",
-	"  commande | tee F        affiche ET enregistre dans F\n  commande | tee -a F     ajoute à la fin de F\n\nPratique pour garder une trace d'une enquête sans rien perdre à l'écran.");
+	"  commande | tee F          affiche ET enregistre dans F\n" +
+	"  commande | tee -a F       ajoute à la fin de F\n" +
+	"  commande | tee A B | wc -l   écrit dans A et dans B, et passe le texte au sort suivant\n" +
+	"\n" +
+	"Pratique pour garder une trace d'une enquête sans rien perdre à l'écran.");
+MANUEL["nl"] = page("numéroter les lignes d'un texte", "Number Lines",
+	"  nl F                     numérote les lignes non vides\n" +
+	"  nl -ba F                 numérote toutes les lignes, vides comprises\n" +
+	"  nl -w3 -s': ' F          numéros sur 3 colonnes, suivis de « : »\n" +
+	"  nl -v 10 -i 5 F          commence à 10, de 5 en 5\n" +
+	"\n" +
+	"Proche de cat -n, mais plus réglable.");
+MANUEL["fold"] = page("couper les lignes trop longues", "FOLD (plier)",
+	"  fold -w 40 F             coupe chaque ligne tous les 40 caractères\n" +
+	"  fold -s -w 40 F          coupe plutôt après une espace, pour ne pas casser les mots");
 MANUEL["which"] = page("trouver où se trouve un programme", "WHICH", "  which nc               /usr/bin/nc\n\nUtile pour vérifier qu'on lance bien le vrai programme, et pas un piège déposé ailleurs.");
 MANUEL["uname"] = page("voir le système et le noyau de la machine", "UNIX NAME", "  uname -a               tout : nom, version du noyau, architecture\n  uname -r               la version du noyau seulement");
 MANUEL["dmesg"] = page("lire les messages du noyau", "Display MESsaGes",

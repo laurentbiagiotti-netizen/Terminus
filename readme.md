@@ -131,7 +131,9 @@ Le code est du JavaScript sans dépendance ni étape de construction.
 | `Web/static/javascript/SortsAvances.js` | variables, alias, liens, scripts, archives, réseau, système, paquets |
 | `Web/static/javascript/Manuel.js` | les pages de `man` et l'ordre des sorts |
 | `Web/static/javascript/Chapitre2.js` | la Crypte (chapitre 3) : SHA-256, base64, `nano`, `ss`, `ssh-keygen`, la Crypte et le coffre, le saut de chapitre |
-| `Web/static/javascript/CommandesCyber.js` | les commandes du réseau et de l'analyse (sed, awk, nmap, systemctl, gpg...) et l'éditeur `vim` côté shell |
+| `Web/static/javascript/CommandesCyber.js` | les commandes du réseau et de l'analyse (nmap, systemctl, gpg...) et l'éditeur `vim` côté shell |
+| `Web/static/javascript/Texte.js` | les sorts qui travaillent le texte, au plus près de GNU : `grep` (BRE et ERE, -o -w -x -A -B -C...), `sed` (adresses, blocs, espace de réserve, -i.bak...), `sort` (-k -t -h -V...), `head`, `tail`, `wc`, `uniq`, `tr`, `tee`, `rev`, `nl`, `fold`, et la traduction des expressions régulières POSIX |
+| `Web/static/javascript/Awk.js` | un vrai petit `awk` : lexeur, parseur et évaluateur (motifs, BEGIN/END, tableaux, fonctions, printf, print > objet), sans eval |
 | `Web/static/javascript/Reseau.js` | les machines du réseau de l'école, les quêtes et les leçons de vim de la Crypte |
 | `Web/static/javascript/Panne.js` | la panne (chapitre 2) : le bâtiment B, le poste, le routeur, l'intranet, l'état du réseau et qui joint qui, les quêtes, Radia |
 | `Web/static/javascript/Examen.js` | l'épreuve finale : la Forteresse, ses quarante épreuves et ses personnages, le quiz de Steve, la note, `examen`, `kamikaze` et `verifier` |
@@ -158,6 +160,7 @@ Le code est du JavaScript sans dépendance ni étape de construction.
 | `tests/solution.js` | rejoue les commandes de `docs/solution.md` et vérifie qu'elles mènent à 20 sur 20 aux trois chapitres |
 | `tests/examen.js` | joue l'épreuve finale de bout en bout, puis un kamikaze, et vérifie la note, les badges, le sceau, le code du diplôme, la reprise après un rechargement et celle d'une vieille sauvegarde |
 | `tests/regressions.js` | rejoue chaque bug trouvé lors de l'audit, pour qu'il ne revienne pas |
+| `tests/texte.js` | compare grep, sed, awk, sort, uniq, tr, head, tail, wc, cut, nl, rev, fold aux vrais outils GNU (plus de 400 cas), puis vérifie ce qui est propre au jeu ; `node tests/texte.js --gnu` revérifie les attendus avec GNU grep, sed et gawk s'ils sont installés |
 | `tests/robustesse.js` | envoie des lignes aléatoires à l'interpréteur (20 000 par défaut, `node tests/robustesse.js 6000` pour une passe rapide) et vérifie qu'aucune ne le fait planter |
 
 Lancer les tests après toute modification :
@@ -167,6 +170,7 @@ node tests/parcours.js
 node tests/solution.js
 node tests/examen.js
 node tests/regressions.js
+node tests/texte.js
 node tests/robustesse.js 6000
 ```
 

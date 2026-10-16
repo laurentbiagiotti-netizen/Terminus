@@ -1268,7 +1268,7 @@ function comparerCles(a, b, o){
 	}
 	if (o.h){
 		var ha = /^[ \t]*(-?\d*\.?\d*)([KMGTPEZYk]?)/.exec(a), hb = /^[ \t]*(-?\d*\.?\d*)([KMGTPEZYk]?)/.exec(b);
-		var sa = SUFFIXES_H.indexOf(ha[2].toUpperCase()) + 1, sb = SUFFIXES_H.indexOf(hb[2].toUpperCase()) + 1;
+		var sa = ha[2] ? SUFFIXES_H.indexOf(ha[2].toUpperCase()) + 1 : 0, sb = hb[2] ? SUFFIXES_H.indexOf(hb[2].toUpperCase()) + 1 : 0;
 		var va = parseFloat(ha[1]) || 0, vb = parseFloat(hb[1]) || 0;
 		var signeA = va < 0 ? -1 : (va > 0 ? 1 : 0), signeB = vb < 0 ? -1 : (vb > 0 ? 1 : 0);
 		if (signeA !== signeB) return signeA < signeB ? -1 : 1;
@@ -1524,7 +1524,7 @@ Shell.sorts.wc = function(args, io){
 	// La largeur des colonnes, comme GNU : le nombre de chiffres de la taille totale (7 au moins pour un tuyau).
 	var largeur;
 	var avecStdin = entrees.some(function(e){ return e.stdin; });
-	if (entrees.length === 1 && avecStdin && colonnes.length === 1) largeur = 1;
+	if (entrees.length === 1 && colonnes.length === 1) largeur = 1;
 	else {
 		var totalOctets = 0;
 		entrees.forEach(function(e){ if (!e.stdin) totalOctets += e.n.c; });
