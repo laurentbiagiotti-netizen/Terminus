@@ -1,15 +1,46 @@
 /**
- * SortsArcanes.js : les sorts avancés du chapitre 4, l'école de magie.
+ * SortsArcanes.js : les sorts avancés du chapitre 4, l'école de magie (« Linux avancé »).
  *
- *  - JSON : jq, un vrai interpréteur de filtres (lexeur, parseur, évaluateur, sans eval)
- *  - chaînes de commandes : xargs, et find réécrit (-exec, -size, -maxdepth, -delete, -o, !, parenthèses)
- *  - textes en colonnes : paste, join, comm, column, et tac, shuf, split
- *  - correctifs : diff (le vrai format unifié avec -u), patch
- *  - copies : rsync
- *  - planification : at, atq, atrm, crontab -e et crontab FICHIER, systemctl list-timers, date -d
+ *  - JSON : jq, un vrai interpréteur de filtres (lexeur, parseur, évaluateur, sans eval ni Function),
+ *    sur un lecteur de JSON qui reprend celui de jq (mêmes messages : « parse error: ... at line 3, column 4 »).
+ *  - chaînes de commandes : xargs ; find complet (-exec ... {} \; et {} +, -size, -empty, -maxdepth, -mindepth,
+ *    -delete, -print, -o, !, -not, parenthèses, -path, -mmin) qui remplace celui de Shell.js.
+ *  - textes en colonnes : paste, join, comm, column, tac (et en prime shuf, split).
+ *  - correctifs : diff (le diff de GNU : mêmes blocs, format normal et unifié -u / -U N), patch (décalage, flou,
+ *    -R, -N, --dry-run, -pN, -i, .rej et .orig comme GNU patch).
+ *  - copies : rsync (-a, -v, -r, -n, --delete, --exclude, la barre finale).
+ *  - planification : at, atq, atrm ; crontab -e, crontab FICHIER, crontab - ; systemctl list-timers et les unités
+ *    .timer ; date -d.
  *
  * Ces sorts n'entrent dans aucune liste ORDRE_DES_SORTS : c'est le chapitre 4 qui les enseignera.
- * Chaque sort peut poser io.code pour un code de retour non nul sans erreur (diff, jq -e, find...).
+ * Chaque sort pose io.code pour un code de retour non nul sans erreur (diff 1, jq -e, patch, find, xargs 123...).
+ * Les messages qui imitent le vrai outil restent tels quels dans un tuyau ; à l'écran, une explication en gris
+ * les suit (astuce).
+ *
+ * --- Les événements (GameEvents) pour les quêtes ---
+ *   jq          { filtre, fichier, fichiers, options, nombre, sortie, code, room }
+ *   xargs       { cmd, commande, lancements: [argv...], sudo, room }        (cmd : la commande lancée, sans sudo)
+ *   find        { count, output, suid, exec, supprime, room }                (le même type que l'ancien find)
+ *   findExec    { cmd, commandes: [argv...], sudo, room }                    (find a lancé au moins une commande)
+ *   touchExistant { item, room }                                             (touch sur un objet qui existait)
+ *   paste, column, tac, join, comm, split   (fichiers, sortie...)
+ *   diff        { a, b, different, unifie, room }                            (a, b : les objets, null pour « - »)
+ *   patch       { ok, item, room, inverse, dejaApplique, echecs, morceaux, essai }
+ *   rsync       { src, dst, sources, destination, liste, delete, dryRun, room }
+ *   at          { tache: { n, quand, commande, user, dossier, hote }, quand, commande, room }
+ *   atq         { nombre }      atrm { tache }      atExecutee { tache }     (une tâche dont l'heure est passée)
+ *   crontabModifiee { user, action: "e" | "install", avant, apres }  et  crontab { user, action } quand une tâche a disparu
+ *   timer       { action: "list-timers" | "status" | "start" | "stop" | "enable" | "disable" | "restart", nom, hote, now }
+ *   date        { relative }    (date -d)
+ *   et les événements habituels quand un objet change : write, cp, mkdir, rm, rmdir (rsync, patch).
+ *
+ * --- Ce qu'un futur chapitre peut appeler ---
+ *   declarerTimer(hote, nom, { OnCalendar, Unit, Description, Documentation, dernier, prochain, actif, enabled })
+ *   timersDe(hote), etatTimer(hote, timer), calendrierSystemd("Mon..Fri *-*-* 07:30")(date, 1 | -1)
+ *   jqAppliquer(filtre, texteJson, variables) : { sorties: [JSON compact], erreur }
+ *   differencesGnu(lignesA, lignesB, contexte), lireCorrectif(texte), appliquerMorceaux(lignes, morceaux, {})
+ *   lireMoment("now + 5 minutes", pourAt), motifVersRegExp("*.log"), Shell.lancerSousCommande(argv, io, nom)
+ *   etatArcanes() : state.arcanes (tâches de at, état des timers), sauvegardé avec la partie.
  */
 
 /* ================================================================== */
@@ -2407,9 +2438,52 @@ Shell.sorts.jq = function(args, io){
 	if (o.e && code === 0) code = !aSorti ? 4 : (jqVrai(dernier) ? 0 : 1);
 	else if (code === 5 && !enErreur && !arrete && !erreurLecture) code = 0;
 	if (code) io.code = code;
-	GameEvents.fire({ type: "jq", filtre: filtre, nombre: sorties.length, sortie: sorties.map(sansAnsi).join("\n"), fichiers: fichiers, room: current_room });
+	GameEvents.fire({ type: "jq", filtre: filtre, fichier: fichiers.length ? fichiers[0] : null, fichiers: fichiers, options: o,
+		nombre: sorties.length, sortie: sorties.map(sansAnsi).join("\n"), code: code, room: current_room });
 	return sorties.join(o.j ? "" : "\n");
 };
+
+/*
+ * Pour les quêtes : applique un filtre jq à un texte JSON sans rien afficher (aucun événement non plus).
+ * variables : { nom: valeur } comme --arg. Renvoie { sorties: [textes JSON compacts], erreur: message ou null }.
+ * Exemple : jqAppliquer(".[] | .nom", objet.getText()).sorties
+ */
+function jqAppliquer(filtre, texte, variables){
+	variables = variables || {};
+	var res = { sorties: [], erreur: null }, arbre;
+	try {
+		arbre = jqCompiler(filtre, variables, { tty: false });
+	} catch (e){
+		if (e instanceof ShellError){ res.erreur = e.message; return res; }
+		throw e;
+	}
+	var flux = jqLireFlux(contenuExact(String(texte), false));
+	if (flux.erreur) res.erreur = "jq: parse error: " + flux.erreur;
+	var base = jqBase(), env = { v: Object.create(base.env.v), f: base.env.f };
+	env.v.ENV = jqEnvironnement();
+	Object.keys(variables).forEach(function(k){ env.v[k] = variables[k]; });
+	var precedent = jqCtx;
+	jqCtx = { pas: 0, entrees: flux.valeurs, pos: 0, io: { err: function(){} }, courante: null };
+	try {
+		while (jqCtx.pos < jqCtx.entrees.length){
+			var entree = jqCtx.entrees[jqCtx.pos++];
+			jqCtx.courante = entree;
+			jqEv(arbre, entree.v, env, function(v){
+				if (res.sorties.length >= JQ_SORTIES_MAX) throw new JqArret("trop de résultats");
+				res.sorties.push(jqCompact(v));
+			});
+		}
+	} catch (e){
+		if (e instanceof JqTraversee) e = e.erreur;
+		if (e instanceof JqErreur) res.erreur = typeof e.valeur === "string" ? e.valeur : jqCompact(e.valeur);
+		else if (e instanceof JqArret || e instanceof RangeError) res.erreur = e.message || "arrêt";
+		else if (e && e.jqHalte) res.erreur = e.message || "halt";
+		else throw e;
+	} finally {
+		jqCtx = precedent;
+	}
+	return res;
+}
 
 /* ================================================================== */
 /* xargs : transformer un flot de lignes en arguments                  */
@@ -2885,6 +2959,7 @@ Shell.sorts.paste = function(args, io){
 			lignes.forEach(function(l, k){ ligne += (k ? sep(k - 1) : "") + l; });
 			sortie.push(ligne);
 		});
+		GameEvents.fire({ type: "paste", fichiers: fichiers, serie: true, sortie: sortie.join("\n"), room: current_room });
 		return sortie.join("\n");
 	}
 	var positions = colonnes.map(function(){ return 0; });
@@ -2901,6 +2976,7 @@ Shell.sorts.paste = function(args, io){
 		for (var m = 1; m < morceaux.length; m++) ligne += sep(m - 1) + morceaux[m];
 		sortie.push(ligne);
 	}
+	GameEvents.fire({ type: "paste", fichiers: fichiers, serie: false, sortie: sortie.join("\n"), room: current_room });
 	return sortie.join("\n");
 };
 
@@ -3058,6 +3134,7 @@ Shell.sorts.column = function(args, io){
 		throw new ShellError("column : quel texte mettre en colonnes ? Utilisation : column -t OBJET, ou commande | column -t");
 	}
 	var lignes = lignesDe(texte).filter(function(l){ return l.trim() !== ""; });
+	GameEvents.fire({ type: "column", tableau: tableau, separateur: seps, room: current_room });
 	if (tableau){
 		var lignesChamps = lignes.map(function(l){
 			if (seps === null) return l.trim().split(/\s+/);
@@ -3128,7 +3205,9 @@ Shell.sorts.tac = function(args, io){
 		if (io.stdin === null) throw new ShellError("tac : quel objet lire à l'envers ? Utilisation : tac OBJET, ou commande | tac");
 		fichiers = ["-"];
 	}
-	return fichiers.map(function(f){ return lignesDe(texteSource(f, io, "tac")).reverse().join("\n"); }).filter(function(t){ return t !== ""; }).join("\n");
+	var sortie = fichiers.map(function(f){ return lignesDe(texteSource(f, io, "tac")).reverse().join("\n"); }).filter(function(t){ return t !== ""; }).join("\n");
+	GameEvents.fire({ type: "tac", fichiers: fichiers, sortie: sortie, room: current_room });
+	return sortie;
 };
 
 Shell.sorts.shuf = function(args, io){
@@ -3478,6 +3557,8 @@ Shell.sorts.diff = function(args, io){
 			if (io.stdin === null) throw new ShellError("diff : « - » désigne l'entrée standard, mais rien n'arrive par un tuyau.");
 			return { item: null, texte: io.stdin, sansFin: !!io.stdinSansFin };
 		}
+		// /dev/null : un texte vide (diff -u /dev/null nouveau fabrique le correctif qui crée un objet).
+		if (nom === "/dev/null") return { item: null, texte: "", sansFin: false };
 		var t = Shell.objetLisible(nom, io, "diff");
 		return { item: t.item, texte: t.item.getText(), sansFin: !!t.item.sansFinDeLigne };
 	};
@@ -4637,107 +4718,193 @@ Shell.sorts.date = function(args, io){
 /* ================================================================== */
 
 MANUEL["jq"] = page("lire, filtrer et transformer du JSON", "le couteau suisse du JSON",
-	"jq lit du JSON (un fichier, ou ce qui arrive par un tuyau) et lui applique un FILTRE.\nLe filtre s'écrit toujours entre apostrophes, pour que le terminal n'y touche pas.\n\n" +
-	"  jq . f.json                     le JSON, joliment indenté\n  jq '.nom' f.json                un champ\n  jq '.adresse.ville' f.json      un champ dans un champ\n" +
-	"  jq '.[0]' f.json                le premier élément d'un tableau (.[-1] : le dernier)\n  jq '.[]' f.json                 chaque élément, un par ligne\n" +
-	"  jq '.[] | .nom' f.json          le tuyau | passe chaque résultat au filtre suivant\n  jq '.[] | select(.age > 18)'    ne garder que ce qui répond à une condition\n" +
-	"  jq 'map(.prix) | add'           transformer chaque élément, puis additionner\n  jq '{nom, ville: .adresse.ville}'   construire un nouvel objet\n" +
-	"  jq 'keys', 'length', 'sort_by(.age)', 'group_by(.classe)', 'unique', 'to_entries'\n  jq '.age += 1', 'del(.mdp)'    modifier une copie (le fichier n'est pas touché)\n\n" +
-	"Options :\n  -r   les chaînes sans guillemets (pour les réutiliser dans un tuyau)\n  -c   une ligne par résultat (compact)\n  -n   ne rien lire : jq -n '1 + 2'\n" +
-	"  -s   lire toutes les valeurs dans un seul tableau\n  -e   le code de retour dit si le dernier résultat est vrai\n  --arg NOM VALEUR   une variable $NOM dans le filtre\n\n" +
-	"Exemples : jq -r '.[] | [.nom, .age] | @csv' eleves.json   (en CSV)\n           jq -r '.[] | \"\\(.nom) a \\(.age) ans\"' eleves.json\n" +
-	"           curl -s http://api/eleves | jq '.[] | select(.actif) | .email'");
+	"Le JSON est le format des API, des journaux modernes et des fichiers de configuration :\n" +
+	"des objets {\"clé\": valeur}, des tableaux [1, 2, 3], des chaînes, des nombres, true, false, null.\n" +
+	"jq lit du JSON (un objet, ou ce qui arrive par un tuyau) et lui applique un FILTRE.\n" +
+	"Le filtre s'écrit toujours entre apostrophes, pour que le terminal n'y touche pas.\n\n" +
+	"Se déplacer dans le JSON :\n" +
+	"  jq . f.json                     le JSON, joliment indenté (et vérifié : une faute, et jq la signale)\n" +
+	"  jq '.nom' f.json                un champ ;  .adresse.ville : un champ dans un champ\n" +
+	"  jq '.[0]' f.json                le premier élément d'un tableau (.[-1] : le dernier, .[1:3] : une tranche)\n" +
+	"  jq '.[]' f.json                 chaque élément, un par ligne\n" +
+	"  jq '.[] | .nom' f.json          le tuyau | passe chaque résultat au filtre suivant (.[].nom pareil)\n\n" +
+	"Choisir, transformer, compter :\n" +
+	"  jq '.[] | select(.age > 18)'            ne garder que ce qui répond à une condition (and, or, not, ==, !=)\n" +
+	"  jq 'map(.prix) | add'                    transformer chaque élément, puis additionner\n" +
+	"  jq '{nom, ville: .adresse.ville}'        construire un nouvel objet ;  [ ... ] : un nouveau tableau\n" +
+	"  jq 'length', 'keys', 'sort_by(.age)', 'group_by(.classe)', 'unique', 'min', 'max', 'to_entries'\n" +
+	"  jq '.mail // \"aucun\"'                   une valeur par défaut quand le champ manque (null)\n" +
+	"  jq 'if .actif then .nom else empty end'  un choix ;  .age += 1, del(.mdp) : modifier une copie\n" +
+	"  jq -r '.[] | \"\\(.nom) a \\(.age) ans\"'   une phrase avec des valeurs dedans\n" +
+	"  jq -r '.[] | [.nom, .age] | @csv'        une ligne de CSV (@tsv : séparée par des tabulations)\n\n" +
+	"Options :\n" +
+	"  -r   les chaînes sans guillemets (pour les passer à d'autres sorts)\n" +
+	"  -c   un résultat par ligne, compact      -S   les clés des objets triées\n" +
+	"  -n   ne rien lire : jq -n '1 + 2'        -s   tout lire dans un seul tableau (un journal ligne par ligne)\n" +
+	"  -e   le code de retour dit si le dernier résultat est vrai\n" +
+	"  --arg NOM VALEUR    une variable $NOM (une chaîne) ;  --argjson NOM 42 : une valeur JSON\n\n" +
+	"Exemples :\n" +
+	"  jq -r '.[] | select(.niveau == \"warn\") | .ip' journal.json | sort | uniq -c\n" +
+	"  jq --arg qui Ada '.[] | select(.nom == $qui)' eleves.json\n" +
+	"  curl -s http://api/eleves | jq '.[] | select(.actif) | .email'\n\n" +
+	"Une erreur (« Cannot index string with string \"nom\" ») dit ce que jq avait sous la main : ici une chaîne,\n" +
+	"là où le filtre attendait un objet. Remonte le tuyau d'un cran pour voir ce qui arrive vraiment.");
+
 MANUEL["xargs"] = page("transformer des lignes en arguments pour un autre sort", "eXtended ARGumentS",
-	"Beaucoup de sorts (rm, cat, chmod...) ne lisent pas leur entrée standard : ils veulent des arguments.\nxargs fait le pont : il lit des mots sur le tuyau et les donne en arguments à la commande.\n\n" +
-	"  find . -name \"*.tmp\" | xargs rm         efface tout ce que find a trouvé\n  cat liste.txt | xargs -n 1 echo         une commande par mot (-n 1)\n" +
-	"  ls | xargs -I {} cp {} sauvegarde/      {} est remplacé par chaque ligne\n  ... | xargs -t rm                       -t affiche chaque commande avant de la lancer\n" +
-	"  ... | xargs -r rm                       -r : ne rien lancer si rien n'arrive\n  ... | sudo xargs rm                     avec les pleins pouvoirs\n" +
-	"  find . -print0 | xargs -0 rm            noms séparés par des caractères nuls (espaces sans danger)\n  ... | xargs -d '\\n' rm                  un nom par ligne, espaces compris\n\n" +
-	"Sans commande, xargs lance echo : cat f | xargs met tout sur une ligne.\nPrudence : vérifie d'abord la liste (sans xargs, ou avec -t) avant un rm.");
-MANUEL["find"] = page("fouiller un lieu et tout ce qu'il contient", "trouver",
-	"Utilise « find » pour parcourir un lieu, et tous les lieux qu'il contient,\nà la recherche de quelque chose. Les cachettes ne lui échappent pas.\n\n" +
-	"  find .                      tout ce qu'il y a à partir d'ici\n  find LIEU -name NOM         ce qui porte exactement ce nom (-iname : sans tenir compte des majuscules)\n" +
-	"  find . -name \"flag*\"        ce dont le nom commence par flag\n  find . -type d              seulement les lieux (f : les objets, l : les raccourcis)\n" +
-	"  find . -user root           ce qui appartient à root ;  -perm -4000 : les objets SUID\n  find . -mtime -1            modifié il y a moins d'un jour (-mmin -10 : moins de 10 minutes)\n" +
-	"  find . -size +1k            plus de 1 Kio (c : octets, k, M ; -size -100c : moins de 100 octets)\n  find . -empty               les objets vides et les lieux vides\n" +
-	"  find . -maxdepth 1          sans descendre plus loin qu'un niveau\n\n" +
-	"Combiner les critères :\n  find . -name \"*.log\" -o -name \"*.tmp\"      l'un OU l'autre (-o)\n  find . ! -user laurent                      ce qui n'est PAS à laurent (! ou -not)\n" +
+	"Beaucoup de sorts (rm, cat, chmod, touch...) ne lisent pas leur entrée standard : ils veulent\n" +
+	"des arguments. xargs fait le pont : il lit des mots sur le tuyau et les donne à la commande.\n\n" +
+	"  find . -name \"*.tmp\" | xargs rm         efface tout ce que find a trouvé\n" +
+	"  cat liste.txt | xargs -n 1 echo         une commande par mot (-n 2 : deux mots à la fois)\n" +
+	"  ls | xargs -I {} cp {} {}.bak           {} est remplacé par chaque ligne, une commande par ligne\n" +
+	"  ... | xargs -t rm                       -t écrit chaque commande avant de la lancer\n" +
+	"  ... | xargs -r rm                       -r : ne rien lancer si rien n'arrive\n" +
+	"  ... | xargs -L 1 echo                   une commande par ligne d'entrée\n" +
+	"  ... | xargs -d , -n 1 echo              les éléments sont séparés par une virgule\n" +
+	"  find . -print0 | xargs -0 rm            noms séparés par des caractères nuls (espaces sans danger)\n\n" +
+	"Avec les pleins pouvoirs : ... | sudo xargs rm, ou ... | xargs sudo rm (si sudo connaît déjà ton mot de passe).\n" +
+	"Sans commande, xargs lance echo : cat f | xargs met tout sur une ligne.\n" +
+	"Les apostrophes et les guillemets comptent pour xargs : un nom comme « l'épée » le fait trébucher.\n" +
+	"Prudence : regarde d'abord la liste (sans xargs, ou avec -t) avant un rm.");
+
+MANUEL["find"].page += "\n\nPour aller plus loin :\n" +
+	"  find . -iname \"*.LOG\"       sans tenir compte des majuscules ;  -path \"*/journaux/*\" : sur tout le chemin\n" +
+	"  find . -type l              les raccourcis ;  -user root : ce qui appartient à root ;  -perm -4000 : les objets SUID\n" +
+	"  find . -mtime -1            modifié il y a moins d'un jour ;  -mmin -10 : moins de 10 minutes ;  -newer OBJET\n" +
+	"  find . -size +1k            plus de 1 Kio (c : octets, k, M) ;  -size -100c : moins de 100 octets\n" +
+	"  find . -empty               les objets vides et les lieux vides\n" +
+	"  find . -maxdepth 1          sans descendre plus bas ;  -mindepth 2 : à partir du deuxième niveau\n\n" +
+	"Combiner les critères (ils s'ajoutent, comme un « et ») :\n" +
+	"  find . -name \"*.log\" -o -name \"*.tmp\"      l'un OU l'autre (-o)\n" +
+	"  find . ! -user laurent                      ce qui n'est PAS à laurent (! ou -not)\n" +
 	"  find . \\( -name a -o -name b \\) -type f     des parenthèses, protégées par \\\n\n" +
-	"Agir sur ce qu'on trouve :\n  find . -name \"*.tmp\" -exec rm {} \\;     lance rm une fois par objet ({} = le chemin trouvé)\n" +
-	"  find . -name \"*.log\" -exec cat {} +     une seule fois, avec tous les chemins\n  find . -name \"*.tmp\" -delete            efface directement\n\n" +
-	"Mets des guillemets autour d'un nom avec une étoile, pour que ce soit find\nqui l'interprète et non le terminal. Avant -delete, essaie toujours avec -print.");
+	"Agir sur ce qu'on trouve :\n" +
+	"  find . -name \"*.tmp\" -exec rm {} \\;     lance rm une fois par objet ({} : le chemin trouvé)\n" +
+	"  find . -name \"*.log\" -exec cat {} +     une seule fois, avec tous les chemins\n" +
+	"  find . -name \"*.tmp\" -delete            efface directement (essaie toujours d'abord sans -delete)\n" +
+	"  find . -name \"*.tmp\" -print             afficher (c'est ce que find fait quand on ne lui demande rien)";
+
 MANUEL["paste"] = page("coller des textes côte à côte", "coller",
 	"  paste noms.txt notes.txt         ligne 1 avec ligne 1, ligne 2 avec ligne 2... séparées par une tabulation\n" +
-	"  paste -d , noms.txt notes.txt    séparées par une virgule (-d ',;' : virgule, puis point-virgule...)\n  paste -s noms.txt                toutes les lignes d'un objet sur une seule ligne\n" +
-	"  paste -sd + nombres.txt          1+2+3... (à donner à une calculette)\n  cat liste | paste - -            deux lignes du tuyau par ligne (- = l'entrée standard)\n\n" +
+	"  paste -d , noms.txt notes.txt    séparées par une virgule (-d ',;' : virgule, puis point-virgule, puis...)\n" +
+	"  paste -s noms.txt                toutes les lignes d'un objet sur une seule ligne\n" +
+	"  paste -sd + nombres.txt          1+2+3... (de quoi faire une addition)\n" +
+	"  cat liste | paste - -            deux lignes du tuyau par ligne (- : l'entrée standard)\n\n" +
 	"C'est l'inverse de cut : cut découpe des colonnes, paste les recolle.");
+
 MANUEL["join"] = page("réunir deux listes triées sur un champ commun", "joindre",
-	"join fait ce qu'une base de données appelle une jointure : il réunit les lignes de deux objets\nqui ont la même valeur dans un champ (le premier, par défaut).\n\n" +
-	"  join eleves.txt notes.txt             « 12 Ada » et « 12 18/20 » donnent « 12 Ada 18/20 »\n  join -t : -1 3 -2 1 a.txt b.txt       séparateur « : », 3e champ du premier, 1er du second\n" +
-	"  join -a 1 a.txt b.txt                 garder aussi les lignes du premier sans partenaire\n  join -v 1 a.txt b.txt                 SEULEMENT celles-là (qui n'a pas de note ?)\n" +
-	"  join -e VIDE -o 1.1,1.2,2.2 a b       choisir les colonnes, et que mettre quand il en manque une\n\n" +
-	"Les deux objets doivent être TRIÉS sur ce champ : sort -k 1 d'abord. Sinon join le signale.");
+	"join fait ce qu'une base de données appelle une jointure : il réunit les lignes de deux objets\n" +
+	"qui ont la même valeur dans un champ (le premier, par défaut).\n\n" +
+	"  join eleves.txt notes.txt             « 12 Ada » et « 12 18 » donnent « 12 Ada 18 »\n" +
+	"  join -t : -1 3 -2 1 a.txt b.txt       séparateur « : », 3e champ du premier, 1er champ du second\n" +
+	"  join -a 1 a.txt b.txt                 garder aussi les lignes du premier sans partenaire\n" +
+	"  join -v 1 a.txt b.txt                 SEULEMENT celles-là (qui n'a pas de note ?)\n" +
+	"  join -e VIDE -o 0,1.2,2.2 a b         choisir les colonnes, et que mettre quand il en manque une\n\n" +
+	"Les deux objets doivent être TRIÉS sur ce champ (sort d'abord). Sinon join le signale.");
+
 MANUEL["comm"] = page("comparer deux listes triées", "COMMon (ce qui est commun)",
-	"comm range les lignes de deux listes triées en trois colonnes :\n  1 : seulement dans la première   2 : seulement dans la seconde   3 : dans les deux\n\n" +
-	"  comm avant.txt apres.txt        les trois colonnes\n  comm -12 a b                    seulement ce qui est commun (on masque 1 et 2)\n" +
-	"  comm -23 a b                    seulement ce qui n'est que dans a (ce qui a disparu)\n  comm -13 a b                    seulement ce qui n'est que dans b (ce qui est apparu)\n\n" +
-	"Les deux listes doivent être triées : sort a > a.tri d'abord.\nExemple : comm -13 comptes-hier.tri comptes.tri montre les comptes apparus depuis hier.");
+	"comm range les lignes de deux listes triées en trois colonnes :\n" +
+	"  1 : seulement dans la première   2 : seulement dans la seconde   3 : dans les deux\n\n" +
+	"  comm avant.txt apres.txt        les trois colonnes\n" +
+	"  comm -12 a b                    seulement ce qui est commun (on masque 1 et 2)\n" +
+	"  comm -23 a b                    seulement ce qui n'est que dans a (ce qui a disparu)\n" +
+	"  comm -13 a b                    seulement ce qui n'est que dans b (ce qui est apparu)\n\n" +
+	"Les deux listes doivent être triées : sort a > a.tri d'abord.\n" +
+	"Exemple : comm -13 comptes-hier.txt comptes.txt montre les comptes apparus depuis hier.");
+
 MANUEL["column"] = page("aligner un texte en colonnes", "colonnes",
-	"  column -t fichier              aligne les mots en tableau (séparés par des blancs)\n  column -t -s : /etc/passwd     des colonnes séparées par « : »\n" +
-	"  column -t -s , -o \" | \" f.csv  avec un séparateur de sortie\n  ls | column                    une liste en plusieurs colonnes\n  ls | column -x                 rangée par rangée plutôt que colonne par colonne\n\n" +
+	"  column -t fichier              aligne les mots en tableau (séparés par des blancs)\n" +
+	"  column -t -s : /etc/passwd     des colonnes séparées par « : »\n" +
+	"  column -t -s , -o \" | \" f.csv  avec un séparateur entre les colonnes affichées\n" +
+	"  ls | column                    une liste en plusieurs colonnes\n" +
+	"  ls | column -x                 rangée par rangée plutôt que colonne par colonne (-c 40 : sur 40 caractères)\n\n" +
 	"Indispensable pour relire un CSV ou la sortie d'un script sans se casser les yeux.");
+
 MANUEL["tac"] = page("afficher un texte à l'envers, de la dernière ligne à la première", "cat à l'envers",
-	"  tac journal.log            la dernière ligne d'abord\n  tac f | head -5            les 5 dernières lignes, de la plus récente à la plus ancienne\n\ntac est cat écrit à l'envers, et fait la même chose... à l'envers.");
+	"  tac journal.log            la dernière ligne d'abord\n" +
+	"  tac f | head -5            les 5 dernières lignes, de la plus récente à la plus ancienne\n\n" +
+	"tac, c'est cat écrit à l'envers, et il fait la même chose... à l'envers.");
+
 MANUEL["shuf"] = page("mélanger des lignes au hasard", "SHUFfle (battre les cartes)",
 	"  shuf liste.txt             les lignes dans un ordre au hasard\n  shuf -n 1 liste.txt        une seule ligne tirée au sort\n" +
 	"  shuf -e pile face          mélanger les arguments\n  shuf -i 1-6 -n 1           un nombre entre 1 et 6 (un dé)\n  shuf -r -n 3 -e a b        trois tirages avec remise");
+
 MANUEL["split"] = page("découper un gros fichier en morceaux", "découper",
 	"  split -l 100 gros.log            des morceaux de 100 lignes : xaa, xab, xac...\n  split -l 100 gros.log partie_    nommés partie_aa, partie_ab...\n" +
 	"  split -b 1k archive              des morceaux de 1 Kio\n  split -n 3 f                     en 3 morceaux\n  split -d -l 10 f                 suffixes en chiffres : x00, x01...\n\n" +
 	"Pour recoller : cat xa* > copie (le joker * range les noms dans l'ordre).");
-MANUEL["diff"] = page("comparer deux textes ligne à ligne", "DIFFérences",
-	"Utilise « diff » pour savoir en quoi deux textes diffèrent.\n\n  diff OBJET1 OBJET2\n  diff -q OBJET1 OBJET2     dit seulement s'ils diffèrent\n" +
-	"  diff -u OBJET1 OBJET2     le format unifié, celui des correctifs (patch, git)\n\nLire la réponse normale :\n" +
-	"  17c17      la ligne 17 a changé (c : changed)\n  < ...      ce qu'elle disait dans le premier objet\n  > ...      ce qu'elle dit dans le second\n" +
-	"  5a6        une ligne ajoutée (a : added) ; 8d7 : une ligne supprimée (d : deleted)\n\nLire le format unifié (-u) :\n" +
-	"  --- ancien / +++ nouveau          les deux objets\n  @@ -12,7 +12,8 @@                 7 lignes à partir de la 12e avant, 8 après\n" +
-	"  -ligne retirée   +ligne ajoutée   (et 3 lignes de contexte autour, sans signe)\n\n" +
-	"Si diff ne répond rien, les deux textes sont identiques (code de retour 0 ; 1 s'ils diffèrent).\nUn correctif se fabrique ainsi : diff -u ancien nouveau > correctif.diff");
+
+MANUEL["diff"].page += "\n\nLe format unifié, celui des correctifs (patch, git) :\n" +
+	"  diff -u ancien nouveau           --- l'ancien, +++ le nouveau, puis des morceaux\n" +
+	"  @@ -12,7 +12,8 @@                7 lignes à partir de la 12e avant, 8 lignes après\n" +
+	"  -ligne retirée  +ligne ajoutée   et 3 lignes de contexte autour, sans signe (-U 1 : une seule)\n\n" +
+	"Un correctif se fabrique ainsi : diff -u ancien nouveau > correctif.diff, puis se donne à patch.\n" +
+	"Le code de retour vaut 0 si les textes sont identiques, 1 s'ils diffèrent.";
+
 MANUEL["patch"] = page("appliquer (ou annuler) un correctif", "le rapiéçage",
 	"patch lit un diff unifié (fabriqué par diff -u) et applique les changements à l'objet.\n\n" +
-	"  patch OBJET correctif.diff      applique le correctif à OBJET\n  patch -p0 < correctif.diff      l'objet est nommé dans le correctif (lignes --- et +++)\n" +
-	"  patch -p1 < correctif.diff      en retirant le premier dossier des noms (a/f.txt devient f.txt)\n  cat c.diff | patch OBJET        par un tuyau\n" +
-	"  patch -R OBJET correctif.diff   annule un correctif déjà appliqué\n  patch --dry-run OBJET c.diff    vérifie sans rien modifier\n\n" +
-	"« Hunk #1 FAILED » : l'objet a trop changé, ce morceau ne s'applique pas ; il est mis de côté dans OBJET.rej.\n" +
-	"« Reversed (or previously applied) patch detected! » : le correctif est déjà appliqué.");
+	"  patch OBJET correctif.diff      applique le correctif à OBJET (patch -i correctif.diff OBJET pareil)\n" +
+	"  cat c.diff | patch OBJET        le correctif par un tuyau ;  patch OBJET < c.diff aussi\n" +
+	"  patch -p0 < correctif.diff      l'objet est celui que nomment les lignes --- et +++\n" +
+	"  patch -p1 < correctif.diff      en retirant le premier dossier des noms (a/f.txt devient f.txt)\n" +
+	"  patch -R OBJET correctif.diff   annule un correctif déjà appliqué\n" +
+	"  patch --dry-run OBJET c.diff    vérifie, sans rien modifier\n\n" +
+	"Lire la réponse :\n" +
+	"  patching file OBJET                          c'est fait\n" +
+	"  Hunk #2 succeeded at 40 (offset 3 lines).    le morceau 2 a été trouvé 3 lignes plus bas que prévu\n" +
+	"  Hunk #1 succeeded at 1 with fuzz 1.          trouvé en ignorant une ligne de contexte qui avait changé\n" +
+	"  Hunk #1 FAILED at 12.                        l'objet a trop changé : le morceau est mis de côté dans OBJET.rej\n" +
+	"  Reversed (or previously applied) patch detected!   le correctif est déjà appliqué (patch -R pour l'annuler)\n\n" +
+	"Quand un morceau a bougé ou échoué, patch garde l'original dans OBJET.orig.");
+
 MANUEL["rsync"] = page("synchroniser deux lieux (sauvegardes, déploiements)", "Remote SYNC",
 	"rsync copie ce qui manque ou a changé d'un lieu vers un autre, et seulement cela.\n\n" +
 	"  rsync -av src/ dst          copie le CONTENU de src dans dst (-a : tout, droits et dates compris ; -v : raconte)\n" +
-	"  rsync -av src dst           copie le lieu src lui-même : on obtient dst/src\n  rsync -avn src/ dst         essai à blanc (-n) : montre sans rien copier\n" +
-	"  rsync -av --delete src/ dst efface aussi dans dst ce qui n'est plus dans src (un miroir exact)\n  rsync -av --exclude '*.tmp' src/ dst   sans les objets .tmp\n\n" +
-	"La barre finale de la source change tout : avec, son contenu ; sans, le lieu lui-même.\nAvant un --delete, fais toujours un essai avec -n.");
+	"  rsync -av src dst           copie le lieu src lui-même : on obtient dst/src\n" +
+	"  rsync -avn src/ dst         essai à blanc (-n, --dry-run) : montre ce qui serait fait, sans rien faire\n" +
+	"  rsync -av --delete src/ dst efface aussi dans dst ce qui n'est plus dans src (un miroir exact)\n" +
+	"  rsync -av --exclude '*.tmp' src/ dst      sans les objets .tmp (--exclude 'cache/' : sans ce lieu)\n" +
+	"  rsync -r src/ dst           récursif, sans garder les droits ni les dates\n\n" +
+	"La barre finale de la source change tout : avec, son contenu ; sans, le lieu lui-même.\n" +
+	"Avant un --delete, fais toujours un essai avec -n : un miroir copie aussi les erreurs.");
+
 MANUEL["at"] = page("lancer une commande une fois, plus tard", "à (telle heure)",
-	"at lit la commande sur son entrée standard, et la planifie.\n\n" +
-	"  echo \"tar -czf sauvegarde.tgz notes\" | at 23:00     ce soir à 23 h\n  echo \"commande\" | at now + 10 minutes\n" +
-	"  at -f script.sh tomorrow                            demain, même heure\n  at noon, at midnight, at teatime (16 h), at 14:00 2026-12-24\n" +
-	"  atq                    la file d'attente (atq = at -l)\n  atrm 3                 retire la tâche 3\n  at -c 3                ce que fera la tâche 3\n\n" +
-	"Pour une commande qui revient tous les jours, ce n'est pas at mais cron (crontab -e)\nou un timer systemd (systemctl list-timers).");
-MANUEL["atq"] = page("voir les tâches planifiées avec at", "AT Queue", "  atq                    numéro, date et propriétaire de chaque tâche en attente\n  sudo atq               celles de tout le monde");
-MANUEL["atrm"] = page("retirer une tâche planifiée avec at", "AT ReMove", "  atrm 3                 retire la tâche 3 (son numéro est donné par atq)\n  atrm 3 4               plusieurs à la fois");
-MANUEL["crontab"] = page("voir, écrire ou retirer les tâches planifiées", "la table de cron",
-	"Sous Linux, le démon cron relance des commandes à heures fixes. Chaque\nutilisateur a sa liste de tâches, sa crontab.\n\n" +
-	"  crontab -l                    affiche ta crontab\n  crontab -e                    la modifie dans l'éditeur\n  crontab FICHIER               l'installe depuis un fichier\n" +
-	"  echo \"*/5 * * * * cmd\" | crontab -    l'installe depuis un tuyau (attention : remplace tout)\n  crontab -r                    la retire entièrement\n" +
-	"  sudo crontab -u NOM -l        affiche celle d'un autre (-e, -r aussi)\n\nLire une ligne :\n  30 7 * * 1   commande\n" +
-	"  minute, heure, jour du mois, mois, jour de la semaine. Ici : tous les\n  lundis à 7 h 30. Une étoile veut dire « à chaque fois ».\n" +
+	"at lit la commande sur son entrée standard, et la planifie pour plus tard, une seule fois.\n\n" +
+	"  echo \"tar -czf sauvegarde.tgz notes\" | at 23:00     ce soir à 23 h (demain si l'heure est passée)\n" +
+	"  echo \"commande\" | at now + 10 minutes              dans 10 minutes (hours, days, weeks aussi)\n" +
+	"  at -f script.sh tomorrow                            demain, même heure\n" +
+	"  at noon, at midnight, at teatime (16 h), at 9am, at 14:00 2026-12-24\n\n" +
+	"  atq                    la file d'attente (atq, c'est at -l)\n" +
+	"  atrm 3                 retire la tâche 3 (at -r 3 pareil)\n" +
+	"  at -c 3                ce que fera la tâche 3\n\n" +
+	"Pour une commande qui revient tous les jours, ce n'est pas at qu'il faut, mais cron (crontab -e)\n" +
+	"ou un timer de systemd (systemctl list-timers).");
+MANUEL["atq"] = page("voir les tâches planifiées avec at", "AT Queue",
+	"  atq                    numéro, date et propriétaire de chaque tâche en attente\n  sudo atq               celles de tout le monde\n\n" +
+	"Une tâche dont l'heure est passée a été lancée : elle quitte la file.");
+MANUEL["atrm"] = page("retirer une tâche planifiée avec at", "AT ReMove",
+	"  atrm 3                 retire la tâche 3 (son numéro est donné par atq)\n  atrm 3 4               plusieurs à la fois\n" +
+	"  sudo atrm 5            celle d'un autre");
+
+MANUEL["crontab"].page = MANUEL["crontab"].page.replace("\n\nUn processus qui renaît", "\n\nÉcrire sa crontab :\n" +
+	"  crontab -e                    l'ouvre dans l'éditeur ; elle est installée quand tu le quittes\n" +
+	"  crontab FICHIER               installe celle écrite dans un objet (elle remplace l'ancienne)\n" +
+	"  echo \"*/5 * * * * cmd\" | crontab -    depuis un tuyau (attention : remplace tout)\n" +
 	"  */5 : toutes les 5 ;  1-5 : de 1 à 5 (du lundi au vendredi) ;  0,30 : à 0 et à 30 ;  @daily, @hourly, @reboot\n\n" +
-	"Une faute de syntaxe ? crontab refuse d'installer et dit laquelle (bad minute, bad hour...).\nDans ce monde, les commentaires ne sont pas gardés.\n\n" +
-	"Un processus qui renaît sitôt tué ? Cherche qui le relance.");
-MANUEL["systemctl"].page += "\n\nLes timers, l'autre façon de planifier :\n  systemctl list-timers          les prochains déclenchements\n  systemctl status logrotate.timer\n  systemctl cat logrotate.timer  son calendrier (OnCalendar=daily...)\n  sudo systemctl disable --now NOM.timer";
-MANUEL["date"] = page("connaître la date et l'heure", "la date",
-	"Utilise « date » pour afficher la date et l'heure de la machine.\n\n  date\n  date +%H:%M        seulement l'heure et les minutes\n  date +%F           la date au format année-mois-jour\n\n" +
-	"Une autre date que maintenant (-d) :\n  date -d tomorrow           demain ;  date -d yesterday : hier\n  date -d \"3 days ago\"       il y a trois jours\n" +
-	"  date -d \"next friday\" +%F  la date de vendredi prochain\n  date -d \"2026-12-24 18:00\"\n  date -d @0                 le 1er janvier 1970 : le début du temps Unix");
+	"Une faute ? crontab refuse d'installer et dit laquelle (bad minute, bad hour...) : rien n'est perdu.\n" +
+	"Dans ce monde, les commentaires d'une crontab ne sont pas gardés.\n\nUn processus qui renaît");
+
+MANUEL["systemctl"].page += "\n\nLes timers, l'autre façon de planifier (un .timer lance un .service) :\n" +
+	"  systemctl list-timers               les prochains déclenchements (--all : aussi ceux qui sont arrêtés)\n" +
+	"  systemctl status logrotate.timer    son état et son prochain déclenchement\n" +
+	"  systemctl cat logrotate.timer       son calendrier : OnCalendar=daily, *-*-* 02:30, Mon..Fri 07:00...\n" +
+	"  sudo systemctl stop NOM.timer       l'arrêter ;  sudo systemctl disable --now NOM.timer : pour de bon";
+
+MANUEL["date"].page += "\n\nUne autre date que maintenant (-d) :\n" +
+	"  date -d tomorrow              demain ;  date -d yesterday : hier\n" +
+	"  date -d \"3 days ago\"          il y a trois jours ;  date -d \"+2 hours\" : dans deux heures\n" +
+	"  date -d \"next friday\" +%F     la date de vendredi prochain\n" +
+	"  date -d \"2026-12-24 18:00\"    une date précise\n" +
+	"  date -d @0                    le 1er janvier 1970 : le début du temps Unix";
 
 /* Ces sorts existent maintenant : plus besoin de dire qu'ils manquent à ce monde. */
 var SORTS_ARCANES = ["jq", "xargs", "paste", "join", "comm", "column", "tac", "shuf", "split", "patch", "rsync", "at", "atq", "atrm"];

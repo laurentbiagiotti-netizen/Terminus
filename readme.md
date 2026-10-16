@@ -136,6 +136,7 @@ Le code est du JavaScript sans dépendance ni étape de construction.
 | `Web/static/javascript/Awk.js` | un vrai petit `awk` : lexeur, parseur et évaluateur (motifs, BEGIN/END, tableaux, fonctions, printf, print > objet), sans eval |
 | `Web/static/javascript/Reseau.js` | les machines du réseau de l'école, les quêtes et les leçons de vim de la Crypte |
 | `Web/static/javascript/Panne.js` | la panne (chapitre 2) : le bâtiment B, le poste, le routeur, l'intranet, l'état du réseau et qui joint qui, les quêtes, Radia |
+| `Web/static/javascript/SortsArcanes.js` | les sorts avancés du chapitre 4 (pas encore enseignés) : `jq` (un vrai interpréteur de filtres, sans eval), `xargs`, `find` complet (-exec, -delete, -size, -o, !, parenthèses), `paste`, `join`, `comm`, `column`, `tac`, `diff` (l'algorithme de GNU, format unifié), `patch`, `rsync`, `at`, `crontab -e`, les timers de systemd (`declarerTimer`), `date -d`, et les événements que les quêtes du chapitre 4 pourront écouter |
 | `Web/static/javascript/Examen.js` | l'épreuve finale : la Forteresse, ses quarante épreuves et ses personnages, le quiz de Steve, la note, `examen`, `kamikaze` et `verifier` |
 | `Web/static/javascript/CommandesPanne.js` | les sorts de la panne (ip, dhclient, netplan, dig, systemctl, iptables, tcpdump, curl, openssl...), qui suivent l'état du réseau |
 | `Web/static/javascript/Annexe.js` | le second acte de la panne : l'Annexe, son Wi-Fi, sa borne, son switch et son écran, et leurs sorts (rfkill, iw, ipcalc, sysctl, named-checkzone, lldpctl, iftop, nethogs...) |
@@ -161,6 +162,7 @@ Le code est du JavaScript sans dépendance ni étape de construction.
 | `tests/examen.js` | joue l'épreuve finale de bout en bout, puis un kamikaze, et vérifie la note, les badges, le sceau, le code du diplôme, la reprise après un rechargement et celle d'une vieille sauvegarde |
 | `tests/regressions.js` | rejoue chaque bug trouvé lors de l'audit, pour qu'il ne revienne pas |
 | `tests/texte.js` | compare grep, sed, awk, sort, uniq, tr, head, tail, wc, cut, nl, rev, fold aux vrais outils GNU (plus de 400 cas), puis vérifie ce qui est propre au jeu ; `node tests/texte.js --gnu` revérifie les attendus avec GNU grep, sed et gawk s'ils sont installés |
+| `tests/arcanes.js` | compare jq, xargs, find, paste, join, comm, column, tac, diff, patch et rsync aux vrais outils (plus de 700 cas), puis vérifie ce qui est propre au jeu (codes de retour, événements, sudo, âge des objets, at, crontab -e, timers) ; `node tests/arcanes.js --gnu` revérifie les attendus avec les vrais outils s'ils sont installés |
 | `tests/robustesse.js` | envoie des lignes aléatoires à l'interpréteur (20 000 par défaut, `node tests/robustesse.js 6000` pour une passe rapide) et vérifie qu'aucune ne le fait planter |
 
 Lancer les tests après toute modification :
@@ -171,6 +173,7 @@ node tests/solution.js
 node tests/examen.js
 node tests/regressions.js
 node tests/texte.js
+node tests/arcanes.js
 node tests/robustesse.js 6000
 ```
 
