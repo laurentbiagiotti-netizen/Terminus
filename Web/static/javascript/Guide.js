@@ -68,8 +68,14 @@ function montrerEtapeTuto(){
 }
 function suivreTuto(ligne){
 	if (tutoEtape < 0) return;
+	// Un joueur qui va plus vite que le tutoriel (cd ForetOuest/AcademieDesSorts d'un coup) saute les étapes
+	// déjà dépassées ; et une fois l'aventure vraiment lancée (plus de trois quêtes), le tutoriel se retire.
+	for (var j = TUTORIEL.length - 1; j > tutoEtape; j--){
+		if (TUTORIEL[j].fait(ligne.trim(), dernierObjetLu)){ tutoEtape = j; break; }
+	}
+	if (Object.keys(state.quests).length > 3) tutoEtape = TUTORIEL.length - 1;
 	var e = TUTORIEL[tutoEtape];
-	if (!e.fait(ligne.trim(), dernierObjetLu)){
+	if (Object.keys(state.quests).length <= 3 && !e.fait(ligne.trim(), dernierObjetLu)){
 		// Une autre commande : on remet la suggestion, sans gronder.
 		if (!Shell.proposition) term.proposer(e.cmd, "tape : ");
 		return;
@@ -198,7 +204,7 @@ var SCENES = {
 		lignes: ["Le bâtiment B tient. La cafétéria, non.", "Plus de Wi-Fi, un écran noir, une fausse boîte aux lettres.", "Même méthode : du câble jusqu'au web."] },
 	c_crypte: { image: "loc_crypte.gif", titre: "Chapitre 3 · La Crypte", chapitre: 3,
 		lignes: ["Un mage noir s'est glissé dans la Citadelle.", "Ses sorts dorment dans le donjon, sous tes pieds.", "Grace te guide à la radio. La chasse est ouverte."] },
-	d_entree: { image: "loc_library.gif", titre: "Chapitre 4 · L'Académie des Arcanes", chapitre: 4,
+	d_entree: { image: "loc_academie.gif", titre: "Chapitre 4 · L'Académie des Arcanes", chapitre: 4,
 		lignes: ["La Nuée a frappé le serveur d'archives cette nuit.", "Données volées, et une bombe programmée pour minuit.", "Huit maîtres, une horloge qui tourne : mesure, nettoie, restaure, documente."] }
 };
 function sceneDeChapitre(scene){

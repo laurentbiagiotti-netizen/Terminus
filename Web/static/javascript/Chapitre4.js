@@ -533,7 +533,7 @@ var QUETES_CH4 = [
 	{ id: "d_corbeau", titre: "Arrêter le script de la Nuée (le dernier Corbeau)",
 	  indice: "Le dernier « Corbeau » est le service nuee-regen qui redépose ses résidus : arrête-le ET empêche-le de revenir (systemctl, comme au chapitre 3), puis relance ton script pour qu'il ne reste plus un seul *.nuee." },
 	{ id: "d_fin", titre: "Rédiger le retour d'expérience et le remettre à Laurent",
-	  indice: "Écris ~/academie/rex.txt avec cinq rubriques (chronologie, indicateurs, volume exfiltré, données concernées, mesures prises) et au moins un chiffre ou une adresse de la nuit, puis dépose une copie dans la BoiteDeLaurent, au fond de l'Académie." }
+	  indice: "Écris ~/academie/rex.txt avec cinq rubriques (chronologie, indicateurs, volume exfiltré, données concernées, mesures prises) et le volume exact ou une adresse de la Nuée, puis dépose une copie dans la BoiteDeLaurent, au fond de l'Académie." }
 ];
 var QUETES_SECONDAIRES_CH4 = [];   // les 50 secondaires arrivent en phase B
 
@@ -606,7 +606,10 @@ function exportMinimise(){
 }
 function tracesAttendues(){ return lignesPropres(TEXTE_ACCES_LOG).filter(function(l){ return l.indexOf(PLAGE_NUEE) > -1; }); }
 function iocAttendus(){ return IP_NUEE.slice().sort(); }
-function volumeMo(){ return Math.round(VOLUME_TOTAL / 1048576); }
+/* Le volume en Mo, à un chiffre après la virgule (0,7) : pour le dire, pas pour le valider. */
+function volumeMo(){ return (Math.round(VOLUME_TOTAL / 104857.6) / 10).toFixed(1).replace(".", ","); }
+/* Le volume en kilo-octets, arrondi : une variante acceptée (à une unité près), qu'on ne devine pas sans calculer. */
+function volumeKo(){ return Math.round(VOLUME_TOTAL / 1024); }
 function edrMachinesCritiques(){ var s = {}; ALERTES_EDR.forEach(function(a){ if (a.gravite === "critique") s[a.machine] = 1; }); return Object.keys(s).sort(); }
 function edrCsv(){ var c = {}; ALERTES_EDR.forEach(function(a){ c[a.machine] = (c[a.machine] || 0) + 1; }); return Object.keys(c).sort().map(function(m){ return '"' + m + '",' + c[m]; }); }
 
@@ -708,7 +711,7 @@ function valider(){
 	var vol = lireAcademie("volume.txt");
 	if (!state.quests["d_awk_volume"] && vol !== null){
 		var m = /-?\d+/.exec(vol);
-		if (m && (parseInt(m[0], 10) === VOLUME_TOTAL || parseInt(m[0], 10) === volumeMo())) state.complete("d_awk_volume");
+		if (m && (parseInt(m[0], 10) === VOLUME_TOTAL || Math.abs(parseInt(m[0], 10) - volumeKo()) <= 1)) state.complete("d_awk_volume");
 	}
 	var vic = lireAcademie("victimes.txt");
 	if (!state.quests["d_awk_victimes"] && vic !== null){
@@ -758,7 +761,18 @@ function valider(){
 	var depotsNuee = ArchivesDepots.items.filter(function(it){ return /\.nuee$/.test(it.itemname); }).length;
 	if (!state.quests["d_corbeau"] && regen && !regen.actif && !regen.auto && depotsNuee === 0 && state.ch4.nettoyageStruct) state.complete("d_corbeau");
 
-	if (!state.quests["d_fin"] && rexOk()) state.complete("d_fin");
+	// Le REX clôt la nuit : pas de « Nuée repoussée » tant que la bombe est armée ou que leur script se relance.
+	if (!state.quests["d_fin"] && rexOk()){
+		var reste = [];
+		if (!state.quests["d_chrono_bombe"]) reste.push("la bombe vise toujours minuit (aile de la Chronomancie)");
+		if (!state.quests["d_corbeau"]) reste.push("le script de la Nuée se relance encore (le dernier Corbeau)");
+		if (!reste.length) state.complete("d_fin");
+		else if (!state.ch4.rexEnAttente){
+			state.ch4.rexEnAttente = true;
+			say("Laurent prend ton retour d'expérience, le lit, et le pose sur l'estrade. « Bien écrit. Mais on ne clôt pas un incident encore ouvert : " +
+				reste.join(", et ") + ". Finis, et je le contresigne. »");
+		}
+	}
 	if (state.quests["d_fin"]) { if (!state.has("victoireCh4")) state.applyState("victoireCh4"); }
 }
 
@@ -768,7 +782,7 @@ function rexOk(){
 	var t = it.getText().toLowerCase();
 	var rubriques = ["chronolog", "indicateur", "volume", "donn", "mesure"];
 	if (!rubriques.every(function(r){ return t.indexOf(r) > -1; })) return false;
-	return t.indexOf(String(VOLUME_TOTAL)) > -1 || t.indexOf(String(volumeMo())) > -1 || IP_NUEE.some(function(ip){ return t.indexOf(ip) > -1; });
+	return t.indexOf(String(VOLUME_TOTAL)) > -1 || IP_NUEE.some(function(ip){ return t.indexOf(ip) > -1; });
 }
 
 /* ------------------------------------------------------------------ */

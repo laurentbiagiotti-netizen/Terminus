@@ -450,6 +450,30 @@ def brian_dessin(r):
     sol_tirets(r, 69)
 
 
+def lettre_academie(nom="item_lettre_academie.gif"):
+    """La quatrième enveloppe du premier lancement : un pli de l'Académie, scellé d'une étoile à cinq branches,
+    même format que la convocation et l'ordre de mission (60 x 42, agrandi deux fois)."""
+    from PIL import Image, ImageDraw
+    from dessiner_lieux import PAL, OUT
+    w, h = 60, 42
+    im = Image.new('P', (w, h), N); im.putpalette(PAL); d = ImageDraw.Draw(im)
+    d.rectangle([2, 6, 57, 39], fill=B)
+    d.line([(2, 6), (29, 25), (57, 6)], fill=N, width=2)
+    d.line([(2, 39), (22, 22)], fill=N); d.line([(57, 39), (37, 22)], fill=N)
+    # le sceau de cire, frappé d'une étoile
+    d.ellipse([22, 17, 37, 32], fill=V)
+    pts = []
+    for k in range(10):
+        a = -math.pi / 2 + k * math.pi / 5
+        r = 6 if k % 2 == 0 else 2.5
+        pts.append((29.5 + r * math.cos(a), 24.5 + r * math.sin(a)))
+    d.polygon(pts, fill=N)
+    # de petites étoiles dans les coins, comme une poussière de sort
+    for x, y in [(8, 12), (51, 12), (8, 34), (51, 34)]:
+        d.point([(x, y), (x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)], fill=V)
+    im.resize((w * 2, h * 2), Image.NEAREST).save(OUT + nom)
+
+
 PORTRAITS = {
     "item_henry.gif": henry_dessin, "item_alfred.gif": alfred_dessin, "item_lee.gif": lee_dessin,
     "item_stephen.gif": stephen_dessin, "item_doug.gif": doug_dessin, "item_paul.gif": paul_dessin,
@@ -466,8 +490,9 @@ DESSINS = {
 }
 
 if __name__ == "__main__":
-    noms = sys.argv[1:] or list(DESSINS) + list(PORTRAITS)
+    noms = sys.argv[1:] or list(DESSINS) + list(PORTRAITS) + ["item_lettre_academie.gif"]
     for nom in noms:
-        if nom in PORTRAITS: perso(nom, PORTRAITS[nom])
+        if nom == "item_lettre_academie.gif": lettre_academie(nom)
+        elif nom in PORTRAITS: perso(nom, PORTRAITS[nom])
         else: finir(nom, DESSINS[nom]())
     print(len(noms), "dessins")

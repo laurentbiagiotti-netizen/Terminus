@@ -9,7 +9,7 @@ Trois repères utiles en salle :
 - un joueur perdu tape `cd` pour rentrer à la Maison, puis `cd -` pour revenir d'où il vient ;
 - un joueur bloqué tape `indice` : deux paliers payants par étape (30 puis 60 XP retirés de la note, pas du niveau), et des remarques gratuites quand quelque chose coince (rouages creux, alias qui masque un sort, clé SSH grillée ou effacée).
 
-Au premier lancement, le jeu affiche `terminus login:` : le prénom devient l'identifiant sur le système et le nom sur le diplôme, puis le joueur choisit un mot de passe qui lui permet de retrouver sa partie après un `logout`. Le jeu propose ensuite trois enveloppes : la convocation à l'épreuve de première année (chapitre 1, la solution ci-dessous), le ticket d'incident du réseau (chapitre 2 directement, voir la partie 7) ou l'ordre de mission de la WarRoom (chapitre 3 directement, voir la partie 13).
+Au premier lancement, le jeu affiche `terminus login:` : le prénom devient l'identifiant sur le système et le nom sur le diplôme, puis le joueur choisit un mot de passe qui lui permet de retrouver sa partie après un `logout`. Le jeu propose ensuite quatre enveloppes : la convocation à l'épreuve de première année (chapitre 1, la solution ci-dessous), le ticket d'incident du réseau (chapitre 2 directement, voir la partie 7), l'ordre de mission de la WarRoom (chapitre 3 directement, voir la partie 14) ou le pli de l'Académie (chapitre 4 directement, voir la partie 23).
 
 Chaque partie est différente. Au premier lancement, le jeu tire une graine au hasard qui fixe le mot de passe sudo, le meilleur client de la taverne, l'adresse de l'attaquant, le nombre de sweats du BDE et les numéros de processus. Dans les blocs ci-dessous, ces valeurs sont écrites entre chevrons :
 
@@ -1332,7 +1332,7 @@ sudo bash ~/academie/nettoyage.sh /srv/depots
 
 ### 32. Le dernier Corbeau, et le retour d'expérience
 
-Le dernier « Corbeau » est le service de la Nuée qui redépose ses résidus : on l'arrête, on finit le ménage, puis on rédige le retour d'expérience et on le dépose dans la boîte de Laurent :
+Le dernier « Corbeau » est le service de la Nuée qui redépose ses résidus : on l'arrête, on finit le ménage, puis on rédige le retour d'expérience et on le dépose dans la boîte de Laurent. Le retour d'expérience porte cinq rubriques (chronologie, indicateurs, volume, données concernées, mesures prises) et le volume exact ou une adresse de la Nuée. Laurent ne le contresigne que si la bombe est désamorcée et le script de la Nuée arrêté : déposé trop tôt, il le garde et dit ce qui reste ouvert, puis la victoire tombe d'elle-même une fois l'incident clos :
 
 ```
 sudo systemctl disable --now nuee-regen

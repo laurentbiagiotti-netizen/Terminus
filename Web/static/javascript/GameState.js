@@ -458,6 +458,14 @@ GameState.prototype.chapitreEnCours = function(){
 
 /* L'étape de la quête principale en cours, ou null si tout est fait. */
 GameState.prototype.queteEnCours = function(){
+	// Au chapitre 4, l'étape de l'Académie d'abord : un départ direct ne rejoue pas les quêtes du chapitre 1.
+	if (typeof QUETES_CH4 !== "undefined" && this.chapitreEnCours() === 5){
+		for (var k = 0; k < QUETES_CH4.length; k++){
+			if (!this.quests[QUETES_CH4[k].id]) return QUETES_CH4[k];
+		}
+		// Chapitre fini au départ direct : plus d'étape (les quêtes du chapitre 1 ne sont pas les siennes).
+		if (this.has("ch4Direct")) return null;
+	}
 	for (var i = 0; i < QUETES_PRINCIPALES.length; i++){
 		if (!this.quests[QUETES_PRINCIPALES[i].id]) return QUETES_PRINCIPALES[i];
 	}

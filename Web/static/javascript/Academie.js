@@ -541,8 +541,8 @@ var MAITRES_VIVANTS = {
 			}
 			return null;
 		},
-		fin: function(){ return "Alfred range son prisme dans un étui de velours. « " + VOLUME_TOTAL + " octets, à peu près " + volumeMo() + " Mo. Grace a de quoi décider.\n\n" +
-			"Un soir, un collègue a annoncé quarante gigaoctets volés à la direction. C'était quarante mégaoctets : il avait lu des kilo-octets comme des octets. La direction a réveillé un avocat pour rien. Depuis, je relis l'unité avant de parler. »"; }
+		fin: function(){ return "Alfred range son prisme dans un étui de velours. « " + VOLUME_TOTAL + " octets, environ " + volumeMo() + " Mo. Grace a de quoi décider.\n\n" +
+			"Un soir, un collègue a annoncé quarante gigaoctets volés à la direction. C'était quarante mégaoctets : le journal comptait en kilo-octets, il les avait pris pour des mégaoctets. La direction a réveillé un avocat pour rien. Depuis, je relis l'unité avant de parler. »"; }
 	},
 	transmutation: {
 		nom: "Lee", item: Lee, etapes: ["d_sed_anonymiser", "d_sed_desarmer"], ecole: "transmutation",

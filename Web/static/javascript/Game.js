@@ -641,13 +641,14 @@ function nouvellePartie(prenom, motDePasse, nomComplet, email){
 	demanderParcours();
 }
 
-/* Les trois enveloppes, à choisir au clavier (1, 2 ou 3) ou d'un clic. */
+/* Les quatre enveloppes, à choisir au clavier (1 à 4) ou d'un clic. */
 function enveloppes(){
 	var boite = document.createElement("div");
 	boite.className = "enveloppes";
 	[["1", "item_convocation.gif", "Convocation", "L'épreuve pratique de première année : tu découvres le terminal Linux. Chapitre 1, puis la suite."],
 	 ["2", "item_ticket.gif", "Ticket d'incident", "Le réseau de l'école est en panne : on cherche quelqu'un qui connaît déjà les bases. Chapitre 2 directement (réseau)."],
-	 ["3", "item_mission.gif", "Ordre de mission", "La WarRoom demande un renfort d'urgence, pour qui connaît déjà les bases. Chapitre 3 directement (cyber)."]].forEach(function(e){
+	 ["3", "item_mission.gif", "Ordre de mission", "La WarRoom demande un renfort d'urgence, pour qui connaît déjà les bases. Chapitre 3 directement (cyber)."],
+	 ["4", "item_lettre_academie.gif", "Pli de l'Académie", "L'Académie des Arcanes appelle un mage confirmé : sed, awk, jq, cron, scripts. Chapitre 4 directement (Linux avancé)."]].forEach(function(e){
 		var bouton = document.createElement("button");
 		bouton.type = "button";
 		bouton.className = "enveloppe";
@@ -674,22 +675,27 @@ function enveloppes(){
 	return boite;
 }
 
-/* Trois convocations possibles : l'épreuve de première année, ou un renfort (réseau ou cyber) pour ceux qui connaissent les bases. */
+/* Quatre convocations possibles : l'épreuve de première année, ou un renfort (réseau, cyber ou Linux avancé) pour ceux qui connaissent les bases. */
 function demanderParcours(){
-	term.echo("Dans ta boîte aux lettres, trois enveloppes portent ton nom. Une seule est pour toi.");
+	term.echo("Dans ta boîte aux lettres, quatre enveloppes portent ton nom. Une seule est pour toi.");
 	term.ajouterElement(enveloppes());
-	term.demander("Tape 1, 2 ou 3 (ou choisis une enveloppe) : ", false, function(reponse){
+	term.demander("Tape 1, 2, 3 ou 4 (ou choisis une enveloppe) : ", false, function(reponse){
 		var choix = String(reponse).trim();
 		Array.prototype.forEach.call(document.querySelectorAll(".enveloppes"), function(b){
 			b.classList.add("enveloppes-choisi");
 			Array.prototype.forEach.call(b.querySelectorAll(".enveloppe"), function(e, i){ if (String(i + 1) === choix) e.classList.add("enveloppe-choisie"); e.disabled = true; });
 		});
-		if (choix !== "1" && choix !== "2" && choix !== "3"){
-			term.echo(C.jaune("Réponds 1, 2 ou 3. En cas de doute, choisis 1 : c'est le début de l'histoire."));
+		if (["1", "2", "3", "4"].indexOf(choix) === -1){
+			term.echo(C.jaune("Réponds 1, 2, 3 ou 4. En cas de doute, choisis 1 : c'est le début de l'histoire."));
 			demanderParcours();
 			return;
 		}
-		if (choix !== "1" && commencerChapitre2(choix === "2" ? 3 : 2)){
+		if (choix === "4" && typeof commencerChapitre4 === "function" && commencerChapitre4()){
+			Shell.fin();
+			majEtat();
+			return;
+		}
+		if (choix !== "1" && choix !== "4" && commencerChapitre2(choix === "2" ? 3 : 2)){
 			Shell.fin();
 			return;
 		}

@@ -38,6 +38,8 @@ function jouer(jeu, liste){ liste.forEach(function(c){ jeu.jouerSolution(c); });
 	vrai(jeu, "state.has('ch4Ouvert')", "chapitre 4 : l'Académie s'ouvre au départ direct");
 	verifier(jeu.lire("current_room.room_name") === "Academie", "chapitre 4 : on arrive dans l'Académie");
 	verifier(jeu.lire("state.chapitreEnCours()") === 5, "chapitre 4 : chapitreEnCours vaut 5");
+	verifier(jeu.lire("state.queteEnCours().id") === "d_frances", "chapitre 4 : au départ direct, l'étape en cours est celle de l'Académie (pas le chapitre 1)");
+	verifier(jeu.taper("indice").indexOf("ForetOuest") === -1, "chapitre 4 : au départ direct, indice ne renvoie pas au chapitre 1");
 	fait(jeu, "d_entree", "d_entree (entrée dans l'Académie)");
 	vrai(jeu, "state.knows('grep') && state.knows('sudo')", "le socle des chapitres précédents est acquis (renfort)");
 	faux(jeu, "state.knows('jq')", "jq n'est pas encore appris : il s'apprend auprès de Stephen");
@@ -82,16 +84,19 @@ function jouer(jeu, liste){ liste.forEach(function(c){ jeu.jouerSolution(c); });
 /* ================================================================== */
 (function(){
 	var jeu = neuf(); surArchives(jeu);
-	var vol = jeu.lire("VOLUME_TOTAL"), mo = jeu.lire("volumeMo()");
+	var vol = jeu.lire("VOLUME_TOTAL"), ko = jeu.lire("volumeKo()");
 	jeu.taper("echo 123 > ~/academie/volume.txt");
 	pasFait(jeu, "d_awk_volume", "un volume faux est refusé");
 	jeu.taper("awk '$3 ~ /^45\\.137\\./ { s += $4 } END { print s }' /var/log/proxy.log > ~/academie/volume.txt");
 	fait(jeu, "d_awk_volume", "volume exact (octets) accepté");
 	verifier(jeu.lire("lignesPropres(lireAcademie('volume.txt'))[0]") === String(vol), "le volume vaut bien VOLUME_TOTAL");
-	// Variante : le volume en Mo arrondi.
+	// Variante : le volume en kilo-octets arrondi. Mais pas « 1 » (le Mo arrondi, qu'on devine sans calculer).
 	var jeu2 = neuf(); surArchives(jeu2);
-	jeu2.taper("echo " + mo + " > ~/academie/volume.txt");
-	fait(jeu2, "d_awk_volume", "volume en Mo arrondi accepté");
+	jeu2.taper("echo 1 > ~/academie/volume.txt");
+	pasFait(jeu2, "d_awk_volume", "« 1 » (le Mo arrondi, devinable) est refusé");
+	jeu2.taper("echo " + ko + " > ~/academie/volume.txt");
+	fait(jeu2, "d_awk_volume", "volume en kilo-octets arrondi accepté");
+	verifier(/^0,[0-9]$/.test(jeu.lire("volumeMo()")), "Alfred annonce le volume en Mo avec une décimale (" + jeu.lire("volumeMo()") + ")");
 	// Victimes : top 3 décroissant.
 	jeu.taper("awk '$3 ~ /^45\\.137\\./ { s[$2] += $4 } END { for (m in s) print m, s[m] }' /var/log/proxy.log | sort -k2,2nr | head -3 > ~/academie/victimes.txt");
 	fait(jeu, "d_awk_victimes", "top 3 des machines correct");
@@ -271,6 +276,18 @@ var SCRIPT_BON = [
 		"cp ~/academie/rex.txt ~/Cybersup/SalleServeurs/Academie/BoiteDeLaurent"
 	]);
 	pasFait(jeu, "d_fin", "un REX sans la rubrique « mesures » est refusé");
+	// Les rubriques sans aucune vraie valeur (ni volume exact, ni IP de la Nuée), même avec des chiffres : refusé.
+	jouer(jeu, [
+		"cat > ~/academie/rex.txt <<'FIN'",
+		"Chronologie : intrusion le 12, exfiltration, bombe pour minuit.",
+		"Indicateurs de compromission : voir ioc.txt",
+		"Volume exfiltre : environ 1 Mo.",
+		"Donnees concernees : comptes etudiants.",
+		"Mesures prises : quarantaine.",
+		"FIN",
+		"cp ~/academie/rex.txt ~/Cybersup/SalleServeurs/Academie/BoiteDeLaurent"
+	]);
+	pasFait(jeu, "d_fin", "un REX sans volume exact ni IP de la Nuée est refusé, même s'il contient des chiffres");
 	jouer(jeu, [
 		"cat > ~/academie/rex.txt <<'FIN'",
 		"Chronologie : intrusion, exfiltration, bombe pour minuit.",
@@ -281,8 +298,17 @@ var SCRIPT_BON = [
 		"FIN",
 		"cp ~/academie/rex.txt ~/Cybersup/SalleServeurs/Academie/BoiteDeLaurent"
 	]);
-	fait(jeu, "d_fin", "REX complet déposé chez Laurent : victoire du chapitre");
+	pasFait(jeu, "d_fin", "un REX complet, mais la bombe armée et le script de la Nuée actif : pas de victoire");
+	verifier(jeu.lire("state.ch4.rexEnAttente") === true, "Laurent garde le REX en attente tant que l'incident est ouvert");
+	jeu.lire("state.complete('d_chrono_bombe')");
+	jeu.taper("ls");
+	pasFait(jeu, "d_fin", "bombe désamorcée mais script de la Nuée actif : toujours pas de victoire");
+	jeu.lire("state.complete('d_corbeau')");
+	jeu.taper("ls");
+	fait(jeu, "d_fin", "REX déjà déposé : la victoire tombe dès que la bombe et le script sont arrêtés");
 	vrai(jeu, "state.has('victoireCh4')", "la victoire du chapitre 4 est enregistrée");
+	jeu.lire("QUETES_CH4.forEach(function(q){ state.quests[q.id] = true; })");
+	verifier(jeu.lire("state.queteEnCours()") === null, "chapitre 4 fini au départ direct : plus d'étape en cours (pas le chapitre 1)");
 	vrai(jeu, "Home.getItemFromName('CertificatAvance') !== -1", "le CertificatAvance est posé dans la Maison");
 	vrai(jeu, "state.texteDuCertificat5().indexOf('CERTIFICAT AVANCÉ') > -1", "le certificat porte le bon intitulé");
 	vrai(jeu, "typeof state.codeDuCertificat5() === 'string' && state.codeDuCertificat5().length > 10", "le code du certificat se fabrique");
