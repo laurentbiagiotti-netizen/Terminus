@@ -23,14 +23,29 @@
  *
  * Ce qu'on peut appeler d'ailleurs (un sort, le chapitre 4) :
  *   Interpreteur.executer(texte)            lance un texte comme au prompt ; renvoie le statut
- *   Interpreteur.capturer(texte, options)   le lance à part : { code, sortie, erreurs }
+ *   Interpreteur.capturer(texte, options)   le lance à part : { code, sortie, erreurs } (stdout et stderr séparés)
  *        options : { positionnels: [...], nom0: "nom", portee: "enfant" (défaut) ou "courante" }
  *   Interpreteur.lancerScript(texte, io, options)   ce que fait bash SCRIPT (utilisé par Shell.js)
  *   Interpreteur.analyser(texte)            l'arbre ; lève une ShellError, ou Incomplet
  *   Interpreteur.verifier(texte)            null, "incomplet", ou la ShellError de syntaxe
+ *   Interpreteur.ceQuiManque(texte)         ce qui manque à un texte inachevé, en clair (ou null)
+ *   Interpreteur.structures(texte)          les structures qu'il utilise : ["if", "for", "fonction", "read"...]
  *   Interpreteur.lire(nom), Interpreteur.affecter(nom, valeur)   les variables, portée comprise
  *   Interpreteur.arith(texte)               un calcul $((...)), sans eval
  *   Shell.statut                            le statut de la dernière commande ($?)
+ *
+ * Les événements (GameEvents) utiles aux quêtes :
+ *   { type: "script", item, room, direct, nom, args, statut, structures }
+ *        à la fin de bash SCRIPT, ./script (item : l'objet du script ; direct : lancé par son chemin)
+ *        et de bash -c TEXTE (item : null, nom : "bash -c"). structures : comme Interpreteur.structures.
+ *   { type: "boucle", sorte, tours, statut, interrompue, dansScript }
+ *        à la fin de chaque boucle ; sorte : "for", "for ((", "while" ou "until" ; interrompue : sortie par break.
+ *   { type: "fonction", action: "definition", nom, dansScript }
+ *   { type: "fonction", action: "appel", nom, args, statut, profondeur, dansScript }
+ *        profondeur : 1 pour un appel direct, plus dans une autre fonction (récursion) ou un $(...).
+ *
+ * Les garde-fous : Interpreteur.LIMITE_COMMANDES commandes par ligne tapée (un script compris),
+ * Interpreteur.LIMITE_PROFONDEUR appels emboîtés, et 400 lignes par script (Shell.js).
  */
 
 /* ------------------------------------------------------------------ */
@@ -513,6 +528,11 @@ var OPERATEURS_PARAMETRE = [":-", ":=", ":+", ":?", "##", "%%", "//", "^^", ",,"
 /* ${NOM}, ${#NOM}, ${NOM:-défaut}, ${NOM#motif}, ${NOM/a/b}, ${NOM:1:3}, ${T[2]}, ${T[@]}... */
 function analyserParametre(contenu){
 	var p = { t: "var", nom: null, index: null, op: null, arg: null, longueur: false };
+	// ${!T[@]} : les indices d'un tableau ; ${!NOM} : la variable dont NOM contient le nom (indirection).
+	var ind = /^!([A-Za-z_][A-Za-z0-9_]*)\[([@*])\]$/.exec(contenu);
+	if (ind){ p.nom = ind[1]; p.index = ind[2]; p.indices = true; return p; }
+	ind = /^!([A-Za-z_][A-Za-z0-9_]*|[0-9]+)$/.exec(contenu);
+	if (ind){ p.nom = ind[1]; p.indirect = true; return p; }
 	var m = /^#([A-Za-z_][A-Za-z0-9_]*|[0-9]+|[@*#?$!-])(\[([^\]]*)\])?$/.exec(contenu);
 	if (m && contenu.length > 1){
 		p.longueur = true;
@@ -768,6 +788,8 @@ Analyseur.prototype.redirection = function(liste){
 	var r = this.prendre();
 	if (/^[012]>&[012]$/.test(r.op)){ liste.push({ op: r.op === "0>&1" ? "1>&1" : r.op }); return; }
 	var cible = this.prendre();
+	// La cible d'une redirection ne peut pas attendre la ligne suivante : « echo > » est une erreur, comme sous bash.
+	if (cible.type === "fin" || cible.type === "nl") throw erreurSyntaxe("newline");
 	if (cible.type !== "mot") throw this.inattendu(cible);
 	if (r.op === "<<" || r.op === "<<-"){
 		var delim = "", cite = false;
@@ -1035,6 +1057,16 @@ Interpreteur.verifier = function(texte){
 };
 
 Interpreteur.estComplet = function(texte){ return Interpreteur.verifier(texte) !== "incomplet"; };
+
+/* Ce qui manque à un texte inachevé, en clair ("il manque un « fi »..."), ou null s'il est complet. */
+Interpreteur.ceQuiManque = function(texte){
+	try { Interpreteur.analyser(texte); }
+	catch (e){
+		if (!(e instanceof Incomplet)) return null;
+		return CONSEILS_FIN[e.attendu] || (e.attendu ? "le here-document attend sa ligne de fin : « " + e.attendu + " »" : "la commande n'est pas finie");
+	}
+	return null;
+};
 
 /* L'erreur que bash donne quand le texte s'arrête au milieu d'une commande (Ctrl+D à l'invite « > »). */
 Interpreteur.erreurIncomplet = function(texte){
@@ -1968,6 +2000,13 @@ function sequenceAccolade(t){
 
 /* La valeur d'un $NOM ou ${...} : un texte, ou une liste pour $@ et ${T[@]}. */
 function valeurParametre(p){
+	if (p.indices) return lireTableau(p.nom).map(function(v, k){ return String(k); });
+	if (p.indirect){
+		var cible = valeurSimple({ nom: p.nom, index: null });
+		if (cible === undefined || cible === "") return sansValeur(p);
+		if (!/^([A-Za-z_][A-Za-z0-9_]*|[0-9]+)$/.test(cible)) throw new ShellError("bash : " + cible + " : mauvaise substitution", 1);
+		return valeurParametre({ t: "var", nom: cible, index: null, op: null, arg: null, longueur: false });
+	}
 	var nom = p.nom, liste = null;
 	if (p.longueur){
 		if (nom === "@" || nom === "*") return String(positionnels().length);
@@ -3101,8 +3140,14 @@ Interpreteur.lancerScript = function(texte, io, options){
 /* encore : le chapitre 4 les rangera dans son ORDRE_DES_SORTS).       */
 /* ------------------------------------------------------------------ */
 
-/* Coupe une ligne lue par read en n morceaux, selon IFS : le dernier reçoit le reste. */
+/* Coupe une ligne lue par read en n morceaux, selon IFS : le dernier reçoit le reste.
+ * n = Infinity (read -a) : autant de morceaux qu'il y en a, sans en ajouter de vides. */
 function decouperLecture(ligne, n, ifs){
+	if (n === Infinity){
+		var tous = decouperLecture(ligne, ligne.length + 1, ifs);
+		while (tous.length && tous[tous.length - 1] === "") tous.pop();
+		return tous;
+	}
 	if (ifs === "") return [ligne].concat(new Array(Math.max(0, n - 1)).fill(""));
 	var blancs = ifs.replace(/[^ \t\n]/g, ""), autres = ifs.replace(/[ \t\n]/g, "");
 	var estBlanc = function(c){ return blancs.indexOf(c) > -1; };
@@ -3168,7 +3213,7 @@ Shell.sorts.read = function(args, io){
 	}
 	var ifs = valeurIFS();
 	if (tableau !== null){
-		Interpreteur.affecter(tableau, ifs === "" ? [ligne] : decouperLecture(ligne, 100000, ifs).filter(function(c, k, t){ return k < t.length - 1 || c !== ""; }));
+		Interpreteur.affecter(tableau, ifs === "" ? [ligne] : decouperLecture(ligne, Infinity, ifs));
 		return "";
 	}
 	var champs = decouperLecture(ligne, noms.length, ifs);

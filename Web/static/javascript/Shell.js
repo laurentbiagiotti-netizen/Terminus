@@ -2103,6 +2103,12 @@ Shell.executer = function(ligne){
 			term.definirInvite(Shell.invite());
 			return;
 		}
+		// La première fois (ou pour un guillemet oublié, piège classique), on explique l'invite « > ».
+		var manque = suite ? "" : Interpreteur.ceQuiManque(texte) || "";
+		if (!suite && (!Shell.astuceSaisieVue || /guillemet|apostrophe/.test(manque))){
+			Shell.astuceSaisieVue = true;
+			term.echo(C.gris("(Commande inachevée : " + manque + ". Le terminal attend la suite sur l'invite « > » ; Ctrl+C abandonne.)"));
+		}
 		Shell.saisieEnCours = texte;
 		term.definirInvite("> ");
 		return;

@@ -264,6 +264,35 @@ var CAS = [
 	// Tableaux
 	["tableaux", "t=(un deux trois); echo ${t[1]} ${#t[@]}; t+=(quatre); echo ${t[@]}", "deux 3\nun deux trois quatre"],
 	["tableau et boucle", "t=('a b' c); for x in \"${t[@]}\"; do echo \"[$x]\"; done", "[a b]\n[c]"],
+	["indices d'un tableau", "t=(x y z); echo ${!t[@]} ${t[-1]}", "0 1 2 z"],
+	["indirection ${!nom}", "cible=valeur; nom=cible; echo ${!nom}", "valeur"],
+	["read -a", "read -a mots <<< '  un deux   trois '; echo ${#mots[@]} ${mots[2]}", "3 trois"],
+	["tableau : tranche", "t=(a b c d); echo ${t[@]:1:2}", "b c"],
+	["$RANDOM est un nombre", "r=$RANDOM; [[ $r =~ ^[0-9]+$ ]] && (( r < 32768 )) && echo nombre", "nombre"],
+	["eval", "cmd='echo $((6 * 7))'; eval \"$cmd\"", "42"],
+
+	// Pièges classiques
+	["le compteur perdu dans un tuyau", "n=0; cat eleves.txt | while read l; do n=$((n + 1)); done; echo $n", "0"],
+	["le compteur gardé avec <", "n=0; while read l; do n=$((n + 1)); done < eleves.txt; echo $n", "5"],
+	["guillemets et espaces dans les noms", "touch 'mon fichier.txt'; for f in *fichier*; do echo \"[$f]\"; done", "[mon fichier.txt]"],
+	["== dans [ ]", "[ a == a ] && echo égal", "égal"],
+	["chaîne vide sans guillemets", "v=; [ -z $v ] && echo vide", "vide"],
+	["$? juste après un test", "[ 2 -gt 1 ]; r=$?; echo \"r=$r\"", "r=0"],
+	["$( ) dans une condition", "if [ $(grep -c B2 eleves.txt) -gt 2 ]; then echo beaucoup; fi", "beaucoup"],
+	["if sur une commande", "if grep -q Bob eleves.txt; then echo présent; fi", "présent"],
+	["négation d'une commande", "if ! grep -q Zoe eleves.txt; then echo absente; fi", "absente"],
+	["case dans une fonction", "type_de() { case $1 in *.sh) echo script ;; *) echo autre ;; esac; }; type_de a.sh; type_de b", "script\nautre"],
+	["fonction qui renvoie une valeur par echo", "carre() { echo $(( $1 * $1 )); }; x=$(carre 7); echo $((x + 1))", "50"],
+	["boucles imbriquées", "for i in 1 2; do for j in 1 2; do echo -n \"$i$j \"; done; done; echo", "11 12 21 22 "],
+	["while avec deux conditions", "i=0; while [ $i -lt 10 ] && [ $i -ne 3 ]; do i=$((i + 1)); done; echo $i", "3"],
+	["somme des notes avec cut", "s=0; for n in $(cut -d, -f2 notes.csv | tail -n +2); do s=$((s + n)); done; echo $s", "54"],
+	["sed dans une boucle", "for c in B2 B3; do echo \"$c : $(grep -c $c eleves.txt)\"; done", "B2 : 3\nB3 : 2"],
+	["printf pour un tableau aligné", "while read n c; do printf '%-4s|%3s\\n' $n $c; done < eleves.txt | head -2", "Ada | B2\nBob | B3"],
+	["here-string et variable", "nom=Ada; grep -c a <<< \"$nom\"", "1"],
+	["seq et printf", "printf '%02d ' $(seq 1 3); echo", "01 02 03 "],
+	["tr et majuscules", "echo bonjour | tr '[:lower:]' '[:upper:]'", "BONJOUR"],
+	["sort -n et head", "printf '10\\n9\\n100\\n' | sort -n | head -1", "9"],
+	["wc -w sur une variable", "phrase='un deux trois'; echo $phrase | wc -w", "3"],
 
 	// Scripts réalistes (B2, B3)
 	["B2 : analyse d'un journal SSH",
@@ -428,7 +457,9 @@ contient(jeu.taper("false || echo secours"), "secours", "|| est maintenant compr
 // Saisie sur plusieurs lignes : l'invite « > » attend la suite.
 var invites = [];
 jeu.lire("term.definirInvite = function(t){ invitesVues.push(t); }; var invitesVues = [];");
-verifier(jeu.taper("if true") === "", "if sans fi : rien ne se lance");
+var inacheve = jeu.taper("if true");
+contient(inacheve, "Commande inachevée : il manque « then »", "if sans fi : rien ne se lance, et la première fois on explique l'invite « > »");
+absent(inacheve, "erreur", "if sans fi : pas d'erreur");
 verifier(jeu.lire("Shell.saisieEnCours") !== null, "la saisie attend la suite");
 verifier(jeu.lire("invitesVues[invitesVues.length - 1]") === "> ", "l'invite devient « > »");
 jeu.taper("then echo dans le bloc");
@@ -436,7 +467,9 @@ contient(jeu.taper("fi"), "dans le bloc", "le bloc se lance au fi");
 verifier(jeu.lire("Shell.saisieEnCours") === null, "la saisie est terminée");
 verifier(jeu.lire("invitesVues[invitesVues.length - 1]") !== "> ", "l'invite normale revient");
 contient(jeu.taper("for i in 1 2\ndo echo tour $i\ndone"), "tour 2", "une ligne avec des \\n se lance d'un coup");
-jeu.taper("echo \"guillemet ouvert");
+verifier(jeu.taper("while false") === "", "la deuxième fois, l'invite « > » n'est plus expliquée");
+jeu.taper("do :; done");
+contient(jeu.taper("echo \"guillemet ouvert"), "un guillemet \" n'est pas refermé", "un guillemet oublié est toujours expliqué");
 contient(jeu.taper("refermé\""), "guillemet ouvert\nrefermé", "un guillemet ouvert continue à la ligne suivante");
 jeu.taper("echo une \\");
 contient(jeu.taper("suite"), "une suite", "une \\ finale continue la ligne");

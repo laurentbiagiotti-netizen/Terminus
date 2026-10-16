@@ -127,7 +127,8 @@ Le code est du JavaScript sans dépendance ni étape de construction.
 | Fichier | Rôle |
 | --- | --- |
 | `Web/static/javascript/GameObjects.js` | le monde : lieux, objets, personnages, textes, réactions |
-| `Web/static/javascript/Shell.js` | l'interpréteur et les sorts de base |
+| `Web/static/javascript/Shell.js` | les sorts de base, le tuyau (`Shell.tuyau`), l'appel d'un sort (`Shell.appeler`) et la saisie au prompt |
+| `Web/static/javascript/Interpreteur.js` | le vrai shell : lexeur, analyseur (arbre) et exécution d'un sous-ensemble de bash. Variables développées au bon moment, `$?`, `&&` `||`, `$(...)`, `$((...))`, `if`, `for`, `while`, `until`, `case`, fonctions, `local`, `{ }`, `( )`, `[[ ]]`, here-documents, `read`, `printf`, `set -e`/`-x`, scripts avec arguments, saisie sur plusieurs lignes (invite `>`), garde-fou contre les boucles infinies ; API pour le chapitre 4 (`Interpreteur.capturer`, `Interpreteur.structures`) et événements `script`, `boucle`, `fonction` |
 | `Web/static/javascript/SortsAvances.js` | variables, alias, liens, scripts, archives, réseau, système, paquets |
 | `Web/static/javascript/Manuel.js` | les pages de `man` et l'ordre des sorts |
 | `Web/static/javascript/Chapitre2.js` | la Crypte (chapitre 3) : SHA-256, base64, `nano`, `ss`, `ssh-keygen`, la Crypte et le coffre, le saut de chapitre |
@@ -160,6 +161,7 @@ Le code est du JavaScript sans dépendance ni étape de construction.
 | `tests/solution.js` | rejoue les commandes de `docs/solution.md` et vérifie qu'elles mènent à 20 sur 20 aux trois chapitres |
 | `tests/examen.js` | joue l'épreuve finale de bout en bout, puis un kamikaze, et vérifie la note, les badges, le sceau, le code du diplôme, la reprise après un rechargement et celle d'une vieille sauvegarde |
 | `tests/regressions.js` | rejoue chaque bug trouvé lors de l'audit, pour qu'il ne revienne pas |
+| `tests/interpreteur.js` | l'interpréteur de shell : plus de 200 scripts dont la sortie et le statut doivent être ceux de bash (des scripts réalistes de B2 et B3 compris), puis la saisie sur plusieurs lignes, les scripts, les messages d'erreur, les garde-fous, l'API et les événements ; `node tests/interpreteur.js --bash` revérifie les attendus avec le vrai bash |
 | `tests/texte.js` | compare grep, sed, awk, sort, uniq, tr, head, tail, wc, cut, nl, rev, fold aux vrais outils GNU (plus de 400 cas), puis vérifie ce qui est propre au jeu ; `node tests/texte.js --gnu` revérifie les attendus avec GNU grep, sed et gawk s'ils sont installés |
 | `tests/robustesse.js` | envoie des lignes aléatoires à l'interpréteur (20 000 par défaut, `node tests/robustesse.js 6000` pour une passe rapide) et vérifie qu'aucune ne le fait planter |
 
@@ -171,6 +173,7 @@ node tests/solution.js
 node tests/examen.js
 node tests/regressions.js
 node tests/texte.js
+node tests/interpreteur.js
 node tests/robustesse.js 6000
 ```
 
