@@ -38,16 +38,25 @@ var sorts = ["ls", "cd", "pwd", "less", "help", "man", "clear", "exit", "mv", "c
 	"which", "uname", "dmesg", "journalctl", "last", "who", "lsof", "pgrep", "pkill", "systemctl", "userdel", "usermod", "groups", "visudo",
 	"ip", "traceroute", "dig", "nmap", "nc", "curl", "ufw", "scp", "ssh-copy-id", "gpg", "vi", "logout",
 	"ethtool", "hostnamectl", "dhclient", "nmcli", "netplan", "reboot", "wget", "host", "nslookup", "resolvectl", "iptables", "tcpdump",
-	"mtr", "openssl", "timedatectl", "telnet", "carte", "examen", "kamikaze", "verifier"];
+	"mtr", "openssl", "timedatectl", "telnet", "carte", "examen", "kamikaze", "verifier",
+	// Les sorts du chapitre 4 (SortsArcanes.js).
+	"jq", "xargs", "paste", "join", "comm", "column", "tac", "shuf", "split", "patch", "rsync", "at", "atq", "atrm"];
 var options = ["-a", "-l", "-la", "-r", "-rf", "-n", "-n 3", "-9", "-s", "-c", "-i", "-v", "-u", "-d:", "-f1", "-f", "-x", "-tf", "-xf", "-cf",
-	"--help", "-", "--", "-z", "-c", "-d", "-tlnp", "-perm -4000", "-perm /u=s", "-perm", "-user root", "2>/dev/null", "2>err", "2>>err", "2>&1", "u-s", "4755", "+t", "-1", "-0", "-99999", "+x", "-x", "755", "000", "u+rwx", "o-r", "a=", "999", "-name", "-type", "d", "f", "-L", "-u sorcier"];
+	"--help", "-", "--", "-z", "-c", "-d", "-tlnp", "-perm -4000", "-perm /u=s", "-perm", "-user root", "2>/dev/null", "2>err", "2>>err", "2>&1", "u-s", "4755", "+t", "-1", "-0", "-99999", "+x", "-x", "755", "000", "u+rwx", "o-r", "a=", "999", "-name", "-type", "d", "f", "-L", "-u sorcier",
+	"-exec cat {} \\;", "-exec rm {} +", "-exec", "{}", "\\;", "-delete", "-o", "!", "\\(", "\\)", "-size +1k", "-size -1", "-empty", "-maxdepth 1", "-mindepth 2", "-mmin -5",
+	"-I {}", "-t", "-0", "-d ,", "-n 2", "-L 1", "-12", "-3", "-t -s :", "-e", "-r", "-c", "--arg x y", "--argjson n 3", "-S", "-R", "-p1", "-p0", "--dry-run", "-av", "-avn",
+	"--delete", "--exclude '*.tmp'", "-U 1", "-sd ,", "-a 1", "-v 2", "-o 1.1,2.2", "-x", "-f", "-l", "-c 3",
+	"now + 5 minutes", "teatime", "noon", "tomorrow", "14:00", "list-timers", "logrotate.timer", "status logrotate.timer", "disable --now apt-daily.timer", "-d tomorrow", "-d '3 days ago'"];
 var noms = [".", "..", "~", "/", "*", "?", ".*", "~/", "../..", "./.", "//", "a/b/c", "~/Village", "Marche", "Boite", "Cage", "Portail",
 	"Rocher", "Stele", "Certificat", ".Phylactere", "SorcierNoir", "Laurent", "Diplome", "LivreDOr", "Registre", "remonter.sh",
 	"Mannequin*", "rouage*", "x", "X", "Truc", ".cache", "nouveau", "copie", "Chaumiere", "Planche", "Rouage", "EpiDeMais", "TrollMoche",
 	"~/Cybersup", "~/Cybersup/BureauDeLaurent", "/opt/gardiens/vigile", "/quarantaine", "~/rapport", "/etc/resolv.conf", "/root/.ssh/authorized_keys", "examen", "kamikaze", "isc-dhcp-server", "telnet", "nginx", "BureauDeLaurent/Agenda", "sauvegarde-lundi.tar", "archive.tar", "terminus", "cybersup",
 	"citadelle", "apprenti", "root", "sorcier", "66", "404", "1", "1337", "0", "-5", "abc", "é", "$USER", "$PWD", "${HOME}", "$", "$$",
 	"A=b", "ll='ls -l'", "z=", "=x", "\"deux mots\"", "'apostrophe'", "\"", "'", "\\", "[", "(", "a(b", "*.log", "motdepasse=", "vrai_nom",
-	"cowsay", "tree", "install", "update", "list", "<b>", "Crypte", "bin", "Caveau", "Racine", ".ssh", ".ssh/authorized_keys", "SHA256SUMS",
+	"cowsay", "tree", "install", "update", "list", "<b>", "'.'", "'.[] | .nom'", "'.a.b[0]'", "'map(.x) | add'", "'{a: .b}'", "'.[] as $x | $x'",
+	"'reduce .[] as $x (0; . + $x)'", "'def f: 1; f'", "'@csv'", "'\\(.)'", "'.[1:'", "'..'", "'paths'", "'.a |= . + 1'", "'error(\"x\")'", "'[range(1e9)]'", "'repeat(1)'",
+	"'limit(3; repeat(1))'", "'\"\\(1,2)\"'", "'{\"a\":1}'", "'def f: f; f'", "'[.[] | select(. > 1)]'", "'.[] |= empty'", "'label $f | 1, break $f'",
+	"c.diff", "a.diff", "dst/", "src/", "'*/5 * * * * echo'", "'61 * * * * x'", "Crypte", "bin", "Caveau", "Racine", ".ssh", ".ssh/authorized_keys", "SHA256SUMS",
 	"gardien", ".porte", "BoiteDeDepot", "coffre", "~/.ssh/id_ed25519", "~/.ssh/id_ed25519.pub", "Corbeau", "CertificatCyber", "/dev/null", "2", "oui",
 	"labo", "web", "mail", "dns", "parefeu", "badgeuse", "imprimante", "poste-47", "/etc/passwd", "/var/log", "/tmp", "/", "/etc/bind/ecole.zone",
 	"10.0.92.0/24", "10.0.92.60", "http://web/", "http://web/robots.txt", "sauvegarde:/preuves/", "web:/tmp", "auth.log.2.gz", "notes.gpg", "maj.php",
@@ -88,6 +97,8 @@ for (var i = 0; i < combien; i++){
 				jeu.jouerSolution(solution[s]);
 			}
 		}
+		// Les sorts du chapitre 4 (SortsArcanes.js), qu'aucun chapitre n'enseigne encore : on les accorde pour les bombarder aussi.
+		if ((i / 400) % 3 !== 0) jeu.lire("SORTS_ARCANES.forEach(function(s){ state.spells[s] = true; })");
 	}
 	var ligne = ligneAleatoire();
 	try {

@@ -633,7 +633,7 @@ Shell.sorts.userdel = function(args, io){
 	if (!io.sudo) throw new ShellError("userdel : Permission denied.\nuserdel : cannot lock /etc/passwd; try again later.\n" + C.gris("(Supprimer un compte est réservé à root : sudo userdel " + nom + ")"));
 	if (nom === JOUEUR || nom === "root") throw new ShellError("userdel : supprimer « " + nom + " » ? C'est toi, ou c'est root. Non.");
 	var passwd = fichierSysteme("passwd");
-	if (!passwd || !new RegExp("^" + nom + ":", "m").test(passwd.getText())) throw new ShellError("userdel : user '" + nom + "' does not exist");
+	if (!passwd || !new RegExp("^" + nom.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ":", "m").test(passwd.getText())) throw new ShellError("userdel : user '" + nom + "' does not exist");
 	var actifs = Shell.procsDeLHote().filter(function(e){ return e.proc.owner === nom; });
 	if (actifs.length) throw new ShellError("userdel : user " + nom + " is currently used by process " + actifs[0].proc.pid + "\n" + C.gris("(Il faut d'abord arrêter ses processus : sudo pkill -u " + nom + ")"));
 	["passwd", "shadow", "group"].forEach(function(f){
@@ -666,8 +666,8 @@ Shell.sorts.usermod = function(args, io){
 		if (!retirer && !ajouter) throw new ShellError("usermod : -G seul remplacerait TOUS les groupes de " + nom + ". Précise -aG (ajouter) ou -rG (retirer).");
 		var fichierGroupes = fichierSysteme("group");
 		var passwdG = fichierSysteme("passwd");
-		if (!passwdG || !new RegExp("^" + nom + ":", "m").test(passwdG.getText())) throw new ShellError("usermod : user '" + nom + "' does not exist");
-		if (!fichierGroupes || !new RegExp("^" + groupe + ":", "m").test(fichierGroupes.getText())) throw new ShellError("usermod : group '" + groupe + "' does not exist");
+		if (!passwdG || !new RegExp("^" + nom.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ":", "m").test(passwdG.getText())) throw new ShellError("usermod : user '" + nom + "' does not exist");
+		if (!fichierGroupes || !new RegExp("^" + groupe.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ":", "m").test(fichierGroupes.getText())) throw new ShellError("usermod : group '" + groupe + "' does not exist");
 		fichierGroupes.setText(lignesDe(fichierGroupes.getText()).map(function(l){
 			var c = l.split(":");
 			if (c[0] !== groupe || c.length < 4) return l;
@@ -681,7 +681,7 @@ Shell.sorts.usermod = function(args, io){
 		return "";
 	}
 	var shadow = fichierSysteme("shadow");
-	if (!shadow || !new RegExp("^" + nom + ":", "m").test(shadow.getText())) throw new ShellError("usermod : user '" + nom + "' does not exist");
+	if (!shadow || !new RegExp("^" + nom.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ":", "m").test(shadow.getText())) throw new ShellError("usermod : user '" + nom + "' does not exist");
 	shadow.setText(lignesDe(shadow.getText()).map(function(l){
 		var c = l.split(":");
 		if (c[0] !== nom) return l;

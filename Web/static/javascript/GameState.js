@@ -1569,7 +1569,7 @@ GameState.prototype.save = function(){
 			flags: this.flags, spells: this.spells, depart: SORTS_DE_DEPART, quests: this.quests, seen: this.seen,
 			nb: this.nbCommandes, nom: this.nom, lieu: this.dernierLieu,
 			xp: this.xp, usages: this.usages, freq: this.frequences, quiz: this.quiz, visites: this.visited, niveau: this.niveauAnnonce, temps: this.tempsMs,
-			env: this.env, alias: this.alias, paquets: this.paquets, cron: this.cron,
+			env: this.env, alias: this.alias, paquets: this.paquets, cron: this.cron, arcanes: this.arcanes || null,
 			indices: this.indices, malus: this.malus, dateVictoire: this.dateVictoire,
 			xp2: this.xp2, malus2: this.malus2, cles: this.clesGenerees, pub: this.clePublique, priv: this.clePrivee,
 			grillee: this.cleGrillee, debut2: this.debutChapitre2, dateVictoire2: this.dateVictoire2, codesFiges: this.codesFiges || {},
@@ -1666,6 +1666,8 @@ GameState.prototype.load = function(){
 		this.chronos = donnees.chronos || {};
 		this.examen = donnees.examen || null;
 		if (donnees.cron) this.cron = donnees.cron;
+		// Les tâches de at et l'état des timers (SortsArcanes.js).
+		this.arcanes = donnees.arcanes || null;
 		Shell.pile_ssh = (donnees.ssh || []).map(lieuParChemin);
 		this.currentRoom = lieuParChemin(donnees.ici || "~");
 		Shell.lieu_precedent = donnees.avant ? lieuParChemin(donnees.avant) : null;
