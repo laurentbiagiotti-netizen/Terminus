@@ -1433,6 +1433,7 @@ function verifierMonde(){
     if (typeof verifierPanne === "function") verifierPanne();
     if (typeof verifierChapitre2 === "function") verifierChapitre2();
     if (typeof verifierChapitre4 === "function") verifierChapitre4();
+    if (typeof verifierChapitre5 === "function") verifierChapitre5();
 }
 
 function texteCarteEtudiante(){
