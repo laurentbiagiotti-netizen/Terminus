@@ -398,249 +398,7 @@ Shell.sorts.zcat = function(args, io){
 /* Transformer du texte : sed, awk, tr, rev, tee                       */
 /* ------------------------------------------------------------------ */
 
-/* Une petite partie de sed : p, d, s///, avec numéros de ligne, intervalles et motifs. */
-function compilerSed(script){
-	var m;
-	var adresse = null, reste = script.trim();
-	function uneAdresse(){
-		var a;
-		if ((a = /^(\d+|\$)/.exec(reste))){ reste = reste.substring(a[0].length); return { ligne: a[1] }; }
-		if ((a = /^\/((?:\\\/|[^\/])*)\//.exec(reste))){ reste = reste.substring(a[0].length); return { motif: new RegExp(a[1].replace(/\\\//g, "/")) }; }
-		return null;
-	}
-	function lireAdresse(){
-		var de = uneAdresse();
-		if (!de) return null;
-		if (reste.charAt(0) === ","){
-			reste = reste.substring(1);
-			var jusque = uneAdresse();
-			if (!jusque) throw new ShellError("sed : adresse incomplète après la virgule dans « " + script + " »");
-			return { de: de, a: jusque };
-		}
-		return { de: de, a: null };
-	}
-	adresse = lireAdresse();
-	reste = reste.trim();
-	if ((m = /^s(.)((?:\\.|(?!\1).)*)\1((?:\\.|(?!\1).)*)\1([gI]*)$/.exec(reste))){
-		return { adresse: adresse, cmd: "s", re: new RegExp(m[2], m[4].indexOf("g") > -1 ? (m[4].indexOf("I") > -1 ? "gi" : "g") : (m[4].indexOf("I") > -1 ? "i" : "")), par: m[3].replace(/\\\//g, "/").replace(/&/g, "$&") };
-	}
-	if (reste === "p" || reste === "d") return { adresse: adresse, cmd: reste };
-	throw new ShellError("sed : script « " + script + " » non compris ici. Exemples : sed -n '5,10p' f, sed 's/ancien/nouveau/g' f, sed '/motif/d' f");
-}
-
-Shell.sorts.sed = function(args, io){
-	var muet = false, surPlace = false, scripts = [], fichiers = [];
-	for (var i = 0; i < args.length; i++){
-		if (args[i] === "-n") muet = true;
-		else if (args[i] === "-i") surPlace = true;
-		else if (args[i] === "-e"){ scripts.push(args[++i] || ""); }
-		else if (/^-[ni]+$/.test(args[i])){ muet = args[i].indexOf("n") > -1 || muet; surPlace = args[i].indexOf("i") > -1 || surPlace; }
-		else if (scripts.length === 0) scripts.push(args[i]);
-		else fichiers.push(args[i]);
-	}
-	if (scripts.length === 0) throw new ShellError("sed : quel script ? Utilisation : sed 's/ancien/nouveau/g' OBJET");
-	var commandes = scripts.map(compilerSed);
-	function appliquer(texte){
-		var lignes = lignesDe(texte), sortie = [];
-		var total = lignes.length;
-		function correspond(adr, ligne, num){
-			if (adr.motif) return adr.motif.test(ligne);
-			return num === (adr.ligne === "$" ? total : parseInt(adr.ligne, 10));
-		}
-		var dansIntervalle = commandes.map(function(){ return false; });
-		lignes.forEach(function(ligne, index){
-			var num = index + 1, supprimee = false, imprimer = [];
-			commandes.forEach(function(c, k){
-				if (supprimee) return;
-				var a = c.adresse;
-				if (a){
-					var original = ligne;
-					if (!a.a){ if (!correspond(a.de, original, num)) return; }
-					else if (dansIntervalle[k]){
-						// La fin d'un intervalle : une ligne qui correspond, ou un numéro atteint.
-						if (a.a.motif ? correspond(a.a, original, num) : num >= (a.a.ligne === "$" ? total : parseInt(a.a.ligne, 10))) dansIntervalle[k] = false;
-					}
-					else if (correspond(a.de, original, num)){
-						var fin = a.a.motif ? null : (a.a.ligne === "$" ? total : parseInt(a.a.ligne, 10));
-						dansIntervalle[k] = fin === null || fin > num;
-					}
-					else return;
-				}
-				if (c.cmd === "s") ligne = ligne.replace(c.re, c.par);
-				else if (c.cmd === "d") supprimee = true;
-				else if (c.cmd === "p") imprimer.push(ligne);
-			});
-			if (supprimee) return;
-			imprimer.forEach(function(l){ sortie.push(l); });
-			if (!muet) sortie.push(ligne);
-		});
-		return sortie.join("\n");
-	}
-	GameEvents.fire({ type: "sed", scripts: scripts, room: current_room });
-	if (fichiers.length === 0){
-		if (surPlace) throw new ShellError("sed -i : il faut un objet à modifier sur place");
-		return appliquer(texteEntree([], io, "sed"));
-	}
-	if (surPlace){
-		fichiers.forEach(function(nom){
-			var t = Shell.objetLisible(nom, io, "sed");
-			Shell.verifierImmuable(t.item, "sed");
-			if (!Shell.bit(t.item, "w", io)) throw new ShellError("sed : impossible de modifier « " + nom + " » : Permission non accordée");
-			var ancien = t.item.getText();
-			t.item.setText(appliquer(ancien));
-			GameEvents.fire({ type: "write", item: t.item, room: t.room, append: false, text: t.item.getText(), created: false, previous: ancien });
-		});
-		return "";
-	}
-	return appliquer(texteEntree(fichiers, io, "sed"));
-};
-
-/*
- * Une petite partie d'awk : -F, motifs (/regex/, $N==val, $N~/re/, NR==n, comparaisons),
- * actions { print ... } avec $0, $N, NF, NR et des chaînes entre guillemets.
- */
-function compilerAwk(source){
-	var programme = source.trim(), motif = null, action = null, m;
-	if ((m = /^(.*?)\{(.*)\}\s*$/.exec(programme))){ motif = m[1].trim(); action = m[2].trim(); }
-	else motif = programme;
-	if (motif === "") motif = null;
-	function valeur(expr, champs, nr){
-		expr = expr.trim();
-		var mm;
-		if ((mm = /^\$(\d+)$/.exec(expr))) return champs[parseInt(mm[1], 10)] !== undefined ? champs[parseInt(mm[1], 10)] : "";
-		if (expr === "NF") return String(champs.length - 1);
-		if (expr === "NR") return String(nr);
-		if ((mm = /^"([^"]*)"$/.exec(expr))) return mm[1];
-		if (/^-?\d+(\.\d+)?$/.test(expr)) return expr;
-		throw new ShellError("awk : expression « " + expr + " » non comprise ici");
-	}
-	// Couper sur && ou || hors des chaînes et des /motifs/.
-	function couper(texte, op){
-		var morceaux = [], courant = "", chaine = false;
-		for (var i = 0; i < texte.length; i++){
-			var c = texte.charAt(i);
-			if (c === "\"") chaine = !chaine;
-			if (!chaine && texte.substr(i, 2) === op){ morceaux.push(courant); courant = ""; i++; continue; }
-			courant += c;
-		}
-		morceaux.push(courant);
-		return morceaux.map(function(x){ return x.trim(); });
-	}
-	function teste(champs, nr){
-		if (motif === null) return true;
-		return couper(motif, "||").some(function(ou){
-			return couper(ou, "&&").every(function(et){ return condition(et, champs, nr); });
-		});
-	}
-	function condition(motif, champs, nr){
-		var mm;
-		if ((mm = /^\/(.*)\/$/.exec(motif))) return new RegExp(mm[1]).test(champs[0]);
-		if ((mm = /^(\$\d+|NR|NF)\s*~\s*\/(.*)\/$/.exec(motif))) return new RegExp(mm[2]).test(valeur(mm[1], champs, nr));
-		if ((mm = /^(\$\d+|NR|NF)\s*(==|!=|>=|<=|>|<)\s*(.+)$/.exec(motif))){
-			var g = valeur(mm[1], champs, nr), d = valeur(mm[3], champs, nr);
-			var num = /^-?\d+(\.\d+)?$/.test(g) && /^-?\d+(\.\d+)?$/.test(d);
-			var x = num ? parseFloat(g) : g, y = num ? parseFloat(d) : d;
-			switch (mm[2]){
-				case "==": return x === y;
-				case "!=": return x !== y;
-				case ">=": return x >= y;
-				case "<=": return x <= y;
-				case ">": return x > y;
-				case "<": return x < y;
-			}
-		}
-		throw new ShellError("awk : motif « " + motif + " » non compris ici. Exemples : '$3 == 0', '/ECHEC/', 'NR == 2'");
-	}
-	function agir(champs, nr){
-		if (action === null || action === "print" || action === "print $0") return champs[0];
-		var mm = /^print\s+(.*)$/.exec(action);
-		if (!mm) throw new ShellError("awk : seule l'action print est connue ici. Exemple : '{ print $1, $3 }'");
-		var morceaux = [], courant = "", dansChaine = false;
-		for (var i = 0; i < mm[1].length; i++){
-			var c = mm[1].charAt(i);
-			if (c === "\"") dansChaine = !dansChaine;
-			if (c === "," && !dansChaine){ morceaux.push(courant); courant = ""; continue; }
-			courant += c;
-		}
-		morceaux.push(courant);
-		return morceaux.map(function(expr){
-			return expr.trim().split(/\s+(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(function(e){ return valeur(e, champs, nr); }).join("");
-		}).join(" ");
-	}
-	return { teste: teste, agir: agir };
-}
-
-Shell.sorts.awk = function(args, io){
-	var separateur = null, i = 0;
-	if (args[i] && args[i].indexOf("-F") === 0){
-		separateur = args[i].length > 2 ? args[i].substring(2) : args[++i];
-		i++;
-	}
-	if (args[i] === undefined) throw new ShellError("awk : quel programme ? Exemple : awk -F: '$3 == 0 { print $1 }' passwd");
-	var prog = compilerAwk(args[i]);
-	var texte = texteEntree(args.slice(i + 1), io, "awk");
-	var sortie = [];
-	lignesDe(texte).forEach(function(ligne, index){
-		if (ligne === "" && index === lignesDe(texte).length - 1) return;
-		var champs = separateur === null ? ligne.trim().split(/\s+/) : ligne.split(separateur);
-		champs.unshift(ligne);
-		if (prog.teste(champs, index + 1)) sortie.push(prog.agir(champs, index + 1));
-	});
-	GameEvents.fire({ type: "awk", programme: args[i], separateur: separateur, sortie: sortie.join("\n"), room: current_room });
-	return sortie.join("\n");
-};
-
-/* tr : des ensembles de caractères, avec les intervalles a-z. */
-function developperEnsemble(e){
-	var sortie = "";
-	for (var i = 0; i < e.length; i++){
-		if (e.charAt(i + 1) === "-" && i + 2 < e.length){
-			var debut = e.charCodeAt(i), fin = e.charCodeAt(i + 2);
-			for (var c = debut; c <= fin; c++) sortie += String.fromCharCode(c);
-			i += 2;
-		} else {
-			sortie += e.charAt(i);
-		}
-	}
-	return sortie;
-}
-
-Shell.sorts.tr = function(args, io){
-	if (io.stdin === null){
-		throw new ShellError("tr : tr ne lit que ce qui arrive par un tuyau. Exemple : echo bonjour | tr a-z A-Z\n" +
-			C.gris("(Pour un objet : cat OBJET | tr ...)"));
-	}
-	var supprimer = args[0] === "-d";
-	var ensembles = args.filter(function(a){ return a.charAt(0) !== "-" || a.length === 1; });
-	if (supprimer){
-		if (ensembles.length !== 1) throw new ShellError("tr -d : quels caractères supprimer ? Exemple : tr -d 'aeiou'");
-		var aSupprimer = developperEnsemble(ensembles[0]);
-		return io.stdin.split("").filter(function(c){ return aSupprimer.indexOf(c) === -1; }).join("");
-	}
-	if (ensembles.length !== 2) throw new ShellError("tr : il faut deux ensembles. Exemple : tr a-z A-Z, ou tr 'A-Za-z' 'N-ZA-Mn-za-m' (ROT13)");
-	var de = developperEnsemble(ensembles[0]), vers = developperEnsemble(ensembles[1]);
-	var sortie = io.stdin.split("").map(function(c){
-		var k = de.indexOf(c);
-		return k === -1 ? c : vers.charAt(Math.min(k, vers.length - 1));
-	}).join("");
-	GameEvents.fire({ type: "tr", text: sortie, de: ensembles[0], vers: ensembles[1] });
-	return sortie;
-};
-
-Shell.sorts.rev = function(args, io){
-	var sortie = lignesDe(texteEntree(args, io, "rev")).map(function(l){ return l.split("").reverse().join(""); }).join("\n");
-	GameEvents.fire({ type: "rev", text: sortie });
-	return sortie;
-};
-
-Shell.sorts.tee = function(args, io){
-	var ajout = args[0] === "-a";
-	var fichiers = args.filter(function(a){ return a.charAt(0) !== "-"; });
-	var texte = io.stdin === null ? "" : io.stdin;
-	fichiers.forEach(function(nom){ Shell.ecrire(nom, texte, ajout, io.stdinSansFin); });
-	GameEvents.fire({ type: "tee", files: fichiers, append: ajout });
-	return texte;
-};
+/* sed, awk, tr, rev et tee sont dans Texte.js et Awk.js, chargés après ce fichier. */
 
 Shell.sorts.which = function(args, io){
 	var sortie = [];
@@ -875,7 +633,7 @@ Shell.sorts.userdel = function(args, io){
 	if (!io.sudo) throw new ShellError("userdel : Permission denied.\nuserdel : cannot lock /etc/passwd; try again later.\n" + C.gris("(Supprimer un compte est réservé à root : sudo userdel " + nom + ")"));
 	if (nom === JOUEUR || nom === "root") throw new ShellError("userdel : supprimer « " + nom + " » ? C'est toi, ou c'est root. Non.");
 	var passwd = fichierSysteme("passwd");
-	if (!passwd || !new RegExp("^" + nom + ":", "m").test(passwd.getText())) throw new ShellError("userdel : user '" + nom + "' does not exist");
+	if (!passwd || !new RegExp("^" + nom.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ":", "m").test(passwd.getText())) throw new ShellError("userdel : user '" + nom + "' does not exist");
 	var actifs = Shell.procsDeLHote().filter(function(e){ return e.proc.owner === nom; });
 	if (actifs.length) throw new ShellError("userdel : user " + nom + " is currently used by process " + actifs[0].proc.pid + "\n" + C.gris("(Il faut d'abord arrêter ses processus : sudo pkill -u " + nom + ")"));
 	["passwd", "shadow", "group"].forEach(function(f){
@@ -908,8 +666,8 @@ Shell.sorts.usermod = function(args, io){
 		if (!retirer && !ajouter) throw new ShellError("usermod : -G seul remplacerait TOUS les groupes de " + nom + ". Précise -aG (ajouter) ou -rG (retirer).");
 		var fichierGroupes = fichierSysteme("group");
 		var passwdG = fichierSysteme("passwd");
-		if (!passwdG || !new RegExp("^" + nom + ":", "m").test(passwdG.getText())) throw new ShellError("usermod : user '" + nom + "' does not exist");
-		if (!fichierGroupes || !new RegExp("^" + groupe + ":", "m").test(fichierGroupes.getText())) throw new ShellError("usermod : group '" + groupe + "' does not exist");
+		if (!passwdG || !new RegExp("^" + nom.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ":", "m").test(passwdG.getText())) throw new ShellError("usermod : user '" + nom + "' does not exist");
+		if (!fichierGroupes || !new RegExp("^" + groupe.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ":", "m").test(fichierGroupes.getText())) throw new ShellError("usermod : group '" + groupe + "' does not exist");
 		fichierGroupes.setText(lignesDe(fichierGroupes.getText()).map(function(l){
 			var c = l.split(":");
 			if (c[0] !== groupe || c.length < 4) return l;
@@ -923,7 +681,7 @@ Shell.sorts.usermod = function(args, io){
 		return "";
 	}
 	var shadow = fichierSysteme("shadow");
-	if (!shadow || !new RegExp("^" + nom + ":", "m").test(shadow.getText())) throw new ShellError("usermod : user '" + nom + "' does not exist");
+	if (!shadow || !new RegExp("^" + nom.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ":", "m").test(shadow.getText())) throw new ShellError("usermod : user '" + nom + "' does not exist");
 	shadow.setText(lignesDe(shadow.getText()).map(function(l){
 		var c = l.split(":");
 		if (c[0] !== nom) return l;
@@ -1356,6 +1114,81 @@ Shell.sorts.vi = Shell.sorts.vim;
 
 function page(resume, titre, texte){ return { resume: resume, titre: titre, page: texte }; }
 
+/*
+ * Les sorts du scripteur (read, printf, seq, basename, dirname, expr, sleep : voir Interpreteur.js).
+ * Aucun chapitre ne les enseigne encore : le chapitre 4 les rangera dans son ORDRE_DES_SORTS.
+ * D'ici là, ils sont « hors barème » : pas d'XP de premier usage (voir Shell.appeler).
+ */
+MANUEL["read"] = page("lire une ligne et la ranger dans des variables", "READ (lire)",
+	"  read NOM               lit une ligne et la range dans la variable NOM\n" +
+	"  read A B C             coupe la ligne en mots : le premier dans A, le deuxième dans B, tout le reste dans C\n" +
+	"  read -r LIGNE          garde les \\ tels quels (le bon réflexe pour lire un fichier)\n" +
+	"  read -p \"Nom ? \" NOM   affiche une question avant de lire\n" +
+	"  read -a T              range chaque mot dans le tableau T (${T[0]}, ${T[1]}...)\n" +
+	"  IFS=: read A B C       coupe sur les : au lieu des espaces\n\n" +
+	"read lit son entrée : un tuyau, un objet (avec <) ou un texte (avec <<<). Il rend le statut 1 quand il\n" +
+	"n'y a plus rien à lire : c'est ce qui arrête la boucle classique, celle qui lit un fichier ligne à ligne :\n\n" +
+	"  while read -r ligne; do\n" +
+	"      echo \"lu : $ligne\"\n" +
+	"  done < fichier\n\n" +
+	"Piège : echo Ada | read nom ne garde rien, car chaque morceau d'un tuyau tourne dans son propre\n" +
+	"sous-shell. Écris plutôt read nom <<< \"Ada\".\n" +
+	"Dans ce monde, read ne lit pas le clavier : donne-lui toujours un tuyau, un objet ou un texte.");
+
+MANUEL["printf"] = page("écrire un texte mis en forme", "PRINT Formatted (écrire avec un format)",
+	"  printf FORMAT ARGUMENTS...\n\n" +
+	"  %s     un texte                    %5s    sur 5 colonnes, calé à droite\n" +
+	"  %d     un nombre entier            %-10s  sur 10 colonnes, calé à gauche\n" +
+	"  %.2f   un nombre à 2 décimales     %03d   sur 3 chiffres : 007\n" +
+	"  %x     un nombre en hexadécimal    %%     le signe % lui-même\n" +
+	"  \\n     un retour à la ligne        \\t     une tabulation\n\n" +
+	"Contrairement à echo, printf n'ajoute pas de retour à la ligne tout seul : pense au \\n.\n" +
+	"S'il y a plus d'arguments que de %, le format resservira :\n" +
+	"  printf \"%s\\n\" un deux trois      un mot par ligne\n" +
+	"  printf \"%-8s %3d\\n\" Ada 42       un petit tableau bien aligné\n" +
+	"  printf -v VAR \"%03d\" 7          range le résultat (007) dans VAR au lieu de l'afficher");
+
+MANUEL["seq"] = page("écrire une suite de nombres", "SEQuence",
+	"  seq 5              1 2 3 4 5, un par ligne\n" +
+	"  seq 2 5            de 2 à 5\n" +
+	"  seq 0 10 100       de 0 à 100, de 10 en 10\n" +
+	"  seq 5 -1 1         à rebours : 5 4 3 2 1\n" +
+	"  seq -s , 3         1,2,3 (le séparateur de ton choix)\n" +
+	"  seq -w 8 10        08 09 10 (tous de la même largeur)\n\n" +
+	"Le compagnon des boucles : for i in $(seq 1 10); do ...; done\n" +
+	"(bash sait aussi l'écrire tout seul : for i in {1..10}, ou for (( i = 1; i <= 10; i++ )).)");
+
+MANUEL["basename"] = page("garder le nom d'un chemin, sans les lieux", "BASE NAME (le nom de base)",
+	"  basename ~/Village/Marche/Panier.txt        Panier.txt\n" +
+	"  basename ~/Village/Marche/Panier.txt .txt   Panier (sans le suffixe)\n" +
+	"  basename -a a/b c/d                          b et d, un par ligne\n\n" +
+	"Son jumeau, dirname, garde l'autre moitié. Dans un script :\n" +
+	"  for f in *.txt; do echo \"$(basename \"$f\" .txt)\"; done\n" +
+	"(bash sait aussi le faire tout seul : ${f##*/} et ${f%.txt}.)");
+
+MANUEL["dirname"] = page("garder les lieux d'un chemin, sans le nom", "DIRectory NAME (le nom du lieu)",
+	"  dirname ~/Village/Marche/Panier.txt    ~/Village/Marche\n" +
+	"  dirname Panier.txt                     . (ici même)\n\n" +
+	"Le jumeau de basename. Pratique dans un script pour savoir où il se trouve : dirname \"$0\".");
+
+MANUEL["expr"] = page("calculer à l'ancienne, ou comparer", "EXPRession",
+	"  expr 2 + 3          5\n" +
+	"  expr 7 / 2          3 (les nombres entiers seulement)\n" +
+	"  expr 6 \\* 7         42 : le * doit être protégé, sinon le shell le prend pour un joker\n" +
+	"  expr length Ada     3\n" +
+	"  expr 3 \\> 2         1 (vrai) ; 0 pour faux\n\n" +
+	"Chaque nombre et chaque opérateur est un argument à part : les espaces comptent.\n" +
+	"C'est l'outil des vieux scripts. Aujourd'hui, bash calcule tout seul : echo $(( 6 * 7 )).");
+
+MANUEL["sleep"] = page("attendre un moment", "SLEEP (dormir)",
+	"  sleep 2       attend 2 secondes\n" +
+	"  sleep 0.5     une demi-seconde\n" +
+	"  sleep 1m      une minute (s, m, h, d)\n\n" +
+	"Utile dans une boucle qui surveille quelque chose : while true; do ...; sleep 5; done\n" +
+	"Dans ce monde, le temps file tout seul : sleep rend la main aussitôt.");
+["read", "printf", "seq", "basename", "dirname", "expr", "sleep"].forEach(function(s){ MANUEL[s].horsBareme = true; });
+
+
 MANUEL["strings"] = page("afficher le texte lisible caché dans un fichier", "STRINGS (les chaînes de caractères)",
 	"  strings FICHIER        affiche chaque suite d'au moins 4 caractères lisibles\n  strings -n 8 FICHIER   au moins 8\n\n" +
 	"Indispensable devant un programme compilé (un binaire) : cat n'y montre que du charabia,\nstrings en sort les adresses, les messages et parfois les mots de passe oubliés là.");
@@ -1386,14 +1219,90 @@ MANUEL["gunzip"] = page("décompresser un fichier .gz", "GNU UNZIP",
 MANUEL["zcat"] = page("lire une archive gzip sans la décompresser", "Z CAT",
 	"  zcat FICHIER.gz        affiche le contenu d'origine\n  zcat auth.log.2.gz | grep Accepted\n\nzcat lit toute archive gzip, quel que soit son nom.");
 MANUEL["sed"] = page("filtrer ou transformer un texte ligne par ligne", "Stream EDitor",
-	"  sed -n '5,10p' F         affiche les lignes 5 à 10\n  sed 's/ancien/nouveau/g' F   remplace partout\n  sed '/motif/d' F         supprime les lignes qui contiennent motif\n  sed -i 's/a/b/' F        modifie le fichier sur place\n\nSans -i, sed affiche le résultat et ne touche pas au fichier.");
-MANUEL["awk"] = page("découper un texte en colonnes et trier les lignes", "Aho, Weinberger et Kernighan",
-	"  awk '{ print $1 }' F           la première colonne (séparées par des espaces)\n  awk -F: '{ print $1, $3 }' F   colonnes séparées par des deux-points\n  awk -F: '$3 == 0' /etc/passwd  les lignes dont la 3e colonne vaut 0\n  awk '/ECHEC/ { print $4 }' F   la 4e colonne des lignes qui contiennent ECHEC\n\n$0 est la ligne entière, NR son numéro, NF son nombre de colonnes.");
+	"  sed 's/ancien/nouveau/' F      remplace la 1re occurrence de chaque ligne\n" +
+	"  sed 's/ancien/nouveau/g' F     remplace partout (g : global)\n" +
+	"  sed 's/a/b/2' F                seulement la 2e occurrence ; 2g : à partir de la 2e\n" +
+	"  sed -n '5,10p' F               affiche les lignes 5 à 10 (-n : rien d'autre)\n" +
+	"  sed -n '/début/,/fin/p' F      de la ligne qui contient début à celle qui contient fin\n" +
+	"  sed '/motif/d' F               supprime les lignes qui contiennent motif\n" +
+	"  sed '1d;$d' F                  supprime la première et la dernière ligne ($ : la dernière)\n" +
+	"  sed '/motif/!d' F              garde seulement ces lignes (! : l'inverse)\n" +
+	"  sed -n '1~2p' F                une ligne sur deux ; 2,+3 : la 2e et les 3 suivantes\n" +
+	"  sed '3a texte' F               ajoute une ligne après la 3e (i : avant, c : à la place)\n" +
+	"  sed '/motif/{s/a/b/;s/c/d/}' F plusieurs commandes sur les mêmes lignes\n" +
+	"  sed 'y/abc/xyz/' F             change a en x, b en y, c en z\n" +
+	"  sed '5q' F                     s'arrête après la 5e ligne\n" +
+	"  sed -n '$=' F                  le numéro de la dernière ligne (le nombre de lignes)\n" +
+	"  sed -i 's/a/b/' F              modifie le fichier sur place\n" +
+	"  sed -i.bak 's/a/b/' F          pareil, en gardant l'original dans F.bak\n" +
+	"\n" +
+	"Dans s///, & est le morceau trouvé et \\1 \\2... les groupes \\( \\) :\n" +
+	"  sed 's/[0-9]\\+/[&]/' F                     met le premier nombre entre crochets\n" +
+	"  sed 's/\\(.*\\):\\(.*\\)/\\2:\\1/' F            échange ce qui est avant et après « : »\n" +
+	"  sed -E 's/(.*):(.*)/\\2:\\1/' F              pareil avec -E : ( ) sans barres obliques\n" +
+	"  sed 's/.*/\\U&/' F                          tout en majuscules (\\L : minuscules)\n" +
+	"\n" +
+	"Sans -E, sed parle la langue « de base » (BRE), comme grep : \\( \\) \\{ \\} \\+ \\? \\|.\n" +
+	"Les espaces de réserve, pour les experts : h H (garder), g G (reprendre), x (échanger),\n" +
+	"n N (ligne suivante), P D. Exemple : sed -n '1!G;h;$p' F renverse le fichier.\n" +
+	"\n" +
+	"Sans -i, sed affiche le résultat et ne touche pas au fichier.");
+MANUEL["awk"] = page("découper un texte en colonnes, filtrer, compter, calculer", "Aho, Weinberger et Kernighan",
+	"Un programme awk est une suite de règles « motif { action } » : pour chaque ligne,\n" +
+	"chaque règle dont le motif est vrai lance son action.\n" +
+	"\n" +
+	"  awk '{ print $1 }' F           la première colonne (séparées par des espaces)\n" +
+	"  awk -F: '{ print $1, $3 }' F   colonnes séparées par des deux-points\n" +
+	"  awk -F: '$3 == 0' /etc/passwd  les lignes dont la 3e colonne vaut 0\n" +
+	"  awk '/ECHEC/ { print $4 }' F   la 4e colonne des lignes qui contiennent ECHEC\n" +
+	"  awk 'NR == 2, NR == 5' F       de la 2e à la 5e ligne\n" +
+	"  awk '{ n[$1]++ } END { for (k in n) print k, n[k] }' F    compte chaque valeur de la 1re colonne\n" +
+	"  awk '{ s += $2 } END { print s, s / NR }' F                somme et moyenne de la 2e colonne\n" +
+	"  awk -v seuil=10 '$2 > seuil' F                            une variable venue de la ligne de commande\n" +
+	"  awk '!vu[$0]++' F              retire les doublons sans trier\n" +
+	"\n" +
+	"$0 est la ligne entière, $1 $2... ses colonnes, $NF la dernière, $(NF-1) l'avant-dernière.\n" +
+	"NR est le numéro de la ligne, NF son nombre de colonnes, FILENAME l'objet lu.\n" +
+	"FS et OFS : les séparateurs en entrée et en sortie ; BEGIN { FS = \":\" } équivaut à -F:.\n" +
+	"Changer une colonne ($2 = \"x\") reconstruit la ligne avec OFS.\n" +
+	"\n" +
+	"Le langage : variables, tableaux t[cle], if/else, while, do, for (i = 1; i <= NF; i++),\n" +
+	"for (k in t), next, exit, delete, et les fonctions length, substr, index, split,\n" +
+	"sub, gsub, match, sprintf, toupper, tolower, int, sqrt... et les tiennes :\n" +
+	"  awk 'function carre(x) { return x * x } { print carre($1) }' F\n" +
+	"\n" +
+	"  printf \"%-10s %5.2f\\n\", $1, $2     une sortie bien alignée (%s %d %f %x %c %%)\n" +
+	"  print $1 > \"liste.txt\"              écrit dans un objet (>> : ajoute à la suite)");
 MANUEL["tr"] = page("remplacer ou supprimer des caractères", "TRanslate",
-	"  echo bonjour | tr a-z A-Z       BONJOUR\n  cat F | tr -d ' '               supprime les espaces\n  cat F | tr 'A-Za-z' 'N-ZA-Mn-za-m'   ROT13 : chaque lettre décalée de 13\n\ntr ne lit que l'entrée standard : il faut un tuyau.");
+	"  echo bonjour | tr a-z A-Z            BONJOUR\n" +
+	"  cat F | tr '[:lower:]' '[:upper:]'   pareil, avec les classes de caractères\n" +
+	"  cat F | tr -d ' '                    supprime les espaces\n" +
+	"  cat F | tr -d '[:digit:]'            supprime les chiffres\n" +
+	"  cat F | tr -s ' '                    resserre les espaces répétées en une seule\n" +
+	"  cat F | tr '\\n' ' '                  met tout sur une ligne (\\n : le retour à la ligne, \\t : la tabulation)\n" +
+	"  cat F | tr -c '[:alnum:]\\n' '_'      remplace tout ce qui n'est PAS une lettre ou un chiffre (-c : le complément)\n" +
+	"  cat F | tr -cd '[:print:]'           ne garde que les caractères affichables\n" +
+	"  cat F | tr 'A-Za-z' 'N-ZA-Mn-za-m'   ROT13 : chaque lettre décalée de 13\n" +
+	"\n" +
+	"Les classes : [:upper:] [:lower:] [:alpha:] [:digit:] [:alnum:] [:space:] [:punct:].\n" +
+	"tr ne lit que l'entrée standard : il faut un tuyau, jamais un nom d'objet.");
 MANUEL["rev"] = page("écrire chaque ligne à l'envers", "REVerse", "  rev FICHIER            chaque ligne renversée, de droite à gauche\n  echo bonjour | rev     ruojnob");
 MANUEL["tee"] = page("écrire dans un fichier tout en affichant", "TEE (le raccord en T des plombiers)",
-	"  commande | tee F        affiche ET enregistre dans F\n  commande | tee -a F     ajoute à la fin de F\n\nPratique pour garder une trace d'une enquête sans rien perdre à l'écran.");
+	"  commande | tee F          affiche ET enregistre dans F\n" +
+	"  commande | tee -a F       ajoute à la fin de F\n" +
+	"  commande | tee A B | wc -l   écrit dans A et dans B, et passe le texte au sort suivant\n" +
+	"\n" +
+	"Pratique pour garder une trace d'une enquête sans rien perdre à l'écran.");
+MANUEL["nl"] = page("numéroter les lignes d'un texte", "Number Lines",
+	"  nl F                     numérote les lignes non vides\n" +
+	"  nl -ba F                 numérote toutes les lignes, vides comprises\n" +
+	"  nl -w3 -s': ' F          numéros sur 3 colonnes, suivis de « : »\n" +
+	"  nl -v 10 -i 5 F          commence à 10, de 5 en 5\n" +
+	"\n" +
+	"Proche de cat -n, mais plus réglable.");
+MANUEL["fold"] = page("couper les lignes trop longues", "FOLD (plier)",
+	"  fold -w 40 F             coupe chaque ligne tous les 40 caractères\n" +
+	"  fold -s -w 40 F          coupe plutôt après une espace, pour ne pas casser les mots");
 MANUEL["which"] = page("trouver où se trouve un programme", "WHICH", "  which nc               /usr/bin/nc\n\nUtile pour vérifier qu'on lance bien le vrai programme, et pas un piège déposé ailleurs.");
 MANUEL["uname"] = page("voir le système et le noyau de la machine", "UNIX NAME", "  uname -a               tout : nom, version du noyau, architecture\n  uname -r               la version du noyau seulement");
 MANUEL["dmesg"] = page("lire les messages du noyau", "Display MESsaGes",

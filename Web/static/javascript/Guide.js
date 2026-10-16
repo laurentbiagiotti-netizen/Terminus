@@ -197,7 +197,9 @@ var SCENES = {
 	r_annexe: { image: "loc_annexe.gif", titre: "Chapitre 2 · Acte II : l'Annexe", chapitre: 2,
 		lignes: ["Le bâtiment B tient. La cafétéria, non.", "Plus de Wi-Fi, un écran noir, une fausse boîte aux lettres.", "Même méthode : du câble jusqu'au web."] },
 	c_crypte: { image: "loc_crypte.gif", titre: "Chapitre 3 · La Crypte", chapitre: 3,
-		lignes: ["Un mage noir s'est glissé dans la Citadelle.", "Ses sorts dorment dans le donjon, sous tes pieds.", "Grace te guide à la radio. La chasse est ouverte."] }
+		lignes: ["Un mage noir s'est glissé dans la Citadelle.", "Ses sorts dorment dans le donjon, sous tes pieds.", "Grace te guide à la radio. La chasse est ouverte."] },
+	d_entree: { image: "loc_library.gif", titre: "Chapitre 4 · L'Académie des Arcanes", chapitre: 4,
+		lignes: ["La Nuée a frappé le serveur d'archives cette nuit.", "Données volées, et une bombe programmée pour minuit.", "Huit maîtres, une horloge qui tourne : mesure, nettoie, restaure, documente."] }
 };
 function sceneDeChapitre(scene){
 	var fond = document.createElement("div");
@@ -224,14 +226,14 @@ function sceneDeChapitre(scene){
 	// La carte des chapitres : celui qui commence s'allume.
 	var carte = document.createElement("p");
 	carte.className = "scene-carte";
-	["Terminus", "La panne", "La Crypte"].forEach(function(nom, i){
+	["Terminus", "La panne", "La Crypte", "L'Académie"].forEach(function(nom, i){
 		var etape = document.createElement("span");
 		var n = i + 1;
-		var fini = n < scene.chapitre || (n === 1 && state.has("victoire")) || (n === 2 && state.quests["r_fin"]) || (n === 3 && state.quests["c_rapport"]);
+		var fini = n < scene.chapitre || (n === 1 && state.has("victoire")) || (n === 2 && state.quests["r_fin"]) || (n === 3 && state.quests["c_rapport"]) || (n === 4 && state.quests["d_fin"]);
 		etape.className = "scene-etape" + (n === scene.chapitre ? " scene-ici" : (fini ? " scene-fait" : ""));
 		etape.textContent = (n === scene.chapitre ? "● " : (fini ? "✓ " : "○ ")) + nom;
 		carte.appendChild(etape);
-		if (i < 2){ var trait = document.createElement("span"); trait.className = "scene-trait"; trait.textContent = " ── "; carte.appendChild(trait); }
+		if (i < 3){ var trait = document.createElement("span"); trait.className = "scene-trait"; trait.textContent = " ── "; carte.appendChild(trait); }
 	});
 	cadre.appendChild(carte);
 	var suite = document.createElement("p");
@@ -276,9 +278,11 @@ function recapChapitre(chapitre){
 	var minutes, badges = [], sorts;
 	if (chapitre === 1){ minutes = Math.round(state.tempsMs / 60000); }
 	else if (chapitre === 3){ minutes = Math.round((state.tempsMs - (state.debutChapitre3 || 0)) / 60000); }
+	else if (chapitre === 5){ minutes = Math.round((state.tempsMs - (state.debutChapitre5 || 0)) / 60000); }
 	else { minutes = Math.round((state.tempsMs - (state.debutChapitre2 || 0)) / 60000); }
 	if (chapitre === 3 && typeof RELIQUES !== "undefined") badges = Object.keys(RELIQUES).filter(function(id){ return state.quests[id]; });
 	if (chapitre === 2 && typeof TROPHEES_CRYPTE !== "undefined") badges = Object.keys(TROPHEES_CRYPTE).filter(function(id){ return state.quests[id]; });
+	if (chapitre === 5 && typeof TROPHEES_CH4 !== "undefined") badges = Object.keys(TROPHEES_CH4).filter(function(id){ return state.quests[id]; });
 	sorts = Object.keys(state.frequences || {}).filter(function(s){ return SORTS_DU_JEU.indexOf(s) === -1; }).filter(function(s){ return chapitreDuSort(s) === chapitre || (chapitre === 1 && ["ls", "cd", "cat"].indexOf(s) > -1); });
 	sorts.sort(function(a, b){ return state.frequences[b] - state.frequences[a]; });
 	return { minutes: minutes, badges: badges, top: sorts.slice(0, 3).map(function(s){ return s + " ×" + state.frequences[s]; }) };
@@ -342,6 +346,18 @@ var QUIZ = {
 		["Un service relancé par Restart=always : tuer son processus suffit-il ?", ["Non : systemctl disable --now", "Oui, kill -9 suffit", "Oui, il faut juste redémarrer", "Non : il faut supprimer le compte"], 0, "systemd le relance aussitôt ; il faut l'arrêter et le désactiver."],
 		["Avant d'analyser une preuve, on :", ["la copie intacte et note son empreinte", "la corrige", "la supprime de la machine", "l'envoie par mail"], 0, "C'est la chaîne de traçabilité : l'empreinte prouve qu'elle n'a pas bougé."],
 		["/etc/sudoers se modifie avec :", ["visudo", "nano directement", "echo >>", "chmod"], 0, "visudo vérifie la syntaxe : une faute dans sudoers peut bloquer tout le monde."]
+	],
+	5: [
+		["Dans une expression régulière, que veut dire un point seul (.) ?", ["N'importe quel caractère", "Un vrai point", "La fin de la ligne", "Rien du tout"], 0, "Pour un vrai point, on l'échappe : \\. Sinon 10.0 attrape aussi 1000."],
+		["awk '{ s += $4 } END { print s }' fait :", ["La somme de la 4e colonne", "La 4e ligne", "Le nombre de colonnes", "La moyenne de la 4e colonne"], 0, "Chaque ligne ajoute son 4e champ à s ; END affiche le total à la fin."],
+		["Avant de transmettre un export à la CNIL, on :", ["le minimise : on masque ce qui n'est pas nécessaire", "l'envoie brut, pour être complet", "le chiffre avec base64", "le supprime"], 0, "La minimisation est un principe du RGPD ; et la notification se fait sous 72 heures."],
+		["jq -r '.[] | select(.gravite == \"critique\") | .machine' sert à :", ["Lister les machines des alertes critiques", "Compter les alertes", "Supprimer les alertes critiques", "Trier le fichier"], 0, "select ne laisse passer que les alertes critiques ; .machine en garde le nom ; -r enlève les guillemets."],
+		["Un compte fantôme vient d'être découvert. Le bon réflexe :", ["Le verrouiller (usermod -L), puis enquêter", "Le supprimer tout de suite", "Changer son nom", "L'ignorer"], 0, "Un compte supprimé, c'est une preuve perdue : on verrouille, on note, on supprime après."],
+		["Une bombe logique peut se cacher dans :", ["Un timer systemd, une tâche at ou une crontab", "Seulement une crontab", "Seulement /tmp", "Seulement le noyau"], 0, "Trois serrures du temps : systemctl list-timers, sudo atq, crontab -u NOM -l. On cherche partout."],
+		["rsync -a --delete SAUVEGARDE/ ARCHIVES/ :", ["Rend ARCHIVES identique à SAUVEGARDE", "Efface la sauvegarde", "Copie ARCHIVES dans SAUVEGARDE", "Compresse les archives"], 0, "La barre finale copie le contenu ; --delete retire ce qui n'existe pas dans la source. -n d'abord, pour voir."],
+		["La règle 3-2-1 des sauvegardes :", ["3 copies, 2 supports, 1 hors ligne", "3 jours, 2 heures, 1 minute", "3 serveurs, 2 mots de passe, 1 clé", "3 sauvegardes par jour"], 0, "Une copie hors ligne échappe au rançongiciel : c'est elle qui a sauvé les archives cette nuit."],
+		["Dans un script, set -e veut dire :", ["S'arrêter à la première commande qui échoue", "Afficher chaque commande", "Exporter toutes les variables", "Ignorer les erreurs"], 0, "Avec un contrôle des arguments et exit 1, c'est le garde-fou d'un script sûr."],
+		["Un service se relance tout seul et redépose des fichiers. Dans quel ordre agir ?", ["Arrêter et désactiver le service, puis nettoyer", "Nettoyer, puis nettoyer encore", "Redémarrer la machine", "Supprimer /srv"], 0, "Tant que la persistance tourne, nettoyer ne sert à rien : systemctl disable --now d'abord."]
 	]
 };
 
@@ -429,9 +445,10 @@ function lancerQuiz(chapitre){
 }
 
 Shell.sorts.quiz = function(args, io){
-	var choix = { "1": 1, "2": 3, "3": 2 }[args[0]] || (state.chapitreEnCours ? state.chapitreEnCours() : 1);
-	var fini = choix === 1 ? state.has("victoire") : (choix === 3 ? !!state.quests["r_fin"] : !!state.quests["c_rapport"]);
-	if (!fini) return "Le quiz du chapitre " + numeroAffiche(choix) + " s'ouvre à la fin du chapitre. " + C.gris("(quiz 1, quiz 2 ou quiz 3 pour un chapitre déjà terminé)");
+	var choix = { "1": 1, "2": 3, "3": 2, "4": 5 }[args[0]] || (state.chapitreEnCours ? state.chapitreEnCours() : 1);
+	var fini = choix === 1 ? state.has("victoire") : (choix === 3 ? !!state.quests["r_fin"] : (choix === 5 ? !!state.quests["d_fin"] : !!state.quests["c_rapport"]));
+	if (choix === 5 && (typeof QUIZ === "undefined" || !QUIZ[5])) return fini ? "Le quiz du chapitre 4 arrivera bientôt." : "Le quiz du chapitre 4 s'ouvrira à la fin du chapitre.";
+	if (!fini) return "Le quiz du chapitre " + numeroAffiche(choix) + " s'ouvre à la fin du chapitre. " + C.gris("(quiz 1, quiz 2, quiz 3 ou quiz 4 pour un chapitre déjà terminé)");
 	setTimeout(function(){ lancerQuiz(choix); }, 50);
 	return C.gris("(Le quiz du chapitre " + numeroAffiche(choix) + " : 5 questions tirées au hasard. 1 à 4 pour répondre, Échap pour sortir.)");
 };
@@ -572,7 +589,7 @@ COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 2, 0,
 	["ambiance", "l'ambiance sonore de chaque chapitre"],
 	["texte + / -", "agrandir ou réduire le texte"],
 	["contraste", "le contraste fort, plus lisible"]);
-MANUEL_DU_JEU.quiz = "quiz n'est PAS une commande Linux : c'est une commande du jeu.\nÀ la fin de chaque chapitre, cinq questions tirées des leçons. quiz 1, quiz 2 ou quiz 3 pour le rejouer.";
+MANUEL_DU_JEU.quiz = "quiz n'est PAS une commande Linux : c'est une commande du jeu.\nÀ la fin de chaque chapitre, cinq questions tirées des leçons. quiz 1, quiz 2, quiz 3 ou quiz 4 pour le rejouer.";
 MANUEL_DU_JEU.texte = "texte n'est PAS une commande Linux : elle règle la taille du texte du jeu.\n  texte +       plus grand\n  texte -       plus petit\n  texte normal  la taille d'origine";
 MANUEL_DU_JEU.contraste = "contraste n'est PAS une commande Linux : elle passe le jeu en contraste fort (texte blanc, couleurs vives, sans effet de vieil écran).";
 MANUEL_DU_JEU.ambiance = "ambiance n'est PAS une commande Linux : un fond sonore discret par chapitre. ambiance on, ambiance off.";

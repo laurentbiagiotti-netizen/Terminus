@@ -269,15 +269,22 @@ function texteBadges(quel){
 		tous.push({ id: id, chap: "cyber", nom: COMPETENCES[id], image: TROPHEES_CRYPTE[id][0], couche: "", lecon: TROPHEES_CRYPTE[id][1] });
 	});
 	if (state.has("crypteOuverte")) tous.push({ id: "platine_cyber", chap: "cyber", nom: COMPETENCES.platine_cyber, image: "tous les badges de la chasse", couche: "", lecon: "De la première trace au rapport d'incident : tu sais mener une enquête jusqu'au bout." });
+	if (state.has("ch4Ouvert") && typeof TROPHEES_CH4 !== "undefined"){
+		Object.keys(TROPHEES_CH4).forEach(function(id){
+			tous.push({ id: id, chap: "arcanes", nom: COMPETENCES[id], image: TROPHEES_CH4[id][0], couche: "", lecon: TROPHEES_CH4[id][1] });
+		});
+		tous.push({ id: "platine_ch4", chap: "arcanes", nom: COMPETENCES.platine_ch4, image: "tous les badges de l'Académie", couche: "", lecon: "Mesurer, prévenir, éradiquer, restaurer, écrire : tu sais mener une réponse à incident de bout en bout." });
+	}
 	// badges reseau, badges cyber, ou un nom de compétence (badges dns, badges sudo...).
 	var choisis = tous.filter(function(b){
 		if (!filtre) return true;
 		if (filtre === "reseau" || filtre === "panne") return b.chap === "reseau";
 		if (filtre === "cyber" || filtre === "chasse" || filtre === "securite") return b.chap === "cyber";
+		if (filtre === "arcanes" || filtre === "academie" || filtre === "avance" || filtre === "linux") return b.chap === "arcanes";
 		return sansAccent(b.nom).indexOf(filtre) > -1;
 	});
 	if (filtre && !choisis.length) return "badges : aucune compétence ne correspond à « " + quel + " ». " + C.gris("Exemples : badges reseau, badges cyber, badges dns, badges sudo.");
-	[["reseau", "RÉSEAU : LA PANNE DE L'ÉCOLE"], ["cyber", "CYBERSÉCURITÉ : LA CHASSE AU CORBEAU"]].forEach(function(c){
+	[["reseau", "RÉSEAU : LA PANNE DE L'ÉCOLE"], ["cyber", "CYBERSÉCURITÉ : LA CHASSE AU CORBEAU"], ["arcanes", "LINUX AVANCÉ : L'ACADÉMIE DES ARCANES"]].forEach(function(c){
 		var liste = choisis.filter(function(b){ return b.chap === c[0]; });
 		if (!liste.length) return;
 		// Le même compte que schema et traque : les badges d'étape ; le platine vient en plus.
@@ -301,4 +308,4 @@ if (typeof MANUEL_DU_JEU !== "undefined") MANUEL_DU_JEU.badges = "badges n'est P
 	"Chaque étape franchie rapporte un badge de compétence (Adressage IP, Résolution DNS, Bit SUID...). badges les liste,\n" +
 	"avec la leçon de chacun : c'est ton aide-mémoire, à relire avant une évaluation.\n\n" +
 	"  badges           tous tes badges\n  badges reseau    ceux du réseau (la panne, couche par couche)\n" +
-	"  badges cyber     ceux de la cybersécurité (la chasse au Corbeau)\n  badges dns       un badge précis, par le nom de sa compétence";
+	"  badges cyber     ceux de la cybersécurité (la chasse au Corbeau)\n  badges arcanes   ceux de Linux avancé (l'Académie des Arcanes)\n  badges dns       un badge précis, par le nom de sa compétence";

@@ -29,6 +29,12 @@ function Item(name, text, picname){
 	this.modifie = false;    // le texte a-t-il change depuis le debut de la partie ?
 	this.id = World.fige ? null : identifiantMonde("i", name);
 	if (this.id) World.items[this.id] = this;
+	// Créé pendant la partie (touch, >, cp...) : il est tout neuf, pour find -mtime, ls -lt et stat.
+	if (World.fige){
+		var maintenant = new Date();
+		this.age = 0;
+		this.heure = ("0" + maintenant.getHours()).slice(-2) + ":" + ("0" + maintenant.getMinutes()).slice(-2);
+	}
 };
 
 Item.prototype.addCmdText = function(cmd, text) {

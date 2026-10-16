@@ -1,4 +1,4 @@
-"""Dessine les badges de compétence (chapitres 2 et 3) : des médailles en pixels, une couleur par rang.
+"""Dessine les badges de compétence (chapitres 2, 3 et 4) : des médailles en pixels, une couleur par rang.
 
 Bronze, argent, or et platine, comme les rangs d'un tableau de trophées ; le dessin est propre au jeu :
 une médaille hexagonale, deux rubans, et au centre le sigle de la compétence (OSI, DNS, SUID...).
@@ -29,8 +29,28 @@ BADGES = [
     ('c_dns', 'DNS', 'bronze'), ('c_parefeu', 'UFW', 'bronze'), ('c_compte', 'UID0', 'argent'), ('c_sudo', 'SUDO', 'argent'),
     ('c_cle', 'KEY', 'argent'), ('c_coffre', 'PUB', 'bronze'), ('c_preuves', 'HASH', 'argent'), ('c_gpg', 'GPG', 'or'),
     ('c_corbeau', '!', 'or'), ('platine_cyber', 'SOC', 'platine'),
+    # chapitre 4 : l'Académie des Arcanes
+    ('d_frances', 'AVIS', 'bronze'), ('d_runes_traces', 'GREP', 'bronze'), ('d_runes_ioc', 'IOC', 'argent'),
+    ('d_awk_volume', 'SUM', 'bronze'), ('d_awk_victimes', 'TOP3', 'argent'), ('d_sed_anonymiser', 'RGPD', 'argent'),
+    ('d_sed_desarmer', 'SED', 'argent'), ('d_jq_alertes', 'JQ', 'bronze'), ('d_jq_rapport', 'CSV', 'argent'),
+    ('d_alchimie_fantomes', 'LOCK', 'argent'), ('d_alchimie_quarantaine', 'CAGE', 'argent'), ('d_chrono_bombe', 'T-0', 'or'),
+    ('d_chrono_sauvegarde', 'CRON', 'bronze'), ('d_archives_restaurer', 'SYNC', 'or'), ('d_archives_patch', 'DIFF', 'argent'),
+    ('d_script_nettoyage', 'SH', 'bronze'), ('d_script_arguments', '$1', 'argent'), ('d_corbeau', 'STOP', 'or'),
+    ('platine_ch4', 'IR', 'platine'),
 ]
 NOIR = (0, 0, 0)
+# Une police de 3 x 5 pixels, pour les sigles de quatre caractères.
+PETITE_POLICE = {
+    'A': ['###', '#.#', '###', '#.#', '#.#'], 'B': ['##.', '#.#', '##.', '#.#', '##.'], 'C': ['###', '#..', '#..', '#..', '###'],
+    'D': ['##.', '#.#', '#.#', '#.#', '##.'], 'E': ['###', '#..', '##.', '#..', '###'], 'F': ['###', '#..', '##.', '#..', '#..'],
+    'G': ['###', '#..', '#.#', '#.#', '###'], 'H': ['#.#', '#.#', '###', '#.#', '#.#'], 'I': ['###', '.#.', '.#.', '.#.', '###'],
+    'K': ['#.#', '#.#', '##.', '#.#', '#.#'], 'L': ['#..', '#..', '#..', '#..', '###'], 'M': ['#.#', '###', '###', '#.#', '#.#'],
+    'N': ['##.', '#.#', '#.#', '#.#', '#.#'], 'O': ['###', '#.#', '#.#', '#.#', '###'], 'P': ['###', '#.#', '###', '#..', '#..'],
+    'R': ['##.', '#.#', '##.', '#.#', '#.#'], 'S': ['###', '#..', '###', '..#', '###'], 'T': ['###', '.#.', '.#.', '.#.', '.#.'],
+    'U': ['#.#', '#.#', '#.#', '#.#', '###'], 'V': ['#.#', '#.#', '#.#', '#.#', '.#.'], 'Y': ['#.#', '#.#', '.#.', '.#.', '.#.'],
+    '0': ['###', '#.#', '#.#', '#.#', '###'], '3': ['###', '..#', '.##', '..#', '###'], '/': ['..#', '..#', '.#.', '#..', '#..'],
+    '?': ['###', '..#', '.#.', '...', '.#.'],
+}
 BLANC = (242, 242, 242)
 
 
@@ -56,6 +76,17 @@ def badge(sigle, rang):
     # le sigle, en pixels nets (sans lissage)
     masque = Image.new('1', (40, 40), 0)
     dm = ImageDraw.Draw(masque)
+    if len(sigle) >= 4:
+        # Quatre caractères ne tiennent pas dans le cœur noir avec la police : une petite police maison de 3 x 5 pixels.
+        larg = len(sigle) * 4 - 1
+        x0, y0 = 20 - larg // 2, 16
+        for k, ch in enumerate(sigle):
+            for y, ligne in enumerate(PETITE_POLICE.get(ch, PETITE_POLICE['?'])):
+                for x, p in enumerate(ligne):
+                    if p == '#':
+                        dm.point((x0 + k * 4 + x, y0 + y), fill=1)
+        im.paste(Image.new('RGB', (40, 40), BLANC if rang != 'or' else eclat), (0, 0), masque)
+        return im.resize((80, 80), Image.NEAREST)
     police = ImageFont.load_default()
     try:
         police = ImageFont.load_default(size=9 if len(sigle) >= 4 else 10)

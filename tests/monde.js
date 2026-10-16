@@ -8,7 +8,7 @@ var vm = require("vm");
 
 var bavard = process.argv.indexOf("-v") > -1;
 var dossier = path.join(__dirname, "..", "Web", "static", "javascript");
-var fichiers = ["EventTarget.js", "Partie.js", "Item.js", "Room.js", "Manuel.js", "Shell.js", "SortsAvances.js", "GameObjects.js", "Chapitre2.js", "CommandesCyber.js", "Reseau.js", "Panne.js", "CommandesPanne.js", "Annexe.js", "Adresses.js", "RpgPanne.js", "SortsCrypte.js", "RpgCrypte.js", "GameState.js", "Examen.js"];
+var fichiers = ["EventTarget.js", "Partie.js", "Item.js", "Room.js", "Manuel.js", "Shell.js", "Interpreteur.js", "SortsAvances.js", "GameObjects.js", "Chapitre2.js", "CommandesCyber.js", "Texte.js", "Awk.js", "Reseau.js", "Panne.js", "CommandesPanne.js", "Annexe.js", "Adresses.js", "RpgPanne.js", "SortsCrypte.js", "RpgCrypte.js", "GameState.js", "Examen.js", "SortsArcanes.js", "Chapitre4.js", "Academie.js"];
 
 function nouveauMonde(stockage, graine){
 	stockage = stockage || {};
@@ -73,6 +73,9 @@ function nouveauMonde(stockage, graine){
 				.replace(/<poste>/g, lire("ADRESSE_POSTE_CORBEAU"))
 				.replace(/<wifi>/g, lire("MDP_WIFI"))
 				.replace(/<bssid>/g, lire("BSSID_FAUX"))
+				.replace(/<fantome-cron>/g, function(){ return lire("typeof FANTOME_CRON !== 'undefined' ? FANTOME_CRON : ''"); })
+				.replace(/<ip-nuee>/g, function(){ return lire("typeof IP_NUEE !== 'undefined' ? IP_NUEE[0] : ''"); })
+				.replace(/<volume>/g, function(){ return lire("typeof VOLUME_TOTAL !== 'undefined' ? String(VOLUME_TOTAL) : ''"); })
 				.replace(/<pid-ecoute>/g, function(){ var p = lire("procCorbeau()"); return p ? String(p.pid) : "0"; })
 				.replace(/<pid:([a-z_-]+)>/g, function(tout, nom){
 					return String(lire("(current_room.procs || []).filter(function(p){ return p.name === " + JSON.stringify(nom) + "; }).map(function(p){ return p.pid; })[0]"));

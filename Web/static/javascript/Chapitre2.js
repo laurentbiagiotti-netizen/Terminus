@@ -1182,9 +1182,10 @@ Shell.sorts.chapitre = function(args, io){
 		var etat1 = state.has("victoire") ? (mission ? C.gris("non joué (renfort)") : C.vert("terminé")) : C.jaune("en cours");
 		var etat2 = state.quests["r_fin"] ? C.vert("terminé") : (state.has("panneSautee") ? C.gris("pas au programme (mission cyber)") : (state.has("panneOuverte") ? C.jaune("ouvert") : C.gris("fermé")));
 		var etat3 = state.quests["c_rapport"] ? C.vert("terminé") : (state.has("crypteOuverte") ? C.jaune("ouvert") : C.gris("fermé"));
+		var etat4 = state.quests["d_fin"] ? C.vert("terminé") : (state.has("ch4Ouvert") ? C.jaune("ouvert") : C.gris("fermé"));
 		var conseil;
-		if (chapitre2Possible()) conseil = "La panne (chapitre 2) s'ouvre en battant le Sorcier Noir, la Crypte (chapitre 3) en réparant le réseau. " +
-			"Si tu connais déjà les bases, tu peux aussi partir tout de suite en renfort : chapitre 2 (la panne) ou chapitre 3 (la mission cyber).";
+		if (chapitre2Possible()) conseil = "La panne (chapitre 2) s'ouvre en battant le Sorcier Noir, la Crypte (chapitre 3) en réparant le réseau, l'Académie (chapitre 4) après la Crypte. " +
+			"Si tu connais déjà les bases, tu peux aussi partir tout de suite : chapitre 2 (la panne), chapitre 3 (la mission cyber) ou chapitre 4 (l'Académie des Arcanes).";
 		else if (state.quests["c_rapport"]) conseil = "Tout est terminé : tes certificats sont dans ta Maison (ls ~).";
 		else if (state.has("crypteOuverte")) conseil = "La Crypte est sous la Citadelle : ssh citadelle, puis cd Crypte. Tape quetes pour l'étape en cours.";
 		else if (state.has("panneOuverte")) conseil = "Radia t'attend au BatimentB de Cybersup : cd ~/Cybersup/BatimentB. Tape quetes pour l'étape en cours.";
@@ -1192,13 +1193,25 @@ Shell.sorts.chapitre = function(args, io){
 		return C.gras("LES CHAPITRES") + "\n\n" +
 			"  1. Terminus      " + etat1 + "   L'épreuve de première année : Linux de base, jusqu'au Sorcier Noir. Note sur le Diplome.\n" +
 			"  2. La panne      " + etat2 + "   Le réseau de l'école est tombé : le réparer couche par couche, du câble au pare-feu. Note sur le CertificatReseau.\n" +
-			"  3. La Crypte     " + etat3 + "   La mission cyber : la Crypte, puis tout le réseau de l'école, jusqu'au rapport d'incident. Note sur le CertificatCyber.\n\n" +
+			"  3. La Crypte     " + etat3 + "   La mission cyber : la Crypte, puis tout le réseau de l'école, jusqu'au rapport d'incident. Note sur le CertificatCyber.\n" +
+			"  4. L'Académie    " + etat4 + "   Niveau avancé : une nuit de réponse à incident face à la Nuée (jq, awk, sed, rsync, timers, scripts). Note sur le CertificatAvance.\n\n" +
 			C.gris(conseil);
 	}
 	if (demande === "1") return mission ?
 		"Tu es venu en renfort : le chapitre 1, ce sont les B1 qui l'ont passé ce matin. Le monde de Terminus reste ouvert si tu veux le visiter." :
 		"Le chapitre 1 commence dans ta Maison : cd, puis ls.";
-	if (demande !== "2" && demande !== "3") throw new ShellError("chapitre : il n'y a que les chapitres 1, 2 et 3. Tape chapitre pour la liste.");
+	if (demande === "4"){
+		if (state.has("ch4Ouvert")) return "Le chapitre 4 est déjà ouvert : l'Académie des Arcanes est au fond de la SalleServeurs (cd ~/Cybersup/SalleServeurs, puis cd Academie).";
+		if (!chapitre2Possible()) return "Tu as déjà commencé une partie : le chapitre 4 (l'Académie) s'ouvre à la fin de la Crypte, ou se choisit au tout début d'une partie neuve.\n" +
+			C.gris("(Pour partir directement à l'Académie : recommencer, puis chapitre 4.)");
+		if (typeof commencerChapitre4 !== "function") return "Le chapitre 4 n'est pas encore disponible.";
+		term.demander("Partir directement à l'Académie des Arcanes (chapitre 4, niveau avancé) ? Les chapitres 1 à 3 ne seront pas notés pour toi. Tape oui pour confirmer : ", false, function(reponse){
+			if (String(reponse).trim().toLowerCase() !== "oui"){ term.echo("Bien. Les chapitres précédents t'attendent."); return; }
+			if (commencerChapitre4()) Shell.fin();
+		});
+		return "";
+	}
+	if (demande !== "2" && demande !== "3") throw new ShellError("chapitre : il n'y a que les chapitres 1, 2, 3 et 4. Tape chapitre pour la liste.");
 	if (demande === "2"){
 		if (state.has("panneSautee")) return "Tu es venu en renfort pour la mission cyber : la panne du réseau ne fait pas partie de ta mission.";
 		if (state.has("panneOuverte")) return "Le chapitre 2 est déjà ouvert : Radia t'attend au BatimentB de Cybersup (cd ~/Cybersup/BatimentB).";

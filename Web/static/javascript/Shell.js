@@ -1,13 +1,15 @@
 /**
- * Shell.js : l'interpreteur de sorts.
+ * Shell.js : les sorts de base, et la mécanique d'un tuyau.
  *
- * Il decoupe la ligne tapee (guillemets, jokers * et ?, tuyaux |, redirections
- * > et >>, enchainements ; et &&), verifie que le joueur connait le sort, puis
- * le lance. Chaque sort recoit ses arguments et un objet "io" :
+ * La lecture des lignes (if, for, while, $(...), variables, here-documents...) est le
+ * travail d'Interpreteur.js, chargé juste après ce fichier. Ici, Shell.tuyau lance un
+ * tuyau (sort1 | sort2 > objet), Shell.appeler lance un sort, et les sorts vivent dans
+ * Shell.sorts. Chaque sort recoit ses arguments et un objet "io" :
  *   io.stdin : ce que le sort precedent a envoye dans le tuyau (ou null)
  *   io.tty   : vrai si la sortie va a l'ecran (faux dans un tuyau ou une redirection)
  *   io.sudo  : vrai si le sort est lance avec sudo
- * Un sort renvoie son texte de sortie, ou leve une ShellError.
+ *   io.code  : le statut de sortie que le sort peut poser (0 par défaut ; grep sans résultat pose 1)
+ * Un sort renvoie son texte de sortie, ou leve une ShellError (statut 1, ou son code).
  */
 
 var GameEvents = new EventTarget();
@@ -56,8 +58,19 @@ var Shell = {
 	lieu_precedent: null,
 	pile_ssh: [],            // lieux d'où l'on est parti en ssh (exit y ramène)
 	profondeur_script: 0,
-	variable_developpee: false
+	variable_developpee: false,
+	statut: 0,               // le statut de la dernière commande, lu par $?
+	statutsTuyau: [0],       // le statut de chaque sort du dernier tuyau
+	saisieEnCours: null      // une commande commencée sur plusieurs lignes (invite « > »)
 };
+
+/* Où s'affichent la sortie normale et les erreurs. Interpreteur.js les redirige quand il faut
+ * capturer une sortie ($(...), un script envoyé dans un objet) ; par défaut, c'est l'écran. */
+Shell.ecranSortie = function(texte){ if (texte !== "") term.echo(texte); };
+Shell.ecranErreur = function(texte){ term.echo(texte); };
+Shell.surEcran = function(){ return true; };
+/* Où est née une erreur : dans un script, Interpreteur.js la préfixe de « script.sh : ligne N : », comme bash. */
+Shell.situer = function(message){ return message; };
 
 /* Valeur d'une variable d'environnement ($USER, $HOME, $PWD...). */
 Shell.variable = function(nom){
@@ -111,10 +124,10 @@ var SORTS_DU_JEU = ["quetes", "indice", "chapitre", "xp", "score", "bulletin", "
 
 /* Vraies commandes Linux absentes de ce monde : on le dit gentiment. */
 var COMMANDES_REELLES = ["vi", "vim", "nano", "emacs", "apt-get", "yum", "dnf", "pacman", "scp",
-	"curl", "wget", "git", "python", "python3", "zsh", "sh", "htop", "zip", "unzip", "gzip", "chgrp", "su", "awk", "sed", "tr", "more",
+	"curl", "wget", "git", "python", "python3", "zsh", "htop", "zip", "unzip", "gzip", "chgrp", "su", "awk", "sed", "tr", "more",
 	"which", "whereis", "locate", "cal", "uname", "who", "w", "free",
 	"mount", "systemctl", "service", "ip", "ifconfig", "netstat", "ss", "nmap", "make", "gcc", "node", "docker",
-	"reboot", "shutdown", "killall", "pkill", "xargs", "tee", "file", "stat", "basename", "dirname", "sleep",
+	"reboot", "shutdown", "killall", "pkill", "xargs", "tee", "file", "stat",
 	"htop", "traceroute", "dig", "nslookup", "useradd", "groups", "umask", "watch", "jobs", "fg", "bg", "nohup"];
 
 /* ------------------------------------------------------------------ */
@@ -154,17 +167,7 @@ Shell.decouper = function(ligne){
 				i++;
 			}
 			if (i >= n){
-				// L'apostrophe d'un mot français (s'appelle, l'épée) ouvre une citation que rien ne ferme.
-				if (guillemet === "'" && /[A-Za-zÀ-ÿ]/.test(ligne.charAt(ouverture - 1) || "")){
-					var debutMot = ligne.lastIndexOf(" ", ouverture) + 1;
-					var finMot = ligne.indexOf(" ", ouverture);
-					var motFautif = ligne.substring(debutMot, finMot === -1 ? n : finMot);
-					throw new ShellError("Il manque un guillemet fermant : '\n" +
-						C.gris("(Pour le terminal, l'apostrophe de « " + motFautif + " » ouvre une citation que rien ne referme. " +
-						"Entoure toute la phrase de guillemets doubles, par exemple : echo \"" + ligne.replace(/^\s*\S+\s+/, "").replace(/"/g, "") + "\", " +
-						"ou protège l'apostrophe avec une barre oblique inverse : " + motFautif.replace("'", "\\'") + ")"));
-				}
-				throw new ShellError("Il manque un guillemet fermant : " + guillemet);
+				throw Shell.apostropheFrancaise(ligne, ouverture) || new ShellError("Il manque un guillemet fermant : " + guillemet);
 			}
 			i++;
 			continue;
@@ -173,7 +176,7 @@ Shell.decouper = function(ligne){
 		if (c === "$" && variable()) continue;
 		if (c === "|"){
 			finir();
-			if (ligne.charAt(i + 1) === "|") throw new ShellError("L'opérateur || n'a pas cours dans ce monde. Utilise | (tuyau), ; ou &&.");
+			if (ligne.charAt(i + 1) === "|"){ jetons.push({ t: "op", v: "||" }); i += 2; continue; }
 			jetons.push({ t: "op", v: "|" });
 			i++;
 			continue;
@@ -209,7 +212,25 @@ Shell.decouper = function(ligne){
 		i++;
 	}
 	finir();
+	// Le texte d'origine voyage avec les jetons : Shell.lancer le confie à l'interpréteur.
+	jetons.source = ligne;
 	return jetons;
+};
+
+/*
+ * L'apostrophe d'un mot français (s'appelle, l'épée) ouvre une citation que rien ne ferme.
+ * Renvoie l'erreur expliquée, ou null si l'apostrophe n'est pas collée à une lettre.
+ */
+Shell.apostropheFrancaise = function(ligne, ouverture){
+	if (ligne.charAt(ouverture) !== "'" || !/[A-Za-zÀ-ÿ]/.test(ligne.charAt(ouverture - 1) || "")) return null;
+	var n = ligne.length;
+	var debutMot = ligne.lastIndexOf(" ", ouverture) + 1;
+	var finMot = ligne.indexOf(" ", ouverture);
+	var motFautif = ligne.substring(debutMot, finMot === -1 ? n : finMot);
+	return new ShellError("Il manque un guillemet fermant : '\n" +
+		C.gris("(Pour le terminal, l'apostrophe de « " + motFautif + " » ouvre une citation que rien ne referme. " +
+		"Entoure toute la phrase de guillemets doubles, par exemple : echo \"" + ligne.replace(/^\s*\S+\s+/, "").replace(/"/g, "") + "\", " +
+		"ou protège l'apostrophe avec une barre oblique inverse : " + motFautif.replace("'", "\\'") + ")"));
 };
 
 function jokerVersRegExp(motif){
@@ -483,6 +504,7 @@ Shell.sorts.cd = function(args, io){
 	return sortie;
 };
 
+/* Comme le vrai cd, il ne dit rien quand sa sortie ne va pas à l'écran (un script capturé, un $(...)). */
 Shell.cdSimple = function(args, io){
 	if (io.sudo){
 		throw new ShellError("sudo : cd : commande introuvable\n" +
@@ -492,12 +514,12 @@ Shell.cdSimple = function(args, io){
 	if (args.length > 1) throw new ShellError("cd : tu ne peux pas aller à plusieurs endroits à la fois.");
 	if (args.length === 0 || args[0] === "~"){
 		enterRoom(Home);
-		return "Te voilà de retour à la Maison !";
+		return !io.tty ? "" : "Te voilà de retour à la Maison !";
 	}
 	if (args[0] === "-"){
 		if (!Shell.lieu_precedent) throw new ShellError("cd : tu n'as encore quitté aucun lieu.");
 		enterRoom(Shell.lieu_precedent);
-		return "Tu es de retour dans " + current_room.toString() + ". " + current_room.intro_text;
+		return !io.tty ? "" : "Tu es de retour dans " + current_room.toString() + ". " + current_room.intro_text;
 	}
 	var r = Shell.chercher(args[0], io, "cd");
 	if (r.node === null) throw new ShellError(Shell.introuvable("cd", r.name, r.dir));
@@ -508,7 +530,7 @@ Shell.cdSimple = function(args, io){
 	// Revenir sur ses pas est toujours permis ; entrer quelque part demande le droit de traverser.
 	if (r.name !== ".." && r.name !== "." && r.node !== current_room) Shell.verifierTraversee(r.node, io, "cd");
 	enterRoom(r.node);
-	return "Tu es maintenant dans " + current_room.toString() + ". " + current_room.intro_text;
+	return !io.tty ? "" : "Tu es maintenant dans " + current_room.toString() + ". " + current_room.intro_text;
 };
 
 Shell.ligneLongue = function(noeud, nom, io){
@@ -691,241 +713,54 @@ Shell.sorts.cat = function(args, io){
 	return tout;
 };
 
-function debutOuFin(cmd){
-	return function(args, io){
-		var nombre = 10;
-		var fichiers = [];
-		for (var i = 0; i < args.length; i++){
-			var a = args[i];
-			if (a === "-n"){
-				i++;
-				if (args[i] === undefined || !/^\d+$/.test(args[i])) throw new ShellError(cmd + " : -n attend un nombre de lignes, par exemple : " + cmd + " -n 3 OBJET");
-				nombre = parseInt(args[i], 10);
-			} else if (/^-n\d+$/.test(a)){
-				nombre = parseInt(a.substring(2), 10);
-			} else if (/^-\d+$/.test(a)){
-				nombre = parseInt(a.substring(1), 10);
-			} else if (a.length > 1 && a.charAt(0) === "-"){
-				throw new ShellError(cmd + " : option inconnue « " + a + " ». Utilisation : " + cmd + " [-n NOMBRE] OBJET");
-			} else {
-				fichiers.push(a);
-			}
-		}
-		function couper(texte){
-			var lignes = lignesDe(texte);
-			return (cmd === "head" ? lignes.slice(0, nombre) : (nombre === 0 ? [] : lignes.slice(-nombre))).join("\n");
-		}
-		if (fichiers.length === 0){
-			if (io.stdin === null) throw new ShellError(cmd + " : de quel objet veux-tu lire " + (cmd === "head" ? "le début" : "la fin") + " ? Utilisation : " + cmd + " [-n NOMBRE] OBJET");
-			return couper(io.stdin);
-		}
-		var blocs = [];
-		for (var k = 0; k < fichiers.length; k++){
-			var trouve = Shell.objetLisible(fichiers[k], io, cmd);
-			var extrait = couper(trouve.item.getText());
-			Shell.apresLecture(trouve, extrait, cmd, io);
-			blocs.push((fichiers.length > 1 ? "==> " + trouve.item.itemname + " <==\n" : "") + extrait);
-		}
-		return blocs.join("\n");
-	};
-}
-Shell.sorts.head = debutOuFin("head");
-Shell.sorts.tail = debutOuFin("tail");
-
-Shell.sorts.wc = function(args, io){
-	var p = lireOptions(args, "lwcm", "wc");
-	function compter(texte){
-		var mots = texte.trim() === "" ? 0 : texte.trim().split(/\s+/).length;
-		return { l: lignesDe(texte).length, w: mots, c: texte.length };
-	}
-	function formater(n, nom){
-		var colonnes = [];
-		var tout = !p.opts.l && !p.opts.w && !p.opts.c && !p.opts.m;
-		if (tout || p.opts.l) colonnes.push(n.l);
-		if (tout || p.opts.w) colonnes.push(n.w);
-		if (tout || p.opts.c || p.opts.m) colonnes.push(n.c);
-		if (colonnes.length === 1) return colonnes[0] + (nom ? " " + nom : "");
-		for (var i = 0; i < colonnes.length; i++) colonnes[i] = completerGauche(colonnes[i], 6);
-		return colonnes.join(" ") + (nom ? " " + nom : "");
-	}
-	if (p.reste.length === 0){
-		if (io.stdin === null) throw new ShellError("wc : que veux-tu compter ? Utilisation : wc [-l] [-w] [-c] OBJET");
-		return formater(compter(io.stdin), "");
-	}
-	var lignes = [], total = { l: 0, w: 0, c: 0 };
-	for (var i = 0; i < p.reste.length; i++){
-		var trouve = Shell.objetLisible(p.reste[i], io, "wc");
-		var n = compter(trouve.item.getText());
-		total.l += n.l; total.w += n.w; total.c += n.c;
-		lignes.push(formater(n, trouve.item.itemname));
-		Shell.apresLecture(trouve, "", "wc", io);
-	}
-	if (p.reste.length > 1) lignes.push(formater(total, "total"));
-	if (io.tty && !p.opts.l && !p.opts.w && !p.opts.c && !p.opts.m){
-		lignes.push(C.gris("(dans l'ordre : lignes, mots, caractères)"));
-	}
-	return lignes.join("\n");
-};
-
-Shell.sorts.grep = function(args, io){
-	var p = lireOptions(args, "invcrRlE", "grep");
-	if (p.opts.R) p.opts.r = true;
-	if (p.reste.length === 0) throw new ShellError("grep : que cherches-tu ? Utilisation : grep MOT OBJET");
-	var motif = p.reste[0];
-	var fichiers = p.reste.slice(1);
-	var re;
-	try {
-		re = new RegExp(motif, p.opts.i ? "gi" : "g");
-	} catch (e){
-		re = new RegExp(motif.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), p.opts.i ? "gi" : "g");
-	}
-	function filtrer(texte, prefixe){
-		var lignes = lignesDe(texte), gardees = [];
-		for (var i = 0; i < lignes.length; i++){
-			re.lastIndex = 0;
-			var correspond = re.test(lignes[i]);
-			if (p.opts.v) correspond = !correspond;
-			if (!correspond) continue;
-			var ligne = lignes[i];
-			if (io.tty && !p.opts.v){
-				re.lastIndex = 0;
-				ligne = ligne.replace(re, function(m){ return m === "" ? m : C.rouge(C.gras(m)); });
-			}
-			if (p.opts.n) ligne = (io.tty ? C.vert(String(i + 1)) : String(i + 1)) + ":" + ligne;
-			gardees.push({ brut: lignes[i], affiche: prefixe + ligne });
-		}
-		return gardees;
-	}
-	if (fichiers.length === 0 && !p.opts.r){
-		if (io.stdin === null) throw new ShellError("grep : dans quoi dois-je chercher « " + motif + " » ? Utilisation : grep MOT OBJET");
-		var gardees = filtrer(io.stdin, "");
-		if (p.opts.c) return String(gardees.length);
-		return gardees.map(function(g){ return g.affiche; }).join("\n");
-	}
-	if (fichiers.length === 0) fichiers = ["."];
-
-	// Rassemble les objets a fouiller, en descendant dans les lieux si -r.
-	var cibles = [], erreurs = [];
-	function ajouterLieu(lieu, chemin, profondeur){
-		if (profondeur > 30) return;
-		for (var i = 0; i < lieu.items.length; i++){
-			var it = lieu.items[i];
-			if (!Shell.bit(it, "r", io)){ erreurs.push("grep : " + chemin + it.itemname + " : Permission non accordée"); continue; }
-			cibles.push({ item: it, room: lieu, nom: chemin + it.itemname });
-		}
-		for (var j = 0; j < lieu.children.length; j++){
-			var enfant = lieu.children[j];
-			if (!Shell.peutFouiller(enfant)) continue;
-			if (!Shell.bit(enfant, "x", io) || !Shell.bit(enfant, "r", io)){
-				erreurs.push("grep : " + chemin + enfant.room_name + " : Permission non accordée");
-				continue;
-			}
-			ajouterLieu(enfant, chemin + enfant.room_name + "/", profondeur + 1);
-		}
-	}
-	for (var f = 0; f < fichiers.length; f++){
-		var r = Shell.chercher(fichiers[f], io, "grep");
-		if (r.node === null){ erreurs.push(Shell.introuvable("grep", r.name, r.dir)); continue; }
-		if (r.node instanceof Room){
-			if (!p.opts.r){
-				erreurs.push("grep : " + fichiers[f] + " : c'est un lieu. Pour fouiller tout ce qu'il contient : grep -r " + motif + " " + fichiers[f]);
-				continue;
-			}
-			if (!Shell.bit(r.node, "r", io)){ erreurs.push("grep : " + fichiers[f] + " : Permission non accordée"); continue; }
-			var prefixe = fichiers[f] === "." ? "" : fichiers[f].replace(/\/+$/, "") + "/";
-			ajouterLieu(r.node, prefixe, 0);
-		} else {
-			if (!Shell.bit(r.node, "r", io)){ erreurs.push("grep : " + fichiers[f] + " : Permission non accordée"); continue; }
-			cibles.push({ item: r.node, room: r.dir, nom: fichiers[f] });
-		}
-	}
-	var plusieurs = cibles.length > 1 || p.opts.r;
-	var sortie = [];
-	for (var c = 0; c < cibles.length; c++){
-		var cible = cibles[c];
-		var etiquette = plusieurs ? (io.tty ? C.magenta(cible.nom) : cible.nom) + ":" : "";
-		var trouvees = filtrer(cible.item.getText(), p.opts.c || p.opts.l ? "" : etiquette);
-		if (p.opts.l){
-			if (trouvees.length) sortie.push(cible.nom);
-		} else if (p.opts.c){
-			sortie.push(etiquette + trouvees.length);
-		} else {
-			for (var t = 0; t < trouvees.length; t++) sortie.push(trouvees[t].affiche);
-		}
-		if (trouvees.length){
-			Shell.apresLecture({ item: cible.item, room: cible.room },
-				trouvees.map(function(g){ return g.brut; }).join("\n"), "grep", io);
-		}
-	}
-	GameEvents.fire({ type: "grep", pattern: motif, count: sortie.length });
-	for (var e = 0; e < erreurs.length; e++) io.err(erreurs[e]);
-	return sortie.join("\n");
-};
-
-Shell.sorts.sort = function(args, io){
-	var p = lireOptions(args, "rnuf", "sort");
-	var texte;
-	if (p.reste.length === 0){
-		if (io.stdin === null) throw new ShellError("sort : que dois-je trier ? Utilisation : sort [-r] [-n] OBJET");
-		texte = io.stdin;
-	} else {
-		var textes = [];
-		for (var i = 0; i < p.reste.length; i++){
-			var trouve = Shell.objetLisible(p.reste[i], io, "sort");
-			textes.push(trouve.item.getText().replace(/\n$/, ""));
-			Shell.apresLecture(trouve, "", "sort", io);
-		}
-		texte = textes.join("\n");
-	}
-	var lignes = lignesDe(texte);
-	if (p.opts.n){
-		lignes.sort(function(a, b){
-			var x = parseFloat(a), y = parseFloat(b);
-			if (isNaN(x)) x = 0;
-			if (isNaN(y)) y = 0;
-			return x - y || (a < b ? -1 : a > b ? 1 : 0);
-		});
-	} else {
-		lignes.sort(function(a, b){
-			if (p.opts.f){ a = a.toLowerCase(); b = b.toLowerCase(); }
-			return a < b ? -1 : a > b ? 1 : 0;
-		});
-	}
-	if (p.opts.r) lignes.reverse();
-	if (p.opts.u){
-		lignes = lignes.filter(function(l, i){ return i === 0 || l !== lignes[i - 1]; });
-	}
-	return lignes.join("\n");
-};
-
-Shell.sorts.uniq = function(args, io){
-	var p = lireOptions(args, "cdu", "uniq");
-	var texte;
-	if (p.reste.length === 0){
-		if (io.stdin === null) throw new ShellError("uniq : de quoi dois-je retirer les doublons ? Utilisation : sort OBJET | uniq");
-		texte = io.stdin;
-	} else {
-		var trouve = Shell.objetLisible(p.reste[0], io, "uniq");
-		texte = trouve.item.getText();
-	}
-	var lignes = lignesDe(texte), groupes = [];
-	for (var i = 0; i < lignes.length; i++){
-		if (groupes.length && groupes[groupes.length - 1].ligne === lignes[i]) groupes[groupes.length - 1].n++;
-		else groupes.push({ ligne: lignes[i], n: 1 });
-	}
-	var sortie = [];
-	for (var g = 0; g < groupes.length; g++){
-		if (p.opts.d && groupes[g].n < 2) continue;
-		if (p.opts.u && groupes[g].n > 1) continue;
-		sortie.push(p.opts.c ? completerGauche(groupes[g].n, 7) + " " + groupes[g].ligne : groupes[g].ligne);
-	}
-	return sortie.join("\n");
-};
+/* head, tail, wc, grep, sort et uniq sont dans Texte.js. */
 
 Shell.sorts.echo = function(args, io){
-	if (args[0] === "-n" || args[0] === "-e") args = args.slice(1);
-	return args.join(" ");
+	var lire = false, sansFin = false, i = 0;
+	while (i < args.length && /^-[neE]+$/.test(args[i])){
+		if (args[i].indexOf("n") > -1) sansFin = true;
+		for (var k = 1; k < args[i].length; k++){
+			if (args[i].charAt(k) === "e") lire = true;
+			if (args[i].charAt(k) === "E") lire = false;
+		}
+		i++;
+	}
+	var texte = args.slice(i).join(" ");
+	if (lire){
+		var r = echappements(texte);
+		texte = r.texte;
+		if (r.arret) sansFin = true;
+	}
+	if (sansFin) io.sansFin = true;
+	else if (texte === "") io.ligneVide = true; // echo tout seul écrit une ligne vide
+	return texte;
 };
+
+/* Les caractères spéciaux d'echo -e et de printf : \n, \t, \\, \0NNN, \xHH... \c arrête tout. */
+function echappements(texte){
+	var sortie = "", i = 0, m;
+	var simples = { "n": "\n", "t": "\t", "\\": "\\", "a": "\x07", "b": "\b", "r": "\r", "v": "\v", "f": "\f", "e": "\x1b", "E": "\x1b", "\"": "\"", "'": "'" };
+	while (i < texte.length){
+		var c = texte.charAt(i);
+		if (c !== "\\" || i + 1 >= texte.length){ sortie += c; i++; continue; }
+		var s = texte.charAt(i + 1), reste = texte.substring(i + 1);
+		if (s === "c") return { texte: sortie, arret: true };
+		if (simples.hasOwnProperty(s)){ sortie += simples[s]; i += 2; continue; }
+		if ((m = /^0([0-7]{0,3})/.exec(reste)) || (m = /^([0-7]{1,3})/.exec(reste))){
+			sortie += String.fromCharCode(parseInt(m[1] || "0", 8));
+			i += 1 + m[0].length;
+			continue;
+		}
+		if ((m = /^x([0-9A-Fa-f]{1,2})/.exec(reste))){
+			sortie += String.fromCharCode(parseInt(m[1], 16));
+			i += 1 + m[0].length;
+			continue;
+		}
+		sortie += c;
+		i++;
+	}
+	return { texte: sortie, arret: false };
+}
 
 /* ------------------------------------------------------------------ */
 /* Agir sur le monde                                                   */
@@ -966,9 +801,9 @@ Shell.sorts.mv = function(args, io){
 			messages.push("mv : ce monde tient trop à « " + item.itemname + " » pour le laisser bouger.");
 			continue;
 		}
-		// Pendant l'épreuve finale, la Forteresse est une vraie machine : root (sudo) déplace ce qu'il veut, et personne
-		// ne dépose rien dans un dossier où il n'a pas le droit d'écrire.
-		var machine = typeof examenEnCours === "function" && examenEnCours();
+		// Sur une vraie machine (l'épreuve finale, ou un serveur du réseau comme archives), root (sudo)
+		// déplace ce qu'il veut, et personne ne dépose dans un dossier où il n'a pas le droit d'écrire.
+		var machine = (typeof examenEnCours === "function" && examenEnCours()) || (typeof racineDe === "function" && !!racineDe(current_room));
 		if (!(item.allows("mv") || (item.owner === JOUEUR && !item.acquis) || (machine && io.sudo && !item.person))){
 			messages.push(item.cmd_text["mv"] || (item.person ?
 				"On ne déplace pas " + item.itemname + " comme un meuble." :
@@ -1234,7 +1069,8 @@ Shell.sorts.mkdir = function(args, io){
 		lieu.owner = JOUEUR;
 		lieu.mode = "rwxr-xr-x";
 		link_rooms(r.dir, lieu);
-		messages.push("Un nouveau lieu apparaît : " + r.name + ".");
+		// Comme le vrai mkdir, rien à dire quand la sortie part dans un tuyau, un objet ou un $(...).
+		if (io.tty) messages.push("Un nouveau lieu apparaît : " + r.name + ".");
 		GameEvents.fire({ type: "mkdir", room: lieu, parent: r.dir });
 	}
 	return messages.join("\n");
@@ -1255,7 +1091,7 @@ Shell.sorts.touch = function(args, io){
 		GameEvents.fire({ type: "touch", item: item, room: r.dir });
 	}
 	if (crees.length === 0) return "";
-	return "Tu viens de créer " + crees.join(", ") + ".";
+	return !io.tty ? "" : "Tu viens de créer " + crees.join(", ") + ".";
 };
 
 function appliquerMode(ancien, expression, cmd){
@@ -1651,7 +1487,7 @@ Shell.sorts.help = function(args, io){
 	var tous = state.knownSpells(), connus = tous, choix = (args[0] || "").toLowerCase();
 	// Au-delà du chapitre 1, help ne montre que les sorts du chapitre en cours : 150 lignes d'un coup, c'est illisible.
 	var enCours = typeof state.chapitreEnCours === "function" ? state.chapitreEnCours() : 1;
-	var interne = { "1": 1, "2": 3, "3": 2 }[choix];
+	var interne = { "1": 1, "2": 3, "3": 2, "4": 5 }[choix];
 	if (choix !== "tout" && choix !== "all" && (interne || enCours !== 1)){
 		var chap = interne || enCours;
 		connus = tous.filter(function(s){ return chapitreDuSort(s) === chap; });
@@ -1665,7 +1501,7 @@ Shell.sorts.help = function(args, io){
 			"  " + C.vert(nomSort) + "\n" + "              " + MANUEL[nomSort].resume);
 	}
 	lignes.push("");
-	if (connus.length < tous.length) lignes.push("", C.gris("Et " + (tous.length - connus.length) + " autres sorts appris dans les autres chapitres : help 1, help 2, help 3, ou help tout."));
+	if (connus.length < tous.length) lignes.push("", C.gris("Et " + (tous.length - connus.length) + " autres sorts appris dans les autres chapitres : help 1, help 2, help 3, help 4, ou help tout."));
 	lignes.push("Pour le détail d'un sort : " + C.vert("man SORT") + " (par exemple man ls).");
 	lignes.push("");
 	lignes.push(C.gras("Les commandes du JEU") + C.gris(" (elles n'existent pas sous Linux : elles t'aident seulement à jouer)"));
@@ -1827,13 +1663,13 @@ Shell.ouApprendre = function(sort){
 
 Shell.appeler = function(nom, args, io){
 	if (Shell.sorts.hasOwnProperty(nom) && state.frequences) state.frequences[nom] = (state.frequences[nom] || 0) + 1;
-	if (nom.indexOf("/") > -1) return Shell.lancerScript(nom, io, true);
+	if (nom.indexOf("/") > -1) return Shell.lancerScript(nom, io, true, args);
 	if (!Shell.sorts.hasOwnProperty(nom)){
 		if (state.paquets[nom] && Shell.paquets[nom] && Shell.paquets[nom].lancer) return Shell.paquets[nom].lancer(args, io);
-		throw new ShellError(Shell.sortInconnu(nom));
+		throw new ShellError(Shell.sortInconnu(nom), 127);
 	}
 	if (SORTS_DU_JEU.indexOf(nom) === -1 && !state.knows(nom)){
-		throw new ShellError("Tu ne connais pas encore le sort « " + nom + " ». " + Shell.ouApprendre(nom));
+		throw new ShellError("Tu ne connais pas encore le sort « " + nom + " ». " + Shell.ouApprendre(nom), 127);
 	}
 	// Presque toutes les commandes Linux acceptent --help : un aide-memoire sans passer par man.
 	if (args.indexOf("--help") > -1 && MANUEL[nom]){
@@ -1841,10 +1677,14 @@ Shell.appeler = function(nom, args, io){
 		return C.gras(nom) + " : " + MANUEL[nom].titre + "\n\n" + MANUEL[nom].page;
 	}
 	var sortie = Shell.sorts[nom](args, io);
-	if (MANUEL[nom]) state.premierUsage(nom);
+	// Un sort hors barème (pas encore rangé dans un chapitre) ne rapporte pas d'XP de premier usage.
+	if (MANUEL[nom] && !MANUEL[nom].horsBareme) state.premierUsage(nom);
 	else if (nom === "vi") state.premierUsage("vim");
 	return sortie;
 };
+
+/* Au-delà, ce n'est plus un script mais un roman. */
+var LIGNES_MAX_SCRIPT = 400;
 
 /* Fait tourner une fonction en recuperant ce qu'elle aurait affiche a l'ecran. */
 Shell.capturer = function(fonction){
@@ -1859,15 +1699,20 @@ Shell.capturer = function(fonction){
 	return tampon.join("\n");
 };
 
-/* Un script est un objet dont chaque ligne est un sort. ./script demande le droit x. */
-Shell.lancerScript = function(chemin, io, direct){
+/*
+ * Un script est un objet qui contient des sorts, des boucles, des conditions... ./script demande le
+ * droit x. args : les arguments du script ($1, $2...). options : { x, e, n } pour bash -x, -e, -n.
+ * L'interpréteur lit le texte entier (Interpreteur.lancerScript) : ses variables restent à l'intérieur,
+ * sa sortie normale part vers la sortie 1 du sort, ses erreurs vers la sortie 2.
+ */
+Shell.lancerScript = function(chemin, io, direct, args, options){
 	if (!state.knows("bash")){
 		throw new ShellError(direct ?
 			chemin + " : tu ne sais pas encore lancer un script. Quelqu'un qui automatise son travail pourra te l'apprendre." :
 			"Tu ne connais pas encore le sort « bash ». " + Shell.ouApprendre("bash"));
 	}
 	var r = Shell.chercher(chemin, io, "bash");
-	if (r.node === null) throw new ShellError("bash : " + chemin + " : aucun objet de ce nom");
+	if (r.node === null) throw new ShellError("bash : " + chemin + " : aucun objet de ce nom", 127);
 	var script = Shell.suivre(r.node, "bash");
 	if (script instanceof Room) throw new ShellError("bash : " + chemin + " : c'est un lieu, pas un script");
 	if (script.person) throw new ShellError(script.itemname + " n'est pas un script, et n'apprécie pas qu'on essaie de l'exécuter.");
@@ -1876,7 +1721,7 @@ Shell.lancerScript = function(chemin, io, direct){
 		if (!direct) throw new ShellError("bash : " + chemin + " : impossible d'exécuter un fichier binaire\n" +
 			C.gris("(C'est un programme compilé, pas un script : on le lance avec ./" + script.itemname + ".)"));
 		if (!(io.sudo ? script.mode.indexOf("x") > -1 || script.mode.indexOf("s") > -1 : Shell.bit(script, "x", null))){
-			throw new ShellError("bash : " + chemin + " : Permission non accordée");
+			throw new ShellError("bash : " + chemin + " : Permission non accordée", 126);
 		}
 		GameEvents.fire({ type: "script", item: script, room: r.dir, direct: true, binaire: true });
 		return script.binaire.sortie;
@@ -1885,33 +1730,26 @@ Shell.lancerScript = function(chemin, io, direct){
 	if (direct && !(io.sudo ? script.mode.indexOf("x") > -1 : Shell.bit(script, "x", null))){
 		throw new ShellError("bash : " + chemin + " : Permission non accordée\n" +
 			C.gris("(Cet objet n'a pas le droit x, celui d'être exécuté : regarde avec ls -l. Donne-le-lui avec chmod +x " + script.itemname +
-			", ou lance-le sans ce droit avec bash " + script.itemname + ".)"));
+			", ou lance-le sans ce droit avec bash " + script.itemname + ".)"), 126);
 	}
-	if (Shell.profondeur_script >= 3) throw new ShellError("bash : trop de scripts emboîtés, j'arrête là avant la boucle infinie.");
-	var lignes = lignesDe(script.getText());
-	if (lignes.length > 60) throw new ShellError("bash : " + chemin + " : ce n'est pas un script, c'est un roman. (Plus de 60 lignes.)");
+	if (Shell.profondeur_script >= 5) throw new ShellError("bash : trop de scripts emboîtés, j'arrête là avant la boucle infinie.");
+	var texte = script.getText();
+	if (lignesDe(texte).length > LIGNES_MAX_SCRIPT){
+		throw new ShellError("bash : " + chemin + " : ce n'est pas un script, c'est un roman. (Plus de " + LIGNES_MAX_SCRIPT + " lignes.)");
+	}
 	Shell.profondeur_script++;
 	var sortie;
 	try {
-		sortie = Shell.capturer(function(){
-			for (var i = 0; i < lignes.length; i++){
-				var ligne = lignes[i].trim();
-				if (ligne === "" || ligne.charAt(0) === "#") continue; // les lignes en # sont des commentaires
-				var jetons;
-				try {
-					jetons = Shell.decouper(ligne);
-				} catch (e){
-					if (e instanceof ShellError){ term.echo(script.itemname + " : ligne " + (i + 1) + " : " + e.message); continue; }
-					throw e;
-				}
-				Shell.lancer(jetons);
-			}
-		});
+		options = options || {};
+		sortie = Interpreteur.lancerScript(texte, io, { nom0: chemin, nomScript: script.itemname, positionnels: args || [],
+			x: !!options.x, e: !!options.e, n: !!options.n });
 	} finally {
 		Shell.profondeur_script--;
 	}
 	state.premierUsage("bash");
-	GameEvents.fire({ type: "script", item: script, room: r.dir, direct: !!direct });
+	// Pour les quêtes : le script, ses arguments, son statut et les structures qu'il utilise (voir Interpreteur.js).
+	GameEvents.fire({ type: "script", item: script, room: r.dir, direct: !!direct, nom: script.itemname, args: (args || []).slice(),
+		statut: io.code || 0, structures: Interpreteur.structures(texte) });
 	return sortie;
 };
 
@@ -1945,70 +1783,118 @@ Shell.ecrire = function(cible, texte, ajout, sansFin){
 	GameEvents.fire({ type: "write", item: r.node, room: r.dir, append: ajout, text: texte, created: false, previous: ancien });
 };
 
-/* Lance un tuyau : sort1 | sort2 | sort3 [> objet]. Renvoie vrai si tout s'est bien passe. */
 /*
- * Lance un tuyau : sort1 | sort2 | sort3, avec ses redirections. Renvoie vrai si tout s'est bien passé.
+ * Lance un tuyau : sort1 | sort2 | sort3, avec ses redirections. Renvoie vrai si aucun sort n'a
+ * échoué par une erreur (l'épreuve finale compte ainsi les fausses manœuvres), et range le statut
+ * du dernier sort dans Shell.statut ($?), comme bash. Un grep qui ne trouve rien pose le statut 1
+ * sans être une erreur : il ne compte pas comme une fausse manœuvre.
  *
  * Chaque sort a deux sorties : la 1 (normale) et la 2 (les erreurs). Par défaut, la 1 va dans le
  * tuyau (ou à l'écran pour le dernier sort) et la 2 à l'écran. Les redirections se lisent de
  * gauche à droite, comme sous bash : « 2>&1 > f » laisse les erreurs à l'écran, « > f 2>&1 »
- * envoie tout dans f.
+ * envoie tout dans f. L'entrée d'un sort peut venir d'un objet (< objet), d'un here-document
+ * (<< FIN) ou d'un texte (<<< "texte").
+ *
+ * jetons : soit une liste de jetons déjà découpés (l'ancienne façon, Shell.decouper), soit
+ * { segments: [...] } préparé par Interpreteur.js. Chaque segment de l'interpréteur a une fonction
+ * preparer() qui développe ses mots au bon moment et renvoie
+ * { argv, redirs: [{ op, cible, texte }], lancer (facultatif), vide (affectations seules), code }.
  */
 var OPERATEURS_FICHIER = { ">": [1], ">>": [1], "2>": [2], "2>>": [2], "&>": [1, 2], "&>>": [1, 2] };
+var OPERATEURS_ENTREE = { "<": true, "<<": true, "<<<": true };
+
+/* Les mots et les redirections d'un segment écrit à l'ancienne (des jetons de Shell.decouper). */
+function preparerJetons(seg, s){
+	var argv = [], redirs = [];
+	for (var k = 0; k < seg.length; k++){
+		var jeton = seg[k];
+		if (jeton.t !== "op"){
+			if (jeton.joker) argv = argv.concat(Shell.developper(jeton.v));
+			else argv.push(jeton.v);
+			continue;
+		}
+		if (/^[12]>&[12]$/.test(jeton.v)){ redirs.push({ op: jeton.v }); continue; }
+		if (!OPERATEURS_FICHIER[jeton.v]) throw new ShellError("Redirection inconnue : " + jeton.v);
+		if (!seg[k + 1] || seg[k + 1].t !== "mot"){
+			throw new ShellError("Après " + jeton.v + " il faut le nom de l'objet dans lequel écrire (ou /dev/null pour tout jeter).");
+		}
+		redirs.push({ op: jeton.v, cible: seg[k + 1].v });
+		k++;
+	}
+	if (argv.length === 0) throw new ShellError("Il manque un sort " + (s === 0 ? "avant" : "après") + " le tuyau |.");
+	return { argv: argv, redirs: redirs };
+}
+
+/* Le texte qu'une redirection < fait lire au sort. */
+Shell.lireEntree = function(chemin){
+	if (chemin === "/dev/null") return "";
+	return Shell.objetLisible(chemin, { sudo: false }, "bash").item.getText();
+};
 
 Shell.tuyau = function(jetons){
-	var segments = [[]];
-	for (var i = 0; i < jetons.length; i++){
-		if (jetons[i].t === "op" && jetons[i].v === "|") segments.push([]);
-		else segments[segments.length - 1].push(jetons[i]);
+	var interprete = !Array.isArray(jetons);
+	var segments;
+	if (interprete) segments = jetons.segments;
+	else {
+		segments = [[]];
+		for (var i = 0; i < jetons.length; i++){
+			if (jetons[i].t === "op" && jetons[i].v === "|") segments.push([]);
+			else segments[segments.length - 1].push(jetons[i]);
+		}
 	}
 	var stdin = null, stdinSansFin = false;
-	var noms = [];
+	var noms = [], codes = [];
 	var echec = false;
-	var sortieFinale = "", finaleALEcran = false, erreursApres = [];
+	var sortieFinale = "", finaleALEcran = false, finaleSansFin = false, finaleVide = false, erreursApres = [];
+	// L'écran : la sortie normale (1) et celle des erreurs (2). Dans une capture ($(...), un script
+	// envoyé dans un objet), « l'écran » est la sortie de ce qui capture : voir Shell.ecranSortie.
+	var ECRAN_1 = { t: "ecran", canal: 1 }, ECRAN_2 = { t: "ecran", canal: 2 };
 	try {
 		for (var s = 0; s < segments.length; s++){
-			var argv = [];
-			var seg = segments[s];
 			var dernier = s === segments.length - 1;
-			var sorties = { 1: dernier ? { t: "ecran" } : { t: "tuyau" }, 2: { t: "ecran" } };
-			for (var k = 0; k < seg.length; k++){
-				var jeton = seg[k];
-				if (jeton.t !== "op"){
-					if (jeton.joker) argv = argv.concat(Shell.developper(jeton.v));
-					else argv.push(jeton.v);
+			var prep = interprete ? segments[s].preparer() : preparerJetons(segments[s], s);
+			var argv = prep.argv || [];
+			var sorties = { 1: dernier ? ECRAN_1 : { t: "tuyau" }, 2: ECRAN_2 };
+			var entree = stdin, entreeSansFin = stdinSansFin, erreurEntree = null;
+			for (var k = 0; k < prep.redirs.length; k++){
+				var r = prep.redirs[k];
+				if (r.op === "2>&1"){ sorties[2] = sorties[1]; continue; }
+				if (r.op === "1>&2"){ sorties[1] = sorties[2]; continue; }
+				if (r.op === "1>&1" || r.op === "2>&2") continue;
+				if (OPERATEURS_ENTREE[r.op]){
+					entreeSansFin = false;
+					if (r.op !== "<"){ entree = r.texte; continue; }
+					try { entree = Shell.lireEntree(r.cible); }
+					catch (e){ if (!(e instanceof ShellError)) throw e; if (!erreurEntree) erreurEntree = e; }
 					continue;
 				}
-				if (jeton.v === "2>&1"){ sorties[2] = sorties[1]; continue; }
-				if (jeton.v === "1>&2"){ sorties[1] = sorties[2]; continue; }
-				if (jeton.v === "1>&1" || jeton.v === "2>&2") continue;
-				var fds = OPERATEURS_FICHIER[jeton.v];
-				if (!fds) throw new ShellError("Redirection inconnue : " + jeton.v);
-				if (!seg[k + 1] || seg[k + 1].t !== "mot"){
-					throw new ShellError("Après " + jeton.v + " il faut le nom de l'objet dans lequel écrire (ou /dev/null pour tout jeter).");
-				}
-				var fichier = { t: "fichier", cible: seg[k + 1].v, ajout: jeton.v.slice(-2) === ">>" };
+				var fds = OPERATEURS_FICHIER[r.op];
+				if (!fds) throw new ShellError("Redirection inconnue : " + r.op);
+				var fichier = { t: "fichier", cible: r.cible, ajout: r.op.slice(-2) === ">>" };
 				for (var f = 0; f < fds.length; f++) sorties[fds[f]] = fichier;
-				k++;
 			}
-			if (argv.length === 0) throw new ShellError("Il manque un sort " + (s === 0 ? "avant" : "après") + " le tuyau |.");
-			// Un alias remplace le premier mot par le texte qu'on lui a associe.
-			if (state.alias.hasOwnProperty(argv[0])){
-				var remplacement = Shell.decouper(state.alias[argv[0]]).filter(function(j){ return j.t === "mot"; }).map(function(j){ return j.v; });
-				argv = remplacement.concat(argv.slice(1));
-				if (argv.length === 0) throw new ShellError("Cet alias est vide.");
+			if (!interprete){
+				// Un alias remplace le premier mot par le texte qu'on lui a associe.
+				if (state.alias.hasOwnProperty(argv[0])){
+					var remplacement = Shell.decouper(state.alias[argv[0]]).filter(function(j){ return j.t === "mot"; }).map(function(j){ return j.v; });
+					argv = remplacement.concat(argv.slice(1));
+					if (argv.length === 0) throw new ShellError("Cet alias est vide.");
+				}
+				// NOM=valeur, tout seul sur la ligne, range une valeur dans une variable.
+				if (argv.length === 1 && segments.length === 1 && /^[A-Za-z_][A-Za-z0-9_]*=/.test(argv[0])){
+					Shell.definirVariable(argv[0], "");
+					Shell.statut = 0;
+					Shell.statutsTuyau = [0];
+					return true;
+				}
 			}
-			// NOM=valeur, tout seul sur la ligne, range une valeur dans une variable.
-			if (argv.length === 1 && segments.length === 1 && /^[A-Za-z_][A-Za-z0-9_]*=/.test(argv[0])){
-				Shell.definirVariable(argv[0], "");
-				return true;
-			}
-			var io = { stdin: stdin, stdinSansFin: stdinSansFin, tty: sorties[1].t === "ecran", sortie1: sorties[1], sudo: false, erreurs: [] };
+			var io = { stdin: entree, stdinSansFin: entreeSansFin, tty: sorties[1] === ECRAN_1 && Shell.surEcran(),
+				sortie1: sorties[1], sortie2: sorties[2], sudo: false, erreurs: [], code: 0 };
 			io.err = (function(liste){ return function(message){ liste.push(message); }; })(io.erreurs);
 			// Un avertissement qu'un vrai programme écrit APRÈS ses résultats (sha256sum -c, par exemple).
 			io.errFin = function(message){ io.erreursFin = io.erreursFin || []; io.erreursFin.push(message); };
 			var nom = argv[0], args = argv.slice(1);
-			if (nom === "sudo"){
+			if (!prep.vide && nom === "sudo"){
 				if (!state.knows("sudo")){
 					throw new ShellError("Tu ne connais pas encore le sort « sudo ». Les légendes disent qu'il confère tous les pouvoirs...");
 				}
@@ -2019,29 +1905,36 @@ Shell.tuyau = function(jetons){
 				nom = args[0];
 				args = args.slice(1);
 			}
-			noms.push(nom);
+			if (!prep.vide) noms.push(nom);
 			var sortie;
 			// Une erreur part par la sortie 2, là où elle pointe ; le tuyau continue, comme sous bash.
 			try {
-				sortie = Shell.appeler(nom, args, io);
+				if (erreurEntree) throw erreurEntree;
+				if (prep.vide){ sortie = ""; io.code = prep.code || 0; }
+				else if (prep.lancer) sortie = prep.lancer(nom, args, io);
+				else sortie = Shell.appeler(nom, args, io);
 			} catch (e){
 				if (!(e instanceof ShellError)) throw e;
-				io.erreurs.push(e.message);
+				io.erreurs.push(Shell.situer(e.message));
 				sortie = "";
 				echec = true;
+				io.code = e.code || 1;
 				if (sorties[2].t === "ecran") jouerSon("erreur");
 			}
+			codes.push(io.code || 0);
 			var texte = (sortie === undefined || sortie === null) ? "" : String(sortie);
 			if (!io.tty) texte = sansAnsi(texte);
-			var sansFin = nom === "echo" && args[0] === "-n";
+			var sansFin = !!io.sansFin || (nom === "echo" && args[0] === "-n");
+			var ligneVide = !!io.ligneVide && texte === "";
 			var erreurs = io.erreurs.length ? io.erreurs.join("\n") : null;
 
 			// On range chaque morceau là où pointe sa sortie : écran, tuyau ou objet.
 			var versTuyau = [], versFichiers = [];
-			function ranger(cible, morceau, estErreur){
+			var ranger = function(cible, morceau, estErreur){
 				if (cible.t === "ecran"){
-					if (estErreur) term.echo(morceau);
-					else { sortieFinale = morceau; finaleALEcran = true; }
+					if (cible.canal === 2) Shell.ecranErreur(morceau);
+					else if (estErreur) Shell.ecranSortie(morceau);
+					else { sortieFinale = morceau; finaleALEcran = true; finaleSansFin = sansFin; finaleVide = ligneVide; }
 				} else if (cible.t === "tuyau"){
 					versTuyau.push(estErreur ? sansAnsi(morceau) : morceau);
 				} else {
@@ -2049,7 +1942,7 @@ Shell.tuyau = function(jetons){
 					if (deja) deja.morceaux.push(sansAnsi(morceau));
 					else versFichiers.push({ cible: cible, morceaux: [sansAnsi(morceau)], sansFin: !estErreur && sansFin });
 				}
-			}
+			};
 			if (erreurs !== null) ranger(sorties[2], erreurs, true);
 			ranger(sorties[1], texte, false);
 			if (io.erreursFin && io.erreursFin.length){
@@ -2070,33 +1963,45 @@ Shell.tuyau = function(jetons){
 			});
 			stdin = versTuyau.filter(function(m){ return m !== ""; }).join("\n");
 			stdinSansFin = sansFin && sorties[1].t === "tuyau";
-			GameEvents.fire({ type: "stderr", name: nom, room: current_room, count: io.erreurs.length,
-				destination: sorties[2].t === "ecran" ? null : (sorties[2] === sorties[1] || sorties[2].t === "tuyau" ? "&1" : sorties[2].cible),
-				args: args, sudo: io.sudo });
+			if (!prep.vide){
+				GameEvents.fire({ type: "stderr", name: nom, room: current_room, count: io.erreurs.length,
+					destination: sorties[2].t === "ecran" ? null : (sorties[2] === sorties[1] || sorties[2].t === "tuyau" ? "&1" : sorties[2].cible),
+					args: args, sudo: io.sudo });
+			}
 		}
-		if (finaleALEcran && sortieFinale !== "") term.echo(sortieFinale);
-		erreursApres.forEach(function(m){ term.echo(m); });
+		if (finaleALEcran) Shell.ecranSortie(sortieFinale, finaleSansFin, finaleVide);
+		erreursApres.forEach(function(m){ Shell.ecranErreur(m); });
 		if (finaleALEcran){
 			if (noms[noms.length - 1] === "echo"){
 				GameEvents.fire({ type: "echo", text: sansAnsi(sortieFinale), room: current_room });
 			}
 		}
 		if (noms.length > 1) GameEvents.fire({ type: "pipeline", names: noms, room: current_room, output: sansAnsi(finaleALEcran ? sortieFinale : stdin) });
+		Shell.statutsTuyau = codes.length ? codes : [0];
+		Shell.statut = Shell.statutsTuyau[Shell.statutsTuyau.length - 1];
 		return !echec;
 	} catch (e){
 		if (e instanceof ShellError){
-			term.echo(e.message);
+			Shell.ecranErreur(Shell.situer(e.message));
 			jouerSon("erreur");
+			Shell.statut = e.code || 1;
+			Shell.statutsTuyau = [Shell.statut];
 			return false;
 		}
 		throw e;
 	}
 };
 
+/*
+ * Lance une ligne déjà découpée par Shell.decouper : son texte d'origine part à l'interpréteur.
+ * Une liste de jetons fabriquée à la main (sans texte d'origine) suit encore l'ancien chemin :
+ * des tuyaux enchaînés par ; && et ||.
+ */
 Shell.lancer = function(jetons){
+	if (jetons && typeof jetons.source === "string" && typeof Interpreteur !== "undefined") return Interpreteur.executer(jetons.source);
 	var sequences = [], courant = [], separateur = null;
 	for (var i = 0; i < jetons.length; i++){
-		if (jetons[i].t === "op" && (jetons[i].v === ";" || jetons[i].v === "&&")){
+		if (jetons[i].t === "op" && (jetons[i].v === ";" || jetons[i].v === "&&" || jetons[i].v === "||")){
 			sequences.push({ jetons: courant, avant: separateur });
 			separateur = jetons[i].v;
 			courant = [];
@@ -2109,8 +2014,10 @@ Shell.lancer = function(jetons){
 	for (var s = 0; s < sequences.length; s++){
 		if (sequences[s].jetons.length === 0) continue;
 		if (sequences[s].avant === "&&" && !ok) continue;
+		if (sequences[s].avant === "||" && ok) continue;
 		ok = Shell.tuyau(sequences[s].jetons);
 	}
+	return Shell.statut;
 };
 
 /* Les récompenses du tour tiennent en une ligne : les sorts appris ensemble, puis l'XP au bout,
@@ -2168,11 +2075,18 @@ Shell.invite = function(){
 	return C.vert(JOUEUR + "@" + Shell.hote()) + ":" + C.bleu(chemin) + "$ ";
 };
 
-/* Point d'entree : appele par Game.js pour chaque ligne validee. */
+/* Au-delà, une saisie sur plusieurs lignes est abandonnée (un guillemet oublié qui avale tout). */
+var LIGNES_MAX_SAISIE = 400;
+
+/*
+ * Point d'entree : appele par Game.js pour chaque ligne validee.
+ * Une commande inachevée (un if sans fi, un guillemet ouvert, un here-document, une \ finale)
+ * attend la suite : l'invite devient « > », comme dans bash, et Ctrl+C l'abandonne.
+ */
 Shell.executer = function(ligne){
 	Shell.proposition = null;
-	Shell.ligneCourante = ligne;
-	if (ligne.trim() === "") return;
+	var suite = Shell.saisieEnCours !== null;
+	if (!suite && ligne.trim() === "") return;
 	// !! rejoue le sort precedent (sudo !! est un grand classique).
 	if (ligne.indexOf("!!") > -1){
 		if (Shell.historique.length === 0){ term.echo("!! : aucun sort précédent à relancer."); return; }
@@ -2180,26 +2094,42 @@ Shell.executer = function(ligne){
 		term.echo(C.gris(ligne));
 		GameEvents.fire({ type: "bangbang" });
 	}
-	Shell.historique.push(ligne);
+	var texte = suite ? Shell.saisieEnCours + "\n" + ligne : ligne;
+	Shell.ligneCourante = texte;
+	var verdict = Interpreteur.verifier(texte);
+	if (verdict === "incomplet"){
+		if (texte.split("\n").length > LIGNES_MAX_SAISIE){
+			Shell.saisieEnCours = null;
+			term.echo("bash : saisie abandonnée : plus de " + LIGNES_MAX_SAISIE + " lignes sans que la commande se termine.\n" +
+				C.gris("(Un guillemet ou un bloc resté ouvert ? Ctrl+C abandonne une saisie en cours.)"));
+			term.definirInvite(Shell.invite());
+			return;
+		}
+		// La première fois (ou pour un guillemet oublié, piège classique), on explique l'invite « > ».
+		var manque = suite ? "" : Interpreteur.ceQuiManque(texte) || "";
+		if (!suite && (!Shell.astuceSaisieVue || /guillemet|apostrophe/.test(manque))){
+			Shell.astuceSaisieVue = true;
+			term.echo(C.gris("(Commande inachevée : " + manque + ". Le terminal attend la suite sur l'invite « > » ; Ctrl+C abandonne.)"));
+		}
+		Shell.saisieEnCours = texte;
+		term.definirInvite("> ");
+		return;
+	}
+	Shell.saisieEnCours = null;
+	Shell.historique.push(texte);
 	state.nbCommandes++;
 	Shell.variable_developpee = false;
-	var jetons;
-	try {
-		jetons = Shell.decouper(ligne);
-	} catch (e){
-		if (e instanceof ShellError){ term.echo(e.message); return; }
-		throw e;
+	if (verdict !== null){
+		term.echo(verdict.message);
+		Shell.statut = verdict.code || 2;
+		if (suite) term.definirInvite(Shell.invite());
+		return;
 	}
-	if (jetons.length === 0) return;
-	var veutSudo = false;
-	for (var i = 0; i < jetons.length; i++){
-		if (jetons[i].t === "mot" && jetons[i].v === "sudo" && (i === 0 || jetons[i - 1].t === "op")) veutSudo = true;
-	}
-	if (veutSudo && state.knows("sudo") && !state.has("sudoOK")){
+	if (Interpreteur.contientSudo(texte) && state.knows("sudo") && !state.has("sudoOK")){
 		term.demander("[sudo] Mot de passe de " + JOUEUR + " : ", true, function(reponse){
 			if (reponse === MOT_DE_PASSE_SUDO){
 				state.applyState("sudoOK");
-				Shell.lancer(jetons);
+				Interpreteur.executer(texte);
 			} else {
 				term.echo("Désolé, essaie encore.\n" + C.gris(typeof examenEnCours === "function" && examenEnCours() ?
 					"(Le mot de passe sudo de l'épreuve est écrit à la fin de ton ordre de mission : cat ~/.ordre-de-mission.)" :
@@ -2209,8 +2139,27 @@ Shell.executer = function(ligne){
 		});
 		return;
 	}
-	Shell.lancer(jetons);
+	Interpreteur.executer(texte);
 	Shell.fin();
+};
+
+/* Ctrl+C : abandonne la commande en cours de saisie sur plusieurs lignes. */
+Shell.interrompre = function(){
+	if (Shell.saisieEnCours === null) return;
+	Shell.saisieEnCours = null;
+	Shell.statut = 130;
+	term.definirInvite(Shell.invite());
+};
+
+/* Ctrl+D sur une ligne vide au milieu d'une saisie sur plusieurs lignes : bash répond « fin de fichier prématurée ». */
+Shell.finDeSaisie = function(){
+	if (Shell.saisieEnCours === null) return false;
+	var texte = Shell.saisieEnCours;
+	Shell.saisieEnCours = null;
+	term.echo(Interpreteur.erreurIncomplet(texte).message);
+	Shell.statut = 2;
+	term.definirInvite(Shell.invite());
+	return true;
 };
 
 /* ------------------------------------------------------------------ */

@@ -1063,5 +1063,54 @@ verifier(lu3.valide && lu3.chapitre === 3, "le code du certificat réseau est va
 contient(w("ssh citadelle"), "Bienvenue sur citadelle", "la Citadelle reste joignable");
 contient(w("less Laurent"), "cd Crypte", "Laurent envoie à la Crypte une fois le réseau réparé");
 
+// --- Le chapitre 4 (l'Académie des Arcanes) : il s'ouvre après le rapport d'incident, et finit sur un certificat ---
+(function(){
+	var fs = require("fs"), path = require("path");
+	var sol = [], bloc = false;
+	fs.readFileSync(path.join(__dirname, "..", "docs", "solution.md"), "utf8").split("\n").forEach(function(l){
+		if (l.indexOf("```") === 0){ bloc = !bloc; return; }
+		if (bloc && l.trim() !== "") sol.push(l);
+	});
+	var st = {};
+	var j = nouveauMonde(st, 77);
+	var i = 0;
+	for (; i < sol.length && sol[i] !== "cp ModeleRapport rapport.txt"; i++) j.jouerSolution(sol[i]);
+	verifier(j.lire("state.has('ch4Ouvert')") === false, "chapitre 4 : fermé tant que le rapport d'incident n'est pas rendu");
+	verifier(j.lire("SalleServeurs.getChildFromName('Academie') === -1"), "chapitre 4 : pas d'escalier avant la fin de la Crypte");
+	contient(j.taper("ssh archives"), "Could not resolve", "chapitre 4 : le serveur archives est introuvable avant l'ouverture");
+	for (; i < sol.length; i++){ j.jouerSolution(sol[i]); if (sol[i] === "cat CertificatCyber"){ i++; break; } }
+	verifier(j.lire("state.quests.c_rapport") === true, "chapitre 4 : le rapport d'incident est rendu");
+	verifier(j.lire("state.has('ch4Ouvert')") === true, "chapitre 4 : l'Académie s'ouvre juste après la Crypte");
+	verifier(j.lire("SalleServeurs.getChildFromName('Academie') !== -1"), "chapitre 4 : un escalier descend de la SalleServeurs");
+	verifier(j.lire("state.chapitreEnCours()") === 2, "chapitre 4 : tant qu'on n'est pas descendu, la Crypte reste le chapitre en cours");
+	for (; i < sol.length; i++){
+		j.jouerSolution(sol[i]);
+		if (sol[i] === "cd Academie") verifier(j.lire("state.chapitreEnCours()") === 5, "chapitre 4 : en descendant, l'Académie devient le chapitre en cours");
+		if (sol[i] === "cp ~/academie/rex.txt ~/Cybersup/SalleServeurs/Academie/BoiteDeLaurent") break;
+	}
+	verifier(j.lire("state.quests.d_fin") === true, "chapitre 4 : le retour d'expérience est accepté");
+	verifier(j.lire("state.has('victoireCh4')") === true, "chapitre 4 : victoire");
+	var cert = j.taper("cat ~/CertificatAvance");
+	contient(cert, "CERTIFICAT AVANCÉ", "chapitre 4 : le CertificatAvance est dans la Maison");
+	contient(cert, "20 / 20", "chapitre 4 : la solution donne 20 sur 20 au certificat");
+	contient(cert, "50 sur 50", "chapitre 4 : les 50 défis figurent au certificat");
+	var code5 = cert.split("\n").filter(function(l){ return /^  [A-Za-z0-9_-]+\.[0-9A-F]{8}$/.test(l); })[0];
+	verifier(!!code5, "chapitre 4 : le certificat porte un code de vérification");
+	if (code5){
+		var lu5 = j.lire("lireCode(" + JSON.stringify(code5.trim()) + ")");
+		verifier(lu5.valide && lu5.chapitre === 5, "chapitre 4 : le code est valide et porte le numéro interne 5");
+	}
+	contient(j.taper("badges arcanes"), "Archimage", "chapitre 4 : le badge platine figure dans badges arcanes");
+	// La sauvegarde et le rechargement gardent tout : la note, le certificat, les défis, la victoire.
+	j.lire("state.save()");
+	var r = nouveauMonde(st);
+	verifier(r.lire("state.quests.d_fin && state.has('victoireCh4')"), "chapitre 4 rechargé : la victoire est gardée");
+	verifier(r.lire("state.xp5") === j.lire("state.xp5") && r.lire("state.xp5") === r.lire("state.xpMax5()"), "chapitre 4 rechargé : l'XP du chapitre est gardée, au maximum");
+	verifier(r.lire("QUETES_SECONDAIRES_CH4.every(function(q){ return state.quests[q.id]; })"), "chapitre 4 rechargé : les 50 défis restent cochés");
+	contient(r.taper("cat ~/CertificatAvance"), "CERTIFICAT AVANCÉ", "chapitre 4 rechargé : le certificat est toujours là");
+	contient(r.taper("cat ~/Cybersup/SalleServeurs/Academie/Frances"), "radio", "chapitre 4 rechargé : Frances a grandi");
+	contient(r.taper("cat ~/Cybersup/SalleServeurs/Academie/Radio"), "terminé", "chapitre 4 rechargé : Grace a terminé");
+})();
+
 console.log(verifications + " vérifications, " + echecs + " échec" + (echecs > 1 ? "s" : ""));
 process.exit(echecs ? 1 : 0);

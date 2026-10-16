@@ -34,7 +34,7 @@ Shell.definirVariable = function(affectation, cmd){
 	if (VARIABLES_SYSTEME.indexOf(nom) > -1){
 		throw new ShellError(prefixe + "la variable " + nom + " est tenue à jour par le système. Ici, on la lit (echo $" + nom + "), on ne la change pas.");
 	}
-	if (valeur.length > 200) throw new ShellError(prefixe + "cette valeur est bien trop longue.");
+	if (valeur.length > 4000) throw new ShellError(prefixe + "cette valeur est bien trop longue.");
 	state.env[nom] = valeur;
 	GameEvents.fire({ type: "export", name: nom, value: valeur });
 };
@@ -195,6 +195,7 @@ Shell.sorts.diff = function(args, io){
 		return p.opts.s ? "Les objets " + p.reste[0] + " et " + p.reste[1] + " sont identiques" :
 			(io.tty ? C.gris("(aucune différence : diff ne dit rien quand les deux textes sont identiques)") : "");
 	}
+	io.code = 1; // comme le vrai diff : statut 1 quand les textes diffèrent (if diff -q a b; then ...)
 	if (p.opts.q) return "Les objets " + p.reste[0] + " et " + p.reste[1] + " sont différents";
 	function plage(debut, nombre){
 		if (nombre === 0) return String(debut);
@@ -233,13 +234,28 @@ function lireListe(liste, cmd){
 }
 
 Shell.sorts.cut = function(args, io){
-	var p = lireOptions(args, "dfcs", "cut", "dfc");
+	// Les options longues de GNU : --complement (tout sauf la liste), --output-delimiter=TEXTE.
+	var complement = false, delimiteurSortie = null, courtes = [];
+	for (var a = 0; a < args.length; a++){
+		if (args[a] === "--complement") complement = true;
+		else if (args[a].indexOf("--output-delimiter=") === 0) delimiteurSortie = args[a].substring(19);
+		else if (args[a] === "--output-delimiter"){ delimiteurSortie = args[++a]; if (delimiteurSortie === undefined) throw new ShellError("cut : --output-delimiter attend un texte"); }
+		else if (args[a] === "--only-delimited") courtes.push("-s");
+		else if (/^--(delimiter|fields|characters|bytes)=/.test(args[a])){
+			var egal = args[a].indexOf("=");
+			courtes.push({ delimiter: "-d", fields: "-f", characters: "-c", bytes: "-b" }[args[a].substring(2, egal)], args[a].substring(egal + 1));
+		}
+		else courtes.push(args[a]);
+	}
+	var p = lireOptions(courtes, "dfcbs", "cut", "dfcb");
+	if (p.opts.b !== undefined) p.opts.c = p.opts.b;
 	if (p.opts.f === undefined && p.opts.c === undefined){
 		throw new ShellError("cut : il faut dire quoi garder. Utilisation : cut -d SEPARATEUR -f CHAMPS OBJET  (par exemple cut -d: -f1 Registre)");
 	}
 	var separateur = p.opts.d === undefined ? "\t" : p.opts.d;
 	if (separateur.length !== 1) throw new ShellError("cut : le séparateur doit être un seul caractère");
-	var retenu = lireListe(p.opts.f !== undefined ? p.opts.f : p.opts.c, "cut");
+	var liste = lireListe(p.opts.f !== undefined ? p.opts.f : p.opts.c, "cut");
+	var retenu = complement ? function(n){ return !liste(n); } : liste;
 	var texte;
 	if (p.reste.length === 0){
 		if (io.stdin === null) throw new ShellError("cut : dans quoi dois-je découper ? Utilisation : cut -d SEPARATEUR -f CHAMPS OBJET");
@@ -258,7 +274,14 @@ Shell.sorts.cut = function(args, io){
 	for (var l = 0; l < lignes.length; l++){
 		var ligne = lignes[l], gardes = [], k;
 		if (p.opts.c !== undefined){
-			for (k = 0; k < ligne.length; k++){ if (retenu(k + 1)) gardes.push(ligne.charAt(k)); }
+			// --output-delimiter sépare les plages de caractères qui ne se touchent pas.
+			var precedent = -2;
+			for (k = 0; k < ligne.length; k++){
+				if (!retenu(k + 1)) continue;
+				if (delimiteurSortie !== null && gardes.length && precedent !== k - 1) gardes.push(delimiteurSortie);
+				gardes.push(ligne.charAt(k));
+				precedent = k;
+			}
 			sortie.push(gardes.join(""));
 			continue;
 		}
@@ -268,7 +291,7 @@ Shell.sorts.cut = function(args, io){
 		}
 		var champs = ligne.split(separateur);
 		for (k = 0; k < champs.length; k++){ if (retenu(k + 1)) gardes.push(champs[k]); }
-		sortie.push(gardes.join(separateur));
+		sortie.push(gardes.join(delimiteurSortie === null ? separateur : delimiteurSortie));
 	}
 	return sortie.join("\n");
 };
@@ -277,11 +300,30 @@ Shell.sorts.cut = function(args, io){
 /* Scripts                                                             */
 /* ------------------------------------------------------------------ */
 
+/*
+ * bash SCRIPT [ARGUMENTS...] lance un script ; bash -c 'sorts' lance un texte écrit sur la ligne.
+ * -x montre chaque commande avant de la lancer, -e arrête à la première erreur, -n vérifie
+ * seulement la syntaxe. sh est un autre nom de bash (voir Interpreteur.js).
+ */
 Shell.sorts.bash = function(args, io){
 	if (args.length === 0){
 		return "Tu es déjà dans bash : c'est lui, le terminal, qui lit tes sorts depuis le début. Pour lancer un script : bash SCRIPT";
 	}
-	return Shell.lancerScript(args[0], io, false);
+	var options = {}, i = 0;
+	while (i < args.length && /^-[xenc]+$/.test(args[i]) && !options.c){
+		for (var k = 1; k < args[i].length; k++) options[args[i].charAt(k)] = true;
+		i++;
+	}
+	if (options.c){
+		if (args[i] === undefined) throw new ShellError("bash : -c : il faut un texte à lancer. Exemple : bash -c 'echo bonjour'", 2);
+		var sortie = Interpreteur.lancerScript(args[i], io, { nom0: args[i + 1] || "bash", positionnels: args.slice(i + 2), nomScript: "bash",
+			x: options.x, e: options.e, n: options.n });
+		GameEvents.fire({ type: "script", item: null, room: current_room, direct: false, nom: "bash -c", args: args.slice(i + 2),
+			statut: io.code || 0, structures: Interpreteur.structures(args[i]) });
+		return sortie;
+	}
+	if (i >= args.length) throw new ShellError("bash : quel script lancer ? Utilisation : bash [-x] SCRIPT [ARGUMENTS...]", 2);
+	return Shell.lancerScript(args[i], io, false, args.slice(i + 1), options);
 };
 
 /* ------------------------------------------------------------------ */
