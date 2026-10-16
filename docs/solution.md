@@ -57,6 +57,15 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
   20. [Les comptes de la Citadelle](#20-les-comptes-de-la-citadelle)
   21. [Les preuves et les notes chiffrées](#21-les-preuves-et-les-notes-chiffrées)
   22. [Le Corbeau et le rapport d'incident](#22-le-corbeau-et-le-rapport-dincident)
+- [Chapitre 4 : l'Académie des Arcanes](#chapitre-4--lacadémie-des-arcanes-niveau-avancé)
+  23. [L'Académie, les maîtres et l'avis de la Nuée](#23-lacadémie-les-maîtres-et-lavis-de-la-nuée)
+  24. [Runes et Divination : mesurer l'ampleur](#24-runes-et-divination--mesurer-lampleur)
+  25. [Transmutation et Grimoires : minimiser, nettoyer, trier](#25-transmutation-et-grimoires--minimiser-nettoyer-trier)
+  26. [Alchimie : comptes fantômes et quarantaine](#26-alchimie--comptes-fantômes-et-quarantaine)
+  27. [Chronomancie : désamorcer la bombe, programmer la sauvegarde](#27-chronomancie--désamorcer-la-bombe-programmer-la-vraie-sauvegarde)
+  28. [Archives : restaurer et appliquer le correctif](#28-archives--restaurer-et-appliquer-le-correctif)
+  29. [Invocation : le script de nettoyage](#29-invocation--le-script-de-nettoyage)
+  30. [Le dernier Corbeau, et le retour d'expérience](#30-le-dernier-corbeau-et-le-retour-dexpérience)
 - [L'épreuve finale : la Forteresse](#lépreuve-finale--la-forteresse-mission-spéciale)
 
 ## Le barème
@@ -69,7 +78,7 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
 | Première utilisation d'un sort (52) | 5 |
 | Lieu découvert (44) | 5 |
 
-Le total possible est de 3860 XP au chapitre 1. Les deux autres chapitres ont chacun leur barème, sur le même principe, et leur note sur 20 à part : 5790 XP pour la panne (22 étapes, 50 quêtes secondaires, 50 sorts, 28 lieux), 5625 XP pour la Crypte (22 étapes, 45 quêtes secondaires dont 14 autour de vim, 49 sorts, 48 lieux). La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
+Le total possible est de 3860 XP au chapitre 1. Les autres chapitres ont chacun leur barème, sur le même principe, et leur note sur 20 à part : 5790 XP pour la panne (22 étapes, 50 quêtes secondaires, 50 sorts, 28 lieux), 5625 XP pour la Crypte (22 étapes, 45 quêtes secondaires dont 14 autour de vim, 49 sorts, 48 lieux), et le chapitre 4, l'Académie des Arcanes, a 20 étapes principales, 23 sorts avancés et sa propre note sur le CertificatAvance (ses quêtes secondaires et badges arrivent dans une étape ultérieure). La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
 
 Ordres de grandeur : un parcours réduit au strict nécessaire (une quarantaine de commandes, impossible sans connaître la solution) donne 10 sur 20. La solution ci-dessous, dernier chapitre compris, donne 20 sur 20. Les derniers points se gagnent en visitant chaque lieu et en lançant chaque sort au moins une fois : `xp` liste ceux qui n'ont jamais servi.
 
@@ -95,6 +104,8 @@ Le joueur est un nouvel étudiant de B1, le jour de la rentrée. Sa Convocation 
 Le joueur traverse donc Terminus (la même histoire que le jeu d'origine), pendant que l'EcranMural de la WarRoom suit sa progression. À la fin, le Sorcier Noir se révèle être Laurent : Terminus était l'épreuve pratique, la crise de la WarRoom était l'examen des M2, et les habitants de Terminus sont d'anciens élèves et des intervenants qui reprennent leur vraie identité quand on retourne leur parler.
 
 Le P.S. de Laurent ouvre ensuite le chapitre 2 : pendant l'épreuve, le réseau de l'école est tombé, et Radia attend la recrue au bâtiment B pour le réparer couche par couche. Quand tout remarche, Radia transmet un message de Grace : du trafic bizarre passe sous la Citadelle. C'est le chapitre 3, la Crypte : un vrai intrus, le Corbeau, est entré pendant l'examen.
+
+Quelques semaines après la Crypte, le chapitre 4 (l'Académie des Arcanes) s'ouvre : les notes volées de Frances ont fuité, et un groupe de rançonneurs, la Nuée, a repris le nom du Corbeau pour frapper le serveur d'archives de l'école. En une nuit, la recrue mesure la fuite, minimise les données à notifier, éradique les comptes et fichiers de la Nuée, désamorce une bombe programmée pour minuit, restaure les archives et rédige le retour d'expérience. Le message final : à Terminus on tapait des commandes, ici on les fait travailler pour soi (le dernier « Corbeau » est un script, battu par le script de la recrue). Ce qui est « malveillant » reste narratif et inerte, comme au chapitre 3.
 
 Hormis Laurent, tous les personnages sont inventés. Ils portent des prénoms de pionniers de l'informatique (Ada, Grace, Hedy, Dennis, Linus, Margaret, Radia, Vint, Evi, Ken, Barbara, Tim, Annie, Alan).
 
