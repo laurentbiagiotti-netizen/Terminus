@@ -8,7 +8,7 @@ var vm = require("vm");
 
 var bavard = process.argv.indexOf("-v") > -1;
 var dossier = path.join(__dirname, "..", "Web", "static", "javascript");
-var fichiers = ["EventTarget.js", "Partie.js", "Item.js", "Room.js", "Manuel.js", "Shell.js", "Interpreteur.js", "SortsAvances.js", "GameObjects.js", "Chapitre2.js", "CommandesCyber.js", "Texte.js", "Awk.js", "Reseau.js", "Panne.js", "CommandesPanne.js", "Annexe.js", "Adresses.js", "RpgPanne.js", "SortsCrypte.js", "RpgCrypte.js", "GameState.js", "Examen.js", "SortsArcanes.js", "Chapitre4.js", "Academie.js", "SortsBastion.js"];
+var fichiers = ["EventTarget.js", "Partie.js", "Item.js", "Room.js", "Manuel.js", "Shell.js", "Interpreteur.js", "SortsAvances.js", "GameObjects.js", "Chapitre2.js", "CommandesCyber.js", "Texte.js", "Awk.js", "Reseau.js", "Panne.js", "CommandesPanne.js", "Annexe.js", "Adresses.js", "RpgPanne.js", "SortsCrypte.js", "RpgCrypte.js", "GameState.js", "Examen.js", "SortsArcanes.js", "Chapitre4.js", "Academie.js", "SortsBastion.js", "SortsGuet.js"];
 
 /* options.avant : du JavaScript lancé après les fichiers du jeu, avant le chargement de la sauvegarde (un monde de test). */
 function nouveauMonde(stockage, graine, options){
