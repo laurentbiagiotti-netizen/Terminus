@@ -1432,6 +1432,7 @@ function verifierMonde(){
     Voyants.cmd_text["less"] = texteVoyants();
     if (typeof verifierPanne === "function") verifierPanne();
     if (typeof verifierChapitre2 === "function") verifierChapitre2();
+    if (typeof verifierChapitre4 === "function") verifierChapitre4();
 }
 
 function texteCarteEtudiante(){

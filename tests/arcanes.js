@@ -1310,7 +1310,7 @@ egal(t("systemctl status sshd 2>&1 | cat"), jeu.lire("(function(){ var io = { st
 /* Le manuel, et ce que le jeu sait de ces sorts */
 jeu.lire("SORTS_ARCANES").forEach(function(sort){
 	verifier(jeu.lire("!!MANUEL[" + JSON.stringify(sort) + "] && MANUEL[" + JSON.stringify(sort) + "].page.length > 80"), "page de manuel pour " + sort);
-	verifier(jeu.lire("tousLesSorts().indexOf(" + JSON.stringify(sort) + ") === -1"), sort + " n'est dans aucune liste ORDRE_DES_SORTS");
+	verifier(jeu.lire("ORDRE_DES_SORTS_5.indexOf(" + JSON.stringify(sort) + ") > -1"), sort + " appartient au chapitre 4 (ORDRE_DES_SORTS_5)");
 	verifier(jeu.lire("COMMANDES_REELLES.indexOf(" + JSON.stringify(sort) + ") === -1"), sort + " n'est plus une « vraie commande absente de ce monde »");
 });
 ["find", "diff", "crontab", "systemctl", "date"].forEach(function(sort){
@@ -1325,9 +1325,11 @@ var source = require("fs").readFileSync(require("path").join(__dirname, "..", "W
 verifier(source.indexOf("\u2014") === -1, "pas de tiret cadratin dans SortsArcanes.js");
 verifier(!/\beval\s*\(|new Function\s*\(/.test(source), "jq n'utilise ni eval ni Function");
 var xpAvant = jeu.lire("state.xp");
+var xp5Avant = jeu.lire("state.xp5");
 jeu.lire("delete state.usages.tac");
 t("tac noms.txt");
-verifier(jeu.lire("state.xp") === xpAvant && jeu.lire("state.usages.tac === true"), "un sort arcane ne rapporte pas d'XP tant qu'aucun chapitre ne l'enseigne");
+verifier(jeu.lire("state.xp") === xpAvant && jeu.lire("state.usages.tac === true"), "un sort du chapitre 4 ne touche pas l'XP du chapitre 1");
+verifier(jeu.lire("state.xp5") === xp5Avant + 5, "le premier usage d'un sort arcane rapporte désormais de l'XP au chapitre 4");
 jeu.lire("delete state.spells.jq");
 contient(t("jq . eleves.json"), "Tu ne connais pas encore le sort « jq »", "jq s'apprend comme les autres sorts");
 

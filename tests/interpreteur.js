@@ -624,7 +624,7 @@ contient(jeu.taper("exit_inexistant; echo $?"), "127", "le statut 127 au prompt"
 ["read", "printf", "seq", "basename", "dirname", "expr", "sleep"].forEach(function(s){
 	verifier(jeu.lire("MANUEL[" + JSON.stringify(s) + "] && MANUEL[" + JSON.stringify(s) + "].page.length > 50"), s + " a sa page de manuel");
 	verifier(jeu.lire("MANUEL[" + JSON.stringify(s) + "].page.indexOf('—') === -1 && MANUEL[" + JSON.stringify(s) + "].resume.indexOf('—') === -1"), s + " : pas de tiret cadratin dans son manuel");
-	verifier(!jeu.lire("tousLesSorts().indexOf(" + JSON.stringify(s) + ") > -1"), s + " n'est encore dans aucun ORDRE_DES_SORTS");
+	verifier(jeu.lire("ORDRE_DES_SORTS_5.indexOf(" + JSON.stringify(s) + ") > -1"), s + " appartient au chapitre 4 (ORDRE_DES_SORTS_5)");
 	verifier(!jeu.lire("COMMANDES_REELLES.indexOf(" + JSON.stringify(s) + ") > -1"), s + " n'est plus dans COMMANDES_REELLES");
 });
 verifier(!jeu.lire("COMMANDES_REELLES.indexOf('sh') > -1"), "sh n'est plus dans COMMANDES_REELLES");

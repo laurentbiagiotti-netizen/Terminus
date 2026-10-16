@@ -1446,6 +1446,7 @@ Tu connais cette barbe. C'est le vieil homme des MontagnesEst.\n\n\
 		default:
 			if (typeof etatChapitre2 === "function") etatChapitre2(param_name);
 			if (typeof etatPanne === "function") etatPanne(param_name);
+			if (typeof etatChapitre4 === "function") etatChapitre4(param_name);
 			break;
 	};
 };
