@@ -920,3 +920,50 @@ GameEvents.addListener("enter", function(e){
 
 /* Le monde est de nouveau figé : ce que le joueur crée ensuite n'a plus d'identifiant fixe. */
 World.fige = true;
+
+/* ------------------------------------------------------------------ */
+/* Départ direct par « chapitre 4 » : on ouvre l'Académie tout de suite */
+/* ------------------------------------------------------------------ */
+
+/* Le socle des chapitres précédents est réputé acquis (renfort), sans XP : on les apprend ailleurs.
+   Les sorts du chapitre 4 (ORDRE_DES_SORTS_5), eux, s'apprennent auprès des maîtres, pour l'XP. */
+function socleCh4Acquis(){
+	[typeof ORDRE_DES_SORTS !== "undefined" ? ORDRE_DES_SORTS : [],
+	 typeof ORDRE_DES_SORTS_2 !== "undefined" ? ORDRE_DES_SORTS_2 : [],
+	 typeof ORDRE_DES_SORTS_3 !== "undefined" ? ORDRE_DES_SORTS_3 : []].forEach(function(liste){
+		liste.forEach(function(s){ state.spells[s] = true; });
+	});
+}
+
+function commencerChapitre4(){
+	var avant = null;
+	try { state.save(); avant = window.localStorage.getItem(CLE_SAUVEGARDE); } catch (e){ avant = null; }
+	var alias = state.alias;
+	state.alias = {};
+	state.flags.rejeuEnCours = true;
+	socleCh4Acquis();
+	state.set("sudoOK");
+	state.set("chapitre1Saute");
+	state.set("ch4Direct");
+	PROFIL.chapitre = 4;
+	enregistrerProfil();
+	if (!state.ch4 || typeof state.ch4 !== "object") state.ch4 = etatCh4Initial();
+	state.applyState("ch4Ouvert");
+	delete state.flags.rejeuEnCours;
+	state.alias = alias;
+	Shell.narration = [];
+	state.gainsDuTour = [];
+	state.debutChapitre5 = state.tempsMs;
+	state.ch4.dernierNb = state.nbCommandes;
+	if (typeof enterRoom === "function") enterRoom(Academie);
+	Shell.lieu_precedent = null;
+	Shell.pile_ssh = [];
+	if (typeof montrerImage === "function") montrerImage(Academie.room_pic, "Academie");
+	if (term && term.effacer) term.effacer();
+	term.echo(C.vert(C.gras("CHAPITRE 4 : L'ACADÉMIE DES ARCANES")) + "\n\n" +
+		"Quelques semaines après la Crypte, les notes volées de Frances ont fuité. Un groupe de rançonneurs, la Nuée, " +
+		"a frappé le serveur d'archives de l'école cette nuit : données exfiltrées, bombe programmée pour minuit, pièges partout.\n\n" +
+		"Tu descends à l'Académie des Arcanes. " + C.vert("cat Frances") + ", puis " + C.vert("cat AVIS.txt") + ". Grace te guide à la radio.\n\n" +
+		C.gris("Ce chapitre a sa propre note sur 20. quetes pour le journal, indice si tu bloques, xp pour ta note. L'horloge de la nuit file vers minuit."));
+	return true;
+}

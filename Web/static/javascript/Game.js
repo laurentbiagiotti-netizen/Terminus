@@ -158,12 +158,12 @@ function ecranDeVictoire(chapitre){
 	var cadre = document.createElement("div");
 	cadre.className = "victoire-cadre";
 	var image = document.createElement("img");
-	var images = { 1: "item_grad.gif", 2: "item_locker.gif", 3: "loc_batimentb_ok.gif" };
+	var images = { 1: "item_grad.gif", 2: "item_locker.gif", 3: "loc_batimentb_ok.gif", 5: "item_historybook.gif" };
 	image.src = sourceImage("./static/img/" + images[chapitre]);
 	image.alt = "";
 	var titre = document.createElement("p");
 	titre.className = "victoire-titre";
-	titre.textContent = chapitre === 2 ? "Incident clos" : (chapitre === 3 ? "Réseau rétabli" : "Le Sorcier Noir est vaincu");
+	titre.textContent = chapitre === 2 ? "Incident clos" : (chapitre === 3 ? "Réseau rétabli" : (chapitre === 5 ? "La Nuée repoussée" : "Le Sorcier Noir est vaincu"));
 	var note = document.createElement("p");
 	note.className = "victoire-note";
 	note.textContent = state.noteTexte(chapitre === 1 ? undefined : chapitre);
@@ -174,7 +174,7 @@ function ecranDeVictoire(chapitre){
 	commande.className = "victoire-commande";
 	commande.appendChild(document.createTextNode(chapitre === 1 ? "Ton diplôme : " : "Ton certificat : "));
 	var code = document.createElement("code");
-	code.textContent = chapitre === 2 ? "cat ~/CertificatCyber" : (chapitre === 3 ? "cat ~/CertificatReseau" : "cat Diplome");
+	code.textContent = chapitre === 2 ? "cat ~/CertificatCyber" : (chapitre === 3 ? "cat ~/CertificatReseau" : (chapitre === 5 ? "cat ~/CertificatAvance" : "cat Diplome"));
 	commande.appendChild(code);
 	var suite = document.createElement("p");
 	suite.className = "victoire-suite";
@@ -246,8 +246,8 @@ var completerSansFete = GameState.prototype.complete;
 GameState.prototype.complete = function(id){
 	var deja = this.quests[id];
 	completerSansFete.call(this, id);
-	if (!deja && (id === "m_boss" || id === "c_rapport" || id === "r_fin") && !Shell.sauvegardeBloquee && !this.has("rejeuEnCours")){
-		setTimeout(function(){ ecranDeVictoire(id === "c_rapport" ? 2 : (id === "r_fin" ? 3 : 1)); }, 700);
+	if (!deja && (id === "m_boss" || id === "c_rapport" || id === "r_fin" || id === "d_fin") && !Shell.sauvegardeBloquee && !this.has("rejeuEnCours")){
+		setTimeout(function(){ ecranDeVictoire(id === "c_rapport" ? 2 : (id === "r_fin" ? 3 : (id === "d_fin" ? 5 : 1))); }, 700);
 	}
 	if (!deja && id === "c_corbeau" && !Shell.sauvegardeBloquee) revelationDuCorbeau();
 };
@@ -325,7 +325,14 @@ function majEtat(){
 		var dernier = texteTalkie();
 		if (radio.dataset.dernier !== dernier){ radio.dataset.dernier = dernier; radioSOC(dernier); }
 	}
-	etat.classList.toggle("etat-alerte", (enCours === 2 && !state.quests["c_rapport"]) || (enCours === 3 && !state.quests["r_fin"]));
+	etat.classList.toggle("etat-alerte", (enCours === 2 && !state.quests["c_rapport"]) || (enCours === 3 && !state.quests["r_fin"]) || (enCours === 5 && !state.quests["d_fin"]));
+	if (enCours === 5){
+		niveau.textContent = state.quests["d_fin"] ? "Chapitre 4 · Nuée repoussée" : "Chapitre 4 · la nuit, " + (typeof heureDeLaNuit === "function" ? heureDeLaNuit() : "");
+		remplirBarre(state.note(5));
+		document.getElementById("etat-xp").textContent = state.xpNet(5) + " XP · " + state.noteTexte(5) + (state.malus5 ? " (indices -" + state.malus5 + ")" : "");
+		document.getElementById("etat").title = "Note du chapitre 4 (l'Académie des Arcanes). Tape xp pour le détail.";
+		return;
+	}
 	if (enCours === 2){
 		niveau.textContent = state.quests["c_rapport"] ? "Chapitre 3 · incident clos" : "Chapitre 3 · incident en cours";
 		remplirBarre(state.note(2));

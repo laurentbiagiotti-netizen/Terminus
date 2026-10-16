@@ -197,7 +197,9 @@ var SCENES = {
 	r_annexe: { image: "loc_annexe.gif", titre: "Chapitre 2 · Acte II : l'Annexe", chapitre: 2,
 		lignes: ["Le bâtiment B tient. La cafétéria, non.", "Plus de Wi-Fi, un écran noir, une fausse boîte aux lettres.", "Même méthode : du câble jusqu'au web."] },
 	c_crypte: { image: "loc_crypte.gif", titre: "Chapitre 3 · La Crypte", chapitre: 3,
-		lignes: ["Un mage noir s'est glissé dans la Citadelle.", "Ses sorts dorment dans le donjon, sous tes pieds.", "Grace te guide à la radio. La chasse est ouverte."] }
+		lignes: ["Un mage noir s'est glissé dans la Citadelle.", "Ses sorts dorment dans le donjon, sous tes pieds.", "Grace te guide à la radio. La chasse est ouverte."] },
+	d_entree: { image: "loc_library.gif", titre: "Chapitre 4 · L'Académie des Arcanes", chapitre: 4,
+		lignes: ["La Nuée a frappé le serveur d'archives cette nuit.", "Données volées, et une bombe programmée pour minuit.", "Huit maîtres, une horloge qui tourne : mesure, nettoie, restaure, documente."] }
 };
 function sceneDeChapitre(scene){
 	var fond = document.createElement("div");
@@ -224,14 +226,14 @@ function sceneDeChapitre(scene){
 	// La carte des chapitres : celui qui commence s'allume.
 	var carte = document.createElement("p");
 	carte.className = "scene-carte";
-	["Terminus", "La panne", "La Crypte"].forEach(function(nom, i){
+	["Terminus", "La panne", "La Crypte", "L'Académie"].forEach(function(nom, i){
 		var etape = document.createElement("span");
 		var n = i + 1;
-		var fini = n < scene.chapitre || (n === 1 && state.has("victoire")) || (n === 2 && state.quests["r_fin"]) || (n === 3 && state.quests["c_rapport"]);
+		var fini = n < scene.chapitre || (n === 1 && state.has("victoire")) || (n === 2 && state.quests["r_fin"]) || (n === 3 && state.quests["c_rapport"]) || (n === 4 && state.quests["d_fin"]);
 		etape.className = "scene-etape" + (n === scene.chapitre ? " scene-ici" : (fini ? " scene-fait" : ""));
 		etape.textContent = (n === scene.chapitre ? "● " : (fini ? "✓ " : "○ ")) + nom;
 		carte.appendChild(etape);
-		if (i < 2){ var trait = document.createElement("span"); trait.className = "scene-trait"; trait.textContent = " ── "; carte.appendChild(trait); }
+		if (i < 3){ var trait = document.createElement("span"); trait.className = "scene-trait"; trait.textContent = " ── "; carte.appendChild(trait); }
 	});
 	cadre.appendChild(carte);
 	var suite = document.createElement("p");
@@ -276,9 +278,11 @@ function recapChapitre(chapitre){
 	var minutes, badges = [], sorts;
 	if (chapitre === 1){ minutes = Math.round(state.tempsMs / 60000); }
 	else if (chapitre === 3){ minutes = Math.round((state.tempsMs - (state.debutChapitre3 || 0)) / 60000); }
+	else if (chapitre === 5){ minutes = Math.round((state.tempsMs - (state.debutChapitre5 || 0)) / 60000); }
 	else { minutes = Math.round((state.tempsMs - (state.debutChapitre2 || 0)) / 60000); }
 	if (chapitre === 3 && typeof RELIQUES !== "undefined") badges = Object.keys(RELIQUES).filter(function(id){ return state.quests[id]; });
 	if (chapitre === 2 && typeof TROPHEES_CRYPTE !== "undefined") badges = Object.keys(TROPHEES_CRYPTE).filter(function(id){ return state.quests[id]; });
+	if (chapitre === 5 && typeof TROPHEES_CH4 !== "undefined") badges = Object.keys(TROPHEES_CH4).filter(function(id){ return state.quests[id]; });
 	sorts = Object.keys(state.frequences || {}).filter(function(s){ return SORTS_DU_JEU.indexOf(s) === -1; }).filter(function(s){ return chapitreDuSort(s) === chapitre || (chapitre === 1 && ["ls", "cd", "cat"].indexOf(s) > -1); });
 	sorts.sort(function(a, b){ return state.frequences[b] - state.frequences[a]; });
 	return { minutes: minutes, badges: badges, top: sorts.slice(0, 3).map(function(s){ return s + " ×" + state.frequences[s]; }) };
@@ -429,8 +433,9 @@ function lancerQuiz(chapitre){
 }
 
 Shell.sorts.quiz = function(args, io){
-	var choix = { "1": 1, "2": 3, "3": 2 }[args[0]] || (state.chapitreEnCours ? state.chapitreEnCours() : 1);
-	var fini = choix === 1 ? state.has("victoire") : (choix === 3 ? !!state.quests["r_fin"] : !!state.quests["c_rapport"]);
+	var choix = { "1": 1, "2": 3, "3": 2, "4": 5 }[args[0]] || (state.chapitreEnCours ? state.chapitreEnCours() : 1);
+	var fini = choix === 1 ? state.has("victoire") : (choix === 3 ? !!state.quests["r_fin"] : (choix === 5 ? !!state.quests["d_fin"] : !!state.quests["c_rapport"]));
+	if (choix === 5 && (typeof QUIZ === "undefined" || !QUIZ[5])) return fini ? "Le quiz du chapitre 4 arrivera bientôt." : "Le quiz du chapitre 4 s'ouvrira à la fin du chapitre.";
 	if (!fini) return "Le quiz du chapitre " + numeroAffiche(choix) + " s'ouvre à la fin du chapitre. " + C.gris("(quiz 1, quiz 2 ou quiz 3 pour un chapitre déjà terminé)");
 	setTimeout(function(){ lancerQuiz(choix); }, 50);
 	return C.gris("(Le quiz du chapitre " + numeroAffiche(choix) + " : 5 questions tirées au hasard. 1 à 4 pour répondre, Échap pour sortir.)");
