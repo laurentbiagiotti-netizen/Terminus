@@ -97,6 +97,20 @@ function fermer(jeu, tours){ (tours || ORDRE_TOURS).forEach(function(cle){ jouer
 	verifier(jeu.taper("sudo chage -M 90 ada", jeu.lire("MOT_DE_PASSE_SUDO")).indexOf("does not exist") === -1, "bastion : chage trouve le compte du joueur");
 })();
 
+/* L'horloge de la nuit : date sur bastion, et le journal qui passe au lendemain après minuit. */
+(function(){
+	var jeu = neuf();
+	jeu.taper("ssh-copy-id bastion"); jeu.taper("ssh bastion");
+	verifier(/ 22:\d\d:\d\d/.test(jeu.taper("date")), "date sur bastion : l'heure de la nuit (22 h au départ)");
+	jeu.lire("state.ch5.horloge = 140"); jeu.taper("ls");
+	verifier(/^0[0-2]:/.test(jeu.taper("date +%H:%M").trim()), "date sur bastion : après minuit, l'heure de la nuit continue");
+	jeu.lire("journalGuet(H5, { unite: 'essai-nuit', message: 'avant' })");
+	var veille = jeu.lire("new Date(state.ch5.base).getDate()");
+	var sortie = jeu.taper("sudo journalctl -t essai-nuit", jeu.lire("MOT_DE_PASSE_SUDO"));
+	var jour = /^[A-Z][a-z]{2} (\d\d) /m.exec(sortie);
+	verifier(jour && +jour[1] !== veille, "journal : une entrée d'après minuit porte la date du lendemain");
+})();
+
 /* Départ direct : sans la Crypte, le joueur n'a pas de clés SSH ; Grace lui en fabrique une paire à l'entrée du Bastion. */
 (function(){
 	var st = {};

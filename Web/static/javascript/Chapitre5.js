@@ -504,6 +504,15 @@ maintenantBastion = function(){
 	return MAINTENANT_AVANT_CH5();
 };
 definirHorlogeGuet(function(){ return new Date(maintenantBastion()); });
+/* date, sur bastion : l'heure de la nuit du chapitre (celle des journaux), pas celle de l'ordinateur. */
+var DATE_AVANT_CH5 = Shell.sorts.date;
+Shell.sorts.date = function(args, io){
+	var surBastion = typeof Shell.hote === "function" && Shell.hote() === H5 && state.has("ch5Ouvert") && state.ch5 && state.ch5.base;
+	var relative = args.some(function(a){ return a === "-d" || a === "--date" || /^--date=/.test(a) || /^-d./.test(a); });
+	if (!surBastion || relative || typeof formaterDate !== "function") return DATE_AVANT_CH5.apply(this, arguments);
+	if (args.length && args[0].charAt(0) !== "+") return DATE_AVANT_CH5.apply(this, arguments);
+	return formaterDate(new Date(maintenantBastion()), args);
+};
 
 function avancerHorlogeCh5(){
 	var c = sCh5();

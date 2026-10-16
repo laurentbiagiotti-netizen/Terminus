@@ -3830,8 +3830,13 @@ Shell.sorts.journalctl = function(args, io){
 	}
 	var base = (function(){ var j = (HOTES[h] && HOTES[h].journal) || []; return typeof j === "function" ? j() : j; })();
 	var tout = (base || []).map(function(x, k){ return { e: x, k: k, cle: (x.heure || "00:00") + ":" + (x.secondes || "00") }; })
-		.concat(e.journal.map(function(x, k){ return { e: x, k: 10000 + k, cle: x.heure + ":" + x.secondes }; }))
-		.sort(function(a, b){ return a.cle < b.cle ? -1 : (a.cle > b.cle ? 1 : a.k - b.k); }).map(function(x){ return x.e; });
+		.concat(e.journal.map(function(x, k){ return { e: x, k: 10000 + k, cle: x.heure + ":" + x.secondes, t: x.t }; }))
+		// Les entrées datées (t) se rangent par leur instant, après le journal d'origine : passé minuit, 00:15 vient après 23:50.
+		.sort(function(a, b){
+			if (a.t && b.t) return a.t - b.t || a.k - b.k;
+			if (a.t || b.t) return a.t ? 1 : -1;
+			return a.cle < b.cle ? -1 : (a.cle > b.cle ? 1 : a.k - b.k);
+		}).map(function(x){ return x.e; });
 	if (tag !== null) tout = tout.filter(function(x){ return String(x.unite).replace(/\[\d+\]$/, "") === tag; });
 	if (prioMax !== null) tout = tout.filter(function(x){ return (x.prio === undefined ? 6 : x.prio) <= prioMax; });
 	if (motif !== null){ var re; try { re = new RegExp(motif); } catch (x){ throw new ShellError("Failed to compile pattern: " + motif); } tout = tout.filter(function(x){ return re.test(x.message); }); }
