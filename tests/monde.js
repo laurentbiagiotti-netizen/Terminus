@@ -8,9 +8,11 @@ var vm = require("vm");
 
 var bavard = process.argv.indexOf("-v") > -1;
 var dossier = path.join(__dirname, "..", "Web", "static", "javascript");
-var fichiers = ["EventTarget.js", "Partie.js", "Item.js", "Room.js", "Manuel.js", "Shell.js", "Interpreteur.js", "SortsAvances.js", "GameObjects.js", "Chapitre2.js", "CommandesCyber.js", "Texte.js", "Awk.js", "Reseau.js", "Panne.js", "CommandesPanne.js", "Annexe.js", "Adresses.js", "RpgPanne.js", "SortsCrypte.js", "RpgCrypte.js", "GameState.js", "Examen.js", "SortsArcanes.js", "Chapitre4.js", "Academie.js"];
+var fichiers = ["EventTarget.js", "Partie.js", "Item.js", "Room.js", "Manuel.js", "Shell.js", "Interpreteur.js", "SortsAvances.js", "GameObjects.js", "Chapitre2.js", "CommandesCyber.js", "Texte.js", "Awk.js", "Reseau.js", "Panne.js", "CommandesPanne.js", "Annexe.js", "Adresses.js", "RpgPanne.js", "SortsCrypte.js", "RpgCrypte.js", "GameState.js", "Examen.js", "SortsArcanes.js", "Chapitre4.js", "Academie.js", "SortsBastion.js", "SortsGuet.js", "Chapitre5.js", "Bastion.js"];
 
-function nouveauMonde(stockage, graine){
+/* options.avant : du JavaScript lancé après les fichiers du jeu, avant le chargement de la sauvegarde (un monde de test). */
+function nouveauMonde(stockage, graine, options){
+	options = options || {};
 	stockage = stockage || {};
 	// Une graine fixe par défaut : les tests sont reproductibles. Les valeurs propres à
 	// la partie (mot de passe, adresses, PID...) se lisent ensuite avec jeu.lire().
@@ -35,6 +37,7 @@ function nouveauMonde(stockage, graine){
 	fichiers.forEach(function(f){
 		vm.runInContext(fs.readFileSync(path.join(dossier, f), "utf8"), bac, { filename: f });
 	});
+	if (options.avant) vm.runInContext(options.avant, bac, { filename: "monde-de-test.js" });
 	// Un faux terminal : il note ce qui s'affiche et répond aux questions (mot de passe sudo).
 	vm.runInContext(
 		"var reponses = [];" +
@@ -67,6 +70,10 @@ function nouveauMonde(stockage, graine){
 			var lire = function(e){ return vm.runInContext(e, bac); };
 			return commande
 				.replace(/<motdepasse>/g, lire("MOT_DE_PASSE_SUDO"))
+				.replace(/<moi>/g, lire("JOUEUR"))
+				.replace(/<vint>/g, function(){ return lire("typeof IP_VINT !== 'undefined' ? IP_VINT : ''"); })
+				.replace(/<pierre-avant>/g, function(){ return String(lire("state.ch5 ? state.ch5.scoreDepart : ''")); })
+				.replace(/<pierre-apres>/g, function(){ return String(lire("state.ch5 ? state.ch5.scoreFinal : ''")); })
 				.replace(/<client>/g, lire("MEILLEUR_CLIENT"))
 				.replace(/<adresse>/g, lire("ADRESSE_ATTAQUANT"))
 				.replace(/<sweats>/g, lire("NB_SWEATS"))
@@ -89,6 +96,8 @@ function nouveauMonde(stockage, graine){
 			if (commande === "ssh-keygen") return this.taper(commande, ["Une phrase de passe", "Une phrase de passe"]);
 			if (/^gpg (-d|--decrypt)/.test(commande)) return this.taper(commande, vm.runInContext("PHRASE_CORBEAU", bac));
 			if (/^gpg (-c|--symmetric)/.test(commande)) return this.taper(commande, ["ma phrase a moi", "ma phrase a moi"]);
+			// Au Bastion : une règle sudo étroite, écrite dans visudo -f (vim), pour le compte de sauvegarde.
+			if (/visudo -f \S*sudoers\.d\/sauvegarde\s*$/.test(commande)) this.editer("function(t){ return { texte: 'sauvegarde ALL=(root) /usr/bin/rsync\\n', commandes: { i: true } }; }");
 			var vim = /(?:^|\s)(?:vim|vi|visudo)(?:\s+(\S+))?\s*$/.exec(commande);
 			if (vim) this.editer(EDITIONS_VIM(vim[1] ? vim[1].split("/").pop() : "sudoers", vm.runInContext("({ poste: ADRESSE_POSTE_CORBEAU, compte: COMPTE_CACHE, port: PORT_CORBEAU, heure: HEURE_PREMIERE })", bac)));
 			// Dans nano, sur le poste du bâtiment B : corriger le DNS, puis ajouter un raccourci de nom.

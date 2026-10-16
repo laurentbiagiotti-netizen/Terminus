@@ -158,12 +158,12 @@ function ecranDeVictoire(chapitre){
 	var cadre = document.createElement("div");
 	cadre.className = "victoire-cadre";
 	var image = document.createElement("img");
-	var images = { 1: "item_grad.gif", 2: "item_locker.gif", 3: "loc_batimentb_ok.gif", 5: "item_historybook.gif" };
+	var images = { 1: "item_grad.gif", 2: "item_locker.gif", 3: "loc_batimentb_ok.gif", 5: "item_historybook.gif", 6: "loc_bastion.gif" };
 	image.src = sourceImage("./static/img/" + images[chapitre]);
 	image.alt = "";
 	var titre = document.createElement("p");
 	titre.className = "victoire-titre";
-	titre.textContent = chapitre === 2 ? "Incident clos" : (chapitre === 3 ? "Réseau rétabli" : (chapitre === 5 ? "La Nuée repoussée" : "Le Sorcier Noir est vaincu"));
+	titre.textContent = chapitre === 2 ? "Incident clos" : (chapitre === 3 ? "Réseau rétabli" : (chapitre === 5 ? "La Nuée repoussée" : (chapitre === 6 ? "Le Bastion a tenu" : "Le Sorcier Noir est vaincu")));
 	var note = document.createElement("p");
 	note.className = "victoire-note";
 	note.textContent = state.noteTexte(chapitre === 1 ? undefined : chapitre);
@@ -174,7 +174,7 @@ function ecranDeVictoire(chapitre){
 	commande.className = "victoire-commande";
 	commande.appendChild(document.createTextNode(chapitre === 1 ? "Ton diplôme : " : "Ton certificat : "));
 	var code = document.createElement("code");
-	code.textContent = chapitre === 2 ? "cat ~/CertificatCyber" : (chapitre === 3 ? "cat ~/CertificatReseau" : (chapitre === 5 ? "cat ~/CertificatAvance" : "cat Diplome"));
+	code.textContent = chapitre === 2 ? "cat ~/CertificatCyber" : (chapitre === 3 ? "cat ~/CertificatReseau" : (chapitre === 5 ? "cat ~/CertificatAvance" : (chapitre === 6 ? "cat ~/CertificatBastion" : "cat Diplome")));
 	commande.appendChild(code);
 	var suite = document.createElement("p");
 	suite.className = "victoire-suite";
@@ -246,8 +246,8 @@ var completerSansFete = GameState.prototype.complete;
 GameState.prototype.complete = function(id){
 	var deja = this.quests[id];
 	completerSansFete.call(this, id);
-	if (!deja && (id === "m_boss" || id === "c_rapport" || id === "r_fin" || id === "d_fin") && !Shell.sauvegardeBloquee && !this.has("rejeuEnCours")){
-		setTimeout(function(){ ecranDeVictoire(id === "c_rapport" ? 2 : (id === "r_fin" ? 3 : (id === "d_fin" ? 5 : 1))); }, 700);
+	if (!deja && (id === "m_boss" || id === "c_rapport" || id === "r_fin" || id === "d_fin" || id === "h_rapport") && !Shell.sauvegardeBloquee && !this.has("rejeuEnCours")){
+		setTimeout(function(){ ecranDeVictoire(id === "c_rapport" ? 2 : (id === "r_fin" ? 3 : (id === "d_fin" ? 5 : (id === "h_rapport" ? 6 : 1)))); }, 700);
 	}
 	if (!deja && id === "c_corbeau" && !Shell.sauvegardeBloquee) revelationDuCorbeau();
 };
@@ -325,7 +325,14 @@ function majEtat(){
 		var dernier = texteTalkie();
 		if (radio.dataset.dernier !== dernier){ radio.dataset.dernier = dernier; radioSOC(dernier); }
 	}
-	etat.classList.toggle("etat-alerte", (enCours === 2 && !state.quests["c_rapport"]) || (enCours === 3 && !state.quests["r_fin"]) || (enCours === 5 && !state.quests["d_fin"]));
+	etat.classList.toggle("etat-alerte", (enCours === 2 && !state.quests["c_rapport"]) || (enCours === 3 && !state.quests["r_fin"]) || (enCours === 5 && !state.quests["d_fin"]) || (enCours === 6 && !state.quests["h_rapport"]));
+	if (enCours === 6){
+		niveau.textContent = state.quests["h_rapport"] ? "Chapitre 5 · le Bastion a tenu" : "Chapitre 5 · la nuit, " + (typeof heureCh5 === "function" ? heureCh5() : "");
+		remplirBarre(state.note(6));
+		document.getElementById("etat-xp").textContent = state.xpNet(6) + " XP · " + state.noteTexte(6) + (state.malus6 ? " (indices -" + state.malus6 + ")" : "");
+		document.getElementById("etat").title = "Note du chapitre 5 (le Bastion). Tape xp pour le détail.";
+		return;
+	}
 	if (enCours === 5){
 		niveau.textContent = state.quests["d_fin"] ? "Chapitre 4 · Nuée repoussée" : "Chapitre 4 · la nuit, " + (typeof heureDeLaNuit === "function" ? heureDeLaNuit() : "");
 		remplirBarre(state.note(5));
@@ -641,14 +648,15 @@ function nouvellePartie(prenom, motDePasse, nomComplet, email){
 	demanderParcours();
 }
 
-/* Les quatre enveloppes, à choisir au clavier (1 à 4) ou d'un clic. */
+/* Les cinq enveloppes, à choisir au clavier (1 à 5) ou d'un clic. */
 function enveloppes(){
 	var boite = document.createElement("div");
 	boite.className = "enveloppes";
 	[["1", "item_convocation.gif", "Convocation", "L'épreuve pratique de première année : tu découvres le terminal Linux. Chapitre 1, puis la suite."],
 	 ["2", "item_ticket.gif", "Ticket d'incident", "Le réseau de l'école est en panne : on cherche quelqu'un qui connaît déjà les bases. Chapitre 2 directement (réseau)."],
 	 ["3", "item_mission.gif", "Ordre de mission", "La WarRoom demande un renfort d'urgence, pour qui connaît déjà les bases. Chapitre 3 directement (cyber)."],
-	 ["4", "item_lettre_academie.gif", "Pli de l'Académie", "L'Académie des Arcanes appelle un mage confirmé : sed, awk, jq, cron, scripts. Chapitre 4 directement (Linux avancé)."]].forEach(function(e){
+	 ["4", "item_lettre_academie.gif", "Pli de l'Académie", "L'Académie des Arcanes appelle un mage confirmé : sed, awk, jq, cron, scripts. Chapitre 4 directement (Linux avancé)."],
+	 ["5", "item_lettre_inspection.gif", "Lettre de l'Inspection", "Un serveur neuf à durcir avant l'inspection de l'aube : comptes, SSH, pare-feu, noyau, journaux. Chapitre 5 directement (durcissement Linux)."]].forEach(function(e){
 		var bouton = document.createElement("button");
 		bouton.type = "button";
 		bouton.className = "enveloppe";
@@ -675,18 +683,18 @@ function enveloppes(){
 	return boite;
 }
 
-/* Quatre convocations possibles : l'épreuve de première année, ou un renfort (réseau, cyber ou Linux avancé) pour ceux qui connaissent les bases. */
+/* Cinq convocations possibles : l'épreuve de première année, ou un renfort (réseau, cyber, Linux avancé ou durcissement) pour ceux qui connaissent les bases. */
 function demanderParcours(){
-	term.echo("Dans ta boîte aux lettres, quatre enveloppes portent ton nom. Une seule est pour toi.");
+	term.echo("Dans ta boîte aux lettres, cinq enveloppes portent ton nom. Une seule est pour toi.");
 	term.ajouterElement(enveloppes());
-	term.demander("Tape 1, 2, 3 ou 4 (ou choisis une enveloppe) : ", false, function(reponse){
+	term.demander("Tape 1, 2, 3, 4 ou 5 (ou choisis une enveloppe) : ", false, function(reponse){
 		var choix = String(reponse).trim();
 		Array.prototype.forEach.call(document.querySelectorAll(".enveloppes"), function(b){
 			b.classList.add("enveloppes-choisi");
 			Array.prototype.forEach.call(b.querySelectorAll(".enveloppe"), function(e, i){ if (String(i + 1) === choix) e.classList.add("enveloppe-choisie"); e.disabled = true; });
 		});
-		if (["1", "2", "3", "4"].indexOf(choix) === -1){
-			term.echo(C.jaune("Réponds 1, 2, 3 ou 4. En cas de doute, choisis 1 : c'est le début de l'histoire."));
+		if (["1", "2", "3", "4", "5"].indexOf(choix) === -1){
+			term.echo(C.jaune("Réponds 1, 2, 3, 4 ou 5. En cas de doute, choisis 1 : c'est le début de l'histoire."));
 			demanderParcours();
 			return;
 		}
@@ -695,7 +703,12 @@ function demanderParcours(){
 			majEtat();
 			return;
 		}
-		if (choix !== "1" && choix !== "4" && commencerChapitre2(choix === "2" ? 3 : 2)){
+		if (choix === "5" && typeof commencerChapitre5 === "function" && commencerChapitre5()){
+			Shell.fin();
+			majEtat();
+			return;
+		}
+		if (choix !== "1" && choix !== "4" && choix !== "5" && commencerChapitre2(choix === "2" ? 3 : 2)){
 			Shell.fin();
 			return;
 		}

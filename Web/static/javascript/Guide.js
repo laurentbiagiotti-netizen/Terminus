@@ -118,7 +118,7 @@ var MINUTES_AVANT_PISTE = 4;
 
 function detailsDeQuete(id){
 	return INDICES_DETAILLES[id] || (typeof INDICES_CHAPITRE2 !== "undefined" && INDICES_CHAPITRE2[id]) ||
-		(typeof INDICES_PANNE !== "undefined" && INDICES_PANNE[id]) || [];
+		(typeof INDICES_PANNE !== "undefined" && INDICES_PANNE[id]) || (typeof INDICES_CH5 !== "undefined" && INDICES_CH5[id]) || [];
 }
 
 var MAJ_OBJECTIF_SANS_GUIDE = majObjectif;
@@ -205,7 +205,9 @@ var SCENES = {
 	c_crypte: { image: "loc_crypte.gif", titre: "Chapitre 3 · La Crypte", chapitre: 3,
 		lignes: ["Un mage noir s'est glissé dans la Citadelle.", "Ses sorts dorment dans le donjon, sous tes pieds.", "Grace te guide à la radio. La chasse est ouverte."] },
 	d_entree: { image: "loc_academie.gif", titre: "Chapitre 4 · L'Académie des Arcanes", chapitre: 4,
-		lignes: ["La Nuée a frappé le serveur d'archives cette nuit.", "Données volées, et une bombe programmée pour minuit.", "Huit maîtres, une horloge qui tourne : mesure, nettoie, restaure, documente."] }
+		lignes: ["La Nuée a frappé le serveur d'archives cette nuit.", "Données volées, et une bombe programmée pour minuit.", "Huit maîtres, une horloge qui tourne : mesure, nettoie, restaure, documente."] },
+	h_entree: { image: "loc_bastion.gif", titre: "Chapitre 5 · Le Bastion", chapitre: 5,
+		lignes: ["Un serveur neuf, installé « par défaut » : toutes ses portes bâillent.", "L'inspection passe à l'aube, et la Nuée a juré de revenir avant.", "Douze tours, douze maîtres : mesure, durcis, vérifie, rends compte."] }
 };
 function sceneDeChapitre(scene){
 	var fond = document.createElement("div");
@@ -232,14 +234,14 @@ function sceneDeChapitre(scene){
 	// La carte des chapitres : celui qui commence s'allume.
 	var carte = document.createElement("p");
 	carte.className = "scene-carte";
-	["Terminus", "La panne", "La Crypte", "L'Académie"].forEach(function(nom, i){
+	["Terminus", "La panne", "La Crypte", "L'Académie", "Le Bastion"].forEach(function(nom, i){
 		var etape = document.createElement("span");
 		var n = i + 1;
-		var fini = n < scene.chapitre || (n === 1 && state.has("victoire")) || (n === 2 && state.quests["r_fin"]) || (n === 3 && state.quests["c_rapport"]) || (n === 4 && state.quests["d_fin"]);
+		var fini = n < scene.chapitre || (n === 1 && state.has("victoire")) || (n === 2 && state.quests["r_fin"]) || (n === 3 && state.quests["c_rapport"]) || (n === 4 && state.quests["d_fin"]) || (n === 5 && state.quests["h_rapport"]);
 		etape.className = "scene-etape" + (n === scene.chapitre ? " scene-ici" : (fini ? " scene-fait" : ""));
 		etape.textContent = (n === scene.chapitre ? "● " : (fini ? "✓ " : "○ ")) + nom;
 		carte.appendChild(etape);
-		if (i < 3){ var trait = document.createElement("span"); trait.className = "scene-trait"; trait.textContent = " ── "; carte.appendChild(trait); }
+		if (i < 4){ var trait = document.createElement("span"); trait.className = "scene-trait"; trait.textContent = " ── "; carte.appendChild(trait); }
 	});
 	cadre.appendChild(carte);
 	var suite = document.createElement("p");
@@ -285,10 +287,12 @@ function recapChapitre(chapitre){
 	if (chapitre === 1){ minutes = Math.round(state.tempsMs / 60000); }
 	else if (chapitre === 3){ minutes = Math.round((state.tempsMs - (state.debutChapitre3 || 0)) / 60000); }
 	else if (chapitre === 5){ minutes = Math.round((state.tempsMs - (state.debutChapitre5 || 0)) / 60000); }
+	else if (chapitre === 6){ minutes = Math.round((state.tempsMs - (state.debutChapitre6 || 0)) / 60000); }
 	else { minutes = Math.round((state.tempsMs - (state.debutChapitre2 || 0)) / 60000); }
 	if (chapitre === 3 && typeof RELIQUES !== "undefined") badges = Object.keys(RELIQUES).filter(function(id){ return state.quests[id]; });
 	if (chapitre === 2 && typeof TROPHEES_CRYPTE !== "undefined") badges = Object.keys(TROPHEES_CRYPTE).filter(function(id){ return state.quests[id]; });
 	if (chapitre === 5 && typeof TROPHEES_CH4 !== "undefined") badges = Object.keys(TROPHEES_CH4).filter(function(id){ return state.quests[id]; });
+	if (chapitre === 6 && typeof TROPHEES_CH5 !== "undefined") badges = Object.keys(TROPHEES_CH5).filter(function(id){ return badgeGagne(id); });
 	sorts = Object.keys(state.frequences || {}).filter(function(s){ return SORTS_DU_JEU.indexOf(s) === -1; }).filter(function(s){ return chapitreDuSort(s) === chapitre || (chapitre === 1 && ["ls", "cd", "cat"].indexOf(s) > -1); });
 	sorts.sort(function(a, b){ return state.frequences[b] - state.frequences[a]; });
 	return { minutes: minutes, badges: badges, top: sorts.slice(0, 3).map(function(s){ return s + " ×" + state.frequences[s]; }) };
@@ -364,6 +368,18 @@ var QUIZ = {
 		["La règle 3-2-1 des sauvegardes :", ["3 copies, 2 supports, 1 hors ligne", "3 jours, 2 heures, 1 minute", "3 serveurs, 2 mots de passe, 1 clé", "3 sauvegardes par jour"], 0, "Une copie hors ligne échappe au rançongiciel : c'est elle qui a sauvé les archives cette nuit."],
 		["Dans un script, set -e veut dire :", ["S'arrêter à la première commande qui échoue", "Afficher chaque commande", "Exporter toutes les variables", "Ignorer les erreurs"], 0, "Avec un contrôle des arguments et exit 1, c'est le garde-fou d'un script sûr."],
 		["Un service se relance tout seul et redépose des fichiers. Dans quel ordre agir ?", ["Arrêter et désactiver le service, puis nettoyer", "Nettoyer, puis nettoyer encore", "Redémarrer la machine", "Supprimer /srv"], 0, "Tant que la persistance tourne, nettoyer ne sert à rien : systemctl disable --now d'abord."]
+	],
+	6: [
+		["Tu viens de modifier sshd_config. Dans quel ordre agir ?", ["sudo sshd -t, puis sudo systemctl reload ssh", "sudo systemctl reload ssh, puis sudo sshd -t", "sudo systemctl restart ssh tout de suite", "Fermer ta session, puis te reconnecter"], 0, "sshd -t vérifie la configuration sans rien appliquer. On garde aussi une session ouverte pendant le test."],
+		["Pour activer ufw à distance sans se couper soi-même :", ["default deny incoming, allow 22/tcp, puis enable", "enable, puis allow 22/tcp", "enable, puis default deny incoming", "disable, puis reset"], 0, "La politique, les exceptions, l'activation : dans cet ordre. Et on vérifie depuis l'extérieur."],
+		["PASS_MAX_DAYS 90 dans /etc/login.defs suffit-il pour les comptes qui existent déjà ?", ["Non : il faut aussi chage -M 90 pour chacun", "Oui, il s'applique à tous", "Oui, après un redémarrage", "Non : il faut supprimer les comptes"], 0, "login.defs ne vaut que pour les comptes créés ensuite ; chage règle un compte existant."],
+		["Un réglage fait avec sudo sysctl -w :", ["Est perdu au prochain redémarrage s'il n'est pas dans /etc/sysctl.d", "Est permanent", "Ne s'applique qu'après un redémarrage", "Modifie le noyau sur le disque"], 0, "On le grave dans /etc/sysctl.d/99-bastion.conf, puis sudo sysctl --system."],
+		["Le mot de passe de GRUB s'écrit :", ["Dans /etc/grub.d/40_custom, sous forme d'empreinte, puis update-grub", "En clair dans /boot/grub/grub.cfg", "Dans /etc/shadow", "Dans /etc/default/grub, en clair"], 0, "grub-mkpasswd-pbkdf2 donne l'empreinte ; grub.cfg se régénère, on ne l'écrit jamais à la main."],
+		["Un fichier de /etc/sudoers.d doit être en mode :", ["0440", "0777", "0644", "0600 appartenant à l'utilisateur"], 0, "Lisible par root et son groupe, modifiable par personne : sudo ignore un fichier trop ouvert. visudo -c le vérifie."],
+		["Une base AIDE sert à :", ["Comparer chaque fichier à son empreinte prise sur un système sain", "Bloquer les connexions SSH", "Mettre à jour les paquets", "Chiffrer le disque"], 0, "aide --init la fabrique, on la met en place (aide.db), puis aide --check compare."],
+		["AppArmor en mode complain :", ["Note les écarts du programme, mais ne bloque rien", "Bloque tout ce que le profil n'autorise pas", "Désactive le programme", "Chiffre les fichiers du programme"], 0, "En enforce, la cellule est fermée : aa-enforce."],
+		["Pourquoi ServerTokens Prod sur Apache ?", ["Pour ne plus afficher la version du serveur", "Pour accélérer les pages", "Pour activer HTTPS", "Pour bloquer la méthode TRACE"], 0, "Une version affichée, c'est la liste des failles connues offerte à qui la lit. TRACE, c'est TraceEnable Off."],
+		["Un rapport d'inspection honnête contient :", ["Les constats, les mesures, le score avant et après, et ce qui reste", "Seulement le score final", "Seulement ce qui a marché", "Les mots de passe changés"], 0, "On ne cache pas le reste : c'est ce qui permet à l'équipe suivante de continuer."]
 	]
 };
 
@@ -451,10 +467,10 @@ function lancerQuiz(chapitre){
 }
 
 Shell.sorts.quiz = function(args, io){
-	var choix = { "1": 1, "2": 3, "3": 2, "4": 5 }[args[0]] || (state.chapitreEnCours ? state.chapitreEnCours() : 1);
-	var fini = choix === 1 ? state.has("victoire") : (choix === 3 ? !!state.quests["r_fin"] : (choix === 5 ? !!state.quests["d_fin"] : !!state.quests["c_rapport"]));
+	var choix = { "1": 1, "2": 3, "3": 2, "4": 5, "5": 6 }[args[0]] || (state.chapitreEnCours ? state.chapitreEnCours() : 1);
+	var fini = choix === 1 ? state.has("victoire") : (choix === 3 ? !!state.quests["r_fin"] : (choix === 5 ? !!state.quests["d_fin"] : (choix === 6 ? !!state.quests["h_rapport"] : !!state.quests["c_rapport"])));
 	if (choix === 5 && (typeof QUIZ === "undefined" || !QUIZ[5])) return fini ? "Le quiz du chapitre 4 arrivera bientôt." : "Le quiz du chapitre 4 s'ouvrira à la fin du chapitre.";
-	if (!fini) return "Le quiz du chapitre " + numeroAffiche(choix) + " s'ouvre à la fin du chapitre. " + C.gris("(quiz 1, quiz 2, quiz 3 ou quiz 4 pour un chapitre déjà terminé)");
+	if (!fini) return "Le quiz du chapitre " + numeroAffiche(choix) + " s'ouvre à la fin du chapitre. " + C.gris("(quiz 1, quiz 2, quiz 3, quiz 4 ou quiz 5 pour un chapitre déjà terminé)");
 	setTimeout(function(){ lancerQuiz(choix); }, 50);
 	return C.gris("(Le quiz du chapitre " + numeroAffiche(choix) + " : 5 questions tirées au hasard. 1 à 4 pour répondre, Échap pour sortir.)");
 };
@@ -595,7 +611,7 @@ COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 2, 0,
 	["ambiance", "l'ambiance sonore de chaque chapitre"],
 	["texte + / -", "agrandir ou réduire le texte"],
 	["contraste", "le contraste fort, plus lisible"]);
-MANUEL_DU_JEU.quiz = "quiz n'est PAS une commande Linux : c'est une commande du jeu.\nÀ la fin de chaque chapitre, cinq questions tirées des leçons. quiz 1, quiz 2, quiz 3 ou quiz 4 pour le rejouer.";
+MANUEL_DU_JEU.quiz = "quiz n'est PAS une commande Linux : c'est une commande du jeu.\nÀ la fin de chaque chapitre, cinq questions tirées des leçons. quiz 1, quiz 2, quiz 3, quiz 4 ou quiz 5 pour le rejouer.";
 MANUEL_DU_JEU.texte = "texte n'est PAS une commande Linux : elle règle la taille du texte du jeu.\n  texte +       plus grand\n  texte -       plus petit\n  texte normal  la taille d'origine";
 MANUEL_DU_JEU.contraste = "contraste n'est PAS une commande Linux : elle passe le jeu en contraste fort (texte blanc, couleurs vives, sans effet de vieil écran).";
 MANUEL_DU_JEU.ambiance = "ambiance n'est PAS une commande Linux : un fond sonore discret par chapitre. ambiance on, ambiance off.";

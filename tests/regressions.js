@@ -639,6 +639,33 @@ jouerJusqua(jf, "less Laurent");
 verifier(jf.lire("state.has('ch4Ouvert')") === false, "avant la Crypte : l'Académie reste fermée");
 contient(jf.taper("grimoire"), "chapitre 4", "avant la Crypte : le grimoire explique qu'il s'ouvre plus tard");
 verifier(jf.lire("SalleServeurs.getChildFromName('Academie') === -1"), "avant la Crypte : pas d'escalier vers l'Académie");
+verifier(jf.lire("state.has('ch5Ouvert')") === false, "avant la Crypte : le Bastion reste fermé");
+contient(jf.taper("rempart"), "chapitre 5", "avant le Bastion : rempart explique qu'il s'ouvre plus tard");
+
+// --- Une vieille sauvegarde, faite avant que le chapitre 5 existe : l'Académie finie, le Bastion s'ouvre ---
+var vieux5 = {};
+var jv5 = nouveauMonde(vieux5, 23);
+jouerJusqua(jv5, "cat CertificatCyber");
+jv5.lire("state.complete('d_entree'); state.complete('d_fin'); state.save()");
+var cle5 = Object.keys(vieux5).filter(function(k){ return /^terminus-cybersup(-partie-.*)?$/.test(k) && /"quests"/.test(vieux5[k]); })[0];
+var donnees5 = JSON.parse(vieux5[cle5]);
+// On efface tout ce que le chapitre 5 a ajouté à la sauvegarde, comme si elle datait d'avant lui.
+["xp6", "malus6", "debut6", "dateVictoire6", "ch5"].forEach(function(k){ delete donnees5[k]; });
+if (donnees5.flags) Object.keys(donnees5.flags).filter(function(f){ return /^ch5|^victoireCh5|^tour_|^platine_ch5/.test(f); }).forEach(function(f){ delete donnees5.flags[f]; });
+Object.keys(donnees5.quests || {}).filter(function(id){ return /^h_|^s_h_/.test(id); }).forEach(function(id){ delete donnees5.quests[id]; });
+vieux5[cle5] = JSON.stringify(donnees5);
+var jr5 = nouveauMonde(vieux5);
+verifier(jr5.lire("state.quests.d_fin") === true, "vieille sauvegarde (avant le Bastion) : l'Académie reste finie");
+jr5.taper("ls");
+verifier(jr5.lire("state.has('ch5Ouvert')") === true, "vieille sauvegarde : le Bastion s'ouvre après l'Académie");
+verifier(jr5.lire("typeof state.ch5 === 'object' && state.ch5.horloge === 0"), "vieille sauvegarde : l'état de la nuit du Bastion est créé, à 22 h");
+verifier(jr5.lire("state.xp6") === 0 && jr5.lire("state.malus6") === 0, "vieille sauvegarde : l'XP du chapitre 5 part de zéro");
+verifier(jr5.lire("Academie.getChildFromName('Bastion') !== -1"), "vieille sauvegarde : le passage vers le Bastion est au fond de l'Académie");
+contient(jr5.taper("cd ~/Cybersup/SalleServeurs/Academie/Bastion"), "Bastion", "vieille sauvegarde : on entre au Bastion");
+verifier(jr5.lire("state.quests.h_entree") === true, "vieille sauvegarde : l'entrée au Bastion est comptée");
+contient(jr5.taper("rempart"), "LE PLAN DU BASTION", "vieille sauvegarde : rempart s'ouvre");
+verifier(jr5.lire("state.chapitreEnCours()") === 6, "vieille sauvegarde : le chapitre en cours est le Bastion");
+verifier(jr5.lire("state.xp2 === state.xpMax2()"), "vieille sauvegarde : la note de la Crypte n'a pas bougé");
 
 console.log(verifications + " vérifications, " + echecs + " échec" + (echecs > 1 ? "s" : ""));
 process.exit(echecs ? 1 : 0);

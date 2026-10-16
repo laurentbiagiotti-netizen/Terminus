@@ -1487,7 +1487,7 @@ Shell.sorts.help = function(args, io){
 	var tous = state.knownSpells(), connus = tous, choix = (args[0] || "").toLowerCase();
 	// Au-delà du chapitre 1, help ne montre que les sorts du chapitre en cours : 150 lignes d'un coup, c'est illisible.
 	var enCours = typeof state.chapitreEnCours === "function" ? state.chapitreEnCours() : 1;
-	var interne = { "1": 1, "2": 3, "3": 2, "4": 5 }[choix];
+	var interne = { "1": 1, "2": 3, "3": 2, "4": 5, "5": 6 }[choix];
 	if (choix !== "tout" && choix !== "all" && (interne || enCours !== 1)){
 		var chap = interne || enCours;
 		connus = tous.filter(function(s){ return chapitreDuSort(s) === chap; });
@@ -1501,7 +1501,7 @@ Shell.sorts.help = function(args, io){
 			"  " + C.vert(nomSort) + "\n" + "              " + MANUEL[nomSort].resume);
 	}
 	lignes.push("");
-	if (connus.length < tous.length) lignes.push("", C.gris("Et " + (tous.length - connus.length) + " autres sorts appris dans les autres chapitres : help 1, help 2, help 3, help 4, ou help tout."));
+	if (connus.length < tous.length) lignes.push("", C.gris("Et " + (tous.length - connus.length) + " autres sorts appris dans les autres chapitres : help 1, help 2, help 3, help 4, help 5, ou help tout."));
 	lignes.push("Pour le détail d'un sort : " + C.vert("man SORT") + " (par exemple man ls).");
 	lignes.push("");
 	lignes.push(C.gras("Les commandes du JEU") + C.gris(" (elles n'existent pas sous Linux : elles t'aident seulement à jouer)"));
@@ -1902,8 +1902,15 @@ Shell.tuyau = function(jetons){
 				if (!state.has("sudoOK")) throw new ShellError("sudo : mot de passe requis.");
 				io.sudo = true;
 				state.premierUsage("sudo");
-				nom = args[0];
-				args = args.slice(1);
+				// sudo -l, sudo -u root CMD... : les options de sudo (SortsBastion.js) avant la commande.
+				if (args[0].charAt(0) === "-" && Shell.optionsSudo){
+					var avecOptions = Shell.optionsSudo(args, io);
+					nom = avecOptions.nom;
+					args = avecOptions.args;
+				} else {
+					nom = args[0];
+					args = args.slice(1);
+				}
 			}
 			if (!prep.vide) noms.push(nom);
 			var sortie;

@@ -454,7 +454,8 @@ Shell.sorts.journalctl = function(args, io){
 	GameEvents.fire({ type: "journalctl", host: Shell.hote(), unite: unite, depuis: depuis, lignes: entrees.map(function(e){ return e.message; }).join("\n") });
 	if (entrees.length === 0) return "-- No entries --";
 	return entrees.map(function(e){
-		var j = dateDuJour().split("-");
+		// Une entrée datée (t, en millisecondes) garde son jour : après minuit, la nuit du Bastion passe au lendemain.
+		var j = e.t ? (function(d){ return [d.getFullYear(), deuxChiffres(d.getMonth() + 1), deuxChiffres(d.getDate())]; })(new Date(e.t)) : dateDuJour().split("-");
 		return ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][+j[1] - 1] + " " + j[2] + " " + e.heure + ":" + (e.secondes || "00") + " " + Shell.hote() + " " + e.unite + ": " + e.message;
 	}).join("\n");
 };

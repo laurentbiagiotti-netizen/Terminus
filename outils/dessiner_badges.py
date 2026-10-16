@@ -1,4 +1,4 @@
-"""Dessine les badges de compétence (chapitres 2, 3 et 4) : des médailles en pixels, une couleur par rang.
+"""Dessine les badges de compétence (chapitres 2, 3, 4 et 5) : des médailles en pixels, une couleur par rang.
 
 Bronze, argent, or et platine, comme les rangs d'un tableau de trophées ; le dessin est propre au jeu :
 une médaille hexagonale, deux rubans, et au centre le sigle de la compétence (OSI, DNS, SUID...).
@@ -37,6 +37,12 @@ BADGES = [
     ('d_chrono_sauvegarde', 'CRON', 'bronze'), ('d_archives_restaurer', 'SYNC', 'or'), ('d_archives_patch', 'DIFF', 'argent'),
     ('d_script_nettoyage', 'SH', 'bronze'), ('d_script_arguments', '$1', 'argent'), ('d_corbeau', 'STOP', 'or'),
     ('platine_ch4', 'IR', 'platine'),
+    # chapitre 5 : le Bastion
+    ('tour_herse', 'PASS', 'argent'), ('tour_sceau', 'SUDO', 'argent'), ('tour_pontlevis', 'SSH', 'or'), ('tour_portes', 'OFF', 'argent'),
+    ('tour_remparts', 'DENY', 'or'), ('tour_coffres', 'PERM', 'argent'), ('tour_coeur', 'KRNL', 'argent'), ('tour_poterne', 'GRUB', 'bronze'),
+    ('tour_banniere', 'HTTP', 'argent'), ('tour_guet', 'LOGS', 'or'), ('tour_sceaux', 'AIDE', 'argent'), ('tour_garde', 'BAN', 'bronze'),
+    ('h_pierre', 'SCAN', 'bronze'), ('h_aube', 'AUBE', 'or'), ('h_rapport', 'DOC', 'or'), ('s_h_avant_quatre', '4H', 'or'),
+    ('platine_ch5', 'HARD', 'platine'),
 ]
 NOIR = (0, 0, 0)
 # Une police de 3 x 5 pixels, pour les sigles de quatre caractères.

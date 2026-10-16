@@ -60,6 +60,20 @@ if (jeu.lire("state.xp5") !== jeu.lire("state.xpMax5()")){
 		jeu.lire("lieuxVisitables(5).filter(function(l){ return !state.visited[l.id]; }).map(function(l){ return l.room_name; }).join(', ')") + "]");
 }
 if (jeu.lire("state.noteTexte(5)") !== "20 / 20") problemes.push("le chapitre 4 n'a pas 20 sur 20 : " + jeu.lire("state.noteTexte(5)"));
+// Le chapitre 5 (le Bastion, numéro 6 dans le code) : la solution doit mener au rapport contresigné, à 20 sur 20.
+if (!jeu.lire("state.quests.h_rapport")) problemes.push("le chapitre 5 (le Bastion) n'atteint pas le rapport contresigné (h_rapport) ; dernier lieu : " + jeu.lire("current_room.room_name"));
+var principales6 = jeu.lire("QUETES_CH5.filter(function(q){ return !state.quests[q.id]; }).map(function(q){ return q.titre; }).join(' ; ')");
+if (principales6) problemes.push("étapes du chapitre 5 manquantes : " + principales6);
+var secondaires6 = jeu.lire("QUETES_SECONDAIRES_CH5.filter(function(q){ return !state.quests[q.id]; }).map(function(q){ return q.titre; }).join(' ; ')");
+if (secondaires6) problemes.push("défis du chapitre 5 (le Bastion) manquants : " + secondaires6);
+if (jeu.lire("QUETES_CH5.length") !== 29) problemes.push("le chapitre 5 devrait compter 29 étapes, il en a " + jeu.lire("QUETES_CH5.length"));
+if (!jeu.lire("state.has('platine_ch5')")) problemes.push("le badge platine du chapitre 5 n'est pas gagné");
+if (jeu.lire("state.xp6") !== jeu.lire("state.xpMax6()")){
+	problemes.push("le chapitre 5 (le Bastion) n'atteint pas le score maximal : " + jeu.lire("state.xp6") + " sur " + jeu.lire("state.xpMax6()") + ". Sorts jamais lancés : [" +
+		jeu.lire("ORDRE_DES_SORTS_6.filter(function(x){ return !state.usages[x]; }).join(', ')") + "] ; lieux jamais visités : [" +
+		jeu.lire("lieuxVisitables(6).filter(function(l){ return !state.visited[l.id]; }).map(function(l){ return l.room_name; }).join(', ')") + "]");
+}
+if (jeu.lire("state.noteTexte(6)") !== "20 / 20") problemes.push("le chapitre 5 n'a pas 20 sur 20 : " + jeu.lire("state.noteTexte(6)"));
 if (jeu.lire("state.xp") !== jeu.lire("state.xpMax()")){
 	problemes.push("la solution n'atteint pas le score maximal. Sorts jamais lancés : [" +
 		jeu.lire("ORDRE_DES_SORTS.filter(function(x){ return !state.usages[x]; }).join(', ')") + "] ; lieux jamais visités : [" +
@@ -68,7 +82,7 @@ if (jeu.lire("state.xp") !== jeu.lire("state.xpMax()")){
 var sorts = jeu.lire("state.knownSpells().length + ' sur ' + tousLesSorts().length");
 
 console.log(commandes.length + " commandes jouées, " + sorts + " sorts appris, " +
-	jeu.lire("state.xp + ' XP sur ' + state.xpMax() + ', note ' + state.noteTexte() + ' ; chapitre 2 : ' + state.xp3 + ' XP sur ' + state.xpMax3() + ', note ' + state.noteTexte(3) + ' ; chapitre 3 : ' + state.xp2 + ' XP sur ' + state.xpMax2() + ', note ' + state.noteTexte(2) + ' ; chapitre 4 : ' + state.xp5 + ' XP sur ' + state.xpMax5() + ', note ' + state.noteTexte(5)") + ".");
+	jeu.lire("state.xp + ' XP sur ' + state.xpMax() + ', note ' + state.noteTexte() + ' ; chapitre 2 : ' + state.xp3 + ' XP sur ' + state.xpMax3() + ', note ' + state.noteTexte(3) + ' ; chapitre 3 : ' + state.xp2 + ' XP sur ' + state.xpMax2() + ', note ' + state.noteTexte(2) + ' ; chapitre 4 : ' + state.xp5 + ' XP sur ' + state.xpMax5() + ', note ' + state.noteTexte(5) + ' ; chapitre 5 : ' + state.xp6 + ' XP sur ' + state.xpMax6() + ', note ' + state.noteTexte(6)") + ".");
 if (problemes.length){
 	console.log("ÉCHEC :\n  " + problemes.join("\n  "));
 	process.exit(1);

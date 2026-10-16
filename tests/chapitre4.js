@@ -370,8 +370,8 @@ function contient(jeu, cmd, mot, m){ verifier(String(jeu.taper(cmd)).toLowerCase
 	vrai(jeu, "state.has('chapitre1Saute')", "départ direct : les chapitres précédents ne sont pas notés");
 	// Rejouer « chapitre 4 » quand il est déjà ouvert : message, pas de dégât.
 	contient(jeu, "chapitre 4", "déjà ouvert", "chapitre 4 déjà ouvert : message clair");
-	// « chapitre 5 » n'existe pas.
-	contient(jeu, "chapitre 5", "1, 2, 3 et 4", "il n'y a pas de chapitre 5");
+	// « chapitre 6 » n'existe pas ; le chapitre 5 (le Bastion) se choisit au début d'une partie neuve.
+	contient(jeu, "chapitre 6", "1, 2, 3, 4 et 5", "il n'y a pas de chapitre 6");
 	// La liste des chapitres mentionne l'Académie.
 	contient(jeu, "chapitre", "académie", "la liste des chapitres mentionne l'Académie");
 	// Depuis une partie déjà engagée (une étape du chapitre 1 franchie), on ne part plus directement.

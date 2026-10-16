@@ -1515,7 +1515,7 @@ Shell.sorts.verifier = function(args, io){
 	if (ex) return rapportCodeExamen(ex);
 	var lu = lireCode(args.join(""));
 	if (!lu) return C.rouge("Code illisible.") + " Ce n'est pas un code de Terminus, ou il est incomplet.";
-	var quoi = { 1: "Diplôme du chapitre 1 (Terminus)", 2: "Certificat cyber (la Crypte)", 3: "Certificat réseau (la panne)", 4: "Épreuve finale (ancien code)" }[lu.chapitre] || "Chapitre " + lu.chapitre;
+	var quoi = { 1: "Diplôme du chapitre 1 (Terminus)", 2: "Certificat cyber (la Crypte)", 3: "Certificat réseau (la panne)", 4: "Épreuve finale (ancien code)", 5: "Certificat Linux avancé (l'Académie des Arcanes)", 6: "Certificat durcissement Linux (le Bastion, chapitre 5)" }[lu.chapitre] || "Chapitre " + lu.chapitre;
 	return (lu.valide ? C.vert("✓ Code authentique") : C.rouge("✗ Code RETOUCHÉ : la somme de contrôle ne correspond pas")) + "\n\n" +
 		"  " + completerDroite("Document", 14) + quoi + "\n" +
 		"  " + completerDroite("Nom", 14) + lu.prenom + "\n" +
