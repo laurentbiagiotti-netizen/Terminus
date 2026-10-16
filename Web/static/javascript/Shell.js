@@ -1902,8 +1902,15 @@ Shell.tuyau = function(jetons){
 				if (!state.has("sudoOK")) throw new ShellError("sudo : mot de passe requis.");
 				io.sudo = true;
 				state.premierUsage("sudo");
-				nom = args[0];
-				args = args.slice(1);
+				// sudo -l, sudo -u root CMD... : les options de sudo (SortsBastion.js) avant la commande.
+				if (args[0].charAt(0) === "-" && Shell.optionsSudo){
+					var avecOptions = Shell.optionsSudo(args, io);
+					nom = avecOptions.nom;
+					args = avecOptions.args;
+				} else {
+					nom = args[0];
+					args = args.slice(1);
+				}
 			}
 			if (!prep.vide) noms.push(nom);
 			var sortie;
