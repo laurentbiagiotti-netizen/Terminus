@@ -41,13 +41,19 @@ var sorts = ["ls", "cd", "pwd", "less", "help", "man", "clear", "exit", "mv", "c
 	"mtr", "openssl", "timedatectl", "telnet", "carte", "examen", "kamikaze", "verifier",
 	// Les sorts du chapitre 4 (SortsArcanes.js).
 	"jq", "xargs", "paste", "join", "comm", "column", "tac", "shuf", "split", "patch", "rsync", "at", "atq", "atrm",
-	"nl", "fold", "read", "printf", "seq", "basename", "dirname", "expr", "sleep", "grimoire", "badges", "quiz"];
+	"nl", "fold", "read", "printf", "seq", "basename", "dirname", "expr", "sleep", "grimoire", "badges", "quiz",
+	// Les sorts du Bastion (SortsBastion.js).
+	"faillock", "pwck", "grpck", "su", "useradd", "umask", "sshd", "systemd-analyze", "apt-get", "dpkg", "etckeeper", "chage", "lastlog", "passwd", "netstat", "debsums"];
 var options = ["-a", "-l", "-la", "-r", "-rf", "-n", "-n 3", "-9", "-s", "-c", "-i", "-v", "-u", "-d:", "-f1", "-f", "-x", "-tf", "-xf", "-cf",
 	"--help", "-", "--", "-z", "-c", "-d", "-tlnp", "-perm -4000", "-perm /u=s", "-perm", "-user root", "2>/dev/null", "2>err", "2>>err", "2>&1", "u-s", "4755", "+t", "-1", "-0", "-99999", "+x", "-x", "755", "000", "u+rwx", "o-r", "a=", "999", "-name", "-type", "d", "f", "-L", "-u sorcier",
 	"-exec cat {} \\;", "-exec rm {} +", "-exec", "{}", "\\;", "-delete", "-o", "!", "\\(", "\\)", "-size +1k", "-size -1", "-empty", "-maxdepth 1", "-mindepth 2", "-mmin -5",
 	"-I {}", "-t", "-0", "-d ,", "-n 2", "-L 1", "-12", "-3", "-t -s :", "-e", "-r", "-c", "--arg x y", "--argjson n 3", "-S", "-R", "-p1", "-p0", "--dry-run", "-av", "-avn",
 	"--delete", "--exclude '*.tmp'", "-U 1", "-sd ,", "-a 1", "-v 2", "-o 1.1,2.2", "-x", "-f", "-l", "-c 3",
-	"now + 5 minutes", "teatime", "noon", "tomorrow", "14:00", "list-timers", "logrotate.timer", "status logrotate.timer", "disable --now apt-daily.timer", "-d tomorrow", "-d '3 days ago'"];
+	"now + 5 minutes", "teatime", "noon", "tomorrow", "14:00", "list-timers", "logrotate.timer", "status logrotate.timer", "disable --now apt-daily.timer", "-d tomorrow", "-d '3 days ago'",
+	"--user root", "--reset", "-tulpn", "-loptn", "-tulnp4", "security", "security sshd", "mask ctrl-alt-del.target", "unmask ctrl-alt-del.target", "edit sshd", "cat sshd",
+	"daemon-reload", "is-enabled sshd", "list-unit-files --state=enabled", "list-units --type=service", "list --upgradable", "purge telnet", "install --reinstall cowsay",
+	"-V", "-S /usr/bin/ls", "-l", "-ll", "-l -U root", "-c", "-f /etc/sudoers.d/x", "commit 'x'", "vcs log", "vcs status", "-T", "-t", "-M 90", "-E 2026-12-31", "-b 90",
+	"-s /usr/sbin/nologin", "-e 2026-12-31", "-m -G sudo", "027", "-S", "u=rwx,g=,o=", "TMOUT=0", "-t ed25519 -N ''", "-t rsa -b 512"];
 var noms = [".", "..", "~", "/", "*", "?", ".*", "~/", "../..", "./.", "//", "a/b/c", "~/Village", "Marche", "Boite", "Cage", "Portail",
 	"Rocher", "Stele", "Certificat", ".Phylactere", "SorcierNoir", "Laurent", "Diplome", "LivreDOr", "Registre", "remonter.sh",
 	"Mannequin*", "rouage*", "x", "X", "Truc", ".cache", "nouveau", "copie", "Chaumiere", "Planche", "Rouage", "EpiDeMais", "TrollMoche",
@@ -108,7 +114,7 @@ for (var i = 0; i < combien; i++){
 			}
 		}
 		// Les sorts avancés (SortsArcanes.js) : on les accorde pour les bombarder aussi, sans attendre les maîtres.
-		if (mode !== 0) jeu.lire("SORTS_ARCANES.forEach(function(s){ state.spells[s] = true; })");
+		if (mode !== 0) jeu.lire("SORTS_ARCANES.concat(SORTS_BASTION).forEach(function(s){ state.spells[s] = true; })");
 	}
 	var ligne = ligneAleatoire();
 	try {

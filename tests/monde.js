@@ -8,9 +8,11 @@ var vm = require("vm");
 
 var bavard = process.argv.indexOf("-v") > -1;
 var dossier = path.join(__dirname, "..", "Web", "static", "javascript");
-var fichiers = ["EventTarget.js", "Partie.js", "Item.js", "Room.js", "Manuel.js", "Shell.js", "Interpreteur.js", "SortsAvances.js", "GameObjects.js", "Chapitre2.js", "CommandesCyber.js", "Texte.js", "Awk.js", "Reseau.js", "Panne.js", "CommandesPanne.js", "Annexe.js", "Adresses.js", "RpgPanne.js", "SortsCrypte.js", "RpgCrypte.js", "GameState.js", "Examen.js", "SortsArcanes.js", "Chapitre4.js", "Academie.js"];
+var fichiers = ["EventTarget.js", "Partie.js", "Item.js", "Room.js", "Manuel.js", "Shell.js", "Interpreteur.js", "SortsAvances.js", "GameObjects.js", "Chapitre2.js", "CommandesCyber.js", "Texte.js", "Awk.js", "Reseau.js", "Panne.js", "CommandesPanne.js", "Annexe.js", "Adresses.js", "RpgPanne.js", "SortsCrypte.js", "RpgCrypte.js", "GameState.js", "Examen.js", "SortsArcanes.js", "Chapitre4.js", "Academie.js", "SortsBastion.js"];
 
-function nouveauMonde(stockage, graine){
+/* options.avant : du JavaScript lancé après les fichiers du jeu, avant le chargement de la sauvegarde (un monde de test). */
+function nouveauMonde(stockage, graine, options){
+	options = options || {};
 	stockage = stockage || {};
 	// Une graine fixe par défaut : les tests sont reproductibles. Les valeurs propres à
 	// la partie (mot de passe, adresses, PID...) se lisent ensuite avec jeu.lire().
@@ -35,6 +37,7 @@ function nouveauMonde(stockage, graine){
 	fichiers.forEach(function(f){
 		vm.runInContext(fs.readFileSync(path.join(dossier, f), "utf8"), bac, { filename: f });
 	});
+	if (options.avant) vm.runInContext(options.avant, bac, { filename: "monde-de-test.js" });
 	// Un faux terminal : il note ce qui s'affiche et répond aux questions (mot de passe sudo).
 	vm.runInContext(
 		"var reponses = [];" +
