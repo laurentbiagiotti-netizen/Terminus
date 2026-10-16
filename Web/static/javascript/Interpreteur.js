@@ -61,7 +61,9 @@ var Interpreteur = {
 	flux: [],                   // la pile des sorties capturées
 	entrees: [],                // la pile des entrées standard (ce que lit read)
 	fonctions: {},              // les fonctions définies au prompt
-	nonExportees: {},           // les variables du prompt créées sans export : un script ne les voit pas
+	nonExportees: {},
+	sources: [],                // les textes de script en cours de lecture (pour situer une erreur)
+	position: null,             // la dernière commande lancée : { source, pos }           // les variables du prompt créées sans export : un script ne les voit pas
 	tableaux: {},               // les tableaux définis au prompt (state.env ne garde que du texte)
 	positionnels: [],           // $1, $2... au prompt (set -- a b c)
 	options: { e: false, x: false, u: false, pipefail: false },  // set -e, -x, -u, -o pipefail au prompt
@@ -747,7 +749,7 @@ function affectationDe(j){
 }
 
 Analyseur.prototype.simple = function(premier){
-	var noeud = { k: "simple", affs: [], mots: [], redirs: [], pos: premier ? premier.pos : this.voir().pos };
+	var noeud = { k: "simple", affs: [], mots: [], redirs: [], pos: premier ? premier.pos : this.voir().pos, source: this.lex.t };
 	var j = premier;
 	for (;;){
 		if (j === null){
@@ -808,6 +810,7 @@ Analyseur.prototype.redirection = function(liste){
 };
 
 Analyseur.prototype.redirections = function(noeud){
+	noeud.source = this.lex.t; // le texte d'où vient le nœud : pour situer une erreur (« script.sh : ligne 3 »)
 	noeud.redirs = noeud.redirs || [];
 	while (this.voir().type === "redir") this.redirection(noeud.redirs);
 	return noeud;
@@ -2272,7 +2275,7 @@ function essayer(fn){
 		return fn();
 	} catch (e){
 		if (!(e instanceof ShellError)) throw e;
-		Shell.ecranErreur(e.message);
+		Shell.ecranErreur(Shell.situer(e.message));
 		jouerSon("erreur");
 		return e.code || 1;
 	}
@@ -2301,6 +2304,7 @@ function finDeBoucle(sorte, res){
 
 function executerCompose(c){
 	var code = 0, r, i;
+	if (c.source) Interpreteur.position = c;
 	switch (c.k){
 		case "si":
 			for (i = 0; i < c.branches.length; i++){
@@ -2426,6 +2430,7 @@ var DECLARATIONS = { "local": 1, "declare": 1, "typeset": 1, "export": 1, "reado
 /* Prépare une commande simple au moment de la lancer : développe ses mots, ses affectations, ses redirections. */
 function preparerSimple(c, sousShell){
 	compter();
+	Interpreteur.position = c;
 	Interpreteur.dernierSubst = null;
 	var argv;
 	if (c.mots.length && DECLARATIONS.hasOwnProperty(litteralDe(c.mots[0].parts))){
@@ -2982,6 +2987,8 @@ function reinitialiser(){
 	Interpreteur.enAlias = {};
 	Interpreteur.signalEnAttente = null;
 	Interpreteur.fondSignale = false;
+	Interpreteur.sources = [];
+	Interpreteur.position = null;
 }
 
 /* Exécute fn ; au niveau le plus haut, le garde-fou et les sauts égarés s'arrêtent ici. */
@@ -3037,10 +3044,28 @@ function executerTexte(texte, opts){
 			return 2;
 		}
 		if (element === null) break;
-		code = executerElement(element);
+		if (opts.prefixe) Interpreteur.sources.push({ texte: texte, prefixe: opts.prefixe });
+		try { code = executerElement(element); }
+		finally { if (opts.prefixe) Interpreteur.sources.pop(); }
 	}
 	return code;
 }
+
+/*
+ * Dans un script, une erreur dit où elle est née, comme bash : « info.sh : ligne 6 : cat : ... ».
+ * Interpreteur.position est la dernière commande lancée ; Interpreteur.sources, les textes de script en cours.
+ */
+Shell.situer = function(message){
+	var p = Interpreteur.position;
+	if (!p || !Interpreteur.sources.length) return message;
+	for (var k = Interpreteur.sources.length - 1; k >= 0; k--){
+		var s = Interpreteur.sources[k];
+		if (s.texte !== p.source) continue;
+		if (message.indexOf(s.prefixe) === 0) return message;
+		return s.prefixe + ligneDe(s.texte, p.pos) + " : " + message.replace(/^bash : /, "");
+	}
+	return message;
+};
 
 /* Lance un texte comme s'il était tapé au prompt. Renvoie le statut. */
 Interpreteur.executer = function(texte){

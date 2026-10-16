@@ -69,6 +69,8 @@ var Shell = {
 Shell.ecranSortie = function(texte){ if (texte !== "") term.echo(texte); };
 Shell.ecranErreur = function(texte){ term.echo(texte); };
 Shell.surEcran = function(){ return true; };
+/* Où est née une erreur : dans un script, Interpreteur.js la préfixe de « script.sh : ligne N : », comme bash. */
+Shell.situer = function(message){ return message; };
 
 /* Valeur d'une variable d'environnement ($USER, $HOME, $PWD...). */
 Shell.variable = function(nom){
@@ -1913,7 +1915,7 @@ Shell.tuyau = function(jetons){
 				else sortie = Shell.appeler(nom, args, io);
 			} catch (e){
 				if (!(e instanceof ShellError)) throw e;
-				io.erreurs.push(e.message);
+				io.erreurs.push(Shell.situer(e.message));
 				sortie = "";
 				echec = true;
 				io.code = e.code || 1;
@@ -1980,7 +1982,7 @@ Shell.tuyau = function(jetons){
 		return !echec;
 	} catch (e){
 		if (e instanceof ShellError){
-			Shell.ecranErreur(e.message);
+			Shell.ecranErreur(Shell.situer(e.message));
 			jouerSon("erreur");
 			Shell.statut = e.code || 1;
 			Shell.statutsTuyau = [Shell.statut];

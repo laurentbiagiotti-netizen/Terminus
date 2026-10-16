@@ -555,6 +555,12 @@ absent(casse, "début", "bash -n ne lance rien");
 var casse2 = jeu.taper("bash casse.sh; echo \"statut $?\"");
 contient(casse2, "« fi »", "le message dit ce qui manque");
 contient(casse2, "statut 2", "une erreur de syntaxe rend 2");
+jeu.taper("cat > situe.sh <<'EOF'\necho un\n\ncat fichier_absent\nf() {\n  commande_inconnue\n}\nf\necho $((1 / 0))\nEOF");
+var situe = jeu.taper("bash situe.sh");
+contient(situe, "situe.sh : ligne 3 : cat : « fichier_absent »", "une erreur dans un script dit sa ligne, comme bash");
+contient(situe, "situe.sh : ligne 5 : commande_inconnue : sort inconnu", "une erreur dans une fonction du script : la ligne de la commande");
+contient(situe, "situe.sh : ligne 8 : 1 / 0 : division par 0", "une erreur de calcul : sa ligne aussi");
+absent(jeu.taper("cat fichier_absent"), "ligne", "au prompt, pas de numéro de ligne");
 
 /* ------------------------------------------------------------------ */
 /* 4. Les erreurs : comme bash, en français                            */
