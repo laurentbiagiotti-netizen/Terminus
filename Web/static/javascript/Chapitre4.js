@@ -696,7 +696,8 @@ function compterOwner(lieu, owner){
 function donneesEgales(a, b){
 	var na = a.itemStringArray().slice().sort(), nb = b.itemStringArray().slice().sort();
 	if (!memeOrdre(na, nb)) return false;
-	return na.every(function(nom){ return a.getItemFromName(nom).getText() === b.getItemFromName(nom).getText(); });
+	function sansFin(t){ return String(t).replace(/\n+$/, ""); }
+	return na.every(function(nom){ return sansFin(a.getItemFromName(nom).getText()) === sansFin(b.getItemFromName(nom).getText()); });
 }
 
 /* La bombe : ses trois déclencheurs sont-ils tous neutralisés ? */
@@ -759,6 +760,8 @@ function verifierBombe(){
 		if (/\.nuee$/.test(it.itemname)) return;
 		it.setText(chiffrerTexte(it.getText()));
 		it.itemname = it.itemname + ".nuee";
+		// Ces fichiers chiffrés pourront être retirés par la restauration (rsync --delete) ou sudo rm.
+		it.addValidCmd("sudo-rm");
 	});
 	if (!state.has("rejeuEnCours")) say(C.rouge("Minuit.") + " La bombe de la Nuée a chiffré /srv/archives (fichiers renommés en .nuee, contenu illisible).\n" +
 		C.gris("(Ce n'est pas une défaite : restaure /srv/archives depuis /srv/sauvegarde-hors-ligne avec rsync, aile des Archives.)"));
