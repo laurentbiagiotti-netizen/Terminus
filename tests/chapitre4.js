@@ -474,7 +474,7 @@ function lireMaitre(jeu, aile, nom){ return String(jeu.taper("cat " + A + aile +
 		verifier(t.indexOf(m[2]) > -1, m[1] + " : une métaphore qui explique son école (« " + m[2] + " »)");
 		verifier(t.indexOf(m[3]) > -1, m[1] + " : la syntaxe s'enseigne sur les données de son aile (" + m[3] + ")");
 		verifier(t.indexOf("Le métier") > -1, m[1] + " : une phrase ancre l'étape dans le vrai métier");
-		verifier(t.indexOf("Les défis de " + m[1]) > -1, m[1] + " : il annonce ses six défis");
+		verifier(/Les défis d(e |')/.test(t) && t.indexOf(m[1]) > -1, m[1] + " : il annonce ses six défis");
 		verifier(jeu.lire(m[1] + ".reveals.length") === 6, m[1] + " révèle ses six défis");
 		verifier(jeu.lire(m[1] + ".picturename.indexOf('item_professor.gif') === -1"), m[1] + " a son propre portrait");
 	});

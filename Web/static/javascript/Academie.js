@@ -462,7 +462,7 @@ GameEvents.addListener("echo", function(e){
    entre ses deux étapes, après une erreur fréquente, et une fois tout fini (félicitations, anecdote, défis). */
 function paroleDeMaitre(m){
 	var e1 = aFait(m.etapes[0]), e2 = aFait(m.etapes[1]);
-	var defis = "\n\n" + C.gras("Les défis de " + m.nom) + C.gris(" (des quêtes secondaires, pour s'entraîner sur l'aile)") + "\n" + listeDefis(m.ecole);
+	var defis = "\n\n" + C.gras("Les défis " + (/^[AEIOUHaeiouh]/.test(m.nom) ? "d'" : "de ") + m.nom) + C.gris(" (des quêtes secondaires, pour s'entraîner sur l'aile)") + "\n" + listeDefis(m.ecole);
 	if (e1 && e2) return m.fin() + defis;
 	var erreur = m.erreur ? m.erreur() : null;
 	var corps = e1 ? m.entre() : m.entree() + "\n\n" + m.metaphore() + "\n\n" + m.syntaxe() + "\n\n" + m.mission();
