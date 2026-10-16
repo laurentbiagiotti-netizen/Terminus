@@ -39,6 +39,18 @@ BADGES = [
     ('platine_ch4', 'IR', 'platine'),
 ]
 NOIR = (0, 0, 0)
+# Une police de 3 x 5 pixels, pour les sigles de quatre caractères.
+PETITE_POLICE = {
+    'A': ['###', '#.#', '###', '#.#', '#.#'], 'B': ['##.', '#.#', '##.', '#.#', '##.'], 'C': ['###', '#..', '#..', '#..', '###'],
+    'D': ['##.', '#.#', '#.#', '#.#', '##.'], 'E': ['###', '#..', '##.', '#..', '###'], 'F': ['###', '#..', '##.', '#..', '#..'],
+    'G': ['###', '#..', '#.#', '#.#', '###'], 'H': ['#.#', '#.#', '###', '#.#', '#.#'], 'I': ['###', '.#.', '.#.', '.#.', '###'],
+    'K': ['#.#', '#.#', '##.', '#.#', '#.#'], 'L': ['#..', '#..', '#..', '#..', '###'], 'M': ['#.#', '###', '###', '#.#', '#.#'],
+    'N': ['##.', '#.#', '#.#', '#.#', '#.#'], 'O': ['###', '#.#', '#.#', '#.#', '###'], 'P': ['###', '#.#', '###', '#..', '#..'],
+    'R': ['##.', '#.#', '##.', '#.#', '#.#'], 'S': ['###', '#..', '###', '..#', '###'], 'T': ['###', '.#.', '.#.', '.#.', '.#.'],
+    'U': ['#.#', '#.#', '#.#', '#.#', '###'], 'V': ['#.#', '#.#', '#.#', '#.#', '.#.'], 'Y': ['#.#', '#.#', '.#.', '.#.', '.#.'],
+    '0': ['###', '#.#', '#.#', '#.#', '###'], '3': ['###', '..#', '.##', '..#', '###'], '/': ['..#', '..#', '.#.', '#..', '#..'],
+    '?': ['###', '..#', '.#.', '...', '.#.'],
+}
 BLANC = (242, 242, 242)
 
 
@@ -64,6 +76,17 @@ def badge(sigle, rang):
     # le sigle, en pixels nets (sans lissage)
     masque = Image.new('1', (40, 40), 0)
     dm = ImageDraw.Draw(masque)
+    if len(sigle) >= 4:
+        # Quatre caractères ne tiennent pas dans le cœur noir avec la police : une petite police maison de 3 x 5 pixels.
+        larg = len(sigle) * 4 - 1
+        x0, y0 = 20 - larg // 2, 16
+        for k, ch in enumerate(sigle):
+            for y, ligne in enumerate(PETITE_POLICE.get(ch, PETITE_POLICE['?'])):
+                for x, p in enumerate(ligne):
+                    if p == '#':
+                        dm.point((x0 + k * 4 + x, y0 + y), fill=1)
+        im.paste(Image.new('RGB', (40, 40), BLANC if rang != 'or' else eclat), (0, 0), masque)
+        return im.resize((80, 80), Image.NEAREST)
     police = ImageFont.load_default()
     try:
         police = ImageFont.load_default(size=9 if len(sigle) >= 4 else 10)

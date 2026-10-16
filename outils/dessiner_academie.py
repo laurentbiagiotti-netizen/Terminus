@@ -62,6 +62,20 @@ def texte(d, x, y, t, c=B):
     d.text((x, y), t, fill=c)
 
 
+def salle(d, x0, y0, x1, y1, sol=V):
+    """La pièce en perspective des chapitres précédents, avec un dallage au sol et une bande hachurée devant."""
+    piece(d, x0, y0, x1, y1, sol=sol)
+    prof = H - y1
+    for k in range(1, 4):
+        t = (k / 4) ** 1.6
+        y = int(y1 + t * prof)
+        d.line([(int(x0 * (1 - t)) + 1, y), (int(x1 + (W - x1) * t) - 1, y)], fill=N)
+    for k in range(1, 6):
+        xa = x0 + (x1 - x0) * k / 6
+        d.line([(xa, y1 + 1), (W * k / 6, H - 1)], fill=N)
+    tramer(d, 2, H - 9, W - 3, H - 2, c=N, pas=3)
+
+
 # ------------------------------------------------------------------
 # Le grand hall et les huit ailes
 # ------------------------------------------------------------------
@@ -69,7 +83,7 @@ def texte(d, x, y, t, c=B):
 def academie():
     """Le grand hall : des colonnes, des grimoires qui flottent, l'horloge qui file vers minuit, l'escalier."""
     im, d = toile()
-    piece(d, 30, 18, 146, 112)
+    salle(d, 30, 18, 146, 112)
     for x in (44, 132):
         colonne(d, x, 22, 112)
     # l'horloge, aiguilles presque sur minuit
@@ -94,11 +108,13 @@ def academie():
 def aile_runes():
     """Les Runes : un mur couvert de signes d'expressions régulières, un tamis qui ne garde que les bonnes lignes."""
     im, d = toile()
-    piece(d, 26, 16, 150, 110, sol=V)
+    salle(d, 26, 16, 150, 110, sol=V)
     briques(d, 30, 20, 146, 106, h=10, w=24)
-    for i, t in enumerate(["^ $ . *", "[0-9]+", "(a|b)", "\\.", "[[:digit:]]"]):
-        d.rectangle([38 + (i % 2) * 52, 26 + i * 15, 38 + (i % 2) * 52 + 54, 37 + i * 15], fill=N)
-        texte(d, 41 + (i % 2) * 52, 26 + i * 15, t, V if i % 2 == 0 else B)
+    for i, t in enumerate(["^ $", "[0-9]+", "(a|b)", ".*"]):
+        x, y = 40 + (i % 2) * 54, 30 + (i // 2) * 36
+        d.rectangle([x, y, x + 44, y + 22], fill=N, outline=V)
+        lg = d.textlength(t)
+        texte(d, x + 22 - lg / 2, y + 5, t, V if i in (0, 3) else B)
     # le tamis, sur un trépied, des lignes qui tombent
     d.ellipse([60, 120, 116, 136], fill=B); d.ellipse([64, 122, 112, 134], fill=N)
     for x in range(66, 112, 5):
@@ -116,23 +132,23 @@ def aile_divination():
     etoiles(d, n=20, graine=11, ymax=60)
     lune(d, 150, 20, 9)
     d.polygon([(0, 120), (176, 120), (176, 170), (0, 170)], fill=V)
-    d.rectangle([20, 116, 156, 124], fill=B)                                     # la table
-    d.rectangle([28, 124, 34, 160], fill=B); d.rectangle([142, 124, 148, 160], fill=B)
+    d.rectangle([20, 116, 172, 124], fill=B)                                     # la table
+    d.rectangle([28, 124, 34, 160], fill=B); d.rectangle([158, 124, 164, 160], fill=B)
     d.polygon([(70, 112), (88, 70), (106, 112)], fill=B, outline=N)              # le prisme
     d.polygon([(78, 108), (88, 84), (98, 108)], fill=N)
     d.line([(10, 86), (80, 92)], fill=B, width=2)                                # le rayon qui entre
     for k in range(3):                                                           # les colonnes qui sortent
-        x = 114 + k * 18
-        d.line([(98, 96 + k * 2), (x, 112)], fill=V if k % 2 == 0 else B, width=2)
-        d.rectangle([x - 3, 112, x + 3, 115], fill=V if k % 2 == 0 else B)
-        texte(d, x - 4, 128, "$" + str(k + 1), B)
+        x = 118 + k * 22
+        d.line([(98, 96 + k * 2), (x, 100)], fill=V if k % 2 == 0 else B, width=2)
+        d.rectangle([x - 8, 100, x + 8, 115], fill=N, outline=V if k % 2 == 0 else B)
+        texte(d, x - 5, 102, "$" + str(k + 1), V if k % 2 == 0 else B)
     return im
 
 
 def aile_transmutation():
     """La Transmutation : un alambic qui fume, et une plume qui change une ligne en une autre."""
     im, d = toile()
-    piece(d, 28, 18, 148, 108)
+    salle(d, 28, 18, 148, 108)
     alambic(d, 56, 72, 18)
     d.line([(56, 44), (78, 34), (100, 50)], fill=B, width=3)                     # le col de cygne
     for k in range(3):
@@ -151,7 +167,7 @@ def aile_transmutation():
 def aile_grimoires():
     """Les Grimoires : des rayonnages, et un grimoire ouvert dont les pages poussent en arbre (un JSON)."""
     im, d = toile()
-    piece(d, 24, 14, 152, 104)
+    salle(d, 24, 14, 152, 104)
     etagere(d, 28, 18, 70, 102, rangs=4, graine=21)
     etagere(d, 106, 18, 148, 102, rangs=4, graine=23)
     # le grimoire ouvert, l'arbre au-dessus
@@ -169,24 +185,23 @@ def aile_grimoires():
 def aile_alchimie():
     """L'Alchimie : trois alambics reliés par des tuyaux de cuivre, un liquide vert qui passe de l'un à l'autre."""
     im, d = toile()
-    piece(d, 22, 16, 154, 106)
+    salle(d, 22, 16, 154, 106)
     for x in (44, 88, 132):
         alambic(d, x, 92, 16)
     d.line([(44, 66), (44, 52), (88, 52), (88, 66)], fill=B, width=3)
     d.line([(88, 52), (132, 52), (132, 66)], fill=B, width=3)
-    d.text((62, 40), "|", fill=V); d.text((108, 40), "|", fill=V)
+    for x in (58, 70, 102, 114):
+        d.rectangle([x, 51, x + 3, 53], fill=V)
     d.rectangle([14, 112, 162, 118], fill=B)
     for x in (24, 152):
         d.rectangle([x - 3, 118, x + 3, 160], fill=B)
-    for k in range(4):
-        d.ellipse([60 + k * 16, 140, 68 + k * 16, 148], fill=V if k % 2 else B)
     return im
 
 
 def aile_chronomancie():
     """La Chronomancie : une grande roue d'horloge, trois sabliers (timer, at, cron) sur une table."""
     im, d = toile()
-    piece(d, 24, 14, 152, 104)
+    salle(d, 24, 14, 152, 104)
     d.ellipse([54, 20, 122, 88], fill=B); d.ellipse([60, 26, 116, 82], fill=N)
     for k in range(12):
         a = k * math.pi / 6
@@ -195,14 +210,13 @@ def aile_chronomancie():
     d.rectangle([20, 118, 156, 124], fill=B)
     for i, x in enumerate((50, 88, 126)):
         sablier(d, x, 90, 28, 18, plein=[0.2, 0.6, 0.9][i])
-    texte(d, 36, 132, "timer  at  cron", B)
     return im
 
 
 def aile_archives():
     """Les Archives : un grand miroir qui reflète une pile de dossiers, et une aiguille qui recoud une page."""
     im, d = toile()
-    piece(d, 24, 14, 152, 104)
+    salle(d, 24, 14, 152, 104)
     d.ellipse([34, 22, 90, 104], fill=B); d.ellipse([39, 27, 85, 99], fill=N)     # le miroir
     for k in range(4):
         d.rectangle([48, 44 + k * 12, 76, 52 + k * 12], outline=V)
@@ -223,10 +237,10 @@ def aile_archives():
 def aile_invocation():
     """L'Invocation : un pupitre et un tableau noir couvert d'un script, un cercle d'invocation tracé au sol."""
     im, d = toile()
-    piece(d, 22, 12, 154, 96)
-    d.rectangle([34, 18, 142, 76], fill=B); d.rectangle([38, 22, 138, 72], fill=N)
-    for k, t in enumerate(["#!/bin/bash", "sort() {", "  for f in ..", "  if [ -e ]", "}"]):
-        texte(d, 42, 23 + k * 10, t, V if k == 0 else B)
+    salle(d, 22, 12, 154, 96)
+    d.rectangle([34, 14, 142, 82], fill=B); d.rectangle([38, 18, 138, 78], fill=N)
+    for k, t in enumerate(["#!/bin/bash", "for f in *", "do", "  echo $f", "done"]):
+        texte(d, 42, 20 + k * 11, t, V if k == 0 else B)
     d.ellipse([40, 118, 136, 162], outline=V, width=2)                         # le cercle au sol
     d.ellipse([56, 126, 120, 154], outline=B)
     for k in range(5):
@@ -238,120 +252,209 @@ def aile_invocation():
 
 
 # ------------------------------------------------------------------
-# Les huit maîtres
+# Les huit maîtres, dans le style des personnages des chapitres 2 et 3 (dessiner_panne.perso) :
+# une silhouette en pied, gros pixels, tête carrée, yeux carrés à pupille noire, sol en tirets.
 # ------------------------------------------------------------------
-
-def henry():
-    """Henry, maître des Runes : une longue barbe, un doigt levé qui allume une rune."""
-    im, d = toile()
-    robe(d, 88, 86, V)
-    visage(d, 88, 50)
-    d.polygon([(66, 58), (110, 58), (100, 98), (88, 108), (76, 98)], fill=B, outline=N)   # la barbe
-    d.line([(80, 74), (96, 74)], fill=N)
-    d.polygon([(62, 36), (88, 6), (114, 36)], fill=V)                            # le chapeau
-    d.rectangle([58, 34, 118, 38], fill=V)
-    d.line([(140, 120), (150, 70)], fill=B, width=4)                             # le bras levé
-    d.rectangle([140, 40, 166, 64], fill=N, outline=B)
-    d.text((145, 46), "^.*", fill=V)
-    return im
+from dessiner_panne import perso, yeux, sol_tirets  # noqa: E402
 
 
-def alfred():
-    """Alfred, maître de la Divination : une capuche, un prisme qu'il tient entre deux doigts."""
-    im, d = toile()
-    robe(d, 88, 88, B)
-    d.polygon([(52, 64), (88, 6), (124, 64), (118, 92), (58, 92)], fill=V)       # la capuche
-    visage(d, 88, 56, 20)
-    d.polygon([(22, 120), (34, 94), (46, 120)], fill=B, outline=N)               # le prisme
-    for k in range(3):
-        d.line([(46, 112), (60 + k * 6, 128 + k * 6)], fill=V if k % 2 == 0 else N, width=2)
-    return im
+def robe_mage(r, haut=33, bas=64, c=V, x0=35, x1=52):
+    """Une robe de mage qui s'évase vers le bas."""
+    for k, y in enumerate(range(haut, bas + 1)):
+        e = k // 6
+        r(x0 - e, y, x1 + e, y, c)
 
 
-def lee():
-    """Lee, maître de la Transmutation : un chignon piqué d'une plume, des lunettes rondes, une fiole fumante."""
-    im, d = toile()
-    robe(d, 88, 86, V)
-    d.ellipse([72, 8, 104, 34], fill=V)                                          # le chignon
-    visage(d, 88, 52)
-    d.ellipse([72, 44, 86, 56], outline=N, width=2); d.ellipse([90, 44, 104, 56], outline=N, width=2)
-    d.line([(100, 10), (126, 0)], fill=B, width=2)                               # la plume dans le chignon
-    d.ellipse([132, 110, 156, 134], fill=B); d.chord([135, 113, 153, 131], 0, 180, fill=V)
-    d.rectangle([140, 98, 148, 112], fill=B)
-    for k in range(3):
-        d.arc([136 + k * 4, 80 - k * 6, 148 + k * 4, 92 - k * 6], 180, 360, fill=B)
-    return im
+def bras(r, gauche=True, droite=True, y=35):
+    if gauche: r(31, y, 34, y + 1, B); r(30, y + 1, 31, y + 11, B); r(30, y + 11, 33, y + 12, B)
+    if droite: r(53, y, 56, y + 1, B); r(56, y + 1, 57, y + 11, B); r(54, y + 11, 57, y + 12, B)
 
 
-def stephen():
-    """Stephen, maître des Grimoires : de grosses lunettes, un grimoire relié serré contre lui."""
-    im, d = toile()
-    robe(d, 88, 86, B)
-    visage(d, 88, 50)
-    d.rectangle([68, 42, 84, 54], outline=V, width=3); d.rectangle([92, 42, 108, 54], outline=V, width=3)
-    d.line([(84, 46), (92, 46)], fill=V, width=2)
-    d.polygon([(62, 30), (66, 18), (110, 18), (114, 30)], fill=N)                # les cheveux
-    d.rectangle([56, 104, 120, 150], fill=V, outline=N, width=2)                 # le grimoire
-    d.rectangle([60, 108, 116, 146], outline=N)
-    d.text((76, 118), "{ }", fill=N)
-    return im
+def jambes(r, c=V):
+    r(38, 55, 41, 64, B); r(46, 55, 49, 64, B); r(39, 56, 40, 63, N); r(47, 56, 48, 63, N)
+    r(36, 65, 42, 66, c); r(45, 65, 51, 66, c)
 
 
-def doug():
-    """Doug, maître de l'Alchimie : des lunettes de protection sur le front, une clé à molette, un tuyau de cuivre."""
-    im, d = toile()
-    robe(d, 88, 86, V)
-    visage(d, 88, 52)
-    d.rectangle([62, 28, 114, 40], fill=N)                                       # les lunettes de protection
-    d.ellipse([66, 26, 84, 42], fill=V, outline=B); d.ellipse([92, 26, 110, 42], fill=V, outline=B)
-    d.line([(68, 64), (108, 64)], fill=N, width=2)                               # la moustache
-    d.line([(10, 100), (40, 100), (40, 130), (70, 130)], fill=B, width=5)       # le tuyau
-    d.ellipse([140, 100, 162, 122], outline=B, width=4); d.line([(146, 120), (130, 150)], fill=B, width=5)
-    return im
+def pieds_robe(r):
+    r(37, 65, 42, 66, B); r(45, 65, 50, 66, B)
 
 
-def paul():
-    """Paul, maître de la Chronomancie : un sablier à la main, une montre à gousset sur la robe."""
-    im, d = toile()
-    robe(d, 88, 86, B)
-    visage(d, 88, 50)
-    d.polygon([(62, 34), (88, 16), (114, 34)], fill=N)
-    d.arc([60, 22, 116, 60], 200, 340, fill=N, width=3)
-    sablier(d, 146, 92, 40, 24, plein=0.7)
-    d.ellipse([70, 112, 90, 132], fill=V, outline=N, width=2)                   # la montre
-    d.line([(80, 122), (80, 115)], fill=N); d.line([(80, 122), (85, 122)], fill=N)
-    d.line([(80, 112), (92, 96)], fill=N)
-    return im
+def henry_dessin(r):
+    # le vieux maître des Runes : chapeau pointu gravé, longue barbe, bâton à runes, une tablette de pierre
+    for k in range(9): r(43 - k, 2 + k, 44 + k, 2 + k, V)
+    r(31, 11, 56, 12, V); r(42, 5, 45, 6, N); r(41, 8, 46, 8, N)          # une rune ^ sur le chapeau
+    r(37, 13, 50, 30, B); yeux(r, 38, 45, 16)
+    r(37, 13, 50, 13, V); r(43, 21, 44, 22, N)
+    r(36, 23, 51, 40, B)                                                     # la barbe
+    r(40, 24, 47, 24, N); r(39, 30, 39, 37, N); r(43, 32, 43, 39, N); r(48, 30, 48, 37, N)
+    robe_mage(r, 33)
+    for x, y in [(37, 46), (49, 50), (40, 56), (47, 60)]: r(x, y, x + 1, y + 1, B)
+    r(30, 36, 34, 37, B); r(29, 37, 30, 45, B)                               # bras gauche, la tablette
+    r(19, 40, 31, 54, B); r(20, 41, 30, 53, N)
+    r(22, 43, 23, 43, V); r(21, 44, 22, 44, V); r(23, 44, 24, 44, V)          # ^
+    r(27, 43, 28, 47, V); r(26, 44, 29, 44, V); r(26, 46, 29, 46, V)          # $
+    r(22, 49, 22, 51, V); r(22, 49, 23, 49, V); r(22, 51, 23, 51, V)          # [
+    r(28, 49, 28, 51, V); r(27, 49, 28, 49, V); r(27, 51, 28, 51, V)          # ]
+    r(53, 36, 57, 37, B); r(59, 6, 60, 66, B); r(57, 4, 62, 7, V)            # le bâton
+    for y in (14, 24, 34, 44): r(58, y, 61, y, V)
+    pieds_robe(r); sol_tirets(r, 68)
 
 
-def andrew():
-    """Andrew, maître des Archives : un miroir à main, une aiguille et son fil passés au col."""
-    im, d = toile()
-    robe(d, 88, 86, V)
-    visage(d, 88, 52)
-    d.polygon([(64, 36), (70, 22), (106, 22), (112, 36)], fill=B, outline=N)
-    d.line([(64, 36), (112, 36)], fill=N)
-    d.ellipse([8, 88, 40, 128], fill=B); d.ellipse([12, 92, 36, 124], fill=N)    # le miroir
-    d.line([(16, 100), (24, 94)], fill=V)
-    d.rectangle([22, 128, 28, 156], fill=B)
-    d.line([(100, 96), (140, 70)], fill=B, width=2)                              # l'aiguille
-    d.arc([92, 90, 150, 140], 270, 30, fill=V, width=2)
-    return im
+def alfred_dessin(r):
+    # le devin d'awk : capuche pointue, une boule de cristal qui découpe la lumière en colonnes
+    for k in range(6): r(43 - k - 3, 4 + k, 44 + k + 3, 4 + k, V)
+    r(32, 10, 55, 33, V)
+    r(37, 14, 50, 31, B); yeux(r, 38, 45, 18); r(43, 23, 44, 25, N)
+    r(41, 28, 46, 28, N); r(37, 14, 50, 14, V)
+    robe_mage(r, 33, 64, V, 34, 53)
+    r(41, 34, 46, 64, B)                                                     # le pan blanc de la robe
+    for y in range(37, 63, 5): r(43, y, 44, y + 1, V)
+    bras(r, True, True, 36)
+    # la boule de cristal, tenue à deux mains, et ses colonnes $1 $2 $3
+    for (x0, x1, y) in [(37, 50, 42), (35, 52, 43), (34, 53, 44), (34, 53, 45), (34, 53, 46), (34, 53, 47), (34, 53, 48), (35, 52, 49), (37, 50, 50)]:
+        r(x0, y, x1, y, B)
+    r(36, 44, 51, 48, N)
+    for x in (38, 43, 48): r(x, 44, x + 1, 48, V)
+    r(39, 51, 48, 52, V)                                                     # le socle
+    for x, y in [(26, 30), (61, 34), (24, 50), (63, 52)]: r(x, y, x, y, B)   # des éclats de lumière
+    pieds_robe(r); sol_tirets(r, 68)
 
 
-def brian():
-    """Brian, maître de l'Invocation : une toque carrée, un bâton de craie, un parchemin de script."""
-    im, d = toile()
-    robe(d, 88, 86, B)
-    visage(d, 88, 52)
-    d.polygon([(56, 26), (88, 14), (120, 26), (88, 38)], fill=V)                # la toque carrée
-    d.rectangle([72, 30, 104, 36], fill=V)
-    d.line([(120, 26), (126, 46)], fill=B, width=2)
-    d.rectangle([134, 92, 166, 150], fill=B)                                     # le parchemin
-    for k in range(5):
-        d.line([(138, 100 + k * 9), (162 - (k * 7) % 12, 100 + k * 9)], fill=N if k else V, width=2)
-    d.rectangle([20, 104, 40, 110], fill=B)                                      # la craie
-    return im
+def lee_dessin(r):
+    # la maîtresse de la Transmutation : chignon, blouse d'alchimiste, une plume qui réécrit, une fiole
+    r(40, 3, 47, 9, V); r(39, 5, 48, 7, V)                                   # le chignon
+    r(35, 9, 52, 14, V)
+    r(37, 12, 50, 30, B); yeux(r, 38, 45, 16)
+    r(37, 15, 44, 15, N); r(45, 15, 51, 15, N)                               # les lunettes
+    r(43, 21, 44, 23, N); r(41, 26, 46, 26, N)
+    r(35, 12, 36, 22, V); r(51, 12, 52, 22, V)
+    r(42, 31, 45, 32, B)
+    r(35, 33, 52, 54, B); r(36, 34, 51, 53, N); r(37, 35, 50, 53, B)         # la blouse
+    r(41, 33, 46, 37, V); r(43, 38, 44, 53, N)
+    r(38, 46, 41, 50, N); r(39, 47, 40, 49, V)                                # une poche
+    bras(r, True, True, 35)
+    # la plume, levée, qui transforme un parchemin
+    r(57, 22, 58, 36, B); r(58, 14, 61, 18, V); r(59, 18, 62, 22, V); r(60, 22, 61, 26, V)
+    r(60, 30, 70, 41, B); r(61, 31, 69, 40, N)
+    r(62, 33, 64, 33, V); r(66, 33, 68, 33, B); r(65, 32, 65, 34, B)          # a > b
+    r(62, 37, 68, 37, V)
+    # la fiole, dans l'autre main
+    r(25, 36, 27, 40, B); r(22, 41, 30, 49, B); r(23, 44, 29, 48, V); r(23, 42, 29, 43, N)
+    jambes(r); sol_tirets(r, 68)
+
+
+def stephen_dessin(r):
+    # le bibliothécaire des Grimoires : crâne lisse, lunettes carrées, un grimoire ouvert dont les pages font un arbre
+    r(37, 6, 50, 29, B)
+    r(34, 13, 37, 21, V); r(50, 13, 53, 21, V)
+    r(36, 14, 43, 20, V); r(44, 14, 51, 20, V); yeux(r, 38, 45, 15)          # lunettes vertes épaisses
+    r(43, 22, 44, 24, N); r(41, 26, 46, 26, N)
+    r(42, 30, 45, 31, B)
+    r(35, 32, 52, 54, V); r(42, 32, 45, 54, B)                               # le gilet
+    r(31, 34, 34, 35, B); r(30, 35, 31, 41, B); r(53, 34, 56, 35, B); r(56, 35, 57, 41, B)
+    # le grimoire ouvert, tenu devant lui
+    r(24, 40, 63, 52, B); r(25, 41, 42, 51, N); r(45, 41, 62, 51, N); r(43, 40, 44, 53, V)
+    r(27, 43, 28, 49, V); r(29, 42, 30, 43, V); r(29, 49, 30, 50, V); r(26, 46, 27, 46, V)   # {
+    r(32, 46, 38, 46, B); r(35, 44, 35, 48, B)                                                  # une branche
+    r(59, 43, 60, 49, V); r(57, 42, 58, 43, V); r(57, 49, 58, 50, V); r(60, 46, 61, 46, V)   # }
+    r(48, 43, 55, 43, B); r(48, 46, 53, 46, B); r(48, 49, 55, 49, B)
+    jambes(r); sol_tirets(r, 68)
+
+
+def doug_dessin(r):
+    # le maître de l'Alchimie : lunettes de forge sur le front, tablier, un tuyau coudé et des gants
+    r(37, 8, 50, 30, B)
+    r(36, 8, 51, 10, V); r(37, 10, 42, 14, V); r(45, 10, 50, 14, V); r(38, 11, 41, 13, N); r(46, 11, 49, 13, N)
+    yeux(r, 38, 45, 17); r(43, 22, 44, 24, N)
+    r(39, 27, 48, 28, N); r(40, 27, 47, 27, B)                               # un grand sourire
+    r(37, 25, 38, 30, V); r(49, 25, 50, 30, V)                               # les favoris
+    r(42, 31, 45, 32, B)
+    r(35, 33, 52, 54, V)
+    r(38, 35, 49, 56, B); r(39, 36, 48, 55, N); r(40, 37, 47, 55, B)         # le tablier
+    r(41, 44, 46, 49, N); r(42, 45, 45, 48, V)
+    # le tuyau coudé, porté sur l'épaule : | puis coude
+    r(53, 34, 56, 35, B); r(56, 24, 58, 36, B); r(56, 22, 68, 24, B); r(66, 24, 68, 40, B); r(65, 40, 69, 42, V)
+    r(54, 44, 58, 47, V)                                                      # gant droit
+    r(30, 35, 34, 36, B); r(29, 36, 30, 45, B); r(27, 45, 32, 48, V)         # gant gauche
+    # un petit alambic à ses pieds
+    r(18, 58, 26, 66, B); r(19, 61, 25, 65, V); r(21, 52, 23, 58, B); r(23, 52, 28, 53, B)
+    jambes(r); sol_tirets(r, 68)
+
+
+def paul_dessin(r):
+    # l'horloger de la Chronomancie : haut-de-forme, gilet, montre à gousset, un sablier à la main
+    r(37, 1, 50, 11, B); r(38, 2, 49, 10, N); r(38, 8, 49, 9, V); r(33, 11, 54, 12, B)
+    r(37, 13, 50, 30, B); yeux(r, 38, 45, 16)
+    r(37, 15, 44, 15, N); r(44, 17, 45, 17, N)                                # le monocle
+    r(43, 21, 44, 23, N); r(40, 26, 47, 26, N); r(40, 25, 41, 25, N); r(46, 25, 47, 25, N)   # moustache
+    r(42, 31, 45, 32, B)
+    r(35, 33, 52, 54, B); r(38, 34, 49, 54, V)                               # la veste et le gilet
+    for y in (38, 43, 48): r(43, y, 44, y + 1, B)
+    r(40, 40, 46, 40, B); r(36, 40, 39, 46, B); r(36, 40, 37, 47, V)          # chaîne et montre
+    r(34, 45, 38, 49, V); r(35, 46, 37, 48, N); r(36, 46, 36, 47, B)
+    bras(r, True, True, 35)
+    # le sablier, levé
+    r(58, 26, 67, 27, B); r(58, 44, 67, 45, B)
+    for k in range(8):
+        r(59 + k // 2, 28 + k, 66 - k // 2, 28 + k, B)
+        r(59 + k // 2, 43 - k, 66 - k // 2, 43 - k, B)
+    r(61, 29, 64, 31, N); r(62, 38, 63, 43, V); r(61, 41, 64, 43, V)
+    r(56, 36, 58, 37, B)
+    jambes(r, B); sol_tirets(r, 68)
+
+
+def andrew_dessin(r):
+    # l'archiviste : bonnet, cache-poussière, le Miroir (rsync) dans une main, l'Aiguille et son fil (patch) dans l'autre
+    r(36, 6, 51, 12, V); r(35, 11, 52, 13, B)
+    r(37, 13, 50, 30, B); yeux(r, 38, 45, 17); r(43, 22, 44, 24, N); r(41, 27, 46, 27, N)
+    r(37, 26, 50, 30, B); r(36, 24, 37, 30, V); r(50, 24, 51, 30, V)
+    r(42, 31, 45, 32, B)
+    robe_mage(r, 33, 62, V, 35, 52)
+    r(36, 40, 51, 41, B); r(36, 50, 51, 51, B)                               # les ceintures de rouleaux
+    for x in (38, 44, 49): r(x, 41, x + 1, 50, B)
+    bras(r, True, True, 35)
+    # le Miroir : un ovale sur un manche
+    r(19, 26, 27, 27, B); r(17, 28, 29, 41, B); r(19, 42, 27, 43, B); r(19, 28, 27, 41, N); r(20, 29, 22, 33, V)
+    r(22, 44, 24, 52, B); r(24, 47, 29, 48, B)
+    # l'Aiguille et son fil vert qui ondule
+    r(60, 22, 61, 40, B); r(60, 22, 61, 23, N)
+    for k, (x, y) in enumerate([(62, 24), (64, 27), (65, 31), (64, 35), (66, 39), (68, 43), (67, 47)]):
+        r(x, y, x + 1, y + 2, V)
+    r(56, 40, 59, 41, B)
+    pieds_robe(r); sol_tirets(r, 68)
+
+
+def brian_dessin(r):
+    # le jeune enchanteur de l'Invocation : cheveux en bataille, une craie levée, un parchemin #!, un cercle au sol
+    for x in range(36, 52, 3): r(x, 6, x + 1, 9, V)
+    r(36, 9, 51, 14, V)
+    r(37, 12, 50, 30, B); r(37, 12, 50, 13, V); yeux(r, 38, 45, 16)
+    r(43, 21, 44, 23, N); r(41, 26, 46, 26, N); r(46, 25, 46, 25, N)
+    r(42, 31, 45, 32, B)
+    r(35, 33, 52, 54, V); r(43, 33, 44, 54, B)
+    for y in (37, 43, 49): r(39, y, 40, y, B); r(47, y, 48, y, B)
+    # la craie levée
+    r(53, 34, 56, 35, B); r(56, 24, 57, 35, B); r(55, 18, 58, 23, B); r(56, 15, 57, 17, V)
+    for x, y in [(60, 14), (62, 18), (52, 14)]: r(x, y, x, y, V)
+    # le parchemin, avec #!
+    r(30, 35, 34, 36, B); r(29, 36, 30, 40, B)
+    r(16, 38, 31, 56, B); r(17, 39, 30, 55, N); r(16, 37, 31, 38, V); r(16, 56, 31, 57, V)
+    r(19, 41, 19, 45, V); r(21, 41, 21, 45, V); r(18, 42, 22, 42, V); r(18, 44, 22, 44, V)   # #
+    r(24, 41, 24, 43, V); r(24, 45, 24, 45, V)                                                # !
+    for y in (48, 51): r(19, y, 28, y, B)
+    jambes(r)
+    # le cercle d'invocation, en pointillés
+    for k in range(0, 360, 20):
+        x = 43 + int(24 * math.cos(math.radians(k))); y = 66 + int(4 * math.sin(math.radians(k)))
+        r(x, y, x + 1, y, V)
+    sol_tirets(r, 69)
+
+
+PORTRAITS = {
+    "item_henry.gif": henry_dessin, "item_alfred.gif": alfred_dessin, "item_lee.gif": lee_dessin,
+    "item_stephen.gif": stephen_dessin, "item_doug.gif": doug_dessin, "item_paul.gif": paul_dessin,
+    "item_andrew.gif": andrew_dessin, "item_brian.gif": brian_dessin,
+}
 
 
 DESSINS = {
@@ -360,12 +463,11 @@ DESSINS = {
     "loc_aile_transmutation.gif": aile_transmutation, "loc_aile_grimoires.gif": aile_grimoires,
     "loc_aile_alchimie.gif": aile_alchimie, "loc_aile_chronomancie.gif": aile_chronomancie,
     "loc_aile_archives.gif": aile_archives, "loc_aile_invocation.gif": aile_invocation,
-    "item_henry.gif": henry, "item_alfred.gif": alfred, "item_lee.gif": lee, "item_stephen.gif": stephen,
-    "item_doug.gif": doug, "item_paul.gif": paul, "item_andrew.gif": andrew, "item_brian.gif": brian,
 }
 
 if __name__ == "__main__":
-    noms = sys.argv[1:] or list(DESSINS)
+    noms = sys.argv[1:] or list(DESSINS) + list(PORTRAITS)
     for nom in noms:
-        finir(nom, DESSINS[nom]())
+        if nom in PORTRAITS: perso(nom, PORTRAITS[nom])
+        else: finir(nom, DESSINS[nom]())
     print(len(noms), "dessins")
