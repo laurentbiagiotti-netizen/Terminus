@@ -1820,6 +1820,20 @@ function developperMots(mots){
 	return r;
 }
 
+/*
+ * Les noms qui correspondent à un mot à jokers (*.txt), rangés dans l'ordre alphabétique comme bash
+ * (sans tenir compte des majuscules, comme dans une langue française ou anglaise). Rien ne correspond :
+ * le mot reste tel quel.
+ */
+function jokers(mot){
+	var noms = Shell.developper(mot);
+	if (noms.length === 1 && noms[0] === mot) return noms;
+	return noms.slice().sort(function(a, b){
+		var x = a.toLowerCase(), y = b.toLowerCase();
+		return x < y ? -1 : x > y ? 1 : (a < b ? -1 : a > b ? 1 : 0);
+	});
+}
+
 function champsDe(parties){
 	var morceaux = [];
 	morceauxDe(parties, false, morceaux);
@@ -1850,7 +1864,7 @@ function champsDe(parties){
 	if (existe) pousser();
 	var resultat = [];
 	for (var j = 0; j < champs.length; j++){
-		if (champs[j].joker) Array.prototype.push.apply(resultat, Shell.developper(champs[j].texte));
+		if (champs[j].joker) Array.prototype.push.apply(resultat, jokers(champs[j].texte));
 		else resultat.push(champs[j].texte);
 	}
 	return resultat;
@@ -3003,6 +3017,7 @@ Interpreteur.capturer = function(texte, options){
 	options = options || {};
 	var erreurs = [], code = 0;
 	var flux = new FluxCapture(function(t){ erreurs.push(t); });
+	var racine = Interpreteur.niveau === 0;
 	proteger(function(){
 		Interpreteur.flux.push(flux);
 		var cadre = options.portee === "courante" ? null : nouveauCadre({ limite: true, positionnels: (options.positionnels || []).slice(), nom0: options.nom0 || "bash",
@@ -3013,6 +3028,8 @@ Interpreteur.capturer = function(texte, options){
 			code = executerTexte(texte, { tolerant: true });
 		} catch (e){
 			if (estSignal(e)) code = e.code || 0;
+			// Le garde-fou, quand c'est cette capture qui a été lancée en premier : son message va dans ses erreurs.
+			else if (e instanceof LimiteAtteinte && racine){ erreurs.push(e.message); code = 1; }
 			else throw e;
 		} finally {
 			if (cadre){
@@ -3173,6 +3190,19 @@ function nombrePrintf(v, io, entierSeul){
 	return isNaN(p) ? 0 : (entierSeul ? Math.trunc(p) : p);
 }
 
+/*
+ * Un nombre avec prec décimales, arrondi comme le printf de C : quand le nombre tombe pile entre deux
+ * (2.5, 0.125), on va vers le chiffre pair (printf "%.0f" 2.5 donne 2). Sinon, comme toFixed.
+ */
+function fixe(n, prec){
+	var echelle = Math.pow(10, prec), x = n * echelle;
+	if (isFinite(x) && x - Math.floor(x) === 0.5 && x / echelle === n){
+		var bas = Math.floor(x);
+		return ((bas % 2 === 0 ? bas : bas + 1) / echelle).toFixed(prec);
+	}
+	return n.toFixed(prec);
+}
+
 function caler(texte, largeur, gauche, zeros){
 	texte = String(texte);
 	if (largeur === null || texte.length >= largeur) return texte;
@@ -3236,7 +3266,7 @@ Interpreteur.formater = function(format, args, io){
 				case "f": case "F": case "e": case "E": case "g": case "G":
 					n = nombrePrintf(prendre(), io, false);
 					var prec = precision === null ? 6 : Math.min(precision, 50);
-					if (p.conv === "f" || p.conv === "F") v = Math.abs(n).toFixed(prec);
+					if (p.conv === "f" || p.conv === "F") v = fixe(Math.abs(n), prec);
 					else if (p.conv === "e" || p.conv === "E"){
 						v = Math.abs(n).toExponential(prec).replace(/e([+-])(\d)$/, "e$10$2");
 						if (p.conv === "E") v = v.toUpperCase();

@@ -502,6 +502,7 @@ Shell.sorts.cd = function(args, io){
 	return sortie;
 };
 
+/* Comme le vrai cd, il ne dit rien quand sa sortie ne va pas à l'écran (un script capturé, un $(...)). */
 Shell.cdSimple = function(args, io){
 	if (io.sudo){
 		throw new ShellError("sudo : cd : commande introuvable\n" +
@@ -511,12 +512,12 @@ Shell.cdSimple = function(args, io){
 	if (args.length > 1) throw new ShellError("cd : tu ne peux pas aller à plusieurs endroits à la fois.");
 	if (args.length === 0 || args[0] === "~"){
 		enterRoom(Home);
-		return "Te voilà de retour à la Maison !";
+		return !io.tty ? "" : "Te voilà de retour à la Maison !";
 	}
 	if (args[0] === "-"){
 		if (!Shell.lieu_precedent) throw new ShellError("cd : tu n'as encore quitté aucun lieu.");
 		enterRoom(Shell.lieu_precedent);
-		return "Tu es de retour dans " + current_room.toString() + ". " + current_room.intro_text;
+		return !io.tty ? "" : "Tu es de retour dans " + current_room.toString() + ". " + current_room.intro_text;
 	}
 	var r = Shell.chercher(args[0], io, "cd");
 	if (r.node === null) throw new ShellError(Shell.introuvable("cd", r.name, r.dir));
@@ -527,7 +528,7 @@ Shell.cdSimple = function(args, io){
 	// Revenir sur ses pas est toujours permis ; entrer quelque part demande le droit de traverser.
 	if (r.name !== ".." && r.name !== "." && r.node !== current_room) Shell.verifierTraversee(r.node, io, "cd");
 	enterRoom(r.node);
-	return "Tu es maintenant dans " + current_room.toString() + ". " + current_room.intro_text;
+	return !io.tty ? "" : "Tu es maintenant dans " + current_room.toString() + ". " + current_room.intro_text;
 };
 
 Shell.ligneLongue = function(noeud, nom, io){
@@ -1066,7 +1067,8 @@ Shell.sorts.mkdir = function(args, io){
 		lieu.owner = JOUEUR;
 		lieu.mode = "rwxr-xr-x";
 		link_rooms(r.dir, lieu);
-		messages.push("Un nouveau lieu apparaît : " + r.name + ".");
+		// Comme le vrai mkdir, rien à dire quand la sortie part dans un tuyau, un objet ou un $(...).
+		if (io.tty) messages.push("Un nouveau lieu apparaît : " + r.name + ".");
 		GameEvents.fire({ type: "mkdir", room: lieu, parent: r.dir });
 	}
 	return messages.join("\n");
@@ -1087,7 +1089,7 @@ Shell.sorts.touch = function(args, io){
 		GameEvents.fire({ type: "touch", item: item, room: r.dir });
 	}
 	if (crees.length === 0) return "";
-	return "Tu viens de créer " + crees.join(", ") + ".";
+	return !io.tty ? "" : "Tu viens de créer " + crees.join(", ") + ".";
 };
 
 function appliquerMode(ancien, expression, cmd){
