@@ -185,7 +185,7 @@ egal(t("curl -s -H 'Host: fort' http://10.0.92.66/"), "<h1>Le fort</h1>", "curl 
 contient(t("curl -s http://fort/ | grep fort"), "Le fort", "curl dans un tuyau");
 
 /* Durcir security.conf : rien ne change tant qu'on ne recharge pas */
-jeu.lire("(function(){ var it = fichierHote('fort', '/etc/apache2/conf-available/security.conf'); it.setText(it.getText().replace('ServerTokens OS', 'ServerTokens Prod').replace('ServerSignature On', 'ServerSignature Off').replace('TraceEnable On', 'TraceEnable Off')); })()");
+jeu.lire("(function(){ var it = fichierHoteGuet('fort', '/etc/apache2/conf-available/security.conf'); it.setText(it.getText().replace('ServerTokens OS', 'ServerTokens Prod').replace('ServerSignature On', 'ServerSignature Off').replace('TraceEnable On', 'TraceEnable Off')); })()");
 contient(t("curl -I http://fort/"), "Server: Apache/2.4.62 (Debian)", "fichier modifié, pas rechargé : l'ancienne configuration tourne");
 contient(t("apachectl configtest"), "Syntax OK", "configtest du fichier modifié");
 s = t("systemctl reload apache2");
@@ -202,9 +202,9 @@ contient(s, "The requested method TRACE is not allowed for this URL.", "405 : le
 contient(t("curl -i -X OPTIONS http://fort/"), "Allow: GET,POST,OPTIONS,HEAD\n", "OPTIONS sans TRACE");
 
 /* Une faute dans la configuration : configtest la trouve, reload la refuse, restart éteint le site */
-jeu.lire("(function(){ var it = fichierHote('fort', '/etc/apache2/conf-available/security.conf'); it.setText(it.getText() + '\\nServerTokenz Prod'); })()");
+jeu.lire("(function(){ var it = fichierHoteGuet('fort', '/etc/apache2/conf-available/security.conf'); it.setText(it.getText() + '\\nServerTokenz Prod'); })()");
 s = t("apachectl configtest 2>&1");
-contient(s, "AH00526: Syntax error on line " + jeu.lire("fichierHote('fort', '/etc/apache2/conf-available/security.conf').getText().split('\\n').length") + " of /etc/apache2/conf-enabled/security.conf:", "configtest : le fichier et la ligne");
+contient(s, "AH00526: Syntax error on line " + jeu.lire("fichierHoteGuet('fort', '/etc/apache2/conf-available/security.conf').getText().split('\\n').length") + " of /etc/apache2/conf-enabled/security.conf:", "configtest : le fichier et la ligne");
 contient(s, "Invalid command 'ServerTokenz', perhaps misspelled or defined by a module not included in the server configuration", "configtest : le message d'Apache");
 contient(s, "Action 'configtest' failed.", "configtest : Action failed");
 egal(code("apachectl configtest"), 1, "configtest en échec : code 1");
@@ -224,14 +224,14 @@ s = t("systemctl status apache2");
 contient(s, "× apache2.service - The Apache HTTP Server", "status : failed");
 contient(s, "Active: failed (Result: exit-code)", "status : Result exit-code");
 contient(s, "ServerTokenz", "status : l'erreur");
-jeu.lire("(function(){ var it = fichierHote('fort', '/etc/apache2/conf-available/security.conf'); it.setText(it.getText().replace('\\nServerTokenz Prod', '')); })()");
+jeu.lire("(function(){ var it = fichierHoteGuet('fort', '/etc/apache2/conf-available/security.conf'); it.setText(it.getText().replace('\\nServerTokenz Prod', '')); })()");
 egal(t("sudo systemctl start apache2"), "", "la faute corrigée, Apache redémarre");
 contient(t("curl -I http://fort/"), "HTTP/1.1 200 OK", "le site répond de nouveau");
 contient(t("sudo systemctl reload apache2 2>&1; echo $?"), "0", "reload possible de nouveau");
 
 /* D'autres fautes classiques */
-function casser(chemin, ajout){ jeu.lire("(function(){ var it = fichierHote('fort', " + JSON.stringify(chemin) + "); it.setText(it.getText() + " + JSON.stringify(ajout) + "); })()"); }
-function reparer(chemin, ajout){ jeu.lire("(function(){ var it = fichierHote('fort', " + JSON.stringify(chemin) + "); it.setText(it.getText().replace(" + JSON.stringify(ajout) + ", '')); })()"); }
+function casser(chemin, ajout){ jeu.lire("(function(){ var it = fichierHoteGuet('fort', " + JSON.stringify(chemin) + "); it.setText(it.getText() + " + JSON.stringify(ajout) + "); })()"); }
+function reparer(chemin, ajout){ jeu.lire("(function(){ var it = fichierHoteGuet('fort', " + JSON.stringify(chemin) + "); it.setText(it.getText().replace(" + JSON.stringify(ajout) + ", '')); })()"); }
 [["\n<Directory /var/www/html>\n\tOptions -Indexes\n", "<Directory> was not closed."],
 	["\n</Directory>", "</Directory> without matching <Directory> section"],
 	["\nOptions Indexes -FollowSymLinks", "Either all Options must start with + or -, or no Option may."],
@@ -314,7 +314,7 @@ contient(s, "Verify return code: 10 (certificate has expired)", "s_client : cert
 contient(s, "verify error:num=10:certificate has expired", "s_client : l'erreur de vérification");
 verifier(ev("EV.s_client.negocie") === "TLSv1.1" && ev("EV.s_client.verification") === 10, "événement s_client");
 casser("/etc/apache2/sites-available/default-ssl.conf", "");
-jeu.lire("(function(){ var it = fichierHote('fort', '/etc/apache2/sites-available/default-ssl.conf'); it.setText(it.getText().replace('/etc/ssl/certs/fort.pem', '/etc/ssl/certs/fort-neuf.pem').replace('\\tSSLEngine on', '\\tSSLEngine on\\n\\tSSLProtocol -all +TLSv1.2 +TLSv1.3')); })()");
+jeu.lire("(function(){ var it = fichierHoteGuet('fort', '/etc/apache2/sites-available/default-ssl.conf'); it.setText(it.getText().replace('/etc/ssl/certs/fort.pem', '/etc/ssl/certs/fort-neuf.pem').replace('\\tSSLEngine on', '\\tSSLEngine on\\n\\tSSLProtocol -all +TLSv1.2 +TLSv1.3')); })()");
 contient(t("apachectl configtest"), "Syntax OK", "nouveau certificat et SSLProtocol");
 t("sudo systemctl reload apache2");
 s = t("openssl s_client -connect fort:443 -tls1_1");
@@ -337,7 +337,7 @@ contient(t("curl -s https://fort.cybersup.lan/ 2>&1; curl https://10.0.92.66/"),
 
 /* Redirection vers HTTPS */
 casser("/etc/apache2/sites-available/000-default.conf", "");
-jeu.lire("(function(){ var it = fichierHote('fort', '/etc/apache2/sites-available/000-default.conf'); it.setText(it.getText().replace('DocumentRoot /var/www/html', 'DocumentRoot /var/www/html\\n\\tRedirect permanent / https://fort/')); })()");
+jeu.lire("(function(){ var it = fichierHoteGuet('fort', '/etc/apache2/sites-available/000-default.conf'); it.setText(it.getText().replace('DocumentRoot /var/www/html', 'DocumentRoot /var/www/html\\n\\tRedirect permanent / https://fort/')); })()");
 t("sudo systemctl reload apache2");
 s = t("curl -I http://fort/admin");
 contient(s, "HTTP/1.1 301 Moved Permanently", "Redirect permanent");
@@ -425,14 +425,14 @@ contient(t("sudo mount -o remount /tmp"), "mount: /tmp: mount point not mounted 
 s = t("findmnt");
 correspond(s, /^TARGET\s+SOURCE\s+FSTYPE\s+OPTIONS\n\/\s+\/dev\/sda1\s+ext4\s+rw,relatime,errors=remount-ro/, "findmnt : l'arbre");
 contient(s, "├─/sys", "findmnt : les branches");
-jeu.lire("(function(){ var it = fichierHote('fort', '/etc/fstab'); it.setText(it.getText() + '\\ntmpfs /tmp tmpfs defaults,size=512M 0 0'); })()");
+jeu.lire("(function(){ var it = fichierHoteGuet('fort', '/etc/fstab'); it.setText(it.getText() + '\\ntmpfs /tmp tmpfs defaults,size=512M 0 0'); })()");
 contient(t("mount /tmp"), "must be superuser to use mount", "mount sans sudo");
 egal(t("sudo mount /tmp"), "", "sudo mount /tmp depuis fstab");
 egal(t("findmnt -n -o OPTIONS /tmp"), "rw,relatime,size=512M,inode64", "findmnt -n -o OPTIONS");
 contient(t("sudo mount /tmp"), "already mounted on /tmp", "mount deux fois");
 t("cd /tmp");
 egal(t("./lancer.sh"), "lance", "/tmp exécutable pour l'instant");
-jeu.lire("(function(){ var it = fichierHote('fort', '/etc/fstab'); it.setText(it.getText().replace('defaults,size=512M', 'defaults,nodev,nosuid,noexec,size=512M')); })()");
+jeu.lire("(function(){ var it = fichierHoteGuet('fort', '/etc/fstab'); it.setText(it.getText().replace('defaults,size=512M', 'defaults,nodev,nosuid,noexec,size=512M')); })()");
 egal(t("./lancer.sh"), "lance", "fstab modifié mais pas remonté : ça s'exécute encore");
 egal(t("sudo mount -o remount /tmp"), "", "sudo mount -o remount /tmp");
 verifier(ev("EV.mount.action") === "remount" && ev("EV.mount.options.indexOf('noexec')") > -1, "événement mount remount");
@@ -548,21 +548,21 @@ contient(cfg, "set timeout=5", "grub.cfg : GRUB_TIMEOUT");
 absent(cfg, "exec tail", "40_custom : les deux premières lignes sautent");
 correspond(t("ls -l /boot/grub/grub.cfg"), /^-r--r--r--/, "grub.cfg en 444 sans mot de passe");
 verifier(ev("EV.grubUpdate.ok") === true && ev("EV.grubUpdate.protege") === false, "événement grubUpdate sans protection");
-jeu.lire("(function(){ var it = fichierHote('fort', '/etc/grub.d/40_custom'); it.setText(it.getText() + '\\nset superusers=\"gardien\"\\npassword_pbkdf2 gardien " + hash + "'); })()");
+jeu.lire("(function(){ var it = fichierHoteGuet('fort', '/etc/grub.d/40_custom'); it.setText(it.getText() + '\\nset superusers=\"gardien\"\\npassword_pbkdf2 gardien " + hash + "'); })()");
 s = t("sudo update-grub");
 contient(s, "protégé", "update-grub : le menu est protégé");
 verifier(ev("EV.grubUpdate.protege") === true && ev("EV.grubUpdate.superusers") === "gardien", "événement grubUpdate protégé");
 contient(t("sudo cat /boot/grub/grub.cfg"), "password_pbkdf2 gardien grub.pbkdf2.sha512", "grub.cfg contient le hash");
 correspond(t("ls -l /boot/grub/grub.cfg"), /^-r--------/, "grub.cfg en 400 avec un mot de passe");
-jeu.lire("(function(){ var it = fichierHote('fort', '/etc/grub.d/40_custom'); it.setText(it.getText() + '\\nmenuentry \"Secours {'); })()");
+jeu.lire("(function(){ var it = fichierHoteGuet('fort', '/etc/grub.d/40_custom'); it.setText(it.getText() + '\\nmenuentry \"Secours {'); })()");
 s = t("sudo update-grub 2>&1");
 contient(s, "Syntax errors are detected in generated GRUB config file.", "update-grub : faute de syntaxe");
 contient(t("sudo cat /boot/grub/grub.cfg"), "password_pbkdf2", "l'ancien grub.cfg reste");
-jeu.lire("(function(){ var it = fichierHote('fort', '/etc/grub.d/40_custom'); it.setText(it.getText().replace('\\nmenuentry \"Secours {', '')); it.mode = 'rw-r--r--'; })()");
+jeu.lire("(function(){ var it = fichierHoteGuet('fort', '/etc/grub.d/40_custom'); it.setText(it.getText().replace('\\nmenuentry \"Secours {', '')); it.mode = 'rw-r--r--'; })()");
 s = t("sudo update-grub");
 contient(s, "Ignorés car non exécutables (chmod +x) : 40_custom", "un script non exécutable est ignoré");
 absent(t("sudo cat /boot/grub/grub.cfg"), "password_pbkdf2", "sans le droit x, plus de mot de passe");
-jeu.lire("fichierHote('fort', '/etc/grub.d/40_custom').mode = 'rwxr-xr-x'");
+jeu.lire("fichierHoteGuet('fort', '/etc/grub.d/40_custom').mode = 'rwxr-xr-x'");
 t("sudo update-grub");
 contient(t("grub-mkconfig 2>/dev/null | grep superusers"), "set superusers=\"gardien\"", "grub-mkconfig sans -o écrit sur la sortie");
 s = t("sudo cryptsetup status sda3_crypt");
@@ -655,7 +655,7 @@ verifier(ev("EV.aureport.rapport") === "-f", "événement aureport");
 jeu.lire("ajouterEvenementAudit('fort', { type: 'USER_AUTH', acct: 'invite', adresse: '10.0.66.6', succes: false, comm: 'sshd' })");
 s = t("sudo aureport -au -i");
 contient(s, "invite 10.0.66.6 ssh /usr/sbin/sshd no", "un événement du monde dans aureport -au");
-jeu.lire("auditSous('fort', { comm: 'useradd', auid: 4294967295, uid: 0 }, function(){ var it = fichierHote('fort', '/etc/passwd'); it.setText(it.getText() + '\\nnuee:x:0:0::/root:/bin/bash'); })");
+jeu.lire("auditSous('fort', { comm: 'useradd', auid: 4294967295, uid: 0 }, function(){ var it = fichierHoteGuet('fort', '/etc/passwd'); it.setText(it.getText() + '\\nnuee:x:0:0::/root:/bin/bash'); })");
 s = t("sudo ausearch -k comptes -i --format text");
 contient(s, "unset, acting as root, successfully opened-file /etc/passwd using /usr/sbin/useradd", "auditSous : la trace du monde, avec son programme");
 verifier(jeu.lire("ajouterEvenementAudit('fort', { chemin: '/etc/hosts', comm: 'vim' })") === null, "un fichier non surveillé ne laisse pas de trace");
@@ -729,7 +729,7 @@ contient(s, "invalid port \"port\"", "rsyslog : port invalide");
 contient(s, "syntax error", "rsyslog : ligne sans action");
 absent(s, "Bye.", "rsyslog en faute : pas de Bye");
 egal(code("rsyslogd -N1"), 1, "rsyslogd -N1 en faute : code 1");
-jeu.lire("supprimerFichierHote('fort', '/etc/rsyslog.d/91-faute.conf')");
+jeu.lire("supprimerFichierHoteGuet('fort', '/etc/rsyslog.d/91-faute.conf')");
 contient(t("rsyslogd"), "already exist", "rsyslogd tout seul : déjà lancé");
 s = t("logrotate -d /etc/logrotate.d/fort");
 contient(s, "warning: logrotate in debug mode does nothing except printing debug messages!", "logrotate -d : l'avertissement");
@@ -750,25 +750,25 @@ egal(t("ls /var/log/fort | cat").split("\n").sort().join(" "), "acces.log acces.
 egal(t("sudo cat /var/log/fort/acces.log.1 | head -1"), "GET / 200", "acces.log.1 a l'ancien contenu");
 egal(t("sudo cat /var/log/fort/acces.log"), "", "acces.log est recréé, vide");
 correspond(t("ls -l /var/log/fort/acces.log"), /^-rw-r-----/, "create 0640");
-jeu.lire("fichierHote('fort', '/var/log/fort/acces.log').setText('GET /nouveau 200')");
+jeu.lire("fichierHoteGuet('fort', '/var/log/fort/acces.log').setText('GET /nouveau 200')");
 t("sudo logrotate -f /etc/logrotate.d/fort");
 egal(t("ls /var/log/fort | cat").split("\n").sort().join(" "), "acces.log acces.log.1 acces.log.2.gz vide.log", "delaycompress : l'ancien .1 devient .2.gz");
 egal(t("sudo zcat /var/log/fort/acces.log.2.gz | head -1"), "GET / 200", "le .gz se relit avec zcat");
 verifier(ev("EV.logrotate.fichiers.length") === 1, "événement logrotate force");
 contient(t("sudo cat /var/lib/logrotate/status"), "\"/var/log/fort/acces.log\"", "l'état de logrotate est écrit");
-jeu.lire("fichierHote('fort', '/etc/logrotate.d/fort').mode = 'rw-rw-rw-'");
+jeu.lire("fichierHoteGuet('fort', '/etc/logrotate.d/fort').mode = 'rw-rw-rw-'");
 contient(t("logrotate -d /etc/logrotate.d/fort 2>&1"), "error: Ignoring /etc/logrotate.d/fort because of bad file mode - must be 0644 or 0444.", "une configuration modifiable par tous est ignorée");
-jeu.lire("fichierHote('fort', '/etc/logrotate.d/fort').mode = 'rw-r--r--'");
+jeu.lire("fichierHoteGuet('fort', '/etc/logrotate.d/fort').mode = 'rw-r--r--'");
 jeu.lire("poserFichierHote('fort', '/etc/logrotate.d/faute', '/var/log/absent.log {\\n\\tdaily\\n\\trotatte 3\\n}\\n')");
 s = t("logrotate -d /etc/logrotate.d/faute 2>&1");
 contient(s, "error: /etc/logrotate.d/faute:3 unknown option 'rotatte' -- ignoring line", "logrotate : option inconnue");
 contient(s, "error: stat of /var/log/absent.log failed: No such file or directory", "logrotate : journal absent sans missingok");
-jeu.lire("supprimerFichierHote('fort', '/etc/logrotate.d/faute')");
+jeu.lire("supprimerFichierHoteGuet('fort', '/etc/logrotate.d/faute')");
 s = t("journalctl --disk-usage");
 contient(s, "Archived and active journals take 8.0M in the file system.", "journalctl --disk-usage");
 contient(s, "volatil", "--disk-usage : l'astuce sur le stockage volatil");
 contient(t("sudo journalctl --header"), "File path: /run/log/journal/", "--header : en mémoire");
-jeu.lire("(function(){ var it = fichierHote('fort', '/etc/systemd/journald.conf'); it.setText(it.getText().replace('#Storage=auto', 'Storage=persistent')); })()");
+jeu.lire("(function(){ var it = fichierHoteGuet('fort', '/etc/systemd/journald.conf'); it.setText(it.getText().replace('#Storage=auto', 'Storage=persistent')); })()");
 contient(t("sudo journalctl --header"), "/run/log/journal/", "journald.conf modifié, pas redémarré");
 contient(t("sudo systemctl reload systemd-journald"), "Job type reload is not applicable", "journald ne se recharge pas");
 egal(t("sudo systemctl restart systemd-journald"), "", "restart systemd-journald");
@@ -868,7 +868,7 @@ jeu.lire("arreterService('fort', 'fail2ban')");
 contient(t("sudo fail2ban-client status"), "Is fail2ban running?", "fail2ban arrêté");
 jeu.lire("demarrerService('fort', 'fail2ban')");
 contient(t("rkhunter --check --sk"), "You must be the root user to run this program.", "rkhunter sans sudo");
-jeu.lire("(function(){ var it = fichierHote('fort', '/etc/shadow'); it.setText(it.getText().replace('invite:!:', 'invite::')); })()");
+jeu.lire("(function(){ var it = fichierHoteGuet('fort', '/etc/shadow'); it.setText(it.getText().replace('invite:!:', 'invite::')); })()");
 s = t("sudo rkhunter --check --sk");
 contient(s, "[ Rootkit Hunter version 1.4.6 ]", "rkhunter");
 correspond(s, /\/usr\/bin\/ping\s+\[ OK \]/, "rkhunter : un binaire d'origine est OK");
@@ -879,7 +879,7 @@ contient(s, "One or more warnings have been found while checking the system.", "
 verifier(ev("EV.rkhunter.alertes") >= 3, "événement rkhunter");
 contient(t("sudo cat /var/log/rkhunter.log"), "Warning:", "rkhunter écrit son journal");
 t("sudo rkhunter --propupd");
-jeu.lire("fichierHote('fort', '/usr/bin/ping').setText('ELF piégé')");
+jeu.lire("fichierHoteGuet('fort', '/usr/bin/ping').setText('ELF piégé')");
 contient(t("sudo rkhunter --check --sk --rwo"), "File /usr/bin/ping has changed", "rkhunter --propupd puis un binaire modifié");
 
 /* ================================================================== */
@@ -913,8 +913,9 @@ contient(t("lynis"), "audit system", "lynis sans commande : l'usage");
 s = t("lynis audit system");
 contient(s, "Non-privileged scan mode", "lynis sans sudo : prévenu");
 // Durcir : le score monte
-jeu.lire("(function(){ var it = fichierHote('fort', '/etc/ssh/sshd_config'); it.setText(it.getText().replace('PermitRootLogin yes', 'PermitRootLogin no')); })()");
-jeu.lire("(function(){ var p = fichierHote('fort', '/etc/passwd'); p.setText(p.getText().split('\\n').filter(function(l){ return !/^(toor|nuee|pirate):/.test(l); }).join('\\n')); var s = fichierHote('fort', '/etc/shadow'); s.setText(s.getText().replace('invite::', 'invite:!:').split('\\n').filter(function(l){ return !/^(toor|pirate):/.test(l); }).join('\\n')); s.mode = 'rw-r-----'; })()");
+jeu.lire("(function(){ var it = fichierHoteGuet('fort', '/etc/ssh/sshd_config'); it.setText(it.getText().replace('PermitRootLogin yes', 'PermitRootLogin no')); })()");
+jeu.lire("(function(){ var p = fichierHoteGuet('fort', '/etc/passwd'); p.setText(p.getText().split('\\n').filter(function(l){ return !/^(toor|nuee|pirate):/.test(l); }).join('\\n')); var s = fichierHoteGuet('fort', '/etc/shadow'); s.setText(s.getText().replace('invite::', 'invite:!:').split('\\n').filter(function(l){ return !/^(toor|pirate):/.test(l); }).join('\\n')); s.mode = 'rw-r-----'; })()");
+jeu.lire("typeof appliquerConfigSsh === 'function' && appliquerConfigSsh('fort')");  // sshd rechargé : il applique ce qui est sur le disque
 t("sudo lynis audit system");
 var score2 = ev("EV.lynis.score");
 verifier(score2 > score1, "le score monte après durcissement (" + score1 + " -> " + score2 + ")");
@@ -944,7 +945,7 @@ jeu.lire("SOURCES_GUET.paquetsEnRetard = function(h){ return h === 'fort' ? 3 : 
 verifier(jeu.lire("scoreLynis('fort').controles.filter(function(c){ return c.id === 'PKGS-7392'; })[0].ok") === false, "une source branchée : paquets en retard");
 jeu.lire("SOURCES_GUET.paquetsEnRetard = null");
 // Un contrôle déclaré par le monde
-jeu.lire("declarerControleLynis({ id: 'BAST-0001', section: 'Boot and services', libelle: 'Checking the drawbridge', poids: 5, gravite: 'warning', conseil: 'Raise the drawbridge', verifier: function(h){ return !!fichierHote(h, '/etc/pont-leve'); } })");
+jeu.lire("declarerControleLynis({ id: 'BAST-0001', section: 'Boot and services', libelle: 'Checking the drawbridge', poids: 5, gravite: 'warning', conseil: 'Raise the drawbridge', verifier: function(h){ return !!fichierHoteGuet(h, '/etc/pont-leve'); } })");
 s = t("sudo lynis audit system");
 correspond(s, /  - Checking the drawbridge\s+\[ WARNING \]/, "declarerControleLynis : le contrôle apparaît");
 contient(s, "! Raise the drawbridge [BAST-0001]", "declarerControleLynis : son conseil");

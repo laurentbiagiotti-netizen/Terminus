@@ -69,7 +69,7 @@
  *   Fichiers d'une machine (chemins absolus de la machine, sans être dessus) :
  *     poserFichierHote(hote, "/etc/x.conf", texte, { mode, owner, lien, binaire, age })   crée les dossiers ; lien relatif accepté
  *     creerDossierHote(hote, "/var/log/x", { mode, owner })   lireFichierHote(hote, chemin) : texte ou null
- *     noeudHote(hote, chemin) : Room, Item ou null     fichiersDuDossier(hote, dossier, "*.conf")     supprimerFichierHote(hote, chemin)
+ *     noeudHoteGuet(hote, chemin) : Room, Item ou null     fichiersDuDossierGuet(hote, dossier, "*.conf")     supprimerFichierHoteGuet(hote, chemin)
  *   installerApacheDebian(hote, { serverName, tokens: "OS", signature: "On", trace: "Off", ssl: false, modules: [], cert, cle, index })
  *     pose un Apache Debian complet (apache2.conf, ports.conf, mods/conf/sites available et enabled, page d'accueil)
  *   configApache(hote) : la configuration sur le disque, parsée     apacheActive(hote) : celle qui tourne (dernier chargement)
@@ -135,7 +135,7 @@ function racineDeGuet(h){
 function hoteIci(){ return Shell.hote(); }
 
 /* Un nœud d'une machine, par son chemin absolu (/etc/apache2/apache2.conf). Les raccourcis sont suivis, sauf le dernier si brut. */
-function noeudHote(h, chemin, brut){
+function noeudHoteGuet(h, chemin, brut){
 	var racine = racineDeGuet(h);
 	if (!racine) return null;
 	var morceaux = String(chemin).split("/").filter(function(m){ return m !== "" && m !== "."; });
@@ -164,29 +164,29 @@ function suivreLienHote(h, item, lieu, garde){
 	if (cible.charAt(0) === "~"){
 		try { n = Shell.chercherDepuis(Home, cible, { sudo: true }, "").node; } catch (e){ n = null; }
 	} else if (cible.charAt(0) === "/"){
-		n = noeudHote(h, cible, true);
+		n = noeudHoteGuet(h, cible, true);
 	} else {
-		n = noeudHote(h, cheminDeLieu(lieu) + "/" + cible, true);
+		n = noeudHoteGuet(h, cheminDeLieu(lieu) + "/" + cible, true);
 	}
 	if (n instanceof Item && n.lien) return suivreLienHote(h, n, null, garde);
 	return n;
 }
 function cheminDeLieu(lieu){ return typeof Shell.cheminAffiche === "function" ? Shell.cheminAffiche(lieu) : lieu.path(); }
 function lireFichierHote(h, chemin){
-	var n = noeudHote(h, chemin);
+	var n = noeudHoteGuet(h, chemin);
 	return n instanceof Item ? n.getText() : null;
 }
-function fichierHote(h, chemin){
-	var n = noeudHote(h, chemin);
+function fichierHoteGuet(h, chemin){
+	var n = noeudHoteGuet(h, chemin);
 	return n instanceof Item ? n : null;
 }
-function dossierHote(h, chemin){
-	var n = noeudHote(h, chemin);
+function dossierHoteGuet(h, chemin){
+	var n = noeudHoteGuet(h, chemin);
 	return n instanceof Room ? n : null;
 }
 /* Les objets d'un dossier, triés par nom (comme un glob). */
-function fichiersDuDossier(h, chemin, motif){
-	var d = dossierHote(h, chemin);
+function fichiersDuDossierGuet(h, chemin, motif){
+	var d = dossierHoteGuet(h, chemin);
 	if (!d) return [];
 	var re = motif ? motifVersRegExp(motif) : null;
 	return d.items.map(function(it){ return it.itemname; }).filter(function(n){ return !re || re.test(n); }).sort()
@@ -240,9 +240,9 @@ function poserFichierHote(h, chemin, texte, options){
 	if (options.age !== undefined) item.age = options.age;
 	return item;
 }
-function supprimerFichierHote(h, chemin){
+function supprimerFichierHoteGuet(h, chemin){
 	var coupe = String(chemin).lastIndexOf("/");
-	var d = dossierHote(h, chemin.substring(0, coupe) || "/");
+	var d = dossierHoteGuet(h, chemin.substring(0, coupe) || "/");
 	if (!d) return false;
 	return !!d.removeItem(chemin.substring(coupe + 1));
 }
@@ -287,7 +287,7 @@ function dateUtcOpenssl(d){ return MOIS_ANGLAIS[d.getUTCMonth()] + " " + complet
 function dateHttp(d){ return JOURS_EN[d.getUTCDay()] + ", " + deux(d.getUTCDate()) + " " + MOIS_ANGLAIS[d.getUTCMonth()] + " " + d.getUTCFullYear() + " " + deux(d.getUTCHours()) + ":" + deux(d.getUTCMinutes()) + ":" + deux(d.getUTCSeconds()) + " GMT"; }
 function dateAudit(d){ return deux(d.getMonth() + 1) + "/" + deux(d.getDate()) + "/" + d.getFullYear() + " " + deux(d.getHours()) + ":" + deux(d.getMinutes()) + ":" + deux(d.getSeconds()); }
 function dateCtime(d){ return JOURS_EN[d.getDay()] + " " + MOIS_ANGLAIS[d.getMonth()] + " " + completerGauche(d.getDate(), 2) + " " + deux(d.getHours()) + ":" + deux(d.getMinutes()) + ":" + deux(d.getSeconds()) + " " + d.getFullYear(); }
-function dateIso(d){ return d.getFullYear() + "-" + deux(d.getMonth() + 1) + "-" + deux(d.getDate()) + " " + deux(d.getHours()) + ":" + deux(d.getMinutes()) + ":" + deux(d.getSeconds()); }
+function dateIsoGuet(d){ return d.getFullYear() + "-" + deux(d.getMonth() + 1) + "-" + deux(d.getDate()) + " " + deux(d.getHours()) + ":" + deux(d.getMinutes()) + ":" + deux(d.getSeconds()); }
 function dateRsyslog(d){
 	var dec = -d.getTimezoneOffset(), signe = dec >= 0 ? "+" : "-";
 	dec = Math.abs(dec);
@@ -461,7 +461,7 @@ function remplacerEnvApache(texte, avert){
 	});
 }
 function nomModuleApache(m){ return String(m).replace(/^mod_/, "").replace(/\.c$/, "").replace(/_module$/, ""); }
-function cheminNormal(p){
+function cheminNormalGuet(p){
 	var morceaux = [];
 	String(p).split("/").forEach(function(m){ if (m === "" || m === ".") return; if (m === "..") morceaux.pop(); else morceaux.push(m); });
 	return "/" + morceaux.join("/");
@@ -476,7 +476,7 @@ function cheminNormal(p){
  *              redirects, rewrites, directories, trace, signature }] }
  */
 function configApache(h){
-	if (!fichierHote(h, APACHE_RACINE + "/apache2.conf")) return null;
+	if (!fichierHoteGuet(h, APACHE_RACINE + "/apache2.conf")) return null;
 	var c = { erreur: null, avertissements: [], modules: MODULES_STATIQUES.slice(), listen: [], vhosts: [], varsInconnues: [],
 		serveur: { tokens: null, signature: null, trace: null, serverName: null, serverAdmin: null, documentRoot: null, headers: [],
 			directories: [], redirects: [], rewrites: [], rewriteEngine: false, sslProtocol: null, sslEngine: false, directoryIndex: null,
@@ -501,7 +501,7 @@ function texteErreurApache(e){
 
 function lireFichierApache(h, chemin, c, pile, obligatoire){
 	if (++c.lus > 200) throw new ErreurApache("Exceeded the maximum include directory nesting level of 128.", chemin, 1);
-	var item = fichierHote(h, chemin);
+	var item = fichierHoteGuet(h, chemin);
 	if (!item) throw new ErreurApache("Could not open configuration file " + chemin + ": No such file or directory", chemin, 1);
 	var lignes = String(item.getText()).split("\n"), profondeurDepart = pile.length;
 	for (var i = 0; i < lignes.length; i++){
@@ -552,7 +552,7 @@ function lireFichierApache(h, chemin, c, pile, obligatoire){
 				entree.vhost = vh;
 			} else if (sectionL === "directory" || sectionL === "directorymatch"){
 				var contexte = vhostCourant(pile) || c.serveur;
-				var dir = { chemin: sectionL === "directory" ? cheminNormal(argsS[0].replace(/^"|"$/g, "")) : null, motif: sectionL === "directorymatch" ? argsS[0] : null,
+				var dir = { chemin: sectionL === "directory" ? cheminNormalGuet(argsS[0].replace(/^"|"$/g, "")) : null, motif: sectionL === "directorymatch" ? argsS[0] : null,
 					options: [], require: null, signature: null, headers: [], fichier: chemin, ligne: numero };
 				contexte.directories.push(dir);
 				entree.directory = dir;
@@ -600,11 +600,11 @@ function directiveApache(h, c, pile, nom, nomL, args, chemin, numero){
 			var motif = args[0].charAt(0) === "/" ? args[0] : APACHE_RACINE + "/" + args[0];
 			var coupe = motif.lastIndexOf("/"), dossier = motif.substring(0, coupe), base = motif.substring(coupe + 1);
 			if (/[*?[]/.test(base)){
-				var liste = fichiersDuDossier(h, dossier, base);
+				var liste = fichiersDuDossierGuet(h, dossier, base);
 				if (!liste.length && nomL === "include") erreur("No matches for the wildcard '" + base + "' in '" + dossier + "', failing");
 				liste.forEach(function(f){ lireFichierApache(h, f.chemin, c, pile); });
 			} else {
-				if (!fichierHote(h, motif)){
+				if (!fichierHoteGuet(h, motif)){
 					if (nomL === "includeoptional") return;
 					erreur("Could not open configuration file " + motif + ": No such file or directory");
 				}
@@ -659,9 +659,9 @@ function directiveApache(h, c, pile, nom, nomL, args, chemin, numero){
 		case "serveradmin": cible.serverAdmin = args[0] || null; return;
 		case "documentroot": {
 			if (!args.length) erreur("DocumentRoot takes one argument, Root directory of the document tree");
-			var racine = cheminNormal(args[0]);
+			var racine = cheminNormalGuet(args[0]);
 			cible.documentRoot = racine;
-			if (!dossierHote(h, racine)) c.avertissements.push("AH00112: Warning: DocumentRoot [" + racine + "] does not exist");
+			if (!dossierHoteGuet(h, racine)) c.avertissements.push("AH00112: Warning: DocumentRoot [" + racine + "] does not exist");
 			return;
 		}
 		case "options": {
@@ -744,7 +744,7 @@ function directiveApache(h, c, pile, nom, nomL, args, chemin, numero){
 		case "sslcertificatefile":
 		case "sslcertificatekeyfile": {
 			var f = args[0] || "";
-			var it = fichierHote(h, f);
+			var it = fichierHoteGuet(h, f);
 			if (!it || String(it.getText()).trim() === "") erreur(nom + ": file '" + f + "' does not exist or is empty");
 			if (nomL === "sslcertificatefile") cible.cert = f; else cible.cle = f;
 			return;
@@ -806,7 +806,7 @@ function apacheActive(h){
 	if (!machineGardee(h)) return null;
 	return etatHote(h).apache || null;
 }
-function apacheInstalle(h){ return !!fichierHote(h, APACHE_RACINE + "/apache2.conf"); }
+function apacheInstalle(h){ return !!fichierHoteGuet(h, APACHE_RACINE + "/apache2.conf"); }
 function serviceApache(h){ return (HOTES[h] && HOTES[h].services && (HOTES[h].services.apache2 || HOTES[h].services.httpd)) || null; }
 
 /* La chaîne « Server: » selon ServerTokens. */
@@ -909,8 +909,8 @@ function repondreApache(h, c, req){
 	var cheminSeul = chemin.replace(/\?.*$/, "").replace(/#.*$/, "") || "/";
 	try { cheminSeul = decodeURIComponent(cheminSeul); } catch (e){}
 	var docRoot = (vh && vh.documentRoot) || c.serveur.documentRoot || "/var/www/html";
-	var fsChemin = cheminNormal(docRoot + "/" + cheminSeul);
-	var echappe = fsChemin.indexOf(cheminNormal(docRoot)) !== 0;
+	var fsChemin = cheminNormalGuet(docRoot + "/" + cheminSeul);
+	var echappe = fsChemin.indexOf(cheminNormalGuet(docRoot)) !== 0;
 	function erreur(code, texte, extra){
 		rep.code = code;
 		rep.corps = pageErreurApache(code, texte, adresseSignature(c, vh, fsChemin, nom, port));
@@ -958,7 +958,7 @@ function repondreApache(h, c, req){
 		return rep;
 	}
 	if (echappe) return erreur(400, "<p>Your browser sent a request that this server could not understand.<br />\n</p>");
-	var noeud = noeudHote(h, fsChemin);
+	var noeud = noeudHoteGuet(h, fsChemin);
 	if (noeud === null) return erreur(404, "<p>The requested URL was not found on this server.</p>");
 	var dossierFs = noeud instanceof Room ? fsChemin : fsChemin.replace(/\/[^\/]*$/, "") || "/";
 	if (requirePour(c, vh, dossierFs) !== "granted") return erreur(403, "<p>You don't have permission to access this resource.</p>");
@@ -1232,12 +1232,12 @@ function installerApacheDebian(h, o){
 		"\t<FilesMatch \"\\.(?:cgi|shtml|phtml|php)$\">\n\t\tSSLOptions +StdEnvVars\n\t</FilesMatch>\n\t<Directory /usr/lib/cgi-bin>\n\t\tSSLOptions +StdEnvVars\n\t</Directory>\n</VirtualHost>\n");
 	poserFichierHote(h, R + "/sites-enabled/000-default.conf", null, { lien: "../sites-available/000-default.conf" });
 	if (o.ssl) poserFichierHote(h, R + "/sites-enabled/default-ssl.conf", null, { lien: "../sites-available/default-ssl.conf" });
-	if (!fichierHote(h, "/etc/ssl/certs/ssl-cert-snakeoil.pem")){
+	if (!fichierHoteGuet(h, "/etc/ssl/certs/ssl-cert-snakeoil.pem")){
 		var nomCert = o.serverName || h;
 		poserFichierHote(h, "/etc/ssl/certs/ssl-cert-snakeoil.pem", fabriquerCertificat({ sujet: "CN = " + nomCert, san: [nomCert], cle: "snakeoil-" + h }));
 		poserFichierHote(h, "/etc/ssl/private/ssl-cert-snakeoil.key", fabriquerCle("snakeoil-" + h), { mode: "rw-r-----" });
 	}
-	if (!fichierHote(h, "/var/www/html/index.html")) poserFichierHote(h, "/var/www/html/index.html", o.index || "<!DOCTYPE html>\n<html><head><title>Apache2 Debian Default Page: It works</title></head>\n<body><h1>It works!</h1></body></html>");
+	if (!fichierHoteGuet(h, "/var/www/html/index.html")) poserFichierHote(h, "/var/www/html/index.html", o.index || "<!DOCTYPE html>\n<html><head><title>Apache2 Debian Default Page: It works</title></head>\n<body><h1>It works!</h1></body></html>");
 	creerDossierHote(h, "/var/log/apache2", { mode: "rwxr-x---" });
 }
 
@@ -1270,7 +1270,7 @@ function ecrireFichier(chemin, texte, io, cmd, options){
 }
 /* Un journal système d'une machine : on y ajoute des lignes (les programmes écrivent leurs journaux eux-mêmes). */
 function ajouterAuFichierHote(h, chemin, lignes, options){
-	var item = fichierHote(h, chemin);
+	var item = fichierHoteGuet(h, chemin);
 	if (!item){
 		if (options && options.siExiste) return null;
 		item = poserFichierHote(h, chemin, "", options || { mode: "rw-r-----", owner: "root" });
@@ -1290,7 +1290,7 @@ Shell.suivre = function(noeud, cmd){
 	while (noeud instanceof Item && noeud.lien && noeud.lien.charAt(0) !== "~" && garde++ < 8){
 		var chemin = noeud.lien.charAt(0) === "/" ? noeud.lien : (noeud.dossierLien || "") + "/" + noeud.lien;
 		var cible = null;
-		try { cible = Shell.chercherDepuis(current_room, cheminNormal(chemin), { sudo: true }, cmd).node; } catch (e){ if (!(e instanceof ShellError)) throw e; }
+		try { cible = Shell.chercherDepuis(current_room, cheminNormalGuet(chemin), { sudo: true }, cmd).node; } catch (e){ if (!(e instanceof ShellError)) throw e; }
 		if (cible === null){
 			throw new ShellError((cmd ? cmd + " : " : "") + noeud.itemname + " : lien brisé (" + noeud.lien + " n'existe plus ou n'est plus accessible)");
 		}
@@ -1320,7 +1320,7 @@ function assurerService(h, nom){
 	if (!machineGardee(h) || !SERVICES_GUET[nom]) return null;
 	HOTES[h].services = HOTES[h].services || {};
 	if (HOTES[h].services[nom]) return HOTES[h].services[nom];
-	if (!noeudHote(h, SERVICES_GUET[nom].fichier)) return null;
+	if (!noeudHoteGuet(h, SERVICES_GUET[nom].fichier)) return null;
 	HOTES[h].services[nom] = service(h, nom, SERVICES_GUET[nom].description, { procNom: SERVICES_GUET[nom].proc || nom });
 	return HOTES[h].services[nom];
 }
@@ -1334,7 +1334,7 @@ function serviceAuto(h, nom){
 }
 function uniteMasquee(h, unite){
 	if (typeof SOURCES_GUET.uniteMasquee === "function"){ try { var r = SOURCES_GUET.uniteMasquee(h, unite); if (r !== null && r !== undefined) return !!r; } catch (e){} }
-	var n = noeudHote(h, "/etc/systemd/system/" + unite, true);
+	var n = noeudHoteGuet(h, "/etc/systemd/system/" + unite, true);
 	if (n instanceof Item && ((n.lien || "") === "/dev/null" || /\/dev\/null$/.test(n.lien || ""))) return true;
 	var cle = h + "/" + unite.replace(/\.service$/, "");
 	var e = state.reseau && state.reseau.services ? state.reseau.services[cle] : null;
@@ -1404,7 +1404,8 @@ Shell.sorts.systemctl = function(args, io){
 	unite = ALIAS_UNITES[unite] || unite;
 	if (!action || !mots[1] || !machineGardee(h) || !CHARGEURS_GUET[unite] || mots.length > 2) return SYSTEMCTL_AVANT_GUET.apply(this, arguments);
 	var s = assurerService(h, unite);
-	if (!s) return SYSTEMCTL_AVANT_GUET.apply(this, arguments);
+	// Sans sa configuration sur le disque, le service n'est pas géré ici (un service déclaré par un autre fichier, par exemple).
+	if (!s || !noeudHoteGuet(h, SERVICES_GUET[unite].fichier)) return SYSTEMCTL_AVANT_GUET.apply(this, arguments);
 	var e = etatHote(h), chargeur = CHARGEURS_GUET[unite];
 	var autres = args.map(function(a){ return a === mots[1] ? unite : a; });
 	if (action === "status" && unite === "apache2" && e.apacheEchec && !s.actif){
@@ -1546,8 +1547,8 @@ function a2commande(cmd, type, activer){
 			else if (a.charAt(0) === "-") throw new ShellError("Unknown option: " + a.replace(/^-+/, "") + "\nusage: " + cmd + " [ -q|--quiet ] [ -f|--force ] [ -m|--maintmode ] [ -p|--purge ] module [ module ... ]");
 			else noms.push(a);
 		});
-		var dispo = fichiersDuDossier(h, APACHE_RACINE + "/" + dossiers[0], type === "module" ? "*.load" : "*.conf").map(function(f){ return f.nom.replace(/\.(load|conf)$/, ""); });
-		var actifs = fichiersDuDossier(h, APACHE_RACINE + "/" + dossiers[1], type === "module" ? "*.load" : "*.conf").map(function(f){ return f.nom.replace(/\.(load|conf)$/, ""); });
+		var dispo = fichiersDuDossierGuet(h, APACHE_RACINE + "/" + dossiers[0], type === "module" ? "*.load" : "*.conf").map(function(f){ return f.nom.replace(/\.(load|conf)$/, ""); });
+		var actifs = fichiersDuDossierGuet(h, APACHE_RACINE + "/" + dossiers[1], type === "module" ? "*.load" : "*.conf").map(function(f){ return f.nom.replace(/\.(load|conf)$/, ""); });
 		if (!noms.length){
 			var choix = activer ? dispo.filter(function(n){ return actifs.indexOf(n) === -1; }) : actifs;
 			throw new ShellError("Your choices are: " + choix.join(" ") + "\nWhich " + (type === "module" ? "module(s)" : type + "(s)") + " do you want to " + (activer ? "enable" : "disable") + " (wildcards ok)?" +
@@ -1597,7 +1598,7 @@ function a2commande(cmd, type, activer){
 			if (actifs.indexOf(n) > -1){ if (!quiet) lignes.push(Nom + " " + n + " already enabled"); return; }
 			var ext = type === "module" ? ".load" : ".conf";
 			poserFichierHote(h, chemin(dossiers[1], n, ext), null, { lien: "../" + dossiers[0] + "/" + n + ext });
-			if (type === "module" && fichierHote(h, chemin(dossiers[0], n, ".conf"))) poserFichierHote(h, chemin(dossiers[1], n, ".conf"), null, { lien: "../" + dossiers[0] + "/" + n + ".conf" });
+			if (type === "module" && fichierHoteGuet(h, chemin(dossiers[0], n, ".conf"))) poserFichierHote(h, chemin(dossiers[1], n, ".conf"), null, { lien: "../" + dossiers[0] + "/" + n + ".conf" });
 			actifs.push(n);
 			changes.push(n);
 			lignes.push("Enabling " + type + " " + n + ".");
@@ -1606,7 +1607,7 @@ function a2commande(cmd, type, activer){
 		function desactiverElement(n){
 			if (dispo.indexOf(n) === -1 && actifs.indexOf(n) === -1){ erreurs.push("ERROR: " + Nom + " " + n + " does not exist!"); return; }
 			if (actifs.indexOf(n) === -1){ if (!quiet) lignes.push(Nom + " " + n + " already disabled"); return; }
-			[".load", ".conf"].forEach(function(ext){ supprimerFichierHote(h, chemin(dossiers[1], n, ext)); });
+			[".load", ".conf"].forEach(function(ext){ supprimerFichierHoteGuet(h, chemin(dossiers[1], n, ext)); });
 			actifs = actifs.filter(function(x){ return x !== n; });
 			changes.push(n);
 			lignes.push(Nom + " " + n + " disabled.");
@@ -2258,7 +2259,7 @@ Shell.sorts.mount = function(args, io){
 		f.entrees.forEach(function(en){
 			if (en.type === "swap" || en.cible === "none" || /(^|,)noauto(,|$)/.test(en.options)) return;
 			if (e.montages.some(function(m){ return m.cible === en.cible; })) return;
-			if (!dossierHote(h, en.cible)){ io.err("mount: " + en.cible + ": mount point does not exist."); io.code = 32; return; }
+			if (!dossierHoteGuet(h, en.cible)){ io.err("mount: " + en.cible + ": mount point does not exist."); io.code = 32; return; }
 			e.montages.push({ source: sourceAffichee(en.source, -1), cible: en.cible, type: en.type, options: optionsNoyau(en.options.split(","), en.type) });
 		});
 		GameEvents.fire({ type: "mount", hote: h, action: "all" });
@@ -2281,14 +2282,14 @@ Shell.sorts.mount = function(args, io){
 		var ligne = f.entrees.filter(function(x){ return x.cible === cible || x.source === cible; })[0];
 		if (!ligne) throw new ShellError("mount: " + cible + ": can't find in /etc/fstab.", 1);
 		if (deja) throw new ShellError("mount: " + ligne.cible + ": " + ligne.source + " already mounted on " + ligne.cible + ".", 32);
-		if (!dossierHote(h, ligne.cible)) throw new ShellError("mount: " + ligne.cible + ": mount point does not exist.", 32);
+		if (!dossierHoteGuet(h, ligne.cible)) throw new ShellError("mount: " + ligne.cible + ": mount point does not exist.", 32);
 		e.montages.push({ source: sourceAffichee(ligne.source, -1), cible: ligne.cible, type: ligne.type, options: optionsNoyau(ligne.options.split(",").concat(demandees), ligne.type) });
 		GameEvents.fire({ type: "mount", hote: h, action: "mount", cible: ligne.cible, options: demandees });
 		return "";
 	}
 	if (mots.length === 2){
 		var dest = mots[1].replace(/\/$/, "") || "/";
-		if (!dossierHote(h, dest)) throw new ShellError("mount: " + dest + ": mount point does not exist.", 32);
+		if (!dossierHoteGuet(h, dest)) throw new ShellError("mount: " + dest + ": mount point does not exist.", 32);
 		if (e.montages.some(function(x){ return x.cible === dest; })) throw new ShellError("mount: " + dest + ": " + mots[0] + " already mounted on " + dest + ".", 32);
 		var t = type || (mots[0] === "tmpfs" ? "tmpfs" : null);
 		if (!t) throw new ShellError("mount: " + dest + ": special device " + mots[0] + " does not exist.", 32);
@@ -2381,10 +2382,10 @@ var DOSSIERS_SYSCTL = ["/etc/sysctl.d", "/run/sysctl.d", "/usr/local/lib/sysctl.
 function fichiersSysctlSysteme(h){
 	var vus = {}, liste = [];
 	DOSSIERS_SYSCTL.forEach(function(d){
-		fichiersDuDossier(h, d, "*.conf").forEach(function(f){ if (!vus[f.nom]){ vus[f.nom] = true; liste.push(f); } });
+		fichiersDuDossierGuet(h, d, "*.conf").forEach(function(f){ if (!vus[f.nom]){ vus[f.nom] = true; liste.push(f); } });
 	});
 	liste.sort(function(a, b){ return a.nom < b.nom ? -1 : (a.nom > b.nom ? 1 : 0); });
-	if (fichierHote(h, "/etc/sysctl.conf")) liste.push({ nom: "sysctl.conf", chemin: "/etc/sysctl.conf" });
+	if (fichierHoteGuet(h, "/etc/sysctl.conf")) liste.push({ nom: "sysctl.conf", chemin: "/etc/sysctl.conf" });
 	return liste;
 }
 /* Applique une affectation au tableau des valeurs : renvoie null (ok) ou le message d'erreur de sysctl. */
@@ -2420,7 +2421,7 @@ function lireFichierSysctl(texte, chemin, valeursConnues){
 }
 function sysctlDemarrage(h){
 	var v = valeursNoyauDefaut(h);
-	if (!dossierHote(h, "/etc/sysctl.d") && !fichierHote(h, "/etc/sysctl.conf")) return v;
+	if (!dossierHoteGuet(h, "/etc/sysctl.d") && !fichierHoteGuet(h, "/etc/sysctl.conf")) return v;
 	fichiersSysctlSysteme(h).forEach(function(f){
 		lireFichierSysctl(lireFichierHote(h, f.chemin), f.chemin, v).affectations.forEach(function(a){ affecterSysctl(v, a.cle, a.valeur); });
 	});
@@ -2429,7 +2430,7 @@ function sysctlDemarrage(h){
 var SYSCTL_AVANT_GUET = Shell.sorts.sysctl;
 Shell.sorts.sysctl = function(args, io){
 	var h = hoteIci();
-	if (!machineGardee(h) || !dossierHote(h, "/etc/sysctl.d")) return SYSCTL_AVANT_GUET.apply(this, arguments);
+	if (!machineGardee(h) || !dossierHoteGuet(h, "/etc/sysctl.d")) return SYSCTL_AVANT_GUET.apply(this, arguments);
 	var e = etatHote(h), v = e.sysctl;
 	var tout = false, nSeul = false, ecrire = false, charger = null, systeme = false, discret = false, ignorerInconnus = false, mots = [];
 	for (var i = 0; i < args.length; i++){
@@ -2570,7 +2571,7 @@ function modulesDemarrage(h){
 function lireModprobe(h){
 	var regles = { blacklist: [], install: {}, remove: {}, options: {}, lignes: [] };
 	["/lib/modprobe.d", "/usr/lib/modprobe.d", "/run/modprobe.d", "/etc/modprobe.d"].forEach(function(d){
-		fichiersDuDossier(h, d, "*.conf").forEach(function(f){
+		fichiersDuDossierGuet(h, d, "*.conf").forEach(function(f){
 			lignesConf(lireFichierHote(h, f.chemin)).forEach(function(l){
 				var m = l.texte.trim().split(/\s+/), quoi = m[0], nom = nomModule(m[1] || "");
 				if (!m[1]) return;
@@ -2733,9 +2734,9 @@ function lireDefautGrub(h){
 function genererGrub(h){
 	var d = lireDefautGrub(h), ver = versionNoyau(h), messages = ["Generating grub configuration file ..."], erreur = null;
 	var morceaux = ["#", "# DO NOT EDIT THIS FILE", "#", "# It is automatically generated by grub-mkconfig using templates", "# from /etc/grub.d and settings from /etc/default/grub", "#", ""];
-	var scripts = fichiersDuDossier(h, "/etc/grub.d", "*").filter(function(f){ return f.item && f.item.mode.charAt(2) === "x" && !/\.(dpkg-|bak|orig)/.test(f.nom) && f.nom !== "README"; });
+	var scripts = fichiersDuDossierGuet(h, "/etc/grub.d", "*").filter(function(f){ return f.item && f.item.mode.charAt(2) === "x" && !/\.(dpkg-|bak|orig)/.test(f.nom) && f.nom !== "README"; });
 	var uuid = hexDe("uuid-racine:" + h, 32).replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, "$1-$2-$3-$4-$5");
-	var superusers = null, motDePasse = false, enClair = false, ignores = fichiersDuDossier(h, "/etc/grub.d", "*").filter(function(f){ return f.item && f.item.mode.charAt(2) !== "x" && f.nom !== "README"; }).map(function(f){ return f.nom; });
+	var superusers = null, motDePasse = false, enClair = false, ignores = fichiersDuDossierGuet(h, "/etc/grub.d", "*").filter(function(f){ return f.item && f.item.mode.charAt(2) !== "x" && f.nom !== "README"; }).map(function(f){ return f.nom; });
 	scripts.forEach(function(f){
 		morceaux.push("### BEGIN " + f.chemin + " ###");
 		if (/^00_header$/.test(f.nom)) morceaux.push("if [ -s $prefix/grubenv ]; then", "  load_env", "fi", "set default=\"" + d.GRUB_DEFAULT + "\"", "", "if [ x\"${feature_menuentry_id}\" = xy ]; then", "  menuentry_id_option=\"--id\"", "else", "  menuentry_id_option=\"\"", "fi", "", "terminal_output gfxterm", "set timeout=" + d.GRUB_TIMEOUT);
@@ -2776,7 +2777,7 @@ function genererGrub(h){
 function grubMkconfig(nomCmd){
 	return function(args, io){
 		var h = hoteIci();
-		if (!machineGardee(h) || !dossierHote(h, "/etc/grub.d")) absentIci(io, nomCmd, "grub2");
+		if (!machineGardee(h) || !dossierHoteGuet(h, "/etc/grub.d")) absentIci(io, nomCmd, "grub2");
 		var sortie = nomCmd === "update-grub" ? "/boot/grub/grub.cfg" : null;
 		for (var i = 0; i < args.length; i++){
 			if (args[i] === "-o" || args[i] === "--output"){ sortie = args[++i]; continue; }
@@ -2893,7 +2894,7 @@ var DESCRIPTIONS_TEXTE = { openat: "opened-file", unlinkat: "deleted", rename: "
 function etatAudit(h){ return etatHote(h).audit; }
 function exeDe(comm){ return EXES_AUDIT[comm] || "/usr/bin/" + comm; }
 function normaliserPerms(p){ return "rwxa".split("").filter(function(c){ return String(p).indexOf(c) > -1; }).join(""); }
-function texteRegle(r){
+function texteRegleGuet(r){
 	if (r.type === "w") return "-w " + r.chemin + " -p " + r.perms + (r.cle ? " -k " + r.cle : "");
 	return r.texte;
 }
@@ -2907,7 +2908,7 @@ function signatureAudit(n){
 }
 /* Les chemins de fichiers couverts par une règle (un fichier, ou tout ce qu'il y a sous un dossier). */
 function cheminsSurveilles(h, r, a){
-	var n = noeudHote(h, r.chemin), liste = [r.chemin];
+	var n = noeudHoteGuet(h, r.chemin), liste = [r.chemin];
 	if (n instanceof Room){
 		var garde = { n: 0 };
 		(function visiter(lieu, chemin, profondeur){
@@ -2925,7 +2926,7 @@ function regleSurChemin(a, chemin, perm){
 	})[0] || null;
 }
 function photographierAudit(h, a){
-	a.regles.forEach(function(r){ if (r.type === "w") cheminsSurveilles(h, r, a).forEach(function(c){ a.sigs[c] = signatureAudit(noeudHote(h, c)); }); });
+	a.regles.forEach(function(r){ if (r.type === "w") cheminsSurveilles(h, r, a).forEach(function(c){ a.sigs[c] = signatureAudit(noeudHoteGuet(h, c)); }); });
 }
 
 /* Écrit un événement dans le journal d'audit de la machine. */
@@ -2951,7 +2952,7 @@ function releverAudit(h, qui){
 	a.regles.forEach(function(r){
 		if (r.type !== "w") return;
 		cheminsSurveilles(h, r, a).forEach(function(c){
-			var n = noeudHote(h, c), sig = signatureAudit(n), avant = a.sigs.hasOwnProperty(c) ? a.sigs[c] : undefined;
+			var n = noeudHoteGuet(h, c), sig = signatureAudit(n), avant = a.sigs.hasOwnProperty(c) ? a.sigs[c] : undefined;
 			if (avant === undefined){ a.sigs[c] = sig; if (sig === null) return; avant = null; if (c === r.chemin) return; }
 			if (sig === avant) return;
 			a.sigs[c] = sig;
@@ -2990,7 +2991,7 @@ GameEvents.addListener("read", function(e){
 		g.audit.regles.forEach(function(r){
 			if (r.type !== "w" || r.perms.indexOf("r") === -1) return;
 			cheminsSurveilles(h, r, g.audit).forEach(function(c){
-				if (noeudHote(h, c) === e.item && auditActif(h)) noterAudit(h, evenementFichier(h, c, e.item, "openat", r.cle, { comm: e.cmd, sudo: e.sudo, lecture: true }));
+				if (noeudHoteGuet(h, c) === e.item && auditActif(h)) noterAudit(h, evenementFichier(h, c, e.item, "openat", r.cle, { comm: e.cmd, sudo: e.sudo, lecture: true }));
 			});
 		});
 	} catch (x){}
@@ -3004,7 +3005,7 @@ GameEvents.addListener("script", function(e){
 		g.audit.regles.forEach(function(r){
 			if (r.type !== "w" || r.perms.indexOf("x") === -1) return;
 			cheminsSurveilles(h, r, g.audit).forEach(function(c){
-				if (noeudHote(h, c) === e.item && auditActif(h)) noterAudit(h, evenementFichier(h, c, e.item, "execve", r.cle, { comm: e.item.itemname, exe: c }));
+				if (noeudHoteGuet(h, c) === e.item && auditActif(h)) noterAudit(h, evenementFichier(h, c, e.item, "execve", r.cle, { comm: e.item.itemname, exe: c }));
 			});
 		});
 	} catch (x){}
@@ -3028,7 +3029,7 @@ function ajouterEvenementAudit(h, o){
 	if (o.chemin && (!o.type || o.type === "SYSCALL")){
 		var perm = o.perm || "w", regle = regleSurChemin(a, o.chemin, perm);
 		if ((!regle && !o.force) || !auditActif(h)) return null;
-		var n = noeudHote(h, o.chemin);
+		var n = noeudHoteGuet(h, o.chemin);
 		var syscall = o.syscall || (perm === "a" ? "fchmodat" : (perm === "x" ? "execve" : "openat"));
 		return noterAudit(h, evenementFichier(h, o.chemin, n, syscall, o.cle || (regle && regle.cle), o));
 	}
@@ -3044,7 +3045,7 @@ function auditSous(h, qui, fonction){
 
 /* Charge les règles : depuis /etc/audit/rules.d (augenrules), comme au démarrage d'auditd. */
 function lireReglesAudit(h){
-	var lignes = [], fichiers = fichiersDuDossier(h, "/etc/audit/rules.d", "*.rules");
+	var lignes = [], fichiers = fichiersDuDossierGuet(h, "/etc/audit/rules.d", "*.rules");
 	fichiers.forEach(function(f){ lignesConf(lireFichierHote(h, f.chemin)).forEach(function(l){ lignes.push({ texte: l.texte.trim(), fichier: f.chemin, n: l.n }); }); });
 	return { lignes: lignes, fichiers: fichiers };
 }
@@ -3100,10 +3101,10 @@ function appliquerArgsAudit(h, a, args, silencieux){
 		} else {
 			if (existante) return { erreur: "Error sending add rule data request (Rule exists)" };
 			var parent = chemin.replace(/\/[^\/]+\/?$/, "") || "/";
-			if (!noeudHote(h, parent)) return { erreur: "Error sending add rule data request (No such file or directory)" };
+			if (!noeudHoteGuet(h, parent)) return { erreur: "Error sending add rule data request (No such file or directory)" };
 			var nouvelle = { type: "w", chemin: chemin.replace(/(.)\/$/, "$1"), perms: p, cle: cle || null };
 			a.regles.push(nouvelle);
-			cheminsSurveilles(h, nouvelle, a).forEach(function(c){ a.sigs[c] = signatureAudit(noeudHote(h, c)); });
+			cheminsSurveilles(h, nouvelle, a).forEach(function(c){ a.sigs[c] = signatureAudit(noeudHoteGuet(h, c)); });
 			res.ajoute = nouvelle;
 		}
 	}
@@ -3128,7 +3129,7 @@ function texteStatutAudit(h, a){
 }
 function exigerAudit(io, cmd){
 	var h = hoteIci();
-	if (!machineGardee(h) || !dossierHote(h, "/etc/audit")) absentIci(io, cmd, "auditd");
+	if (!machineGardee(h) || !dossierHoteGuet(h, "/etc/audit")) absentIci(io, cmd, "auditd");
 	return h;
 }
 Shell.sorts.auditctl = function(args, io){
@@ -3145,8 +3146,8 @@ Shell.sorts.auditctl = function(args, io){
 		noterAudit(h, { type: "CONFIG_CHANGE", op: op, cle: cleR || null, succes: true, auid: qui.auid, uid: 0, comm: "auditctl", exe: "/usr/sbin/auditctl", extra: extra || "" });
 	}
 	if (r.supprime){ sorties.push("No rules"); config("remove_rule", null, "list=4"); GameEvents.fire({ type: "auditctl", hote: h, action: "delete" }); }
-	if (r.ajoute){ config("add_rule", r.ajoute.cle, "list=4"); GameEvents.fire({ type: "auditctl", hote: h, action: "add", regle: texteRegle(r.ajoute), chemin: r.ajoute.chemin || null, cle: r.ajoute.cle, perms: r.ajoute.perms || null }); }
-	if (r.retire){ config("remove_rule", r.retire.cle, "list=4"); GameEvents.fire({ type: "auditctl", hote: h, action: "remove", regle: texteRegle(r.retire) }); }
+	if (r.ajoute){ config("add_rule", r.ajoute.cle, "list=4"); GameEvents.fire({ type: "auditctl", hote: h, action: "add", regle: texteRegleGuet(r.ajoute), chemin: r.ajoute.chemin || null, cle: r.ajoute.cle, perms: r.ajoute.perms || null }); }
+	if (r.retire){ config("remove_rule", r.retire.cle, "list=4"); GameEvents.fire({ type: "auditctl", hote: h, action: "remove", regle: texteRegleGuet(r.retire) }); }
 	if (r.enable !== undefined){ config("set", null, "audit_enabled=" + r.enable + " old=1"); sorties.push(texteStatutAudit(h, a)); GameEvents.fire({ type: "auditctl", hote: h, action: "enable", valeur: r.enable }); }
 	if (r.fichier){
 		var it = Shell.objetLisible(r.fichier, io, "auditctl").item, erreurs = [];
@@ -3154,8 +3155,8 @@ Shell.sorts.auditctl = function(args, io){
 		erreurs.forEach(function(x){ io.err(x); });
 	}
 	if (r.liste){
-		sorties.push(a.regles.length ? a.regles.map(texteRegle).join("\n") : "No rules");
-		GameEvents.fire({ type: "auditctl", hote: h, action: "list", regles: a.regles.map(texteRegle) });
+		sorties.push(a.regles.length ? a.regles.map(texteRegleGuet).join("\n") : "No rules");
+		GameEvents.fire({ type: "auditctl", hote: h, action: "list", regles: a.regles.map(texteRegleGuet) });
 	}
 	if (r.statut){ sorties.push(texteStatutAudit(h, a)); GameEvents.fire({ type: "auditctl", hote: h, action: "status" }); }
 	var texte = sorties.join("\n");
@@ -3174,7 +3175,7 @@ Shell.sorts.augenrules = function(args, io){
 	var e = etatHote(h);
 	if (e.audit.enabled === 2) throw new ShellError("The audit system is in immutable mode, no rule changes allowed" + astuce(io, "-e 2 verrouille les règles jusqu'au prochain redémarrage : c'est le but."));
 	var r = chargerReglesAudit(h, e, true);
-	GameEvents.fire({ type: "augenrules", hote: h, regles: e.audit.regles.map(texteRegle), ok: !r.erreur, fichiers: lu.fichiers.map(function(f){ return f.chemin; }) });
+	GameEvents.fire({ type: "augenrules", hote: h, regles: e.audit.regles.map(texteRegleGuet), ok: !r.erreur, fichiers: lu.fichiers.map(function(f){ return f.chemin; }) });
 	if (serviceActif(h, "auditd")) noterAudit(h, { type: "CONFIG_CHANGE", op: "add_rule", cle: null, succes: true, auid: uidDe(JOUEUR), uid: 0, comm: "auditctl", exe: "/usr/sbin/auditctl", extra: "list=4" });
 	var sortie = (/^-D\b/m.test(lu.lignes.map(function(l){ return l.texte; }).join("\n")) ? "No rules\n" : "") + texteStatutAudit(h, e.audit);
 	if (r.erreur) io.err(r.erreur);
@@ -3413,8 +3414,8 @@ function lireRsyslog(h, maitre){
 	function attribut(bloc, nom){ var m = new RegExp(nom + "\\s*=\\s*\"([^\"]*)\"", "i").exec(bloc); return m ? m[1] : null; }
 	function inclure(motif, profondeur){
 		var coupe = motif.lastIndexOf("/"), dossier = motif.substring(0, coupe), base = motif.substring(coupe + 1);
-		if (/[*?[]/.test(base)) fichiersDuDossier(h, dossier, base).forEach(function(f){ lireUn(f.chemin, profondeur + 1); });
-		else if (fichierHote(h, motif)) lireUn(motif, profondeur + 1);
+		if (/[*?[]/.test(base)) fichiersDuDossierGuet(h, dossier, base).forEach(function(f){ lireUn(f.chemin, profondeur + 1); });
+		else if (fichierHoteGuet(h, motif)) lireUn(motif, profondeur + 1);
 	}
 	function traiterBloc(bloc, chemin, n){
 		var type = /^(\w+)/.exec(bloc)[1].toLowerCase();
@@ -3556,7 +3557,7 @@ Shell.sorts.logger = function(args, io){
 };
 Shell.sorts.rsyslogd = function(args, io){
 	var h = hoteIci();
-	if (!machineGardee(h) || !fichierHote(h, "/etc/rsyslog.conf")) absentIci(io, "rsyslogd", "rsyslog");
+	if (!machineGardee(h) || !fichierHoteGuet(h, "/etc/rsyslog.conf")) absentIci(io, "rsyslogd", "rsyslog");
 	var niveau = null, maitre = "/etc/rsyslog.conf";
 	for (var i = 0; i < args.length; i++){
 		var m = /^-N(\d)?$/.exec(args[i]);
@@ -3593,9 +3594,9 @@ function lireLogrotate(h, chemins, io){
 	function copie(o){ var c = {}; for (var k in o) if (o.hasOwnProperty(k)) c[k] = o[k]; return c; }
 	function lireChemin(chemin, profondeur){
 		if (profondeur > 6) return;
-		var n = noeudHote(h, chemin);
+		var n = noeudHoteGuet(h, chemin);
 		if (n === null){ resultat.erreurs.push("error: cannot stat " + chemin + ": No such file or directory"); return; }
-		if (n instanceof Room){ fichiersDuDossier(h, chemin, "*").filter(function(f){ return !/(\.dpkg-|~$|\.bak$|\.disabled$)/.test(f.nom); }).forEach(function(f){ lireChemin(f.chemin, profondeur + 1); }); return; }
+		if (n instanceof Room){ fichiersDuDossierGuet(h, chemin, "*").filter(function(f){ return !/(\.dpkg-|~$|\.bak$|\.disabled$)/.test(f.nom); }).forEach(function(f){ lireChemin(f.chemin, profondeur + 1); }); return; }
 		if (/[wW]/.test(n.mode.charAt(4)) || /[wW]/.test(n.mode.charAt(7))){ resultat.erreurs.push("error: Ignoring " + chemin + " because of bad file mode - must be 0644 or 0444."); return; }
 		if (n.owner !== "root"){ resultat.erreurs.push("error: Ignoring " + chemin + " because the file owner is wrong (should be root or user with uid 0)."); return; }
 		resultat.lus.push(chemin);
@@ -3641,7 +3642,7 @@ function lireLogrotate(h, chemins, io){
 }
 Shell.sorts.logrotate = function(args, io){
 	var h = hoteIci();
-	if (!machineGardee(h) || !fichierHote(h, "/etc/logrotate.conf") && !dossierHote(h, "/etc/logrotate.d")) absentIci(io, "logrotate");
+	if (!machineGardee(h) || !fichierHoteGuet(h, "/etc/logrotate.conf") && !dossierHoteGuet(h, "/etc/logrotate.d")) absentIci(io, "logrotate");
 	var debug = false, force = false, bavard = false, chemins = [], etatFichier = "/var/lib/logrotate/status";
 	for (var i = 0; i < args.length; i++){
 		var a = args[i];
@@ -3665,7 +3666,7 @@ Shell.sorts.logrotate = function(args, io){
 		var fichiers = [];
 		b.motifs.forEach(function(m){
 			var coupe = m.lastIndexOf("/"), dossier = m.substring(0, coupe), base = m.substring(coupe + 1);
-			if (/[*?[]/.test(base)) fichiersDuDossier(h, dossier, base).filter(function(f){ return !/\.(\d+)(\.gz)?$/.test(f.nom); }).forEach(function(f){ fichiers.push(f.chemin); });
+			if (/[*?[]/.test(base)) fichiersDuDossierGuet(h, dossier, base).filter(function(f){ return !/\.(\d+)(\.gz)?$/.test(f.nom); }).forEach(function(f){ fichiers.push(f.chemin); });
 			else fichiers.push(m);
 		});
 		return fichiers;
@@ -3684,20 +3685,20 @@ Shell.sorts.logrotate = function(args, io){
 		}
 		if (!fichiers.length && (debug || bavard)) sortie.push("No logs found. Rotation not needed.");
 		fichiers.forEach(function(chemin){
-			var item = fichierHote(h, chemin);
+			var item = fichierHoteGuet(h, chemin);
 			if (debug || bavard) sortie.push("considering log " + chemin);
 			if (!item){
 				if (o.missingok){ if (debug || bavard) sortie.push("  log " + chemin + " does not exist -- skipping"); }
 				else echecs.push("error: stat of " + chemin + " failed: No such file or directory");
 				return;
 			}
-			var dossier = dossierHote(h, chemin.replace(/\/[^\/]+$/, ""));
+			var dossier = dossierHoteGuet(h, chemin.replace(/\/[^\/]+$/, ""));
 			if (dossier && (dossier.mode.charAt(7) === "w" || dossier.mode.charAt(4) === "w") && !o.su){
 				echecs.push("error: skipping \"" + chemin + "\" because parent directory has insecure permissions (It's world writable or writable by group which is not \"root\") Set \"su\" directive in config file to tell logrotate which user/group should be used for rotation.");
 				return;
 			}
 			var derniere = dernieres[chemin];
-			if (debug || bavard){ sortie.push("  Now: " + dateIso(maintenant).substring(0, 16)); sortie.push("  Last rotated at " + (derniere ? dateIso(derniere).substring(0, 16) : dateIso(maintenant).substring(0, 16))); }
+			if (debug || bavard){ sortie.push("  Now: " + dateIsoGuet(maintenant).substring(0, 16)); sortie.push("  Last rotated at " + (derniere ? dateIsoGuet(derniere).substring(0, 16) : dateIsoGuet(maintenant).substring(0, 16))); }
 			var vide = item.getText() === "";
 			var aFaire = force;
 			if (!aFaire && o.size) aFaire = versOctetsUtf8(item.getText()).length >= tailleOctetsLogrotate(o.size);
@@ -3706,7 +3707,7 @@ Shell.sorts.logrotate = function(args, io){
 				aFaire = jours >= seuil;
 			}
 			if (vide && o.notifempty){ if (debug || bavard) sortie.push("  log does not need rotating (log is empty)"); return; }
-			if (!aFaire){ if (debug || bavard) sortie.push("  log does not need rotating (log has been rotated at " + dateIso(derniere || maintenant).substring(0, 16).replace(/:0(\d)$/, ":$1") + ", which is less than " + ({ daily: "a day", weekly: "a week", monthly: "a month", yearly: "a year", hourly: "an hour" }[o.frequence] || "a week") + " ago)"); return; }
+			if (!aFaire){ if (debug || bavard) sortie.push("  log does not need rotating (log has been rotated at " + dateIsoGuet(derniere || maintenant).substring(0, 16).replace(/:0(\d)$/, ":$1") + ", which is less than " + ({ daily: "a day", weekly: "a week", monthly: "a month", yearly: "a year", hourly: "an hour" }[o.frequence] || "a week") + " ago)"); return; }
 			if (debug || bavard) sortie.push("  log needs rotating", "rotating log " + chemin + ", log->rotateCount is " + (o.rotate || 0));
 			var ext = o.compress ? ".gz" : "";
 			if (!debug && !io.sudo){ echecs.push("error: error renaming " + chemin + " to " + chemin + ".1: Permission denied"); return; }
@@ -3714,12 +3715,12 @@ Shell.sorts.logrotate = function(args, io){
 			for (var j = n; j >= 1; j--){
 				var plusVieux = [chemin + "." + j + ext, chemin + "." + j];
 				plusVieux.forEach(function(p){
-					if (!fichierHote(h, p)) return;
-					if (j === n){ if (debug || bavard) sortie.push("removing old log " + p); if (!debug) supprimerFichierHote(h, p); }
+					if (!fichierHoteGuet(h, p)) return;
+					if (j === n){ if (debug || bavard) sortie.push("removing old log " + p); if (!debug) supprimerFichierHoteGuet(h, p); }
 					else {
 						var dest = p.replace(new RegExp("\\." + j + "(\\.gz)?$"), "." + (j + 1) + "$1");
 						if (debug || bavard) sortie.push("renaming " + p + " to " + dest + " (rotatecount " + n + ", logstart 1, i " + j + "), ");
-						if (!debug){ var it = fichierHote(h, p); supprimerFichierHote(h, dest); it.itemname = dest.split("/").pop(); }
+						if (!debug){ var it = fichierHoteGuet(h, p); supprimerFichierHoteGuet(h, dest); it.itemname = dest.split("/").pop(); }
 					}
 				});
 			}
@@ -3727,12 +3728,12 @@ Shell.sorts.logrotate = function(args, io){
 			var cible = chemin + ".1" + (o.compress && !o.delaycompress ? ".gz" : "");
 			if (debug || bavard) sortie.push((o.copytruncate ? "copying " : "renaming ") + chemin + " to " + chemin + ".1");
 			if (!debug){
-				var dossierLog = dossierHote(h, chemin.replace(/\/[^\/]+$/, ""));
+				var dossierLog = dossierHoteGuet(h, chemin.replace(/\/[^\/]+$/, ""));
 				var copie = new Item(chemin.split("/").pop() + ".1", item.getText(), "item_manuscript.gif");
 				copie.owner = item.owner; copie.mode = item.mode;
 				if (o.compress && !o.delaycompress){ copie.gzip = { contenu: copie.getText(), nom: copie.itemname }; copie.setText(brouiller(copie.getText(), "logrotate")); copie.itemname += ".gz"; }
 				if (o.delaycompress && o.compress){
-					var second = fichierHote(h, chemin + ".2");
+					var second = fichierHoteGuet(h, chemin + ".2");
 					if (second){ second.gzip = { contenu: second.getText(), nom: second.itemname }; second.setText(brouiller(second.getText(), "logrotate2")); second.itemname += ".gz"; }
 				}
 				dossierLog.addItem(copie);
@@ -3774,7 +3775,7 @@ function modeDepuisOctal(o){
 
 function stockageJournald(h){
 	var valeur = "auto";
-	[["/etc/systemd/journald.conf"]].concat([fichiersDuDossier(h, "/etc/systemd/journald.conf.d", "*.conf").map(function(f){ return f.chemin; })]).forEach(function(liste){
+	[["/etc/systemd/journald.conf"]].concat([fichiersDuDossierGuet(h, "/etc/systemd/journald.conf.d", "*.conf").map(function(f){ return f.chemin; })]).forEach(function(liste){
 		liste.forEach(function(c){
 			var section = null;
 			(lireFichierHote(h, c) || "").split("\n").forEach(function(l){
@@ -3785,7 +3786,7 @@ function stockageJournald(h){
 			});
 		});
 	});
-	if (valeur === "auto") return dossierHote(h, "/var/log/journal") ? "persistent" : "volatile";
+	if (valeur === "auto") return dossierHoteGuet(h, "/var/log/journal") ? "persistent" : "volatile";
 	if (valeur === "persistent" || valeur === "volatile" || valeur === "none") return valeur;
 	return "volatile";
 }
@@ -3820,7 +3821,7 @@ Shell.sorts.journalctl = function(args, io){
 				"\nBoot ID: " + hexDe("boot:" + h, 32) + "\nSequential number ID: " + hexDe("seq:" + h, 32) + "\nState: ONLINE\nCompatible flags: TAIL_ENTRY_BOOT_ID\nIncompatible flags: COMPRESSED-ZSTD KEYED-HASH COMPACT\nHeader size: 272\nArena size: 8388336";
 		}
 		if (special === "--list-boots"){
-			return "IDX BOOT ID                          FIRST ENTRY                 LAST ENTRY                 \n  0 " + hexDe("boot:" + h, 32) + " " + JOURS_EN[maintenantGuet().getDay()] + " " + dateIso(new Date(maintenantGuet().getTime() - 4 * 3600000)) + " CET " + JOURS_EN[maintenantGuet().getDay()] + " " + dateIso(maintenantGuet()) + " CET";
+			return "IDX BOOT ID                          FIRST ENTRY                 LAST ENTRY                 \n  0 " + hexDe("boot:" + h, 32) + " " + JOURS_EN[maintenantGuet().getDay()] + " " + dateIsoGuet(new Date(maintenantGuet().getTime() - 4 * 3600000)) + " CET " + JOURS_EN[maintenantGuet().getDay()] + " " + dateIsoGuet(maintenantGuet()) + " CET";
 		}
 		if (!io.sudo) throw new ShellError("Failed to " + special.replace(/^--/, "").replace(/=.*/, "") + " journal: Permission denied" + astuce(io, "sudo journalctl " + special));
 		if (special === "--flush" && !persistant) return "";
@@ -3862,7 +3863,7 @@ function sourcesChrony(h){
 		if (!m) return;
 		var motif = m[1] === "include" ? m[2] : m[2].replace(/\/$/, "") + "/" + (m[1] === "sourcedir" ? "*.sources" : "*.conf");
 		var coupe = motif.lastIndexOf("/");
-		fichiersDuDossier(h, motif.substring(0, coupe), motif.substring(coupe + 1)).forEach(function(f){ lignesConf(lireFichierHote(h, f.chemin)).forEach(function(x){ lignes.push(x.texte.trim()); }); });
+		fichiersDuDossierGuet(h, motif.substring(0, coupe), motif.substring(coupe + 1)).forEach(function(f){ lignesConf(lireFichierHote(h, f.chemin)).forEach(function(x){ lignes.push(x.texte.trim()); }); });
 	});
 	var sources = [];
 	lignes.forEach(function(l){
@@ -3880,7 +3881,7 @@ function horlogeSynchronisee(h){
 	if (ntp === "chrony") return sourcesChrony(h).some(function(s){ return s.joignable; });
 	return true;
 }
-function gereHeure(h){ return machineGardee(h) && (!!fichierHote(h, "/etc/chrony/chrony.conf") || !!((HOTES[h] || {}).services || {})["systemd-timesyncd"]); }
+function gereHeure(h){ return machineGardee(h) && (!!fichierHoteGuet(h, "/etc/chrony/chrony.conf") || !!((HOTES[h] || {}).services || {})["systemd-timesyncd"]); }
 var TIMEDATECTL_AVANT_GUET = Shell.sorts.timedatectl;
 Shell.sorts.timedatectl = function(args, io){
 	var h = hoteIci();
@@ -3890,7 +3891,7 @@ Shell.sorts.timedatectl = function(args, io){
 	var d = maintenantGuet(), hiver = d.getMonth() < 2 || d.getMonth() > 9 || (d.getMonth() === 2 && d.getDate() < 25) || (d.getMonth() === 9 && d.getDate() >= 26);
 	var tz = e.fuseau || "Europe/Paris", zone = tz === "UTC" ? "UTC" : (hiver ? "CET" : "CEST"), dec = tz === "UTC" ? 0 : (hiver ? 1 : 2);
 	var utc = new Date(d.getTime() - dec * 3600000);
-	function f(x){ return JOURS_EN[x.getDay()] + " " + dateIso(x); }
+	function f(x){ return JOURS_EN[x.getDay()] + " " + dateIsoGuet(x); }
 	if (action === "status"){
 		GameEvents.fire({ type: "timedatectl", action: "status", host: h, hote: h, synchronise: sync });
 		return "               Local time: " + f(d) + " " + zone + "\n           Universal time: " + f(utc) + " UTC\n                 RTC time: " + f(utc) + "\n" +
@@ -3900,7 +3901,7 @@ Shell.sorts.timedatectl = function(args, io){
 	}
 	if (action === "show"){
 		return ["Timezone=" + tz, "LocalRTC=no", "CanNTP=" + (ntp ? "yes" : "no"), "NTP=" + (actif ? "yes" : "no"), "NTPSynchronized=" + (sync ? "yes" : "no"),
-			"TimeUSec=" + JOURS_EN[d.getDay()] + " " + dateIso(d) + " " + zone, "RTCTimeUSec=" + JOURS_EN[d.getDay()] + " " + dateIso(utc)].join("\n");
+			"TimeUSec=" + JOURS_EN[d.getDay()] + " " + dateIsoGuet(d) + " " + zone, "RTCTimeUSec=" + JOURS_EN[d.getDay()] + " " + dateIsoGuet(utc)].join("\n");
 	}
 	if (action === "set-ntp"){
 		var valeur = mots[1];
@@ -3936,7 +3937,7 @@ Shell.sorts.timedatectl = function(args, io){
 var CHRONYC_AVANT_GUET = Shell.sorts.chronyc;
 Shell.sorts.chronyc = function(args, io){
 	var h = hoteIci();
-	if (!machineGardee(h) || !fichierHote(h, "/etc/chrony/chrony.conf")) return CHRONYC_AVANT_GUET.apply(this, arguments);
+	if (!machineGardee(h) || !fichierHoteGuet(h, "/etc/chrony/chrony.conf")) return CHRONYC_AVANT_GUET.apply(this, arguments);
 	var mots = args.filter(function(a){ return a.charAt(0) !== "-"; }), action = mots[0] || "tracking";
 	assurerService(h, "chrony");
 	if (!serviceActif(h, "chrony")) throw new ShellError("506 Cannot talk to daemon" + astuce(io, "chrony est arrêté : sudo systemctl enable --now chrony (ou sudo timedatectl set-ntp true)."), 1);
@@ -3981,23 +3982,23 @@ function lireProfil(texte){
 	return { nom: m[1] || m[2], binaire: m[2] && m[2].charAt(0) === "/" ? m[2] : null, drapeaux: drapeaux, mode: drapeaux.indexOf("complain") > -1 ? "complain" : (drapeaux.indexOf("kill") > -1 ? "kill" : "enforce") };
 }
 function fichiersProfils(h){
-	return fichiersDuDossier(h, "/etc/apparmor.d", "*").filter(function(f){ return f.item && !f.item.lien && !/^\./.test(f.nom) && !/~$/.test(f.nom) && !/\.dpkg-/.test(f.nom); });
+	return fichiersDuDossierGuet(h, "/etc/apparmor.d", "*").filter(function(f){ return f.item && !f.item.lien && !/^\./.test(f.nom) && !/~$/.test(f.nom) && !/\.dpkg-/.test(f.nom); });
 }
 function profilsDemarrage(h){
 	var profils = {};
-	if (!dossierHote(h, "/etc/apparmor.d")) return profils;
+	if (!dossierHoteGuet(h, "/etc/apparmor.d")) return profils;
 	fichiersProfils(h).forEach(function(f){
-		if (noeudHote(h, "/etc/apparmor.d/disable/" + f.nom, true)) return;
+		if (noeudHoteGuet(h, "/etc/apparmor.d/disable/" + f.nom, true)) return;
 		var p = lireProfil(f.item.getText());
 		if (!p) return;
-		if (noeudHote(h, "/etc/apparmor.d/force-complain/" + f.nom, true)) p.mode = "complain";
+		if (noeudHoteGuet(h, "/etc/apparmor.d/force-complain/" + f.nom, true)) p.mode = "complain";
 		profils[p.nom] = { fichier: f.chemin, mode: p.mode, binaire: p.binaire };
 	});
 	return profils;
 }
 function exigerApparmor(io, cmd){
 	var h = hoteIci();
-	if (!machineGardee(h) || !dossierHote(h, "/etc/apparmor.d")) absentIci(io, cmd, "apparmor");
+	if (!machineGardee(h) || !dossierHoteGuet(h, "/etc/apparmor.d")) absentIci(io, cmd, "apparmor");
 	return h;
 }
 function procsProfil(h, p){
@@ -4062,8 +4063,8 @@ function aaCommande(cmd, mode){
 					return tout.replace(/\s*flags\s*=\s*\([^)]*\)/, "").replace(/\s*\{$/, (drapeaux.length ? " flags=(" + drapeaux.join(",") + ")" : "") + " {");
 				});
 				f.item.setText(nouveau);
-				supprimerFichierHote(h, "/etc/apparmor.d/disable/" + f.nom);
-				if (mode === "enforce") supprimerFichierHote(h, "/etc/apparmor.d/force-complain/" + f.nom);
+				supprimerFichierHoteGuet(h, "/etc/apparmor.d/disable/" + f.nom);
+				if (mode === "enforce") supprimerFichierHoteGuet(h, "/etc/apparmor.d/force-complain/" + f.nom);
 				e.apparmor = e.apparmor || {};
 				e.apparmor[p.nom] = { fichier: f.chemin, mode: mode, binaire: p.binaire };
 				sorties.push("Setting " + f.chemin + " to " + mode + " mode.");
@@ -4110,8 +4111,8 @@ function dureeFail2ban(v){
 function lireFail2ban(h){
 	var sections = { DEFAULT: { bantime: "10m", findtime: "10m", maxretry: "5", backend: "auto", ignoreip: "127.0.0.1/8 ::1" } };
 	FILTRES_FAIL2BAN.forEach(function(f){ sections[f] = { port: f === "sshd" ? "ssh" : "http,https", logpath: f === "sshd" ? "%(sshd_log)s" : "%(apache_error_log)s", backend: f === "sshd" ? "%(sshd_backend)s" : "%(default_backend)s" }; });
-	var fichiers = ["/etc/fail2ban/jail.conf"].concat(fichiersDuDossier(h, "/etc/fail2ban/jail.d", "*.conf").map(function(f){ return f.chemin; }), ["/etc/fail2ban/jail.local"],
-		fichiersDuDossier(h, "/etc/fail2ban/jail.d", "*.local").map(function(f){ return f.chemin; }));
+	var fichiers = ["/etc/fail2ban/jail.conf"].concat(fichiersDuDossierGuet(h, "/etc/fail2ban/jail.d", "*.conf").map(function(f){ return f.chemin; }), ["/etc/fail2ban/jail.local"],
+		fichiersDuDossierGuet(h, "/etc/fail2ban/jail.d", "*.local").map(function(f){ return f.chemin; }));
 	var lus = [];
 	fichiers.forEach(function(c){
 		var t = lireFichierHote(h, c);
@@ -4134,7 +4135,7 @@ function lireFail2ban(h){
 		var v = function(k){ return s[k] !== undefined ? s[k] : d[k]; };
 		if (!/^(true|yes|1|on)$/i.test(v("enabled") || "false")) return;
 		var filtre = (v("filter") || nom).split("[")[0].trim();
-		if (FILTRES_FAIL2BAN.indexOf(filtre) === -1 && !fichierHote(h, "/etc/fail2ban/filter.d/" + filtre + ".conf") && !fichierHote(h, "/etc/fail2ban/filter.d/" + filtre + ".local")){
+		if (FILTRES_FAIL2BAN.indexOf(filtre) === -1 && !fichierHoteGuet(h, "/etc/fail2ban/filter.d/" + filtre + ".conf") && !fichierHoteGuet(h, "/etc/fail2ban/filter.d/" + filtre + ".local")){
 			erreur = "ERROR   Found no accessible config files for 'filter.d/" + filtre + "' under /etc/fail2ban\nERROR   Unable to read the filter '" + filtre + "'\nERROR   Errors in jail '" + nom + "'. Skipping...";
 			return;
 		}
@@ -4173,7 +4174,7 @@ function fail2banEchec(h, jail, ip, n){
 var FAIL2BAN_AVANT_GUET = Shell.sorts["fail2ban-client"];
 Shell.sorts["fail2ban-client"] = function(args, io){
 	var h = hoteIci();
-	if (h === "citadelle" || !machineGardee(h) || !dossierHote(h, "/etc/fail2ban")) return FAIL2BAN_AVANT_GUET.apply(this, arguments);
+	if (h === "citadelle" || !machineGardee(h) || !dossierHoteGuet(h, "/etc/fail2ban")) return FAIL2BAN_AVANT_GUET.apply(this, arguments);
 	var mots = args.filter(function(a){ return a !== "-q" && a !== "-v" && a !== "-d"; }), action = mots[0] || "";
 	if (action === "version" || args.indexOf("-V") > -1 || args.indexOf("--version") > -1) return "1.0.2";
 	if (!io.sudo) throw new ShellError("ERROR  Permission denied to socket: /var/run/fail2ban/fail2ban.sock, (you must be root)" + astuce(io, "sudo fail2ban-client " + args.join(" ")), 255);
@@ -4236,7 +4237,7 @@ Shell.sorts["fail2ban-client"] = function(args, io){
 /* Lire l'état d'une machine (pour rkhunter et lynis)                   */
 /* ================================================================== */
 
-function comptesHote(h){
+function comptesHoteGuet(h){
 	var passwd = (lireFichierHote(h, "/etc/passwd") || "").split("\n").filter(Boolean).map(function(l){ var c = l.split(":"); return { nom: c[0], mdp: c[1], uid: +c[2], shell: c[6] || "" }; });
 	var shadow = {};
 	(lireFichierHote(h, "/etc/shadow") || "").split("\n").filter(Boolean).forEach(function(l){ var c = l.split(":"); shadow[c[0]] = c[1]; });
@@ -4245,7 +4246,9 @@ function comptesHote(h){
 /* La configuration effective de sshd (comme sshd -T : la première valeur l'emporte), clés en minuscules. */
 function sshEffectiveGuet(h){
 	if (typeof SOURCES_GUET.sshEffective === "function"){ try { var r = SOURCES_GUET.sshEffective(h); if (r && typeof r === "object") return r; } catch (e){} }
-	if (typeof configSshEffective === "function"){
+	// La configuration chargée par sshd (SortsBastion.js) n'a de sens que si la machine a une unité ssh qu'on recharge.
+	var uniteSsh = typeof uniteInfo === "function" ? (function(){ try { return uniteInfo(h, "ssh.service") || uniteInfo(h, "sshd.service"); } catch (e){ return null; } })() : null;
+	if (typeof configSshEffective === "function" && uniteSsh){
 		try { var r2 = configSshEffective(h); if (r2 && typeof r2 === "object" && !Array.isArray(r2)){ var bas = {}; Object.keys(r2).forEach(function(k){ bas[k.toLowerCase()] = String(r2[k]).toLowerCase ? String(r2[k]) : r2[k]; }); if (Object.keys(bas).length) return bas; } } catch (e){}
 	}
 	var valeurs = {};
@@ -4261,7 +4264,7 @@ function sshEffectiveGuet(h){
 			if (cle === "include"){
 				v.split(/\s+/).forEach(function(motif){
 					var complet = motif.charAt(0) === "/" ? motif : "/etc/ssh/" + motif, coupe = complet.lastIndexOf("/");
-					fichiersDuDossier(h, complet.substring(0, coupe), complet.substring(coupe + 1)).forEach(function(f){ lire(f.chemin, profondeur + 1); });
+					fichiersDuDossierGuet(h, complet.substring(0, coupe), complet.substring(coupe + 1)).forEach(function(f){ lire(f.chemin, profondeur + 1); });
 				});
 				continue;
 			}
@@ -4295,13 +4298,13 @@ var SUID_ATTENDUS = ["/usr/bin/passwd", "/usr/bin/su", "/usr/bin/sudo", "/usr/bi
 var RKHUNTER_AVANT_GUET = Shell.sorts.rkhunter;
 Shell.sorts.rkhunter = function(args, io){
 	var h = hoteIci();
-	if (h === "citadelle" || !machineGardee(h) || !fichierHote(h, "/etc/rkhunter.conf")) return RKHUNTER_AVANT_GUET.apply(this, arguments);
+	if (h === "citadelle" || !machineGardee(h) || !fichierHoteGuet(h, "/etc/rkhunter.conf")) return RKHUNTER_AVANT_GUET.apply(this, arguments);
 	if (args.indexOf("--version") > -1 || args.indexOf("-V") > -1) return "Rootkit Hunter 1.4.6";
 	var verifier = args.indexOf("--check") > -1 || args.indexOf("-c") > -1, propupd = args.indexOf("--propupd") > -1;
 	if (!verifier && !propupd) throw new ShellError("Usage: rkhunter {--check | --update | --versioncheck |\n                --propupd [{filename | directory | package name},...] |\n                --list [{tests | {lang | languages} | rootkits | perl | propfiles}] |\n                --config-check | --version | --help} [options]");
 	if (!io.sudo) throw new ShellError("You must be the root user to run this program." + astuce(io, "sudo rkhunter --check --sk"), 1);
 	var e = etatHote(h), binaires = [];
-	["/usr/bin", "/usr/sbin", "/bin", "/sbin"].forEach(function(d){ fichiersDuDossier(h, d, "*").forEach(function(f){ if (f.item && !f.item.lien) binaires.push(f); }); });
+	["/usr/bin", "/usr/sbin", "/bin", "/sbin"].forEach(function(d){ fichiersDuDossierGuet(h, d, "*").forEach(function(f){ if (f.item && !f.item.lien) binaires.push(f); }); });
 	if (propupd){
 		e.rkhunterBase = {};
 		binaires.forEach(function(f){ e.rkhunterBase[f.chemin] = condense(f.item.getText()) + ":" + f.item.mode; });
@@ -4312,7 +4315,7 @@ Shell.sorts.rkhunter = function(args, io){
 		var col = statut === "OK" || statut === "None found" || statut === "Not found" || statut === "Found" || statut === "Not set" ? C.vert : (statut === "Warning" ? C.rouge : C.jaune);
 		return "    " + completerDroite(texte, 53) + "[ " + (io.tty ? col(statut) : statut) + " ]";
 	}
-	var c = comptesHote(h), ssh = sshEffectiveGuet(h), alertes = [], lignes = ["[ Rootkit Hunter version 1.4.6 ]", "", "Checking system commands...", "", "  Performing 'strings' command checks",
+	var c = comptesHoteGuet(h), ssh = sshEffectiveGuet(h), alertes = [], lignes = ["[ Rootkit Hunter version 1.4.6 ]", "", "Checking system commands...", "", "  Performing 'strings' command checks",
 		ligne("Checking 'strings' command", "OK"), "", "  Performing file properties checks"];
 	var suspects = 0;
 	binaires.slice(0, 40).forEach(function(f){
@@ -4323,7 +4326,7 @@ Shell.sorts.rkhunter = function(args, io){
 	var uid0 = c.passwd.filter(function(u){ return u.uid === 0; }).length > 1, vides = c.passwd.some(function(u){ return c.shadow[u.nom] === ""; });
 	var racineSsh = !/^no$/i.test(ssh.permitrootlogin || "");
 	var caches = [];
-	["/dev", "/tmp", "/var/tmp"].forEach(function(d){ var r = dossierHote(h, d); if (r){ r.items.concat(r.children).forEach(function(x){ var n = x.itemname || x.room_name; if (/^\./.test(n) && !/^\.(X11-unix|ICE-unix|font-unix|XIM-unix|Test-unix)$/.test(n)) caches.push(d + "/" + n); }); } });
+	["/dev", "/tmp", "/var/tmp"].forEach(function(d){ var r = dossierHoteGuet(h, d); if (r){ r.items.concat(r.children).forEach(function(x){ var n = x.itemname || x.room_name; if (/^\./.test(n) && !/^\.(X11-unix|ICE-unix|font-unix|XIM-unix|Test-unix)$/.test(n)) caches.push(d + "/" + n); }); } });
 	if (uid0) alertes.push("Account '" + c.passwd.filter(function(u){ return u.uid === 0 && u.nom !== "root"; }).map(function(u){ return u.nom; }).join(", ") + "' is root equivalent (UID 0)");
 	if (vides) alertes.push("Found passwordless account(s)");
 	if (racineSsh) alertes.push("The SSH configuration option 'PermitRootLogin' has a value of '" + ssh.permitrootlogin + "'");
@@ -4391,9 +4394,9 @@ function scoreLynis(h, filtre){
 /* --- Les contrôles par défaut : chacun lit l'état réel de la machine --- */
 (function(){
 	function D(id, section, libelle, poids, gravite, conseil, verifier, details){ declarerControleLynis({ id: id, section: section, libelle: libelle, poids: poids, gravite: gravite, conseil: conseil, verifier: verifier, details: details }); }
-	function fichierExiste(h, c){ return !!fichierHote(h, c); }
+	function fichierExiste(h, c){ return !!fichierHoteGuet(h, c); }
 	D("BOOT-5122", "Boot and services", "Checking for password protection", 3, "suggestion", "Set a password on GRUB boot loader to prevent altering boot configuration (e.g. boot in single user mode without password)", function(h){
-		if (!dossierHote(h, "/etc/grub.d") && !fichierExiste(h, "/boot/grub/grub.cfg")) return null;
+		if (!dossierHoteGuet(h, "/etc/grub.d") && !fichierExiste(h, "/boot/grub/grub.cfg")) return null;
 		var t = lireFichierHote(h, "/boot/grub/grub.cfg") || "";
 		return /^\s*set\s+superusers\s*=/m.test(t) && /^\s*password_pbkdf2\s+\S+\s+grub\.pbkdf2\.sha512\./m.test(t);
 	});
@@ -4403,27 +4406,27 @@ function scoreLynis(h, filtre){
 		return !inutiles.some(function(n){ var s = services[n]; return s && (s.actif || s.auto); });
 	}, function(h){ var s = (HOTES[h] || {}).services || {}; return "Services: " + ["telnet.socket", "rpcbind", "avahi-daemon"].filter(function(n){ return s[n] && (s[n].actif || s[n].auto); }).join(", "); });
 	D("KRNL-5820", "Kernel", "Checking core dumps configuration", 1, "suggestion", "If not required, consider explicit disabling of core dump in /etc/security/limits.conf file", function(h){
-		var textes = [lireFichierHote(h, "/etc/security/limits.conf") || ""].concat(fichiersDuDossier(h, "/etc/security/limits.d", "*.conf").map(function(f){ return lireFichierHote(h, f.chemin); }));
+		var textes = [lireFichierHote(h, "/etc/security/limits.conf") || ""].concat(fichiersDuDossierGuet(h, "/etc/security/limits.d", "*.conf").map(function(f){ return lireFichierHote(h, f.chemin); }));
 		return textes.some(function(t){ return lignesConf(t).some(function(l){ return /^\s*\*\s+hard\s+core\s+0\s*$/.test(l.texte); }); });
 	});
 	[["net.ipv4.ip_forward", "0"], ["net.ipv4.conf.all.rp_filter", "1"], ["net.ipv4.conf.all.accept_redirects", "0"], ["net.ipv4.conf.all.send_redirects", "0"],
 		["net.ipv4.conf.all.accept_source_route", "0"], ["net.ipv4.conf.all.log_martians", "1"], ["kernel.dmesg_restrict", "1"], ["kernel.kptr_restrict", "2"],
 		["kernel.randomize_va_space", "2"], ["fs.protected_symlinks", "1"], ["fs.protected_hardlinks", "1"], ["fs.suid_dumpable", "0"]].forEach(function(x){
 		D("KRNL-6000:" + x[0], "Kernel Hardening", "sysctl key " + x[0] + " (exp: " + x[1] + ")", 1, "suggestion", "One or more sysctl values differ from the scan profile and could be tweaked", function(h){
-			if (!dossierHote(h, "/etc/sysctl.d")) return null;
+			if (!dossierHoteGuet(h, "/etc/sysctl.d")) return null;
 			var v = etatHote(h).sysctl[x[0]];
 			return x[0] === "kernel.kptr_restrict" ? +v >= 1 : String(v) === x[1];
 		}, function(h){ return x[0] + " (exp: " + x[1] + ", now: " + etatHote(h).sysctl[x[0]] + ")"; });
 	});
 	D("AUTH-9204", "Users, Groups and Authentication", "Checking users with an UID of zero", 4, "warning", "Multiple users with UID 0 found in /etc/passwd", function(h){
 		if (!fichierExiste(h, "/etc/passwd")) return null;
-		return comptesHote(h).passwd.filter(function(u){ return u.uid === 0; }).length <= 1;
+		return comptesHoteGuet(h).passwd.filter(function(u){ return u.uid === 0; }).length <= 1;
 	});
 	D("AUTH-9283", "Users, Groups and Authentication", "Checking for accounts without password", 4, "warning", "Found accounts without password: lock them or set a password", function(h){
 		if (!fichierExiste(h, "/etc/shadow")) return null;
-		var c = comptesHote(h);
+		var c = comptesHoteGuet(h);
 		return !Object.keys(c.shadow).some(function(n){ return c.shadow[n] === ""; }) && !c.passwd.some(function(u){ return u.mdp === ""; });
-	}, function(h){ var c = comptesHote(h); return "Accounts: " + Object.keys(c.shadow).filter(function(n){ return c.shadow[n] === ""; }).join(", "); });
+	}, function(h){ var c = comptesHoteGuet(h); return "Accounts: " + Object.keys(c.shadow).filter(function(n){ return c.shadow[n] === ""; }).join(", "); });
 	D("AUTH-9286", "Users, Groups and Authentication", "Checking user password aging (maximum)", 2, "suggestion", "Configure maximum password age in /etc/login.defs", function(h){
 		var v = lireLoginDefs(h, "PASS_MAX_DAYS");
 		if (v === null && !fichierExiste(h, "/etc/login.defs")) return null;
@@ -4445,16 +4448,16 @@ function scoreLynis(h, filtre){
 		return lignesConf(t).some(function(l){ return /^\s*auth\s+required\s+pam_wheel\.so/.test(l.texte); });
 	});
 	D("AUTH-9252", "Users, Groups and Authentication", "Checking sudoers for NOPASSWD: ALL", 3, "warning", "A sudo rule grants every command without password", function(h){
-		var fichiers = ["/etc/sudoers"].concat(fichiersDuDossier(h, "/etc/sudoers.d", "*").map(function(f){ return f.chemin; }));
+		var fichiers = ["/etc/sudoers"].concat(fichiersDuDossierGuet(h, "/etc/sudoers.d", "*").map(function(f){ return f.chemin; }));
 		if (!fichierExiste(h, "/etc/sudoers")) return null;
 		return !fichiers.some(function(c){ return lignesConf(lireFichierHote(h, c) || "").some(function(l){ return /NOPASSWD\s*:\s*ALL\s*$/.test(l.texte); }); });
 	});
 	D("AUTH-9254", "Users, Groups and Authentication", "Checking permissions of /etc/sudoers.d files", 1, "suggestion", "Files in /etc/sudoers.d should have mode 0440", function(h){
-		if (!dossierHote(h, "/etc/sudoers.d")) return null;
-		return fichiersDuDossier(h, "/etc/sudoers.d", "*").every(function(f){ return !f.item || f.nom === "README" || f.item.mode === "r--r-----"; });
+		if (!dossierHoteGuet(h, "/etc/sudoers.d")) return null;
+		return fichiersDuDossierGuet(h, "/etc/sudoers.d", "*").every(function(f){ return !f.item || f.nom === "README" || f.item.mode === "r--r-----"; });
 	});
 	D("SHLL-6220", "Shells", "Checking session timeout (TMOUT)", 1, "suggestion", "Set a read-only TMOUT in /etc/profile.d to close idle sessions", function(h){
-		var textes = [lireFichierHote(h, "/etc/profile") || ""].concat(fichiersDuDossier(h, "/etc/profile.d", "*.sh").map(function(f){ return lireFichierHote(h, f.chemin); }));
+		var textes = [lireFichierHote(h, "/etc/profile") || ""].concat(fichiersDuDossierGuet(h, "/etc/profile.d", "*.sh").map(function(f){ return lireFichierHote(h, f.chemin); }));
 		var tout = textes.join("\n");
 		return /(^|\s)TMOUT=\d+/m.test(tout) && /(readonly\s+TMOUT|declare\s+-r\s+TMOUT|typeset\s+-r\s+TMOUT|readonly\s+-?\s*TMOUT)/.test(tout);
 	});
@@ -4466,7 +4469,7 @@ function scoreLynis(h, filtre){
 		return !!m && ["nodev", "nosuid", "noexec"].every(function(o){ return m.options.indexOf(o) > -1; });
 	}, function(h){ var m = montages(h).filter(function(x){ return x.cible === "/tmp"; })[0]; return "/tmp: " + (m ? m.options.join(",") : "not mounted separately"); });
 	D("FILE-6362", "File systems", "Checking /tmp sticky bit", 2, "warning", "Set the sticky bit on /tmp (chmod +t /tmp)", function(h){
-		var t = dossierHote(h, "/tmp");
+		var t = dossierHoteGuet(h, "/tmp");
 		if (!t) return null;
 		return /[tT]$/.test(t.mode);
 	});
@@ -4535,29 +4538,29 @@ function scoreLynis(h, filtre){
 		if (!fichierExiste(h, "/etc/rsyslog.conf")) return null;
 		return serviceActif(h, "rsyslog") && (etatHote(h).rsyslog.conf || []).some(function(r){ return !!r.distant; });
 	});
-	D("ACCT-9628", "Accounting", "Checking auditd", 2, "suggestion", "Enable auditd to collect audit information", function(h){ return dossierHote(h, "/etc/audit") ? serviceActif(h, "auditd") : false; });
+	D("ACCT-9628", "Accounting", "Checking auditd", 2, "suggestion", "Enable auditd to collect audit information", function(h){ return dossierHoteGuet(h, "/etc/audit") ? serviceActif(h, "auditd") : false; });
 	D("ACCT-9630", "Accounting", "Checking audit rules (/etc/passwd, /etc/shadow)", 3, "suggestion", "Audit daemon is enabled with an empty ruleset. Disable the daemon or define rules", function(h){
-		if (!dossierHote(h, "/etc/audit")) return false;
+		if (!dossierHoteGuet(h, "/etc/audit")) return false;
 		var r = etatHote(h).audit.regles;
 		return ["/etc/passwd", "/etc/shadow"].every(function(c){ return r.some(function(x){ return x.type === "w" && (x.chemin === c || x.chemin === "/etc") && x.perms.indexOf("w") > -1; }); });
 	});
 	D("TIME-3104", "Time and Synchronization", "Checking for a running NTP daemon or client", 2, "suggestion", "Use NTP daemon or NTP client to prevent time issues", function(h){ return serviceNtp(h) ? horlogeSynchronisee(h) : null; });
 	D("MACF-6208", "Security frameworks", "Checking AppArmor profiles (enforce mode)", 2, "suggestion", "Put AppArmor profiles in enforce mode (aa-enforce)", function(h){
-		if (!dossierHote(h, "/etc/apparmor.d")) return null;
+		if (!dossierHoteGuet(h, "/etc/apparmor.d")) return null;
 		var p = etatHote(h).apparmor || {}, noms = Object.keys(p);
 		return noms.length > 0 && noms.every(function(n){ return p[n].mode === "enforce"; });
 	}, function(h){ var p = etatHote(h).apparmor || {}; return "Complain mode: " + Object.keys(p).filter(function(n){ return p[n].mode !== "enforce"; }).join(", "); });
 	D("FINT-4350", "Software: file integrity", "Checking file integrity tool (AIDE database)", 2, "suggestion", "Install a file integrity tool to monitor changes to critical and sensitive files", function(h){
 		if (typeof SOURCES_GUET.aideBase === "function"){ try { var r = SOURCES_GUET.aideBase(h); if (r !== null && r !== undefined) return !!r; } catch (e){} }
-		if (!dossierHote(h, "/etc/aide") && !fichierExiste(h, "/etc/aide/aide.conf")) return null;
+		if (!dossierHoteGuet(h, "/etc/aide") && !fichierExiste(h, "/etc/aide/aide.conf")) return null;
 		return fichierExiste(h, "/var/lib/aide/aide.db") || fichierExiste(h, "/var/lib/aide/aide.db.gz");
 	});
 	D("TOOL-5190", "Software: System tooling", "Checking intrusion prevention (fail2ban sshd jail)", 2, "suggestion", "Enable fail2ban with the sshd jail", function(h){
-		if (!dossierHote(h, "/etc/fail2ban")) return false;
+		if (!dossierHoteGuet(h, "/etc/fail2ban")) return false;
 		return serviceActif(h, "fail2ban") && !!(etatHote(h).f2b.conf || {}).sshd;
 	});
 	D("FILE-7524", "File Permissions", "Checking permissions of /etc/shadow", 3, "warning", "Restrict /etc/shadow to 640 root:shadow", function(h){
-		var s = fichierHote(h, "/etc/shadow");
+		var s = fichierHoteGuet(h, "/etc/shadow");
 		if (!s) return null;
 		return s.owner === "root" && ["rw-r-----", "rw-------", "r--r-----", "r--------", "---------"].indexOf(s.mode) > -1;
 	});
@@ -4634,7 +4637,7 @@ Shell.sorts.lynis = function(args, io){
 		"  ---------------------------------------------------", "  Profiles:                  /etc/lynis/default.prf", "  Log file:                  /var/log/lynis.log",
 		"  Report file:               /var/log/lynis-report.dat", "  Report version:            1.0", "  ---------------------------------------------------", "  Auditor:                   [Not Specified]",
 		"  Language:                  en", "  Test category:             all", "  Test group:                all", "  ---------------------------------------------------");
-	var journal = [dateIso(d) + " Starting Lynis " + VERSION_LYNIS + " with PID " + (4000 + state.nbCommandes % 4000) + ", build date 2021-07-29", dateIso(d) + " ===---------------------------------------------------------------==="];
+	var journal = [dateIsoGuet(d) + " Starting Lynis " + VERSION_LYNIS + " with PID " + (4000 + state.nbCommandes % 4000) + ", build date 2021-07-29", dateIsoGuet(d) + " ===---------------------------------------------------------------==="];
 	var sections = ORDRE_SECTIONS_LYNIS.slice();
 	r.detail.forEach(function(x){ if (sections.indexOf(x.controle.section) === -1) sections.push(x.controle.section); });
 	sections.forEach(function(s){
@@ -4645,8 +4648,8 @@ Shell.sorts.lynis = function(args, io){
 			var c = x.controle, statut = x.ok ? etat("OK", C.vert) : (c.gravite === "warning" ? etat("WARNING", C.rouge) : etat("SUGGESTION", C.jaune));
 			var lib = "  - " + c.libelle;
 			L.push(lib.length < 62 ? completerDroite(lib, 62) + statut : lib + " " + statut);
-			journal.push(dateIso(d) + " Performing test ID " + c.id + " (" + c.libelle + ")");
-			journal.push(dateIso(d) + " Result: " + (x.ok ? "OK" : (c.gravite === "warning" ? "Warning: " : "Suggestion: ") + c.conseil + (x.details ? " (" + x.details + ")" : "")));
+			journal.push(dateIsoGuet(d) + " Performing test ID " + c.id + " (" + c.libelle + ")");
+			journal.push(dateIsoGuet(d) + " Result: " + (x.ok ? "OK" : (c.gravite === "warning" ? "Warning: " : "Suggestion: ") + c.conseil + (x.details ? " (" + x.details + ")" : "")));
 		});
 	});
 	var warnings = r.detail.filter(function(x){ return x.ok === false && x.controle.gravite === "warning"; });
@@ -4677,20 +4680,20 @@ Shell.sorts.lynis = function(args, io){
 	L.push("  Follow-up:", "  ----------------------------", "  - Show details of a test (lynis show details TEST-ID)", "  - Check the logfile for all details (less /var/log/lynis.log)", "",
 		"================================================================================", "", "  Lynis security scan details:", "",
 		"  Hardening index : " + r.score + " [" + completerDroite(barre, 20) + "]", "  Tests performed : " + r.controles.length, "  Plugins enabled : 0", "", "  Components:",
-		"  - Firewall               [" + (r.detail.some(function(x){ return x.id === "FIRE-4590" && x.ok; }) ? "V" : "X") + "]", "  - Malware scanner        [" + (fichierHote(h, "/etc/rkhunter.conf") ? "V" : "X") + "]", "",
+		"  - Firewall               [" + (r.detail.some(function(x){ return x.id === "FIRE-4590" && x.ok; }) ? "V" : "X") + "]", "  - Malware scanner        [" + (fichierHoteGuet(h, "/etc/rkhunter.conf") ? "V" : "X") + "]", "",
 		"  Scan mode:", "  Normal [" + (io.sudo ? "V" : " ") + "]  Forensics [ ]  Integration [ ]  Pentest [" + (io.sudo ? " " : "V") + "]", "", "  Lynis modules:", "  - Compliance status      [?]",
 		"  - Security audit         [V]", "  - Vulnerability scan     [V]", "", "  Files:", "  - Test and debug information      : /var/log/lynis.log",
 		"  - Report data                     : /var/log/lynis-report.dat", "", "================================================================================");
-	journal.push(dateIso(d) + " Hardening index : [" + r.score + "] [" + completerDroite(barre, 20) + "]", dateIso(d) + " Tests performed : " + r.controles.length, dateIso(d) + " Lynis " + VERSION_LYNIS + " finished");
+	journal.push(dateIsoGuet(d) + " Hardening index : [" + r.score + "] [" + completerDroite(barre, 20) + "]", dateIsoGuet(d) + " Tests performed : " + r.controles.length, dateIsoGuet(d) + " Lynis " + VERSION_LYNIS + " finished");
 	var e = etatHote(h);
 	if (io.sudo){
 		e.lynis = { score: r.score, date: d.getTime(), controles: r.controles, journal: journal };
 		poserFichierHote(h, "/var/log/lynis.log", journal.join("\n"), { mode: "rw-r-----" });
-		poserFichierHote(h, "/var/log/lynis-report.dat", ["# Lynis Report", "report_version_major=1", "report_version_minor=0", "report_datetime_start=" + dateIso(d), "auditor=[Not Specified]",
+		poserFichierHote(h, "/var/log/lynis-report.dat", ["# Lynis Report", "report_version_major=1", "report_version_minor=0", "report_datetime_start=" + dateIsoGuet(d), "auditor=[Not Specified]",
 			"lynis_version=" + VERSION_LYNIS, "os=Linux", "os_name=Debian", "os_version=12", "hostname=" + h, "hardening_index=" + r.score, "lynis_tests_done=" + r.controles.length]
 			.concat(warnings.map(function(x){ return "warning[]=" + idAffiche(x.id) + "|" + x.controle.conseil + "|" + (x.details || "-") + "|-|"; }))
 			.concat(suggestions.map(function(x){ return "suggestion[]=" + idAffiche(x.id) + "|" + x.controle.conseil + "|" + (x.details || "-") + "|-|"; }))
-			.concat(["report_datetime_end=" + dateIso(d)]).join("\n"), { mode: "rw-r-----" });
+			.concat(["report_datetime_end=" + dateIsoGuet(d)]).join("\n"), { mode: "rw-r-----" });
 	} else if (e.lynis) e.lynis.journal = e.lynis.journal || journal;
 	GameEvents.fire({ type: "lynis", hote: h, score: r.score, controles: r.controles, sudo: !!io.sudo });
 	var texte = discret ? warnings.map(function(x){ return "  ! " + x.controle.conseil + " [" + idAffiche(x.id) + "]"; }).concat(["  Hardening index : " + r.score + " [" + completerDroite(barre, 20) + "]"]).join("\n") : L.join("\n");
