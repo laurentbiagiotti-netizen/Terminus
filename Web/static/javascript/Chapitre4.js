@@ -291,89 +291,17 @@ ORDRE_DES_SORTS_5.forEach(function(s){ if (MANUEL[s]) delete MANUEL[s].horsBarem
 /* Les huit maîtres (prénoms des inventeurs de leurs outils)           */
 /* ------------------------------------------------------------------ */
 
-var Henry = new Item("Henry",
-	"« Henry, maître des Runes. Une rune, c'est une expression régulière : un dessin qui dit quelles lignes retenir.\n\n" +
-	"  grep -E \"motif\"      cherche avec les runes étendues (| pour « ou », () pour grouper, + pour « au moins un »)\n" +
-	"  grep -o \"motif\"      n'affiche que ce qui correspond, pas toute la ligne\n" +
-	"  grep -w \"mot\"        le mot entier, pas un bout d'un autre mot\n" +
-	"  grep -c \"motif\"      compte les lignes qui correspondent\n" +
-	"  [[:digit:]] [[:alpha:]]   les classes POSIX : un chiffre, une lettre\n\n" +
-	"La Nuée a une signature : ses requêtes viennent de la plage " + PLAGE_NUEE + "x.y, et portent l'agent " + MARQUE_NUEE + ".\n" +
-	"Le journal d'accès du serveur archives est dans /var/log/acces.log. Retiens d'abord les lignes de la Nuée, puis leurs adresses uniques. »",
-	"item_professor.gif").personnage();
-
-var Alfred = new Item("Alfred",
-	"« Alfred, maître de la Divination. awk lit un registre colonne par colonne : $1 le premier champ, $NF le dernier.\n\n" +
-	"  awk '{ s += $4 } END { print s }'        additionne la 4e colonne\n" +
-	"  awk '$3 ~ /motif/ { ... }'                n'agit que si la 3e colonne correspond\n" +
-	"  awk '{ t[$2] += $4 } END { for (m in t) print m, t[m] }'   un total par clé (tableau associatif)\n\n" +
-	"Le journal du proxy est dans /var/log/proxy.log : heure, ip_source, ip_dest, octets, url.\n" +
-	"Mesure ce que la Nuée a emporté (les octets vers " + PLAGE_NUEE + "...), puis les machines qui ont le plus envoyé. »",
-	"item_professor.gif").personnage();
-
-var Lee = new Item("Lee",
-	"« Lee, maître de la Transmutation. sed transforme un texte d'un trait, partout à la fois.\n\n" +
-	"  sed -E 's/motif/remplacement/g'    remplace (g : chaque occurrence de la ligne)\n" +
-	"  sed -i 'commande' FICHIER          modifie le fichier sur place\n" +
-	"  sed '/motif/d'                      supprime les lignes qui correspondent\n\n" +
-	"Deux travaux pour la CNIL et l'éradication :\n" +
-	"- l'export brut (/srv/edr/export-brut.txt) contient des mails et des numéros d'étudiant : on MINIMISE avant de transmettre. Chaque mail devient [mail], chaque numéro ETU-XXXX.\n" +
-	"- la Nuée a trafiqué /etc/archives.conf : une ligne exec_hook de trop, et une valeur changée. On retire la ligne et on rétablit la valeur, sans abîmer le reste. »",
-	"item_professor.gif").personnage();
-
-var Stephen = new Item("Stephen",
-	"« Stephen, maître des Grimoires. jq lit le JSON : des objets {clé: valeur}, des tableaux [ ... ].\n\n" +
-	"  jq '.' f.json                         le JSON, bien présenté\n" +
-	"  jq -r '.[] | .machine'                un champ de chaque élément (-r : sans guillemets)\n" +
-	"  jq -r '.[] | select(.gravite==\"critique\") | .machine'   un filtre\n" +
-	"  jq -r 'group_by(.machine)[] | [.[0].machine, length] | @csv'   un CSV par groupe\n\n" +
-	"L'export de l'antivirus est dans /srv/edr/alertes.json. Donne à Grace la liste des machines en alerte CRITIQUE (unique, triée), puis un tableau machine,alertes. »",
-	"item_professor.gif").personnage().enseigne("jq");
-
-var Doug = new Item("Doug",
-	"« Doug, maître de l'Alchimie. On relie les sorts en chaînes, et on fait travailler l'un POUR l'autre.\n\n" +
-	"  ... | xargs CMD           lance CMD sur chaque mot reçu ; xargs -I {} CMD {} place chaque élément\n" +
-	"  comm -23 A B              ce qui est dans A mais pas dans B (fichiers triés)\n" +
-	"  join A B                  réunit deux fichiers sur une clé commune\n" +
-	"  paste A B                 colle deux colonnes côte à côte\n" +
-	"  column -t                 aligne un tableau ; nl numérote ; fold plie les lignes longues ; shuf mélange\n\n" +
-	"Deux chasses :\n" +
-	"- les comptes fantômes : compare les comptes du serveur (/etc/passwd) au registre du personnel (/srv/personnel.csv), et verrouille les intrus.\n" +
-	"- la quarantaine : tous les fichiers déposés par la Nuée cette nuit (ils ont un propriétaire à part) vont dans /quarantaine, sans en oublier ni en détruire. »",
-	"item_artisan.gif").personnage().enseigne("xargs", "paste", "join", "comm", "column", "nl", "fold", "shuf");
-
-var Paul = new Item("Paul",
-	"« Paul, maître de la Chronomancie. Tout ce qui est programmé se lit et se désamorce.\n\n" +
-	"  systemctl list-timers              les minuteurs de systemd et leur prochain déclenchement\n" +
-	"  sudo systemctl disable --now X.timer   arrête un minuteur ET l'empêche de revenir\n" +
-	"  atq                                la file des tâches « at » ;  sudo atrm N : en retirer une\n" +
-	"  echo \"cmd\" | at 23:00              planifier une tâche ponctuelle\n" +
-	"  crontab -e / crontab -l / crontab -r   les tâches répétées (minute heure jour mois jour-semaine)\n\n" +
-	"La bombe de la Nuée a TROIS déclencheurs qui visent minuit : un timer au nom anodin (maj-nocturne.timer), " +
-	"une tâche at de secours, et une ligne de crontab d'un compte fantôme. Désamorce les trois : une seule oubliée, et la bombe sonne.\n" +
-	"Ensuite, programme la VRAIE sauvegarde nocturne de l'école : /usr/local/bin/sauvegarde.sh tous les jours à 2 h 30. »",
-	"item_professor.gif").personnage().enseigne("at", "atq", "atrm");
-
-var Andrew = new Item("Andrew",
-	"« Andrew, maître des Archives. Le Miroir copie à l'identique, l'Aiguille recoud.\n\n" +
-	"  rsync -a SRC/ DST/            copie fidèle (droits, dates) ;  --delete : DST devient l'exact reflet de SRC\n" +
-	"  rsync -n ...                  à blanc d'abord, pour voir ce qui changerait\n" +
-	"  patch < correctif.diff        applique un correctif au format unifié ;  diff -u A B : le fabrique\n" +
-	"  tac                           un fichier à l'envers ;  split : le découper\n\n" +
-	"La Nuée a trafiqué les archives (/srv/archives). La sauvegarde hors ligne (/srv/sauvegarde-hors-ligne) est intacte : " +
-	"restaure /srv/archives à l'identique depuis elle. Puis Grace t'enverra correctif.diff pour le script d'entrée (/usr/local/bin/depot.sh) : applique-le avec patch. »",
-	"item_professor.gif").personnage().enseigne("tac", "split", "patch", "rsync");
-
-var Brian = new Item("Brian",
-	"« Brian, maître de l'Invocation. Un script, c'est ton propre sort : une liste d'ordres dans un fichier.\n\n" +
-	"  read VAR             lit une ligne ;  printf \"%s\\n\" x : affiche proprement\n" +
-	"  for f in ...; do ... done     une boucle ;  if [ -e \"$f\" ]; then ... fi : une condition\n" +
-	"  nettoyer() { ... }   une fonction ;  \"$1\" : le premier argument ;  exit 1 : échouer exprès\n" +
-	"  set -e               s'arrêter à la première erreur ;  seq, basename, dirname, expr : les petits outils\n\n" +
-	"Écris ~/academie/nettoyage.sh : pour chaque fichier *.nuee d'un dossier, s'il existe, déplace-le en /quarantaine et compte. " +
-	"Il doit contenir une FONCTION, une BOUCLE et une CONDITION, être exécutable (chmod +x) et tourner sans erreur. " +
-	"Puis fais-lui prendre le dossier en argument ($1), refuser de tourner sans argument (exit 1), et set -e. »",
-	"item_professor.gif").personnage().enseigne("read", "printf", "seq", "basename", "dirname", "expr", "sleep");
+/* Leur texte est VIVANT (Academie.js) : entrée en scène, métaphore, syntaxe sur les registres de leur aile,
+   mission, réaction aux erreurs fréquentes, félicitations. Ici, on ne pose que les personnages et leurs sorts. */
+function maitre(nom, image){ return new Item(nom, "", image || "item_professor.gif").personnage(); }
+var Henry = maitre("Henry");
+var Alfred = maitre("Alfred");
+var Lee = maitre("Lee");
+var Stephen = maitre("Stephen").enseigne("jq");
+var Doug = maitre("Doug", "item_artisan.gif").enseigne("xargs", "paste", "join", "comm", "column", "nl", "fold", "shuf");
+var Paul = maitre("Paul").enseigne("at", "atq", "atrm");
+var Andrew = maitre("Andrew").enseigne("tac", "split", "patch", "rsync");
+var Brian = maitre("Brian").enseigne("read", "printf", "seq", "basename", "dirname", "expr", "sleep");
 
 var LES_MAITRES = [
 	[AileRunes, Henry], [AileDivination, Alfred], [AileTransmutation, Lee], [AileGrimoires, Stephen],
@@ -381,13 +309,8 @@ var LES_MAITRES = [
 ];
 LES_MAITRES.forEach(function(x){ x[0].addItem(x[1]); });
 
-var Frances = new Item("Frances",
-	"Frances est là, en B1 depuis la Crypte, et elle fulmine.\n\n" +
-	"« Ils ont pris MON nom. Mes notes ont fuité sur un forum, et une bande de rançonneurs, la Nuée, s'en sert en se faisant appeler le Corbeau. " +
-	"Sauf que moi, je n'ai jamais rien cassé. Eux, si.\n\n" +
-	"Ma bombe à moi n'existait pas. Celle-là, elle compte les minutes : elle chiffrera les archives à minuit. Cherche ce qui est programmé.\n\n" +
-	"Commence par lire leur AVIS.txt, posé partout. Ensuite, suis les maîtres aile par aile, et la radio de Grace. Je reste avec toi. »",
-	"item_frances.gif").personnage();
+/* Frances : son texte grandit au fil de la nuit (Academie.js). */
+var Frances = new Item("Frances", "", "item_frances.gif").personnage();
 Academie.addItem(Frances);
 
 var AvisNuee = new Item("AVIS.txt",
@@ -596,21 +519,21 @@ var QUETES_CH4 = [
 	{ id: "d_alchimie_quarantaine", titre: "Alchimie : mettre en quarantaine les fichiers de la Nuée",
 	  indice: "Les fichiers déposés par la Nuée appartiennent à l'utilisateur « nuee ». find -user nuee sous /srv et /tmp, puis mv vers /quarantaine (find -exec ou xargs)." },
 	{ id: "d_chrono_bombe", titre: "Chronomancie : désamorcer la bombe (timer, at, cron)",
-	  indice: "Aile de la Chronomancie : Paul explique. Trois déclencheurs : le timer maj-nocturne (systemctl disable --now), une tâche at (atq puis atrm), et la crontab du fantôme " + FANTOME_CRON + " (crontab -u -r). Les trois." },
+	  indice: "Aile de la Chronomancie : Paul explique. Trois déclencheurs sur archives : un timer systemd, une tâche at, et la crontab d'un compte fantôme. Cherche-les (list-timers, atq, crontab -u), puis neutralise les trois." },
 	{ id: "d_chrono_sauvegarde", titre: "Chronomancie : programmer la vraie sauvegarde nocturne",
-	  indice: "Une ligne de crontab qui lance /usr/local/bin/sauvegarde.sh tous les jours à 2 h 30 : « 30 2 * * * /usr/local/bin/sauvegarde.sh » (crontab -e, ou | crontab -)." },
+	  indice: "Une ligne de crontab qui lance /usr/local/bin/sauvegarde.sh tous les jours à 2 h 30 : cinq champs de temps (minute heure jour mois jour-de-semaine), puis la commande. Paul a des exemples." },
 	{ id: "d_archives_restaurer", titre: "Archives : restaurer /srv/archives (rsync)",
 	  indice: "Aile des Archives : Andrew explique. Remets /srv/archives à l'identique depuis /srv/sauvegarde-hors-ligne : rsync -a --delete (teste d'abord avec -n)." },
 	{ id: "d_archives_patch", titre: "Archives : appliquer le correctif de Grace (patch)",
-	  indice: "Grace a déposé correctif.diff dans ta Maison (~). Sur archives, cd /usr/local/bin, puis sudo patch depot.sh < ~/correctif.diff." },
+	  indice: "Grace a déposé correctif.diff dans ta Maison (~). Sur archives, applique-le au script /usr/local/bin/depot.sh avec patch, avec les droits de root. Andrew montre comment, sur sa formule." },
 	{ id: "d_script_nettoyage", titre: "Invocation : écrire le script de nettoyage",
 	  indice: "Aile de l'Invocation : Brian explique. Écris ~/academie/nettoyage.sh (une fonction, une boucle, une condition) qui déplace les *.nuee de /srv/depots vers /quarantaine, rends-le exécutable, et lance-le sur archives." },
 	{ id: "d_script_arguments", titre: "Invocation : un argument et un code de retour",
 	  indice: "Fais prendre à nettoyage.sh le dossier en argument ($1), refuse de tourner sans argument (exit 1), ajoute set -e. Lance-le sans argument (il échoue), puis avec /srv/depots." },
 	{ id: "d_corbeau", titre: "Arrêter le script de la Nuée (le dernier Corbeau)",
-	  indice: "Le dernier « Corbeau » est le service nuee-regen qui redépose ses résidus : sudo systemctl disable --now nuee-regen, puis relance ton script pour qu'il ne reste plus un seul *.nuee." },
+	  indice: "Le dernier « Corbeau » est le service nuee-regen qui redépose ses résidus : arrête-le ET empêche-le de revenir (systemctl, comme au chapitre 3), puis relance ton script pour qu'il ne reste plus un seul *.nuee." },
 	{ id: "d_fin", titre: "Rédiger le retour d'expérience et le remettre à Laurent",
-	  indice: "Écris ~/academie/rex.txt (chronologie, indicateurs, volume exfiltré, données concernées, mesures prises) avec un here-document, puis dépose-le : cp ~/academie/rex.txt ~/Cybersup/SalleServeurs/Academie/BoiteDeLaurent." }
+	  indice: "Écris ~/academie/rex.txt avec cinq rubriques (chronologie, indicateurs, volume exfiltré, données concernées, mesures prises) et au moins un chiffre ou une adresse de la nuit, puis dépose une copie dans la BoiteDeLaurent, au fond de l'Académie." }
 ];
 var QUETES_SECONDAIRES_CH4 = [];   // les 50 secondaires arrivent en phase B
 
@@ -639,7 +562,7 @@ var INDICES_CH4 = {
 
 /* La radio de Grace : un conseil par étape. */
 var CONSEILS_CH4 = {
-	d_frances: "Ici Grace, de la WarRoom. La Nuée a frappé le serveur archives cette nuit. Commence par Frances, puis lis leur AVIS.txt : il annonce la bombe de minuit.",
+	d_frances: "ici la WarRoom. La Nuée a frappé le serveur archives cette nuit. Commence par Frances, puis lis leur AVIS.txt : il annonce la bombe de minuit.",
 	d_runes_traces: "Première chose : mesurer. Aile des Runes, chez Henry. Sur archives, le journal d'accès garde la trace de la Nuée (plage " + PLAGE_NUEE + "). Isole ces lignes.",
 	d_runes_ioc: "Bien. Maintenant les indicateurs : les adresses uniques de la Nuée. On les transmettra aux autorités.",
 	d_awk_volume: "Aile de la Divination, chez Alfred. Le proxy sait combien d'octets sont partis vers eux : additionne-les.",
@@ -800,7 +723,9 @@ function valider(){
 	var mac = lireAcademie("machines.txt");
 	if (!state.quests["d_jq_alertes"] && mac !== null && memeEnsemble(lignesPropres(mac), edrMachinesCritiques())) state.complete("d_jq_alertes");
 	var csv = lireAcademie("alertes.csv");
-	if (!state.quests["d_jq_rapport"] && csv !== null && memeOrdre(lignesPropres(csv), edrCsv())) state.complete("d_jq_rapport");
+	// Le CSV : une ligne par machine, dans n'importe quel ordre, guillemets et espaces facultatifs.
+	var normeCsv = function(l){ return l.replace(/["\s]/g, ""); };
+	if (!state.quests["d_jq_rapport"] && csv !== null && memeEnsemble(lignesPropres(csv).map(normeCsv), edrCsv().map(normeCsv))) state.complete("d_jq_rapport");
 
 	if (!state.quests["d_alchimie_fantomes"]){
 		var fant = lireAcademie("fantomes.txt");
@@ -870,8 +795,6 @@ function verifierChapitre4(){
 		}
 	}
 	valider();
-	if (RadioGrace.getText() !== texteRadioCh4()) RadioGrace.cmd_text["less"] = texteRadioCh4();
-	if (Horloge.getText() !== texteHorloge()) Horloge.cmd_text["less"] = texteHorloge();
 	if (state.has("victoireCh4")) CertificatAvance.cmd_text["less"] = state.texteDuCertificat5();
 }
 

@@ -1103,6 +1103,7 @@ GameState.prototype.sectionDuJournal = function(lignes, chapitre, titre, quetes,
 		else if (this.seen[s2.id]) lignes.push("    [ ] " + s2.titre);
 		else inconnues++;
 	}
+	if (inconnues > 0 && chapitre === 5) lignes.push(C.gris("    ... et " + inconnues + " autre" + (inconnues > 1 ? "s" : "") + " : les défis des maîtres, à découvrir en leur parlant aile par aile."));
 	if (inconnues > 0 && chapitre === 3) lignes.push(C.gris("    ... et " + inconnues + " autre" + (inconnues > 1 ? "s" : "") + " à découvrir dans les notes des machines."));
 	lignes.push(C.cyan("  Note du chapitre " + numeroAffiche(chapitre) + " : " + this.noteTexte(chapitre)) + C.gris("   " + this.xpNet(chapitre) + " XP sur " + this.xpMaxDe(chapitre)));
 };
