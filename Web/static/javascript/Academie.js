@@ -189,7 +189,7 @@ var SALUT_SH =
 	"    printf \"Bonjour %s, bienvenue a l'Academie\\n\" \"$1\"\n" +
 	"}\n" +
 	"if [ -z \"$1\" ]; then\n" +
-	"    echo \"usage : salut.sh LISTE\" >&2\n" +
+	"    echo \"usage : salut.sh LISTE\"\n" +
 	"    exit 1\n" +
 	"fi\n" +
 	"n=0\n" +
@@ -248,7 +248,10 @@ var DEFIS_ARCANES = [
 	{ id: "s_d_grep_o", ecole: "runes", titre: "Runes : n'extraire du registre que les noms des élèves (grep -o)",
 	  appel: function(n, a, s){ var l = lignesSortie(s); return n === "grep" && (memeOrdre(l, RUNES.eleves) || memeOrdre(l, RUNES.eleves.map(function(e){ return e.substring(6); }))); } },
 	{ id: "s_d_grep_C", ecole: "runes", titre: "Runes : montrer l'explosion avec la ligne d'avant et celle d'après (grep -C)",
-	  appel: function(n, a, s){ var l = lignesSortie(s); return n === "grep" && [RUNES.avant, RUNES.explosion, RUNES.apres].every(function(x){ return l.indexOf(x) > -1; }); } },
+	  appel: function(n, a, s){
+		var l = lignesSortie(s), contexte = a.some(function(x){ return /^-[ABC]\d*$|^-\d+$|^--(context|after-context|before-context)/.test(x); });
+		return n === "grep" && contexte && [RUNES.avant, RUNES.explosion, RUNES.apres].every(function(x){ return l.indexOf(x) > -1; });
+	  } },
 	{ id: "s_d_grep_v", ecole: "runes", titre: "Runes : tout le registre, sauf les commentaires (grep -v)",
 	  appel: function(n, a, s){ return n === "grep" && memeOrdre(lignesSortie(s), RUNES.donnees); } },
 	{ id: "s_d_grep_classe", ecole: "runes", titre: "Runes : les codes de salle faits seulement de chiffres, avec une classe [[:digit:]]",
@@ -881,6 +884,8 @@ texteRadioCh4 = function(){
 texteVivant(RadioGrace, function(){ return texteRadioCh4(); });
 
 texteVivant(Horloge, function(){ return texteHorloge(); });
+/* Le certificat se lit toujours à jour (un défi réussi le tour même de la victoire y figure). */
+texteVivant(CertificatAvance, function(){ return state.has("victoireCh4") ? state.texteDuCertificat5() : ""; });
 Horloge.revele("s_d_avant_minuit");
 
 /* ------------------------------------------------------------------ */

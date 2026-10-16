@@ -606,5 +606,39 @@ jn.taper("cd Poste");
 jn.taper("echo 62");
 verifier(!jn.lire("state.quests.s_r_maisons"), "les colles se répondent dans le bâtiment B, pas ailleurs");
 
+// --- Une vieille sauvegarde, faite avant que le chapitre 4 existe, se recharge et ouvre l'Académie ---
+var vieux = {};
+var jv = nouveauMonde(vieux, 21);
+jouerJusqua(jv, "cat CertificatCyber");
+verifier(jv.lire("state.quests.c_rapport") === true, "vieille partie : la Crypte est finie");
+jv.lire("state.save()");
+var cle = Object.keys(vieux).filter(function(k){ return /^terminus-cybersup(-partie-.*)?$/.test(k) && /"quests"/.test(vieux[k]); })[0];
+var donnees = JSON.parse(vieux[cle]);
+// On efface tout ce que le chapitre 4 a ajouté à la sauvegarde, comme si elle datait d'avant lui.
+["xp5", "malus5", "debut5", "dateVictoire5", "ch4"].forEach(function(k){ delete donnees[k]; });
+if (donnees.flags) Object.keys(donnees.flags).filter(function(f){ return /^ch4|^victoireCh4/.test(f); }).forEach(function(f){ delete donnees.flags[f]; });
+Object.keys(donnees.quests || {}).filter(function(id){ return /^d_|^s_d_/.test(id); }).forEach(function(id){ delete donnees.quests[id]; });
+vieux[cle] = JSON.stringify(donnees);
+var jr = nouveauMonde(vieux);
+verifier(jr.lire("state.quests.c_rapport") === true, "vieille sauvegarde : la Crypte reste finie");
+jr.taper("ls");
+verifier(jr.lire("state.has('ch4Ouvert')") === true, "vieille sauvegarde : l'Académie s'ouvre après la Crypte");
+verifier(jr.lire("typeof state.ch4 === 'object' && state.ch4.horloge === 0"), "vieille sauvegarde : l'état de la nuit est créé, l'horloge à 20 h");
+verifier(jr.lire("state.xp5") === 0 && jr.lire("state.malus5") === 0, "vieille sauvegarde : l'XP du chapitre 4 part de zéro");
+verifier(jr.lire("SalleServeurs.getChildFromName('Academie') !== -1"), "vieille sauvegarde : l'escalier descend à l'Académie");
+contient(jr.taper("cd ~/Cybersup/SalleServeurs/Academie"), "Academie", "vieille sauvegarde : on descend à l'Académie");
+verifier(jr.lire("state.quests.d_entree") === true, "vieille sauvegarde : l'entrée dans l'Académie est comptée");
+contient(jr.taper("cat Frances"), "Nuée", "vieille sauvegarde : Frances parle de la Nuée");
+contient(jr.taper("grimoire"), "GRIMOIRE", "vieille sauvegarde : le grimoire s'ouvre");
+contient(jr.taper("quetes"), "Académie des Arcanes", "vieille sauvegarde : le journal montre le chapitre 4");
+verifier(jr.lire("state.chapitreEnCours()") === 5, "vieille sauvegarde : le chapitre en cours est l'Académie");
+verifier(jr.lire("state.quests.c_corbeau === true && state.xp2 === state.xpMax2()"), "vieille sauvegarde : la note de la Crypte n'a pas bougé");
+// Une sauvegarde d'avant la Crypte : l'Académie reste fermée, et le serveur archives introuvable.
+var jf = nouveauMonde({}, 22);
+jouerJusqua(jf, "less Laurent");
+verifier(jf.lire("state.has('ch4Ouvert')") === false, "avant la Crypte : l'Académie reste fermée");
+contient(jf.taper("grimoire"), "chapitre 4", "avant la Crypte : le grimoire explique qu'il s'ouvre plus tard");
+verifier(jf.lire("SalleServeurs.getChildFromName('Academie') === -1"), "avant la Crypte : pas d'escalier vers l'Académie");
+
 console.log(verifications + " vérifications, " + echecs + " échec" + (echecs > 1 ? "s" : ""));
 process.exit(echecs ? 1 : 0);

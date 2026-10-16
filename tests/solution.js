@@ -50,7 +50,16 @@ if (jeu.lire("state.xp2") !== jeu.lire("state.xpMax2()")){
 if (!jeu.lire("state.quests.d_fin")) problemes.push("le chapitre 4 (l'Académie) n'atteint pas la victoire (d_fin) ; dernier lieu : " + jeu.lire("current_room.room_name"));
 var principales5 = jeu.lire("QUETES_CH4.filter(function(q){ return !state.quests[q.id]; }).map(function(q){ return q.titre; }).join(' ; ')");
 if (principales5) problemes.push("étapes du chapitre 4 manquantes : " + principales5);
-if (jeu.lire("state.xp5 > state.xpMax5()")) problemes.push("le chapitre 4 dépasse son barème : " + jeu.lire("state.xp5") + " sur " + jeu.lire("state.xpMax5()"));
+var secondaires5 = jeu.lire("QUETES_SECONDAIRES_CH4.filter(function(q){ return !state.quests[q.id]; }).map(function(q){ return q.titre; }).join(' ; ')");
+if (secondaires5) problemes.push("défis du chapitre 4 (l'Académie) manquants : " + secondaires5);
+if (jeu.lire("QUETES_SECONDAIRES_CH4.length") !== 50) problemes.push("le chapitre 4 devrait compter 50 défis, il en a " + jeu.lire("QUETES_SECONDAIRES_CH4.length"));
+if (!jeu.lire("state.has('platine_ch4')")) problemes.push("le badge platine du chapitre 4 n'est pas gagné");
+if (jeu.lire("state.xp5") !== jeu.lire("state.xpMax5()")){
+	problemes.push("le chapitre 4 (l'Académie) n'atteint pas le score maximal : " + jeu.lire("state.xp5") + " sur " + jeu.lire("state.xpMax5()") + ". Sorts jamais lancés : [" +
+		jeu.lire("ORDRE_DES_SORTS_5.filter(function(x){ return !state.usages[x]; }).join(', ')") + "] ; lieux jamais visités : [" +
+		jeu.lire("lieuxVisitables(5).filter(function(l){ return !state.visited[l.id]; }).map(function(l){ return l.room_name; }).join(', ')") + "]");
+}
+if (jeu.lire("state.noteTexte(5)") !== "20 / 20") problemes.push("le chapitre 4 n'a pas 20 sur 20 : " + jeu.lire("state.noteTexte(5)"));
 if (jeu.lire("state.xp") !== jeu.lire("state.xpMax()")){
 	problemes.push("la solution n'atteint pas le score maximal. Sorts jamais lancés : [" +
 		jeu.lire("ORDRE_DES_SORTS.filter(function(x){ return !state.usages[x]; }).join(', ')") + "] ; lieux jamais visités : [" +
@@ -59,7 +68,7 @@ if (jeu.lire("state.xp") !== jeu.lire("state.xpMax()")){
 var sorts = jeu.lire("state.knownSpells().length + ' sur ' + tousLesSorts().length");
 
 console.log(commandes.length + " commandes jouées, " + sorts + " sorts appris, " +
-	jeu.lire("state.xp + ' XP sur ' + state.xpMax() + ', note ' + state.noteTexte() + ' ; chapitre 2 : ' + state.xp3 + ' XP sur ' + state.xpMax3() + ', note ' + state.noteTexte(3) + ' ; chapitre 3 : ' + state.xp2 + ' XP sur ' + state.xpMax2() + ', note ' + state.noteTexte(2)") + ".");
+	jeu.lire("state.xp + ' XP sur ' + state.xpMax() + ', note ' + state.noteTexte() + ' ; chapitre 2 : ' + state.xp3 + ' XP sur ' + state.xpMax3() + ', note ' + state.noteTexte(3) + ' ; chapitre 3 : ' + state.xp2 + ' XP sur ' + state.xpMax2() + ', note ' + state.noteTexte(2) + ' ; chapitre 4 : ' + state.xp5 + ' XP sur ' + state.xpMax5() + ', note ' + state.noteTexte(5)") + ".");
 if (problemes.length){
 	console.log("ÉCHEC :\n  " + problemes.join("\n  "));
 	process.exit(1);

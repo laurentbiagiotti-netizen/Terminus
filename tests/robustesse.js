@@ -40,7 +40,8 @@ var sorts = ["ls", "cd", "pwd", "less", "help", "man", "clear", "exit", "mv", "c
 	"ethtool", "hostnamectl", "dhclient", "nmcli", "netplan", "reboot", "wget", "host", "nslookup", "resolvectl", "iptables", "tcpdump",
 	"mtr", "openssl", "timedatectl", "telnet", "carte", "examen", "kamikaze", "verifier",
 	// Les sorts du chapitre 4 (SortsArcanes.js).
-	"jq", "xargs", "paste", "join", "comm", "column", "tac", "shuf", "split", "patch", "rsync", "at", "atq", "atrm"];
+	"jq", "xargs", "paste", "join", "comm", "column", "tac", "shuf", "split", "patch", "rsync", "at", "atq", "atrm",
+	"nl", "fold", "read", "printf", "seq", "basename", "dirname", "expr", "sleep", "grimoire", "badges", "quiz"];
 var options = ["-a", "-l", "-la", "-r", "-rf", "-n", "-n 3", "-9", "-s", "-c", "-i", "-v", "-u", "-d:", "-f1", "-f", "-x", "-tf", "-xf", "-cf",
 	"--help", "-", "--", "-z", "-c", "-d", "-tlnp", "-perm -4000", "-perm /u=s", "-perm", "-user root", "2>/dev/null", "2>err", "2>>err", "2>&1", "u-s", "4755", "+t", "-1", "-0", "-99999", "+x", "-x", "755", "000", "u+rwx", "o-r", "a=", "999", "-name", "-type", "d", "f", "-L", "-u sorcier",
 	"-exec cat {} \\;", "-exec rm {} +", "-exec", "{}", "\\;", "-delete", "-o", "!", "\\(", "\\)", "-size +1k", "-size -1", "-empty", "-maxdepth 1", "-mindepth 2", "-mmin -5",
@@ -67,7 +68,13 @@ var noms = [".", "..", "~", "/", "*", "?", ".*", "~/", "../..", "./.", "//", "a/
 	"http://intranet/planning.txt", "intranet:443", "FORWARD", "INPUT", "-D FORWARD 1", "-L FORWARD", "-A FORWARD -p tcp --dport 25 -j DROP", "port 23", "port 53",
 	"s_client -connect intranet:443", "x509 -noout -dates -in /etc/ssl/intranet.pem", "set-ntp true", "set-ntp", "apply", "try", "set ethernets.eth0.dhcp4=true",
 	"MX", "@10.0.92.53", "@routeur", "nginx", "apache2", "telnet.socket", "isc-dhcp-server", "--failed", "-xeu nginx", "/etc/resolv.conf", "/etc/hosts",
-	"/etc/netplan/01-poste.yaml", "~/Cybersup/BatimentB/Poste", "BatimentB", "Poste", "Radia", "--report", "-br", "-tulnp", "dns eth0 10.0.92.53", "query intranet", "25", "23", "-L", "-U", "corbeau", "maintenance", "-u sshd", "-d", "-c", "-k", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"];
+	"/etc/netplan/01-poste.yaml", "~/Cybersup/BatimentB/Poste", "BatimentB", "Poste", "Radia", "--report", "-br", "-tulnp", "dns eth0 10.0.92.53", "query intranet", "25", "23", "-L", "-U", "corbeau", "maintenance", "-u sshd", "-d", "-c", "-k", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+	// L'Académie des Arcanes (chapitre 4) : ses lieux, ses maîtres, ses registres, le serveur archives.
+	"~/Cybersup/SalleServeurs/Academie", "Academie", "Runes", "Divination", "Transmutation", "Grimoires", "Alchimie", "Chronomancie", "Archives", "Invocation",
+	"Reserve", "Parchemins", "BoiteDeLaurent", "Henry", "Alfred", "Lee", "Stephen", "Doug", "Paul", "Andrew", "Brian", "Frances", "Radio", "Horloge", "Bestiaire",
+	"registre-des-sorts.log", "potions.txt", "recettes.txt", "bibliotheque.json", "formule.txt", "amelioration.diff", "salut.sh", "liste-des-eleves.txt",
+	"archives", "/srv/archives", "/srv/sauvegarde-hors-ligne/", "/srv/depots", "/var/log/acces.log", "/var/log/proxy.log", "/srv/edr/alertes.json",
+	"/etc/archives.conf", "/usr/local/bin/depot.sh", "nuee-regen", "maj-nocturne.timer", "~/academie", "~/academie/nettoyage.sh", "~/correctif.diff", "-u nuee", "4h45", "04:45"];
 var liaisons = [" | ", " > ", " >> ", " ; ", " && ", " |", "| ", " || ", ">", " & "];
 
 function ligneAleatoire(){
@@ -90,15 +97,18 @@ var lignesJouees = 0;
 for (var i = 0; i < combien; i++){
 	// On repart régulièrement d'un monde neuf, tantôt vierge, tantôt entièrement débloqué.
 	if (i % 400 === 0){
-		jeu = (i / 400) % 3 === 2 ? mondeExamen() : nouveauMonde({});
-		if ((i / 400) % 3 === 1){
+		var mode = (i / 400) % 4;
+		jeu = mode === 2 ? mondeExamen() : nouveauMonde({});
+		// Le départ direct au chapitre 4 : l'Académie, la Nuée et sa bombe, bombardées elles aussi.
+		if (mode === 3) jeu.taper("chapitre 4", "oui");
+		if (mode === 1){
 			var jusque = Math.floor(hasard() * solution.length);
 			for (var s = 0; s <= jusque; s++){
 				jeu.jouerSolution(solution[s]);
 			}
 		}
-		// Les sorts du chapitre 4 (SortsArcanes.js), qu'aucun chapitre n'enseigne encore : on les accorde pour les bombarder aussi.
-		if ((i / 400) % 3 !== 0) jeu.lire("SORTS_ARCANES.forEach(function(s){ state.spells[s] = true; })");
+		// Les sorts avancés (SortsArcanes.js) : on les accorde pour les bombarder aussi, sans attendre les maîtres.
+		if (mode !== 0) jeu.lire("SORTS_ARCANES.forEach(function(s){ state.spells[s] = true; })");
 	}
 	var ligne = ligneAleatoire();
 	try {
@@ -111,6 +121,7 @@ for (var i = 0; i < combien; i++){
 		}
 		if (jeu.lire("state.xp > state.xpMax()")) plantages.push({ ligne: ligne, erreur: "XP au-dessus du maximum" });
 		if (jeu.lire("state.xp2 > state.xpMax2()")) plantages.push({ ligne: ligne, erreur: "XP du chapitre 2 au-dessus du maximum" });
+		if (jeu.lire("state.xp5 > state.xpMax5()")) plantages.push({ ligne: ligne, erreur: "XP du chapitre 4 (l'Académie) au-dessus du maximum" });
 	} catch (e){
 		plantages.push({ ligne: ligne, erreur: String(e && e.message) + "\n" + (e && e.stack ? e.stack.split("\n").slice(0, 6).join("\n") : String(e)) });
 		jeu = nouveauMonde({});
