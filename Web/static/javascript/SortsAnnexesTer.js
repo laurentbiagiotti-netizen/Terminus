@@ -402,7 +402,7 @@ function axOpensslEnc(args, io){
 			return ecrire(lignes.join("\n"), null, chiffre) + (o.p ? "" : "");
 		}
 		var texte = octets.map(function(x){ return String.fromCharCode(x); }).join("");
-		if (!o.sortie && io.tty) texte = texte.replace(/[\x00-\x1f\x7f-\xff]/g, "�");
+		if (!o.sortie && io.tty) texte = texte.replace(/[\x00-\x1f\x7f-\xff]/g, "\uFFFD");
 		return ecrire(texte, octets, chiffre);
 	};
 	if (o.pass){

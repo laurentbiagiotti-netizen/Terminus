@@ -1609,7 +1609,7 @@ function axOpensslRand(args, io){
 	var texte;
 	if (b64){ var t = axBase64(octets), l = []; for (var k = 0; k < t.length; k += 64) l.push(t.substring(k, k + 64)); texte = l.join("\n"); }
 	else if (hex) texte = axHex(octets);
-	else { texte = octets.map(function(b){ return String.fromCharCode(b); }).join(""); if (io.tty && !sortie) texte = texte.replace(/[\x00-\x1f\x7f-\xff]/g, "�"); }
+	else { texte = octets.map(function(b){ return String.fromCharCode(b); }).join(""); if (io.tty && !sortie) texte = texte.replace(/[\x00-\x1f\x7f-\xff]/g, "\uFFFD"); }
 	GameEvents.fire({ type: "axOpenssl", sous: "rand", sortie: texte, n: n, b64: b64, hex: hex });
 	if (sortie){ Shell.ecrire(sortie, texte, false); return ""; }
 	return texte;

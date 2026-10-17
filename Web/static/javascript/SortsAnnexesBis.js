@@ -67,7 +67,7 @@ function axDecoderUtf8(o, tolerant){
 	}
 	return { texte: t };
 }
-/* L'affichage d'un objet ISO-8859-1 dans un terminal UTF-8 : chaque octet non ASCII devient « � ». */
+/* L'affichage d'un objet ISO-8859-1 dans un terminal UTF-8 : chaque octet non ASCII devient « U+FFFD », le losange à point d'interrogation. */
 function axAfficherLatin1(t){ return t.replace(/[\u0080-\u00ff]/g, "\ufffd"); }
 /* cat -v : les octets non imprimables en notation ^X et M-X. */
 function axNotationV(octets, o){
@@ -1203,7 +1203,7 @@ Shell.sorts.sqlite3 = function(args, io){
 /* ================================================================== */
 
 MANUEL["iconv"] = page("changer l'encodage d'un texte", "Internationalization CONVert",
-	"Un même « é » s'écrit avec deux octets en UTF-8 (c3 a9), un seul en ISO-8859-1 (e9). Lu dans le mauvais encodage, il devient « Ã© » ou « � ».\n\n" +
+	"Un même « é » s'écrit avec deux octets en UTF-8 (c3 a9), un seul en ISO-8859-1 (e9). Lu dans le mauvais encodage, il devient « Ã© » ou « \uFFFD ».\n\n" +
 	"  iconv -f ISO-8859-1 -t UTF-8 vieux.txt > neuf.txt     de l'ISO-8859-1 (latin-1) vers l'UTF-8\n" +
 	"  iconv -f UTF-8 -t ASCII//TRANSLIT texte.txt           sans accents (é devient e)\n" +
 	"  iconv -l                                              les encodages connus\n\n" +
