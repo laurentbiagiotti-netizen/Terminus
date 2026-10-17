@@ -128,7 +128,7 @@ var ORDRE_DES_SORTS_7 = (function(){
 	var liste = (typeof SORTS_MACHINES !== "undefined" ? SORTS_MACHINES : []).concat(["systemd-tmpfiles"]);
 	var autres = [].concat(typeof ORDRE_DES_SORTS !== "undefined" ? ORDRE_DES_SORTS : [], typeof ORDRE_DES_SORTS_2 !== "undefined" ? ORDRE_DES_SORTS_2 : [],
 		typeof ORDRE_DES_SORTS_3 !== "undefined" ? ORDRE_DES_SORTS_3 : [], typeof ORDRE_DES_SORTS_5 !== "undefined" ? ORDRE_DES_SORTS_5 : [],
-		typeof ORDRE_DES_SORTS_6 !== "undefined" ? ORDRE_DES_SORTS_6 : [], SORTS_DES_ANNEXES_CH6, ["updatedb", "locate", "screen", "groupadd", "fsck.ext4", "pvdisplay", "lvdisplay"]);
+		typeof ORDRE_DES_SORTS_6 !== "undefined" ? ORDRE_DES_SORTS_6 : [], SORTS_DES_ANNEXES_CH6, ["updatedb", "locate", "groupadd", "fsck.ext4", "pvdisplay", "lvdisplay"]);
 	return liste.filter(function(s, i){ return liste.indexOf(s) === i && autres.indexOf(s) === -1 && typeof MANUEL !== "undefined" && MANUEL[s]; });
 })();
 /* Le chapitre les enseigne : leur premier usage rapporte désormais de l'XP. */
@@ -151,7 +151,7 @@ var SORTS_DES_QUARTIERS = {
 	marche: ["apt-mark", "apt-cache", "needrestart"],
 	labyrinthe: [],
 	limites: ["ulimit", "systemd-cgtop"],
-	guetteur: ["strace", "tmux", "nohup", "watch"]
+	guetteur: ["strace", "tmux", "screen", "nohup", "watch"]
 };
 
 /* ------------------------------------------------------------------ */

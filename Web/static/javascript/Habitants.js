@@ -15,8 +15,9 @@
 World.fige = false;
 
 function ouverteCh6(){ return state && state.has && state.has("ch6Ouvert") && lumenOuvert(); }
-function habitantCh6(lieu, nom, texte){
+function habitantCh6(lieu, nom, texte, sorts){
 	var it = new Item(nom, "", "item_" + nom.toLowerCase() + ".gif").personnage();
+	if (sorts && sorts.length){ it.enseigne.apply(it, sorts); declarerSortsAnnexes(sorts); }
 	texteVivant(it, texte);
 	lieu.addItem(it);
 	return it;
@@ -91,7 +92,7 @@ var LogeuseLumen = habitantCh6(quartierCh6("ateliers").lieu, "Logeuse", function
 		"Enfin, que toi aussi tu puisses travailler sous ce groupe, le temps d'une session. »\n\n" +
 		C.gris("Les outils : sudo setquota -u NOM SOUPLE DURE 0 0 /home (en Kio, ou 900M, 1G), quota -u NOM, sudo repquota -a ; " +
 			"sudo chgrp habitants DOSSIER, sudo chmod g+s DOSSIER (ou 2775) ; newgrp GROUPE, puis id.");
-});
+}, ["setquota", "quota", "repquota", "edquota", "chgrp", "newgrp"]);
 declarerAnnexe({ id: "a6_habitants", chapitre: 7, titre: "Les nouveaux habitants", habitant: "la Logeuse", lieu: "aux Ateliers", item: function(){ return LogeuseLumen; }, ouverte: ouverteCh6,
 	indice: "aux Ateliers, quelqu'un compte des valises.",
 	resume: "Une part de /home pour Ninon et Basile (quotas), un dossier commun au groupe habitants (setgid), et newgrp.",
@@ -121,7 +122,7 @@ var AllumeurLumen = habitantCh6(HallLumen, "Allumeur", function(){
 		"Fige-le d'un signal, réveille-le d'un autre (kill -STOP, kill -CONT, sur son numéro). Et surtout : détache-le de ta session (disown), " +
 		"qu'il ne meure plus quand tu t'en vas. Ferme ta session, reviens, et il doit être là. »\n\n" +
 		C.gris("Les outils : chat-errant ; Ctrl-Z ; jobs ; bg %1 ; fg %1 ; kill -STOP PID, kill -CONT PID (pgrep chat-errant) ; disown %1 ; exit, puis ssh lumen.");
-});
+}, ["jobs", "bg", "fg", "disown"]);
 declarerAnnexe({ id: "a6_chat", chapitre: 7, titre: "Le chat du Cœur", habitant: "l'Allumeur", lieu: "sur la place", item: function(){ return AllumeurLumen; }, ouverte: ouverteCh6,
 	indice: "sur la place, un vieil homme cherche quelque chose derrière la grille du Cœur.",
 	resume: "Un programme qui ronronne : premier plan, Ctrl-Z, jobs, bg, fg, kill -STOP et -CONT, disown.",
@@ -154,7 +155,7 @@ var VeilleuseLumen = habitantCh6(quartierCh6("observatoire").lieu, "Veilleuse", 
 		"Et dis-moi aussi quand il s'est arrêté la dernière fois, d'un coup, sans prévenir : la machine garde la liste de ses arrêts et redémarrages (last -x). " +
 		"Puis chante-moi les trois couplets : écris-les dans ~/chant.txt, sur lumen. »\n\n" +
 		C.gris("Les outils : zgrep MOTIF FICHIERS.gz ; zless FICHIER.gz ; last -x (ou last -x reboot) ; echo ... >> ~/chant.txt.");
-});
+}, ["zgrep", "zless"]);
 declarerAnnexe({ id: "a6_chant", chapitre: 7, titre: "Le chant du Cœur", habitant: "la Veilleuse", lieu: "à l'Observatoire", item: function(){ return VeilleuseLumen; }, ouverte: ouverteCh6,
 	indice: "sous la coupole de l'Observatoire, une bougie veille.",
 	resume: "Retrouver un chant dans des journaux compressés (zgrep, zless) et la date d'un arrêt brutal (last -x).",
@@ -185,7 +186,7 @@ var HorlogerLumen = habitantCh6(quartierCh6("horloge").lieu, "Horloger", functio
 		"Lis l'horloge matérielle du Cœur, et remets-la à l'heure du système. Montre-moi le calendrier du mois, pour mon cadran. " +
 		"Et donne-moi l'heure comme la donnent les machines entre elles : le nombre de secondes depuis le 1er janvier 1970. Note-le dans ~/horloge.txt, sur lumen. »\n\n" +
 		C.gris("Les outils : sudo hwclock --show ; sudo hwclock --systohc (le système vers la pile) ; cal ; date +%s.");
-});
+}, ["hwclock", "cal"]);
 declarerAnnexe({ id: "a6_horloge", chapitre: 7, titre: "L'horloge de la place", habitant: "l'Horloger", lieu: "à la Tour de l'Horloge", item: function(){ return HorlogerLumen; }, ouverte: ouverteCh6,
 	indice: "au pied de la Tour, quelqu'un démonte une horloge.",
 	resume: "L'horloge matérielle (hwclock), le calendrier (cal) et l'heure en secondes depuis 1970 (date +%s).",
@@ -216,7 +217,7 @@ var ImprimeurLumen = habitantCh6(quartierCh6("gazette").lieu, "Imprimeur", funct
 		"On m'a parlé de trois façons de le rouler serré : bzip2, xz, zstd. Essaie les trois, en gardant à chaque fois le rouleau d'origine (-k), " +
 		"lis aussi ce que xz dit de lui-même (xz -l), compare les tailles, et dis-moi la meilleure : écris son nom dans ~/rouleaux.txt, sur lumen. »\n\n" +
 		C.gris("Les outils : bzip2 -k FICHIER ; xz -k FICHIER ; zstd FICHIER (il garde l'original) ; xz -l FICHIER.xz ; ls -l.");
-});
+}, ["bzip2", "bunzip2", "bzcat", "xz", "unxz", "xzcat", "zstd", "unzstd", "zstdcat"]);
 declarerAnnexe({ id: "a6_rouleaux", chapitre: 7, titre: "Les rouleaux compressés", habitant: "l'Imprimeur", lieu: "à la Gazette", item: function(){ return ImprimeurLumen; }, ouverte: ouverteCh6,
 	indice: "à la Gazette, un homme se bat avec un rouleau trop grand.",
 	resume: "Comparer trois compressions (bzip2, xz, zstd) sur un gros fichier, et choisir la meilleure.",

@@ -72,8 +72,8 @@ function tuerProcessusMachine(h, p, signal, origine){
 	if (!p) return null;
 	if (p.etat === "Z") return null;   // on ne tue pas un mort : seul son parent peut le récolter
 	if (signal === 0) return null;
-	if (signal === 19 || signal === 20 || signal === 21 || signal === 22){ p.etatAvantArret = p.etat; p.etat = "T"; GameEvents.fire({ type: "machine", hote: h, cmd: "signal", signal: signal, pid: p.pid, comm: p.comm, origine: origine }); return null; }
-	if (signal === 18){ if (p.etat === "T") p.etat = p.etatAvantArret || "S"; GameEvents.fire({ type: "machine", hote: h, cmd: "signal", signal: signal, pid: p.pid, comm: p.comm, origine: origine }); return null; }
+	if (signal === 19 || signal === 20 || signal === 21 || signal === 22){ if (p.etat !== "T") p.etatAvantArret = p.etat; p.etat = "T"; GameEvents.fire({ type: "machine", hote: h, cmd: "signal", signal: signal, pid: p.pid, comm: p.comm, origine: origine }); return null; }
+	if (signal === 18){ if (p.etat === "T") p.etat = p.etatAvantArret && p.etatAvantArret !== "T" ? p.etatAvantArret : "S"; GameEvents.fire({ type: "machine", hote: h, cmd: "signal", signal: signal, pid: p.pid, comm: p.comm, origine: origine }); return null; }
 	if (signal === 28 || signal === 17 || signal === 23) return null;
 	if (signal === 1 && p.nohup) return null;
 	if (p.ignore && p.ignore.indexOf(signal) > -1) return null;
@@ -1134,7 +1134,7 @@ Shell.executer = function(ligne){
 		var n = e.noeud, argv = null;
 		try { argv = argvSimple(n); } catch (x){ argv = null; }
 		var nohup = false;
-		if (argv && argv[0] === "nohup"){ nohup = true; argv = argv.slice(1); }
+		if (argv && argv[0] === "nohup"){ nohup = true; argv = argv.slice(1); if (state.knows("nohup") && MANUEL.nohup && !MANUEL.nohup.horsBareme) state.premierUsage("nohup"); }
 		var sudo = false;
 		if (argv && argv[0] === "sudo"){ sudo = true; argv = argv.slice(1); }
 		if (argv && programmeLong(h, argv)){

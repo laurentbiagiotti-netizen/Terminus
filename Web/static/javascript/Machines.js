@@ -24,7 +24,7 @@ var DEFIS_LUMEN = [
 	{ id: "s_m6_du_profondeur", q: "docks", titre: "Docks : un seul niveau de profondeur (du -h --max-depth=1 /var)",
 	  appel: function(n, a, s){ var i = a.indexOf("-d"); return n === "du" && (a.indexOf("--max-depth=1") > -1 || (i > -1 && a[i + 1] === "1") || a.some(function(x){ return /^-\w*d1$/.test(x); })) && /\/var\/log/.test(s); } },
 	{ id: "s_m6_df_types", q: "docks", titre: "Docks : les types des systèmes de fichiers (df -hT)",
-	  appel: function(n, a, s){ return n === "df" && oCh6(a).indexOf("T") > -1 && /ext4/.test(s) && /tmpfs/.test(s); } },
+	  appel: function(n, a, s){ return n === "df" && oCh6(a).indexOf("T") > -1 && /ext4/.test(s); } },
 	{ id: "s_m6_ncdu", q: "docks", titre: "Docks : le plan des entrepôts, trié par taille (ncdu /var)",
 	  appel: function(n, a, s){ return n === "ncdu" && a.some(function(x){ return /^\/var/.test(x); }); } },
 	{ id: "s_m6_find_vieux", q: "docks", titre: "Docks : ce qui dort depuis plus d'un mois (find /var -mtime +30)",
@@ -110,7 +110,7 @@ var DEFIS_LUMEN = [
 	  appel: function(n, a, s){ return n === "systemctl" && a.indexOf("show") > -1 && /^Restart=(on-failure|always|on-abnormal)$/m.test(s); } },
 	// La Crypte des mémoires (Betty)
 	{ id: "s_m6_tar_t", q: "memoires", titre: "Crypte : lister une archive sans l'ouvrir (tar tzf)",
-	  appel: function(n, a, s){ return n === "tar" && /t/.test(oCh6(a)) && /registre-1880/.test(s); } },
+	  appel: function(n, a, s){ return n === "tar" && a.some(function(x){ return /^-?[A-Za-z]*t[A-Za-z]*$/.test(x); }) && /registre-1880/.test(s); } },
 	{ id: "s_m6_calendar", q: "memoires", titre: "Crypte : quand sonnera la prochaine sauvegarde (systemd-analyze calendar)",
 	  appel: function(n, a, s){ return n === "systemd-analyze" && a.indexOf("calendar") > -1 && /Next elapse/.test(s); } },
 	{ id: "s_m6_rsync_dry", q: "memoires", titre: "Crypte : une copie à blanc vers le disque de sauvegarde (rsync -an)",
@@ -787,6 +787,7 @@ var SORTS_RPG_CH6 = {
 	"systemd-cgtop":    { nom: "les Parts de Lumière",       image: "Tu vois la part de la machine que prend chaque service." },
 	"strace":           { nom: "le Cornet du Guetteur",      image: "Tu entends chaque demande d'un programme au noyau." },
 	"tmux":             { nom: "la Session Gardée",          image: "Ton terminal reste ouvert sur la machine, même quand tu pars." },
+	"screen":           { nom: "la Vieille Session",         image: "L'ancêtre de tmux : une session qui survit, elle aussi." },
 	"nohup":            { nom: "Le Sourd au Départ",         image: "Le programme ne s'arrête pas quand tu fermes la porte." },
 	"watch":            { nom: "la Ronde du Guetteur",       image: "Tu relances une commande toutes les deux secondes." }
 };

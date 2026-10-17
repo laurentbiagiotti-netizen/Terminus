@@ -907,9 +907,11 @@ Shell.sorts.journalctl = function(args, io){
 		if (/^-[a-zA-Z]+$/.test(a) && /^-[xefrk]+$/.test(a)){ if (a.indexOf("f") > -1) o.suivre = true; if (a.indexOf("e") > -1) o.fin = true; if (a.indexOf("r") > -1) o.inverse = true; if (a.indexOf("k") > -1) o.noyau = true; continue; }
 		if (a.charAt(0) === "-") throw new ShellError("journalctl: unrecognized option '" + a + "'", 1);
 	}
-	if (!io.sudo && !M.journalPourTous) io.err("Hint: You are currently not seeing messages from other users and the system.\n      Users in groups 'adm', 'systemd-journal' can see all messages.\n      Pass -q to turn off this notice.");
+	// Les membres des groupes adm et systemd-journal lisent tout le journal, comme root.
+	var lecteur = io.sudo || M.journalPourTous || (typeof groupesMachine === "function" && groupesMachine(h).some(function(g){ return (g.nom === "adm" || g.nom === "systemd-journal") && g.membres.indexOf(JOUEUR) > -1; }));
+	if (!lecteur) io.err("Hint: You are currently not seeing messages from other users and the system.\n      Users in groups 'adm', 'systemd-journal' can see all messages.\n      Pass -q to turn off this notice.");
 	var entrees = (M.journal || []).slice();
-	if (!io.sudo && !M.journalPourTous) entrees = [];
+	if (!lecteur) entrees = [];
 	if (o.boot !== null) entrees = entrees.filter(function(e){ return e.b === o.boot; });
 	if (o.boot !== null && o.boot < -((M.demarrages || []).length - 1) && (M.demarrages || []).length) throw new ShellError("Data from the specified boot (" + o.boot + ") is not available: No such boot ID in journal", 1);
 	if (o.noyau) entrees = entrees.filter(function(e){ return e.k; });

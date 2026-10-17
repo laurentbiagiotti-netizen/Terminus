@@ -23,6 +23,21 @@
  */
 
 var QUETES_ANNEXES = [];
+/* Les sorts qu'enseignent les habitants : appris sans XP (les annexes sont hors note), comme un bonus. */
+var SORTS_DES_ANNEXES = {};
+function declarerSortsAnnexes(liste){ liste.forEach(function(s){ SORTS_DES_ANNEXES[s] = true; }); }
+var LEARN_AVANT_ANNEXES = GameState.prototype.learn;
+GameState.prototype.learn = function(sort){
+	if (SORTS_DES_ANNEXES[sort] && (typeof tousLesSorts !== "function" || tousLesSorts().indexOf(sort) === -1)){
+		if (this.spells[sort]) return;
+		this.spells[sort] = true;
+		if (typeof jouerSon === "function") jouerSon("sort");
+		Shell.narration.push({ sort: sort, rpg: "", resume: MANUEL[sort] ? MANUEL[sort].resume : "" });
+		GameEvents.fire({ type: "learn", spell: sort });
+		return;
+	}
+	return LEARN_AVANT_ANNEXES.apply(this, arguments);
+};
 var AMIS_ANNEXES = {};
 var XP_ANNEXE = typeof XP_QUETE_SECONDAIRE !== "undefined" ? XP_QUETE_SECONDAIRE : 50;
 
