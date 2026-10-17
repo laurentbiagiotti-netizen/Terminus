@@ -919,3 +919,76 @@ body.contraste .pale{ opacity: 1; }
     #objectif.objectif-tuto, .scene-chapitre{ animation: none; }
     .scene-ligne{ animation: none; opacity: 1; }
 }
+
+/* Les cinématiques d'ouverture de chapitre */
+#cinematique{
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 9vh 16px;
+    background: #000000;
+    border-top: 7vh solid #000000;
+    border-bottom: 7vh solid #000000;
+    box-shadow: inset 0 1px 0 #1c1c1c, inset 0 -1px 0 #1c1c1c;
+    animation: cine-entree 420ms ease-out both;
+    cursor: pointer;
+}
+.cine-titre{
+    margin: 0;
+    color: var(--vert-clair);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
+.cine-cadre{
+    position: relative;
+    width: min(416px, 78vw);
+    aspect-ratio: 416 / 404;
+}
+.cine-image, .cine-voile{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+}
+.cine-image{ object-fit: contain; }
+.cine-plan .cine-cadre{ animation: cine-plan 520ms steps(6) both; }
+.cine-texte{
+    margin: 0;
+    min-height: 3.2em;
+    max-width: 38em;
+    color: #ffffff;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    text-align: center;
+}
+.cine-texte::after{
+    content: "▌";
+    color: var(--vert-clair);
+    animation: intro-curseur 1s steps(1) infinite;
+}
+.cine-aide{
+    margin: 0;
+    color: var(--gris);
+    font-size: 0.8rem;
+}
+.cine-points{ color: var(--vert-clair); letter-spacing: 0.2em; }
+.cine-sortie{ animation: intro-extinction 280ms ease-in both; }
+@keyframes cine-entree{ from{ opacity: 0; } }
+@keyframes cine-plan{ 0%{ opacity: 0; filter: brightness(3); } 40%{ opacity: 1; } 100%{ filter: none; } }
+body.crt .cine-texte{ text-shadow: 0 0 1px currentColor, 0 0 6px rgba(78, 216, 122, 0.35); }
+body.crt .cine-image{ filter: drop-shadow(0 0 4px rgba(78, 216, 122, 0.35)); }
+@media (prefers-reduced-motion: reduce){
+    #cinematique, .cine-plan .cine-cadre, .cine-sortie, .cine-texte::after{ animation: none; }
+}
+@media (max-width: 600px){
+    #cinematique{ border-top-width: 4vh; border-bottom-width: 4vh; gap: 12px; }
+    .cine-texte{ font-size: 0.95rem; }
+}

@@ -620,3 +620,164 @@ MANUEL_DU_JEU.ambiance = "ambiance n'est PAS une commande Linux : un fond sonore
 appliquerAffichage();
 if (term) brancherGuide();
 else document.addEventListener("DOMContentLoaded", function(){ brancherGuide(); majObjectif(); });
+
+/* ------------------------------------------------------------------ */
+/* Les cinématiques : l'ouverture de chaque chapitre                    */
+/* ------------------------------------------------------------------ */
+/*
+ * Avant la carte de chapitre (sceneDeChapitre), quatre plans : une illustration du jeu qui se
+ * reconstruit par blocs de pixels (comme l'écran titre), et une phrase qui s'écrit lettre à lettre.
+ * Une seule fois par chapitre (drapeau cinematiqueN) ; la commande du jeu « cinematique N » la rejoue.
+ * Entrée : plan suivant. Échap : passer. Mouvement réduit demandé : on va droit à la carte.
+ */
+var CINEMATIQUES = {
+	1: { titre: "Chapitre 1 · Terminus", plans: [
+		{ image: "loc_cybersup.gif", texte: "Cybersup, Puteaux. Ce matin : l'épreuve pratique de première année." },
+		{ image: "titlescreen_cybersup.gif", texte: "Pas de copie, pas de QCM. Un terminal. Chaque commande est un sort." },
+		{ image: "loc_forest.gif", texte: "Derrière ta Maison s'étend Terminus : forêts, villages, grottes. Des fichiers partout." },
+		{ image: "item_sorciernoir.gif", texte: "Et au bout du chemin, dans la Citadelle, le Sorcier Noir t'attend." }] },
+	2: { titre: "Chapitre 2 · La panne", plans: [
+		{ image: "item_ticket.gif", texte: "Un ticket d'incident, priorité haute. Plus une lettre ne sort du bâtiment B." },
+		{ image: "loc_batimentb.gif", texte: "Le réseau de l'école est tombé. Les mails dorment, Lille ne répond plus." },
+		{ image: "item_radia.gif", texte: "Radia, M1 réseau, t'attend devant l'armoire, son talkie-walkie à la main." },
+		{ image: "item_osi.gif", texte: "Sept étages, du câble jusqu'au web. On répare de bas en haut." }] },
+	3: { titre: "Chapitre 3 · La Crypte", plans: [
+		{ image: "loc_warroom.gif", texte: "La WarRoom. Sur l'écran mural, les voyants passent au rouge, un par un." },
+		{ image: "item_corbeau.gif", texte: "Un intrus signe ses traces d'une plume noire. On l'appelle le Corbeau." },
+		{ image: "loc_citadelle.gif", texte: "Il s'est glissé dans la Citadelle, le serveur de l'école. Grace prend la radio." },
+		{ image: "loc_crypte.gif", texte: "Ses sorts dorment dans le donjon, sous tes pieds. La chasse est ouverte." }] },
+	4: { titre: "Chapitre 4 · L'Académie des Arcanes", plans: [
+		{ image: "item_frances.gif", texte: "Quelques semaines ont passé. Les notes de Frances ont fuité sur un forum." },
+		{ image: "item_corbeau.gif", texte: "Une bande de rançonneurs, la Nuée, a repris le nom du Corbeau." },
+		{ image: "loc_aile_chronomancie.gif", texte: "Cette nuit, elle a frappé les archives. Une bombe logique vise minuit." },
+		{ image: "loc_academie.gif", texte: "Huit maîtres t'attendent à l'Académie des Arcanes. L'horloge tourne déjà." }] },
+	5: { titre: "Chapitre 5 · Le Bastion", plans: [
+		{ image: "loc_serveur_bastion.gif", texte: "Quelques jours plus tard. Un serveur neuf, installé par défaut : toutes ses portes bâillent." },
+		{ image: "item_pierre.gif", texte: "La Pierre d'Inspection s'allume à peine : 38 sur 100." },
+		{ image: "item_frances.gif", texte: "La Nuée a juré de revenir à l'aube. Frances éprouvera chaque mur avant elle." },
+		{ image: "loc_bastion.gif", texte: "Douze tours à dresser avant 6 h. L'inspecteur arrive juste derrière." }] }
+};
+/* La carte du chapitre 1 (les autres sont dans SCENES, à l'entrée de chaque chapitre). */
+var SCENE_CHAPITRE_1 = { image: "item_convocation.gif", titre: "Chapitre 1 · Terminus", chapitre: 1,
+	lignes: ["Ta Maison d'abord : regarde autour de toi.", "Chaque sort appris ouvre un bout du monde.", "Le tutoriel, à droite, te guide pour les premiers pas."] };
+/* La première carte de chaque chapitre : c'est elle que la cinématique précède. */
+var PREMIERE_SCENE = { 2: "r_batiment", 3: "c_crypte", 4: "d_entree", 5: "h_entree" };
+
+function lancerCinematique(n, apres, forcer){
+	var cine = CINEMATIQUES[n];
+	apres = apres || function(){};
+	if (!cine || (!forcer && state.has("cinematique" + n))){ apres(); return; }
+	state.set("cinematique" + n);
+	if (calmeDemande){ apres(); return; }
+	var fond = document.createElement("div");
+	fond.id = "cinematique";
+	fond.setAttribute("role", "dialog");
+	fond.setAttribute("aria-label", "Cinématique : " + cine.titre);
+	var haut = document.createElement("p"); haut.className = "cine-titre"; haut.textContent = cine.titre;
+	var cadre = document.createElement("div"); cadre.className = "cine-cadre";
+	var image = document.createElement("img"); image.className = "cine-image"; image.alt = "";
+	var voile = document.createElement("canvas"); voile.className = "cine-voile"; voile.setAttribute("aria-hidden", "true");
+	var texte = document.createElement("p"); texte.className = "cine-texte"; texte.setAttribute("aria-live", "polite");
+	var bas = document.createElement("p"); bas.className = "cine-aide";
+	var points = document.createElement("span"); points.className = "cine-points";
+	bas.appendChild(points);
+	bas.appendChild(document.createTextNode(window.matchMedia && window.matchMedia("(pointer: coarse)").matches ? "  touche : suite" : "  Entrée : suite · Échap : passer"));
+	cadre.appendChild(image); cadre.appendChild(voile);
+	[haut, cadre, texte, bas].forEach(function(e){ fond.appendChild(e); });
+	document.body.appendChild(fond);
+	jouerSon("niveau");
+
+	var plan = -1, minuteurs = [], fini = false, ecriture = null;
+	function plusTard(f, ms){ minuteurs.push(setTimeout(f, ms)); }
+	function arreter(){ minuteurs.forEach(clearTimeout); minuteurs = []; if (ecriture){ clearInterval(ecriture); ecriture = null; } }
+	function terminer(){
+		if (fini) return;
+		fini = true;
+		arreter();
+		document.removeEventListener("keydown", touche, true);
+		fond.classList.add("cine-sortie");
+		setTimeout(function(){ if (fond.parentNode) fond.parentNode.removeChild(fond); apres(); }, 280);
+	}
+	function reconstruire(){
+		var largeur = image.clientWidth || 416, hauteur = image.clientHeight || 404;
+		var taille = Math.max(8, Math.round(largeur / 22));
+		voile.width = largeur; voile.height = hauteur; voile.style.display = "block";
+		var ctx = voile.getContext("2d");
+		ctx.fillStyle = "#000000"; ctx.fillRect(0, 0, largeur, hauteur);
+		var blocs = [];
+		for (var y = 0; y < hauteur; y += taille) for (var x = 0; x < largeur; x += taille) blocs.push([x, y]);
+		for (var i = blocs.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var t = blocs[i]; blocs[i] = blocs[j]; blocs[j] = t; }
+		var parImage = Math.ceil(blocs.length / 30), position = 0, numero = plan;
+		(function etape(){
+			if (fini || numero !== plan) return;
+			for (var k = 0; k < parImage && position < blocs.length; k++, position++) ctx.clearRect(blocs[position][0], blocs[position][1], taille, taille);
+			if (position < blocs.length) requestAnimationFrame(etape); else voile.style.display = "none";
+		})();
+	}
+	function montrer(i){
+		arreter();
+		if (i >= cine.plans.length){ terminer(); return; }
+		plan = i;
+		var p = cine.plans[i];
+		points.textContent = cine.plans.map(function(x, k){ return k === i ? "●" : "○"; }).join(" ");
+		fond.classList.remove("cine-plan");
+		void fond.offsetWidth;
+		fond.classList.add("cine-plan");
+		texte.textContent = "";
+		image.onload = function(){ if (plan === i) reconstruire(); };
+		image.src = sourceImage("./static/img/" + p.image);
+		if (image.complete) reconstruire();
+		var lettres = 0;
+		plusTard(function(){
+			ecriture = setInterval(function(){
+				lettres++;
+				texte.textContent = p.texte.substring(0, lettres);
+				if (lettres >= p.texte.length){ clearInterval(ecriture); ecriture = null; plusTard(function(){ montrer(i + 1); }, 2200); }
+			}, 28);
+		}, 450);
+	}
+	// Entrée (ou un toucher) : finir la phrase en cours, puis passer au plan suivant. Échap : tout passer.
+	function avancer(){
+		if (fini) return;
+		if (ecriture){ arreter(); texte.textContent = cine.plans[plan].texte; voile.style.display = "none"; plusTard(function(){ montrer(plan + 1); }, 2200); return; }
+		montrer(plan + 1);
+	}
+	function touche(e){
+		if (e.ctrlKey || e.metaKey || e.altKey) return;
+		e.preventDefault(); e.stopPropagation();
+		if (e.key === "Escape") terminer(); else avancer();
+	}
+	setTimeout(function(){
+		if (fini) return;
+		document.addEventListener("keydown", touche, true);
+		fond.addEventListener("click", avancer);
+	}, 300);
+	montrer(0);
+}
+
+/* La carte d'un chapitre : sa cinématique d'abord, la première fois. */
+var SCENE_SANS_CINEMATIQUE = sceneDeChapitre;
+sceneDeChapitre = function(scene){
+	var n = scene && scene.chapitre;
+	var premiere = n === 1 ? scene === SCENE_CHAPITRE_1 : (PREMIERE_SCENE[n] && SCENES[PREMIERE_SCENE[n]] === scene);
+	if (premiere && CINEMATIQUES[n] && !state.has("cinematique" + n)){
+		lancerCinematique(n, function(){ SCENE_SANS_CINEMATIQUE(scene); });
+		return;
+	}
+	SCENE_SANS_CINEMATIQUE(scene);
+};
+
+/* La commande du jeu : revoir une cinématique. */
+if (typeof SORTS_DU_JEU !== "undefined" && SORTS_DU_JEU.indexOf("cinematique") === -1) SORTS_DU_JEU.push("cinematique");
+if (typeof COMMANDES_DU_JEU !== "undefined") COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 4, 0, ["cinematique", "revoir l'ouverture d'un chapitre (cinematique 1 à 5)"]);
+if (typeof MANUEL_DU_JEU !== "undefined") MANUEL_DU_JEU.cinematique = "cinematique n'est PAS une commande Linux : c'est une commande du jeu, comme quetes ou badges.\n" +
+	"Elle rejoue l'ouverture d'un chapitre : cinematique 1 (Terminus), 2 (la panne), 3 (la Crypte), 4 (l'Académie), 5 (le Bastion).\n" +
+	"Sans numéro, celle du chapitre en cours. Entrée passe au plan suivant, Échap passe tout.";
+Shell.sorts.cinematique = function(args){
+	var affiche = { 1: 1, 2: 3, 3: 2, 5: 4, 6: 5 }[state.chapitreEnCours()] || 1;
+	var n = args && args[0] ? parseInt(args[0], 10) : affiche;
+	if (!CINEMATIQUES[n]) throw new ShellError("cinematique : un numéro de chapitre, de 1 à 5. Exemple : cinematique 3");
+	if (calmeDemande) return C.gris("(Ton système demande de réduire les animations : les cinématiques sont coupées.)");
+	setTimeout(function(){ lancerCinematique(n, function(){ var champ = document.getElementById("saisie"); if (champ) champ.focus(); }, true); }, 50);
+	return "";
+};

@@ -712,9 +712,17 @@ function demanderParcours(){
 			Shell.fin();
 			return;
 		}
-		accueillir();
-		term.definirInvite(Shell.invite());
-		majEtat();
+		var commencer = function(){
+			accueillir();
+			term.definirInvite(Shell.invite());
+			majEtat();
+		};
+		// La Convocation : l'ouverture du chapitre 1 (cinématique, puis sa carte), avant le message d'accueil.
+		if (choix === "1" && typeof lancerCinematique === "function" && typeof SCENE_CHAPITRE_1 !== "undefined"){
+			lancerCinematique(1, function(){ commencer(); if (typeof SCENE_SANS_CINEMATIQUE === "function") SCENE_SANS_CINEMATIQUE(SCENE_CHAPITRE_1); });
+			return;
+		}
+		commencer();
 	});
 }
 

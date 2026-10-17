@@ -676,5 +676,19 @@ verifier(jr5.lire("state.xp2 === state.xpMax2()"), "vieille sauvegarde : la note
 	verifier(jn.lire("(function(){ var c = 0; pourChaqueNoeud(function(x){ if (x.cmd_text && typeof x.cmd_text.less === 'string' && /(^|\\n)apprenti:|\\/home\\/apprenti|apprenti@/.test(x.cmd_text.less)) c++; }); return c; })()") === 0, "nouveau compte : plus aucun fichier ne cite le compte provisoire");
 })();
 
+// Les cinématiques d'ouverture (Guide.js, navigateur) : cinq chapitres, quatre plans chacun, et des images qui existent.
+(function(){
+	var fs = require("fs"), path = require("path");
+	var guide = fs.readFileSync(path.join(__dirname, "..", "Web", "static", "javascript", "Guide.js"), "utf8");
+	var bloc = guide.substring(guide.indexOf("var CINEMATIQUES = {"), guide.indexOf("var SCENE_CHAPITRE_1"));
+	var images = bloc.match(/image: "([^"]+)"/g) || [];
+	verifier(images.length === 20, "cinématiques : 5 chapitres de 4 plans (" + images.length + " images)");
+	images.forEach(function(m){
+		var f = /image: "([^"]+)"/.exec(m)[1];
+		verifier(fs.existsSync(path.join(__dirname, "..", "Web", "static", "img", f)), "cinématique : l'image " + f + " existe");
+	});
+	verifier(bloc.indexOf("—") === -1 && bloc.indexOf(" & ") === -1, "cinématiques : ni tiret cadratin ni esperluette");
+})();
+
 console.log(verifications + " vérifications, " + echecs + " échec" + (echecs > 1 ? "s" : ""));
 process.exit(echecs ? 1 : 0);
