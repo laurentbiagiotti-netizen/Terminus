@@ -75,10 +75,13 @@ function axCheminMaison(){ return "/home/" + JOUEUR; }
 /* Un texte affiché tel quel par un vrai programme, suivi à l'écran d'une explication grise. */
 function axAstuce(io, texte){ return io && io.tty ? "\n" + C.gris(texte) : ""; }
 
-/* Un habitant : un personnage qu'on lit avec cat, au texte vivant, qui enseigne les sorts de son annexe. */
-function axHabitant(lieu, nom, texte, sorts){
+/* Un habitant : un personnage qu'on lit avec cat, au texte vivant, qui enseigne les sorts de son annexe (sans XP).
+   sortsDuChapitre : des sorts que le chapitre enseigne aussi, dont l'annexe a besoin dès l'ouverture du chapitre ; ils s'apprennent
+   comme d'habitude (leur XP reste celle du barème du chapitre : seul le moment où on les apprend change). */
+function axHabitant(lieu, nom, texte, sorts, sortsDuChapitre){
 	var it = new Item(nom, "", "item_" + axSansAccent(nom).replace(/[^a-z0-9]/g, "") + ".gif").personnage();
 	if (sorts && sorts.length){ it.enseigne.apply(it, sorts); declarerSortsAnnexes(sorts); }
+	if (sortsDuChapitre && sortsDuChapitre.length) it.enseigne.apply(it, sortsDuChapitre);
 	texteVivant(it, texte);
 	lieu.addItem(it);
 	return it;

@@ -221,7 +221,7 @@ var AxSentinelle = axHabitant(axTour("guet"), "Sentinelle", function(){
 		"Puis éprouve-le : un compte de test ajouté doit faire sonner l'alerte, que tu liras dans le journal. »\n\n" +
 		C.gris("Les outils, sur le Bastion : [Path] PathChanged=/etc/passwd ; [Service] Type=oneshot, ExecStart=/usr/bin/logger -t guetteur \"...\" ; [Install] WantedBy=multi-user.target ;\n" +
 			"sudo systemctl daemon-reload ; sudo systemctl enable --now guet-passwd.path ; systemctl list-units --type=path ; sudo useradd ... ; sudo journalctl -t guetteur.");
-}, []);
+}, [], ["useradd"]);
 declarerAnnexe({ id: "a5_guetteur", chapitre: 6, titre: "Le guetteur automatique", habitant: "la Sentinelle", lieu: "à la Tour de Guet", item: function(){ return AxSentinelle; }, ouverte: axOuverteCh5,
 	indice: "à la Tour de Guet, une sentinelle aux yeux cernés fixe un registre.",
 	resume: "Une unité systemd .path qui surveille /etc/passwd et déclenche une alerte (PathChanged, logger, list-units --type=path).",
@@ -327,6 +327,8 @@ GameEvents.addListener("axCmp", function(e){
 var AX_CLE_HERAUT = axDeclarerCle({ nom: "heraut", phrase: "", commentaire: "heraut@inspection" });
 P5("/srv/inspection/heraut.pub", AX_CLE_HERAUT.publique, { mode: "rw-r--r--", owner: "root" });
 P5("/srv/inspection/LISEZMOI", "LA CLÉ DU HÉRAUT DE L'INSPECTION\n\nheraut.pub : sa clé publique. Elle doit être SIGNÉE par l'autorité de l'Inspection,\npour le seul compte heraut, et pour un an.", { mode: "rw-r--r--", owner: "root" });
+/* Les dossiers posés ici ne comptent pas dans le barème du chapitre (comme ceux de la machine bastion). */
+["/srv", "/srv/inspection"].forEach(function(c){ var d = dossierHote(H5, c); if (d){ d.horsBareme = true; d.chapitre = 6; } });
 function axCaInspection(){
 	var priv = fichierHote(H5, "/etc/ssh/ca_inspection"), pub = fichierHote(H5, "/etc/ssh/ca_inspection.pub");
 	return priv && pub && /^-----BEGIN OPENSSH PRIVATE KEY-----/.test(priv.getText()) ? pub : null;
@@ -355,7 +357,7 @@ var AxHeraut = axHabitant(axTour("banniere"), "Heraut", function(){
 		C.gris("Les outils, sur le Bastion : sudo ssh-keygen -t ed25519 -f /etc/ssh/ca_inspection -C \"autorite de l'Inspection\" ; sudo ssh-keygen -s /etc/ssh/ca_inspection -I heraut -n heraut -V +52w /srv/inspection/heraut.pub ;\n" +
 			"ssh-keygen -L -f /srv/inspection/heraut-cert.pub ; TrustedUserCAKeys /etc/ssh/ca_inspection.pub dans sshd_config ; sudo sshd -t ; sudo systemctl reload ssh.\n" +
 			"(Dans la vraie vie, la clé privée de l'autorité dort hors du serveur, sur une machine coupée du réseau.)");
-}, []);
+}, [], ["sshd"]);
 declarerAnnexe({ id: "a5_certificat", chapitre: 6, titre: "Le sceau de l'Inspection", habitant: "le Héraut", lieu: "à la Bannière", item: function(){ return AxHeraut; }, ouverte: axOuverteCh5,
 	indice: "à la Bannière, un héraut attend, une trompette sous le bras.",
 	resume: "Les certificats SSH : une autorité (ssh-keygen -f), une clé signée pour un compte et un temps (ssh-keygen -s -I -n -V), lue (-L), et TrustedUserCAKeys.",

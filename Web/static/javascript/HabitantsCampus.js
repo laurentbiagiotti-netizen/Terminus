@@ -115,7 +115,7 @@ var AxAppariteur = axHabitant(BatimentB, "Appariteur", function(){
 		"Envoie-lui ensuite mon planning des gardes (planning-gardes.txt, ici même), tel quel. " +
 		"Et quand elle te rappellera, garde ce qu'elle t'envoie dans un fichier : c'est le plan de ses rondes. »\n\n" +
 		C.gris("Les outils : nc -l 5555 (écouter ; -v pour voir qui se connecte) ; echo \"...\" | nc loge 6666 (parler) ; nc loge 6666 < FICHIER ; nc -l 5555 > FICHIER.");
-}, []);
+}, [], ["nc"]);
 declarerAnnexe({ id: "a2_talkies", chapitre: 3, titre: "Les talkies du campus", habitant: "l'Appariteur", lieu: "au bâtiment B", item: function(){ return AxAppariteur; }, ouverte: axOuverteCh2,
 	indice: "au bâtiment B, un talkie-walkie ne répond plus.",
 	resume: "Se parler d'une machine à l'autre avec nc : écouter un port (nc -l), répondre, passer un fichier dans les deux sens.",
@@ -256,7 +256,7 @@ var AxBibliothecaire = axHabitant(BatimentB, "Bibliothecaire", function(){
 		"Ouvre-le en arrière-plan, sans session, lis la page d'accueil par le tunnel, et rapporte-moi le catalogue dans ta Maison. " +
 		"Puis referme le tunnel : on ne laisse pas une porte ouverte derrière soi. »\n\n" +
 		C.gris("Les outils : curl http://intranet-lille/ (pour voir) ; ssh -f -N -L 8080:intranet-lille:80 passerelle-lille ; curl http://localhost:8080/ ; curl -o ~/catalogue.txt ... ; ps, kill PID.");
-}, []);
+}, [], ["curl"]);
 declarerAnnexe({ id: "a2_tunnel", chapitre: 3, titre: "Le tunnel vers l'intranet", habitant: "la Bibliothécaire", lieu: "au bâtiment B", item: function(){ return AxBibliothecaire; }, ouverte: axOuverteCh2,
 	indice: "au bâtiment B, un écran affiche « délai dépassé ».",
 	resume: "Un tunnel ssh (ssh -f -N -L) vers un site qu'on ne peut pas joindre directement, puis curl http://localhost:PORT.",
