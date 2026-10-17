@@ -1,4 +1,4 @@
-"""Dessine les badges de compétence (chapitres 2, 3, 4 et 5) : des médailles en pixels, une couleur par rang.
+"""Dessine les badges de compétence (chapitres 2 à 6) : des médailles en pixels, une couleur par rang.
 
 Bronze, argent, or et platine, comme les rangs d'un tableau de trophées ; le dessin est propre au jeu :
 une médaille hexagonale, deux rubans, et au centre le sigle de la compétence (OSI, DNS, SUID...).
@@ -43,6 +43,15 @@ BADGES = [
     ('tour_banniere', 'HTTP', 'argent'), ('tour_guet', 'LOGS', 'or'), ('tour_sceaux', 'AIDE', 'argent'), ('tour_garde', 'BAN', 'bronze'),
     ('h_pierre', 'SCAN', 'bronze'), ('h_aube', 'AUBE', 'or'), ('h_rapport', 'DOC', 'or'), ('s_h_avant_quatre', '4H', 'or'),
     ('platine_ch5', 'HARD', 'platine'),
+    # chapitre 6 : Lumen, la cité qui s'éteint (un badge par quartier rallumé, puis la Lanterne, la Nuit, le rapport)
+    ('quartier_docks', 'DISK', 'argent'), ('quartier_archives', 'INOD', 'argent'), ('quartier_gazette', 'ROT', 'argent'),
+    ('quartier_forges', 'OOM', 'or'), ('quartier_horloge', 'CPU', 'argent'), ('quartier_citernes', 'LVM', 'or'),
+    ('quartier_porte', 'FSTB', 'argent'), ('quartier_ateliers', 'UNIT', 'or'), ('quartier_memoires', 'BAK', 'or'),
+    ('quartier_observatoire', 'IO', 'bronze'), ('quartier_puits', 'RAID', 'or'), ('quartier_thermes', 'FSCK', 'argent'),
+    ('quartier_marche', 'APT', 'argent'), ('quartier_labyrinthe', 'BOOT', 'argent'), ('quartier_limites', 'CGRP', 'argent'),
+    ('quartier_guetteur', 'TRCE', 'bronze'), ('m6_lanterne', 'PHAR', 'bronze'), ('m6_nuit', 'NUIT', 'or'),
+    ('m6_rapport', 'DOC', 'or'), ('s_m6_avant_midi', '12H', 'or'), ('platine_ch6', 'OPS', 'platine'),
+    ('ami_ch6', 'AMI', 'or'),
 ]
 NOIR = (0, 0, 0)
 # Une police de 3 x 5 pixels, pour les sigles de quatre caractères.

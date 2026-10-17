@@ -55,7 +55,7 @@ function etatAnnexe(id){
 	if (!state.annexes[id]) state.annexes[id] = { proposee: false, etapes: [] };
 	return state.annexes[id];
 }
-function annexeOuverte(a){ try { return typeof a.ouverte === "function" ? !!a.ouverte() : true; } catch (e){ return false; } }
+function queteAnnexeAccessible(a){ try { return typeof a.ouverte === "function" ? !!a.ouverte() : true; } catch (e){ return false; } }
 function annexeProposee(a){ return !!(state.annexes && state.annexes[a.id] && state.annexes[a.id].proposee); }
 
 /* Un habitant lu : il propose sa quête. */
@@ -63,7 +63,7 @@ GameEvents.addListener("read", function(e){
 	QUETES_ANNEXES.forEach(function(a){
 		var it = null;
 		try { it = typeof a.item === "function" ? a.item() : a.item; } catch (x){ it = null; }
-		if (!it || e.item !== it || !annexeOuverte(a)) return;
+		if (!it || e.item !== it || !queteAnnexeAccessible(a)) return;
 		var s = etatAnnexe(a.id);
 		if (s.proposee) return;
 		s.proposee = true;
@@ -76,7 +76,7 @@ GameEvents.addListener("read", function(e){
 function verifierAnnexes(){
 	if (!state || !state.quests) return;
 	QUETES_ANNEXES.forEach(function(a){
-		if (state.quests[a.id] || !annexeOuverte(a) || !annexeProposee(a)) return;
+		if (state.quests[a.id] || !queteAnnexeAccessible(a) || !annexeProposee(a)) return;
 		var s = etatAnnexe(a.id);
 		for (var i = 0; i < a.etapes.length; i++){
 			if (s.etapes[i]) continue;
@@ -129,7 +129,7 @@ function annexesToutesFaites(chapitre){ var l = annexesDuChapitre(chapitre); ret
 
 /* Le journal : une section « Quêtes annexes » dans quetes, et quetes annexes pour le détail. */
 function texteAnnexesCourt(chapitre){
-	var l = annexesDuChapitre(chapitre).filter(annexeOuverte);
+	var l = annexesDuChapitre(chapitre).filter(queteAnnexeAccessible);
 	if (!l.length) return null;
 	var proposees = l.filter(function(a){ return annexeProposee(a) || state.quests[a.id]; });
 	var faites = l.filter(function(a){ return state.quests[a.id]; }).length;
@@ -143,11 +143,11 @@ function texteAnnexesCourt(chapitre){
 }
 function texteAnnexesDetail(){
 	var chapitres = [];
-	QUETES_ANNEXES.forEach(function(a){ if (annexeOuverte(a) && chapitres.indexOf(a.chapitre) === -1) chapitres.push(a.chapitre); });
+	QUETES_ANNEXES.forEach(function(a){ if (queteAnnexeAccessible(a) && chapitres.indexOf(a.chapitre) === -1) chapitres.push(a.chapitre); });
 	if (!chapitres.length) return "Aucune quête annexe pour l'instant : les habitants des chapitres que tu ouvriras t'en proposeront.";
 	var lignes = [C.gras("QUÊTES ANNEXES"), C.gris("Facultatives : des histoires d'habitants, hors de la note du chapitre. Récompenses : des XP en bonus, un souvenir (~/Souvenirs), une lumière de plus sur le plan."), ""];
 	chapitres.forEach(function(ch){
-		var l = annexesDuChapitre(ch).filter(annexeOuverte), ami = AMIS_ANNEXES[ch];
+		var l = annexesDuChapitre(ch).filter(queteAnnexeAccessible), ami = AMIS_ANNEXES[ch];
 		lignes.push(C.gras("Chapitre " + numeroAffiche(ch)) + C.gris("  (" + l.filter(function(a){ return state.quests[a.id]; }).length + " sur " + l.length + (ami ? " ; toutes : le badge « " + ami.nom + " »" : "") + ")"));
 		l.forEach(function(a){
 			if (!annexeProposee(a) && !state.quests[a.id]){ lignes.push("  " + C.gris("[ ] ??? : " + (a.indice || "un habitant attend qu'on lui parle."))); return; }
@@ -172,7 +172,7 @@ GameState.prototype.journal = function(detail){
 	var t = JOURNAL_AVANT_ANNEXES.apply(this, arguments);
 	var blocs = [];
 	var chapitres = [];
-	QUETES_ANNEXES.forEach(function(a){ if (annexeOuverte(a) && chapitres.indexOf(a.chapitre) === -1) chapitres.push(a.chapitre); });
+	QUETES_ANNEXES.forEach(function(a){ if (queteAnnexeAccessible(a) && chapitres.indexOf(a.chapitre) === -1) chapitres.push(a.chapitre); });
 	chapitres.forEach(function(ch){ var b = texteAnnexesCourt(ch); if (b) blocs.push(b); });
 	if (!blocs.length) return t;
 	// La section se place avant le niveau et le compte des sorts (les dernières lignes du journal).
