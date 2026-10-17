@@ -340,6 +340,11 @@ function construireLumen(){
 	D6("/tmp", { mode: "rwxrwxrwt" });
 	D6("/var/tmp", { mode: "rwxrwxrwt" });
 	D6("/proc");
+	["meminfo", "mdstat", "loadavg", "swaps", "uptime", "cpuinfo", "mounts", "version"].forEach(function(n){
+		var it = P6("/proc/" + n, "", { mode: "r--r--r--" });
+		it.taille = 0;
+		texteVivant(it, function(){ return estMonLumen() && state && state.reseau && state.reseau.machines && state.reseau.machines[H6] ? texteProcMachine(H6, n) : ""; });
+	});
 	D6("/run");
 	D6("/var/lib/lumen/sessions", { mode: "rwx-wx-wt" });
 	D6("/srv/donnees");
@@ -1188,7 +1193,7 @@ function validerCh6(){
 	QUARTIERS_CH6.forEach(function(q){
 		if (!quartierAllumeCh6(q.cle) || c.allumes[q.cle] !== undefined) return;
 		c.allumes[q.cle] = c.horloge;
-		if (!state.has("rejeuEnCours")) say(C.jaune("✺ " + q.titre.charAt(0).toUpperCase() + q.titre.substring(1) + " se rallume") + C.gris(" : les fenêtres s'éclairent une à une, et " + q.gardien + " lève sa lanterne vers la place."));
+		if (!state.has("rejeuEnCours")) say(C.jaune("✺ Quartier rallumé : " + q.titre) + C.gris(" : les fenêtres s'éclairent une à une, et " + q.gardien + " lève sa lanterne vers la place."));
 	});
 	if (c.tousAllumes === undefined && quartiersAllumesCh6().length === QUARTIERS_CH6.length) c.tousAllumes = c.horloge;
 	// La Longue Nuit : à 14 h, ou dès que les seize quartiers sont rallumés.

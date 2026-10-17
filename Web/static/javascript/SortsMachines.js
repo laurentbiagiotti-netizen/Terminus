@@ -2128,3 +2128,32 @@ function journalMachine(h, e){
 	M.journal.push({ t: t, u: e.unite || "systemd", pid: e.pid || null, m: String(e.message || ""), p: e.prio === undefined ? 6 : e.prio, k: e.noyau ? 1 : 0, b: e.boot || 0, unit: e.unit || null });
 	if (M.journal.length > 1500) M.journal.splice(0, M.journal.length - 1500);
 }
+
+/* Sur une machine modélisée, ls trie par nom, comme le vrai (sauf -t, -f) : le monde garde, lui, l'ordre d'arrivée. */
+var LISTER_LIEU_AVANT_MACHINES = Shell.listerLieu;
+Shell.listerLieu = function(lieu, opts, io){
+	if (!machineIci() || (opts && (opts.t || opts.f))) return LISTER_LIEU_AVANT_MACHINES.apply(this, arguments);
+	var items = lieu.items, enfants = lieu.children;
+	var parNom = function(a, b){ var x = a.itemname || a.room_name || "", y = b.itemname || b.room_name || ""; return x < y ? -1 : (x > y ? 1 : 0); };
+	lieu.items = items.slice().sort(parNom);
+	lieu.children = enfants.slice().sort(parNom);
+	try { return LISTER_LIEU_AVANT_MACHINES.apply(this, arguments); }
+	finally { lieu.items = items; lieu.children = enfants; }
+};
+
+/* Sur une machine modélisée, ~ est le dossier personnel du joueur sur CETTE machine (/home/NOM), pas sa Maison. */
+function maisonMachine(h){ var d = dossierHote(h, "/home/" + JOUEUR); return d ? "/home/" + JOUEUR : null; }
+var CHERCHER_AVANT_MACHINES = Shell.chercher;
+Shell.chercher = function(chemin, io, cmd){
+	if (typeof chemin === "string" && (chemin === "~" || chemin.indexOf("~/") === 0)){
+		var h = machineIci(), m = h ? maisonMachine(h) : null;
+		if (m) return CHERCHER_AVANT_MACHINES.call(this, m + chemin.substring(1), io, cmd);
+	}
+	return CHERCHER_AVANT_MACHINES.apply(this, arguments);
+};
+var CD_AVANT_MACHINES = Shell.sorts.cd;
+Shell.sorts.cd = function(args, io){
+	var h = machineIci(), m = h ? maisonMachine(h) : null;
+	if (m && (args.length === 0 || args[0] === "~")) return CD_AVANT_MACHINES.call(this, [m], io);
+	return CD_AVANT_MACHINES.apply(this, arguments);
+};

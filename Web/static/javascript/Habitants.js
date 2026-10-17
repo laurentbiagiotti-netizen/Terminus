@@ -149,7 +149,7 @@ var VeilleuseLumen = habitantCh6(quartierCh6("observatoire").lieu, "Veilleuse", 
 	if (aFait("a6_chant")) return "La Veilleuse fredonne le chant du Cœur, les yeux fermés. « Quand la ville a peur, je chante l'aube. Merci de me l'avoir rendu. »";
 	return "Une vieille dame emmitouflée, une bougie à la main, est assise sous la coupole.\n\n" +
 		"« Avant de s'éteindre, le Cœur chantait. Un chant en trois couplets, que je lui entendais murmurer la nuit. Je l'ai oublié. " +
-		"Il doit être dans ses vieux journaux, ceux qu'on a roulés et compressés (/var/log/lumen/coeur.log.2.gz, .3.gz, .4.gz). " +
+		"Il doit être dans ses vieux journaux, ceux qu'on a roulés et compressés (/var/log/lumen/coeur.log.*.gz). " +
 		"Ne les décompresse pas : cherche dedans tel quel (zgrep), et lis-en un en entier, page à page (zless), pour l'entendre battre.\n\n" +
 		"Et dis-moi aussi quand il s'est arrêté la dernière fois, d'un coup, sans prévenir : la machine garde la liste de ses arrêts et redémarrages (last -x). " +
 		"Puis chante-moi les trois couplets : écris-les dans ~/chant.txt, sur lumen. »\n\n" +

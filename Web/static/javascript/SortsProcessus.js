@@ -525,7 +525,8 @@ function tuerParNom(cmd){
 			if (a === "-s" || a === "--signal"){ signal = lireSignal(args[++i]); if (signal === null) throw new ShellError(cmd + ": unknown signal; " + cmd + " -l lists signals.", 1); continue; }
 			if (a === "-u" || a === "--user"){ user = args[++i]; continue; }
 			if (a === "-f" || a === "--full"){ complet = true; continue; }
-			if (a === "-e" || a === "--exact"){ exact = true; continue; }
+			if (a === "-e" || a === "--exact" || (cmd === "pkill" && a === "-x")){ exact = true; continue; }
+			if (cmd === "pkill" && /^-[xf]+$/.test(a)){ if (a.indexOf("x") > -1) exact = true; if (a.indexOf("f") > -1) complet = true; continue; }
 			if (a === "-v" || a === "--verbose"){ verbeux = true; continue; }
 			if (a === "-i"){ interactif = true; continue; }
 			if (a === "-l"){ return texteListeSignaux(); }

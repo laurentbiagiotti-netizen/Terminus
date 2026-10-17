@@ -83,6 +83,8 @@ function nouveauMonde(stockage, graine, options){
 				.replace(/<fantome-cron>/g, function(){ return lire("typeof FANTOME_CRON !== 'undefined' ? FANTOME_CRON : ''"); })
 				.replace(/<ip-nuee>/g, function(){ return lire("typeof IP_NUEE !== 'undefined' ? IP_NUEE[0] : ''"); })
 				.replace(/<volume>/g, function(){ return lire("typeof VOLUME_TOTAL !== 'undefined' ? String(VOLUME_TOTAL) : ''"); })
+				.replace(/<latence-avant>/g, function(){ return lire("(function(){ var m = (etatMachine('lumen').mesuresCurl || []).filter(function(x){ return x.temps >= 1; })[0]; return m ? m.temps.toFixed(2) : ''; })()"); })
+				.replace(/<latence-apres>/g, function(){ return lire("(function(){ var m = (etatMachine('lumen').mesuresCurl || []).filter(function(x){ return x.temps < 0.5 && x.code === 200; }).pop(); return m ? m.temps.toFixed(3) : ''; })()"); })
 				.replace(/<pid-ecoute>/g, function(){ var p = lire("procCorbeau()"); return p ? String(p.pid) : "0"; })
 				.replace(/<pid:([a-z_-]+)>/g, function(tout, nom){
 					return String(lire("(current_room.procs || []).filter(function(p){ return p.name === " + JSON.stringify(nom) + "; }).map(function(p){ return p.pid; })[0]"));
@@ -90,6 +92,8 @@ function nouveauMonde(stockage, graine, options){
 		},
 		// Joue une ligne de la solution comme le ferait un joueur : repères remplis, questions répondues.
 		jouerSolution: function(brute){
+			// Ctrl-Z (chapitre 6) : la touche, pas une commande.
+			if (brute.trim() === "Ctrl-Z") return String(vm.runInContext("Shell.suspendre() ? '' : ''", bac));
 			var commande = this.remplir(brute);
 			var mdp = vm.runInContext("MOT_DE_PASSE_SUDO", bac);
 			if (commande === "passwd") return this.taper(commande, ["Une phrase bien longue 42", "Une phrase bien longue 42"]);
