@@ -9,7 +9,7 @@ Trois repères utiles en salle :
 - un joueur perdu tape `cd` pour rentrer à la Maison, puis `cd -` pour revenir d'où il vient ;
 - un joueur bloqué tape `indice` : deux paliers payants par étape (30 puis 60 XP retirés de la note, pas du niveau), et des remarques gratuites quand quelque chose coince (rouages creux, alias qui masque un sort, clé SSH grillée ou effacée).
 
-Au premier lancement, le jeu affiche `terminus login:` : le prénom devient l'identifiant sur le système et le nom sur le diplôme, puis le joueur choisit un mot de passe qui lui permet de retrouver sa partie après un `logout`. Le jeu propose ensuite cinq enveloppes : la convocation à l'épreuve de première année (chapitre 1, la solution ci-dessous), le ticket d'incident du réseau (chapitre 2 directement, voir la partie 7), l'ordre de mission de la WarRoom (chapitre 3 directement, voir la partie 14), le pli de l'Académie (chapitre 4 directement, voir la partie 23) ou la lettre de l'Inspection (chapitre 5 directement, voir la partie 33).
+Au premier lancement, le jeu affiche `terminus login:` : le prénom devient l'identifiant sur le système et le nom sur le diplôme, puis le joueur choisit un mot de passe qui lui permet de retrouver sa partie après un `logout`. Le jeu propose ensuite six enveloppes : la convocation à l'épreuve de première année (chapitre 1, la solution ci-dessous), le ticket d'incident du réseau (chapitre 2 directement, voir la partie 7), l'ordre de mission de la WarRoom (chapitre 3 directement, voir la partie 14), le pli de l'Académie (chapitre 4 directement, voir la partie 23), la lettre de l'Inspection (chapitre 5 directement, voir la partie 33) ou la Lanterne de Lumen (chapitre 6 directement, voir la partie 49).
 
 Chaque partie est différente. Au premier lancement, le jeu tire une graine au hasard qui fixe le mot de passe sudo, le meilleur client de la taverne, l'adresse de l'attaquant, le nombre de sweats du BDE et les numéros de processus. Dans les blocs ci-dessous, ces valeurs sont écrites entre chevrons :
 
@@ -85,6 +85,20 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
   46. [Les défis des maîtres, tour par tour](#46-les-défis-des-maîtres-tour-par-tour)
   47. [L'aube](#47-laube)
   48. [Le rapport d'inspection](#48-le-rapport-dinspection)
+- [Chapitre 6 : Lumen, la cité qui s'éteint](#chapitre-6--lumen-la-cité-qui-séteint-exploitation-linux)
+  49. [Lumen, les gardiens et le Phare](#49-lumen-les-gardiens-et-le-phare)
+  50. [Les Docks et les Archives (Seymour, Kathleen)](#50-les-docks-et-les-archives-seymour-kathleen)
+  51. [La Gazette et les Forges (Ida, Gordon)](#51-la-gazette-et-les-forges-ida-gordon)
+  52. [La Tour de l'Horloge et les Citernes (Niklaus, Sophie)](#52-la-tour-de-lhorloge-et-les-citernes-niklaus-sophie)
+  53. [La Porte du Matin et les Ateliers (Lynn, Mary)](#53-la-porte-du-matin-et-les-ateliers-lynn-mary)
+  54. [La Crypte des mémoires et l'Observatoire (Betty, Donald)](#54-la-crypte-des-mémoires-et-lobservatoire-betty-donald)
+  55. [Le Puits et les Thermes (Dorothy, Ruth)](#55-le-puits-et-les-thermes-dorothy-ruth)
+  56. [Le Grand Marché et le Labyrinthe (Charles, John)](#56-le-grand-marché-et-le-labyrinthe-charles-john)
+  57. [La Bibliothèque des limites et le Guetteur (Kay, Klara)](#57-la-bibliothèque-des-limites-et-le-guetteur-kay-klara)
+  58. [La Longue Nuit](#58-la-longue-nuit)
+  59. [Le rapport de remise en service](#59-le-rapport-de-remise-en-service)
+  60. [Les défis des gardiens, quartier par quartier](#60-les-défis-des-gardiens-quartier-par-quartier)
+  61. [Les quêtes annexes : l'Ami de Lumen](#61-les-quêtes-annexes--lami-de-lumen)
 - [L'épreuve finale : la Forteresse](#lépreuve-finale--la-forteresse-mission-spéciale)
 
 ## Le barème
@@ -97,7 +111,7 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
 | Première utilisation d'un sort (52) | 5 |
 | Lieu découvert (44) | 5 |
 
-Le total possible est de 3860 XP au chapitre 1. Les autres chapitres ont chacun leur barème, sur le même principe, et leur note sur 20 à part : 5790 XP pour la panne (22 étapes, 50 quêtes secondaires, 50 sorts, 28 lieux), 5625 XP pour la Crypte (22 étapes, 45 quêtes secondaires dont 14 autour de vim, 49 sorts, 48 lieux), 5175 XP pour le chapitre 4, l'Académie des Arcanes (20 étapes, 50 défis des maîtres, 23 sorts avancés, 26 lieux), noté sur le CertificatAvance, et 7500 XP pour le chapitre 5, le Bastion (29 étapes dont le rapport final à 300 XP, 74 défis, 42 sorts de durcissement, 14 lieux), noté sur le CertificatBastion. La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
+Le total possible est de 3860 XP au chapitre 1. Les autres chapitres ont chacun leur barème, sur le même principe, et leur note sur 20 à part : 5790 XP pour la panne (22 étapes, 50 quêtes secondaires, 50 sorts, 28 lieux), 5625 XP pour la Crypte (22 étapes, 45 quêtes secondaires dont 14 autour de vim, 49 sorts, 48 lieux), 5175 XP pour le chapitre 4, l'Académie des Arcanes (20 étapes, 50 défis des maîtres, 23 sorts avancés, 26 lieux), noté sur le CertificatAvance, et 7500 XP pour le chapitre 5, le Bastion (29 étapes dont le rapport final à 300 XP, 74 défis, 42 sorts de durcissement, 14 lieux), noté sur le CertificatBastion, et 8795 XP pour le chapitre 6, Lumen (37 étapes dont le rapport final à 300 XP, 82 défis, 47 sorts d'exploitation, 18 lieux), noté sur le CertificatLumen ; les quêtes annexes de Lumen sont hors barème. La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
 
 Ordres de grandeur : un parcours réduit au strict nécessaire (une quarantaine de commandes, impossible sans connaître la solution) donne 10 sur 20. La solution ci-dessous, dernier chapitre compris, donne 20 sur 20. Les derniers points se gagnent en visitant chaque lieu et en lançant chaque sort au moins une fois : `xp` liste ceux qui n'ont jamais servi.
 
@@ -128,7 +142,9 @@ Quelques semaines après la Crypte, le chapitre 4 (l'Académie des Arcanes) s'ou
 
 Le chapitre 5 (le Bastion) s'ouvre ensuite : la Nuée a juré de revenir, et un serveur neuf, installé « par défaut », doit passer l'inspection de l'aube. En une nuit, la recrue mesure (la Pierre d'Inspection), ferme douze tours (comptes, sudo, SSH, services, pare-feu, droits, noyau, démarrage, Apache et TLS, audit et journaux, intégrité, fail2ban et AppArmor), relit l'aube, puis rend un rapport d'inspection honnête, avec ce qui reste. Frances éprouve chaque mur, sans rien casser. Tout est défensif : la Nuée reste narrative et inerte.
 
-Hormis Laurent, tous les personnages sont inventés. Ils portent des prénoms de pionniers de l'informatique (Ada, Grace, Hedy, Dennis, Linus, Margaret, Radia, Vint, Evi, Ken, Barbara, Tim, Annie, Alan ; au Bastion, Fernando, Butler, Tatu, Jean, Evelyn, Edsger, Joan, Robert, Katherine, Ralph, Adele).
+Le chapitre 6 (Lumen) s'ouvre enfin sous le Bastion : une cité souterraine, éclairée par une seule machine que personne n'entretient depuis des années, s'éteint quartier après quartier. En une journée, avant la Longue Nuit de 14 h, la recrue rallume seize quartiers (le disque, les inodes, les journaux, la mémoire, les processus, LVM, fstab, les unités systemd, la sauvegarde, les mesures, le RAID et SMART, fsck, apt et dpkg, le démarrage, les limites, strace et tmux), tient la Nuit en surveillant en direct, puis rend un rapport de remise en service qui dit aussi ce qui cassera ensuite. Ici, pas d'ennemi : l'usure, l'oubli et le manque d'entretien.
+
+Hormis Laurent, tous les personnages sont inventés. Ils portent des prénoms de pionniers de l'informatique (Ada, Grace, Hedy, Dennis, Linus, Margaret, Radia, Vint, Evi, Ken, Barbara, Tim, Annie, Alan ; au Bastion, Fernando, Butler, Tatu, Jean, Evelyn, Edsger, Joan, Robert, Katherine, Ralph, Adele ; à Lumen, Seymour, Kathleen, Ida, Gordon, Niklaus, Sophie, Lynn, Mary, Betty, Donald, Dorothy, Ruth, Charles, John, Kay, Klara). Les six habitants des quêtes annexes de Lumen ne portent que leur métier (la Logeuse, l'Allumeur, la Veilleuse, l'Horloger, l'Imprimeur, la Postière).
 
 ## Chapitre 1 : Terminus (l'épreuve de première année)
 
@@ -1719,6 +1735,458 @@ badges bastion
 ```
 
 Laurent contresigne : « Le Bastion a tenu. Pas parce qu'il est imprenable : parce que tu sais ce qui reste. » Le CertificatBastion porte la note du chapitre 5 et son code de vérification (`verifier CODE` le lit) ; le quiz du chapitre (`quiz 5`) s'ouvre, et `badges bastion` relit les seize leçons (une par tour, la Pierre, l'Aube, le Rapport, 4 h) et le platine.
+
+## Chapitre 6 : Lumen, la cité qui s'éteint (exploitation Linux)
+
+Numéro interne 7, affiché 6. Le chapitre s'ouvre à la fin du Bastion (le rapport d'inspection contresigné) : au fond du hall du Bastion, une grille s'ouvre sur un escalier qui descend vers Lumen (`cd Lumen`). On peut aussi y partir directement (la sixième enveloppe, « La Lanterne de Lumen », ou `chapitre 6` en début de partie) : les sorts des chapitres 1 à 5 sont alors acquis, et Lumen est au fond de la SalleServeurs.
+
+Lumen est une cité souterraine dont toute la lumière vient d'une seule machine, le Cœur de Lumen (le serveur `lumen`). Elle tourne depuis des années sans que personne ne l'entretienne, et ce matin, quartier après quartier, elle s'éteint. La Longue Nuit tombe à 14 h : il est 6 h à l'arrivée, chaque commande avance de 2 minutes (`cat Horloge`, la barre d'état et la radio de Grace donnent l'heure). Seize quartiers, seize gardiens (des prénoms de pionniers) : Seymour (les Docks, le disque plein), Kathleen (les Archives, les inodes), Ida (la Gazette, les journaux), Gordon (les Forges, la mémoire), Niklaus (la Tour de l'Horloge, les processus), Sophie (les Citernes, LVM), Lynn (la Porte du Matin, fstab et les montages), Mary (les Ateliers des automates, les unités systemd), Betty (la Crypte des mémoires, la sauvegarde), Donald (l'Observatoire, les mesures), Dorothy (le Puits aux deux sources, le RAID et SMART), Ruth (les Thermes, fsck et tune2fs), Charles (le Grand Marché, apt et dpkg), John (le Labyrinthe, le démarrage), Kay (la Bibliothèque des limites, ulimit et les groupes de contrôle) et Klara (le Guetteur, strace et tmux). Chaque gardien est vivant comme au Bastion : il explique son quartier par une image et le vrai mot du métier, donne la syntaxe, confie la mission sans dicter la commande, réagit aux erreurs fréquentes, puis raconte une anecdote du métier et coche ses cinq défis. `lanterne` (une commande du jeu) montre le Phare de Lumen : le plan des seize quartiers (rouge éteint, vert rallumé), l'heure, la lumière de la cité sur 100 (25 au départ) et les avaries de la Nuit.
+
+Tout est validé sur l'état réel de la machine `lumen`, pas sur la commande tapée : une commande écrite dans un `echo` ne compte pas, un raccourci est refusé (tuer l'export sans sa boucle, qui le relance ; supprimer toutes les sessions, y compris celles des habitants connectés ; lancer l'allumeur à la main avec `nohup` au lieu d'en faire un service ; recopier une mesure de latence inventée dans le carnet ; lancer la longue recopie dans la session ssh, qui meurt avec elle...), et les variantes légitimes sont acceptées (`systemctl edit`, `tee` ou `nano` pour un drop-in, `lvextend -r` ou `resize2fs`, `nohup` ou `tmux` pour la recopie, un délai ou la désactivation pour le service qui fait attendre le démarrage...). La Longue Nuit tombe à 14 h, ou plus tôt quand les seize quartiers sont rallumés : sur chaque quartier encore éteint, elle laisse une avarie (un vidage mémoire de 3 Go, douze mille sessions, l'export relancé, une ligne fausse dans fstab, la gazette en échec...), et sur la place une surprise (le journal des connexions qui explose). Ce n'est pas une défaite : on surveille en direct (`uptime`, `free -h`, `top -b -n 1`, `journalctl -f` ou `-u`), on répare, et le Phare doit dépasser 90.
+
+| Repère | Où le trouver dans le jeu |
+| --- | --- |
+| `<latence-avant>` | le temps de réponse mesuré par Donald avant les réparations (dans le carnet de l'Observatoire et le journal de lumen-web : 4,91 s) |
+| `<latence-apres>` | ta propre mesure, après les réparations (`curl -o /dev/null -s -w '%{time_total}\n' http://lumen/`, notée dans `~/carnet.txt` sur lumen) |
+
+Les 82 défis de Lumen (quêtes secondaires `s_m6_*`, 50 XP chacun) : cinq par quartier, révélés en lisant le gardien, réussis sur lumen ; et deux défis d'honneur, révélés par Laurent : les seize quartiers rallumés avant midi, et le rapport remis sans avoir acheté d'indice. La solution ci-dessous rallume d'abord les seize quartiers (avant midi), tient la Nuit, rend le rapport, puis fait les défis, quartier par quartier, et enfin les quêtes annexes.
+
+### 49. Lumen, les gardiens et le Phare
+
+On descend à Lumen, on écoute Laurent, on lit l'ordre de mission, la radio, l'horloge et le bestiaire, on consulte le Phare (c'est la lumière de départ), puis on fait le tour des seize quartiers pour apprendre les sorts et découvrir les défis.
+
+```
+cd ~/Cybersup/SalleServeurs/Academie/Bastion/Lumen
+cat Laurent
+cat Mission
+cat Radio
+cat Horloge
+cat Bestiaire
+lanterne
+cd Docks
+cat Seymour
+cd ../Archives
+cat Kathleen
+cd ../Gazette
+cat Ida
+cd ../Forges
+cat Gordon
+cd ../TourHorloge
+cat Niklaus
+cd ../Citernes
+cat Sophie
+cd ../PorteDuMatin
+cat Lynn
+cd ../Ateliers
+cat Mary
+cd ../CrypteMemoires
+cat Betty
+cd ../Observatoire
+cat Donald
+cd ../Puits
+cat Dorothy
+cd ../Thermes
+cat Ruth
+cd ../GrandMarche
+cat Charles
+cd ../Labyrinthe
+cat John
+cd ../BibliothequeLimites
+cat Kay
+cd ../Guetteur
+cat Klara
+cd ..
+```
+
+La deuxième étape (`m6_lanterne`) demande Laurent et l'ordre de mission lus, puis `lanterne` : sa lumière est retenue comme lumière de départ. Toute la suite se fait sur `lumen`, dans une seule session ssh.
+
+### 50. Les Docks et les Archives (Seymour, Kathleen)
+
+`/var` est plein : le coupable est une vieille archive oubliée dans `/var/backups`. Même effacé, un fichier de débogage reste tenu ouvert par lumen-web (`lsof +L1`) : relancer le service rend la place. Puis les Archives n'ont plus une fiche libre (les inodes) : on retire les sessions de plus d'une heure, pas celles des habitants connectés, et une règle `systemd-tmpfiles` fait ensuite le ménage seule.
+
+```
+ssh lumen
+df -h
+sudo du -sh /var/* | sort -h
+sudo rm /var/backups/lumen-2024.tar.gz
+sudo lsof +L1
+sudo systemctl restart lumen-web
+df -i
+sudo find /var/lib/lumen/sessions -type f -mmin +60 -delete
+echo 'd /var/lib/lumen/sessions 1733 root root 1h' | sudo tee /etc/tmpfiles.d/lumen-sessions.conf
+sudo systemd-tmpfiles --clean
+```
+
+### 51. La Gazette et les Forges (Ida, Gordon)
+
+Le journal de la cité grossit sans fin : une règle `logrotate` (éprouvée à blanc avec `-d`, puis forcée avec `-f`), et le journal de systemd borné pour de bon (`SystemMaxUse`, pas seulement un `--vacuum-size`). Aux Forges, la mémoire est saturée et l'OOM killer a frappé : le cache qui fuit passe sous une limite (`MemoryMax`, dans un drop-in), puis un fichier d'échange de secours (en `600`, gravé dans fstab) et la swappiness à 10.
+
+```
+printf '/var/log/lumen/*.log {\n\tdaily\n\trotate 7\n\tcompress\n\tmissingok\n\tnotifempty\n\tmaxsize 100M\n}\n' | sudo tee /etc/logrotate.d/lumen
+sudo logrotate -d /etc/logrotate.d/lumen
+sudo logrotate -f /etc/logrotate.d/lumen
+journalctl --disk-usage
+sudo journalctl --vacuum-size=200M
+sudo sed -i 's/^#SystemMaxUse=/SystemMaxUse=200M/' /etc/systemd/journald.conf
+sudo systemctl restart systemd-journald
+free -h
+sudo dmesg -T | grep -i oom
+sudo mkdir -p /etc/systemd/system/cache-rapports.service.d
+printf '[Service]\nMemoryMax=1G\n' | sudo tee /etc/systemd/system/cache-rapports.service.d/memoire.conf
+sudo systemctl daemon-reload
+sudo systemctl restart cache-rapports
+sudo fallocate -l 2G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+echo 'vm.swappiness = 10' | sudo tee /etc/sysctl.d/99-swap.conf
+sudo sysctl --system
+```
+
+### 52. La Tour de l'Horloge et les Citernes (Niklaus, Sophie)
+
+Un export tourne à 100 % depuis hier soir : on le calme d'abord (`renice`), puis on regarde son parent, une boucle qui le relance ; tuer l'enfant seul ne sert à rien, on arrête la boucle, puis l'export. Les trois spectres (des zombies) ne se tuent pas : on relance leur parent, lumen-veilleur. Aux Citernes, la base est à l'étroit : on agrandit le volume logique à chaud (`lvextend`, puis `resize2fs`), et on s'entraîne à l'instantané qu'on prendrait avant une opération risquée (créé, vu, retiré).
+
+```
+sudo renice +19 -p $(pgrep -x export-registre)
+ps -o ppid= -p $(pgrep -x export-registre)
+pstree -p $(pgrep -f export-boucle)
+sudo kill $(pgrep -f export-boucle)
+sudo killall export-registre
+sudo systemctl restart lumen-veilleur
+sudo vgs
+sudo lvextend -L +20G /dev/vg_lumen/lv_donnees
+sudo resize2fs /dev/mapper/vg_lumen-lv_donnees
+sudo lvcreate -s -L 2G -n avant_maj /dev/vg_lumen/lv_donnees
+sudo lvs
+sudo lvremove -y /dev/vg_lumen/avant_maj
+```
+
+### 53. La Porte du Matin et les Ateliers (Lynn, Mary)
+
+Le fstab de lumen ne laisserait pas la cité se réveiller : `/boot` désigné par un UUID faux, et un disque de sauvegarde amovible sans `nofail`. `findmnt --verify` les trouve, `blkid` donne le vrai UUID, puis `mount -a` doit tout monter sans un mot. Aux Ateliers, l'allumeur des réverbères tourne lancé à la main : il tient le port 8080 et mourra avec la session de l'opérateur. On l'arrête, on écrit son unité systemd, on l'active, puis on l'éprouve (`kill -s KILL`) : il revient seul (`Restart=on-failure`), et le journal le dit.
+
+```
+sudo findmnt --verify
+sudo blkid /dev/sda1
+sudo sed -i 's/4c2e8a1f-7d3b-4e5a-9c61-0b8f2d3e4a57/b81f3c7e-52a9-4d10-a6e4-91c0d2f7e358/' /etc/fstab
+sudo sed -i 's#/mnt/sauvegarde       ext4    defaults#/mnt/sauvegarde       ext4    defaults,nofail#' /etc/fstab
+sudo systemctl daemon-reload
+sudo mount -a
+sudo pkill -x allumeur
+printf '[Unit]\nDescription=L allumeur des reverberes\nAfter=network-online.target\n\n[Service]\nUser=allumeur\nExecStart=/opt/lumen/allumeur --port 8080\nRestart=on-failure\nRestartSec=5\n\n[Install]\nWantedBy=multi-user.target\n' | sudo tee /etc/systemd/system/allumeur.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now allumeur
+sudo systemctl kill -s KILL allumeur
+sudo journalctl -u allumeur
+```
+
+### 54. La Crypte des mémoires et l'Observatoire (Betty, Donald)
+
+Une sauvegarde qu'on n'a jamais restaurée n'existe pas. Un service `oneshot` qui la fabrique, un timer qui la lance chaque nuit (`Persistent=true`), un premier lancement à la main, puis une vraie restauration dans `/tmp/restauration`, comparée à l'original (`diff -r`). À l'Observatoire, on mesure : la charge face au nombre de cœurs, l'occupation des disques, l'histoire de la machine (`sar`), les connexions ; puis le temps de réponse de la cité, noté dans le carnet. Les Docks réparés et l'export arrêté, il passe sous la demi-seconde.
+
+```
+printf '[Unit]\nDescription=Sauvegarde de la cite\n\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/sauvegarde.sh\n' | sudo tee /etc/systemd/system/sauvegarde.service
+printf '[Unit]\nDescription=Sauvegarde chaque nuit\n\n[Timer]\nOnCalendar=*-*-* 02:00\nPersistent=true\n\n[Install]\nWantedBy=timers.target\n' | sudo tee /etc/systemd/system/sauvegarde.timer
+sudo systemctl daemon-reload
+sudo systemctl enable --now sauvegarde.timer
+systemctl list-timers
+sudo systemctl start sauvegarde
+mkdir /tmp/restauration
+sudo tar xzf /srv/sauvegardes/lumen-*.tar.gz -C /tmp/restauration
+diff -r /srv/archives/registres /tmp/restauration/srv/archives/registres
+uptime
+nproc
+iostat -x
+sar -q
+ss -s
+curl -o /dev/null -s -w '%{time_total}\n' http://lumen/ >> ~/carnet.txt
+cat ~/carnet.txt
+```
+
+### 55. Le Puits et les Thermes (Dorothy, Ruth)
+
+Le miroir des archives est dégradé (`[_U]` dans `/proc/mdstat`) : on retire la source tarie (`--fail`, `--remove`) et on ajoute le disque neuf, puis on lit la santé des disques : sdb est mort, sdc perd des secteurs (à écrire dans le rapport). Aux Thermes, une erreur a remonté les archives en lecture seule : on arrête ce qui les utilise, on démonte, `e2fsck`, on remonte ; puis `tune2fs` règle les vérifications et la réserve.
+
+```
+cat /proc/mdstat
+sudo mdadm /dev/md0 --fail /dev/sdb1 --remove /dev/sdb1
+sudo mdadm /dev/md0 --add /dev/sdd1
+sudo smartctl -H /dev/sdb
+sudo smartctl -a /dev/sdc
+mount | grep archives
+sudo systemctl stop lumen-archiviste
+sudo umount /srv/archives
+sudo e2fsck -f -y /dev/md0
+sudo fsck -n /dev/md0
+sudo mount /srv/archives
+sudo systemctl start lumen-archiviste
+sudo tune2fs -l /dev/md0
+sudo tune2fs -c 30 /dev/md0
+sudo tune2fs -m 1 /dev/md0
+cat /proc/mdstat
+```
+
+### 56. Le Grand Marché et le Labyrinthe (Charles, John)
+
+Une mise à jour s'est coupée en plein milieu : dpkg refuse tout tant qu'on ne l'a pas finie. On la finit, on répare les dépendances, on met à jour la liste ; puis on épingle la base (`apt-mark hold`) et on relance les services qui tournent encore sur de vieilles bibliothèques (`needrestart`). Le noyau neuf attendra un redémarrage : à écrire dans le rapport. Au Labyrinthe, la gazette est en échec : elle exige (`Requires=`) une unité qui n'existe pas. On corrige sa copie dans `/etc/systemd/system`, puis on regarde le démarrage : un service attend un réseau disparu pendant 90 secondes, on le désactive.
+
+```
+sudo dpkg --configure -a
+sudo apt --fix-broken install
+sudo apt update
+apt list --upgradable
+sudo apt-mark hold lumen-base
+apt-mark showhold
+cat /var/run/reboot-required
+sudo needrestart -r l
+sudo systemctl restart lumen-web lumen-messager
+systemctl --failed
+sudo journalctl -b -p err
+sudo cp /lib/systemd/system/lumen-gazette.service /etc/systemd/system/
+sudo sed -i 's/lumen-db/lumen-base/' /etc/systemd/system/lumen-gazette.service
+sudo systemctl daemon-reload
+sudo systemctl start lumen-gazette
+sudo systemctl reset-failed
+systemd-analyze blame
+systemd-analyze critical-chain
+sudo systemctl disable lumen-attente-reseau
+```
+
+### 57. La Bibliothèque des limites et le Guetteur (Kay, Klara)
+
+Le catalogue étouffe : « Too many open files ». Sa limite (`/proc/PID/limits`) face à ce qu'il tient ouvert (`/proc/PID/fd`), puis `LimitNOFILE` dans un drop-in. L'indexeur mange toute la lumière : `systemd-cgtop`, puis une part fixe (`set-property CPUQuota= MemoryMax=`). Au Guetteur, le messager ne répond plus : `strace` montre qu'il attend un `connect` vers un registre éteint ; on corrige son adresse. Enfin, la longue recopie des archives (plusieurs dizaines de minutes) se lance dans `tmux`, et survit à la déconnexion : on se déconnecte, on revient, on rattache, elle a continué.
+
+```
+cat /proc/$(pidof lumen-catalogue)/limits
+sudo ls /proc/$(pidof lumen-catalogue)/fd | wc -l
+sudo mkdir -p /etc/systemd/system/lumen-catalogue.service.d
+printf '[Service]\nLimitNOFILE=65536\n' | sudo tee /etc/systemd/system/lumen-catalogue.service.d/limites.conf
+sudo systemctl daemon-reload
+sudo systemctl restart lumen-catalogue
+systemd-cgtop
+sudo systemctl set-property lumen-indexeur CPUQuota=50% MemoryMax=2G
+systemctl show -p CPUQuotaPerSecUSec,MemoryMax lumen-indexeur
+sudo strace -p $(pidof lumen-messager)
+getent hosts registre-ancien
+sudo sed -i 's/^base = registre-ancien:5432/base = 127.0.0.1:5432/' /etc/lumen/messager.conf
+sudo systemctl restart lumen-messager
+tmux new -s copie
+/usr/local/bin/recopier-archives
+tmux detach
+exit
+ssh lumen
+tmux attach -t copie
+tmux detach
+```
+
+Les seize quartiers sont rallumés avant midi (le défi d'honneur `s_m6_avant_midi`) : la Longue Nuit tombe aussitôt, en avance.
+
+### 58. La Longue Nuit
+
+Quand la Nuit tombe, les quartiers rallumés tiennent ; les autres reçoivent chacun une avarie, et la place reçoit la surprise : le journal des connexions explose (2,5 Go en une heure). L'étape demande de surveiller en direct (`uptime`, `free -h`, `top -b -n 1`, un `journalctl -u` ou `-f` après la tombée de la Nuit), de réparer chaque avarie (la surprise se règle avec la rotation : `connexions.log` est dans `/var/log/lumen/`), puis le Phare doit dépasser 90 (`lanterne`). Ici, tout était rallumé : il ne reste que la surprise. On attend aussi la fin de la recopie.
+
+```
+tmux attach -t copie
+tmux detach
+lanterne
+watch -n 2 cat /proc/mdstat
+tmux attach -t copie
+tmux detach
+uptime
+free -h
+top -b -n 1 | head -15
+sudo journalctl -u lumen-web -n 5
+sudo logrotate -f /etc/logrotate.d/lumen
+lanterne
+exit
+```
+
+### 59. Le rapport de remise en service
+
+Le rapport porte cinq rubriques (avaries, causes, réparations, mesures, ce qui reste), les vraies latences (avant, celle de Donald ; après, la tienne) et le disque à remplacer bientôt (sdc). Laurent ne le contresigne que si la Nuit est passée et le Phare au-dessus de 90 : déposé trop tôt, il le garde et dit ce qui reste ; sans les vraies mesures, il les demande.
+
+```
+mkdir -p ~/lumen
+cat > ~/lumen/rapport.txt <<'FIN'
+RAPPORT DE REMISE EN SERVICE - LUMEN
+Avaries : /var plein, fichier efface encore ouvert, inodes epuises, journaux geants, memoire saturee et OOM, export fou et zombies, base a l'etroit, fstab faux, allumeur lance a la main, sauvegarde jamais testee, miroir degrade, archives en lecture seule, apt bloque, gazette en echec, catalogue a court de fichiers, messager bloque.
+Causes : aucune rotation ni nettoyage, une fuite memoire sans limite, une boucle oubliee, un disque mort, une mise a jour coupee, une faute dans Requires, une limite trop basse, une adresse perimee.
+Reparations : seize quartiers rallumes, la Longue Nuit tenue.
+Mesures : latence avant <latence-avant> s, latence apres <latence-apres> s.
+Ce qui reste : remplacer le disque sdc, qui perd des secteurs ; redemarrer sur le noyau 6.1.0-27.
+FIN
+cp ~/lumen/rapport.txt BoiteDeLaurent
+```
+
+Laurent contresigne : « Lumen brille. Pas parce que rien ne cassera plus : parce que tu sais ce qui cassera ensuite, et que c'est écrit. » Le CertificatLumen, posé dans la Maison (`cat ~/CertificatLumen`), porte la note du chapitre 6 et son code de vérification ; le quiz du chapitre (`quiz 6`) s'ouvre, et `badges lumen` relit les vingt leçons (une par quartier, la Lanterne, la Nuit, le Rapport, midi) et le platine.
+
+### 60. Les défis des gardiens, quartier par quartier
+
+Les 80 défis des quartiers, dans l'ordre des gardiens (la solution les fait après le rapport). Les Docks : `du --max-depth`, `df -hT`, `ncdu`, ce qui dort depuis un mois, les liens cassés. Les Archives : `ls -f`, le numéro d'inode, le nombre d'inodes du volume, `rm sess_*` qui ne passe pas (Argument list too long), `systemd-tmpfiles --cat-config`. La Gazette : `journalctl --since`, `-u`, `-f`, `--vacuum-time`, `-o short-iso`. Les Forges : `vmstat`, les plus gros mangeurs, la base protégée de l'OOM killer, `pmap`, `MemAvailable`. La Tour : `pgrep -a`, `pidof`, `nice`, `kill -l`, `top -b`. Les Citernes : un disque neuf préparé (`pvcreate`) puis relié à la réserve (`vgextend`), `blkid`, `lsblk`, `vgdisplay`. La Porte : `findmnt /`, l'UUID seul, `/proc/mounts`, `lsblk -o`, `df -h /boot`. Les Ateliers : `systemd-analyze verify`, `systemctl cat`, `is-enabled`, `systemd-run`, `show -p Restart`. La Crypte : `tar tzf`, `systemd-analyze calendar`, `rsync -an` puis `rsync -a` vers le disque de sauvegarde, le journal de la sauvegarde. L'Observatoire : `uptime -p`, `sar -q`, `sar -r`, le code de réponse seul, `iostat -x sdc`. Le Puits : `mdadm --examine`, `lsblk -f`, `mdadm --detail --scan`, un test SMART court et son résultat, `smartctl -i`. Les Thermes : `dmesg -T`, `fuser -vm`, `lsof +D`, `mount -o remount,rw`, `tune2fs -i`. Le Marché : `dpkg -l`, `apt policy`, `apt-cache depends`, `uname -r`, `dpkg --audit`. Le Labyrinthe : `list-dependencies`, `journalctl -k`, `systemd-analyze`, `--list-boots`, `-b -1`. La Bibliothèque : `ulimit -n`, `ulimit -a`, `lsof -p`, `/proc/PID/status`, `show -p LimitNOFILE`. Le Guetteur : `hostnamectl`, le fuseau de la cité, `screen -ls`, `getent hosts`, `watch`. Au passage, quelques sorts du chapitre servent une fois (`swapoff`, `swapon --show`, `nohup`).
+
+```
+ssh lumen
+sudo du -h --max-depth=1 /var
+df -hT
+ncdu /var
+sudo find /var -mtime +30
+sudo find /var/www -xtype l
+sudo rm /var/www/lumen/ancien-plan.html
+sudo ls -f /var/lib/lumen/sessions | head -3
+sudo stat -c %i /etc/fstab
+sudo tune2fs -l /dev/mapper/vg_lumen-lv_sessions
+sudo rm /var/lib/lumen/sessions/sess_*
+systemd-tmpfiles --cat-config
+journalctl --since "1 hour ago"
+journalctl -u lumen-web
+journalctl -f
+sudo journalctl --vacuum-time=7d
+journalctl -o short-iso -n 3
+vmstat 1 5
+ps aux --sort=-%mem | head -5
+echo -500 | sudo tee /proc/$(pidof lumen-base)/oom_score_adj
+sudo pmap $(pidof lumen-base)
+grep MemAvailable /proc/meminfo
+pgrep -a lumen
+pidof lumen-web
+nice -n 10 tar czf /tmp/etc.tar.gz /etc/lumen
+kill -l
+top -b -n 1
+sudo pvcreate /dev/sde
+sudo pvs
+sudo vgextend vg_lumen /dev/sde
+sudo blkid
+lsblk
+sudo vgdisplay
+findmnt /
+sudo blkid -s UUID -o value /dev/sda1
+cat /proc/mounts
+lsblk -o NAME,UUID,MOUNTPOINT
+df -h /boot
+systemd-analyze verify /etc/systemd/system/allumeur.service
+systemctl cat allumeur
+systemctl is-enabled allumeur
+sudo systemd-run --on-active=30min /usr/local/bin/sauvegarde.sh
+systemctl show -p Restart allumeur
+tar tzf /srv/sauvegardes/lumen-*.tar.gz
+systemd-analyze calendar '*-*-* 02:00'
+rsync -an /srv/archives/ /mnt/sauvegarde/archives/
+sudo rsync -a /srv/archives/ /mnt/sauvegarde/archives/
+sudo journalctl -u sauvegarde
+uptime -p
+sar -q
+sar -r
+curl -o /dev/null -s -w '%{http_code}\n' http://lumen/
+iostat -x sdc
+sudo mdadm --examine /dev/sdc1
+lsblk -f
+sudo mdadm --detail --scan
+sudo smartctl -t short /dev/sdc
+sudo smartctl -l selftest /dev/sdc
+sudo smartctl -i /dev/sdc
+sudo dmesg -T | grep EXT4
+sudo fuser -vm /srv/archives
+sudo lsof +D /srv/archives
+sudo mount -o remount,rw /srv/archives
+sudo tune2fs -i 6m /dev/md0
+dpkg -l | grep lumen
+apt policy lumen-base
+apt-cache depends lumen-web
+uname -r
+sudo dpkg --audit
+systemctl list-dependencies lumen-gazette
+sudo journalctl -k
+systemd-analyze
+sudo journalctl --list-boots
+sudo journalctl -b -1
+ulimit -n
+ulimit -a
+sudo lsof -p $(pidof lumen-catalogue)
+cat /proc/$(pidof lumen-catalogue)/status
+systemctl show -p LimitNOFILE lumen-catalogue
+hostnamectl
+sudo timedatectl set-timezone Europe/Paris
+screen -ls
+getent hosts registre-ancien
+watch -n 2 uptime
+sudo swapoff /swapfile
+sudo swapon -a
+swapon --show
+nohup /usr/local/bin/recopier-archives &
+exit
+```
+
+Le chapitre est alors à 20 sur 20, le platine gagné (`badges lumen`).
+
+### 61. Les quêtes annexes : l'Ami de Lumen
+
+Six habitants de Lumen ont chacun un service à demander. Ces quêtes annexes sont facultatives et hors note : elles ne comptent ni dans l'XP du chapitre ni dans la note, et donnent un bonus d'XP à part, un souvenir déposé dans `~/Souvenirs`, puis, toutes finies, le badge « Ami de Lumen ». Elles n'enseignent que des notions jamais vues dans les chapitres 1 à 6 (les quotas, le bit setgid d'un dossier et `newgrp`, les tâches de fond et leurs signaux, les journaux compressés et `last -x`, l'horloge matérielle et `cal`, les compressions `bzip2`, `xz` et `zstd`, les dates de fichiers posées avec `touch -d` et `touch -r` et `find -newermt`). Une annexe s'ouvre en lisant son habitant ; ses étapes se font dans l'ordre ; `quetes annexes` en donne l'avancée. L'Allumeur est sur la place, la Logeuse aux Ateliers, la Veilleuse à l'Observatoire, l'Horloger à la Tour de l'Horloge, l'Imprimeur à la Gazette, la Postière aux Archives. Pour le Chat errant de l'Allumeur, le programme se lance au premier plan, puis on le suspend avec Ctrl+Z (deux fois dans la solution : la ligne `Ctrl-Z` du bloc ci-dessous désigne cette touche, pas une commande à taper).
+
+```
+cat Allumeur
+cd Ateliers
+cat Logeuse
+cd ../Observatoire
+cat Veilleuse
+cd ../TourHorloge
+cat Horloger
+cd ../Gazette
+cat Imprimeur
+cd ../Archives
+cat Postiere
+quetes annexes
+ssh lumen
+sudo setquota -u ninon 900M 1G 0 0 /home
+sudo setquota -u basile 900M 1G 0 0 /home
+quota -u ninon
+sudo repquota -a
+sudo chgrp habitants /home/commun
+sudo chmod g+s /home/commun
+touch /home/commun/bienvenue.txt
+ls -l /home/commun
+newgrp habitants
+id
+chat-errant
+Ctrl-Z
+jobs
+bg %1
+fg %1
+Ctrl-Z
+kill -STOP $(pgrep chat-errant)
+kill -CONT $(pgrep chat-errant)
+disown %1
+exit
+ssh lumen
+pgrep -a chat-errant
+zgrep chant /var/log/lumen/coeur.log.*.gz
+zless /var/log/lumen/coeur.log.3.gz
+last -x
+echo "quand la ville dort, je veille" > ~/chant.txt
+echo "quand la ville a froid, je brule" >> ~/chant.txt
+echo "quand la ville a peur, je chante l'aube" >> ~/chant.txt
+sudo hwclock --show
+sudo hwclock --systohc
+cal
+date +%s >> ~/horloge.txt
+cd /srv/gazette
+bzip2 -k rouleau-1880.txt
+xz -k rouleau-1880.txt
+xz -l rouleau-1880.txt.xz
+zstd rouleau-1880.txt
+ls -l
+echo xz > ~/rouleaux.txt
+cd
+touch -d "$(date +%F) 00:00" ~/repere
+find /srv/courrier -newermt "$(date +%F) 00:00"
+cat /srv/courrier/lettre-de-la-maire.txt
+cp /srv/courrier/lettre-de-la-maire.txt ~/
+touch -r /srv/courrier/lettre-de-la-maire.txt ~/lettre-de-la-maire.txt
+exit
+```
+
+L'Imprimeur demande quel format garde le rouleau le plus petit : `ls -l` le montre (ici `xz`). Les six annexes finies, les habitants viennent saluer la recrue sur la place, et le badge « Ami de Lumen » s'ajoute à `badges lumen`.
 
 ## L'épreuve finale : la Forteresse (mission spéciale)
 

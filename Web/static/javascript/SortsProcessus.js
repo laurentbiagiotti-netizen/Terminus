@@ -657,7 +657,10 @@ function fichiersOuvertsListe(h, p){
 	var l = [{ fd: "cwd", type: "DIR", chemin: p.cwd || "/", taille: 4096 }, { fd: "rtd", type: "DIR", chemin: "/", taille: 4096 }, { fd: "txt", type: "REG", chemin: p.exe || (String(p.cmd).split(/\s+/)[0].charAt(0) === "/" ? String(p.cmd).split(/\s+/)[0] : "/usr/bin/" + p.comm), taille: 1024000 }];
 	(p.fichiers || []).forEach(function(f){ l.push(f); });
 	(p.ports || []).forEach(function(port, i){ l.push({ fd: (3 + (p.fichiers || []).length + i) + "u", type: "IPv4", chemin: "*:" + port + " (LISTEN)", proto: "TCP", reseau: true }); });
-	(p.connexions || []).forEach(function(cx, i){ l.push({ fd: (20 + i) + "u", type: "IPv4", chemin: cx, proto: "TCP", reseau: true }); });
+	(p.connexions || []).forEach(function(cx, i){
+		var chemin = typeof cx === "string" ? cx : (cx.local || "*") + "->" + (cx.distant || "*") + (cx.etat ? " (" + String(cx.etat).replace(/-/g, "_") + ")" : "");
+		l.push({ fd: (20 + i) + "u", type: "IPv4", chemin: chemin, proto: "TCP", reseau: true });
+	});
 	return l;
 }
 var LSOF_AVANT_MACHINES = Shell.sorts.lsof;
@@ -676,7 +679,7 @@ Shell.sorts.lsof = function(args, io){
 		if (a === "+D"){ o.dossier = cheminNormal(args[++i] || "/"); continue; }
 		if (a === "+f" || a === "--"){ o.f = true; continue; }
 		if (/^-[nPlt]+$/.test(a)) { if (a.indexOf("t") > -1) o.t = true; continue; }
-		if (a.charAt(0) === "-" || a.charAt(0) === "+") throw new ShellError("lsof: unsupported option: " + a + "\nlsof 4.95.0\n latest revision: https://github.com/lsof-org/lsof\n usage: [-?abhKlnNoOPRtUvVX] [+|-c c] [+|-d s] [+D D] [+|-E] [+|-e s] [+|-f[gG]] [+|-L [l]] [-p s] [+|-r [t]] [-s [p:s]] [-S [t]] [-T [t]] [-u s] [+|-w] [-x [fl]] [--] [names]", 1);
+		if (a.charAt(0) === "-" || a.charAt(0) === "+") throw new ShellError("lsof: unsupported option: " + a + "\nlsof 4.95.0\n usage: [-?abhKlnNoOPRtUvVX] [+|-c c] [+|-d s] [+D D] [+|-E] [+|-e s] [+|-f[gG]] [+|-L [l]] [-p s] [+|-r [t]] [-s [p:s]] [-S [t]] [-T [t]] [-u s] [+|-w] [-x [fl]] [--] [names]", 1);
 		o.chemins.push(cheminNormal(/^\//.test(a) ? a : cheminDuLieuMachine(current_room) + "/" + a));
 	}
 	if (!io.sudo){ io.err("lsof: WARNING: can't stat() fuse.gvfsd-fuse file system /run/user/1000/gvfs\n      Output information may be incomplete."); }
@@ -691,7 +694,7 @@ Shell.sorts.lsof = function(args, io){
 			if (o.reseau !== null && !f.reseau) return;
 			if (o.reseau && o.reseau.charAt(0) === ":" && String(f.chemin).indexOf(o.reseau.substring(1)) === -1) return;
 			if (o.dossier && String(f.chemin).indexOf(o.dossier + "/") !== 0 && f.chemin !== o.dossier) return;
-			if (o.chemins.length && !o.chemins.some(function(c){ var fs = o.f ? fsParCible(h, c) : null; return f.chemin === c || (fs || o.f) && String(f.chemin).indexOf(c + "/") === 0 || f.chemin.indexOf(c + "/") === 0 && dossierHote(h, c); })) return;
+			if (o.chemins.length && !o.chemins.some(function(c){ var fs = o.f ? fsParCible(h, c) : null; return f.chemin === c || (fs || o.f) && String(f.chemin).indexOf(c + "/") === 0 || String(f.chemin).indexOf(c + "/") === 0 && dossierHote(h, c); })) return;
 			nb++;
 			if (o.t){ lignes.push(String(p.pid)); return; }
 			lignes.push([completerDroite(p.comm.substring(0, 9), 9), completerGauche(p.pid, 6), completerDroite(p.user.substring(0, 8), 8), completerGauche(f.fd || "3w", 4) + " ", completerDroite(f.type || "REG", 6),
@@ -1014,7 +1017,7 @@ function texteProcMachine(h, nom){
 		case "loadavg": var c = chargeMachine(h); return c.map(function(x){ return x.toFixed(2); }).join(" ") + " " + procsMachine(h).filter(function(p){ return p.etat === "R"; }).length + "/" + (procsMachine(h).length + 118) + " " + (M.prochainPid || 5000);
 		case "swaps": return "Filename\t\t\t\tType\t\tSize\t\tUsed\t\tPriority\n" + (M.swaps || []).map(function(s){ return completerDroite(s.chemin, 40) + completerDroite(s.type, 16) + completerDroite(s.taille, 16) + completerDroite(s.utilise, 16) + s.prio; }).join("\n");
 		case "uptime": var s = (maintenantMachine(h) - (M.demarrage || 0)) / 1000; return s.toFixed(2) + " " + (s * nprocMachine(h) * 0.6).toFixed(2);
-		case "cpuinfo": var l = []; for (var i = 0; i < nprocMachine(h); i++) l.push("processor\t: " + i + "\nvendor_id\t: GenuineIntel\nmodel name\t: Intel(R) Xeon(R) CPU E-2224 @ 3.40GHz\ncpu MHz\t\t: 3400.000\ncache size\t: 8192 KB\ncpu cores\t: " + nprocMachine(h) + "\n"); return l.join("\n");
+		case "cpuinfo": var l = []; for (var i = 0; i < nprocMachine(h); i++) l.push("processor\t: " + i + "\nvendor_id\t: unknown\nmodel name\t: Common KVM processor\ncpu MHz\t\t: 3400.000\ncache size\t: 8192 KB\ncpu cores\t: " + nprocMachine(h) + "\n"); return l.join("\n");
 		case "mounts": return fsMontes(h).map(function(f){ return f.source + " " + f.cible + " " + f.type + " " + texteOptionsMontage(f) + " 0 0"; }).join("\n");
 		case "version": return "Linux version " + (typeof versionNoyau === "function" ? versionNoyau(h) : "6.1.0") + " (debian-kernel@lists.debian.org) (gcc-12 (Debian 12.2.0-14) 12.2.0, GNU ld (GNU Binutils for Debian) 2.40) #1 SMP PREEMPT_DYNAMIC Debian 6.1.115-1 (2024-11-01)";
 	}
@@ -1028,7 +1031,7 @@ function texteProcMachine(h, nom){
 /*
  * Un « programme long » est une commande que la machine connaît comme durable (M.programmesLongs[nom] = gabarit de
  * processus, ou sleep N, tail -f, watch) : au premier plan, il prend le terminal ; Ctrl-Z le suspend (le jeu propose
- * Shell.suspendre) ; & le lance en tâche de fond ; jobs, bg, fg, disown, kill %N s'en occupent.
+ * Shell.suspendre) ; l'opérateur « & » le lance en tâche de fond ; jobs, bg, fg, disown, kill %N s'en occupent.
  */
 function programmeLong(h, argv){
 	var M = etatMachine(h), nom = String(argv[0] || "").split("/").pop();

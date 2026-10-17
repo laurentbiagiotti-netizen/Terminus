@@ -982,7 +982,7 @@ Shell.sorts.dmesg = function(args, io){
 		if (/^-[THwxeLk]+$/.test(a) || a === "--follow" || a === "--human" || a === "--color=never"){ if (a.indexOf("T") > -1) humainT = true; continue; }
 		throw new ShellError("dmesg: unrecognized option '" + a + "'\nTry 'dmesg --help' for more information.", 1);
 	}
-	if (!io.sudo) throw new ShellError("dmesg: read kernel buffer failed: Operation not permitted" + astuce(io, "Sur ce Debian, le journal du noyau est réservé à root (kernel.dmesg_restrict = 1) : sudo dmesg"), 1);
+	if (!io.sudo) throw new ShellError("dmesg: read kernel buffer failed: Operation not permitted" + astuce(io, "Sur cette machine, le journal du noyau est réservé à root (kernel.dmesg_restrict = 1) : sudo dmesg"), 1);
 	var entrees = (M.journal || []).filter(function(e){ return e.k && e.b === 0 && (!M.dmesgVide || e.t > M.dmesgVide); });
 	if (niveaux){
 		var voulus = niveaux.map(function(n){ return lirePrio(n === "warn" ? "warning" : n); });

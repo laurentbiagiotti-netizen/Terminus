@@ -507,15 +507,16 @@ var GARDIENS_LUMEN = {
 			"  curl -o /dev/null -s -w '%{time_total}\\n' http://lumen/      le temps de réponse, en secondes\n" +
 			"  ... >> ~/carnet.txt                   noter la mesure dans ton carnet\n\n" +
 			"Une mesure qu'on n'a pas notée n'existe pas. »"; },
-		mission: function(){ return "« Ta mission : relève mes cinq instruments sur lumen. Puis, quand les Docks seront réparés, chronomètre la cité : elle doit répondre en moins d'une seconde. Note ta mesure dans ton carnet (~/carnet.txt, sur lumen), et garde la mienne pour ton rapport. »"; },
+		mission: function(){ return "« Ta mission : relève mes cinq instruments sur lumen. Puis chronomètre la cité : elle doit répondre en moins d'une demi-seconde, et pour ça, il faut que les Docks respirent et que l'engrenage fou de la Tour se taise. Note ta mesure dans ton carnet (~/carnet.txt, sur lumen), et garde la mienne pour ton rapport. »"; },
 		entre: function(premier){ return premier ? "Donald prend des notes. « Les instruments sont relevés. Maintenant le chronomètre : curl -w, et le carnet. Tant que /var est plein, la page mettra quatre secondes. »" :
 			"« La mesure est notée. Relève aussi mes instruments : uptime, nproc, iostat -x, sar, ss -s. »"; },
 		erreur: function(){
 			if (!aFait("m6_latence") && ETATS_CH6.m6_latence() && !carnetOkCh6()) return "Donald tend son carnet. « La cité répond vite, mais ta mesure n'est notée nulle part : ajoute-la à ~/carnet.txt (sur lumen), avec >>. »";
 			if (!aFait("m6_latence") && (etatMachine(H6).mesuresCurl || []).length > 1 && varPleinCh6()) return "« Tant que /var est plein, la cité répond en quatre secondes et une erreur 503. Les Docks d'abord. »";
+			if (!aFait("m6_latence") && !ETATS_CH6.m6_latence() && (etatMachine(H6).mesuresCurl || []).length > 1 && procCh6("export-registre")) return "« Mieux, mais pas encore : l'engrenage fou de la Tour de l'Horloge mange le processeur, et la page attend son tour. Arrête-le, puis remesure. »";
 			return null;
 		},
-		fin: function(){ return "Donald recule de sa lunette. « La cité répond en moins d'une seconde. Je l'écris.\n\n" +
+		fin: function(){ return "Donald recule de sa lunette. « La cité répond en moins d'une demi-seconde. Je l'écris.\n\n" +
 			"Un jour, une équipe a passé une semaine à optimiser du code parce que « le site était lent ». Personne n'avait mesuré. Le disque était à 100 % d'occupation : " +
 			"une sauvegarde mal planifiée tournait en pleine journée. Une ligne de iostat aurait suffi. »"; }
 	},

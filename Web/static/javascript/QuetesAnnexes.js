@@ -114,6 +114,7 @@ function poserSouvenir(s){
 		World.fige = fige;
 		dossier.owner = JOUEUR;
 		dossier.mode = "rwxr-xr-x";
+		dossier.horsBareme = true;   // facultatif : ni XP de lieu, ni place dans le barème du chapitre 1
 		if (typeof libererNom === "function") libererNom(Home, "Souvenirs");
 		link_rooms(Home, dossier);
 	}

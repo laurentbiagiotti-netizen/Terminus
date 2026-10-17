@@ -159,7 +159,7 @@ var SORTS_DES_QUARTIERS = {
 /* ------------------------------------------------------------------ */
 
 var CoeurDeLumen = lieuDuChapitre7(new Room("lumen",
-	"La machine lumen : le Cœur de Lumen. Un Debian qui tourne depuis quarante et un jours sans qu'on le regarde. Disques pleins, mémoire à bout, " +
+	"La machine lumen : le Cœur de Lumen. Un serveur qui tourne depuis quarante et un jours sans qu'on le regarde. Disques pleins, mémoire à bout, " +
 	"services en panne : chaque quartier éteint de la cité est une avarie de cette machine.", "loc_coeur_lumen.gif"));
 CoeurDeLumen.racineHote = H6;
 CoeurDeLumen.owner = "root";
@@ -646,7 +646,7 @@ var QUETES_CH6 = [
 	{ id: "m6_mesures", titre: "Observatoire : mesurer la charge, les disques, la mémoire, le réseau",
 	  indice: "Observatoire (Donald). uptime et nproc, iostat -x, sar (-u, -r ou -q), ss -s : tout sur lumen." },
 	{ id: "m6_latence", titre: "Observatoire : mesurer le temps de réponse de la cité, et le noter",
-	  indice: "curl -o /dev/null -s -w '%{time_total}\\n' http://lumen/ : une fois les Docks réparés, il passe sous la seconde. Note la mesure dans ~/carnet.txt sur lumen (>>)." },
+	  indice: "curl -o /dev/null -s -w '%{time_total}\\n' http://lumen/ : une fois les Docks réparés et l'export de la Tour arrêté, il passe sous la demi-seconde. Note la mesure dans ~/carnet.txt sur lumen (>>)." },
 	{ id: "m6_raid", titre: "Puits : le miroir dégradé, remplacer la source tarie",
 	  indice: "Puits (Dorothy). cat /proc/mdstat ([_U]), sudo mdadm --detail /dev/md0, puis sudo mdadm /dev/md0 --fail /dev/sdb1 --remove /dev/sdb1 et --add /dev/sdd1. Suis la reconstruction." },
 	{ id: "m6_smart", titre: "Puits : la santé des disques (SMART), le prochain à mourir",
@@ -961,7 +961,7 @@ var VALIDATIONS_CH6 = {
 	m6_journal: function(){ return ETATS_CH6.m6_journal() && vu("diskUsage"); },
 	m6_memoire: function(){ return ETATS_CH6.m6_memoire() && vu("free") && vu("oom"); },
 	m6_swap: function(){ return ETATS_CH6.m6_swap(); },
-	m6_cpu: function(){ return ETATS_CH6.m6_cpu() && vu("renice"); },
+	m6_cpu: function(){ return ETATS_CH6.m6_cpu() && (vu("renice") || vu("reniceTout")); },
 	m6_zombie: function(){ return ETATS_CH6.m6_zombie() && vu("ppid") && vu("veilleurRelance"); },
 	m6_lvm: function(){ return ETATS_CH6.m6_lvm(); },
 	m6_snapshot: function(){ return ETATS_CH6.m6_snapshot() && vu("lvsSnapshot"); },
@@ -1000,11 +1000,12 @@ function quartiersAllumesCh6(){ return QUARTIERS_CH6.filter(function(q){ return 
 function optionsCh6(args){ return args.filter(function(a){ return /^-[A-Za-z0-9]+$/.test(a); }).join("").replace(/-/g, ""); }
 function noterCh6(nom, args, sortie, io){
 	var o = optionsCh6(args), c = sCh6();
-	if (nom === "df" && /\/var$/m.test(sortie) && varPleinCh6() && / 100% \/var$/m.test(sortie)) noterVu("dfVarPlein");
+	// Les constats ne dépendent pas de l'ordre : qui répare d'abord et regarde ensuite n'est pas bloqué.
+	if (nom === "df" && /\/var$/m.test(sortie)) noterVu("dfVarPlein");
 	if (nom === "df" && o.indexOf("i") > -1 && /sessions/.test(sortie)) noterVu("dfi");
 	if ((nom === "du" || nom === "ncdu") && args.some(function(a){ return /^\/var(\/|\*|$)/.test(a); }) && /backups/.test(sortie)) noterVu("coupable");
 	if (nom === "find" && args.some(function(a){ return /^\/var/.test(a); }) && /lumen-2024\.tar\.gz/.test(sortie)) noterVu("coupable");
-	if (nom === "lsof" && args.indexOf("+L1") > -1 && /\(deleted\)/.test(sortie)) noterVu("lsofL1");
+	if (nom === "lsof" && args.indexOf("+L1") > -1) noterVu("lsofL1");
 	if (nom === "systemd-tmpfiles" && args.indexOf("--clean") > -1 && io.sudo && !io.code && tmpfilesSessionsCh6()) noterVu("tmpfilesClean");
 	if (nom === "logrotate" && (o.indexOf("d") > -1 || args.indexOf("--debug") > -1) && /lumen/.test(sortie)) noterVu("logrotateDebug");
 	if (nom === "journalctl" && args.indexOf("--disk-usage") > -1) noterVu("diskUsage");
@@ -1055,7 +1056,7 @@ function noterCh6(nom, args, sortie, io){
 	if (nom === "systemd-cgtop") noterVu("cgtop");
 	if (nom === "ulimit" && args.some(function(a){ return /^\d+$/.test(a); })) noterVu("ulimitShell");
 	if (nom === "systemctl" && args[0] === "show" && /CPUQuota|MemoryMax/.test(args.join(" ")) && /lumen-indexeur/.test(args.join(" "))) noterVu("showCg");
-	if (nom === "strace" && /connect\(/.test(sortie)) noterVu("strace");
+	if (nom === "strace" && (/connect\(/.test(sortie) || messagerOkCh6())) noterVu("strace");
 	if (nom === "watch") noterVu("watch");
 	// La Longue Nuit : on surveille en direct.
 	if (c.nuit){

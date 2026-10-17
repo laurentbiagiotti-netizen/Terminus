@@ -74,6 +74,24 @@ if (jeu.lire("state.xp6") !== jeu.lire("state.xpMax6()")){
 		jeu.lire("lieuxVisitables(6).filter(function(l){ return !state.visited[l.id]; }).map(function(l){ return l.room_name; }).join(', ')") + "]");
 }
 if (jeu.lire("state.noteTexte(6)") !== "20 / 20") problemes.push("le chapitre 5 n'a pas 20 sur 20 : " + jeu.lire("state.noteTexte(6)"));
+// Le chapitre 6 (Lumen, numéro 7 dans le code) : la solution doit mener au rapport contresigné, à 20 sur 20, puis aux six quêtes annexes.
+if (!jeu.lire("state.quests.m6_rapport")) problemes.push("le chapitre 6 (Lumen) n'atteint pas le rapport contresigné (m6_rapport) ; dernier lieu : " + jeu.lire("current_room.room_name"));
+var principales7 = jeu.lire("QUETES_CH6.filter(function(q){ return !state.quests[q.id]; }).map(function(q){ return q.titre; }).join(' ; ')");
+if (principales7) problemes.push("étapes du chapitre 6 manquantes : " + principales7);
+var secondaires7 = jeu.lire("QUETES_SECONDAIRES_CH6.filter(function(q){ return !state.quests[q.id]; }).map(function(q){ return q.titre; }).join(' ; ')");
+if (secondaires7) problemes.push("défis du chapitre 6 (Lumen) manquants : " + secondaires7);
+if (jeu.lire("QUETES_CH6.length") !== 37) problemes.push("le chapitre 6 devrait compter 37 étapes, il en a " + jeu.lire("QUETES_CH6.length"));
+if (jeu.lire("QUETES_SECONDAIRES_CH6.length") !== 82) problemes.push("le chapitre 6 devrait compter 82 défis, il en a " + jeu.lire("QUETES_SECONDAIRES_CH6.length"));
+if (!jeu.lire("state.has('platine_ch6')")) problemes.push("le badge platine du chapitre 6 n'est pas gagné");
+if (jeu.lire("state.xp7") !== jeu.lire("state.xpMax7()")){
+	problemes.push("le chapitre 6 (Lumen) n'atteint pas le score maximal : " + jeu.lire("state.xp7") + " sur " + jeu.lire("state.xpMax7()") + ". Sorts jamais lancés : [" +
+		jeu.lire("ORDRE_DES_SORTS_7.filter(function(x){ return !state.usages[x]; }).join(', ')") + "] ; lieux jamais visités : [" +
+		jeu.lire("lieuxVisitables(7).filter(function(l){ return !state.visited[l.id]; }).map(function(l){ return l.room_name; }).join(', ')") + "]");
+}
+if (jeu.lire("state.noteTexte(7)") !== "20 / 20") problemes.push("le chapitre 6 n'a pas 20 sur 20 : " + jeu.lire("state.noteTexte(7)"));
+var annexes = jeu.lire("QUETES_ANNEXES.filter(function(a){ return !state.quests[a.id]; }).map(function(a){ return a.id; }).join(' ')");
+if (annexes) problemes.push("quêtes annexes de Lumen manquantes : " + annexes);
+if (!jeu.lire("state.has('ami_ch6')")) problemes.push("le badge Ami de Lumen n'est pas gagné");
 if (jeu.lire("state.xp") !== jeu.lire("state.xpMax()")){
 	problemes.push("la solution n'atteint pas le score maximal. Sorts jamais lancés : [" +
 		jeu.lire("ORDRE_DES_SORTS.filter(function(x){ return !state.usages[x]; }).join(', ')") + "] ; lieux jamais visités : [" +
@@ -82,7 +100,7 @@ if (jeu.lire("state.xp") !== jeu.lire("state.xpMax()")){
 var sorts = jeu.lire("state.knownSpells().length + ' sur ' + tousLesSorts().length");
 
 console.log(commandes.length + " commandes jouées, " + sorts + " sorts appris, " +
-	jeu.lire("state.xp + ' XP sur ' + state.xpMax() + ', note ' + state.noteTexte() + ' ; chapitre 2 : ' + state.xp3 + ' XP sur ' + state.xpMax3() + ', note ' + state.noteTexte(3) + ' ; chapitre 3 : ' + state.xp2 + ' XP sur ' + state.xpMax2() + ', note ' + state.noteTexte(2) + ' ; chapitre 4 : ' + state.xp5 + ' XP sur ' + state.xpMax5() + ', note ' + state.noteTexte(5) + ' ; chapitre 5 : ' + state.xp6 + ' XP sur ' + state.xpMax6() + ', note ' + state.noteTexte(6)") + ".");
+	jeu.lire("state.xp + ' XP sur ' + state.xpMax() + ', note ' + state.noteTexte() + ' ; chapitre 2 : ' + state.xp3 + ' XP sur ' + state.xpMax3() + ', note ' + state.noteTexte(3) + ' ; chapitre 3 : ' + state.xp2 + ' XP sur ' + state.xpMax2() + ', note ' + state.noteTexte(2) + ' ; chapitre 4 : ' + state.xp5 + ' XP sur ' + state.xpMax5() + ', note ' + state.noteTexte(5) + ' ; chapitre 5 : ' + state.xp6 + ' XP sur ' + state.xpMax6() + ', note ' + state.noteTexte(6) + ' ; chapitre 6 : ' + state.xp7 + ' XP sur ' + state.xpMax7() + ', note ' + state.noteTexte(7)") + ".");
 if (problemes.length){
 	console.log("ÉCHEC :\n  " + problemes.join("\n  "));
 	process.exit(1);

@@ -997,8 +997,8 @@ function fermer(jeu, tours){ (tours || ORDRE_TOURS).forEach(function(cle){ jouer
 /* ================================================================== */
 (function(){
 	var doc = fs.readFileSync(path.join(RACINE, "docs", "solution.md"), "utf8");
-	var debut = doc.indexOf("## Chapitre 5 : le Bastion"), fin = doc.indexOf("## L'épreuve finale");
-	verifier(debut > -1 && fin > debut, "docs/solution.md : la section du chapitre 5 avant l'épreuve finale");
+	var debut = doc.indexOf("## Chapitre 5 : le Bastion"), fin = doc.indexOf("## Chapitre 6 : Lumen");
+	verifier(debut > -1 && fin > debut, "docs/solution.md : la section du chapitre 5 avant celle du chapitre 6");
 	var section = doc.substring(debut, fin);
 	for (var n = 33; n <= 48; n++) verifier(new RegExp("^### " + n + "\\. ", "m").test(section), "docs/solution.md : la partie " + n);
 	verifier(section.indexOf("—") === -1, "docs/solution.md (chapitre 5) : pas de tiret cadratin");
