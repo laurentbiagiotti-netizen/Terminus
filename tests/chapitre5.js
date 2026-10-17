@@ -179,7 +179,7 @@ function fermer(jeu, tours){ (tours || ORDRE_TOURS).forEach(function(cle){ jouer
 	egal(jeu.lire("Shell.cheminAffiche(HallBastion)"), "~/Cybersup/SalleServeurs/Bastion", "départ direct : le hall est au fond de la SalleServeurs");
 	contient(jeu.taper("chapitre"), "5. Le Bastion", "chapitre : la ligne 5");
 	contient(jeu.taper("chapitre 5"), "déjà ouvert", "chapitre 5 déjà ouvert : message clair");
-	contient(jeu.taper("chapitre 6"), "1, 2, 3, 4 et 5", "chapitre 6 : il n'existe pas");
+	contient(jeu.taper("chapitre 7"), "1, 2, 3, 4, 5 et 6", "chapitre 7 : il n'existe pas");
 	contient(jeu.taper("help 5"), "Tes sorts du chapitre 5", "help 5");
 	contient(jeu.taper("quetes"), "Pierre", "quetes : l'étape de la Pierre");
 	contient(jeu.taper("xp"), "CHAPITRE 5 : LE BASTION", "xp : le tableau du chapitre 5");
@@ -895,10 +895,10 @@ function fermer(jeu, tours){ (tours || ORDRE_TOURS).forEach(function(cle){ jouer
 	});
 	var guide = guideSrc;
 	contient(guide, 'h_entree: { image: "loc_bastion.gif", titre: "Chapitre 5 · Le Bastion", chapitre: 5', "scène d'entrée du Bastion");
-	contient(guide, '"4": 5, "5": 6 }[args[0]]', "quiz 5 : le chapitre interne 6");
+	contient(guide, '"4": 5, "5": 6, "6": 7 }[args[0]]', "quiz 5 : le chapitre interne 6");
 	contient(guide, "INDICES_CH5[id]", "les pistes du Bastion dans detailsDeQuete");
 	contient(guide, 'chapitre === 6 && typeof TROPHEES_CH5', "le récapitulatif de fin compte les badges du Bastion");
-	contient(guide, '["Terminus", "La panne", "La Crypte", "L\'Académie", "Le Bastion"]', "la carte des cinq chapitres");
+	contient(guide, '["Terminus", "La panne", "La Crypte", "L\'Académie", "Le Bastion", "Lumen"]', "la carte des six chapitres");
 	var game = fs.readFileSync(path.join(JS, "Game.js"), "utf8");
 	contient(game, "item_lettre_inspection.gif", "la cinquième enveloppe");
 	contient(game, "Lettre de l'Inspection", "la cinquième enveloppe : son titre");

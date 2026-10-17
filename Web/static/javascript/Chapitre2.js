@@ -1183,10 +1183,13 @@ Shell.sorts.chapitre = function(args, io){
 		var etat2 = state.quests["r_fin"] ? C.vert("terminé") : (state.has("panneSautee") ? C.gris("pas au programme (mission cyber)") : (state.has("panneOuverte") ? C.jaune("ouvert") : C.gris("fermé")));
 		var etat3 = state.quests["c_rapport"] ? C.vert("terminé") : (state.has("crypteOuverte") ? C.jaune("ouvert") : C.gris("fermé"));
 		var etat4 = state.quests["d_fin"] ? C.vert("terminé") : (state.has("ch4Ouvert") ? C.jaune("ouvert") : (state.has("ch5Direct") ? C.gris("non joué (renfort)") : C.gris("fermé")));
-		var etat5 = state.quests["h_rapport"] ? C.vert("terminé") : (state.has("ch5Ouvert") ? C.jaune("ouvert") : C.gris("fermé"));
+		var etat5 = state.quests["h_rapport"] ? C.vert("terminé") : (state.has("ch5Ouvert") ? C.jaune("ouvert") : (state.has("ch6Direct") ? C.gris("non joué (renfort)") : C.gris("fermé")));
+		var etat6 = state.quests["m6_rapport"] ? C.vert("terminé") : (state.has("ch6Ouvert") ? C.jaune("ouvert") : C.gris("fermé"));
 		var conseil;
-		if (chapitre2Possible()) conseil = "La panne (chapitre 2) s'ouvre en battant le Sorcier Noir, la Crypte (chapitre 3) en réparant le réseau, l'Académie (chapitre 4) après la Crypte, le Bastion (chapitre 5) après l'Académie. " +
-			"Si tu connais déjà les bases, tu peux aussi partir tout de suite : chapitre 2 (la panne), chapitre 3 (la mission cyber), chapitre 4 (l'Académie des Arcanes) ou chapitre 5 (le Bastion).";
+		if (chapitre2Possible()) conseil = "La panne (chapitre 2) s'ouvre en battant le Sorcier Noir, la Crypte (chapitre 3) en réparant le réseau, l'Académie (chapitre 4) après la Crypte, le Bastion (chapitre 5) après l'Académie, Lumen (chapitre 6) après le Bastion. " +
+			"Si tu connais déjà les bases, tu peux aussi partir tout de suite : chapitre 2 (la panne), chapitre 3 (la mission cyber), chapitre 4 (l'Académie des Arcanes), chapitre 5 (le Bastion) ou chapitre 6 (Lumen).";
+		else if (state.quests["m6_rapport"]) conseil = "Lumen brille : ton CertificatLumen est dans ta Maison (cat ~/CertificatLumen).";
+		else if (state.has("ch6Ouvert")) conseil = "Lumen est sous " + (state.has("ch6Direct") && !state.has("ch5Ouvert") ? "la SalleServeurs (cd ~/Cybersup/SalleServeurs, puis cd Lumen)" : "le Bastion (cd ~/Cybersup/SalleServeurs/Academie/Bastion, puis cd Lumen)") + ". Tape quetes pour l'étape en cours, lanterne pour le plan.";
 		else if (state.quests["h_rapport"]) conseil = "Le Bastion a tenu : ton CertificatBastion est dans ta Maison (cat ~/CertificatBastion).";
 		else if (state.has("ch5Ouvert")) conseil = "Le Bastion est au fond de " + (state.has("ch5Direct") && !state.has("ch4Ouvert") ? "la SalleServeurs (cd ~/Cybersup/SalleServeurs, puis cd Bastion)" : "l'Académie (cd ~/Cybersup/SalleServeurs/Academie, puis cd Bastion)") + ". Tape quetes pour l'étape en cours, rempart pour le plan.";
 		else if (state.quests["c_rapport"]) conseil = "Tout est terminé : tes certificats sont dans ta Maison (ls ~).";
@@ -1198,7 +1201,8 @@ Shell.sorts.chapitre = function(args, io){
 			"  2. La panne      " + etat2 + "   Le réseau de l'école est tombé : le réparer couche par couche, du câble au pare-feu. Note sur le CertificatReseau.\n" +
 			"  3. La Crypte     " + etat3 + "   La mission cyber : la Crypte, puis tout le réseau de l'école, jusqu'au rapport d'incident. Note sur le CertificatCyber.\n" +
 			"  4. L'Académie    " + etat4 + "   Niveau avancé : une nuit de réponse à incident face à la Nuée (jq, awk, sed, rsync, timers, scripts). Note sur le CertificatAvance.\n" +
-			"  5. Le Bastion    " + etat5 + "   Durcissement Linux : douze murs à dresser sur un serveur neuf avant l'inspection de l'aube. Note sur le CertificatBastion.\n\n" +
+			"  5. Le Bastion    " + etat5 + "   Durcissement Linux : douze murs à dresser sur un serveur neuf avant l'inspection de l'aube. Note sur le CertificatBastion.\n" +
+			"  6. Lumen         " + etat6 + "   Exploitation Linux : rallumer seize quartiers d'une cité avant la Longue Nuit (disques, mémoire, services, RAID). Note sur le CertificatLumen.\n\n" +
 			C.gris(conseil);
 	}
 	if (demande === "1") return mission ?
@@ -1226,7 +1230,18 @@ Shell.sorts.chapitre = function(args, io){
 		});
 		return "";
 	}
-	if (demande !== "2" && demande !== "3") throw new ShellError("chapitre : il n'y a que les chapitres 1, 2, 3, 4 et 5. Tape chapitre pour la liste.");
+	if (demande === "6"){
+		if (state.has("ch6Ouvert")) return "Le chapitre 6 est déjà ouvert : Lumen est sous " + (state.has("ch6Direct") && !state.has("ch5Ouvert") ? "la SalleServeurs (cd ~/Cybersup/SalleServeurs, puis cd Lumen)." : "le Bastion (cd ~/Cybersup/SalleServeurs/Academie/Bastion, puis cd Lumen).");
+		if (!chapitre2Possible()) return "Tu as déjà commencé une partie : le chapitre 6 (Lumen) s'ouvre à la fin du Bastion, ou se choisit au tout début d'une partie neuve.\n" +
+			C.gris("(Pour partir directement à Lumen : recommencer, puis chapitre 6.)");
+		if (typeof commencerChapitre6 !== "function") return "Le chapitre 6 n'est pas encore disponible.";
+		term.demander("Partir directement à Lumen (chapitre 6, exploitation Linux) ? Les chapitres 1 à 5 ne seront pas notés pour toi. Tape oui pour confirmer : ", false, function(reponse){
+			if (String(reponse).trim().toLowerCase() !== "oui"){ term.echo("Bien. Les chapitres précédents t'attendent."); return; }
+			if (commencerChapitre6()) Shell.fin();
+		});
+		return "";
+	}
+	if (demande !== "2" && demande !== "3") throw new ShellError("chapitre : il n'y a que les chapitres 1, 2, 3, 4, 5 et 6. Tape chapitre pour la liste.");
 	if (demande === "2"){
 		if (state.has("panneSautee")) return "Tu es venu en renfort pour la mission cyber : la panne du réseau ne fait pas partie de ta mission.";
 		if (state.has("panneOuverte")) return "Le chapitre 2 est déjà ouvert : Radia t'attend au BatimentB de Cybersup (cd ~/Cybersup/BatimentB).";

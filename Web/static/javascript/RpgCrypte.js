@@ -238,7 +238,7 @@ var RANGS_DES_BADGES = {
 	c_sudo: "argent", c_cle: "argent", c_preuves: "argent", c_gpg: "or", c_corbeau: "or", platine_reseau: "platine", platine_cyber: "platine"
 };
 function rangDuBadge(id){ return RANGS_DES_BADGES[id] || "bronze"; }
-function badgeGagne(id){ return /^(platine_|tour_)/.test(id) ? state.has(id) : !!state.quests[id]; }
+function badgeGagne(id){ return /^(platine_|tour_|quartier_|ami_)/.test(id) ? state.has(id) : !!state.quests[id]; }
 function idDuBadge(nom){ for (var k in COMPETENCES){ if (COMPETENCES[k] === nom) return k; } return null; }
 function nomDuBadge(id){ return COMPETENCES[id] || ""; }
 
@@ -281,6 +281,13 @@ function texteBadges(quel){
 		});
 		tous.push({ id: "platine_ch5", chap: "bastion", nom: COMPETENCES.platine_ch5, image: "tous les badges du Bastion", couche: "", lecon: "Mesurer, durcir mur par mur, vérifier, relire l'aube, rendre compte : tu sais durcir un serveur Linux de bout en bout." });
 	}
+	if (state.has("ch6Ouvert") && typeof TROPHEES_CH6 !== "undefined"){
+		Object.keys(TROPHEES_CH6).forEach(function(id){
+			tous.push({ id: id, chap: "lumen", nom: COMPETENCES[id], image: TROPHEES_CH6[id][0], couche: "", lecon: TROPHEES_CH6[id][1] });
+		});
+		tous.push({ id: "platine_ch6", chap: "lumen", nom: COMPETENCES.platine_ch6, image: "tous les badges de Lumen", couche: "", lecon: "Mesurer, réparer quartier par quartier, tenir la Nuit, rendre compte : tu sais remettre en service un serveur Linux de bout en bout." });
+		if (typeof AMIS_ANNEXES !== "undefined" && AMIS_ANNEXES[7]) tous.push({ id: "ami_ch6", chap: "lumen", nom: COMPETENCES.ami_ch6, image: "les six habitants de Lumen", couche: "", lecon: "Les quêtes annexes : quotas et setgid, tâches et signaux, journaux compressés, horloge matérielle, compressions, dates de fichiers. Facultatif, hors note." });
+	}
 	// badges reseau, badges cyber, ou un nom de compétence (badges dns, badges sudo...).
 	var choisis = tous.filter(function(b){
 		if (!filtre) return true;
@@ -288,10 +295,11 @@ function texteBadges(quel){
 		if (filtre === "cyber" || filtre === "chasse" || filtre === "securite") return b.chap === "cyber";
 		if (filtre === "arcanes" || filtre === "academie" || filtre === "avance" || filtre === "linux") return b.chap === "arcanes";
 		if (filtre === "bastion" || filtre === "durcissement" || filtre === "hardening") return b.chap === "bastion";
+		if (filtre === "lumen" || filtre === "exploitation" || filtre === "machines") return b.chap === "lumen";
 		return sansAccent(b.nom).indexOf(filtre) > -1;
 	});
 	if (filtre && !choisis.length) return "badges : aucune compétence ne correspond à « " + quel + " ». " + C.gris("Exemples : badges reseau, badges cyber, badges dns, badges sudo.");
-	[["reseau", "RÉSEAU : LA PANNE DE L'ÉCOLE"], ["cyber", "CYBERSÉCURITÉ : LA CHASSE AU CORBEAU"], ["arcanes", "LINUX AVANCÉ : L'ACADÉMIE DES ARCANES"], ["bastion", "DURCISSEMENT LINUX : LE BASTION"]].forEach(function(c){
+	[["reseau", "RÉSEAU : LA PANNE DE L'ÉCOLE"], ["cyber", "CYBERSÉCURITÉ : LA CHASSE AU CORBEAU"], ["arcanes", "LINUX AVANCÉ : L'ACADÉMIE DES ARCANES"], ["bastion", "DURCISSEMENT LINUX : LE BASTION"], ["lumen", "EXPLOITATION LINUX : LUMEN"]].forEach(function(c){
 		var liste = choisis.filter(function(b){ return b.chap === c[0]; });
 		if (!liste.length) return;
 		// Le même compte que schema et traque : les badges d'étape ; le platine vient en plus.
@@ -315,4 +323,4 @@ if (typeof MANUEL_DU_JEU !== "undefined") MANUEL_DU_JEU.badges = "badges n'est P
 	"Chaque étape franchie rapporte un badge de compétence (Adressage IP, Résolution DNS, Bit SUID...). badges les liste,\n" +
 	"avec la leçon de chacun : c'est ton aide-mémoire, à relire avant une évaluation.\n\n" +
 	"  badges           tous tes badges\n  badges reseau    ceux du réseau (la panne, couche par couche)\n" +
-	"  badges cyber     ceux de la cybersécurité (la chasse au Corbeau)\n  badges arcanes   ceux de Linux avancé (l'Académie des Arcanes)\n  badges bastion   ceux du durcissement Linux (le Bastion)\n  badges dns       un badge précis, par le nom de sa compétence";
+	"  badges cyber     ceux de la cybersécurité (la chasse au Corbeau)\n  badges arcanes   ceux de Linux avancé (l'Académie des Arcanes)\n  badges bastion   ceux du durcissement Linux (le Bastion)\n  badges lumen     ceux de l'exploitation Linux (Lumen)\n  badges dns       un badge précis, par le nom de sa compétence";

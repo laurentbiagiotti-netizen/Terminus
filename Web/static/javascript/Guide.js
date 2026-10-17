@@ -118,7 +118,8 @@ var MINUTES_AVANT_PISTE = 4;
 
 function detailsDeQuete(id){
 	return INDICES_DETAILLES[id] || (typeof INDICES_CHAPITRE2 !== "undefined" && INDICES_CHAPITRE2[id]) ||
-		(typeof INDICES_PANNE !== "undefined" && INDICES_PANNE[id]) || (typeof INDICES_CH5 !== "undefined" && INDICES_CH5[id]) || [];
+		(typeof INDICES_PANNE !== "undefined" && INDICES_PANNE[id]) || (typeof INDICES_CH5 !== "undefined" && INDICES_CH5[id]) ||
+		(typeof INDICES_CH6 !== "undefined" && INDICES_CH6[id]) || [];
 }
 
 var MAJ_OBJECTIF_SANS_GUIDE = majObjectif;
@@ -207,7 +208,9 @@ var SCENES = {
 	d_entree: { image: "loc_academie.gif", titre: "Chapitre 4 · L'Académie des Arcanes", chapitre: 4,
 		lignes: ["La Nuée a frappé le serveur d'archives cette nuit.", "Données volées, et une bombe programmée pour minuit.", "Huit maîtres, une horloge qui tourne : mesure, nettoie, restaure, documente."] },
 	h_entree: { image: "loc_bastion.gif", titre: "Chapitre 5 · Le Bastion", chapitre: 5,
-		lignes: ["Un serveur neuf, installé « par défaut » : toutes ses portes bâillent.", "L'inspection passe à l'aube, et la Nuée a juré de revenir avant.", "Douze tours, douze maîtres : mesure, durcis, vérifie, rends compte."] }
+		lignes: ["Un serveur neuf, installé « par défaut » : toutes ses portes bâillent.", "L'inspection passe à l'aube, et la Nuée a juré de revenir avant.", "Douze tours, douze maîtres : mesure, durcis, vérifie, rends compte."] },
+	m6_entree: { image: "loc_lumen.gif", titre: "Chapitre 6 · Lumen, la cité qui s'éteint", chapitre: 6,
+		lignes: ["Sous l'école dort une cité, et une seule machine l'éclaire : le Cœur.", "Seize quartiers sont éteints. À 14 h, la Longue Nuit tombera sur eux.", "Seize gardiens : mesure, répare, prévois, rends compte."] }
 };
 function sceneDeChapitre(scene){
 	var fond = document.createElement("div");
@@ -234,14 +237,14 @@ function sceneDeChapitre(scene){
 	// La carte des chapitres : celui qui commence s'allume.
 	var carte = document.createElement("p");
 	carte.className = "scene-carte";
-	["Terminus", "La panne", "La Crypte", "L'Académie", "Le Bastion"].forEach(function(nom, i){
+	["Terminus", "La panne", "La Crypte", "L'Académie", "Le Bastion", "Lumen"].forEach(function(nom, i){
 		var etape = document.createElement("span");
 		var n = i + 1;
-		var fini = n < scene.chapitre || (n === 1 && state.has("victoire")) || (n === 2 && state.quests["r_fin"]) || (n === 3 && state.quests["c_rapport"]) || (n === 4 && state.quests["d_fin"]) || (n === 5 && state.quests["h_rapport"]);
+		var fini = n < scene.chapitre || (n === 1 && state.has("victoire")) || (n === 2 && state.quests["r_fin"]) || (n === 3 && state.quests["c_rapport"]) || (n === 4 && state.quests["d_fin"]) || (n === 5 && state.quests["h_rapport"]) || (n === 6 && state.quests["m6_rapport"]);
 		etape.className = "scene-etape" + (n === scene.chapitre ? " scene-ici" : (fini ? " scene-fait" : ""));
 		etape.textContent = (n === scene.chapitre ? "● " : (fini ? "✓ " : "○ ")) + nom;
 		carte.appendChild(etape);
-		if (i < 4){ var trait = document.createElement("span"); trait.className = "scene-trait"; trait.textContent = " ── "; carte.appendChild(trait); }
+		if (i < 5){ var trait = document.createElement("span"); trait.className = "scene-trait"; trait.textContent = " ── "; carte.appendChild(trait); }
 	});
 	cadre.appendChild(carte);
 	var suite = document.createElement("p");
@@ -288,11 +291,13 @@ function recapChapitre(chapitre){
 	else if (chapitre === 3){ minutes = Math.round((state.tempsMs - (state.debutChapitre3 || 0)) / 60000); }
 	else if (chapitre === 5){ minutes = Math.round((state.tempsMs - (state.debutChapitre5 || 0)) / 60000); }
 	else if (chapitre === 6){ minutes = Math.round((state.tempsMs - (state.debutChapitre6 || 0)) / 60000); }
+	else if (chapitre === 7){ minutes = Math.round((state.tempsMs - (state.debutChapitre7 || 0)) / 60000); }
 	else { minutes = Math.round((state.tempsMs - (state.debutChapitre2 || 0)) / 60000); }
 	if (chapitre === 3 && typeof RELIQUES !== "undefined") badges = Object.keys(RELIQUES).filter(function(id){ return state.quests[id]; });
 	if (chapitre === 2 && typeof TROPHEES_CRYPTE !== "undefined") badges = Object.keys(TROPHEES_CRYPTE).filter(function(id){ return state.quests[id]; });
 	if (chapitre === 5 && typeof TROPHEES_CH4 !== "undefined") badges = Object.keys(TROPHEES_CH4).filter(function(id){ return state.quests[id]; });
 	if (chapitre === 6 && typeof TROPHEES_CH5 !== "undefined") badges = Object.keys(TROPHEES_CH5).filter(function(id){ return badgeGagne(id); });
+	if (chapitre === 7 && typeof TROPHEES_CH6 !== "undefined") badges = Object.keys(TROPHEES_CH6).filter(function(id){ return badgeGagne(id); });
 	sorts = Object.keys(state.frequences || {}).filter(function(s){ return SORTS_DU_JEU.indexOf(s) === -1; }).filter(function(s){ return chapitreDuSort(s) === chapitre || (chapitre === 1 && ["ls", "cd", "cat"].indexOf(s) > -1); });
 	sorts.sort(function(a, b){ return state.frequences[b] - state.frequences[a]; });
 	return { minutes: minutes, badges: badges, top: sorts.slice(0, 3).map(function(s){ return s + " ×" + state.frequences[s]; }) };
@@ -380,6 +385,18 @@ var QUIZ = {
 		["AppArmor en mode complain :", ["Note les écarts du programme, mais ne bloque rien", "Bloque tout ce que le profil n'autorise pas", "Désactive le programme", "Chiffre les fichiers du programme"], 0, "En enforce, la cellule est fermée : aa-enforce."],
 		["Pourquoi ServerTokens Prod sur Apache ?", ["Pour ne plus afficher la version du serveur", "Pour accélérer les pages", "Pour activer HTTPS", "Pour bloquer la méthode TRACE"], 0, "Une version affichée, c'est la liste des failles connues offerte à qui la lit. TRACE, c'est TraceEnable Off."],
 		["Un rapport d'inspection honnête contient :", ["Les constats, les mesures, le score avant et après, et ce qui reste", "Seulement le score final", "Seulement ce qui a marché", "Les mots de passe changés"], 0, "On ne cache pas le reste : c'est ce qui permet à l'équipe suivante de continuer."]
+	],
+	7: [
+		["df -h montre /var à 100 %. On a effacé un journal de 6 Go, et df ne bouge pas. Pourquoi ?", ["Un processus tient encore le fichier ouvert", "df se met à jour une fois par jour", "Le fichier est dans la corbeille", "Il faut redémarrer la machine"], 0, "La place n'est rendue qu'à la fermeture du fichier : lsof +L1 le montre, relancer le service le libère."],
+		["« No space left on device », mais df -h montre de la place. Que regarder ?", ["df -i : les inodes sont peut-être épuisés", "free -h", "La température du disque", "Le pare-feu"], 0, "Un fichier, une fiche (un inode) : des millions de petits fichiers épuisent les inodes avant les octets."],
+		["Dans free -h, quelle colonne dit la mémoire qu'on peut encore donner aux programmes ?", ["available", "free", "shared", "buff/cache"], 0, "Linux remplit la mémoire libre de cache, et la rend dès qu'on la demande : available en tient compte."],
+		["Un processus est à l'état Z (<defunct>). Comment s'en débarrasser ?", ["Relancer (ou arrêter) son parent, qui doit relever son compte", "kill -9 sur le zombie", "Redémarrer la machine, toujours", "rm /proc/PID"], 0, "Un zombie est déjà mort : c'est son parent qui doit lire son code de retour. ps -o ppid= le nomme."],
+		["Après lvextend -L +20G, df -h montre toujours l'ancienne taille. Il manque :", ["resize2fs (ou lvextend -r)", "Un redémarrage", "mkfs.ext4", "mount -a"], 0, "lvextend agrandit le volume, resize2fs le système de fichiers. lvextend -r fait les deux."],
+		["Une ligne de /etc/fstab pointe vers un disque amovible souvent débranché. Quelle option ajouter ?", ["nofail", "noexec", "ro", "noatime"], 0, "Sans nofail, le démarrage s'arrête en mode secours si le disque manque. findmnt --verify vérifie fstab avant le redémarrage."],
+		["Pour qu'un service se relance tout seul s'il meurt, on écrit dans son unité :", ["Restart=on-failure", "WantedBy=multi-user.target", "After=network.target", "Type=oneshot"], 0, "WantedBy le démarre au réveil (avec enable) ; Restart le relance s'il tombe."],
+		["On ne lance jamais e2fsck sur un système de fichiers :", ["Monté", "Démonté", "En ext4", "Sur un RAID"], 0, "On démonte d'abord (fuser -vm dit qui l'occupe), on répare, on remonte."],
+		["« Too many open files » dans le journal d'un service. Où lever la limite ?", ["LimitNOFILE= dans son unité systemd, puis restart", "ulimit -n dans ton shell", "Dans /etc/fstab", "Avec chmod"], 0, "ulimit ne change que ton shell ; un service hérite des limites de son unité. cat /proc/PID/limits vérifie."],
+		["Une copie de six heures sur un serveur distant se lance :", ["Dans tmux (ou screen, ou avec nohup)", "Directement dans la session SSH", "Avec sudo -i", "Dans un timer systemd quotidien"], 0, "Les connexions tombent : tmux garde la session ouverte sur la machine, tmux attach la retrouve."]
 	]
 };
 
@@ -467,10 +484,10 @@ function lancerQuiz(chapitre){
 }
 
 Shell.sorts.quiz = function(args, io){
-	var choix = { "1": 1, "2": 3, "3": 2, "4": 5, "5": 6 }[args[0]] || (state.chapitreEnCours ? state.chapitreEnCours() : 1);
-	var fini = choix === 1 ? state.has("victoire") : (choix === 3 ? !!state.quests["r_fin"] : (choix === 5 ? !!state.quests["d_fin"] : (choix === 6 ? !!state.quests["h_rapport"] : !!state.quests["c_rapport"])));
+	var choix = { "1": 1, "2": 3, "3": 2, "4": 5, "5": 6, "6": 7 }[args[0]] || (state.chapitreEnCours ? state.chapitreEnCours() : 1);
+	var fini = choix === 1 ? state.has("victoire") : (choix === 3 ? !!state.quests["r_fin"] : (choix === 5 ? !!state.quests["d_fin"] : (choix === 6 ? !!state.quests["h_rapport"] : (choix === 7 ? !!state.quests["m6_rapport"] : !!state.quests["c_rapport"]))));
 	if (choix === 5 && (typeof QUIZ === "undefined" || !QUIZ[5])) return fini ? "Le quiz du chapitre 4 arrivera bientôt." : "Le quiz du chapitre 4 s'ouvrira à la fin du chapitre.";
-	if (!fini) return "Le quiz du chapitre " + numeroAffiche(choix) + " s'ouvre à la fin du chapitre. " + C.gris("(quiz 1, quiz 2, quiz 3, quiz 4 ou quiz 5 pour un chapitre déjà terminé)");
+	if (!fini) return "Le quiz du chapitre " + numeroAffiche(choix) + " s'ouvre à la fin du chapitre. " + C.gris("(quiz 1, quiz 2, quiz 3, quiz 4, quiz 5 ou quiz 6 pour un chapitre déjà terminé)");
 	setTimeout(function(){ lancerQuiz(choix); }, 50);
 	return C.gris("(Le quiz du chapitre " + numeroAffiche(choix) + " : 5 questions tirées au hasard. 1 à 4 pour répondre, Échap pour sortir.)");
 };
@@ -655,13 +672,18 @@ var CINEMATIQUES = {
 		{ image: "loc_serveur_bastion.gif", texte: "Quelques jours plus tard. Un serveur neuf, installé par défaut : toutes ses portes bâillent." },
 		{ image: "item_pierre.gif", texte: "La Pierre d'Inspection s'allume à peine : 38 sur 100." },
 		{ image: "item_frances.gif", texte: "La Nuée a juré de revenir à l'aube. Frances éprouvera chaque mur avant elle." },
-		{ image: "loc_bastion.gif", texte: "Douze tours à dresser avant 6 h. L'inspecteur arrive juste derrière." }] }
+		{ image: "loc_bastion.gif", texte: "Douze tours à dresser avant 6 h. L'inspecteur arrive juste derrière." }] },
+	6: { titre: "Chapitre 6 · Lumen, la cité qui s'éteint", plans: [
+		{ image: "loc_lumen_nuit.gif", texte: "Sous l'école dort Lumen, une cité bâtie par les premiers ingénieurs." },
+		{ image: "loc_coeur_lumen.gif", texte: "Une seule machine l'éclaire : le Cœur. Depuis le départ de la Nuée, il s'épuise." },
+		{ image: "loc_lumen.gif", texte: "Quartier après quartier, les lumières s'éteignent. Il est 6 h." },
+		{ image: "item_lanterne_lumen.gif", texte: "À 14 h, la Longue Nuit tombera. Seize gardiens attendent une lanterne." }] }
 };
 /* La carte du chapitre 1 (les autres sont dans SCENES, à l'entrée de chaque chapitre). */
 var SCENE_CHAPITRE_1 = { image: "item_convocation.gif", titre: "Chapitre 1 · Terminus", chapitre: 1,
 	lignes: ["Ta Maison d'abord : regarde autour de toi.", "Chaque sort appris ouvre un bout du monde.", "Le tutoriel, à droite, te guide pour les premiers pas."] };
 /* La première carte de chaque chapitre : c'est elle que la cinématique précède. */
-var PREMIERE_SCENE = { 2: "r_batiment", 3: "c_crypte", 4: "d_entree", 5: "h_entree" };
+var PREMIERE_SCENE = { 2: "r_batiment", 3: "c_crypte", 4: "d_entree", 5: "h_entree", 6: "m6_entree" };
 
 function lancerCinematique(n, apres, forcer){
 	var cine = CINEMATIQUES[n];
@@ -770,14 +792,14 @@ sceneDeChapitre = function(scene){
 
 /* La commande du jeu : revoir une cinématique. */
 if (typeof SORTS_DU_JEU !== "undefined" && SORTS_DU_JEU.indexOf("cinematique") === -1) SORTS_DU_JEU.push("cinematique");
-if (typeof COMMANDES_DU_JEU !== "undefined") COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 4, 0, ["cinematique", "revoir l'ouverture d'un chapitre (cinematique 1 à 5)"]);
+if (typeof COMMANDES_DU_JEU !== "undefined") COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 4, 0, ["cinematique", "revoir l'ouverture d'un chapitre (cinematique 1 à 6)"]);
 if (typeof MANUEL_DU_JEU !== "undefined") MANUEL_DU_JEU.cinematique = "cinematique n'est PAS une commande Linux : c'est une commande du jeu, comme quetes ou badges.\n" +
-	"Elle rejoue l'ouverture d'un chapitre : cinematique 1 (Terminus), 2 (la panne), 3 (la Crypte), 4 (l'Académie), 5 (le Bastion).\n" +
+	"Elle rejoue l'ouverture d'un chapitre : cinematique 1 (Terminus), 2 (la panne), 3 (la Crypte), 4 (l'Académie), 5 (le Bastion), 6 (Lumen).\n" +
 	"Sans numéro, celle du chapitre en cours. Entrée passe au plan suivant, Échap passe tout.";
 Shell.sorts.cinematique = function(args){
-	var affiche = { 1: 1, 2: 3, 3: 2, 5: 4, 6: 5 }[state.chapitreEnCours()] || 1;
+	var affiche = { 1: 1, 2: 3, 3: 2, 5: 4, 6: 5, 7: 6 }[state.chapitreEnCours()] || 1;
 	var n = args && args[0] ? parseInt(args[0], 10) : affiche;
-	if (!CINEMATIQUES[n]) throw new ShellError("cinematique : un numéro de chapitre, de 1 à 5. Exemple : cinematique 3");
+	if (!CINEMATIQUES[n]) throw new ShellError("cinematique : un numéro de chapitre, de 1 à 6. Exemple : cinematique 3");
 	if (calmeDemande) return C.gris("(Ton système demande de réduire les animations : les cinématiques sont coupées.)");
 	setTimeout(function(){ lancerCinematique(n, function(){ var champ = document.getElementById("saisie"); if (champ) champ.focus(); }, true); }, 50);
 	return "";
