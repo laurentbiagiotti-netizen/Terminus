@@ -327,7 +327,7 @@ function construireLumen(){
 	P6("/srv/gazette/rouleau-1880.txt", "La Gazette de Lumen, rouleau de 1880 : les nouvelles de la cite, jour apres jour.\n", { taille: 120 * MIO6, ageJours: 50, owner: JOUEUR });
 	// Le courrier (quête annexe de la Postière) : des lettres datées, une seule récente et importante.
 	D6("/srv/courrier", { mode: "rwxr-xr-x" });
-	P6("/srv/courrier/lettre-de-la-maire.txt", "Lettre de la maire de Lumen, a remettre au gardien du Coeur :\n\n\"Si la lumiere revient avant la nuit, que la place soit illuminee en l'honneur de qui l'aura rallumee.\"\n", { ageMin: 180 });
+	P6("/srv/courrier/lettre-de-la-maire.txt", "Lettre de la maire de Lumen, à remettre au gardien du Cœur :\n\n« Si la lumière revient avant la nuit, que la place soit illuminée en l'honneur de qui l'aura rallumée. »\n", { ageMin: 180 });
 	P6("/srv/courrier/avis-de-passage.txt", "Avis de passage : colis non distribue.\n", { ageMin: 1500 });
 	P6("/srv/courrier/brouillon.txt", "", { ageMin: 100 });
 	// Les comptes et leurs dossiers.
