@@ -236,6 +236,9 @@ function dureeEcoulee(h, p){
 function procsVisibles(h, io, nom){
 	var M = etatMachine(h), liste = procsMachine(h).slice();
 	var bash = M.pidBash || PID_BASH;
+	// init et le fil du noyau qui engendre les autres : toujours là, toujours 1 et 2.
+	if (!procParPid(h, 1)) liste.unshift({ pid: 1, ppid: 0, user: "root", comm: "systemd", cmd: "/sbin/init", etat: "S", cpu: 0, rss: 13200, vsz: 168000, ni: 0, tty: "?", debut: M.demarrage || maintenantMachine(h) - 86400000 },
+		{ pid: 2, ppid: 0, user: "root", comm: "kthreadd", cmd: "[kthreadd]", etat: "S", cpu: 0, rss: 0, vsz: 0, ni: 0, tty: "?", debut: M.demarrage || maintenantMachine(h) - 86400000, noyau: true });
 	if (!procParPid(h, bash)){
 		liste.push({ pid: bash - 1, ppid: M.pidSshd || 812, user: JOUEUR, comm: "sshd", cmd: "sshd: " + JOUEUR + "@pts/0", etat: "S", cpu: 0, rss: 7012, vsz: 17480, ni: 0, tty: "?", debut: M.connexion || maintenantMachine(h) - 600000, session: true });
 		liste.push({ pid: bash, ppid: bash - 1, user: JOUEUR, comm: "bash", cmd: "-bash", etat: "S", cpu: 0, rss: 5240, vsz: 8728, ni: 0, tty: "pts/0", debut: M.connexion || maintenantMachine(h) - 600000, chef: true, session: true });
@@ -273,6 +276,8 @@ Shell.sorts.ps = function(args, io){
 		if (a === "-f") { complet = true; continue; }
 		if (a === "-ef" || a === "-fe" || a === "-eF" || a === "-Af"){ tous = true; complet = true; continue; }
 		if (a === "-o" || a === "--format" || a === "-O"){ format = (format ? format + "," : "") + args[++i]; continue; }
+		if (/^-[eAfFlyw]+o$/.test(a)){ if (/[eA]/.test(a)) tous = true; if (/[fF]/.test(a)) complet = true; format = (format ? format + "," : "") + args[++i]; continue; }
+		if (/^ax[o]?$/.test(a) && a === "axo"){ tous = true; format = (format ? format + "," : "") + args[++i]; continue; }
 		if (/^-o.+/.test(a)){ format = (format ? format + "," : "") + a.substring(2); continue; }
 		if ((m = /^--format=(.+)$/.exec(a))){ format = m[1]; continue; }
 		if (a === "-p" || a === "--pid" || a === "p" || a === "q"){ (args[++i] || "").split(",").forEach(function(x){ pids.push(+x); }); continue; }
@@ -1120,11 +1125,10 @@ Shell.executer = function(ligne){
 	}
 	return EXECUTER_AVANT_MACHINES.apply(this, arguments);
 };
-if (typeof executerElement === "function"){
-	var EXECUTER_ELEMENT_AVANT_MACHINES = executerElement;
-	executerElement = function(e){
+{
+	Interpreteur.lancerEnFond = function(e, auPremierPlan){
 		var h = machineIci();
-		if (!h || !e.fond) return EXECUTER_ELEMENT_AVANT_MACHINES.apply(this, arguments);
+		if (!h || !e.fond) return undefined;
 		var n = e.noeud, argv = null;
 		try { argv = argvSimple(n); } catch (x){ argv = null; }
 		var nohup = false;
@@ -1138,7 +1142,7 @@ if (typeof executerElement === "function"){
 			if (r && r.sortie) term.echo(r.sortie);
 			return 0;
 		}
-		var code = EXECUTER_ELEMENT_AVANT_MACHINES.call(this, { noeud: e.noeud, fond: false });
+		var code = auPremierPlan();
 		var M = etatMachine(h), j = { n: (jobsMachine(h).length + 1), pid: nouveauPid(h), cmd: argv ? argv.join(" ") : "commande" };
 		term.echo("[" + j.n + "] " + j.pid);
 		term.echo("[" + j.n + "]+  Done                    " + j.cmd);
@@ -1151,7 +1155,7 @@ function argvSimple(n){
 	if (!n) return null;
 	if (n.k === "simple"){
 		if (n.redirs && n.redirs.length) return null;
-		return (n.mots || []).map(function(m){ var l = typeof litteralDe === "function" ? litteralDe(m.parts || []) : null; return l !== null ? l : String(m.brut || "").replace(/^['"]|['"]$/g, ""); });
+		return (n.mots || []).map(function(m){ var l = typeof Interpreteur.litteralDe === "function" ? Interpreteur.litteralDe(m.parts || []) : null; return l !== null ? l : String(m.brut || "").replace(/^['"]|['"]$/g, ""); });
 	}
 	if (n.k === "tuyau" && n.cmds && n.cmds.length === 1 && !n.neg) return argvSimple(n.cmds[0]);
 	if (n.k === "liste" && n.elements && n.elements.length === 1) return argvSimple(n.elements[0].noeud);

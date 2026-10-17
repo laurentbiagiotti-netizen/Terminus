@@ -169,6 +169,7 @@ function ligneDe(texte, pos){
 }
 
 /* La valeur d'un mot sans guillemets ni $ (if, fi, un nom de variable...), ou null. */
+Interpreteur.litteralDe = function(parties){ return litteralDe(parties); };
 function litteralDe(parties){
 	var v = "";
 	for (var i = 0; i < parties.length; i++){
@@ -2181,6 +2182,11 @@ Interpreteur.executerNoeud = function(n){
 };
 
 function executerElement(e){
+	// Une machine qui sait faire des tâches de fond (SortsProcessus.js) prend la main ; sinon, la commande tourne au premier plan.
+	if (e.fond && typeof Interpreteur.lancerEnFond === "function"){
+		var r = Interpreteur.lancerEnFond(e, function(){ return essayer(function(){ return Interpreteur.executerNoeud(e.noeud); }); });
+		if (r !== undefined) return r;
+	}
 	if (e.fond && !Interpreteur.fondSignale){
 		Interpreteur.fondSignale = true;
 		Shell.ecranErreur(C.gris("(& lance une commande en tâche de fond. Ici, il n'y a pas de tâche de fond : elle tourne tout de suite, au premier plan.)"));
@@ -2542,7 +2548,7 @@ function fauteClassique(nom, args){
 
 /* Lance une commande : une fonction, une commande intégrée au shell, ou un sort (par Shell.appeler). */
 function lancerCommande(nom, args, io){
-	if (io.sudo){
+	if (io.sudo && !io.racine){
 		if (PROGRAMMES_INTEGRES.hasOwnProperty(nom)) return INTEGREES[nom](args, io);
 		if (trouverFonction(nom) || INTEGREES.hasOwnProperty(nom)){
 			throw new ShellError("sudo : " + nom + " : commande introuvable\n" +

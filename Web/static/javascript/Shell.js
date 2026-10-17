@@ -58,6 +58,7 @@ var Shell = {
 	lieu_precedent: null,
 	pile_ssh: [],            // lieux d'où l'on est parti en ssh (exit y ramène)
 	profondeur_script: 0,
+	enRoot: 0, // plus de 0 : les commandes tournent en root (un service lancé par systemd)
 	variable_developpee: false,
 	statut: 0,               // le statut de la dernière commande, lu par $?
 	statutsTuyau: [0],       // le statut de chaque sort du dernier tuyau
@@ -1764,9 +1765,9 @@ Shell.ecrire = function(cible, texte, ajout, sansFin){
 	if (r.node instanceof Room) throw new ShellError("Impossible d'écrire dans « " + r.name + " » : c'est un lieu.");
 	if (r.node === null){
 		Shell.nomValide(r.name, "écriture");
-		Shell.verifierEcriture(r.dir, null, "écriture", r.name);
+		Shell.verifierEcriture(r.dir, Shell.enRoot > 0 ? { sudo: true } : null, "écriture", r.name);
 		var item = new Item(r.name, texte);
-		item.owner = JOUEUR;
+		item.owner = Shell.enRoot > 0 ? "root" : JOUEUR;
 		item.sansFinDeLigne = !!sansFin;
 		r.dir.addItem(item);
 		GameEvents.fire({ type: "write", item: item, room: r.dir, append: ajout, text: texte, created: true, previous: "" });
@@ -1774,7 +1775,7 @@ Shell.ecrire = function(cible, texte, ajout, sansFin){
 	}
 	if (r.node.immuable) Shell.verifierImmuable(r.node, "écriture");
 	// Comme sous Linux, c'est le terminal (et non sudo) qui ouvre le fichier : pas de passe-droit ici.
-	if (!Shell.bit(r.node, "w", null)){
+	if (!Shell.bit(r.node, "w", Shell.enRoot > 0 ? { sudo: true } : null)){
 		throw new ShellError("Impossible d'écrire dans « " + r.name + " » : Permission non accordée");
 	}
 	var ancien = r.node.getText();
@@ -1889,7 +1890,7 @@ Shell.tuyau = function(jetons){
 				}
 			}
 			var io = { stdin: entree, stdinSansFin: entreeSansFin, tty: sorties[1] === ECRAN_1 && Shell.surEcran(),
-				sortie1: sorties[1], sortie2: sorties[2], sudo: false, erreurs: [], code: 0 };
+				sortie1: sorties[1], sortie2: sorties[2], sudo: Shell.enRoot > 0, racine: Shell.enRoot > 0, erreurs: [], code: 0 };
 			io.err = (function(liste){ return function(message){ liste.push(message); }; })(io.erreurs);
 			// Un avertissement qu'un vrai programme écrit APRÈS ses résultats (sha256sum -c, par exemple).
 			io.errFin = function(message){ io.erreursFin = io.erreursFin || []; io.erreursFin.push(message); };

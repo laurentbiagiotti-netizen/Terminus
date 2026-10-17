@@ -106,6 +106,8 @@ function lancerUnite(h, unite, raison){
 		if (lim.nice !== null) g.ni = lim.nice;
 		if (lim.workingDirectory) g.cwd = lim.workingDirectory;
 		if (i > 0 && principal) g.ppid = principal.pid;
+		// Sous MemoryMax, un service démarre petit : il grossit ensuite (sa fuite) jusqu'à la limite.
+		if (lim.memMax && (g.rss || 0) * 1024 > lim.memMax * 0.4) g.rss = Math.round(lim.memMax * 0.4 / 1024);
 		var p = lancerProcessusMachine(h, g);
 		if (i === 0) principal = p;
 	});
@@ -124,6 +126,7 @@ function executerOneshot(h, unite, principal, lim, desc){
 	var M = etatMachine(h), argv = lim.execStart.split(/\s+/), code = 0, erreurs = [], sortie = "";
 	var io = { sudo: true, tty: false, stdin: null, code: 0, err: function(m){ erreurs.push(sansAnsi(String(m))); }, errFin: function(m){ erreurs.push(sansAnsi(String(m))); } };
 	EXECUTION_SERVICE_MACHINE++;
+	Shell.enRoot++;
 	var narration = Shell.narration.slice();
 	try {
 		var f = fichierHote(h, argv[0]);
@@ -131,9 +134,9 @@ function executerOneshot(h, unite, principal, lim, desc){
 		else { var r = Shell.lancerSousCommande([argv[0].split("/").pop()].concat(argv.slice(1)), io, "systemd"); sortie = r.sortie; code = r.code; }
 		code = code || io.code || 0;
 	} catch (e){
-		if (!(e instanceof ShellError)) { EXECUTION_SERVICE_MACHINE--; throw e; }
+		if (!(e instanceof ShellError)) throw e;
 		erreurs.push(sansAnsi(e.message)); code = e.code || 1;
-	} finally { EXECUTION_SERVICE_MACHINE--; Shell.narration = narration; }
+	} finally { EXECUTION_SERVICE_MACHINE--; Shell.enRoot--; Shell.narration = narration; }
 	String(sortie || "").split("\n").filter(Boolean).slice(0, 8).forEach(function(l){ journalMachine(h, { unite: argv[0].split("/").pop(), pid: principal.pid, unit: unite, message: sansAnsi(l) }); });
 	erreurs.slice(0, 8).forEach(function(l){ journalMachine(h, { unite: argv[0].split("/").pop(), pid: principal.pid, unit: unite, prio: 3, message: l }); });
 	retirerProcessus(h, principal);
@@ -236,11 +239,11 @@ controleAvantDemarrage(function(h, unite, action){
 /* ================================================================== */
 
 function dateSystemdMachine(h, ms){ var d = dateMachine(h, ms); return JOURS_EN[d.getDay()] + " " + d.getFullYear() + "-" + deuxChiffres(d.getMonth() + 1) + "-" + deuxChiffres(d.getDate()) + " " + deuxChiffres(d.getHours()) + ":" + deuxChiffres(d.getMinutes()) + ":" + deuxChiffres(d.getSeconds()) + " " + abregeFuseau(h); }
-function dureeTexte(ms){
+function dureeSystemd(ms){
 	var s = Math.max(0, Math.round(ms / 1000));
 	if (s < 60) return s + "s";
 	var m = Math.floor(s / 60);
-	if (m < 60) return m + "min " + (s % 60 ? (s % 60) + "s" : "").trim();
+	if (m < 60) return (m + "min " + (s % 60 ? (s % 60) + "s" : "")).trim();
 	var hh = Math.floor(m / 60);
 	if (hh < 24) return hh + "h " + (m % 60) + "min";
 	var j = Math.floor(hh / 24);
@@ -266,8 +269,8 @@ function statutMachine(h, unite, io){
 	}
 	if (info.type === "timer"){
 		var t = timerInfo(h, info.unite);
-		lignes.push("     Active: " + (info.actif ? (io.tty ? C.vert("active (waiting)") : "active (waiting)") + " since " + dateSystemdMachine(h, s.depuis || maintenantMachine(h)) + "; " + dureeTexte(maintenantMachine(h) - (s.depuis || maintenantMachine(h))) + " ago" : "inactive (dead)"));
-		lignes.push("    Trigger: " + (info.actif && t.prochain ? dateSystemdMachine(h, t.prochain) + "; " + dureeTexte(t.prochain - maintenantMachine(h)) + " left" : "n/a"));
+		lignes.push("     Active: " + (info.actif ? (io.tty ? C.vert("active (waiting)") : "active (waiting)") + " since " + dateSystemdMachine(h, s.depuis || maintenantMachine(h)) + "; " + dureeSystemd(maintenantMachine(h) - (s.depuis || maintenantMachine(h))) + " ago" : "inactive (dead)"));
+		lignes.push("    Trigger: " + (info.actif && t.prochain ? dateSystemdMachine(h, t.prochain) + "; " + dureeSystemd(t.prochain - maintenantMachine(h)) + " left" : "n/a"));
 		lignes.push("   Triggers: ● " + t.active);
 		io.code = info.actif ? 0 : 3;
 		return lignes.join("\n");
@@ -276,10 +279,10 @@ function statutMachine(h, unite, io){
 	if (declencheur) lignes.push("TriggeredBy: " + (etatUnite(h, declencheur.unite).actif ? "● " : "○ ") + declencheur.unite);
 	var p = s.pid ? procParPid(h, s.pid) : null;
 	if (info.echec){
-		lignes.push("     Active: " + (io.tty ? C.rouge("failed") : "failed") + " (Result: " + (s.resultat || "exit-code") + ") since " + dateSystemdMachine(h, s.fin || maintenantMachine(h)) + "; " + dureeTexte(maintenantMachine(h) - (s.fin || maintenantMachine(h))) + " ago");
+		lignes.push("     Active: " + (io.tty ? C.rouge("failed") : "failed") + " (Result: " + (s.resultat || "exit-code") + ") since " + dateSystemdMachine(h, s.fin || maintenantMachine(h)) + "; " + dureeSystemd(maintenantMachine(h) - (s.fin || maintenantMachine(h))) + " ago");
 		if (s.dernierPid) lignes.push("    Process: " + s.dernierPid + " ExecStart=" + lim.execStart + " (code=" + (s.resultat === "signal" || s.resultat === "oom-kill" ? "killed, signal=KILL" : "exited, status=" + (s.code || "1/FAILURE")) + ")", "   Main PID: " + s.dernierPid + " (code=" + (s.resultat === "signal" || s.resultat === "oom-kill" ? "killed, signal=KILL" : "exited, status=" + (s.code || "1/FAILURE")) + ")");
 	} else if (info.actif && p){
-		lignes.push("     Active: " + (io.tty ? C.vert("active (running)") : "active (running)") + " since " + dateSystemdMachine(h, s.depuis) + "; " + dureeTexte(maintenantMachine(h) - s.depuis) + " ago");
+		lignes.push("     Active: " + (io.tty ? C.vert("active (running)") : "active (running)") + " since " + dateSystemdMachine(h, s.depuis) + "; " + dureeSystemd(maintenantMachine(h) - s.depuis) + " ago");
 		lignes.push("   Main PID: " + p.pid + " (" + p.comm + ")");
 		var procs = procsMachine(h).filter(function(x){ return x.unite === info.unite; });
 		var rss = procs.reduce(function(a, x){ return a + (x.etat === "Z" ? 0 : x.rss); }, 0) * 1024;
@@ -289,10 +292,10 @@ function statutMachine(h, unite, io){
 		lignes.push("     CGroup: /system.slice/" + info.unite);
 		procs.forEach(function(x, k){ lignes.push("             " + (k === procs.length - 1 ? "└─" : "├─") + x.pid + " " + (x.etat === "Z" ? "[" + x.comm + "] <defunct>" : x.cmd)); });
 	} else if (lim.type === "oneshot" && s.dernierPid){
-		lignes.push("     Active: inactive (dead) since " + dateSystemdMachine(h, s.fin) + "; " + dureeTexte(maintenantMachine(h) - s.fin) + " ago");
+		lignes.push("     Active: inactive (dead) since " + dateSystemdMachine(h, s.fin) + "; " + dureeSystemd(maintenantMachine(h) - s.fin) + " ago");
 		lignes.push("    Process: " + s.dernierPid + " ExecStart=" + lim.execStart + " (code=exited, status=" + (s.code ? s.code + "/FAILURE" : "0/SUCCESS") + ")", "   Main PID: " + s.dernierPid + " (code=exited, status=" + (s.code ? s.code + "/FAILURE" : "0/SUCCESS") + ")");
 	} else {
-		lignes.push("     Active: inactive (dead)" + (s.fin ? " since " + dateSystemdMachine(h, s.fin) + "; " + dureeTexte(maintenantMachine(h) - s.fin) + " ago" : ""));
+		lignes.push("     Active: inactive (dead)" + (s.fin ? " since " + dateSystemdMachine(h, s.fin) + "; " + dureeSystemd(maintenantMachine(h) - s.fin) + " ago" : ""));
 	}
 	var j = lignesJournalUnite(h, info.unite, 6);
 	if (j.length) lignes.push("", j.join("\n"));
@@ -301,11 +304,30 @@ function statutMachine(h, unite, io){
 	return lignes.join("\n");
 }
 var ACTIONS_VIE_SYSTEMCTL = ["start", "stop", "restart", "reload", "try-restart", "reload-or-restart", "try-reload-or-restart", "enable", "disable", "reenable", "mask"];
+/* Sur une machine modélisée, une unité qu'on vient d'écrire n'est pas activée tant qu'on n'a pas fait enable. */
+var UNITE_INFO_AVANT_MACHINES = uniteInfo;
+uniteInfo = function(hote, nom){
+	var i = UNITE_INFO_AVANT_MACHINES.apply(this, arguments);
+	if (!estMachine(hote) || i.service || i.masque || !i.existe) return i;
+	var b = etatBastion(), etat = (b.unites[hote] || {})[i.unite], decl = (UNITES_DECLAREES[hote] || {})[i.unite];
+	if ((!etat || etat.auto === undefined) && (!decl || decl.enabled === undefined) && i.auto){
+		i.auto = false;
+		if (i.etatFichier === "enabled") i.etatFichier = "disabled";
+	}
+	return i;
+};
 var SYSTEMCTL_AVANT_MACHINES = Shell.sorts.systemctl;
 Shell.sorts.systemctl = function(args, io){
 	var h = machineIci();
 	if (!h) return SYSTEMCTL_AVANT_MACHINES.apply(this, arguments);
-	var mots = args.filter(function(a){ return a.charAt(0) !== "-"; }), options = args.filter(function(a){ return a.charAt(0) === "-"; });
+	// Les options qui prennent une valeur (-s KILL, -p MemoryMax, -t service, -n 20) : la valeur n'est pas une unité.
+	var AVEC_VALEUR = ["-s", "--signal", "-p", "--property", "-t", "--type", "--state", "-n", "--lines", "-o", "--output", "-H", "--host", "-M", "--machine", "--kill-whom", "--kill-who"];
+	var mots = [], options = [];
+	for (var ia = 0; ia < args.length; ia++){
+		if (args[ia].charAt(0) !== "-"){ mots.push(args[ia]); continue; }
+		options.push(args[ia]);
+		if (AVEC_VALEUR.indexOf(args[ia]) > -1 && args[ia + 1] !== undefined){ ia++; options.push(args[ia]); }
+	}
 	var action = mots[0] || "list-units";
 	var opt = function(nom){ var o = options.filter(function(x){ return x.indexOf(nom + "=") === 0; })[0]; return o ? o.substring(nom.length + 1).split(",") : null; };
 	var noms = mots.slice(1).map(function(n){ return nomUniteComplet(n); });
@@ -549,7 +571,7 @@ function timerInfo(h, unite){
 function listeTimers(h, tous, io){
 	var t = timersMachine(h).filter(function(x){ return tous || x.info.actif; }).sort(function(a, b){ return (a.prochain || Infinity) - (b.prochain || Infinity); });
 	var maintenant = maintenantMachine(h);
-	var rangs = t.map(function(x){ return [x.prochain ? dateSystemdMachine(h, x.prochain) : "-", x.prochain ? dureeTexte(x.prochain - maintenant) + " left" : "-", x.dernier ? dateSystemdMachine(h, x.dernier) : "-", x.dernier ? dureeTexte(maintenant - x.dernier) + " ago" : "-", x.unite, x.active]; });
+	var rangs = t.map(function(x){ return [x.prochain ? dateSystemdMachine(h, x.prochain) : "-", x.prochain ? dureeSystemd(x.prochain - maintenant) + " left" : "-", x.dernier ? dateSystemdMachine(h, x.dernier) : "-", x.dernier ? dureeSystemd(maintenant - x.dernier) + " ago" : "-", x.unite, x.active]; });
 	var entetes = ["NEXT", "LEFT", "LAST", "PASSED", "UNIT", "ACTIVATES"];
 	var larg = entetes.map(function(e, k){ return Math.max.apply(null, [e.length].concat(rangs.map(function(r){ return r[k].length; }))); });
 	var lignes = [entetes].concat(rangs).map(function(r){ return r.map(function(v, k){ return k === r.length - 1 ? v : completerDroite(v, larg[k]); }).join(" "); });
@@ -643,7 +665,7 @@ function analyseCalendrier(h, args, io){
 			var p = h ? prochaineEcheance(h, c, t) : null;
 			if (p === null){ l.push("    Next elapse: never"); break; }
 			l.push((k === 0 ? "    Next elapse: " : "       Iter. #" + (k + 1) + ": ") + dateSystemdMachine(h, p));
-			if (k === 0){ var u = new Date(p - DECALAGE_HISTOIRE * 3600000); l.push("       (in UTC): " + JOURS_EN[u.getDay()] + " " + u.getFullYear() + "-" + deuxChiffres(u.getMonth() + 1) + "-" + deuxChiffres(u.getDate()) + " " + deuxChiffres(u.getHours()) + ":" + deuxChiffres(u.getMinutes()) + ":" + deuxChiffres(u.getSeconds()) + " UTC", "       From now: " + dureeTexte(p - t) + " left"); }
+			if (k === 0){ var u = new Date(p - DECALAGE_HISTOIRE * 3600000); l.push("       (in UTC): " + JOURS_EN[u.getDay()] + " " + u.getFullYear() + "-" + deuxChiffres(u.getMonth() + 1) + "-" + deuxChiffres(u.getDate()) + " " + deuxChiffres(u.getHours()) + ":" + deuxChiffres(u.getMinutes()) + ":" + deuxChiffres(u.getSeconds()) + " UTC", "       From now: " + dureeSystemd(p - t) + " left"); }
 			t = p + 1000;
 		}
 		blocs.push(l.join("\n"));

@@ -58,7 +58,13 @@ function etatMachine(h){
 		M.journal = M.journal || [];
 		M.procs = M.procs || [];
 		M.prochainPid = M.prochainPid || 5000;
+		M.tachesFinies = M.tachesFinies || {};
 		state.reseau.machines[h] = M;
+		// Les processus du départ prennent les mêmes valeurs par défaut que ceux lancés en cours de partie.
+		var depart = M.procs;
+		M.procs = [];
+		if (typeof lancerProcessusMachine === "function") depart.forEach(function(p){ if (!p.debut && M.demarrage) p.debut = M.demarrage + 60000 + (p.pid || 0) * 10; lancerProcessusMachine(h, p); });
+		else M.procs = depart;
 		if (typeof d.apresInit === "function") d.apresInit(h, M);
 	}
 	return M;
@@ -101,6 +107,7 @@ function surTicMachine(f){ TICS_MACHINES.push(f); }
 function avancerMachine(h){
 	if (!estMachine(h)) return;
 	var M = etatMachine(h);
+	if (typeof installerProcMachine === "function") installerProcMachine(h);
 	if (M.nb === undefined || M.nb === null || M.nb > state.nbCommandes) M.nb = state.nbCommandes;
 	var n = Math.min(60, state.nbCommandes - M.nb);
 	M.nb = state.nbCommandes;
@@ -774,6 +781,17 @@ Shell.sorts.ls = function(args, io){
 	if (!h) return LS_AVANT_MACHINES.apply(this, arguments);
 	var opts = {}, cibles = [];
 	args.forEach(function(a){ if (/^-[a-zA-Z1]+$/.test(a)) a.substring(1).split("").forEach(function(c){ opts[c] = true; }); else if (a === "--all") opts.a = true; else if (a === "--human-readable") opts.h = true; else cibles.push(a); });
+	// ls -d : le dossier lui-même, pas son contenu (ls -ld /home/commun).
+	if (opts.d){
+		LS_HUMAIN_MACHINES = !!opts.h;
+		try {
+			return (cibles.length ? cibles : ["."]).map(function(c){
+				var r = Shell.chercher(c, io, "ls");
+				if (r.node === null) throw new ShellError("ls: cannot access '" + c + "': No such file or directory", 2);
+				return opts.l ? Shell.ligneLongue(r.node, c, io) : c;
+			}).join("\n");
+		} finally { LS_HUMAIN_MACHINES = false; }
+	}
 	var virtuelles = [];
 	(cibles.length ? cibles : ["."]).forEach(function(c){
 		try {
@@ -829,6 +847,7 @@ function tronquerSortieMachine(lignes, io, cmd){
 }
 
 var RM_AVANT_MACHINES = Shell.sorts.rm;
+var INTOUCHABLES_MACHINES = ["/etc/passwd", "/etc/shadow", "/etc/group", "/etc/gshadow", "/etc/sudoers"];
 Shell.sorts.rm = function(args, io){
 	var h = machineIci();
 	if (!h) return RM_AVANT_MACHINES.apply(this, arguments);
@@ -851,6 +870,21 @@ Shell.sorts.rm = function(args, io){
 		reels.push(n);
 	});
 	Object.keys(virtuels).forEach(function(c){ retirerVirtuels(h, c, virtuels[c]); });
+	// Sur une machine, root supprime ce qu'il veut (sauf les registres des comptes, auxquels le monde tient).
+	if (io.sudo) reels.forEach(function(n){
+		var r = null;
+		try { r = Shell.chercher(n, io, "rm"); } catch (e){ return; }
+		(function marquer(noeud, chemin){
+			if (!noeud) return;
+			if (noeud instanceof Room){
+				noeud.items.forEach(function(it){ marquer(it, chemin + "/" + it.itemname); });
+				noeud.children.forEach(function(c){ if (c.parents[0] === noeud) marquer(c, chemin + "/" + c.room_name); });
+				return;
+			}
+			if (INTOUCHABLES_MACHINES.indexOf(cheminNormal(chemin)) > -1){ noeud.protege = true; return; }
+			if (!noeud.allows("sudo-rm")) noeud.addValidCmd("sudo-rm");
+		})(r.node, r.node instanceof Room ? cheminDuLieuMachine(r.node) : cheminNormal(cheminDuLieuMachine(r.dir) + "/" + r.name));
+	});
 	var sortie = reels.length ? RM_AVANT_MACHINES.call(this, options.concat(reels), io) : "";
 	return messages.concat(sortie ? [sortie] : []).join("\n");
 };
@@ -886,7 +920,8 @@ Shell.sorts.find = function(args, io){
 		}
 		if (p){
 			var nom = chemin.substring(chemin.lastIndexOf("/") + 1);
-			var f = p.lieu.items.filter(function(x){ return x.virtuel && x.itemname === nom; })[0];
+			if (!p.index){ p.index = {}; p.lieu.items.forEach(function(x){ if (x.virtuel) p.index[x.itemname] = x; }); }
+				var f = p.index[nom];
 			if (f){
 				if (f.owner !== JOUEUR && !o.sudo) return "rm : impossible de supprimer « " + nom + " » : Permission denied";
 				p.retires[f.virtuel.cle] = true;

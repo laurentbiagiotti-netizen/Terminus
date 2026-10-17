@@ -2651,6 +2651,24 @@ function comparaisonNumerique(texte, critere, exemple){
 	return function(v){ return m[1] === "-" ? v < n : (m[1] === "+" ? v > n : v === n); };
 }
 
+/* -newermt : la date d'un objet, comme une clé « AAAAMMJJhhmmss » comparable, à l'heure de la machine où l'on est. */
+function maintenantFind(){
+	var h = typeof machineIci === "function" ? machineIci() : null;
+	return h ? maintenantMachine(h) : Date.now();
+}
+function cleDeDateFind(texte){
+	var m = /^(\d{4})-(\d\d)-(\d\d)(?:[ T](\d\d):(\d\d)(?::(\d\d))?)?$/.exec(String(texte).trim());
+	if (!m) return null;
+	return m[1] + m[2] + m[3] + (m[4] || "00") + (m[5] || "00") + (m[6] || "00");
+}
+function cleDeDateNoeud(noeud){
+	var h = typeof machineIci === "function" ? machineIci() : null;
+	var ms = noeud.mtimeMs !== undefined ? noeud.mtimeMs : maintenantFind() - ageEnMinutes(noeud) * 60000;
+	var d = h ? dateMachine(h, ms) : new Date(ms);
+	function n2(x){ return (x < 10 ? "0" : "") + x; }
+	return d.getFullYear() + n2(d.getMonth() + 1) + n2(d.getDate()) + n2(d.getHours()) + n2(d.getMinutes()) + n2(d.getSeconds());
+}
+
 Shell.sorts.find = function(args, io){
 	var departs = [], i = 0;
 	while (i < args.length && args[i].charAt(0) !== "-" && args[i] !== "!" && args[i] !== "(" && args[i] !== ")"){ departs.push(args[i]); i++; }
@@ -2658,7 +2676,7 @@ Shell.sorts.find = function(args, io){
 	var jetons = args.slice(i), k = 0, action = false;
 	var options = { maxdepth: Infinity, mindepth: 0, depth: false };
 	var execsGroupes = [];
-	var CONNUS = "-name, -iname, -path, -type, -user, -perm, -mtime, -mmin, -newer, -size, -empty, -maxdepth, -mindepth, -print, -print0, -exec, -delete, -prune, -o, !, \\( \\)";
+	var CONNUS = "-name, -iname, -path, -type, -user, -perm, -mtime, -mmin, -newer, -newermt, -size, -empty, -maxdepth, -mindepth, -print, -print0, -exec, -delete, -prune, -o, !, \\( \\)";
 	function valeur(nom, exemple){
 		if (jetons[k] === undefined) throw new ShellError("find : " + nom + " attend une valeur, par exemple : " + exemple);
 		return jetons[k++];
@@ -2729,6 +2747,12 @@ Shell.sorts.find = function(args, io){
 				var a = ageEnJours(c.noeud), ar = ageEnJours(ref);
 				return a < ar || (a === ar && (c.noeud.heure || "09:00") > (ref.heure || "09:00"));
 			} };
+		case "-newermt":
+			v = valeur("-newermt", "find . -newermt \"2026-10-15 12:00\"");
+			var cible = cleDeDateFind(v);
+			if (!cible) throw new ShellError("find: I cannot figure out how to interpret ‘" + v + "’ as a date or time" +
+				astuce(io, "Une date se donne ainsi : -newermt \"2026-10-15\" ou -newermt \"2026-10-15 12:30\"."));
+			return { test: function(c){ return !c.estLieu && cleDeDateNoeud(c.noeud) > cible; } };
 		case "-size":
 			v = valeur("-size", "-size +1k");
 			var ms = /^([+-]?)(\d+)([ckMGbw]?)$/.exec(v);

@@ -3026,7 +3026,7 @@ function systemctlGere(h, action, mots, options, io, toutes, maintenant, opt){
 		}
 		GameEvents.fire({ type: "systemctl", action: action, host: h, service: i.cle && i.cle.indexOf(".") === -1 ? i.cle : i.unite.replace(/\.service$/, ""), now: maintenant, unite: i.unite });
 		if (io.tty && action === "stop" && i.auto) sortie.push(C.gris("(Arrêté, mais toujours activé : il redémarrera au prochain démarrage. disable --now fait les deux.)"));
-		if (io.tty && action === "start" && !i.auto) sortie.push(C.gris("(Démarré, mais pas activé : au prochain démarrage, il restera arrêté. enable --now fait les deux.)"));
+		if (io.tty && action === "start" && !i.auto && i.etatFichier !== "static") sortie.push(C.gris("(Démarré, mais pas activé : au prochain démarrage, il restera arrêté. enable --now fait les deux.)"));
 	});
 	return sortie.join("\n");
 }
@@ -3105,7 +3105,7 @@ function declarerPaquet(hote, nom, def){
 		description: def.description || nom, section: def.section || "admin", priorite: def.priorite || "optional", taille: def.taille || 100,
 		fichiers: {}, conffiles: def.conffiles || Object.keys(fichiers).filter(function(c){ return c.indexOf("/etc/") === 0; }),
 		services: def.services || [], depot: def.depot || (def.disponible && def.disponible !== def.version ? "stable-security" : "stable"),
-		installe: def.installe !== false, mainteneur: def.mainteneur || "Debian Developers <debian-devel@lists.debian.org>"
+		installe: def.installe !== false, depends: def.depends || null, mainteneur: def.mainteneur || "Debian Developers <debian-devel@lists.debian.org>"
 	};
 	Object.keys(fichiers).forEach(function(c){ p.fichiers[cheminNormal(c)] = String(fichiers[c]); });
 	p.conffiles = p.conffiles.map(cheminNormal);
