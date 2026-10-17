@@ -47,6 +47,7 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
   11. [Les mails, Lille et le telnet](#11-les-mails-lille-et-le-telnet)
   12. [L'Annexe : le Wi-Fi de la cafétéria](#12-lannexe--le-wi-fi-de-la-cafétéria)
   13. [Le compte rendu](#13-le-compte-rendu)
+  - [Les quêtes annexes du chapitre 2 : l'Ami du campus](#les-quêtes-annexes-du-chapitre-2--lami-du-campus)
 - [Chapitre 3 : la Crypte](#chapitre-3--la-crypte-la-mission-cyber)
   14. [La Crypte](#14-la-crypte)
   15. [Les journaux de la Citadelle](#15-les-journaux-de-la-citadelle)
@@ -57,6 +58,7 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
   20. [Les comptes de la Citadelle](#20-les-comptes-de-la-citadelle)
   21. [Les preuves et les notes chiffrées](#21-les-preuves-et-les-notes-chiffrées)
   22. [Le Corbeau et le rapport d'incident](#22-le-corbeau-et-le-rapport-dincident)
+  - [Les quêtes annexes du chapitre 3 : l'Ami de la Crypte](#les-quêtes-annexes-du-chapitre-3--lami-de-la-crypte)
 - [Chapitre 4 : l'Académie des Arcanes](#chapitre-4--lacadémie-des-arcanes-niveau-avancé)
   23. [L'Académie, les maîtres et l'avis de la Nuée](#23-lacadémie-les-maîtres-et-lavis-de-la-nuée)
   24. [Chronomancie d'abord : la bombe, avant 23 h](#24-chronomancie-dabord--la-bombe-avant-23-h)
@@ -68,6 +70,7 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
   30. [Archives : restaurer et appliquer le correctif](#30-archives--restaurer-et-appliquer-le-correctif)
   31. [Invocation : le script de nettoyage](#31-invocation--le-script-de-nettoyage)
   32. [Le dernier Corbeau, et le retour d'expérience](#32-le-dernier-corbeau-et-le-retour-dexpérience)
+  - [Les quêtes annexes du chapitre 4 : l'Ami de l'Académie](#les-quêtes-annexes-du-chapitre-4--lami-de-lacadémie)
 - [Chapitre 5 : le Bastion](#chapitre-5--le-bastion-durcissement-linux)
   33. [Le Bastion, les maîtres et la Pierre](#33-le-bastion-les-maîtres-et-la-pierre)
   34. [La Herse des Comptes (Fernando)](#34-la-herse-des-comptes-fernando)
@@ -85,6 +88,7 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
   46. [Les défis des maîtres, tour par tour](#46-les-défis-des-maîtres-tour-par-tour)
   47. [L'aube](#47-laube)
   48. [Le rapport d'inspection](#48-le-rapport-dinspection)
+  - [Les quêtes annexes du chapitre 5 : l'Ami du Bastion](#les-quêtes-annexes-du-chapitre-5--lami-du-bastion)
 - [Chapitre 6 : Lumen, la cité qui s'éteint](#chapitre-6--lumen-la-cité-qui-séteint-exploitation-linux)
   49. [Lumen, les gardiens et le Phare](#49-lumen-les-gardiens-et-le-phare)
   50. [Les Docks et les Archives (Seymour, Kathleen)](#50-les-docks-et-les-archives-seymour-kathleen)
@@ -746,6 +750,69 @@ cat ~/CertificatReseau
 
 Radia remet le CertificatReseau, avec la note du chapitre 2 et son code de vérification, puis transmet le message de Grace : du trafic bizarre sous la Citadelle, et une trappe qui vient de s'ouvrir. C'est le chapitre 3.
 
+### Les quêtes annexes du chapitre 2 : l'Ami du campus
+
+Six habitants du bâtiment B ont chacun un service à demander. Comme à Lumen, ces quêtes annexes sont facultatives et hors note : elles ne comptent ni dans l'XP du chapitre ni dans la note, et donnent un bonus d'XP à part (50 par annexe), un souvenir déposé dans `~/Souvenirs`, une lumière de plus sur le plan (`schema`), puis, toutes finies, le badge « Ami du campus ». Elles s'ouvrent dès l'ouverture du chapitre (départ direct compris) : une annexe se propose quand on lit son habitant, ses étapes se font dans l'ordre, et `quetes annexes` en donne l'avancée. Elles n'enseignent que des notions jamais vues ailleurs dans le jeu : l'inventaire du matériel (`lscpu`, `lspci`, `lsusb`, `dmidecode`), `nc` en écoute (`nc -l`) pour se parler et se passer un fichier d'une machine à l'autre, le carnet d'adresses de ssh (`~/.ssh/config` : `Host`, `HostName`, `User`, `Port`, `IdentityFile`), le rebond par une passerelle (`ssh -J`, `ProxyJump`), le tunnel ssh (`ssh -f -N -L`) et la recherche dans le manuel (`apropos`, `whatis`, les sections de `man`).
+
+La Gestionnaire du parc veut la fiche matérielle du Poste de l'accueil ; l'Appariteur parle à la Gardienne de nuit, sur la machine `loge`, avec `nc` ; la Documentaliste glisse la clé du dépôt de cours (port 2222, compte `cours`) dans la Maison ; le Coursier doit lire un colis sur `labo-lille`, qu'on n'atteint que par `passerelle-lille` ; la Bibliothécaire veut le catalogue de l'intranet de Lille, qui ne répond qu'aux machines de Lille ; la Tutrice cherche la page du fichier `/etc/passwd`, et pas celle de la commande. Deux repères changent d'une partie à l'autre : `<code-loge>`, le code que la Gardienne donne au premier `nc -l 5555`, et `<pid-tunnel>`, le PID du tunnel, que montre `ps`.
+
+```
+cd ~/Cybersup/BatimentB
+cat Gestionnaire
+cat Appariteur
+cat Documentaliste
+cat Coursier
+cat Bibliothecaire
+cat Tutrice
+quetes annexes
+cd Poste
+lscpu
+lspci
+lsusb
+sudo dmidecode -s system-serial-number
+echo "Poste de l'accueil : CYB-B20-4471" > ~/inventaire.txt
+cd ~/Cybersup/BatimentB
+nc -l 5555
+echo "<code-loge>" | nc loge 6666
+nc loge 6666 < planning-gardes.txt
+nc -l 5555 > ~/plan-des-rondes.txt
+cat ~/plan-des-rondes.txt
+mkdir -p ~/.ssh
+mv ~/depot_ed25519 ~/.ssh/
+chmod 600 ~/.ssh/depot_ed25519
+cat >> ~/.ssh/config <<'FIN'
+Host depot
+    HostName 10.0.97.77
+    User cours
+    Port 2222
+    IdentityFile ~/.ssh/depot_ed25519
+FIN
+ssh depot
+cat LISEZMOI
+exit
+ssh -J passerelle-lille labo-lille
+exit
+cat >> ~/.ssh/config <<'FIN'
+Host labo-lille
+    ProxyJump passerelle-lille
+FIN
+ssh labo-lille
+cat /srv/colis/a-remettre.txt
+exit
+ssh -f -N -L 8080:intranet-lille:80 passerelle-lille
+curl http://localhost:8080/
+curl -o ~/catalogue.txt http://localhost:8080/catalogue.txt
+ps
+kill <pid-tunnel>
+apropos comptes
+whatis passwd
+man 5 passwd
+echo 7 > ~/notice.txt
+quetes annexes
+```
+
+Le code de la Gardienne est à renvoyer tel quel ; le planning part par une redirection d'entrée (`<`) ; le plan des rondes arrive par une redirection de sortie (`>`). Le tunnel tourne en arrière-plan sans session (`-f -N`) : on le referme avec `kill`, une fois le catalogue rapporté. Le champ du shell est le septième de `/etc/passwd` (`man 5 passwd`).
+
 ## Chapitre 3 : la Crypte (la mission cyber)
 
 Notions : empreintes (`sha256sum`, `sha256sum -c`), encodage (`base64`, `base64 -d`), bit SUID (`ls -l`, `find -perm -4000`, `chmod u-s`), sortie d'erreur (`2>`, `2>/dev/null`), ports en écoute (`ss -tlnp`, vu au chapitre 2), édition de fichiers (`nano`, vu au chapitre 2), clés SSH (`ssh-keygen`, clé publique et clé privée, `authorized_keys`). Puis, sur tout le réseau de l'école : journaux compressés (`zcat`, `journalctl`, `last`, `who`), cartographie (`nmap`, et `ip`, `nc`, `dig`, `traceroute` vus au chapitre 2), processus et services (`pgrep`, `pkill`, `lsof`, `systemctl`), attribut immuable (`lsattr`, `chattr`), filtres de texte (`sed`, `awk`, `tr`, `rev`, `tee`), comptes et droits (`userdel`, `usermod`, `groups`, `visudo`), pare-feu (`ufw`), copie de preuves (`ssh-copy-id`, `scp`, `md5sum`, `sha1sum`), analyse de fichiers (`file`, `xxd`, `strings`, `stat`), chiffrement (`gpg`) et l'éditeur des serveurs, `vim`, avec ses leçons. En bonus, le carnet de traque de Grace (`lastb`, `lastlog`, `w`, `chage`, `fail2ban-client`) et la trousse d'Evi (`clamscan`, `rkhunter`, `debsums`, `exiftool`, `getfacl`, `setfacl`).
@@ -1101,6 +1168,77 @@ Dans `vim rapport.txt`, pour chacune des quatre lignes à compléter : s'y place
 
 À ce stade le chapitre 3 affiche 5625 XP sur 5625, soit 20 sur 20, et le CertificatCyber porte son code de vérification.
 
+### Les quêtes annexes du chapitre 3 : l'Ami de la Crypte
+
+Six habitants de la Crypte ont chacun un service à demander : l'Enlumineur, le Passeur et le Serrurier dans la Crypte, le Fossoyeur, le Sonneur et le Sacristain dans le Caveau. Facultatives et hors note, elles donnent chacune 50 XP en bonus, un souvenir dans `~/Souvenirs`, une lumière de plus sur le tableau de chasse (`traque`), et toutes finies, le badge « Ami de la Crypte ». Leurs lieux sont sous la Crypte, dans les Catacombes (les Galeries, l'Ossuaire, le Clocher). Les notions sont nouvelles : les nombres magiques d'un fichier (`hexdump -C`), les chaînes de liens (`readlink -f`, `realpath`), les liens durs et les inodes (`ln` sans `-s`, `ls -i`), le suivi d'un journal qui tourne (`tail -f`, `tail -F`, `grep --line-buffered`), la durée maximale d'un programme (`timeout`, `-s KILL`, les codes 124 et 137), l'agent ssh (`ssh-agent`, `ssh-add`) et la fabrication de mots de passe (`pwgen`, `openssl rand`, `openssl passwd -6` et le sel).
+
+La phrase de la clé du Passeur est dans son texte (« trois cloches sous la lune ») : `ssh-add` la demande une seule fois. Pour la grille du Serrurier, on recalcule l'empreinte de chacun des trois candidats avec le même sel : `<mot-grille>` est celui dont l'empreinte est identique à celle que donne le Serrurier (il change d'une partie à l'autre).
+
+```
+ssh citadelle
+cd Crypte
+cat Enlumineur
+cat Passeur
+cat Serrurier
+cd Caveau
+cat Fossoyeur
+cat Sonneur
+cat Sacristain
+quetes annexes
+cd ../Catacombes
+hexdump -C -n 16 enluminure.txt
+mv enluminure.txt enluminure.png
+hexdump -C -n 16 copie-du-registre.txt
+mv copie-du-registre.txt copie-du-registre.pdf
+hexdump -C -n 16 sceau.txt
+mv sceau.txt sceau.gz
+ls -l
+readlink passage-nord
+readlink -f passage-nord
+realpath Galeries/../Galeries/escalier
+ls -li Galeries Ossuaire
+ln Ossuaire/testament.txt Galeries/
+rm Ossuaire/testament.txt
+ls -li Galeries
+cd Clocher
+tail -f ronde.log
+tail -f ronde.log
+ls -l
+tail -F ronde.log
+tail -F ronde.log | grep --line-buffered ALERTE > ~/alertes.txt
+cat ~/alertes.txt
+cd ..
+timeout 5 ./ombre-errante
+echo $? > ~/sablier.txt
+timeout 5 ./ombre-tetue
+timeout -s KILL 5 ./ombre-tetue
+echo $? >> ~/sablier.txt
+cat ~/sablier.txt
+chmod 600 ~/cle-du-passeur
+eval "$(ssh-agent -s)"
+ssh-add ~/cle-du-passeur
+ssh-add -l
+ssh passeur@beffroi
+cat LISEZMOI
+exit
+ssh passeur@beffroi
+exit
+ssh-add -D
+pwgen 12 5
+pwgen -s 16 3
+openssl rand -base64 24
+openssl passwd -6 rouille
+openssl passwd -6 rouille
+openssl passwd -6 -salt Gr1ll3Cav porte-de-chene
+openssl passwd -6 -salt Gr1ll3Cav herse-de-fer
+openssl passwd -6 -salt Gr1ll3Cav grille-rouillee
+echo <mot-grille> > ~/serrure.txt
+exit
+quetes annexes
+```
+
+Le premier `tail -f` voit le journal grandir ; au second, le journal a tourné (`ls -l` montre `ronde.log.1`) et `tail -f`, qui suit le fichier, ne voit plus rien : `tail -F` suit le nom. Sans `--line-buffered`, `grep` garde ses lignes en mémoire quand il écrit dans un fichier, et `~/alertes.txt` resterait vide. `timeout` rend 124 quand il a dû arrêter le programme, et 137 (128 + 9) quand il a fallu `SIGKILL`.
+
 ## Chapitre 4 : l'Académie des Arcanes (niveau avancé)
 
 Numéro interne 5, affiché 4. Quelques semaines après la Crypte, les notes volées de Frances ont fuité : un groupe de rançonneurs, la Nuée, a repris le nom du Corbeau. En une nuit, la Nuée a exfiltré des données de l'école, posé une bombe logique programmée pour minuit, semé des pièges et laissé un script qui recrée ses fichiers. Tout ce qui est « malveillant » ici est narratif et inerte (comme les charges neutralisées du chapitre 3) : le joueur apprend à mesurer la fuite, notifier (RGPD), éradiquer, restaurer et documenter.
@@ -1385,6 +1523,82 @@ cp ~/academie/rex.txt ~/Cybersup/SalleServeurs/Academie/BoiteDeLaurent
 ```
 
 Le dossier (indicateurs, chronologie) part aux autorités : les humains de la Nuée sont hors de portée, mais leur script, lui, est battu par le tien. Laurent conclut : « À Terminus, tu tapais des commandes. Ici, tu les fais travailler pour toi. » Le CertificatAvance porte la note du chapitre 4 et son code de vérification ; le quiz du chapitre (`quiz 4`) s'ouvre, et `badges arcanes` relit les dix-huit leçons.
+
+### Les quêtes annexes du chapitre 4 : l'Ami de l'Académie
+
+Six habitants de l'Académie, un par aile (le Copiste aux Grimoires, la Secrétaire aux Archives, le Trésorier à l'Alchimie, l'Apprentie à l'Invocation, la Messagère à la Chronomancie, la Surveillante à la Divination), ont chacun un service à demander. Facultatives et hors note, elles donnent chacune 50 XP en bonus, un souvenir dans `~/Souvenirs`, une lumière de plus sur le tableau des écoles (`grimoire`), et toutes finies, le badge « Ami de l'Académie ». Les notions sont nouvelles : les encodages et les fins de ligne (`cat -A`, `iconv`, `dos2unix`, un script en CRLF qui ne se lance plus), les variables d'environnement dans un modèle (`export`, `printenv`, `envsubst`), les tailles lisibles et les calculs à virgule (`numfmt`, `bc`), les options d'un script (`getopts`, `OPTARG`) avec une fonction, les tubes nommés (`mkfifo`) et une base SQLite (`sqlite3`).
+
+```
+cd ~/Cybersup/SalleServeurs/Academie/Grimoires
+cat Copiste
+cd ../Archives
+cat Secretaire
+cd ../Alchimie
+cat Tresorier
+cd ../Invocation
+cat Apprentie
+cd ../Chronomancie
+cat Messagere
+cd ../Divination
+cat Surveillante
+quetes annexes
+cd ../Grimoires
+file grimoire-ancien.txt
+cat -A grimoire-ancien.txt
+iconv -f ISO-8859-1 -t UTF-8 grimoire-ancien.txt > ~/grimoire.txt
+dos2unix ~/grimoire.txt
+cat ~/grimoire.txt
+./incantation.sh
+dos2unix incantation.sh
+./incantation.sh
+cd ../Archives
+export ELEVE="Ambre Morel"
+export MAISON="Divination"
+export DATE_EPREUVE="12 novembre"
+printenv ELEVE MAISON DATE_EPREUVE
+envsubst < modele-convocation.txt > ~/convocation.txt
+cat ~/convocation.txt
+envsubst '$ELEVE $MAISON' < modele-affiche.txt > ~/affiche.txt
+cat ~/affiche.txt
+cd ../Alchimie
+numfmt --to=iec --field=2 < reserves.txt
+numfmt --from=iec 750M
+cat depenses.txt
+echo "scale=2; (12.50 + 7.25 + 30.00 + 4.75 + 18.40 + 9.90 + 22.15) / 7" | bc
+echo 14.99 > ~/balance.txt
+cat > ~/sortilege.sh <<'FIN'
+#!/bin/bash
+benir() {
+    echo "Que la lumière soit sur $1 !"
+}
+nom="inconnu"
+while getopts "n:" opt; do
+    case $opt in
+        n) nom="$OPTARG" ;;
+        *) echo "Utilisation : $0 -n NOM" >&2; exit 2 ;;
+    esac
+done
+benir "$nom"
+FIN
+chmod +x ~/sortilege.sh
+~/sortilege.sh -n Ambre
+~/sortilege.sh -z
+echo $?
+mkfifo ~/question
+ls -l ~/question
+echo "La Nuée reviendra-t-elle ?" > ~/question
+mkfifo ~/reponse
+cat ~/reponse
+cd ../Divination
+sqlite3 registre.db ".tables"
+sqlite3 registre.db ".schema eleves"
+sqlite3 -header -column registre.db "SELECT nom, moyenne FROM eleves WHERE maison = 'Divination' ORDER BY moyenne DESC;"
+sqlite3 registre.db "SELECT COUNT(*) FROM eleves WHERE maison = 'Alchimie' AND moyenne > 12;"
+sqlite3 registre.db "SELECT COUNT(*) FROM eleves WHERE maison = 'Alchimie' AND moyenne > 12;" > ~/registre.txt
+quetes annexes
+```
+
+`cat -A` montre les `^M` (les `\r` des fins de ligne CRLF) et les octets non UTF-8 (`M-...`). `envsubst` sans liste remplace toutes les variables qu'il trouve ; avec une liste (`'$ELEVE $MAISON'`), il ne touche qu'à celles-là, et `$PRIX` reste tel quel. `$(( ))` ne calcule qu'en entiers : `bc`, avec `scale=2`, garde deux décimales (14.99). L'Oracle lit le tube `question` et répond dans le tube `reponse` : rien n'est écrit sur le disque.
 
 ## Chapitre 5 : le Bastion (durcissement Linux)
 
@@ -1735,6 +1949,73 @@ badges bastion
 ```
 
 Laurent contresigne : « Le Bastion a tenu. Pas parce qu'il est imprenable : parce que tu sais ce qui reste. » Le CertificatBastion porte la note du chapitre 5 et son code de vérification (`verifier CODE` le lit) ; le quiz du chapitre (`quiz 5`) s'ouvre, et `badges bastion` relit les seize leçons (une par tour, la Pierre, l'Aube, le Rapport, 4 h) et le platine.
+
+### Les quêtes annexes du chapitre 5 : l'Ami du Bastion
+
+Six habitants du Bastion ont chacun un service à demander : le Colporteur au Pont-levis, le Sergent à la Herse, la Sentinelle à la Tour de Guet, le Greffier au Sceau du Roi, la Cantinière dans la Salle des Coffres et le Héraut à la Bannière. Facultatives et hors note, elles donnent chacune 50 XP en bonus, un souvenir dans `~/Souvenirs`, une lumière de plus sur le plan des tours (`rempart`), et toutes finies, le badge « Ami du Bastion ». Elles restent défensives, comme tout le chapitre, et n'enseignent que des notions jamais vues : une clé de serveur qui change (`ssh-keygen -F`, `ssh-keyscan`, `ssh-keygen -R`), la qualité des mots de passe (`pam_pwquality`, `pwscore`), une unité systemd `.path` qui surveille un fichier, l'enregistrement des sessions sudo (`Defaults log_output`, `sudoreplay`), le chiffrement d'un fichier (`openssl enc -aes-256-cbc -pbkdf2`) vérifié avec `cmp`, et les certificats SSH (une autorité, `ssh-keygen -s`, `TrustedUserCAKeys`).
+
+La Cantinière choisit sa phrase de passe : `openssl enc` la demande (deux fois pour chiffrer, une fois pour déchiffrer). Au premier `ssh relais`, ssh refuse : la clé du relais a changé. On compare l'empreinte que montre ssh à celle que Vint a dictée au Colporteur, avant de répondre `yes`. La première session sudo enregistrée porte le numéro `000001` (`sudo sudoreplay -l` le montre). La clé de l'autorité est forgée ici sans phrase (`-N ""`), pour l'exercice : dans la vraie vie, elle dort hors du serveur, sur une machine coupée du réseau.
+
+```
+cd ~/Cybersup/SalleServeurs/Academie/Bastion
+cd PontLevis
+cat Colporteur
+cd ../Herse
+cat Sergent
+cd ../Guet
+cat Sentinelle
+cd ../Sceau
+cat Greffier
+cd ../Coffres
+cat Cantiniere
+cd ../Banniere
+cat Heraut
+quetes annexes
+cd ../PontLevis
+ssh relais
+ssh-keygen -F relais
+ssh-keyscan relais
+ssh-keygen -R relais
+ssh relais
+cat LISEZMOI
+exit
+cd ../Coffres
+openssl enc -aes-256-cbc -pbkdf2 -salt -in recette.txt -out ~/recette.enc
+file ~/recette.enc
+openssl enc -d -aes-256-cbc -pbkdf2 -in ~/recette.enc -out ~/recette-dechiffree.txt
+cmp recette.txt ~/recette-dechiffree.txt
+echo $?
+cd ..
+ssh bastion
+sudo apt install libpam-pwquality libpwquality-tools
+printf 'minlen = 12\nminclass = 3\n' | sudo tee -a /etc/security/pwquality.conf
+echo "bastion1" | pwscore
+echo "Trois-Tours-Gardent-L-Aube-42" | pwscore
+printf '[Unit]\nDescription=Guetteur du fichier des comptes\n\n[Path]\nPathChanged=/etc/passwd\n\n[Install]\nWantedBy=multi-user.target\n' | sudo tee /etc/systemd/system/guet-passwd.path
+printf '[Unit]\nDescription=Alerte du guetteur\n\n[Service]\nType=oneshot\nExecStart=/usr/bin/logger -t guetteur "le fichier des comptes a change"\n' | sudo tee /etc/systemd/system/guet-passwd.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now guet-passwd.path
+systemctl list-units --type=path
+sudo useradd essai-guet
+sudo journalctl -t guetteur
+sudo userdel essai-guet
+sudo visudo -f /etc/sudoers.d/greffier
+sudo visudo -c
+sudo systemctl status ssh
+sudo sudoreplay -l
+sudo sudoreplay 000001
+sudo ssh-keygen -t ed25519 -f /etc/ssh/ca_inspection -N "" -C "autorite de l'Inspection"
+cat /srv/inspection/LISEZMOI
+sudo ssh-keygen -s /etc/ssh/ca_inspection -I heraut -n heraut -V +52w /srv/inspection/heraut.pub
+sudo ssh-keygen -L -f /srv/inspection/heraut-cert.pub
+echo 'TrustedUserCAKeys /etc/ssh/ca_inspection.pub' | sudo tee /etc/ssh/sshd_config.d/60-inspection.conf
+sudo sshd -t
+sudo systemctl reload ssh
+exit
+quetes annexes
+```
+
+`pwscore` refuse un mot trop court ou trop simple et donne une note au mot accepté. Le compte d'essai `essai-guet` sert seulement à faire sonner le guetteur : on le supprime aussitôt l'alerte lue. Dans `visudo -f /etc/sudoers.d/greffier`, une seule ligne : `Defaults log_output`. Comme pour Tatu, `TrustedUserCAKeys` va dans un fichier à soi de `sshd_config.d`, et `sshd -t` passe avant le `reload`.
 
 ## Chapitre 6 : Lumen, la cité qui s'éteint (exploitation Linux)
 

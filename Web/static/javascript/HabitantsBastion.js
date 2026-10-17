@@ -355,7 +355,7 @@ var AxHeraut = axHabitant(axTour("banniere"), "Heraut", function(){
 		"Forge la paire de clés de l'autorité (/etc/ssh/ca_inspection), signe ma clé (/srv/inspection/heraut.pub) pour le seul compte heraut et pour un an, " +
 		"montre-moi le certificat, puis dis à sshd de faire confiance à l'autorité, proprement. »\n\n" +
 		C.gris("Les outils, sur le Bastion : sudo ssh-keygen -t ed25519 -f /etc/ssh/ca_inspection -C \"autorite de l'Inspection\" ; sudo ssh-keygen -s /etc/ssh/ca_inspection -I heraut -n heraut -V +52w /srv/inspection/heraut.pub ;\n" +
-			"ssh-keygen -L -f /srv/inspection/heraut-cert.pub ; TrustedUserCAKeys /etc/ssh/ca_inspection.pub dans sshd_config ; sudo sshd -t ; sudo systemctl reload ssh.\n" +
+			"sudo ssh-keygen -L -f /srv/inspection/heraut-cert.pub ; TrustedUserCAKeys /etc/ssh/ca_inspection.pub dans sshd_config ; sudo sshd -t ; sudo systemctl reload ssh.\n" +
 			"(Dans la vraie vie, la clé privée de l'autorité dort hors du serveur, sur une machine coupée du réseau.)");
 }, [], ["sshd"]);
 declarerAnnexe({ id: "a5_certificat", chapitre: 6, titre: "Le sceau de l'Inspection", habitant: "le Héraut", lieu: "à la Bannière", item: function(){ return AxHeraut; }, ouverte: axOuverteCh5,

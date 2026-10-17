@@ -85,6 +85,9 @@ function nouveauMonde(stockage, graine, options){
 				.replace(/<volume>/g, function(){ return lire("typeof VOLUME_TOTAL !== 'undefined' ? String(VOLUME_TOTAL) : ''"); })
 				.replace(/<latence-avant>/g, function(){ return lire("(function(){ var m = (etatMachine('lumen').mesuresCurl || []).filter(function(x){ return x.temps >= 1; })[0]; return m ? m.temps.toFixed(2) : ''; })()"); })
 				.replace(/<latence-apres>/g, function(){ return lire("(function(){ var m = (etatMachine('lumen').mesuresCurl || []).filter(function(x){ return x.temps < 0.5 && x.code === 200; }).pop(); return m ? m.temps.toFixed(3) : ''; })()"); })
+				.replace(/<code-loge>/g, function(){ return lire("typeof AX_CODE_LOGE !== 'undefined' ? AX_CODE_LOGE : ''"); })
+				.replace(/<pid-tunnel>/g, function(){ return String(lire("(current_room.procs || []).filter(function(p){ return /^ssh -f -N /.test(p.name); }).map(function(p){ return p.pid; })[0]")); })
+				.replace(/<mot-grille>/g, function(){ return lire("typeof AX_MOT_GRILLE !== 'undefined' ? AX_MOT_GRILLE : ''"); })
 				.replace(/<pid-ecoute>/g, function(){ var p = lire("procCorbeau()"); return p ? String(p.pid) : "0"; })
 				.replace(/<pid:([a-z_-]+)>/g, function(tout, nom){
 					return String(lire("(current_room.procs || []).filter(function(p){ return p.name === " + JSON.stringify(nom) + "; }).map(function(p){ return p.pid; })[0]"));
@@ -99,6 +102,11 @@ function nouveauMonde(stockage, graine, options){
 			if (commande === "passwd") return this.taper(commande, ["Une phrase bien longue 42", "Une phrase bien longue 42"]);
 			if (commande === "ssh-keygen") return this.taper(commande, ["Une phrase de passe", "Une phrase de passe"]);
 			if (/^gpg (-d|--decrypt)/.test(commande)) return this.taper(commande, vm.runInContext("PHRASE_CORBEAU", bac));
+			// Les quêtes annexes : la phrase de la clé du Passeur (ssh-add), l'empreinte du relais acceptée (ssh relais).
+			if (/^ssh-add \S*cle-du-passeur/.test(commande)) return this.taper(commande, vm.runInContext("AX_PHRASE_PASSEUR", bac));
+			if (/^ssh relais$/.test(commande)) return this.taper(commande, "yes");
+			if (/^openssl enc /.test(commande) && !/-pass /.test(commande)) return this.taper(commande, ["Ragout au miel de la garnison", "Ragout au miel de la garnison"]);
+			if (/visudo -f \S*sudoers\.d\/greffier\s*$/.test(commande)) this.editer("function(t){ return { texte: 'Defaults log_output\\n', commandes: { i: true } }; }");
 			if (/^gpg (-c|--symmetric)/.test(commande)) return this.taper(commande, ["ma phrase a moi", "ma phrase a moi"]);
 			// Au Bastion : une règle sudo étroite, écrite dans visudo -f (vim), pour le compte de sauvegarde.
 			if (/visudo -f \S*sudoers\.d\/sauvegarde\s*$/.test(commande)) this.editer("function(t){ return { texte: 'sauvegarde ALL=(root) /usr/bin/rsync\\n', commandes: { i: true } }; }");

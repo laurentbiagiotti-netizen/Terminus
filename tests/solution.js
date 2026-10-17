@@ -74,7 +74,7 @@ if (jeu.lire("state.xp6") !== jeu.lire("state.xpMax6()")){
 		jeu.lire("lieuxVisitables(6).filter(function(l){ return !state.visited[l.id]; }).map(function(l){ return l.room_name; }).join(', ')") + "]");
 }
 if (jeu.lire("state.noteTexte(6)") !== "20 / 20") problemes.push("le chapitre 5 n'a pas 20 sur 20 : " + jeu.lire("state.noteTexte(6)"));
-// Le chapitre 6 (Lumen, numéro 7 dans le code) : la solution doit mener au rapport contresigné, à 20 sur 20, puis aux six quêtes annexes.
+// Le chapitre 6 (Lumen, numéro 7 dans le code) : la solution doit mener au rapport contresigné, à 20 sur 20, puis aux six quêtes annexes (les annexes des chapitres 2 à 5 sont jouées à la fin de leur chapitre).
 if (!jeu.lire("state.quests.m6_rapport")) problemes.push("le chapitre 6 (Lumen) n'atteint pas le rapport contresigné (m6_rapport) ; dernier lieu : " + jeu.lire("current_room.room_name"));
 var principales7 = jeu.lire("QUETES_CH6.filter(function(q){ return !state.quests[q.id]; }).map(function(q){ return q.titre; }).join(' ; ')");
 if (principales7) problemes.push("étapes du chapitre 6 manquantes : " + principales7);
@@ -90,8 +90,11 @@ if (jeu.lire("state.xp7") !== jeu.lire("state.xpMax7()")){
 }
 if (jeu.lire("state.noteTexte(7)") !== "20 / 20") problemes.push("le chapitre 6 n'a pas 20 sur 20 : " + jeu.lire("state.noteTexte(7)"));
 var annexes = jeu.lire("QUETES_ANNEXES.filter(function(a){ return !state.quests[a.id]; }).map(function(a){ return a.id; }).join(' ')");
-if (annexes) problemes.push("quêtes annexes de Lumen manquantes : " + annexes);
-if (!jeu.lire("state.has('ami_ch6')")) problemes.push("le badge Ami de Lumen n'est pas gagné");
+if (annexes) problemes.push("quêtes annexes manquantes : " + annexes);
+[["ami_ch2", "Ami du campus"], ["ami_ch3", "Ami de la Crypte"], ["ami_ch4", "Ami de l'Académie"], ["ami_ch5", "Ami du Bastion"], ["ami_ch6", "Ami de Lumen"]].forEach(function(b){
+	if (!jeu.lire("state.has('" + b[0] + "')")) problemes.push("le badge " + b[1] + " n'est pas gagné");
+});
+if (jeu.lire("QUETES_ANNEXES.length") !== 30) problemes.push("il devrait y avoir 30 quêtes annexes, il y en a " + jeu.lire("QUETES_ANNEXES.length"));
 if (jeu.lire("state.xp") !== jeu.lire("state.xpMax()")){
 	problemes.push("la solution n'atteint pas le score maximal. Sorts jamais lancés : [" +
 		jeu.lire("ORDRE_DES_SORTS.filter(function(x){ return !state.usages[x]; }).join(', ')") + "] ; lieux jamais visités : [" +

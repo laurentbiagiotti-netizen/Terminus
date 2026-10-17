@@ -381,7 +381,7 @@ var QUARTIERS = {
 	var jeu = surLumen();
 	t(jeu, "exit");
 	contient(jeu.taper("quetes annexes"), "QUÊTES ANNEXES", "quetes annexes : le tableau");
-	egal(jeu.lire("QUETES_ANNEXES.length"), 6, "six quêtes annexes");
+	egal(jeu.lire("QUETES_ANNEXES.filter(function(a){ return a.chapitre === 7; }).length"), 6, "six quêtes annexes à Lumen");
 	jouer(jeu, ["cd Ateliers", "cat Logeuse"]);
 	vrai(jeu, "state.annexes.a6_habitants.proposee === true", "lire la Logeuse ouvre son annexe");
 	var xp7 = jeu.lire("state.xp7");
@@ -447,7 +447,7 @@ var QUARTIERS = {
 	verifier(sorties.some(function(s){ return /Longue Nuit tombe en avance/.test(s); }), "partie complète : la Nuit en avance est annoncée");
 	verifier(sorties.some(function(s){ return /Lumen brille/.test(s); }), "partie complète : Laurent contresigne");
 	// Les annexes : toutes finies, le badge Ami de Lumen.
-	jeu.lire("QUETES_ANNEXES").forEach(function(a){ fait(jeu, a.id, "partie complète : annexe " + a.id); });
+	jeu.lire("QUETES_ANNEXES").filter(function(a){ return a.chapitre === 7; }).forEach(function(a){ fait(jeu, a.id, "partie complète : annexe " + a.id); });
 	vrai(jeu, "state.has('ami_ch6')", "partie complète : Ami de Lumen");
 	egal(jeu.lire("state.xp7"), 8795, "les annexes ne changent pas l'XP du chapitre");
 	verifier(jeu.lire("state.xpAnnexes") >= 300, "les annexes donnent leur bonus (" + jeu.lire("state.xpAnnexes") + ")");
