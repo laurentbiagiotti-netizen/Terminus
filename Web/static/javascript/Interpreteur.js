@@ -2844,6 +2844,64 @@ INTEGREES.shift = function(args, io){
 	return "";
 };
 
+/*
+ * getopts CHAÎNE NOM [ARGS...] : lit les options une à une, comme bash. OPTIND désigne l'argument suivant, OPTARG
+ * reçoit la valeur d'une option qui en attend une (une lettre suivie de « : » dans CHAÎNE). Les options groupées
+ * (-fv) et collées à leur valeur (-nAmbre) sont comprises. Une CHAÎNE qui commence par « : » rend getopts muet :
+ * NOM vaut alors « ? » (option inconnue) ou « : » (valeur manquante), et OPTARG la lettre en cause.
+ */
+var POSITION_GETOPTS = { cle: null, sous: 1 };
+INTEGREES.getopts = function(args, io){
+	if (args.length < 2) throw new ShellError("getopts : utilisation : getopts chaîne_d'options nom [arg ...]", 2);
+	var chaine = args[0], nom = args[1], liste = args.length > 2 ? args.slice(2) : positionnels().slice();
+	verifierNom(nom, "getopts");
+	var muet = chaine.charAt(0) === ":";
+	if (muet) chaine = chaine.substring(1);
+	var optind = parseInt(Interpreteur.lire("OPTIND"), 10);
+	if (isNaN(optind) || optind < 1) optind = 1;
+	var cle = function(n){ return n + "\u0001" + liste.join("\u0002"); };
+	var sous = POSITION_GETOPTS.cle === cle(optind) ? POSITION_GETOPTS.sous : 1;
+	var arg = liste[optind - 1];
+	var fini = function(){ POSITION_GETOPTS = { cle: null, sous: 1 }; Interpreteur.affecter(nom, "?"); io.code = 1; return ""; };
+	if (arg === undefined || arg === "-" || arg.charAt(0) !== "-") return fini();
+	if (arg === "--"){ Interpreteur.affecter("OPTIND", String(optind + 1)); return fini(); }
+	var lettre = arg.charAt(sous);
+	var avancer = function(){
+		if (sous + 1 < arg.length) POSITION_GETOPTS = { cle: cle(optind), sous: sous + 1 };
+		else { optind++; POSITION_GETOPTS = { cle: null, sous: 1 }; }
+		Interpreteur.affecter("OPTIND", String(optind));
+	};
+	var k = chaine.indexOf(lettre);
+	if (lettre === ":" || k === -1){
+		if (muet) Interpreteur.affecter("OPTARG", lettre);
+		else { Interpreteur.supprimer("OPTARG"); io.err(nom0() + " : option non valable -- « " + lettre + " »"); }
+		Interpreteur.affecter(nom, "?");
+		avancer();
+		return "";
+	}
+	if (chaine.charAt(k + 1) === ":"){
+		var valeur;
+		if (sous + 1 < arg.length){ valeur = arg.substring(sous + 1); optind++; }
+		else { valeur = liste[optind]; optind += 2; }
+		POSITION_GETOPTS = { cle: null, sous: 1 };
+		if (valeur === undefined){
+			optind--;
+			Interpreteur.affecter("OPTIND", String(optind));
+			if (muet){ Interpreteur.affecter("OPTARG", lettre); Interpreteur.affecter(nom, ":"); }
+			else { Interpreteur.supprimer("OPTARG"); io.err(nom0() + " : l'option nécessite un argument -- « " + lettre + " »"); Interpreteur.affecter(nom, "?"); }
+			return "";
+		}
+		Interpreteur.affecter("OPTIND", String(optind));
+		Interpreteur.affecter("OPTARG", valeur);
+		Interpreteur.affecter(nom, lettre);
+		return "";
+	}
+	Interpreteur.supprimer("OPTARG");
+	Interpreteur.affecter(nom, lettre);
+	avancer();
+	return "";
+};
+
 INTEGREES.set = function(args, io){
 	var o = optionsCourantes();
 	var auPrompt = !Interpreteur.cadres.some(function(c){ return c.limite; });
