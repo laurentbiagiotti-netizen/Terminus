@@ -52,6 +52,8 @@ BADGES = [
     ('quartier_guetteur', 'TRCE', 'bronze'), ('m6_lanterne', 'PHAR', 'bronze'), ('m6_nuit', 'NUIT', 'or'),
     ('m6_rapport', 'DOC', 'or'), ('s_m6_avant_midi', '12H', 'or'), ('platine_ch6', 'OPS', 'platine'),
     ('ami_ch6', 'AMI', 'or'),
+    # les quêtes annexes des chapitres 2 à 5 : le badge « Ami » de chaque chapitre
+    ('ami_ch2', 'AMI', 'or'), ('ami_ch3', 'AMI', 'or'), ('ami_ch4', 'AMI', 'or'), ('ami_ch5', 'AMI', 'or'),
 ]
 NOIR = (0, 0, 0)
 # Une police de 3 x 5 pixels, pour les sigles de quatre caractères.
@@ -115,6 +117,10 @@ def badge(sigle, rang):
 
 
 if __name__ == '__main__':
+    import sys
+    choix = sys.argv[1:]
     for ident, sigle, rang in BADGES:
+        if choix and ident not in choix:
+            continue
         badge(sigle, rang).convert('P', palette=Image.ADAPTIVE, colors=16).save(os.path.join(OUT, 'badge_' + ident + '.gif'))
-    print(len(BADGES), 'badges')
+    print(len([b for b in BADGES if not choix or b[0] in choix]), 'badges')

@@ -24,8 +24,15 @@ World.fige = false;
 /* ================================================================== */
 
 if (typeof PROPRIETES_SAUVEGARDEES !== "undefined"){
-	["encodage", "fifo", "axTampon", "axBase"].forEach(function(k){ if (PROPRIETES_SAUVEGARDEES.indexOf(k) === -1) PROPRIETES_SAUVEGARDEES.push(k); });
+	["encodage", "fifo", "axTampon", "axBase", "octets"].forEach(function(k){ if (PROPRIETES_SAUVEGARDEES.indexOf(k) === -1) PROPRIETES_SAUVEGARDEES.push(k); });
 }
+/* cp copie des octets : la copie garde l'encodage, les octets bruts (nombres magiques) et la base SQLite de l'original. */
+GameEvents.addListener("cp", function(e){
+	if (!e || !e.source || !e.copy) return;
+	if (e.source.encodage) e.copy.encodage = e.source.encodage;
+	if (e.source.octets) e.copy.octets = e.source.octets.slice();
+	if (e.source.axBase) e.copy.axBase = JSON.parse(JSON.stringify(e.source.axBase));
+});
 var AX_CP1252 = { 0x80: 0x20ac, 0x82: 0x201a, 0x83: 0x192, 0x84: 0x201e, 0x85: 0x2026, 0x86: 0x2020, 0x87: 0x2021, 0x88: 0x2c6, 0x89: 0x2030, 0x8a: 0x160, 0x8b: 0x2039, 0x8c: 0x152,
 	0x8e: 0x17d, 0x91: 0x2018, 0x92: 0x2019, 0x93: 0x201c, 0x94: 0x201d, 0x95: 0x2022, 0x96: 0x2013, 0x97: 0x2014, 0x98: 0x2dc, 0x99: 0x2122, 0x9a: 0x161, 0x9b: 0x203a,
 	0x9c: 0x153, 0x9e: 0x17e, 0x9f: 0x178 };

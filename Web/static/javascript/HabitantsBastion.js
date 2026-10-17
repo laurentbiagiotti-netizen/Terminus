@@ -307,12 +307,17 @@ declarerAnnexe({ id: "a5_coffre", chapitre: 6, titre: "Le coffre de la cantiniè
 	resume: "Chiffrer un fichier avec une phrase de passe (openssl enc -aes-256-cbc -pbkdf2), le déchiffrer, et vérifier à l'octet près (cmp).",
 	etapes: [
 		{ titre: "Chiffrer la recette dans ~/recette.enc (openssl enc -aes-256-cbc -pbkdf2)", fait: function(){ return axChiffreRecette(); } },
-		{ titre: "La déchiffrer dans une autre copie, dans ta Maison (openssl enc -d)", fait: function(){ return !!axDechiffreeRecette(); } },
+		{ titre: "La déchiffrer dans une autre copie, dans ta Maison (openssl enc -d)", fait: function(){ return axVu("a5_coffre", "dechiffre") && !!axDechiffreeRecette(); } },
 		{ titre: "Vérifier qu'elle est identique à l'originale, octet par octet (cmp)", fait: function(){ return axVu("a5_coffre", "cmp"); } }
 	],
 	souvenir: { nom: "Cuillere-de-miel", texte: "Une cuillère en bois, encore collante de miel. La Cantinière l'a gardée « pour la prochaine fois que tu passeras »." },
 	lumiere: "le feu de la cantine",
 	merci: "La Cantinière range la recette chiffrée dans le coffre, et jette l'autre au feu. « Même moi, je ne la lirai plus sans ma phrase. Parfait. »"
+});
+/* Une copie de la recette ne compte qu'après un vrai déchiffrement de ~/recette.enc (pas un cp de l'originale). */
+GameEvents.addListener("axChiffre", function(e){
+	if (!axOuverteCh5() || e.sens !== "dechiffre" || !e.ok || !e.item || e.item.itemname !== "recette.enc" || !axChiffreRecette()) return;
+	axNoter("a5_coffre", "dechiffre");
 });
 GameEvents.addListener("axCmp", function(e){
 	if (!axOuverteCh5() || !e.identiques || !e.a || !e.b) return;
