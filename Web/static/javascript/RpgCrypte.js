@@ -288,6 +288,13 @@ function texteBadges(quel){
 		tous.push({ id: "platine_ch6", chap: "lumen", nom: COMPETENCES.platine_ch6, image: "tous les badges de Lumen", couche: "", lecon: "Mesurer, réparer quartier par quartier, tenir la Nuit, rendre compte : tu sais remettre en service un serveur Linux de bout en bout." });
 		if (typeof AMIS_ANNEXES !== "undefined" && AMIS_ANNEXES[7]) tous.push({ id: "ami_ch6", chap: "lumen", nom: COMPETENCES.ami_ch6, image: "les six habitants de Lumen", couche: "", lecon: "Les quêtes annexes : quotas et setgid, tâches et signaux, journaux compressés, horloge matérielle, compressions, dates de fichiers. Facultatif, hors note." });
 	}
+	// Les badges « Ami » des quêtes annexes (facultatives, hors note), chapitre par chapitre.
+	[[3, "ami_ch2", "reseau", "panneOuverte", "les six habitants du campus", "Les quêtes annexes : le matériel (lscpu, lspci, lsusb, dmidecode), nc -l, ~/.ssh/config, ssh -J, ssh -L, les sections du manuel. Facultatif, hors note."],
+	 [2, "ami_ch3", "cyber", "crypteOuverte", "les six habitants de la Crypte", "Les quêtes annexes : nombres magiques (hexdump), liens (readlink, realpath, liens durs), tail -F, timeout, ssh-agent, mots de passe (pwgen, openssl). Facultatif, hors note."],
+	 [5, "ami_ch4", "arcanes", "ch4Ouvert", "les six habitants de l'Académie", "Les quêtes annexes : encodages (iconv, dos2unix), envsubst, numfmt et bc, getopts, mkfifo, sqlite3. Facultatif, hors note."],
+	 [6, "ami_ch5", "bastion", "ch5Ouvert", "les six habitants du Bastion", "Les quêtes annexes : known_hosts, pwquality, unités .path, sudoreplay, openssl enc, certificats SSH. Facultatif, hors note."]].forEach(function(a){
+		if (typeof AMIS_ANNEXES !== "undefined" && AMIS_ANNEXES[a[0]] && state.has(a[3]) && COMPETENCES[a[1]]) tous.push({ id: a[1], chap: a[2], nom: COMPETENCES[a[1]], image: a[4], couche: "", lecon: a[5] });
+	});
 	// badges reseau, badges cyber, ou un nom de compétence (badges dns, badges sudo...).
 	var choisis = tous.filter(function(b){
 		if (!filtre) return true;
@@ -303,9 +310,10 @@ function texteBadges(quel){
 		var liste = choisis.filter(function(b){ return b.chap === c[0]; });
 		if (!liste.length) return;
 		// Le même compte que schema et traque : les badges d'étape ; le platine vient en plus.
-		var etapes = liste.filter(function(b){ return !/^platine_/.test(b.id); });
+		var etapes = liste.filter(function(b){ return !/^(platine_|ami_)/.test(b.id); });
 		var gagnes = etapes.filter(function(b){ return badgeGagne(b.id); }).length;
-		lignes.push("", C.gras(c[1]) + C.gris(" · " + gagnes + " sur " + etapes.length + (etapes.length < liste.length ? ", plus le platine" : "")));
+		var platine = liste.some(function(b){ return /^platine_/.test(b.id); }), ami = liste.some(function(b){ return /^ami_/.test(b.id); });
+		lignes.push("", C.gras(c[1]) + C.gris(" · " + gagnes + " sur " + etapes.length + (platine ? ", plus le platine" : "") + (ami ? (platine ? " et" : ", plus") + " l'ami des habitants" : "")));
 		liste.forEach(function(b){
 			var rang = rangDuBadge(b.id);
 			if (!badgeGagne(b.id)){ lignes.push("  " + C.gris("░ " + b.nom + " · " + rang + " · à gagner")); return; }
