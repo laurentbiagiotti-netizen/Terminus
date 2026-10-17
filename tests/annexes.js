@@ -27,10 +27,10 @@ var DOC = fs.readFileSync(path.join(RACINE, "docs", "solution.md"), "utf8");
 
 /* Les chapitres affichés 2 à 5, leur numéro interne, leur badge, leur tableau de bord. */
 var CHAPITRES = [
-	{ affiche: 2, interne: 3, prefixe: "a2_", badge: "ami_ch2", nom: "Ami du campus", plan: "schema" },
-	{ affiche: 3, interne: 2, prefixe: "a3_", badge: "ami_ch3", nom: "Ami de la Crypte", plan: "traque" },
-	{ affiche: 4, interne: 5, prefixe: "a4_", badge: "ami_ch4", nom: "Ami de l'Académie", plan: "grimoire" },
-	{ affiche: 5, interne: 6, prefixe: "a5_", badge: "ami_ch5", nom: "Ami du Bastion", plan: "rempart" }
+	{ affiche: 2, interne: 3, prefixe: "a2_", badge: "ami_ch2", nom: "Ami du campus", plan: "schema", badges: "reseau" },
+	{ affiche: 3, interne: 2, prefixe: "a3_", badge: "ami_ch3", nom: "Ami de la Crypte", plan: "traque", badges: "cyber" },
+	{ affiche: 4, interne: 5, prefixe: "a4_", badge: "ami_ch4", nom: "Ami de l'Académie", plan: "grimoire", badges: "arcanes" },
+	{ affiche: 5, interne: 6, prefixe: "a5_", badge: "ami_ch5", nom: "Ami du Bastion", plan: "rempart", badges: "bastion" }
 ];
 var XP_MAX = { xpMax: 3860, xpMax3: 5790, xpMax2: 5625, xpMax5: 5175, xpMax6: 7500, xpMax7: 8795 };
 
@@ -383,6 +383,7 @@ CHAPITRES.forEach(function(c){
 	ids.forEach(function(id){ fait(jeu, id, "chapitre " + c.affiche + " : " + id); });
 	egal(jeu.lire("state.xpAnnexes || 0") - xpAvant, 300, "chapitre " + c.affiche + " : 300 XP en bonus, hors note");
 	verifier(jeu.lire("state.has('" + c.badge + "')"), "chapitre " + c.affiche + " : le badge " + c.nom);
+	contient(jeu.taper("badges " + c.badges), c.nom, "chapitre " + c.affiche + " : badges " + c.badges + " relit le badge " + c.nom);
 	var souvenirs = jeu.lire("annexesDuChapitre(" + c.interne + ").map(function(a){ return a.souvenir.nom; })");
 	var dossier = jeu.taper("ls ~/Souvenirs");
 	egal(souvenirs.length, 6, "chapitre " + c.affiche + " : six souvenirs");
