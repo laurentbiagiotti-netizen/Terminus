@@ -250,9 +250,19 @@ MANUEL["systemd-cgtop"] = page("qui consomme quoi, service par service", "SYSTEM
 	"Comme top, mais par groupe de contrôle : chaque service avec tous ses processus, son %CPU et sa mémoire.\n" +
 	"Le moyen le plus rapide de trouver le service gourmand.\n\n  systemd-cgtop");
 MANUEL["chgrp"] = page("changer le groupe d'un fichier ou d'un dossier", "CHange GRouP",
-	"  sudo chgrp lumen /srv/lumen/commun          le dossier appartient au groupe lumen\n" +
-	"  sudo chgrp -R lumen /srv/lumen/commun       et tout ce qu'il contient\n" +
-	"(sudo chown ada:lumen fichier change le propriétaire et le groupe d'un coup.)");
+	"  sudo chgrp habitants /home/commun          le dossier appartient au groupe habitants\n" +
+	"  sudo chgrp -R habitants /home/commun       et tout ce qu'il contient\n" +
+	"(sudo chown ninon:habitants fichier change le propriétaire et le groupe d'un coup.)");
+MANUEL["systemd-tmpfiles"] = page("faire le ménage des dossiers temporaires, selon des règles", "SYSTEMD TMPFILES",
+	"Chaque ligne d'un fichier de /etc/tmpfiles.d (ou /usr/lib/tmpfiles.d) décrit un dossier et ce qu'on y fait :\n\n" +
+	"  TYPE  CHEMIN                      MODE  UTILISATEUR  GROUPE  ÂGE\n" +
+	"  d     /var/lib/lumen/sessions     1733  root         root    1h\n\n" +
+	"d crée le dossier s'il manque et, avec un ÂGE (30m, 1h, 7d), y retire ce qui n'a pas bougé depuis plus longtemps.\n" +
+	"Un timer (systemd-tmpfiles-clean.timer) fait ce ménage chaque jour, tout seul.\n\n" +
+	"  sudo systemd-tmpfiles --clean        le ménage, tout de suite\n" +
+	"  sudo systemd-tmpfiles --create       créer ce qui manque\n" +
+	"  systemd-tmpfiles --cat-config        toutes les règles, fichier par fichier\n\n" +
+	"Un fichier de /etc/tmpfiles.d remplace celui de même nom dans /usr/lib/tmpfiles.d.");
 MANUEL["groupadd"] = page("créer un groupe", "GROUP ADD", "  sudo groupadd familles      un nouveau groupe dans /etc/group (sudo usermod -aG familles ada y ajoute ada)");
 MANUEL["newgrp"] = page("changer de groupe courant", "NEW GRouP",
 	"  newgrp lumen      un nouveau shell où ton groupe courant est lumen : les fichiers que tu crées lui appartiennent\n" +
@@ -317,7 +327,9 @@ MANUEL["cal"] = page("un calendrier", "CALendar",
 		"df compte aussi les fichiers supprimés mais encore ouverts par un processus (lsof +L1) : du, lui, ne les voit pas.");
 	ajout("du", "Sur un serveur (chapitre 6) :\n  sudo du -sh /var/* | sort -h       le poids de chaque dossier de /var, le plus lourd en dernier\n  sudo du -h --max-depth=1 /var      un niveau de profondeur\n  du -x                              sans traverser les autres montages ;  --apparent-size : la taille, pas la place");
 	ajout("find", "Sur un serveur (chapitre 6) :\n  sudo find /var -size +500M                   les fichiers de plus de 500 Mio\n  sudo find /var/backups -mtime +30            pas modifiés depuis plus de 30 jours\n" +
-		"  sudo find /var/lib/lumen/sessions -type f -mmin +60 -delete     supprimer ceux de plus d'une heure (-mmin : en minutes)\n  Toujours lancer d'abord sans -delete, pour voir ce qui partirait.");
+		"  sudo find /var/lib/lumen/sessions -type f -mmin +60 -delete     supprimer ceux de plus d'une heure (-mmin : en minutes)\n  Toujours lancer d'abord sans -delete, pour voir ce qui partirait.\n" +
+		"  find /var/www -xtype l                       les liens cassés (qui pointent vers un fichier qui n'existe plus)\n" +
+		"  find /srv/courrier -newermt \"2026-10-17 00:00\"     modifiés après une date et une heure précises");
 	ajout("ps", "Sur un serveur (chapitre 6) :\n  ps aux --sort=-%mem | head     les plus gourmands en mémoire\n  ps -eo pid,ppid,ni,stat,%cpu,%mem,cmd --sort=-%cpu      les colonnes choisies\n" +
 		"  ps -o ppid= -p 4242            le parent d'un processus (le = vide supprime l'en-tête)\n  ps -ef --forest                l'arbre\n" +
 		"STAT : R (tourne), S (dort), D (attend le disque, ne s'interrompt pas), Z (zombie : mort, pas encore récolté par son parent),\nT (arrêté, Ctrl-Z ou SIGSTOP) ; N : nice positif ; < : prioritaire ; s : chef de session ; + : au premier plan.");

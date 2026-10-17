@@ -11,6 +11,7 @@
  *   term.onCommande = function(ligne){ ... };
  *   term.onCompletion = function(texteAvantCurseur){ return {valeur, choix}; };
  *   term.onInterruption = function(){ ... };        Ctrl+C (abandonner une saisie sur plusieurs lignes)
+ *   term.onSuspension = function(){ return vrai; }  Ctrl+Z : vrai si un programme au premier plan a été suspendu
  *   term.onFinDeSaisie = function(){ return vrai; }  Ctrl+D sur une ligne vide : vrai si la saisie en cours l'a pris
  *   term.demander("Mot de passe : ", true, function(reponse){ ... });
  */
@@ -453,6 +454,12 @@ Terminal.prototype.touche = function(e){
 		this.saisie.value = "";
 		// Une commande commencée sur plusieurs lignes (invite « > ») est abandonnée.
 		if (this.onInterruption) this.onInterruption();
+	} else if (e.key === "z" && e.ctrlKey && !this.question){
+		// Ctrl+Z : suspendre le programme qui occupe le terminal (sur une machine qui sait le faire).
+		e.preventDefault();
+		if (this.onSuspension && this.onSuspension()){ this.saisie.value = ""; this.defiler(); return; }
+		this.echo(this.texteInvite + this.saisie.value + "^Z");
+		this.saisie.value = "";
 	}
 };
 

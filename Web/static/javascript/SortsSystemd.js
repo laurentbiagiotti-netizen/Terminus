@@ -213,6 +213,27 @@ function synchroniserUnites(h, unites){
 		if (!e.actif && procs.length) arreterUnite(h, u, false);
 	});
 }
+/* Une dépendance dure (Requires=, BindsTo=) vers une unité qui n'existe pas : systemd refuse de démarrer. */
+function dependancesManquantes(h, unite){
+	var d = directivesMachine(h, unite), l = [];
+	["Requires", "BindsTo", "Requisite"].forEach(function(k){
+		var v = derniere(d, "Unit", k);
+		String(v || "").split(/\s+/).filter(Boolean).forEach(function(n){ if (!uniteInfo(h, n).existe) l.push(nomUniteComplet(n)); });
+	});
+	return l;
+}
+controleAvantDemarrage(function(h, unite, action){
+	if (!estMachine(h) || action === "reload" || !/\.service$/.test(unite)) return null;
+	var info = uniteInfo(h, unite);
+	if (!info.fichiers.principal) return null;
+	var manque = dependancesManquantes(h, unite);
+	if (!manque.length) return null;
+	journalMachine(h, { unite: "systemd", pid: 1, unit: unite, prio: 3, message: "Dependency failed for " + unite + " - " + info.description + "." });
+	journalMachine(h, { unite: "systemd", pid: 1, unit: unite, prio: 4, message: unite + ": Job " + unite + "/" + action + " failed with result 'dependency'." });
+	marquerEchec(h, info);
+	GameEvents.fire({ type: "machine", hote: h, cmd: "unite", action: "dependance", unite: unite, manque: manque });
+	throw new ShellError("Failed to " + (action === "restart" ? "restart" : "start") + " " + unite + ": Unit " + manque[0] + " not found.", 5);
+});
 /* Un contrôle avant start/restart : exécutable, utilisateur, port. */
 controleAvantDemarrage(function(h, unite, action){
 	if (!estMachine(h) || action === "reload" || !/\.service$/.test(unite)) return null;
@@ -975,4 +996,69 @@ Shell.sorts.dmesg = function(args, io){
 	if (vider) M.dmesgVide = maintenantMachine(h);
 	GameEvents.fire({ type: "machine", hote: h, cmd: "dmesg", humain: humainT, niveaux: niveaux, sortie: entrees.map(function(e){ return e.m; }).join("\n") });
 	return lignes.join("\n");
+};
+
+/* ================================================================== */
+/* systemd-tmpfiles : le ménage des dossiers temporaires                 */
+/* ================================================================== */
+
+/* « 1h », « 30m », « 2d », « 90 » (secondes) : un âge en minutes, ou null (« - »). */
+function ageTmpfilesEnMinutes(t){
+	var m = /^~?(\d+)(us|ms|s|sec|m|min|h|hr|d|w)?$/.exec(String(t || "").trim());
+	if (!m) return null;
+	var n = +m[1], u = m[2] || "s";
+	return { us: n / 6e7, ms: n / 60000, s: n / 60, sec: n / 60, m: n, min: n, h: n * 60, hr: n * 60, d: n * 1440, w: n * 10080 }[u];
+}
+function fichiersTmpfiles(h){
+	var par = {};
+	["/usr/lib/tmpfiles.d", "/run/tmpfiles.d", "/etc/tmpfiles.d"].forEach(function(d){
+		fichiersDuDossier(h, d).forEach(function(f){ if (/\.conf$/.test(f.nom)) par[f.nom] = f; });
+	});
+	return Object.keys(par).sort().map(function(n){ return par[n]; });
+}
+function reglesTmpfiles(h){
+	var l = [];
+	fichiersTmpfiles(h).forEach(function(f){
+		String(f.item.getText()).split("\n").forEach(function(x, i){
+			var t = x.trim();
+			if (!t || t.charAt(0) === "#") return;
+			var c = t.split(/\s+/);
+			l.push({ type: c[0].replace(/[!+=~^-]+$/, ""), chemin: c[1], mode: c[2], user: c[3], groupe: c[4], age: c[5], fichier: f.chemin, ligne: i + 1, champs: c.length });
+		});
+	});
+	return l;
+}
+Shell.sorts["systemd-tmpfiles"] = function(args, io){
+	var h = machineIci();
+	if (!h) throw new ShellError("systemd-tmpfiles : il faut une machine qui tourne sous systemd (ssh lumen, au chapitre 6).", 1);
+	var action = args.filter(function(a){ return /^--(clean|create|remove|cat-config)$/.test(a); })[0];
+	if (!action) throw new ShellError("systemd-tmpfiles: You need to specify at least one of --clean, --create, --remove, or --purge.", 1);
+	if (action === "--cat-config"){
+		GameEvents.fire({ type: "machine", hote: h, cmd: "systemd-tmpfiles", action: "cat-config" });
+		return fichiersTmpfiles(h).map(function(f){ return "# " + f.chemin + "\n" + String(f.item.getText()).replace(/\n$/, ""); }).join("\n\n");
+	}
+	if (!io.sudo) throw new ShellError("Failed to open " + (action === "--clean" ? "directory" : "file") + ": Permission denied" + astuce(io, "Le ménage touche aux dossiers du système : sudo systemd-tmpfiles " + action), 1);
+	var erreurs = [], retires = 0, crees = 0;
+	reglesTmpfiles(h).forEach(function(r){
+		if (r.champs < 2){ erreurs.push(r.fichier + ":" + r.ligne + ": Syntax error."); return; }
+		if (!/^[dDeqQxXfFLrRvzZtTwcbpaAh]$/.test(r.type)){ erreurs.push(r.fichier + ":" + r.ligne + ": Unknown command type '" + r.type + "'."); return; }
+		var chemin = cheminNormal(r.chemin);
+		if (action === "--create" && /^[dDqQv]$/.test(r.type) && !dossierHote(h, chemin)){
+			moteurSeul(function(){ creerDossierHote(h, chemin, { mode: (r.mode && /^\d{3,4}$/.test(r.mode) && modeDepuisOctal(r.mode.slice(-3))) || "rwxr-xr-x", owner: r.user && r.user !== "-" ? r.user : "root" }); });
+			crees++;
+		}
+		if (action === "--clean" && /^[dDeqQvxX]$/.test(r.type)){
+			var age = ageTmpfilesEnMinutes(r.age);
+			if (age === null || !(age > 0)) return;
+			var gs = groupesVirtuels(h, chemin);
+			if (gs) gs.forEach(function(g){ if (g.nombre > 0 && g.ageMin > age){ retires += g.nombre; g.nombre = 0; } });
+			var lieu = dossierHote(h, chemin);
+			if (lieu) lieu.items.slice().forEach(function(it){
+				if (ageEnMinutes(it) > age && !it.protege){ moteurSeul(function(){ lieu.removeItem(it); }); retires++; }
+			});
+		}
+	});
+	GameEvents.fire({ type: "machine", hote: h, cmd: "systemd-tmpfiles", action: action.substring(2), retires: retires, crees: crees, erreurs: erreurs.length });
+	if (erreurs.length){ io.code = 1; return erreurs.join("\n"); }
+	return "";
 };

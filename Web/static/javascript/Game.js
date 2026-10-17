@@ -492,6 +492,7 @@ function demarrer(){
 	term.onEvenement = banniere;
 	term.onCompletion = Shell.completer;
 	term.onInterruption = Shell.interrompre;
+	term.onSuspension = function(){ return typeof Shell.suspendre === "function" ? Shell.suspendre() : false; };
 	term.onFinDeSaisie = Shell.finDeSaisie;
 	term.historique = Shell.historique.slice();
 	term.positionHistorique = term.historique.length;

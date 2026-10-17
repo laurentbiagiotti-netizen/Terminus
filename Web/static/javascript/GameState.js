@@ -229,6 +229,12 @@ function GameState(){
 	this.debutChapitre6 = null;
 	this.dateVictoire6 = null;
 	this.ch5 = typeof etatCh5Initial === "function" ? etatCh5Initial() : {};
+	// Chapitre 6 pour le joueur : la cité de Lumen (numéro 7 dans le code, voir Chapitre6.js)
+	this.xp7 = 0;
+	this.malus7 = 0;
+	this.debutChapitre7 = null;
+	this.dateVictoire7 = null;
+	this.ch6 = typeof etatCh6Initial === "function" ? etatCh6Initial() : {};
 	// Succès et chronomètre
 	this.succes = {};          // succès débloqués
 	this.chronos = {};         // temps de jeu au moment où chaque étape a été franchie
@@ -277,6 +283,7 @@ function tousLesSorts(){
 	if (typeof ORDRE_DES_SORTS_2 !== "undefined") tous = tous.concat(ORDRE_DES_SORTS_2);
 	if (typeof ORDRE_DES_SORTS_5 !== "undefined") tous = tous.concat(ORDRE_DES_SORTS_5);
 	if (typeof ORDRE_DES_SORTS_6 !== "undefined") tous = tous.concat(ORDRE_DES_SORTS_6);
+	if (typeof ORDRE_DES_SORTS_7 !== "undefined") tous = tous.concat(ORDRE_DES_SORTS_7);
 	return tous;
 }
 
@@ -286,18 +293,21 @@ function tousLesSorts(){
  * la panne est son chapitre 2, la Crypte son chapitre 3 (voir numeroAffiche).
  */
 function chapitreDuSort(sort){
+	if (typeof ORDRE_DES_SORTS_7 !== "undefined" && ORDRE_DES_SORTS_7.indexOf(sort) > -1) return 7;
 	if (typeof ORDRE_DES_SORTS_6 !== "undefined" && ORDRE_DES_SORTS_6.indexOf(sort) > -1) return 6;
 	if (typeof ORDRE_DES_SORTS_5 !== "undefined" && ORDRE_DES_SORTS_5.indexOf(sort) > -1) return 5;
 	if (typeof ORDRE_DES_SORTS_3 !== "undefined" && ORDRE_DES_SORTS_3.indexOf(sort) > -1) return 3;
 	return typeof ORDRE_DES_SORTS_2 !== "undefined" && ORDRE_DES_SORTS_2.indexOf(sort) > -1 ? 2 : 1;
 }
 function chapitreDeQuete(id){
+	if (/^(m6_|s_m6_|a6_)/.test(id)) return 7;
 	if (/^(h_|s_h_)/.test(id)) return 6;
 	if (/^(d_|s_d_)/.test(id)) return 5;
 	if (/^(r_|s_r_)/.test(id)) return 3;
 	return /^(c_|s_c_|s_v_)/.test(id) ? 2 : 1;
 }
 function numeroAffiche(chapitre){
+	if (chapitre === 7) return 6;
 	if (chapitre === 6) return 5;
 	if (chapitre === 5) return 4;
 	return chapitre === 3 ? 2 : (chapitre === 2 ? 3 : 1);
@@ -326,10 +336,11 @@ GameState.prototype.learn = function(sort){
 	else if (chapitre === 3) this.xp3 += XP_SORT_APPRIS;
 	else if (chapitre === 5) this.xp5 += XP_SORT_APPRIS;
 	else if (chapitre === 6) this.xp6 += XP_SORT_APPRIS;
+	else if (chapitre === 7) this.xp7 += XP_SORT_APPRIS;
 	else if (!this.has("chapitre1Saute")) this.xp += XP_SORT_APPRIS;
 	jouerSon("sort");
 	// Pas une ligne par sort : Shell.fin regroupe tous les sorts du tour sur une seule ligne.
-	Shell.narration.push({ sort: sort, rpg: (chapitre === 3 || chapitre === 2 || chapitre === 5 || chapitre === 6) && typeof nomRpg === "function" ? nomRpg(sort, chapitre) : "", resume: MANUEL[sort].resume });
+	Shell.narration.push({ sort: sort, rpg: (chapitre === 3 || chapitre === 2 || chapitre === 5 || chapitre === 6 || chapitre === 7) && typeof nomRpg === "function" ? nomRpg(sort, chapitre) : "", resume: MANUEL[sort].resume });
 	GameEvents.fire({ type: "learn", spell: sort });
 };
 
@@ -337,11 +348,12 @@ GameState.prototype.learn = function(sort){
 
 GameState.prototype.gagner = function(points, raison, chapitre){
 	// En mission cyber, le chapitre 1 n'est pas noté : ses petits gains ne s'affichent ni ne comptent.
-	if (chapitre !== 2 && chapitre !== 3 && chapitre !== 5 && chapitre !== 6 && this.has("chapitre1Saute")) return;
+	if (chapitre !== 2 && chapitre !== 3 && chapitre !== 5 && chapitre !== 6 && chapitre !== 7 && this.has("chapitre1Saute")) return;
 	if (chapitre === 2) this.xp2 += points;
 	else if (chapitre === 3) this.xp3 += points;
 	else if (chapitre === 5) this.xp5 += points;
 	else if (chapitre === 6) this.xp6 += points;
+	else if (chapitre === 7) this.xp7 += points;
 	else this.xp += points;
 	this.gainsDuTour.push({ points: points, raison: raison });
 };
@@ -356,7 +368,7 @@ GameState.prototype.visiter = function(lieu){
 	if (!lieu.id || this.visited[lieu.id]) return;
 	this.visited[lieu.id] = true;
 	if (lieu.horsBareme) return;
-	this.gagner(XP_NOUVEAU_LIEU, "nouveau lieu", lieu.chapitre === 2 || lieu.chapitre === 3 || lieu.chapitre === 5 || lieu.chapitre === 6 ? lieu.chapitre : 1);
+	this.gagner(XP_NOUVEAU_LIEU, "nouveau lieu", lieu.chapitre === 2 || lieu.chapitre === 3 || lieu.chapitre === 5 || lieu.chapitre === 6 || lieu.chapitre === 7 ? lieu.chapitre : 1);
 };
 
 /* Lieux dans lesquels on peut réellement entrer (pas la Boite ni la Cage), chapitre par chapitre. */
@@ -407,8 +419,18 @@ GameState.prototype.xpMax6 = function(){
 		(typeof QUETES_SECONDAIRES_CH5 !== "undefined" ? QUETES_SECONDAIRES_CH5.length : 0) * XP_QUETE_SECONDAIRE;
 };
 
+/* Le barème de Lumen (chapitre 6 pour le joueur). Les quêtes annexes ne comptent pas : elles donnent un bonus. */
+GameState.prototype.xpMax7 = function(){
+	if (typeof QUETES_CH6 === "undefined") return 1;
+	return ORDRE_DES_SORTS_7.length * (XP_SORT_APPRIS + XP_PREMIER_USAGE) +
+		lieuxVisitables(7).length * XP_NOUVEAU_LIEU +
+		(QUETES_CH6.length - 1) * XP_QUETE + XP_VICTOIRE +
+		(typeof QUETES_SECONDAIRES_CH6 !== "undefined" ? QUETES_SECONDAIRES_CH6.length : 0) * XP_QUETE_SECONDAIRE;
+};
+
 /* Le barème et les malus d'un chapitre, quel qu'il soit. */
 GameState.prototype.xpMaxDe = function(chapitre){
+	if (chapitre === 7) return this.xpMax7();
 	if (chapitre === 6) return this.xpMax6();
 	if (chapitre === 5) return this.xpMax5();
 	return chapitre === 2 ? this.xpMax2() : (chapitre === 3 ? this.xpMax3() : this.xpMax());
@@ -450,6 +472,7 @@ GameState.prototype.xpNet = function(chapitre){
 	if (chapitre === 3) return Math.max(0, this.xp3 - this.malus3);
 	if (chapitre === 5) return Math.max(0, this.xp5 - this.malus5);
 	if (chapitre === 6) return Math.max(0, this.xp6 - this.malus6);
+	if (chapitre === 7) return Math.max(0, this.xp7 - this.malus7);
 	return Math.max(0, this.xp - this.malus);
 };
 
@@ -472,6 +495,7 @@ GameState.prototype.note = function(chapitre){
  * y descendant ou d'emblée pour la mission cyber).
  */
 GameState.prototype.chapitreEnCours = function(){
+	if (this.quests["m6_entree"] || this.has("ch6Ouvert") && this.has("ch6Direct")) return 7;
 	if (this.quests["h_entree"] || this.has("ch5Ouvert") && this.has("ch5Direct")) return 6;
 	if (this.quests["d_entree"] || this.has("ch4Ouvert") && this.has("ch4Direct")) return 5;
 	if (this.quests["c_crypte"]) return 2;
@@ -482,6 +506,13 @@ GameState.prototype.chapitreEnCours = function(){
 
 /* L'étape de la quête principale en cours, ou null si tout est fait. */
 GameState.prototype.queteEnCours = function(){
+	// Au chapitre 6, l'étape de Lumen d'abord ; fini au départ direct : plus d'étape.
+	if (typeof QUETES_CH6 !== "undefined" && this.chapitreEnCours() === 7){
+		for (var m = 0; m < QUETES_CH6.length; m++){
+			if (!this.quests[QUETES_CH6[m].id]) return QUETES_CH6[m];
+		}
+		if (this.has("ch6Direct")) return null;
+	}
 	// Au chapitre 5, l'étape du Bastion d'abord ; fini au départ direct : plus d'étape.
 	if (typeof QUETES_CH5 !== "undefined" && this.chapitreEnCours() === 6){
 		for (var b = 0; b < QUETES_CH5.length; b++){
@@ -514,6 +545,10 @@ GameState.prototype.queteEnCours = function(){
 	if (this.has("ch5Ouvert") && typeof QUETES_CH5 !== "undefined"){
 		if (this.chapitreEnCours() === 6) listes.unshift(QUETES_CH5);
 		else listes.push(QUETES_CH5);
+	}
+	if (this.has("ch6Ouvert") && typeof QUETES_CH6 !== "undefined"){
+		if (this.chapitreEnCours() === 7) listes.unshift(QUETES_CH6);
+		else listes.push(QUETES_CH6);
 	}
 	for (var l = 0; l < listes.length; l++){
 		for (var j = 0; j < listes[l].length; j++){
@@ -578,7 +613,8 @@ GameState.prototype.demanderIndice = function(){
 	}
 	var details = INDICES_DETAILLES[q.id] || (typeof INDICES_CHAPITRE2 !== "undefined" && INDICES_CHAPITRE2[q.id]) ||
 		(typeof INDICES_PANNE !== "undefined" && INDICES_PANNE[q.id]) ||
-		(typeof INDICES_CH4 !== "undefined" && INDICES_CH4[q.id]) || (typeof INDICES_CH5 !== "undefined" && INDICES_CH5[q.id]) || [];
+		(typeof INDICES_CH4 !== "undefined" && INDICES_CH4[q.id]) || (typeof INDICES_CH5 !== "undefined" && INDICES_CH5[q.id]) ||
+		(typeof INDICES_CH6 !== "undefined" && INDICES_CH6[q.id]) || [];
 	var pris = this.indices[q.id] || 0;
 	var lignes = [C.jaune("Étape en cours : " + q.titre), C.gris("Indice gratuit : ") + q.indice];
 	var constats = this.diagnostics();
@@ -607,9 +643,10 @@ GameState.prototype.demanderIndice = function(){
 		else if (chapitre === 3) etat.malus3 += cout;
 		else if (chapitre === 5) etat.malus5 += cout;
 		else if (chapitre === 6) etat.malus6 += cout;
+		else if (chapitre === 7) etat.malus7 += cout;
 		else etat.malus += cout;
 		var max = etat.xpMaxDe(chapitre);
-		var deja = chapitre === 2 ? etat.malus2 : (chapitre === 3 ? etat.malus3 : (chapitre === 5 ? etat.malus5 : (chapitre === 6 ? etat.malus6 : etat.malus)));
+		var deja = chapitre === 2 ? etat.malus2 : (chapitre === 3 ? etat.malus3 : (chapitre === 5 ? etat.malus5 : (chapitre === 6 ? etat.malus6 : (chapitre === 7 ? etat.malus7 : etat.malus))));
 		var manquants = etat.sortsManquants(details[pris]);
 		term.echo(C.cyan("Indice " + (pris + 2) + " : ") + details[pris] + "\n" +
 			(manquants.length ? manquants.map(function(t){ return C.cyan("À noter : ") + t; }).join("\n") + "\n" : "") + C.gris("-" + cout + " XP sur la note" + (chapitre !== 1 ? " du chapitre " + numeroAffiche(chapitre) : "") + ". Note maximale encore possible : " +
@@ -715,6 +752,7 @@ GameState.prototype.tableauXP = function(){
 		if (this.has("crypteOuverte")) blocs.push(this.tableauXP2(), "");
 		if (this.has("ch4Ouvert") && typeof QUETES_CH4 !== "undefined") blocs.push(this.tableauXP5(), "");
 		if (this.has("ch5Ouvert") && typeof QUETES_CH5 !== "undefined") blocs.push(this.tableauXP6(), "");
+		if (this.has("ch6Ouvert") && typeof QUETES_CH6 !== "undefined") blocs.push(this.tableauXP7(), "");
 		return blocs.concat([C.gris("Temps de jeu : " + this.tempsTexte() + ". Sorts lancés : " + this.nbCommandes + "."),
 			C.gris("Barème : " + XP_QUETE + " XP par étape (" + XP_VICTOIRE + " pour la dernière), " + XP_QUETE_SECONDAIRE + " par quête secondaire, " +
 				XP_SORT_APPRIS + " par sort appris, " + XP_PREMIER_USAGE + " la première fois qu'on s'en sert, " + XP_NOUVEAU_LIEU + " par lieu découvert.")]).join("\n");
@@ -763,6 +801,7 @@ GameState.prototype.tableauXP = function(){
 	if (this.has("crypteOuverte") && typeof QUETES_CHAPITRE2 !== "undefined") lignes.push("", this.tableauXP2(), "");
 	if (this.has("ch4Ouvert") && typeof QUETES_CH4 !== "undefined") lignes.push("", this.tableauXP5(), "");
 	if (this.has("ch5Ouvert") && typeof QUETES_CH5 !== "undefined") lignes.push("", this.tableauXP6(), "");
+	if (this.has("ch6Ouvert") && typeof QUETES_CH6 !== "undefined") lignes.push("", this.tableauXP7(), "");
 	lignes.push(C.gris("Temps de jeu : " + this.tempsTexte() + ". Sorts lancés : " + this.nbCommandes + "."));
 	lignes.push(C.gris("Barème : " + XP_QUETE + " XP par étape de la quête principale (" + XP_VICTOIRE + " pour la dernière), " +
 		XP_QUETE_SECONDAIRE + " par quête secondaire, " + XP_SORT_APPRIS + " par sort appris, " +
@@ -783,7 +822,7 @@ function lieuxAVoir(etat, chapitre){
 		var machine = typeof racineDe === "function" ? racineDe(lieu) : null;
 		if (machine === lieu && typeof Machines !== "undefined" && lieu.parents[0] === Machines){
 			// Une machine du réseau : on y entre par ssh, une fois le réseau découvert (ou la panne commencée, pour les siennes).
-			if (etat.has("reseauCartographie") || (lieu.chapitre === 3 && etat.quests["r_batiment"]) || (lieu.chapitre === 5 && etat.has("ch4Ouvert")) || (lieu.chapitre === 6 && etat.has("ch5Ouvert"))) proches.push("la machine " + lieu.room_name + C.gris(" (ssh " + lieu.room_name + ")"));
+			if (etat.has("reseauCartographie") || (lieu.chapitre === 3 && etat.quests["r_batiment"]) || (lieu.chapitre === 5 && etat.has("ch4Ouvert")) || (lieu.chapitre === 6 && etat.has("ch5Ouvert")) || (lieu.chapitre === 7 && etat.has("ch6Ouvert"))) proches.push("la machine " + lieu.room_name + C.gris(" (ssh " + lieu.room_name + ")"));
 			else caches++;
 			return;
 		}
@@ -892,6 +931,32 @@ GameState.prototype.tableauXP6 = function(){
 	var aVoir = lieuxAVoir(this, 6);
 	if (aVoir.lignes) lignes.push("  " + aVoir.lignes.replace(/\n/g, "\n  "));
 	if (this.malus6 > 0) lignes.push(C.jaune("  Indices payants : " + this.nbIndices(6) + ", soit -" + this.malus6 + " XP sur la note du chapitre."));
+	return lignes.join("\n");
+};
+
+GameState.prototype.tableauXP7 = function(){
+	var principales = QUETES_CH6.filter(function(q){ return this.quests[q.id]; }, this).length;
+	var secondaires = QUETES_SECONDAIRES_CH6.filter(function(q){ return this.quests[q.id]; }, this).length;
+	var appris = ORDRE_DES_SORTS_7.filter(function(x){ return this.spells[x]; }, this).length;
+	var utilises = ORDRE_DES_SORTS_7.filter(function(x){ return this.usages[x]; }, this).length;
+	var lieux = lieuxVisitables(7), visites = lieux.filter(function(l){ return this.visited[l.id]; }, this).length;
+	function ligne(nom, fait, total){
+		return "  " + completerDroite(nom, 22) + completerGauche(fait + " / " + total, 8);
+	}
+	var lignes = [
+		C.gras("CHAPITRE 6 : LUMEN") + "   " + C.gras(this.xpNet(7) + " XP") + " sur " + this.xpMax7() + "   Note : " + C.gras(this.noteTexte(7)),
+		ligne("Quêtes principales", principales, QUETES_CH6.length),
+		ligne("Quêtes secondaires", secondaires, QUETES_SECONDAIRES_CH6.length),
+		ligne("Sorts appris", appris, ORDRE_DES_SORTS_7.length),
+		ligne("Premières utilisations", utilises, ORDRE_DES_SORTS_7.length),
+		ligne("Lieux découverts", visites, lieux.length)
+	];
+	if (typeof annexesDuChapitre === "function" && annexesDuChapitre(7).length){
+		lignes.push(ligne("Quêtes annexes (bonus)", annexesDuChapitre(7).filter(function(a){ return this.quests[a.id]; }, this).length, annexesDuChapitre(7).length));
+	}
+	var aVoir = lieuxAVoir(this, 7);
+	if (aVoir.lignes) lignes.push("  " + aVoir.lignes.replace(/\n/g, "\n  "));
+	if (this.malus7 > 0) lignes.push(C.jaune("  Indices payants : " + this.nbIndices(7) + ", soit -" + this.malus7 + " XP sur la note du chapitre."));
 	return lignes.join("\n");
 };
 
@@ -1053,6 +1118,8 @@ function trouverQuete(id){
 	if (typeof QUETES_PANNE !== "undefined") toutes = toutes.concat(QUETES_PANNE, QUETES_SECONDAIRES_PANNE);
 	if (typeof QUETES_CH4 !== "undefined") toutes = toutes.concat(QUETES_CH4, typeof QUETES_SECONDAIRES_CH4 !== "undefined" ? QUETES_SECONDAIRES_CH4 : []);
 	if (typeof QUETES_CH5 !== "undefined") toutes = toutes.concat(QUETES_CH5, typeof QUETES_SECONDAIRES_CH5 !== "undefined" ? QUETES_SECONDAIRES_CH5 : []);
+	if (typeof QUETES_CH6 !== "undefined") toutes = toutes.concat(QUETES_CH6, typeof QUETES_SECONDAIRES_CH6 !== "undefined" ? QUETES_SECONDAIRES_CH6 : []);
+	if (typeof QUETES_ANNEXES !== "undefined") toutes = toutes.concat(QUETES_ANNEXES);
 	for (var i = 0; i < toutes.length; i++){
 		if (toutes[i].id === id) return toutes[i];
 	}
@@ -1069,13 +1136,21 @@ GameState.prototype.complete = function(id){
 	this.seen[id] = true;
 	var quete = trouverQuete(id);
 	var principale = id.charAt(0) === "m" || id.indexOf("c_") === 0 || id.indexOf("r_") === 0 || id.indexOf("d_") === 0 || id.indexOf("h_") === 0;
-	var finale = id === "m_boss" || id === "c_rapport" || id === "r_fin" || id === "d_fin" || id === "h_rapport";
+	var finale = id === "m_boss" || id === "c_rapport" || id === "r_fin" || id === "d_fin" || id === "h_rapport" || id === "m6_rapport";
+	// Une quête annexe : des XP en bonus, hors de la note du chapitre.
+	if (/^a\d+_/.test(id)){
+		this.xpAnnexes = (this.xpAnnexes || 0) + XP_QUETE_SECONDAIRE;
+		jouerSon("quete");
+		say(C.jaune("★ Quête annexe accomplie : " + (quete ? quete.titre : id)) + C.gris("  +" + XP_QUETE_SECONDAIRE + " XP en bonus (hors note)"));
+		return;
+	}
 	var points = principale ? (finale ? XP_VICTOIRE : XP_QUETE) : XP_QUETE_SECONDAIRE;
 	var chapitre = chapitreDeQuete(id);
 	if (chapitre === 2) this.xp2 += points;
 	else if (chapitre === 3) this.xp3 += points;
 	else if (chapitre === 5) this.xp5 += points;
 	else if (chapitre === 6) this.xp6 += points;
+	else if (chapitre === 7) this.xp7 += points;
 	else if (!this.has("chapitre1Saute")) this.xp += points;
 	else points = 0;
 	if (principale) this.chronos[id] = this.tempsMs;
@@ -1147,6 +1222,11 @@ GameState.prototype.journal = function(detail){
 			typeof QUETES_SECONDAIRES_CH5 !== "undefined" ? QUETES_SECONDAIRES_CH5 : [],
 			"Terminé. Ton CertificatBastion t'attend dans ta Maison : cat ~/CertificatBastion");
 	}
+	if (this.has("ch6Ouvert") && typeof QUETES_CH6 !== "undefined"){
+		this.sectionDuJournal(lignes, 7, "Chapitre 6 : Lumen, la cité qui s'éteint", QUETES_CH6,
+			typeof QUETES_SECONDAIRES_CH6 !== "undefined" ? QUETES_SECONDAIRES_CH6 : [],
+			"Terminé. Ton CertificatLumen t'attend dans ta Maison : cat ~/CertificatLumen");
+	}
 	lignes.push("");
 	var pr = this.progression();
 	if (!this.has("chapitre1Saute")) lignes.push(C.cyan("Niveau " + pr.niveau + " : " + pr.titre) + C.gris("   " + pr.xp + " XP sur " + pr.max + " (détail : xp)"));
@@ -1179,6 +1259,7 @@ GameState.prototype.sectionDuJournal = function(lignes, chapitre, titre, quetes,
 		else if (this.seen[s2.id]) lignes.push("    [ ] " + s2.titre);
 		else inconnues++;
 	}
+	if (inconnues > 0 && chapitre === 7) lignes.push(C.gris("    ... et " + inconnues + " autre" + (inconnues > 1 ? "s" : "") + " : les défis des gardiens, à découvrir en leur parlant quartier par quartier."));
 	if (inconnues > 0 && chapitre === 6) lignes.push(C.gris("    ... et " + inconnues + " autre" + (inconnues > 1 ? "s" : "") + " : les défis des maîtres, à découvrir en leur parlant tour par tour."));
 	if (inconnues > 0 && chapitre === 5) lignes.push(C.gris("    ... et " + inconnues + " autre" + (inconnues > 1 ? "s" : "") + " : les défis des maîtres, à découvrir en leur parlant aile par aile."));
 	if (inconnues > 0 && chapitre === 3) lignes.push(C.gris("    ... et " + inconnues + " autre" + (inconnues > 1 ? "s" : "") + " à découvrir dans les notes des machines."));
@@ -1526,6 +1607,7 @@ Tu connais cette barbe. C'est le vieil homme des MontagnesEst.\n\n\
 			if (typeof etatPanne === "function") etatPanne(param_name);
 			if (typeof etatChapitre4 === "function") etatChapitre4(param_name);
 			if (typeof etatChapitre5 === "function") etatChapitre5(param_name);
+			if (typeof etatChapitre6 === "function") etatChapitre6(param_name);
 			break;
 	};
 };
@@ -1613,6 +1695,9 @@ GameState.prototype.texteDuChrono = function(){
 	}
 	if (typeof QUETES_CH5 !== "undefined" && this.has("ch5Ouvert")){
 		listes.push({ titre: "Chapitre 5 : le Bastion", quetes: QUETES_CH5, depart: this.debutChapitre6 || 0 });
+	}
+	if (typeof QUETES_CH6 !== "undefined" && this.has("ch6Ouvert")){
+		listes.push({ titre: "Chapitre 6 : Lumen", quetes: QUETES_CH6, depart: this.debutChapitre7 || 0 });
 	}
 	for (var l = 0; l < listes.length; l++){
 		lignes.push(C.gras(listes[l].titre));
@@ -1767,6 +1852,8 @@ GameState.prototype.save = function(){
 			xp3: this.xp3, malus3: this.malus3, debut3: this.debutChapitre3, dateVictoire3: this.dateVictoire3, panne: this.panne, examen: this.examen || null,
 				xp5: this.xp5, malus5: this.malus5, debut5: this.debutChapitre5, dateVictoire5: this.dateVictoire5, ch4: this.ch4,
 				xp6: this.xp6, malus6: this.malus6, debut6: this.debutChapitre6, dateVictoire6: this.dateVictoire6, ch5: this.ch5,
+				xp7: this.xp7, malus7: this.malus7, debut7: this.debutChapitre7, dateVictoire7: this.dateVictoire7, ch6: this.ch6,
+				annexes: this.annexes || {}, xpAnnexes: this.xpAnnexes || 0,
 			ici: current_room.path(),
 			avant: Shell.lieu_precedent ? Shell.lieu_precedent.path() : null,
 			ssh: Shell.pile_ssh.map(function(lieu){ return lieu.path(); }),
@@ -1867,6 +1954,14 @@ GameState.prototype.load = function(){
 			this.dateVictoire6 = donnees.dateVictoire6 || null;
 			this.ch5 = typeof etatCh5Initial === "function" ? etatCh5Initial() : {};
 			if (donnees.ch5) for (var cle6 in donnees.ch5){ if (donnees.ch5.hasOwnProperty(cle6)) this.ch5[cle6] = donnees.ch5[cle6]; }
+			this.xp7 = donnees.xp7 || 0;
+			this.malus7 = donnees.malus7 || 0;
+			this.debutChapitre7 = donnees.debut7 === undefined ? null : donnees.debut7;
+			this.dateVictoire7 = donnees.dateVictoire7 || null;
+			this.ch6 = typeof etatCh6Initial === "function" ? etatCh6Initial() : {};
+			if (donnees.ch6) for (var cle7 in donnees.ch6){ if (donnees.ch6.hasOwnProperty(cle7)) this.ch6[cle7] = donnees.ch6[cle7]; }
+			this.annexes = donnees.annexes || {};
+			this.xpAnnexes = donnees.xpAnnexes || 0;
 			this.chronos = donnees.chronos || {};
 		this.examen = donnees.examen || null;
 		if (donnees.cron) this.cron = donnees.cron;

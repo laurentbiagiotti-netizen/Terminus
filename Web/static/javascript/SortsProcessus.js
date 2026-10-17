@@ -477,6 +477,7 @@ function correspondProc(p, motif, complet, exact){
 var PGREP_AVANT_MACHINES = Shell.sorts.pgrep;
 Shell.sorts.pgrep = function(args, io){
 	var h = machineIci();
+	if (!h) return PGREP_AVANT_MACHINES.apply(this, arguments);
 	var o = { l: false, a: false, f: false, x: false, c: false, n: false, o: false, u: null, d: "\n" }, motifs = [];
 	for (var i = 0; i < args.length; i++){
 		var a = args[i];

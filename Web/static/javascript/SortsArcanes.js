@@ -2676,7 +2676,7 @@ Shell.sorts.find = function(args, io){
 	var jetons = args.slice(i), k = 0, action = false;
 	var options = { maxdepth: Infinity, mindepth: 0, depth: false };
 	var execsGroupes = [];
-	var CONNUS = "-name, -iname, -path, -type, -user, -perm, -mtime, -mmin, -newer, -newermt, -size, -empty, -maxdepth, -mindepth, -print, -print0, -exec, -delete, -prune, -o, !, \\( \\)";
+	var CONNUS = "-name, -iname, -path, -type, -xtype, -user, -perm, -mtime, -mmin, -newer, -newermt, -size, -empty, -maxdepth, -mindepth, -print, -print0, -exec, -delete, -prune, -o, !, \\( \\)";
 	function valeur(nom, exemple){
 		if (jetons[k] === undefined) throw new ShellError("find : " + nom + " attend une valeur, par exemple : " + exemple);
 		return jetons[k++];
@@ -2746,6 +2746,18 @@ Shell.sorts.find = function(args, io){
 				if (c.estLieu) return false;
 				var a = ageEnJours(c.noeud), ar = ageEnJours(ref);
 				return a < ar || (a === ar && (c.noeud.heure || "09:00") > (ref.heure || "09:00"));
+			} };
+		case "-xtype":
+			v = valeur("-xtype", "-xtype l");
+			if (["d", "f", "l"].indexOf(v) === -1) throw new ShellError("find : -xtype attend d, f ou l");
+			return { test: function(c){
+				if (c.estLieu) return v === "d";
+				if (!c.noeud.lien) return v === "f";
+				// -xtype regarde la cible du lien : l si la cible n'existe pas (un lien cassé).
+				var cible = null;
+				try { cible = Shell.suivre(c.noeud, "find"); } catch (e){ cible = null; }
+				if (!cible || cible === c.noeud) return v === "l";
+				return v === (cible instanceof Room ? "d" : "f");
 			} };
 		case "-newermt":
 			v = valeur("-newermt", "find . -newermt \"2026-10-15 12:00\"");
