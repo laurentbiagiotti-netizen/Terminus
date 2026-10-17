@@ -2525,7 +2525,7 @@ function unitesHote(hote){
 	var vus = {};
 	if (racineHote(hote)){
 		DOSSIERS_UNITES.forEach(function(d){
-			fichiersDuDossier(hote, d).forEach(function(f){ if (/\.(service|socket|target|timer)$/.test(f.nom) && !/@\./.test(f.nom)) vus[f.nom] = true; });
+			fichiersDuDossier(hote, d).forEach(function(f){ if (/\.(service|socket|target|timer|path)$/.test(f.nom) && !/@\./.test(f.nom)) vus[f.nom] = true; });
 		});
 	}
 	Object.keys((HOTES[hote] && HOTES[hote].services) || {}).forEach(function(k){ vus[/^sshd?$/.test(k) ? uniteInfo(hote, k).unite : nomUniteComplet(k)] = true; });
@@ -2733,7 +2733,7 @@ function puceUnite(info, tty){
 function sousEtatTexte(info){
 	if (info.echec) return "failed";
 	if (!info.actif) return "dead";
-	return { socket: "listening", target: "active", timer: "waiting" }[info.type] || (info.directives.Service && derniere(info.directives, "Service", "Type") === "oneshot" ? "exited" : "running");
+	return { socket: "listening", target: "active", timer: "waiting", path: "waiting" }[info.type] || (info.directives.Service && derniere(info.directives, "Service", "Type") === "oneshot" ? "exited" : "running");
 }
 function statutUnite(h, info, io){
 	if (!info.existe && !info.masque){ io.code = 4; throw new ShellError("Unit " + info.unite + " could not be found.", 4); }

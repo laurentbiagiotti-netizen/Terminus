@@ -1173,7 +1173,8 @@ var AX_MAGIQUES = [
 	{ octets: [0x47, 0x49, 0x46, 0x38], type: "GIF image data, version 89a, 64 x 64", ext: "gif" },
 	{ octets: [0xff, 0xd8, 0xff], type: "JPEG image data, JFIF standard 1.01", ext: "jpg" },
 	{ octets: [0x50, 0x4b, 0x03, 0x04], type: "Zip archive data, at least v2.0 to extract", ext: "zip" },
-	{ octets: [0x7f, 0x45, 0x4c, 0x46], type: "ELF 64-bit LSB executable, x86-64, dynamically linked", ext: "" }
+	{ octets: [0x7f, 0x45, 0x4c, 0x46], type: "ELF 64-bit LSB executable, x86-64, dynamically linked", ext: "" },
+	{ octets: [0x53, 0x61, 0x6c, 0x74, 0x65, 0x64, 0x5f, 0x5f], type: "openssl enc'd data with salted password", ext: "enc" }
 ];
 function axMagique(octets){
 	for (var i = 0; i < AX_MAGIQUES.length; i++){
@@ -1584,7 +1585,7 @@ Shell.sorts.openssl = function(args, io){
 	var sous = args[0];
 	if (sous === "rand") return axOpensslRand(args.slice(1), io);
 	if (sous === "passwd") return axOpensslPasswd(args.slice(1), io);
-	if (sous === "enc" || /^-?aes-(128|192|256)-(cbc|ctr|gcm)$/.test(sous || "") || sous === "base64") {
+	if (sous === "enc" || /^-?aes-(128|192|256)-(cbc|ctr|gcm)$/.test(sous || "")){
 		if (typeof axOpensslEnc === "function") return axOpensslEnc(args, io);
 	}
 	return OPENSSL_AVANT_ANNEXES.apply(this, arguments);
