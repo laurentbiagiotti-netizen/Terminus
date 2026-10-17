@@ -710,6 +710,8 @@ function demanderParcours(){
 		}
 		if (choix !== "1" && choix !== "4" && choix !== "5" && commencerChapitre2(choix === "2" ? 3 : 2)){
 			Shell.fin();
+			// L'ordre de mission commence à la WarRoom, avant la Crypte : son ouverture se joue tout de suite.
+			if (choix === "3" && typeof lancerCinematique === "function") lancerCinematique(3);
 			return;
 		}
 		var commencer = function(){

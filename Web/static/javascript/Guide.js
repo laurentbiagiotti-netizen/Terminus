@@ -228,7 +228,7 @@ function sceneDeChapitre(scene){
 		var p = document.createElement("p");
 		p.className = "scene-ligne";
 		p.style.animationDelay = (calmeDemande ? 0 : 400 + i * 700) + "ms";
-		p.textContent = l;
+		p.textContent = l.replace(/ ([:;!?»])/g, "\u00a0$1").replace(/« /g, "«\u00a0");
 		cadre.appendChild(p);
 	});
 	// La carte des chapitres : celui qui commence s'allume.
@@ -718,7 +718,8 @@ function lancerCinematique(n, apres, forcer){
 		arreter();
 		if (i >= cine.plans.length){ terminer(); return; }
 		plan = i;
-		var p = cine.plans[i];
+		// Typographie française : une espace insécable avant : ; ! ? et », pour que la ponctuation ne commence jamais une ligne.
+		var p = { image: cine.plans[i].image, texte: cine.plans[i].texte.replace(/ ([:;!?»])/g, "\u00a0$1").replace(/« /g, "«\u00a0") };
 		points.textContent = cine.plans.map(function(x, k){ return k === i ? "●" : "○"; }).join(" ");
 		fond.classList.remove("cine-plan");
 		void fond.offsetWidth;
@@ -739,7 +740,7 @@ function lancerCinematique(n, apres, forcer){
 	// Entrée (ou un toucher) : finir la phrase en cours, puis passer au plan suivant. Échap : tout passer.
 	function avancer(){
 		if (fini) return;
-		if (ecriture){ arreter(); texte.textContent = cine.plans[plan].texte; voile.style.display = "none"; plusTard(function(){ montrer(plan + 1); }, 2200); return; }
+		if (ecriture){ arreter(); texte.textContent = cine.plans[plan].texte.replace(/ ([:;!?»])/g, "\u00a0$1").replace(/« /g, "«\u00a0"); voile.style.display = "none"; plusTard(function(){ montrer(plan + 1); }, 2200); return; }
 		montrer(plan + 1);
 	}
 	function touche(e){
