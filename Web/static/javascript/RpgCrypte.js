@@ -293,7 +293,7 @@ function texteBadges(quel){
 			tous.push({ id: id, chap: "ile", nom: COMPETENCES[id], image: TROPHEES_CH7[id][0], couche: "", lecon: TROPHEES_CH7[id][1] });
 		});
 		tous.push({ id: "platine_ch7", chap: "ile", nom: COMPETENCES.platine_ch7, image: "tous les badges de Port-Aube", couche: "", lecon: "Mesurer, bâtir maison par maison, tenir la Tempête, accueillir la Marée, rendre compte : tu sais monter les services réseau d'une infrastructure Linux de bout en bout." });
-		if (typeof AMIS_ANNEXES !== "undefined" && AMIS_ANNEXES[8]) tous.push({ id: "ami_ch7", chap: "ile", nom: COMPETENCES.ami_ch7, image: "les six habitants de Port-Aube", couche: "", lecon: "Les quêtes annexes : l'impression (CUPS), un filtre Sieve, la découverte en .local (avahi), un tunnel VPN (wg), un démon rsync, sftp enfermé. Facultatif, hors note." });
+		if (typeof AMIS_ANNEXES !== "undefined" && AMIS_ANNEXES[8]) tous.push({ id: "ami_ch7", chap: "ile", nom: COMPETENCES.ami_ch7, image: "les six habitants de Port-Aube", couche: "", lecon: "Les quêtes annexes : l'impression (CUPS), un filtre Sieve, la découverte en .local (avahi), un tunnel WireGuard, un démon rsync, sftp enfermé. Facultatif, hors note." });
 	}
 	if (state.has("ch8Ouvert") && typeof TROPHEES_CH8 !== "undefined"){
 		Object.keys(TROPHEES_CH8).forEach(function(id){
