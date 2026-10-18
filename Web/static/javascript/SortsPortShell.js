@@ -53,6 +53,13 @@ function vueCouchesPort(h, ids){
 	return v;
 }
 function vueImagePort(h, img){ return vueCouchesPort(h, (img && img.couches) || []); }
+/* Pour le monde : les chemins d'une image, et la couche (la plus haute) qui a posé un chemin. */
+function fichiersImagePort(h, img){ var v = vueImagePort(h, img); return Object.keys(v).filter(function(k){ return k.indexOf("__") !== 0; }).sort(); }
+function coucheContientPort(h, img, chemin){
+	var p = cheminNormal(chemin), l = (img && img.couches) || [];
+	for (var i = l.length - 1; i >= 0; i--){ var c = couchePort(h, l[i]); if (!c) continue; if ((c.supprimes || []).indexOf(p) > -1) return null; if (c.fichiers && c.fichiers[p]) return { id: l[i], index: i, cmd: c.cmd }; }
+	return null;
+}
 function enfantsVuePort(v){
 	if (v.__enfants) return v.__enfants;
 	var e = {};
@@ -1102,7 +1109,7 @@ var COMMANDES_CONTENEUR_PORT = {
 	},
 	expr: function(ctx, args){ try { var v = Function("return (" + args.join(" ").replace(/[^0-9+\-*/% ()]/g, "") + ")|0")(); ctx.sortir(v + "\n"); return v ? 0 : 1; } catch (e){ return 2; } },
 	seq: function(ctx, args){ var a = args.map(Number), d = a.length > 1 ? a[0] : 1, f = a[a.length - 1], l = []; for (var i = d; i <= f && l.length < 1000; i++) l.push(i); ctx.sortir(l.join("\n") + "\n"); return 0; },
-	yes: function(ctx){ ctx.sortir("y\ny\ny\n"); return 0; },
+	yes: function(ctx, args){ var m = (args && args.length ? args.join(" ") : "y") + "\n"; ctx.sortir(m + m + m); return 0; },
 	clear: function(){ return 0; },
 	sha256sum: function(ctx, args){ var code = 0; lireOptionsCourtesPort(args).reste.forEach(function(f){ var t = lireTextePort(ctx, f); if (t === null){ ctx.erreur("sha256sum: " + f + ": No such file or directory\n"); code = 1; return; } ctx.sortir(sha256(t) + "  " + f + "\n"); }); if (!args.length) ctx.sortir(sha256(ctx.stdin || "") + "  -\n"); return code; },
 	base64: function(ctx){ ctx.sortir(encoderBase64(ctx.stdin || "") + "\n"); return 0; },

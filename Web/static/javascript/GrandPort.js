@@ -20,7 +20,8 @@
  *   avancerHorlogeCh8() fait avancer l'horloge (5 min par commande comptée), saute les nuits ; renvoie { nuits, minutes }
  *   texteAvantFlotteCh8() « la flotte dans 1 j 15 h » ; AUBE_CH8 (minutes) ; jourCh8()
  *   declarerUnitesPort() et semerPort() (faits d'eux-mêmes à l'ouverture), PROJETS_PORT (les textes des projets)
- *   poserEpreuveCaissePort(), poserSonarPort(), poserTempetePort() : les incidents prêts à poser
+ *   poserEpreuveCaissePort(), poserSonarPort() : les incidents prêts à poser (la pile en tempête est ~/tempete)
+ *   imageEclaireurPort() l'image inerte de l'éclaireur (posée en quarantaine sur douane par semerPort)
  */
 
 World.fige = false;

@@ -22,7 +22,8 @@
  *   enMarchePort(c)                     vrai si le conteneur tourne ; santePort(c) "healthy" | "unhealthy" | "starting" | null
  *   imagePort(h, ref)                   l'image désignée (tag, id court, digest) ou null ; imagesPort(h) toutes
  *   tagsPort(h, image) / digestsPort(image) / tailleImagePort(h, image)
- *   coucheContientPort(h, image, chemin) le chemin vient-il d'une couche de l'image ? ; fichiersImagePort(h, image)
+ *   coucheContientPort(h, image, chemin) { id, index, cmd } de la couche qui a posé ce chemin, ou null ;
+ *   fichiersImagePort(h, image) les chemins de l'image (SortsPortShell.js)
  *   volumePort(h, nom) ; reseauPort(h, nom) ; evenementsPort(h, filtre)
  *   lireFichierConteneurPort(h, c, chemin)  le texte d'un fichier vu depuis le conteneur (couches, montages)
  *   requetePort(depuisHote, hoteCible, port, chemin) { code, corps } une requête HTTP comme curl la ferait
@@ -1220,7 +1221,7 @@ function utilisateurConteneurPort(h, c, demande){
 	var ligne = passwd.split("\n").filter(function(l){ var x = l.split(":"); return x[0] === qui || (/^\d+$/.test(qui) && x[2] === qui); })[0];
 	var r;
 	if (ligne){ var x = ligne.split(":"); r = { nom: x[0], uid: +x[2], gid: +x[3] }; }
-	else if (/^\d+$/.test(qui)) r = { nom: qui, uid: +qui, gid: +qui, inconnu: true };
+	else if (/^\d+$/.test(qui)) r = { nom: qui, uid: +qui, gid: 0, inconnu: true };
 	else return { erreur: "unable to find user " + qui + ": no matching entries in passwd file" };
 	if (groupe !== undefined){
 		if (/^\d+$/.test(groupe)) r.gid = +groupe;
@@ -1597,8 +1598,7 @@ function rotationJournalPort(h, c){
 			var apres = poserFichierHote(h, chemin + "." + k, "", { mode: "rw-r-----" });
 			apres.taille = Math.min(avant.taille || 0, max);
 		}
-		it.taille = 0;
-		if (n <= 1) it.taille = 0;
+		it.taille = Math.round(max / 3);
 	});
 	c.rotations = (c.rotations || 0) + 1;
 }

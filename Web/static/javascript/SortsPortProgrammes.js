@@ -16,7 +16,7 @@
 /* Démarrer le programme d'un conteneur                                 */
 /* ================================================================== */
 
-var HELLO_PORT = "\nHello from Docker!\nThis message shows that your installation appears to be working correctly.\n\nTo generate this message, Docker took the following steps:\n 1. The Docker client contacted the Docker daemon.\n 2. The Docker daemon pulled the \"hello-world\" image from the registry.\n    (amd64)\n 3. The Docker daemon created a new container from that image which runs the\n    executable that produces the output you are currently reading.\n 4. The Docker daemon streamed that output to the Docker client, which sent it\n    to your terminal.\n\nTo try something more ambitious, you can run an Ubuntu container with:\n $ docker run -it ubuntu bash\n\nShare images, automate workflows, and more with a free Docker ID:\n (the registry of the continent)\n\nFor more examples and ideas, visit:\n (the manual: man docker)\n";
+var HELLO_PORT = "\nHello from Docker!\nThis message shows that your installation appears to be working correctly.\n\nTo generate this message, Docker took the following steps:\n 1. The Docker client contacted the Docker daemon.\n 2. The Docker daemon pulled the \"hello-world\" image from the registry.\n    (amd64)\n 3. The Docker daemon created a new container from that image which runs the\n    executable that produces the output you are currently reading.\n 4. The Docker daemon streamed that output to the Docker client, which sent it\n    to your terminal.\n\nTo try something more ambitious, you can run a Debian container with:\n $ docker run -it debian:12 bash\n\nFor more examples and ideas:\n $ man docker\n";
 
 /* Lancer le programme : { ok } ou { erreurOci, code } ou { erreurDemon }. */
 function lancerProgrammePort(h, c, options){
@@ -97,6 +97,11 @@ function programmePourArgvPort(h, c, ctx, argv, journal, prof){
 		case "tail":
 			if (args.indexOf("-f") > -1 || args.indexOf("-F") > -1) return attentePort(ctx, argv, "tail");
 			break;
+		case "yes":
+			var oui = attentePort(ctx, argv, "yes");
+			oui.repete = args.length ? args.join(" ") : "y";
+			oui.journalApres = [["stdout", oui.repete], ["stdout", oui.repete], ["stdout", oui.repete]];
+			return oui;
 		case "cat":
 			if (!args.length && c.config.OpenStdin) return attentePort(ctx, argv, "cat");
 			break;
@@ -159,6 +164,13 @@ function shellProgrammePort(h, c, ctx, quel, args, suite){
 			// Ce que le script écrit avant sa boucle passe dans les journaux.
 			var avant = script.split(/;\s*(?:while|sleep\s+infinity|tail\s+-f)/)[0];
 			if (avant && avant !== script){ var r0 = executerLignePort(Object.create(ctx, { sh: { value: shell, writable: true } }), avant); att.journalApres = [["stdout", r0.sortie.replace(/\n$/, "")]].filter(function(x){ return x[1]; }); }
+			// Le corps d'une boucle sans fin qui écrit : il écrit sans cesse (les journaux grossissent).
+			var corps = /while\s+(?:true|:)\s*;\s*do\s+([\s\S]*?);?\s*done/.exec(script);
+			if (corps && !/sleep\s+\d/.test(corps[1])){
+				var rb = executerLignePort(Object.create(ctx, { sh: { value: shell, writable: true } }), corps[1]);
+				var txt = String(rb.sortie || "").replace(/\n$/, "");
+				if (txt){ att.repete = txt; att.journalApres = (att.journalApres || []).concat([["stdout", txt], ["stdout", txt], ["stdout", txt]]); }
+			}
 			return att;
 		}
 		var sous = Object.create(ctx);
@@ -185,6 +197,11 @@ function ticProgrammePort(h, c, tic){
 		if (c.memoire < cible) c.memoire = cible;
 	}
 	if (prog.type === "python-app"){ c.memoire = Math.min(prog.memoireMax || 64 * 1048576, (c.memoire || 0) + (prog.croissance || 0)); }
+	if (prog.repete){
+		for (var k = 0; k < 3; k++) ajouterJournalPort(h, c, "stdout", prog.repete);
+		var lr = fichierJournalHotePort(h, c);
+		if (lr){ lr.taille = (lr.taille || 0) + 4 * 1048576; rotationJournalPort(h, c); }
+	}
 	if (prog.type === "nginx" || prog.type === "python-app" || prog.type === "registry"){ var lf = fichierJournalHotePort(h, c); if (lf){ lf.taille = (lf.taille || 0) + (prog.bavard || 2400); rotationJournalPort(h, c); } }
 }
 

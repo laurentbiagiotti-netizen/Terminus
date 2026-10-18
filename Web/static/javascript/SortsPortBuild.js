@@ -240,7 +240,7 @@ function construireImagePort(o){
 						im = r.image; pull = r;
 					}
 					var aref = analyserRefPort(ref);
-					affiche.metadonnees.push(aref.complet.replace(/@.*$/, ""));
+					if (affiche.metadonnees.indexOf(aref.complet.replace(/@.*$/, "")) === -1) affiche.metadonnees.push(aref.complet.replace(/@.*$/, ""));
 					et.couches = im.couches.slice(); et.config = copieJson(im.config || {}); et.historique = copieJson(im.historique || []);
 					["Env", "ExposedPorts", "Labels"].forEach(function(k){ if (!et.config[k]) et.config[k] = k === "Env" ? [] : {}; });
 					et.cle = sha256("from:" + im.id); et.base = im.id;
@@ -588,7 +588,7 @@ function lancerBuildPort(h, d, io, buildx){
 	var contexteMontre = false;
 	aff.etapes.forEach(function(e){
 		if (e.type !== "FROM" && !contexteMontre && dossier){ contexteMontre = true; blocs.push({ titre: "[internal] load build context", lignes: ["transferring context: " + ctxTexte], temps: (0.1 + ctxTaille / 1.5e8).toFixed(1) + "s" }); }
-		blocs.push({ titre: (e.cache && e.type !== "FROM" ? "CACHED " : "") + e.texte, lignes: e.journal && plain ? e.journal : [], temps: e.cache ? "0.0s" : tempsPort(e.texte + t0), cache: e.cache && e.type !== "FROM", pull: e.pull });
+		blocs.push({ titre: (e.cache && e.type !== "FROM" ? "CACHED " : "") + e.texte, lignes: e.journal && plain ? e.journal : [], temps: e.cache || (e.type === "FROM" && !e.pull) ? "0.0s" : tempsPort(e.texte + t0), cache: e.cache && e.type !== "FROM", pull: e.pull });
 	});
 	if (!contexteMontre && dossier) blocs.push({ titre: "[internal] load build context", lignes: ["transferring context: " + ctxTexte], temps: "0.1s" });
 	var nomTag = res.record.tags.map(function(t){ return analyserRefPort(t).complet.replace(/^continent\.lan\/library\//, REGISTRE_CONTINENT_PORT + "/library/"); });
