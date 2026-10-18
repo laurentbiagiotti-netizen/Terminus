@@ -93,7 +93,7 @@ var QUARTIERS = {
 	var s = jb.taper("ssh lumen");
 	verifier(/Could not resolve/.test(s) && /n'apparaît/.test(s), "ssh lumen avant l'ouverture (au Bastion) : refusé");
 	contient(jeu.taper("chapitre"), "6. ", "chapitre : la ligne 6");
-	contient(jeu.taper("chapitre 7"), "1, 2, 3, 4, 5 et 6", "chapitre 7 : il n'existe pas");
+	contient(jeu.taper("chapitre 8"), "1, 2, 3, 4, 5, 6 et 7", "chapitre 8 : il n'existe pas");
 })();
 
 /* ================================================================== */
@@ -408,8 +408,8 @@ var QUARTIERS = {
 /* ================================================================== */
 (function(){
 	var doc = fs.readFileSync(path.join(RACINE, "docs", "solution.md"), "utf8");
-	var debut = doc.indexOf("## Chapitre 6 : Lumen"), fin = doc.indexOf("## L'épreuve finale");
-	verifier(debut > -1 && fin > debut, "docs/solution.md : la section du chapitre 6 avant l'épreuve finale");
+	var debut = doc.indexOf("## Chapitre 6 : Lumen"), fin = doc.indexOf("## Chapitre 7 : Port-Aube");
+	verifier(debut > -1 && fin > debut, "docs/solution.md : la section du chapitre 6 avant celle du chapitre 7");
 	var section = doc.substring(debut, fin);
 	for (var n = 49; n <= 61; n++) verifier(new RegExp("^### " + n + "\\. ", "m").test(section), "docs/solution.md : la partie " + n);
 	verifier(section.indexOf("—") === -1, "docs/solution.md (chapitre 6) : pas de tiret cadratin");

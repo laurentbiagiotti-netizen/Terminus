@@ -32,7 +32,7 @@ var CHAPITRES = [
 	{ affiche: 4, interne: 5, prefixe: "a4_", badge: "ami_ch4", nom: "Ami de l'Académie", plan: "grimoire", badges: "arcanes" },
 	{ affiche: 5, interne: 6, prefixe: "a5_", badge: "ami_ch5", nom: "Ami du Bastion", plan: "rempart", badges: "bastion" }
 ];
-var XP_MAX = { xpMax: 3860, xpMax3: 5790, xpMax2: 5625, xpMax5: 5175, xpMax6: 7500, xpMax7: 8795 };
+var XP_MAX = { xpMax: 3860, xpMax3: 5790, xpMax2: 5625, xpMax5: 5175, xpMax6: 7500, xpMax7: 8795, xpMax8: 6120 };
 
 /* Une partie neuve, en départ direct au chapitre affiché ch. Au Bastion, la clé est posée sur bastion. */
 function neuf(ch, stockage){
@@ -94,7 +94,7 @@ var FICHIERS = ["SortsAnnexes.js", "HabitantsCampus.js", "HabitantsCrypte.js", "
 /* ================================================================== */
 (function(){
 	var jeu = monde.nouveauMonde({});
-	egal(jeu.lire("QUETES_ANNEXES.length"), 30, "trente quêtes annexes en tout");
+	egal(jeu.lire("QUETES_ANNEXES.length"), 36, "trente-six quêtes annexes en tout (six par chapitre, du 2 au 7)");
 	CHAPITRES.forEach(function(c){
 		var a = jeu.lire("QUETES_ANNEXES.filter(function(a){ return a.id.indexOf('" + c.prefixe + "') === 0; }).map(function(a){ return [a.chapitre, a.etapes.length, !!a.souvenir, !!a.merci, !!a.lumiere, typeof a.ouverte]; })");
 		egal(a.length, 6, "chapitre " + c.affiche + " : six annexes");
@@ -114,7 +114,7 @@ var FICHIERS = ["SortsAnnexes.js", "HabitantsCampus.js", "HabitantsCrypte.js", "
 		verifier(jeu.lire("!!MANUEL[" + JSON.stringify(s) + "]"), "annexe : " + s + " a sa page de manuel");
 		verifier(jeu.lire("!!(MANUEL[" + JSON.stringify(s) + "] || {}).horsBareme"), "annexe : la page de " + s + " ne rapporte pas d'XP");
 	});
-	egal(jeu.lire("Object.keys(SORTS_DES_ANNEXES).filter(function(s){ return [ORDRE_DES_SORTS, ORDRE_DES_SORTS_2, ORDRE_DES_SORTS_3, ORDRE_DES_SORTS_5, ORDRE_DES_SORTS_6, ORDRE_DES_SORTS_7].some(function(o){ return o.indexOf(s) > -1; }); }).join(' ')"), "", "aucun sort d'annexe dans un barème");
+	egal(jeu.lire("Object.keys(SORTS_DES_ANNEXES).filter(function(s){ return [ORDRE_DES_SORTS, ORDRE_DES_SORTS_2, ORDRE_DES_SORTS_3, ORDRE_DES_SORTS_5, ORDRE_DES_SORTS_6, ORDRE_DES_SORTS_7, ORDRE_DES_SORTS_8].some(function(o){ return o.indexOf(s) > -1; }); }).join(' ')"), "", "aucun sort d'annexe dans un barème");
 	["lscpu", "lspci", "lsusb", "dmidecode", "apropos", "whatis", "hexdump", "readlink", "realpath", "timeout", "ssh-agent", "ssh-add", "pwgen", "iconv", "dos2unix", "envsubst", "printenv", "numfmt", "bc", "mkfifo", "sqlite3", "ssh-keyscan", "pwscore", "sudoreplay", "cmp"].forEach(function(s){
 		verifier(sorts.indexOf(s) > -1, "annexe : " + s + " est un sort d'annexe");
 	});

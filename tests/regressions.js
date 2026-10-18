@@ -682,12 +682,35 @@ verifier(jr5.lire("state.xp2 === state.xpMax2()"), "vieille sauvegarde : la note
 	var guide = fs.readFileSync(path.join(__dirname, "..", "Web", "static", "javascript", "Guide.js"), "utf8");
 	var bloc = guide.substring(guide.indexOf("var CINEMATIQUES = {"), guide.indexOf("var SCENE_CHAPITRE_1"));
 	var images = bloc.match(/image: "([^"]+)"/g) || [];
-	verifier(images.length === 24, "cinématiques : 6 chapitres de 4 plans (" + images.length + " images)");
+	verifier(images.length === 29, "cinématiques : 7 chapitres, quatre plans pour les six premiers, cinq pour Port-Aube (" + images.length + " images)");
 	images.forEach(function(m){
 		var f = /image: "([^"]+)"/.exec(m)[1];
 		verifier(fs.existsSync(path.join(__dirname, "..", "Web", "static", "img", f)), "cinématique : l'image " + f + " existe");
 	});
 	verifier(bloc.indexOf("—") === -1 && bloc.indexOf(" & ") === -1, "cinématiques : ni tiret cadratin ni esperluette");
+	// Port-Aube (chapitre 7) : cinq plans, chacun avec son image dessinée pour lui (outils/dessiner_ile.py), des textes courts.
+	var c7 = bloc.substring(bloc.search(/\n\t7: \{/));
+	var plans7 = c7.match(/\{ image: "([^"]+)", texte: "((?:[^"\\]|\\.)*)" \}/g) || [];
+	verifier(plans7.length === 5, "cinématique 7 : cinq plans (" + plans7.length + ")");
+	var vus = {};
+	plans7.forEach(function(p){
+		var m = /image: "([^"]+)", texte: "((?:[^"\\]|\\.)*)"/.exec(p);
+		verifier(/^cine7_/.test(m[1]) && !vus[m[1]], "cinématique 7 : une image dédiée par plan (" + m[1] + ")");
+		vus[m[1]] = true;
+		verifier(m[2].length <= 110, "cinématique 7 : un texte court (" + m[2].length + " caractères) : " + m[2]);
+	});
+	["cine7_mer_aube.gif", "cine7_quai_laurent.gif", "cine7_maisons_vides.gif", "cine7_phare_orage.gif", "cine7_maree.gif"].forEach(function(f){ verifier(!!vus[f], "cinématique 7 : le plan " + f); });
+	verifier(/île/.test(c7.split("}] }")[0]) && /Laurent/.test(c7) && /14 h/.test(c7) && /19 h/.test(c7), "cinématique 7 : l'île, Laurent, l'orage de 14 h, la marée de 19 h");
+	verifier(/PREMIERE_SCENE = \{[^}]*7: "p7_quai"/.test(guide) && /\n\tp7_quai: \{ image:/.test(guide), "cinématique 7 : elle précède la scène de l'arrivée sur le quai (p7_quai)");
+	verifier(/cinematique 1 à 7/.test(guide) && /7 \(Port-Aube\)/.test(guide), "la commande cinematique connaît le chapitre 7");
+	// Elle se joue en départ direct comme après Lumen : l'arrivée sur le quai est une vraie étape, hors du rejeu, une seule fois.
+	[function(j){ j.taper("chapitre 7", "oui"); }, function(j){ j.taper("chapitre 6", "oui"); j.lire("state.complete('m6_rapport'); verifierMonde()"); j.taper("cd ~/Cybersup/Embarcadere/PortAube"); }].forEach(function(depart, k){
+		var j = nouveauMonde({});
+		j.lire("var SCENES_JOUEES_TEST = []; var COMPLETE_TEST = GameState.prototype.complete; GameState.prototype.complete = function(id){ var deja = this.quests[id]; COMPLETE_TEST.call(this, id); if (!deja && id === 'p7_quai' && !this.has('rejeuEnCours')) SCENES_JOUEES_TEST.push(id); };");
+		depart(j);
+		j.taper("cd ~/Cybersup/Embarcadere"); j.taper("cd PortAube");
+		verifier(j.lire("SCENES_JOUEES_TEST.length") === 1, "cinématique 7 : déclenchée une fois, " + (k ? "en continuant depuis Lumen" : "en départ direct"));
+	});
 })();
 
 console.log(verifications + " vérifications, " + echecs + " échec" + (echecs > 1 ? "s" : ""));
