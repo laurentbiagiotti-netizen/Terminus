@@ -930,7 +930,7 @@ function monterEnGradeCh8(n){
 	c.rangA[n] = c.minutes;
 	state.set(RANGS_CH8[n].galon);
 	if (!state.has("rejeuEnCours")){
-		if (typeof montrerImage === "function" && RANGS_CH8[n].image) montrerImage(RANGS_CH8[n].image, RANGS_CH8[n].nom);
+		if (typeof montrerImage === "function" && RANGS_CH8[n].image) montrerImage("./static/img/" + RANGS_CH8[n].image, RANGS_CH8[n].nom);
 		say(C.jaune(C.gras("✦ RANG : " + RANGS_CH8[n].nom.toUpperCase())) + "\n" + SCENES_RANGS_CH8[n] + "\n" +
 			C.gris("(galons : tes galons, et ce qu'il faut pour le rang suivant. De nouveaux quais s'ouvrent à toi.)"));
 	}
@@ -952,7 +952,7 @@ var NUITS_CH8 = {
 function nuitCh8(n){
 	if (state.has("rejeuEnCours")) return;
 	var k = Math.min(3, n), nuit = NUITS_CH8[k];
-	if (typeof montrerImage === "function") montrerImage("scene_bivouac_nuit" + k + ".gif", "Le bivouac, nuit " + n);
+	if (typeof montrerImage === "function") montrerImage("./static/img/scene_bivouac_nuit" + k + ".gif", "Le bivouac, nuit " + n);
 	say(C.gras("☾ LA NUIT " + n + " AU BIVOUAC") + "\n" + nuit.scene + "\n" + C.gris("(Radio : « " + nuit.radio.replace(/RANG/g, nomRangCh8()) + " »)") + "\n" +
 		C.gris("(Le jour se lève : il est " + heureCh8() + ". " + (flotteMajusculeCh8()) + ".)"));
 }
@@ -1015,7 +1015,7 @@ function commencerBatailleCh8(parAube){
 	if (c.bataille) return;
 	c.bataille = { debut: c.minutes, avantAube: !parAube && c.minutes < AUBE_CH8 };
 	if (!state.has("rejeuEnCours")){
-		if (typeof montrerImage === "function") montrerImage("loc_bataille_aube.gif", "La bataille de l'aube");
+		if (typeof montrerImage === "function") montrerImage("./static/img/loc_bataille_aube.gif", "La bataille de l'aube");
 		say(C.rouge(C.gras("⚓ LA BATAILLE DE L'AUBE")) + "\n" +
 			(parAube ? "Le soleil se lève, rouge, et la flotte noire avec lui. " : "Tu n'as pas attendu l'aube. Ton escadre est rassemblée, et c'est toi qui sors à la rencontre de la flotte noire. ") +
 			"Quatre galions noirs fendent la bande du jour, et derrière eux, des voiles à perte de vue. La pluie fouette les ponts, un éclair déchire le ciel au-dessus du phare noir. " +
@@ -1228,7 +1228,7 @@ function etatChapitre8(nom){
 			if (!state.dateVictoire9) state.dateVictoire9 = dateDuJour();
 			poser(Home, CertificatGrandPortCh8);
 			if (!state.has("rejeuEnCours")){
-				if (typeof montrerImage === "function") montrerImage("loc_grand_port_victoire.gif", "Le Grand Port illumine la baie");
+				if (typeof montrerImage === "function") montrerImage("./static/img/loc_grand_port_victoire.gif", "Le Grand Port illumine la baie");
 				say(C.jaune(C.gras("LA FLOTTE NOIRE VIRE DE BORD.")) + " Un à un, les galions noirs abattent leurs voiles et tournent le dos au port. Sur la jetée, quelqu'un lance le premier cri, et tout le port le reprend. " +
 					"Les grues s'illuminent, les navires de l'école hissent le grand pavois, des fusées vertes éclatent au-dessus de la baie, et les quatorze maîtres du port lèvent leur casquette vers toi." +
 					(typeof texteAmiFinaleCh8 === "function" ? texteAmiFinaleCh8() : ""));
