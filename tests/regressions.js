@@ -667,6 +667,26 @@ contient(jr5.taper("rempart"), "LE PLAN DU BASTION", "vieille sauvegarde : rempa
 verifier(jr5.lire("state.chapitreEnCours()") === 6, "vieille sauvegarde : le chapitre en cours est le Bastion");
 verifier(jr5.lire("state.xp2 === state.xpMax2()"), "vieille sauvegarde : la note de la Crypte n'a pas bougé");
 
+// Une vieille sauvegarde, d'avant Port-Aube (chapitre 7) : finie à Lumen, elle ouvre l'île sans rien perdre.
+(function(){
+	var st = {};
+	var jl = nouveauMonde(st);
+	jl.taper("chapitre 6", "oui");
+	jl.lire("state.complete('m6_rapport'); state.save()");
+	var k = Object.keys(st).filter(function(x){ return /"quests"/.test(st[x]); })[0];
+	var d = JSON.parse(st[k]);
+	["xp8", "malus8", "debutChapitre8", "dateVictoire8", "ch7"].forEach(function(x){ delete d[x]; });
+	if (d.flags) Object.keys(d.flags).filter(function(f){ return /^ch7|^victoireCh7|^cinematique7/.test(f); }).forEach(function(f){ delete d.flags[f]; });
+	st[k] = JSON.stringify(d);
+	var j7 = nouveauMonde(st);
+	j7.taper("ls");
+	verifier(j7.lire("state.has('ch7Ouvert')") === true, "vieille sauvegarde (avant Port-Aube) : l'île s'ouvre après Lumen");
+	verifier(j7.lire("typeof state.ch7 === 'object' && state.xp8 === 0 && state.malus8 === 0"), "vieille sauvegarde : l'état de la journée est créé, l'XP du chapitre 7 part de zéro");
+	contient(j7.taper("cd ~/Cybersup/Embarcadere/PortAube"), "PortAube", "vieille sauvegarde : la traversée");
+	verifier(j7.lire("state.quests.p7_quai") === true && j7.lire("heureCh7()") === "07:00", "vieille sauvegarde : l'arrivée sur le quai, à 7 h");
+	contient(j7.taper("chantier"), "LE PLAN DE PORT-AUBE", "vieille sauvegarde : chantier s'ouvre");
+})();
+
 // Le compte créé à la connexion : le monde, construit avant, ne garde pas l'identifiant provisoire (passwd, journaux de l'épreuve).
 (function(){
 	var jn = nouveauMonde({});

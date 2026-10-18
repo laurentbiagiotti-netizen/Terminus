@@ -636,19 +636,19 @@ var FICHIERS = ["SortsIle.js", "SortsIlePoste.js", "SortsIleRegistre.js", "Sorts
 /* ================================================================== */
 (function(){
 	var jeu = monde.nouveauMonde({});
-	jeu.lire("adopterPrenom('Ada')");
+	jeu.lire("adopterPrenom('Fama')");
 	jeu.taper("chapitre 7", "oui");
 	jeu.lire("ORDRE_DES_SORTS_8.forEach(function(s){ state.spells[s] = true; })");
 	jeu.taper("ssh poste");
-	verifier(jeu.taper("grep -c '^ada:' /etc/passwd").trim() === "1", "poste : le compte du joueur porte son identifiant (ada)");
+	verifier(jeu.taper("grep -c '^fama:' /etc/passwd").trim() === "1", "poste : le compte du joueur porte son identifiant (fama)");
 	verifier(jeu.taper("grep -c apprenti /etc/passwd /etc/group /etc/aliases").indexOf(":1") === -1, "poste : plus aucune trace de l'identifiant provisoire");
-	contient(jeu.taper("mailq"), "ada@port-aube.lan", "la file de la Poste attend ada");
+	contient(jeu.taper("mailq"), "fama@port-aube.lan", "la file de la Poste attend fama");
 	jeu.taper("cd");
-	egal(jeu.taper("pwd").trim(), "/home/ada", "cd sur poste : /home/ada");
-	contient(jeu.taper("whoami"), "ada", "whoami sur poste");
+	egal(jeu.taper("pwd").trim(), "/home/fama", "cd sur poste : /home/fama");
+	contient(jeu.taper("whoami"), "fama", "whoami sur poste");
 	jeu.taper("exit");
 	jeu.taper("ssh greniers");
-	contient(jeu.taper("ls -ld /home/ada"), "ada", "greniers : /home/ada");
+	contient(jeu.taper("ls -ld /home/fama"), "fama", "greniers : /home/fama");
 })();
 (function(){
 	var st = {};

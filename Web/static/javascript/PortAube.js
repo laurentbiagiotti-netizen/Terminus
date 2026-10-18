@@ -258,7 +258,7 @@ var BUNDLE_SYSTEME_ILE = "# Les autorités de certification publiques du paquet 
 
 var BIND_NAMED_CONF = "// This is the primary configuration file for the BIND DNS server named.\n//\n// Please read /usr/share/doc/bind9/README.Debian for information on the\n// structure of BIND configuration files in Debian, *BEFORE* you customize\n// this configuration file.\n//\n// If you are just adding zones, please do that in /etc/bind/named.conf.local\n\n" +
 	"include \"/etc/bind/named.conf.options\";\ninclude \"/etc/bind/named.conf.local\";\ninclude \"/etc/bind/named.conf.default-zones\";\n";
-var BIND_OPTIONS = "options {\n\tdirectory \"/var/cache/bind\";\n\n\t// If there is a firewall between you and nameservers you want\n\t// to talk to, you may need to fix the firewall to allow multiple\n\t// ports to talk.  See http://www.kb.cert.org/vuls/id/800113\n\n" +
+var BIND_OPTIONS = "options {\n\tdirectory \"/var/cache/bind\";\n\n\t// If there is a firewall between you and nameservers you want\n\t// to talk to, you may need to fix the firewall to allow multiple\n\t// ports to talk.\n\n" +
 	"\t// Les serveurs de l'île font autorité pour l'île, et ne cherchent rien ailleurs.\n\trecursion no;\n\tallow-query { any; };\n\n\tdnssec-validation auto;\n\n\tlisten-on-v6 { any; };\n};\n";
 var BIND_LOCAL = "//\n// Do any local configuration here\n//\n\n// Consider adding the 1918 zones here, if they are not used in your\n// organization\n//include \"/etc/bind/zones.rfc1918\";\n";
 var BIND_DEFAULT_ZONES = "// prime the server with knowledge of the root servers\nzone \".\" {\n\ttype hint;\n\tfile \"/usr/share/dns/root.hints\";\n};\n\n" +

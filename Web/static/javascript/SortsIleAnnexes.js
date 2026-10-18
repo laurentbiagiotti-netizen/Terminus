@@ -352,7 +352,7 @@ function doveadmSieveIle(h, mots, args, io){
 /* Les services que l'île annonce d'elle-même en .local. */
 var SERVICES_AVAHI_ILE = [["imprimerie", "Presse de la gazette", "_ipp._tcp", 631], ["halle", "Halle d'échange", "_smb._tcp", 445], ["bibliotheque", "Bibliothèque de l'île", "_rsync._tcp", 873],
 	["poste", "Poste de Port-Aube", "_imap._tcp", 143], ["quai", "quai", "_ssh._tcp", 22], ["phare", "Phare-Relais", "_ssh._tcp", 22]];
-var TYPES_AVAHI_ILE = { "_ipp._tcp": "Internet Printer", "_smb._tcp": "Microsoft Windows Network", "_rsync._tcp": "Rsync", "_imap._tcp": "IMAP Mail Access", "_ssh._tcp": "SSH Remote Terminal", "_http._tcp": "Web Site", "_workstation._tcp": "Workstation" };
+var TYPES_AVAHI_ILE = { "_ipp._tcp": "Internet Printer", "_smb._tcp": "SMB File Sharing", "_rsync._tcp": "Rsync", "_imap._tcp": "IMAP Mail Access", "_ssh._tcp": "SSH Remote Terminal", "_http._tcp": "Web Site", "_workstation._tcp": "Workstation" };
 function servicesAvahiIle(h){
 	var l = SERVICES_AVAHI_ILE.filter(function(s){ return estHoteIle(s[0]); }).map(function(s){ return { hote: s[0], nom: s[1], type: s[2], port: s[3] }; });
 	// Les fichiers /etc/avahi/services/*.service de chaque machine où avahi-daemon tourne.
