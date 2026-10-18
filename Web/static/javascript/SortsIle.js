@@ -69,7 +69,7 @@ function dateGmtIle(h, ms){
 }
 function evenementIle(h, cmd, infos){
 	var e = { type: "ile", hote: h, cmd: cmd };
-	for (var k in (infos || {})) if (infos.hasOwnProperty(k)) e[k] = infos[k];
+	for (var k in (infos || {})) if (infos.hasOwnProperty(k)) e[k === "type" ? "typeInfo" : k] = infos[k];
 	GameEvents.fire(e);
 }
 /* Les alias des unités de Debian : systemctl restart bind9 relance named. */
@@ -1212,4 +1212,23 @@ Shell.sorts.dig = function(args, io){
 		else if (q.statut === "NXDOMAIN") texte += astuce(io, "NXDOMAIN : ce nom n'existe pas dans la zone servie par " + hs + ".");
 	}
 	return texte;
+};
+
+/* mkdir -p sur une machine de l'île : chaque dossier manquant du chemin est créé, l'un après l'autre (avec les mêmes droits). */
+var MKDIR_AVANT_ILE = Shell.sorts.mkdir;
+Shell.sorts.mkdir = function(args, io){
+	var h = ileIci();
+	var parents = args.some(function(a){ return /^-[a-zA-Z]*p/.test(a) || a === "--parents"; });
+	if (!h || !parents) return MKDIR_AVANT_ILE.apply(this, arguments);
+	var options = args.filter(function(a){ return a.charAt(0) === "-"; }), sorties = [];
+	args.filter(function(a){ return a.charAt(0) !== "-"; }).forEach(function(a){
+		var abs = cheminNormal(a.charAt(0) === "/" ? a : cheminDuLieuMachine(current_room) + "/" + a), x = "";
+		abs.split("/").filter(Boolean).forEach(function(m){
+			x += "/" + m;
+			if (dossierHote(h, x)) return;
+			var s = MKDIR_AVANT_ILE.call(this, options.concat([x]), io);
+			if (s) sorties.push(s);
+		});
+	});
+	return sorties.join("\n");
 };

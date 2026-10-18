@@ -137,6 +137,7 @@ function texteMessageIle(h, msg, destinataire){
 function rangerMaildirIle(h, dossier, msg, texte, proprietaire, sousDossier){
 	var base = dossier.replace(/\/$/, "") + (sousDossier ? "/." + sousDossier : "");
 	moteurSeul(function(){
+		if (sousDossier) ["", "/new", "/cur", "/tmp"].forEach(function(s){ creerDossierHote(h, dossier.replace(/\/$/, "") + s, { owner: proprietaire, mode: "rwx------" }); });
 		["", "/new", "/cur", "/tmp"].forEach(function(s){
 			creerDossierHote(h, base + s, { owner: proprietaire, mode: "rwx------" });
 		});

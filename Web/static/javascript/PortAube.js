@@ -439,7 +439,8 @@ var PosteIle = poserMachineIle("poste", { ip: IP_ILE.poste, image: "loc_baie_ile
 		D("/etc/opendkim/keys", { owner: "opendkim" });
 		D("/home/capitaine", { owner: "capitaine", mode: "rwxr-x---" });
 		binairesIle(P, ["/usr/sbin/postfix", "/usr/sbin/postconf", "/usr/sbin/sendmail", "/usr/bin/mailq", "/usr/sbin/postqueue", "/usr/sbin/postsuper", "/usr/bin/mail",
-			"/usr/sbin/dovecot", "/usr/bin/doveadm", "/usr/bin/doveconf", "/usr/bin/sievec", "/usr/sbin/opendkim-genkey", "/usr/sbin/sssd", "/usr/sbin/sss_cache"]);
+			"/usr/sbin/dovecot", "/usr/bin/doveadm", "/usr/bin/doveconf", "/usr/bin/sievec", "/usr/lib/dovecot/dovecot-lda", "/usr/sbin/opendkim-genkey", "/usr/sbin/sssd", "/usr/sbin/sss_cache"]);
+		D("/home/capitaine/sieve", { owner: "capitaine", mode: "rwx------" });
 	} });
 var GreniersIle = poserMachineIle("greniers", { ip: IP_ILE.greniers, image: "loc_baie_ile.gif", materiel: { srv: 500 },
 	intro: "La machine greniers : les Greniers de la cité. Un grand disque, /srv/homes, où chaque habitant aura son dossier ; personne ne peut encore y monter.",
@@ -460,6 +461,7 @@ var GreniersIle = poserMachineIle("greniers", { ip: IP_ILE.greniers, image: "loc
 	} });
 var HalleIle = poserMachineIle("halle", { ip: IP_ILE.halle, image: "loc_baie_ile.gif", sss: true,
 	intro: "La machine halle : la Halle d'échange. Samba y est installé, pour que chacun dépose et prenne ; aucun partage n'est encore ouvert.",
+	comptes: [["depot", 1002, 1002, "Le dépôt des devoirs,,,", "/home/depot", "/bin/bash", "$y$j9T$" + hexDe("depot-sel", 22) + "$" + hexDe("depot-mdp", 43)]], groupes: [["depot", 1002, ""]],
 	unites: [["smbd.service", true, true], ["sssd.service", true, true]],
 	construire: function(P, D){
 		P("/etc/samba/smb.conf", SMB_CONF_DEBIAN);
@@ -467,6 +469,7 @@ var HalleIle = poserMachineIle("halle", { ip: IP_ILE.halle, image: "loc_baie_ile
 		D("/var/log/samba");
 		D("/etc/sssd", { mode: "rwx--x--x" });
 		P("/etc/sssd/sssd.conf", SSSD_CONF_BATISSEURS, { mode: "rw-------" });
+		D("/home/depot", { owner: "depot", mode: "rwxr-x---" });
 		binairesIle(P, ["/usr/sbin/smbd", "/usr/bin/testparm", "/usr/bin/smbpasswd", "/usr/bin/pdbedit", "/usr/bin/smbclient", "/usr/sbin/sssd", "/usr/sbin/sss_cache"]);
 	} });
 var RegistreIle = poserMachineIle("registre", { ip: IP_ILE.registre, image: "loc_baie_ile.gif",
@@ -551,6 +554,10 @@ var RiveIle = poserMachineIle("rive", { ip: IP_ILE.rive, image: "loc_baie_ile.gi
 	intro: "La machine rive : sur le continent, dans l'ancien campus. De l'autre côté de la mer, elle attend un pont pour parler à l'île.",
 	construire: function(P, D){
 		D("/etc/wireguard", { mode: "rwx------" });
+		var prive = cleWgIle("rive-prive-sara");
+		P("/etc/wireguard/privatekey", prive + "\n", { mode: "rw-------" });
+		P("/etc/wireguard/publickey", publiqueWgIle(prive) + "\n", { mode: "rw-r--r--" });
+		P("/etc/wireguard/wg0.conf", "[Interface]\nPrivateKey = " + prive + "\nAddress = 10.99.0.2/24\nListenPort = 51820\n\n[Peer]\n# Le phare de Port-Aube : sa clé publique, à recopier ici à la place de A_REMPLACER.\nPublicKey = A_REMPLACER\nAllowedIPs = 10.99.0.1/32\n", { mode: "rw-------" });
 		binairesIle(P, ["/usr/bin/wg", "/usr/bin/wg-quick"]);
 	} });
 
