@@ -594,7 +594,7 @@ function seminerCh6(){
 /* ------------------------------------------------------------------ */
 
 function relierLumen(){
-	var parent = state.has("ch5Ouvert") || !state.has("ch6Direct") ? HallBastion : SalleServeurs;
+	var parent = (state.has("ch5Ouvert") && !state.has("ch5ApresCh6")) || !state.has("ch6Direct") ? HallBastion : SalleServeurs;
 	if (parent.children.indexOf(HallLumen) === -1) relier(parent, HallLumen);
 }
 

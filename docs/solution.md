@@ -31,6 +31,7 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
 
 - [Le barème](#le-barème)
 - [Le fil de l'histoire](#le-fil-de-lhistoire)
+- [Changer de chapitre, et l'aide des commandes du jeu](#changer-de-chapitre-et-laide-des-commandes-du-jeu)
 - [Chapitre 1 : Terminus](#chapitre-1--terminus-lépreuve-de-première-année)
   1. [La Maison et l'Académie](#1-la-maison-et-lacadémie)
   2. [La grotte et le Portail](#2-la-grotte-et-le-portail)
@@ -182,6 +183,15 @@ Le chapitre 6 (Lumen) s'ouvre enfin sous le Bastion : une cité souterraine, éc
 Au chapitre 7, l'école fonde Port-Aube sur une île, et la recrue bâtit la cité en une journée, avant la marée. Au chapitre 8 (la Flotte noire), une flotte ennemie se rassemble derrière le phare noir, et ses navires portent des conteneurs : au Grand Port de Port-Aube, la recrue arrive Mousse, sans avoir jamais touché un conteneur, et doit, en trois jours, tenir quatorze quais (de la première caisse à l'escadre Swarm), gagner ses galons d'épreuve en épreuve jusqu'à Amiral, puis tenir la bataille de l'aube : un navire sombre, une mise à jour piégée arrive, et on la refuse en lisant son empreinte. Après la victoire, les Labels de l'image de l'éclaireur portent l'empreinte d'une clé de chez nous : quelqu'un, à Cybersup, construit leurs navires. Tout est défensif : l'image de l'éclaireur est inerte (un fichier-témoin, une phrase, des Labels), et ne se lance jamais.
 
 Hormis Laurent, tous les personnages sont inventés. Ils portent des prénoms de pionniers de l'informatique (Ada, Grace, Hedy, Dennis, Linus, Margaret, Radia, Vint, Evi, Ken, Barbara, Tim, Annie, Alan ; au Bastion, Fernando, Butler, Tatu, Jean, Evelyn, Edsger, Joan, Robert, Katherine, Ralph, Adele ; à Lumen, Seymour, Kathleen, Ida, Gordon, Niklaus, Sophie, Lynn, Mary, Betty, Donald, Dorothy, Ruth, Charles, John, Kay, Klara). Les six habitants des quêtes annexes de Lumen ne portent que leur métier (la Logeuse, l'Allumeur, la Veilleuse, l'Horloger, l'Imprimeur, la Postière). Au Grand Port, les quatorze maîtres du port s'appellent Kylian, Julien, Grégoire, Chahla, Adonis, Eden, Megane, Jahmal, Déborah, Elias, Remi, Ian, Soufiane et Arnaud, et ses six habitants Anissa, Edson, Mina, Ronan, Idrissa et Neil.
+
+## Changer de chapitre, et l'aide des commandes du jeu
+
+Ces commandes du jeu ne font partie d'aucune étape : la solution ci-dessous suit l'ordre de l'histoire et ne s'en sert pas.
+
+- `chapitres` (ou `chapitre` sans numéro) : les huit chapitres, leur état (en cours, ouvert, terminé, fermé, non joué), la note de chacun, le chapitre où l'on est et comment s'y rendre.
+- `aller N` : pour un chapitre ouvert, emmène à son lieu d'entrée (les connexions `ssh` en cours sont fermées ; pour la Crypte, une connexion à citadelle est ouverte, comme avec `ssh citadelle`), en fait le chapitre en cours et affiche son étape. Pour un chapitre 4 à 8 pas encore ouvert, propose de l'ouvrir en renfort (réponse `oui`) : les autres chapitres gardent leur progression et leur note, les chapitres sautés restent non joués, les sorts des chapitres d'avant sont prêtés et rapportent leurs XP s'ils sont ensuite appris pour de vrai dans leur chapitre. Le chapitre en cours suit ensuite le joueur (une étape franchie, l'entrée de l'Académie, du Bastion, de Lumen, de Port-Aube ou du Grand Port passée), et seule son horloge avance : les autres attendent.
+- Refus : pendant l'épreuve finale ; un chapitre 1, 2 ou 3 fermé (ils s'ouvrent dans l'ordre de l'histoire) ; un chapitre 4 à 8 avant d'avoir battu le Sorcier Noir. Au tout début d'une partie neuve, `aller N` fait un départ direct, comme `chapitre N`.
+- `help COMMANDE`, `COMMANDE --help` et `man COMMANDE` : la page d'une commande du jeu, avec toutes ses sous-commandes (`help badges` : `badges N`, `badges reseau`, `badges dns`...). `help SORT` montre la page d'un sort déjà appris.
 
 ## Chapitre 1 : Terminus (l'épreuve de première année)
 

@@ -90,7 +90,7 @@ link_rooms(GrandPortCh8, BoiteGrandPortCh8);
 
 /* Le Grand Port s'ouvre depuis le quai de Port-Aube ; au départ direct, depuis l'Embarcadère. */
 function relierGrandPortCh8(){
-	var parent = state.has("ch7Ouvert") || !state.has("ch8Direct") ? HallPortAube : Embarcadere;
+	var parent = (state.has("ch7Ouvert") && !state.has("ch7ApresCh8")) || !state.has("ch8Direct") ? HallPortAube : Embarcadere;
 	if (parent === Embarcadere && Cybersup.children.indexOf(Embarcadere) === -1) relier(Cybersup, Embarcadere);
 	if (parent === HallPortAube && Cybersup.children.indexOf(Embarcadere) === -1) relier(Cybersup, Embarcadere);
 	if (parent.children.indexOf(GrandPortCh8) === -1) relier(parent, GrandPortCh8);

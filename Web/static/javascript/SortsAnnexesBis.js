@@ -263,6 +263,8 @@ var LANCER_SCRIPT_AVANT_ANNEXES_BIS = Shell.lancerScript;
 Shell.lancerScript = function(chemin, io, direct, args, options){
 	var it = null;
 	try { var r = Shell.chercher(chemin, io, "bash"); it = r.node instanceof Item ? Shell.suivre(r.node, "bash") : null; } catch (e){ it = null; }
+	// Un raccourci peut mener à un lieu (ou à rien) : seul un objet a un texte à lire.
+	if (!(it instanceof Item) || typeof it.getText !== "function") it = null;
 	if (it && /\r\n/.test(it.getText())){
 		var texte = it.getText();
 		if (direct && /^#!/.test(texte) && Shell.bit(it, "x", io)){

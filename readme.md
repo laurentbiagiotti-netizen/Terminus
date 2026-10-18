@@ -179,6 +179,10 @@ Au premier lancement, le jeu affiche `terminus login:` : on tape son prénom (il
 
 **Des succès** (`succes`), **un chrono façon speedrun** (`chrono`, temps de passage à chaque étape), **des sons 8 bits** (`son`, coupés par défaut) et **une barre de touches** sur téléphone (Tab, ↑, `|`, `~`, `/`, `>`, `*`...).
 
+**Changer de chapitre en cours de partie** : `chapitres` (ou `chapitre` sans numéro) montre les huit chapitres, leur état (en cours, ouvert, terminé, fermé, non joué), la note de chacun et comment s'y rendre. `aller N` emmène à l'entrée d'un chapitre ouvert (les connexions `ssh` en cours sont fermées, l'image du lieu et l'étape en cours s'affichent) et en fait le chapitre en cours : la barre d'état, `quetes`, `indice` et `help` le suivent. Un chapitre 4 à 8 pas encore ouvert s'ouvre « en renfort », après confirmation, sans rien perdre : les autres chapitres gardent leur progression et leur note, les chapitres sautés restent non joués, et les sorts des chapitres d'avant sont prêtés (appris ensuite pour de vrai dans leur chapitre, ils rapportent leurs XP comme d'habitude). Seule l'horloge du chapitre où l'on est avance : la bombe de l'Académie, l'aube du Bastion, la Longue Nuit, la marée et la flotte attendent qu'on revienne. Refusé pendant l'épreuve finale, pour un chapitre 1, 2 ou 3 fermé (ils s'ouvrent dans l'ordre de l'histoire) et avant d'avoir battu le Sorcier Noir ; au tout début d'une partie neuve, `aller N` fait un départ direct, comme `chapitre N`.
+
+**Une aide pour chaque commande du jeu** : `help COMMANDE`, `COMMANDE --help` et `man COMMANDE` affichent la même page, avec toutes les sous-commandes et options qui existent vraiment et des exemples (`help badges` : `badges`, `badges N`, `badges reseau`, `badges dns` pour relire la leçon d'un badge ; `help quetes`, `help indice`, `help aller`...). `help SORT` montre la page d'un sort déjà appris, comme `SORT --help`.
+
 ## Pour les formateurs
 
 Le déroulé complet, avec la solution de chaque étape et le barème, se trouve dans [docs/solution.md](docs/solution.md).
@@ -244,6 +248,8 @@ Le code est du JavaScript sans dépendance ni étape de construction.
 | `Web/static/javascript/Chapitre8.js` | le Grand Port (chapitre 8, numéro interne 9) : les quatorze quais, l'horloge et les nuits, les rangs et leurs épreuves, les 44 étapes validées sur l'état réel des machines, l'assaut de l'aube, la bataille, le rapport, le cliffhanger, l'ouverture, le départ direct et le certificat |
 | `Web/static/javascript/Port.js` | la vie du Grand Port : les quatorze maîtres vivants et leurs manœuvres, leurs 84 défis et les cinq défis d'honneur, les badges, `port`, `galons`, le Bestiaire et les noms imagés des sorts |
 | `Web/static/javascript/HabitantsPort.js` | les six quêtes annexes du Grand Port et leurs habitants |
+| `Web/static/javascript/Navigation.js` | `chapitres` et `aller N` : la liste des chapitres, le passage d'un chapitre ouvert à l'autre, l'ouverture d'un chapitre 4 à 8 en renfort en cours de partie (les sorts prêtés, le chapitre en cours, les horloges en pause) |
+| `Web/static/javascript/AideDuJeu.js` | la page d'aide de chaque commande du jeu : `help COMMANDE`, `COMMANDE --help`, `man COMMANDE` |
 | `Web/static/javascript/SortsAnnexes.js`, `SortsAnnexesBis.js`, `SortsAnnexesTer.js` | les sorts des quêtes annexes des chapitres 2 à 5 et leurs pages de manuel : matériel, manuel, nc, ssh (config, agent, rebond, tunnels, known_hosts, certificats), curl, hexdump, liens, journaux vivants, timeout, mots de passe ; encodages, envsubst, numfmt, bc, getopts, mkfifo, sqlite3 ; pwscore, sudoreplay, openssl enc, cmp |
 | `Web/static/javascript/HabitantsCampus.js`, `HabitantsCrypte.js`, `HabitantsAcademie.js`, `HabitantsBastion.js` | les six quêtes annexes de chacun des chapitres 2 à 5, leurs habitants, leurs machines et leurs fichiers |
 | `Web/static/javascript/Examen.js` | l'épreuve finale : la Forteresse, ses quarante épreuves et ses personnages, le quiz de Steve, la note, `examen`, `kamikaze` et `verifier` |
@@ -285,6 +291,7 @@ Le code est du JavaScript sans dépendance ni étape de construction.
 | `tests/bastion-moteur-a.js`, `tests/bastion-moteur-b.js` | les sorts du durcissement, sur une machine de test : comptes, sudo, SSH, systemd, paquets (a), Apache, TLS, noyau, audit, journaux, AppArmor, fail2ban, lynis (b) |
 | `tests/examen.js` | joue l'épreuve finale de bout en bout, puis un kamikaze, et vérifie la note, les badges, le sceau, le code du diplôme, la reprise après un rechargement et celle d'une vieille sauvegarde |
 | `tests/regressions.js` | rejoue chaque bug trouvé lors de l'audit, pour qu'il ne revienne pas, et la reprise de vieilles sauvegardes faites avant le chapitre 4, avant le chapitre 5 et avant le chapitre 7 |
+| `tests/navigation.js` | l'aide des commandes du jeu (une page par commande, les options annoncées essayées une à une, `help` pas plus long qu'avant), `chapitres`, `aller N` vers un chapitre ouvert (connexions ssh fermées), le Bastion ouvert en renfort en pleine panne puis le retour à la panne intacte (notes, étapes, horloges, sorts prêtés, sauvegarde), l'Académie en renfort après un départ direct au Bastion, et les cas refusés (épreuve finale, chapitre 1 pas fini, chapitres 1 à 3 fermés) |
 | `tests/interpreteur.js` | l'interpréteur de shell : plus de 200 scripts dont la sortie et le statut doivent être ceux de bash (des scripts réalistes de B2 et B3 compris), puis la saisie sur plusieurs lignes, les scripts, les messages d'erreur, les garde-fous, l'API et les événements ; `node tests/interpreteur.js --bash` revérifie les attendus avec le vrai bash |
 | `tests/texte.js` | compare grep, sed, awk, sort, uniq, tr, head, tail, wc, cut, nl, rev, fold aux vrais outils GNU (plus de 400 cas), puis vérifie ce qui est propre au jeu ; `node tests/texte.js --gnu` revérifie les attendus avec GNU grep, sed et gawk s'ils sont installés |
 | `tests/arcanes.js` | compare jq, xargs, find, paste, join, comm, column, tac, diff, patch et rsync aux vrais outils (plus de 700 cas), puis vérifie ce qui est propre au jeu (codes de retour, événements, sudo, âge des objets, at, crontab -e, timers) ; `node tests/arcanes.js --gnu` revérifie les attendus avec les vrais outils s'ils sont installés |
@@ -297,6 +304,7 @@ node tests/parcours.js
 node tests/solution.js
 node tests/examen.js
 node tests/regressions.js
+node tests/navigation.js
 node tests/texte.js
 node tests/interpreteur.js
 node tests/arcanes.js

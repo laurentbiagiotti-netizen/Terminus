@@ -47,7 +47,9 @@ var sorts = ["ls", "cd", "pwd", "less", "help", "man", "clear", "exit", "mv", "c
 	// Les sorts de la Tour de Guet (SortsGuet.js) et le chapitre 5 (le Bastion) : son plan, ses tours, ses pare-feu.
 	"apachectl", "apache2ctl", "a2enmod", "a2dismod", "a2enconf", "a2disconf", "a2ensite", "a2dissite", "getcap", "setcap", "mount", "findmnt", "lsmod", "modprobe",
 	"grub-mkpasswd-pbkdf2", "update-grub", "grub-mkconfig", "cryptsetup", "auditctl", "augenrules", "ausearch", "aureport", "logger", "rsyslogd", "logrotate",
-	"aa-status", "aa-enforce", "aa-complain", "aa-disable", "apparmor_parser", "lynis", "aide", "nft", "sysctl", "fail2ban-client", "rkhunter", "rempart"];
+	"aa-status", "aa-enforce", "aa-complain", "aa-disable", "apparmor_parser", "lynis", "aide", "nft", "sysctl", "fail2ban-client", "rkhunter", "rempart",
+	// Changer de chapitre (Navigation.js).
+	"chapitres", "aller"];
 var options = ["-a", "-l", "-la", "-r", "-rf", "-n", "-n 3", "-9", "-s", "-c", "-i", "-v", "-u", "-d:", "-f1", "-f", "-x", "-tf", "-xf", "-cf",
 	"--help", "-", "--", "-z", "-c", "-d", "-tlnp", "-perm -4000", "-perm /u=s", "-perm", "-user root", "2>/dev/null", "2>err", "2>>err", "2>&1", "u-s", "4755", "+t", "-1", "-0", "-99999", "+x", "-x", "755", "000", "u+rwx", "o-r", "a=", "999", "-name", "-type", "d", "f", "-L", "-u sorcier",
 	"-exec cat {} \\;", "-exec rm {} +", "-exec", "{}", "\\;", "-delete", "-o", "!", "\\(", "\\)", "-size +1k", "-size -1", "-empty", "-maxdepth 1", "-mindepth 2", "-mmin -5",

@@ -247,6 +247,8 @@ function GameState(){
 	this.debutChapitre9 = null;
 	this.dateVictoire9 = null;
 	this.ch8 = typeof etatCh8Initial === "function" ? etatCh8Initial() : {};
+	// Changer de chapitre en cours de partie (Navigation.js) : le chapitre choisi, les sorts prêtés par un renfort.
+	this.navigation = { actif: false, choisi: null, pretes: {} };
 	// Succès et chronomètre
 	this.succes = {};          // succès débloqués
 	this.chronos = {};         // temps de jeu au moment où chaque étape a été franchie
@@ -283,6 +285,15 @@ GameState.prototype.setCurrentRoom = function(newRoom){
 };
 
 /* ---------------- sorts ---------------- */
+
+/* Un sort prêté (aller N, le renfort en cours de partie) : utilisable, mais pas encore appris dans son chapitre. */
+GameState.prototype.prete = function(sort){
+	return !!(this.navigation && this.navigation.pretes && this.navigation.pretes[sort]);
+};
+/* Un sort vraiment appris (les tableaux et le bulletin ne comptent pas les sorts prêtés). */
+GameState.prototype.appris = function(sort){
+	return !!this.spells[sort] && !this.prete(sort);
+};
 
 GameState.prototype.knows = function(sort){
 	if (sort === "vi") sort = "vim"; // vi est l'autre nom de vim
@@ -335,7 +346,7 @@ function numeroAffiche(chapitre){
 
 GameState.prototype.nbSortsChapitre1 = function(){
 	var n = 0;
-	for (var i = 0; i < ORDRE_DES_SORTS.length; i++){ if (this.spells[ORDRE_DES_SORTS[i]]) n++; }
+	for (var i = 0; i < ORDRE_DES_SORTS.length; i++){ if (this.appris(ORDRE_DES_SORTS[i])) n++; }
 	return n;
 };
 
@@ -349,7 +360,9 @@ GameState.prototype.knownSpells = function(){
 };
 
 GameState.prototype.learn = function(sort){
-	if (this.spells[sort]) return;
+	if (this.spells[sort] && !this.prete(sort)) return;
+	// Un sort prêté par un renfort (Navigation.js), appris ici pour de vrai : il rapporte ses XP, comme d'habitude.
+	if (this.prete(sort)) delete this.navigation.pretes[sort];
 	this.spells[sort] = true;
 	var chapitre = chapitreDuSort(sort);
 	if (chapitre === 2) this.xp2 += XP_SORT_APPRIS;
@@ -750,7 +763,7 @@ GameState.prototype.bulletin = function(){
 	for (var i = 0; i < BLOCS_DE_COMPETENCES.length; i++){
 		var bloc = BLOCS_DE_COMPETENCES[i], points = 0, utilises = 0;
 		for (var k = 0; k < bloc.sorts.length; k++){
-			if (this.spells[bloc.sorts[k]]) points += 0.5;
+			if (this.appris(bloc.sorts[k])) points += 0.5;
 			if (this.usages[bloc.sorts[k]]){ points += 0.5; utilises++; }
 		}
 		var note = Math.round(points / bloc.sorts.length * 40) / 2;
@@ -771,7 +784,7 @@ GameState.prototype.texteDuBulletin = function(){
 	for (var i = 0; i < BLOCS_DE_COMPETENCES.length; i++){
 		for (var k = 0; k < BLOCS_DE_COMPETENCES[i].sorts.length; k++){
 			var sort = BLOCS_DE_COMPETENCES[i].sorts[k];
-			if (this.spells[sort] && !this.usages[sort]) manquants.push(sort);
+			if (this.appris(sort) && !this.usages[sort]) manquants.push(sort);
 		}
 	}
 	if (manquants.length > 0) lignes.push(C.gris("Sorts connus mais jamais lancés : " + manquants.join(", ")));
@@ -840,7 +853,7 @@ GameState.prototype.tableauXP = function(){
 	var utilises = 0, oublies = [];
 	for (i = 0; i < ORDRE_DES_SORTS.length; i++){
 		if (this.usages[ORDRE_DES_SORTS[i]]) utilises++;
-		else if (this.spells[ORDRE_DES_SORTS[i]]) oublies.push(ORDRE_DES_SORTS[i]);
+		else if (this.appris(ORDRE_DES_SORTS[i])) oublies.push(ORDRE_DES_SORTS[i]);
 	}
 	var lieux = lieuxVisitables(), visites = 0;
 	for (i = 0; i < lieux.length; i++){ if (this.visited[lieux[i].id] && lieux[i] !== Home) visites++; }
@@ -921,7 +934,7 @@ function lieuxAVoir(etat, chapitre){
 GameState.prototype.tableauXP3 = function(){
 	var principales = QUETES_PANNE.filter(function(q){ return this.quests[q.id]; }, this).length;
 	var secondaires = QUETES_SECONDAIRES_PANNE.filter(function(q){ return this.quests[q.id]; }, this).length;
-	var appris = ORDRE_DES_SORTS_3.filter(function(x){ return this.spells[x]; }, this).length;
+	var appris = ORDRE_DES_SORTS_3.filter(function(x){ return this.appris(x); }, this).length;
 	var utilises = ORDRE_DES_SORTS_3.filter(function(x){ return this.usages[x]; }, this).length;
 	var lieux = lieuxVisitables(3), visites = lieux.filter(function(l){ return this.visited[l.id]; }, this).length;
 	function ligne(nom, fait, total){
@@ -944,7 +957,7 @@ GameState.prototype.tableauXP3 = function(){
 GameState.prototype.tableauXP2 = function(){
 	var principales = QUETES_CHAPITRE2.filter(function(q){ return this.quests[q.id]; }, this).length;
 	var secondaires = QUETES_SECONDAIRES_2.filter(function(q){ return this.quests[q.id]; }, this).length;
-	var appris = ORDRE_DES_SORTS_2.filter(function(x){ return this.spells[x]; }, this).length;
+	var appris = ORDRE_DES_SORTS_2.filter(function(x){ return this.appris(x); }, this).length;
 	var utilises = ORDRE_DES_SORTS_2.filter(function(x){ return this.usages[x]; }, this).length;
 	var lieux = lieuxVisitables(2), visites = lieux.filter(function(l){ return this.visited[l.id]; }, this).length;
 	function ligne(nom, fait, total){
@@ -968,7 +981,7 @@ GameState.prototype.tableauXP5 = function(){
 	var principales = QUETES_CH4.filter(function(q){ return this.quests[q.id]; }, this).length;
 	var secondaires = (typeof QUETES_SECONDAIRES_CH4 !== "undefined" ? QUETES_SECONDAIRES_CH4 : []).filter(function(q){ return this.quests[q.id]; }, this).length;
 	var totalSec = typeof QUETES_SECONDAIRES_CH4 !== "undefined" ? QUETES_SECONDAIRES_CH4.length : 0;
-	var appris = ORDRE_DES_SORTS_5.filter(function(x){ return this.spells[x]; }, this).length;
+	var appris = ORDRE_DES_SORTS_5.filter(function(x){ return this.appris(x); }, this).length;
 	var utilises = ORDRE_DES_SORTS_5.filter(function(x){ return this.usages[x]; }, this).length;
 	var lieux = lieuxVisitables(5), visites = lieux.filter(function(l){ return this.visited[l.id]; }, this).length;
 	function ligne(nom, fait, total){
@@ -991,7 +1004,7 @@ GameState.prototype.tableauXP5 = function(){
 GameState.prototype.tableauXP6 = function(){
 	var principales = QUETES_CH5.filter(function(q){ return this.quests[q.id]; }, this).length;
 	var secondaires = QUETES_SECONDAIRES_CH5.filter(function(q){ return this.quests[q.id]; }, this).length;
-	var appris = ORDRE_DES_SORTS_6.filter(function(x){ return this.spells[x]; }, this).length;
+	var appris = ORDRE_DES_SORTS_6.filter(function(x){ return this.appris(x); }, this).length;
 	var utilises = ORDRE_DES_SORTS_6.filter(function(x){ return this.usages[x]; }, this).length;
 	var lieux = lieuxVisitables(6), visites = lieux.filter(function(l){ return this.visited[l.id]; }, this).length;
 	function ligne(nom, fait, total){
@@ -1014,7 +1027,7 @@ GameState.prototype.tableauXP6 = function(){
 GameState.prototype.tableauXP7 = function(){
 	var principales = QUETES_CH6.filter(function(q){ return this.quests[q.id]; }, this).length;
 	var secondaires = QUETES_SECONDAIRES_CH6.filter(function(q){ return this.quests[q.id]; }, this).length;
-	var appris = ORDRE_DES_SORTS_7.filter(function(x){ return this.spells[x]; }, this).length;
+	var appris = ORDRE_DES_SORTS_7.filter(function(x){ return this.appris(x); }, this).length;
 	var utilises = ORDRE_DES_SORTS_7.filter(function(x){ return this.usages[x]; }, this).length;
 	var lieux = lieuxVisitables(7), visites = lieux.filter(function(l){ return this.visited[l.id]; }, this).length;
 	function ligne(nom, fait, total){
@@ -1040,7 +1053,7 @@ GameState.prototype.tableauXP7 = function(){
 GameState.prototype.tableauXP8 = function(){
 	var principales = QUETES_CH7.filter(function(q){ return this.quests[q.id]; }, this).length;
 	var secondaires = QUETES_SECONDAIRES_CH7.filter(function(q){ return this.quests[q.id]; }, this).length;
-	var appris = ORDRE_DES_SORTS_8.filter(function(x){ return this.spells[x]; }, this).length;
+	var appris = ORDRE_DES_SORTS_8.filter(function(x){ return this.appris(x); }, this).length;
 	var utilises = ORDRE_DES_SORTS_8.filter(function(x){ return this.usages[x]; }, this).length;
 	var lieux = lieuxVisitables(8), visites = lieux.filter(function(l){ return this.visited[l.id]; }, this).length;
 	function ligne(nom, fait, total){
@@ -1066,7 +1079,7 @@ GameState.prototype.tableauXP8 = function(){
 GameState.prototype.tableauXP9 = function(){
 	var principales = QUETES_CH8.filter(function(q){ return this.quests[q.id]; }, this).length;
 	var secondaires = QUETES_SECONDAIRES_CH8.filter(function(q){ return this.quests[q.id]; }, this).length;
-	var appris = ORDRE_DES_SORTS_9.filter(function(x){ return this.spells[x]; }, this).length;
+	var appris = ORDRE_DES_SORTS_9.filter(function(x){ return this.appris(x); }, this).length;
 	var utilises = ORDRE_DES_SORTS_9.filter(function(x){ return this.usages[x]; }, this).length;
 	var lieux = lieuxVisitables(9), visites = lieux.filter(function(l){ return this.visited[l.id]; }, this).length;
 	function ligne(nom, fait, total){
@@ -1373,7 +1386,8 @@ GameState.prototype.journal = function(detail){
 	lignes.push("");
 	var pr = this.progression();
 	if (!this.has("chapitre1Saute")) lignes.push(C.cyan("Niveau " + pr.niveau + " : " + pr.titre) + C.gris("   " + pr.xp + " XP sur " + pr.max + " (détail : xp)"));
-	lignes.push(C.gris("Sorts appris : " + this.knownSpells().length + " sur " + tousLesSorts().length + ". Sorts lancés : " + this.nbCommandes + "."));
+	var pretes = this.knownSpells().filter(function(s){ return this.prete(s); }, this).length;
+	lignes.push(C.gris("Sorts appris : " + (this.knownSpells().length - pretes) + " sur " + tousLesSorts().length + (pretes ? " (et " + pretes + " prêtés par un renfort)" : "") + ". Sorts lancés : " + this.nbCommandes + "."));
 	return lignes.join("\n");
 };
 
@@ -2008,7 +2022,7 @@ GameState.prototype.save = function(){
 				xp7: this.xp7, malus7: this.malus7, debut7: this.debutChapitre7, dateVictoire7: this.dateVictoire7, ch6: this.ch6,
 				xp8: this.xp8, malus8: this.malus8, debut8: this.debutChapitre8, dateVictoire8: this.dateVictoire8, ch7: this.ch7,
 				xp9: this.xp9, malus9: this.malus9, debut9: this.debutChapitre9, dateVictoire9: this.dateVictoire9, ch8: this.ch8,
-				annexes: this.annexes || {}, xpAnnexes: this.xpAnnexes || 0,
+				annexes: this.annexes || {}, xpAnnexes: this.xpAnnexes || 0, navigation: this.navigation || null,
 			ici: current_room.path(),
 			avant: Shell.lieu_precedent ? Shell.lieu_precedent.path() : null,
 			ssh: Shell.pile_ssh.map(function(lieu){ return lieu.path(); }),
@@ -2129,6 +2143,8 @@ GameState.prototype.load = function(){
 			if (donnees.ch8) for (var cle9 in donnees.ch8){ if (donnees.ch8.hasOwnProperty(cle9)) this.ch8[cle9] = donnees.ch8[cle9]; }
 			this.annexes = donnees.annexes || {};
 			this.xpAnnexes = donnees.xpAnnexes || 0;
+			this.navigation = donnees.navigation || { actif: false, choisi: null, pretes: {} };
+			if (!this.navigation.pretes) this.navigation.pretes = {};
 			this.chronos = donnees.chronos || {};
 		this.examen = donnees.examen || null;
 		if (donnees.cron) this.cron = donnees.cron;

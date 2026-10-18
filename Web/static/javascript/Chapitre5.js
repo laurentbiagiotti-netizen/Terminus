@@ -1474,7 +1474,7 @@ function verifierChapitre5(){
 	var c = state.ch5;
 	if (!c.base) c.base = baseNuitCh5();
 	// Le passage vers le hall (aussi pour une vieille sauvegarde faite avant ce chapitre).
-	var parent = state.has("ch4Ouvert") || !state.has("ch5Direct") ? Academie : SalleServeurs;
+	var parent = (state.has("ch4Ouvert") && !state.has("ch4ApresCh5")) || !state.has("ch5Direct") ? Academie : SalleServeurs;
 	if (parent.children.indexOf(HallBastion) === -1) relier(parent, HallBastion);
 	declarerMondeBastion();
 	seminerCh5();
@@ -1497,7 +1497,7 @@ function etatChapitre5(nom){
 		case "ch5Ouvert":
 			if (!state.ch5 || typeof state.ch5 !== "object") state.ch5 = etatCh5Initial();
 			if (!state.ch5.base) state.ch5.base = baseNuitCh5();
-			relier(state.has("ch4Ouvert") || !state.has("ch5Direct") ? Academie : SalleServeurs, HallBastion);
+			relier((state.has("ch4Ouvert") && !state.has("ch4ApresCh5")) || !state.has("ch5Direct") ? Academie : SalleServeurs, HallBastion);
 			declarerMondeBastion();
 			if (!state.has("rejeuEnCours") && !state.has("ch5Direct")) say("Au fond de l'Académie, une poterne s'ouvre sur une cour pavée : le Bastion (cd Bastion). " +
 				C.gris("(Radio : « Grace : la recrue ? Laurent t'attend au Bastion. L'inspection est à l'aube, et la Nuée a juré de revenir avant. »)"));

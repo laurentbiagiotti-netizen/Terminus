@@ -1178,48 +1178,15 @@ function commencerChapitre2(cible){
 Shell.sorts.chapitre = function(args, io){
 	var demande = args[0];
 	var mission = state.has("chapitre1Saute");
-	if (demande === undefined){
-		var etat1 = state.has("victoire") ? (mission ? C.gris("non joué (renfort)") : C.vert("terminé")) : C.jaune("en cours");
-		var etat2 = state.quests["r_fin"] ? C.vert("terminé") : (state.has("panneSautee") ? C.gris("pas au programme (mission cyber)") : (state.has("panneOuverte") ? C.jaune("ouvert") : C.gris("fermé")));
-		var etat3 = state.quests["c_rapport"] ? C.vert("terminé") : (state.has("crypteOuverte") ? C.jaune("ouvert") : C.gris("fermé"));
-		var etat4 = state.quests["d_fin"] ? C.vert("terminé") : (state.has("ch4Ouvert") ? C.jaune("ouvert") : (state.has("ch5Direct") ? C.gris("non joué (renfort)") : C.gris("fermé")));
-		var etat5 = state.quests["h_rapport"] ? C.vert("terminé") : (state.has("ch5Ouvert") ? C.jaune("ouvert") : (state.has("ch6Direct") ? C.gris("non joué (renfort)") : C.gris("fermé")));
-		var etat6 = state.quests["m6_rapport"] ? C.vert("terminé") : (state.has("ch6Ouvert") ? C.jaune("ouvert") : (state.has("ch7Direct") ? C.gris("non joué (renfort)") : C.gris("fermé")));
-		var etat7 = state.quests["p7_rapport"] ? C.vert("terminé") : (state.has("ch7Ouvert") ? C.jaune("ouvert") : (state.has("ch8Direct") ? C.gris("non joué (renfort)") : C.gris("fermé")));
-		var etat8 = state.quests["n8_rapport"] ? C.vert("terminé") : (state.has("ch8Ouvert") ? C.jaune("ouvert") : C.gris("fermé"));
-		var conseil;
-		if (chapitre2Possible()) conseil = "La panne (chapitre 2) s'ouvre en battant le Sorcier Noir, la Crypte (chapitre 3) en réparant le réseau, l'Académie (chapitre 4) après la Crypte, le Bastion (chapitre 5) après l'Académie, Lumen (chapitre 6) après le Bastion, Port-Aube (chapitre 7) après Lumen, le Grand Port (chapitre 8) après Port-Aube. " +
-			"Si tu connais déjà les bases, tu peux aussi partir tout de suite : chapitre 2 (la panne), chapitre 3 (la mission cyber), chapitre 4 (l'Académie des Arcanes), chapitre 5 (le Bastion), chapitre 6 (Lumen), chapitre 7 (Port-Aube) ou chapitre 8 (le Grand Port).";
-		else if (state.quests["n8_rapport"]) conseil = "La flotte noire a viré de bord : ton CertificatGrandPort est dans ta Maison (cat ~/CertificatGrandPort).";
-		else if (state.has("ch8Ouvert")) conseil = "Le Grand Port est " + (state.has("ch8Direct") && !state.has("ch7Ouvert") ? "au bout de l'Embarcadère (cd ~/Cybersup/Embarcadere/GrandPort)" : "au bout du quai de Port-Aube (cd ~/Cybersup/Embarcadere/PortAube/GrandPort)") + ". Tape quetes pour l'étape en cours, port pour le plan, galons pour ton rang.";
-		else if (state.quests["p7_rapport"]) conseil = "Port-Aube brille : ton CertificatPortAube est dans ta Maison (cat ~/CertificatPortAube).";
-		else if (state.has("ch7Ouvert")) conseil = "Port-Aube est au large : cd ~/Cybersup/Embarcadere, puis cd PortAube. Tape quetes pour l'étape en cours, chantier pour le plan.";
-		else if (state.quests["m6_rapport"]) conseil = "Lumen brille : ton CertificatLumen est dans ta Maison (cat ~/CertificatLumen).";
-		else if (state.has("ch6Ouvert")) conseil = "Lumen est sous " + (state.has("ch6Direct") && !state.has("ch5Ouvert") ? "la SalleServeurs (cd ~/Cybersup/SalleServeurs, puis cd Lumen)" : "le Bastion (cd ~/Cybersup/SalleServeurs/Academie/Bastion, puis cd Lumen)") + ". Tape quetes pour l'étape en cours, lanterne pour le plan.";
-		else if (state.quests["h_rapport"]) conseil = "Le Bastion a tenu : ton CertificatBastion est dans ta Maison (cat ~/CertificatBastion).";
-		else if (state.has("ch5Ouvert")) conseil = "Le Bastion est au fond de " + (state.has("ch5Direct") && !state.has("ch4Ouvert") ? "la SalleServeurs (cd ~/Cybersup/SalleServeurs, puis cd Bastion)" : "l'Académie (cd ~/Cybersup/SalleServeurs/Academie, puis cd Bastion)") + ". Tape quetes pour l'étape en cours, rempart pour le plan.";
-		else if (state.quests["c_rapport"]) conseil = "Tout est terminé : tes certificats sont dans ta Maison (ls ~).";
-		else if (state.has("crypteOuverte")) conseil = "La Crypte est sous la Citadelle : ssh citadelle, puis cd Crypte. Tape quetes pour l'étape en cours.";
-		else if (state.has("panneOuverte")) conseil = "Radia t'attend au BatimentB de Cybersup : cd ~/Cybersup/BatimentB. Tape quetes pour l'étape en cours.";
-		else conseil = "Le chapitre 2 s'ouvre quand tu auras battu le Sorcier Noir.";
-		return C.gras("LES CHAPITRES") + "\n\n" +
-			"  1. Terminus      " + etat1 + "   L'épreuve de première année : Linux de base, jusqu'au Sorcier Noir. Note sur le Diplome.\n" +
-			"  2. La panne      " + etat2 + "   Le réseau de l'école est tombé : le réparer couche par couche, du câble au pare-feu. Note sur le CertificatReseau.\n" +
-			"  3. La Crypte     " + etat3 + "   La mission cyber : la Crypte, puis tout le réseau de l'école, jusqu'au rapport d'incident. Note sur le CertificatCyber.\n" +
-			"  4. L'Académie    " + etat4 + "   Niveau avancé : une nuit de réponse à incident face à la Nuée (jq, awk, sed, rsync, timers, scripts). Note sur le CertificatAvance.\n" +
-			"  5. Le Bastion    " + etat5 + "   Durcissement Linux : douze murs à dresser sur un serveur neuf avant l'inspection de l'aube. Note sur le CertificatBastion.\n" +
-			"  6. Lumen         " + etat6 + "   Exploitation Linux : rallumer seize quartiers d'une cité avant la Longue Nuit (disques, mémoire, services, RAID). Note sur le CertificatLumen.\n" +
-			"  7. Port-Aube     " + etat7 + "   Services réseau Linux : bâtir les dix maisons d'une cité avant la marée (DNS, courrier, NFS, Samba, LDAP, TLS, sauvegardes). Note sur le CertificatPortAube.\n" +
-			"  8. Le Grand Port " + etat8 + "   Les conteneurs, de zéro à héros : quatorze quais, cinq épreuves de rang et une bataille à l'aube (docker, compose, swarm). Note sur le CertificatGrandPort.\n\n" +
-			C.gris(conseil);
-	}
+	// La liste des chapitres (leur état, ta note, comment t'y rendre) : Navigation.js, comme chapitres.
+	if (demande === undefined) return texteDesChapitres();
 	if (demande === "1") return mission ?
 		"Tu es venu en renfort : le chapitre 1, ce sont les B1 qui l'ont passé ce matin. Le monde de Terminus reste ouvert si tu veux le visiter." :
 		"Le chapitre 1 commence dans ta Maison : cd, puis ls.";
 	if (demande === "4"){
-		if (state.has("ch4Ouvert")) return "Le chapitre 4 est déjà ouvert : l'Académie des Arcanes est au fond de la SalleServeurs (cd ~/Cybersup/SalleServeurs, puis cd Academie).";
+		if (state.has("ch4Ouvert")) return "Le chapitre 4 est déjà ouvert : l'Académie des Arcanes est au fond de la SalleServeurs (cd ~/Cybersup/SalleServeurs, puis cd Academie). aller 4 t'y emmène.";
 		if (!chapitre2Possible()) return "Tu as déjà commencé une partie : le chapitre 4 (l'Académie) s'ouvre à la fin de la Crypte, ou se choisit au tout début d'une partie neuve.\n" +
-			C.gris("(Pour partir directement à l'Académie : recommencer, puis chapitre 4.)");
+			C.gris("(Pour partir directement à l'Académie : recommencer, puis chapitre 4.)") + "\n" + conseilRenfort(4);
 		if (typeof commencerChapitre4 !== "function") return "Le chapitre 4 n'est pas encore disponible.";
 		term.demander("Partir directement à l'Académie des Arcanes (chapitre 4, niveau avancé) ? Les chapitres 1 à 3 ne seront pas notés pour toi. Tape oui pour confirmer : ", false, function(reponse){
 			if (String(reponse).trim().toLowerCase() !== "oui"){ term.echo("Bien. Les chapitres précédents t'attendent."); return; }
@@ -1228,9 +1195,9 @@ Shell.sorts.chapitre = function(args, io){
 		return "";
 	}
 	if (demande === "5"){
-		if (state.has("ch5Ouvert")) return "Le chapitre 5 est déjà ouvert : le Bastion est au fond de " + (state.has("ch5Direct") && !state.has("ch4Ouvert") ? "la SalleServeurs (cd ~/Cybersup/SalleServeurs, puis cd Bastion)." : "l'Académie (cd ~/Cybersup/SalleServeurs/Academie, puis cd Bastion).");
+		if (state.has("ch5Ouvert")) return "Le chapitre 5 est déjà ouvert : le Bastion est en " + Shell.cheminAffiche(HallBastion) + " (cd " + Shell.cheminAffiche(HallBastion) + "). aller 5 t'y emmène.";
 		if (!chapitre2Possible()) return "Tu as déjà commencé une partie : le chapitre 5 (le Bastion) s'ouvre à la fin de l'Académie, ou se choisit au tout début d'une partie neuve.\n" +
-			C.gris("(Pour partir directement au Bastion : recommencer, puis chapitre 5.)");
+			C.gris("(Pour partir directement au Bastion : recommencer, puis chapitre 5.)") + "\n" + conseilRenfort(5);
 		if (typeof commencerChapitre5 !== "function") return "Le chapitre 5 n'est pas encore disponible.";
 		term.demander("Partir directement au Bastion (chapitre 5, durcissement Linux) ? Les chapitres 1 à 4 ne seront pas notés pour toi. Tape oui pour confirmer : ", false, function(reponse){
 			if (String(reponse).trim().toLowerCase() !== "oui"){ term.echo("Bien. Les chapitres précédents t'attendent."); return; }
@@ -1239,9 +1206,9 @@ Shell.sorts.chapitre = function(args, io){
 		return "";
 	}
 	if (demande === "6"){
-		if (state.has("ch6Ouvert")) return "Le chapitre 6 est déjà ouvert : Lumen est sous " + (state.has("ch6Direct") && !state.has("ch5Ouvert") ? "la SalleServeurs (cd ~/Cybersup/SalleServeurs, puis cd Lumen)." : "le Bastion (cd ~/Cybersup/SalleServeurs/Academie/Bastion, puis cd Lumen).");
+		if (state.has("ch6Ouvert")) return "Le chapitre 6 est déjà ouvert : Lumen est en " + Shell.cheminAffiche(HallLumen) + " (cd " + Shell.cheminAffiche(HallLumen) + "). aller 6 t'y emmène.";
 		if (!chapitre2Possible()) return "Tu as déjà commencé une partie : le chapitre 6 (Lumen) s'ouvre à la fin du Bastion, ou se choisit au tout début d'une partie neuve.\n" +
-			C.gris("(Pour partir directement à Lumen : recommencer, puis chapitre 6.)");
+			C.gris("(Pour partir directement à Lumen : recommencer, puis chapitre 6.)") + "\n" + conseilRenfort(6);
 		if (typeof commencerChapitre6 !== "function") return "Le chapitre 6 n'est pas encore disponible.";
 		term.demander("Partir directement à Lumen (chapitre 6, exploitation Linux) ? Les chapitres 1 à 5 ne seront pas notés pour toi. Tape oui pour confirmer : ", false, function(reponse){
 			if (String(reponse).trim().toLowerCase() !== "oui"){ term.echo("Bien. Les chapitres précédents t'attendent."); return; }
@@ -1250,9 +1217,9 @@ Shell.sorts.chapitre = function(args, io){
 		return "";
 	}
 	if (demande === "7"){
-		if (state.has("ch7Ouvert")) return "Le chapitre 7 est déjà ouvert : Port-Aube est au large (cd ~/Cybersup/Embarcadere, puis cd PortAube).";
+		if (state.has("ch7Ouvert")) return "Le chapitre 7 est déjà ouvert : Port-Aube est au large (cd ~/Cybersup/Embarcadere, puis cd PortAube). aller 7 t'y emmène.";
 		if (!chapitre2Possible()) return "Tu as déjà commencé une partie : le chapitre 7 (Port-Aube) s'ouvre à la fin de Lumen, ou se choisit au tout début d'une partie neuve.\n" +
-			C.gris("(Pour partir directement à Port-Aube : recommencer, puis chapitre 7.)");
+			C.gris("(Pour partir directement à Port-Aube : recommencer, puis chapitre 7.)") + "\n" + conseilRenfort(7);
 		if (typeof commencerChapitre7 !== "function") return "Le chapitre 7 n'est pas encore disponible.";
 		term.demander("Partir directement à Port-Aube (chapitre 7, services réseau Linux) ? Les chapitres 1 à 6 ne seront pas notés pour toi. Tape oui pour confirmer : ", false, function(reponse){
 			if (String(reponse).trim().toLowerCase() !== "oui"){ term.echo("Bien. Les chapitres précédents t'attendent."); return; }
@@ -1261,9 +1228,9 @@ Shell.sorts.chapitre = function(args, io){
 		return "";
 	}
 	if (demande === "8"){
-		if (state.has("ch8Ouvert")) return "Le chapitre 8 est déjà ouvert : le Grand Port t'attend (" + (state.has("ch8Direct") && !state.has("ch7Ouvert") ? "cd ~/Cybersup/Embarcadere/GrandPort" : "cd ~/Cybersup/Embarcadere/PortAube/GrandPort") + ").";
+		if (state.has("ch8Ouvert")) return "Le chapitre 8 est déjà ouvert : le Grand Port t'attend (cd " + Shell.cheminAffiche(GrandPortCh8) + "). aller 8 t'y emmène.";
 		if (!chapitre2Possible()) return "Tu as déjà commencé une partie : le chapitre 8 (le Grand Port) s'ouvre à la fin de Port-Aube, ou se choisit au tout début d'une partie neuve.\n" +
-			C.gris("(Pour partir directement au Grand Port : recommencer, puis chapitre 8.)");
+			C.gris("(Pour partir directement au Grand Port : recommencer, puis chapitre 8.)") + "\n" + conseilRenfort(8);
 		if (typeof commencerChapitre8 !== "function") return "Le chapitre 8 n'est pas encore disponible.";
 		term.demander("Partir directement au Grand Port (chapitre 8, les conteneurs) ? Les chapitres 1 à 7 ne seront pas notés pour toi. Tape oui pour confirmer : ", false, function(reponse){
 			if (String(reponse).trim().toLowerCase() !== "oui"){ term.echo("Bien. Les chapitres précédents t'attendent."); return; }
@@ -1274,9 +1241,9 @@ Shell.sorts.chapitre = function(args, io){
 	if (demande !== "2" && demande !== "3") throw new ShellError("chapitre : il n'y a que les chapitres 1, 2, 3, 4, 5, 6, 7 et 8. Tape chapitre pour la liste.");
 	if (demande === "2"){
 		if (state.has("panneSautee")) return "Tu es venu en renfort pour la mission cyber : la panne du réseau ne fait pas partie de ta mission.";
-		if (state.has("panneOuverte")) return "Le chapitre 2 est déjà ouvert : Radia t'attend au BatimentB de Cybersup (cd ~/Cybersup/BatimentB).";
+		if (state.has("panneOuverte")) return "Le chapitre 2 est déjà ouvert : Radia t'attend au BatimentB de Cybersup (cd ~/Cybersup/BatimentB). aller 2 t'y emmène.";
 	} else if (state.has("crypteOuverte")){
-		return "Le chapitre 3 est déjà ouvert : la Crypte est sous la Citadelle. Depuis n'importe où : ssh citadelle, puis cd Crypte.";
+		return "Le chapitre 3 est déjà ouvert : la Crypte est sous la Citadelle. Depuis n'importe où : ssh citadelle, puis cd Crypte. aller 3 t'y emmène.";
 	}
 	if (!chapitre2Possible()){
 		if (demande === "3" && state.has("panneOuverte")) return "Le chapitre 3 s'ouvrira quand le réseau de l'école sera réparé (chapitre 2) : Radia t'attend au BatimentB de Cybersup.";
