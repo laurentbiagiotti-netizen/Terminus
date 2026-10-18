@@ -32,7 +32,7 @@ var CHAPITRES = [
 	{ affiche: 4, interne: 5, prefixe: "a4_", badge: "ami_ch4", nom: "Ami de l'Académie", plan: "grimoire", badges: "arcanes" },
 	{ affiche: 5, interne: 6, prefixe: "a5_", badge: "ami_ch5", nom: "Ami du Bastion", plan: "rempart", badges: "bastion" }
 ];
-var XP_MAX = { xpMax: 3860, xpMax3: 5790, xpMax2: 5625, xpMax5: 5175, xpMax6: 7500, xpMax7: 8795, xpMax8: 6120 };
+var XP_MAX = { xpMax: 3860, xpMax3: 5790, xpMax2: 5625, xpMax5: 5175, xpMax6: 7500, xpMax7: 8795, xpMax8: 6120, xpMax9: 9215 };
 
 /* Une partie neuve, en départ direct au chapitre affiché ch. Au Bastion, la clé est posée sur bastion. */
 function neuf(ch, stockage){
@@ -94,7 +94,7 @@ var FICHIERS = ["SortsAnnexes.js", "HabitantsCampus.js", "HabitantsCrypte.js", "
 /* ================================================================== */
 (function(){
 	var jeu = monde.nouveauMonde({});
-	egal(jeu.lire("QUETES_ANNEXES.length"), 36, "trente-six quêtes annexes en tout (six par chapitre, du 2 au 7)");
+	egal(jeu.lire("QUETES_ANNEXES.length"), 42, "quarante-deux quêtes annexes en tout (six par chapitre, du 2 au 8)");
 	CHAPITRES.forEach(function(c){
 		var a = jeu.lire("QUETES_ANNEXES.filter(function(a){ return a.id.indexOf('" + c.prefixe + "') === 0; }).map(function(a){ return [a.chapitre, a.etapes.length, !!a.souvenir, !!a.merci, !!a.lumiere, typeof a.ouverte]; })");
 		egal(a.length, 6, "chapitre " + c.affiche + " : six annexes");
@@ -114,13 +114,77 @@ var FICHIERS = ["SortsAnnexes.js", "HabitantsCampus.js", "HabitantsCrypte.js", "
 		verifier(jeu.lire("!!MANUEL[" + JSON.stringify(s) + "]"), "annexe : " + s + " a sa page de manuel");
 		verifier(jeu.lire("!!(MANUEL[" + JSON.stringify(s) + "] || {}).horsBareme"), "annexe : la page de " + s + " ne rapporte pas d'XP");
 	});
-	egal(jeu.lire("Object.keys(SORTS_DES_ANNEXES).filter(function(s){ return [ORDRE_DES_SORTS, ORDRE_DES_SORTS_2, ORDRE_DES_SORTS_3, ORDRE_DES_SORTS_5, ORDRE_DES_SORTS_6, ORDRE_DES_SORTS_7, ORDRE_DES_SORTS_8].some(function(o){ return o.indexOf(s) > -1; }); }).join(' ')"), "", "aucun sort d'annexe dans un barème");
+	egal(jeu.lire("Object.keys(SORTS_DES_ANNEXES).filter(function(s){ return [ORDRE_DES_SORTS, ORDRE_DES_SORTS_2, ORDRE_DES_SORTS_3, ORDRE_DES_SORTS_5, ORDRE_DES_SORTS_6, ORDRE_DES_SORTS_7, ORDRE_DES_SORTS_8, ORDRE_DES_SORTS_9].some(function(o){ return o.indexOf(s) > -1; }); }).join(' ')"), "", "aucun sort d'annexe dans un barème");
 	["lscpu", "lspci", "lsusb", "dmidecode", "apropos", "whatis", "hexdump", "readlink", "realpath", "timeout", "ssh-agent", "ssh-add", "pwgen", "iconv", "dos2unix", "envsubst", "printenv", "numfmt", "bc", "mkfifo", "sqlite3", "ssh-keyscan", "pwscore", "sudoreplay", "cmp"].forEach(function(s){
 		verifier(sorts.indexOf(s) > -1, "annexe : " + s + " est un sort d'annexe");
 	});
 	Object.keys(XP_MAX).forEach(function(k){ egal(jeu.lire("state." + k + "()"), XP_MAX[k], "barème inchangé : " + k); });
 	// Les sorts du chapitre qu'un habitant enseigne (nc, curl, useradd, sshd) restent ceux du barème : pas des sorts d'annexe.
 	["nc", "curl", "useradd", "sshd"].forEach(function(s){ verifier(sorts.indexOf(s) === -1 && deja.indexOf(s) > -1, s + " reste un sort du chapitre"); });
+})();
+
+/* ================================================================== */
+/* 2 bis. Le Grand Port (chapitre 8) : six annexes, aucune notion vue ailleurs */
+/* ================================================================== */
+(function(){
+	function vrai(j, expr, m){ verifier(j.lire(expr) === true, m + "  [" + expr + "]"); }
+	var jeu = monde.nouveauMonde({});
+	var a8 = jeu.lire("QUETES_ANNEXES.filter(function(a){ return a.id.indexOf('a8_') === 0; }).map(function(a){ return [a.id, a.chapitre, a.etapes.length, !!a.souvenir, !!a.merci, !!a.lumiere, a.habitant]; })");
+	egal(a8.length, 6, "chapitre 8 : six annexes");
+	egal(a8.map(function(x){ return x[0]; }).sort().join(" "), "a8_cabine a8_cloisons a8_continents a8_douanier a8_podman a8_relecteur", "chapitre 8 : les six annexes attendues");
+	egal(a8.map(function(x){ return x[6]; }).sort().join(" "), "Anissa Edson Idrissa Mina Neil Ronan", "chapitre 8 : les six habitants (prénoms de la liste)");
+	a8.forEach(function(x){
+		egal(x[1], 9, x[0] + " : numéro interne 9");
+		egal(x[2], 4, x[0] + " : quatre étapes");
+		verifier(x[3] && x[4] && x[5], x[0] + " : un souvenir, une fin, une lumière");
+	});
+	egal(jeu.lire("(AMIS_ANNEXES[9] || {}).badge"), "ami_ch8", "chapitre 8 : le badge Ami du Grand Port déclaré");
+	verifier(fs.existsSync(path.join(IMG, "badge_ami_ch8.gif")), "image de la médaille : badge_ami_ch8.gif");
+	jeu.lire("QUETES_ANNEXES.filter(function(a){ return a.id.indexOf('a8_') === 0; }).map(function(a){ return a.item().picturename; })").forEach(function(n){ verifier(fs.existsSync(path.join(IMG, path.basename(n))), "image du portrait : " + path.basename(n)); });
+	// La règle : les sorts des annexes du port ne sont enseignés par aucun chapitre, ni dans le barème du Grand Port.
+	var deja = jeu.lire("tousLesSorts()");
+	["podman", "unshare", "nsenter", "lsns", "skopeo", "hadolint", "systemd-nspawn", "machinectl"].forEach(function(x){
+		vrai(jeu, "!!SORTS_DES_ANNEXES[" + JSON.stringify(x) + "]", "annexe du port : " + x + " est un sort d'annexe");
+		verifier(deja.indexOf(x) === -1, "annexe du port : " + x + " n'est enseigné dans aucun chapitre");
+		vrai(jeu, "ORDRE_DES_SORTS_9.indexOf(" + JSON.stringify(x) + ") === -1", "annexe du port : " + x + " hors du barème du Grand Port");
+	});
+	// Les manœuvres des annexes (buildx, manifest) ne sont enseignées par aucun maître du port : seulement par Ronan.
+	["buildx", "manifest"].forEach(function(x){ egal(jeu.lire("MANOEUVRES_PORT[" + JSON.stringify(x) + "]"), "Ronan", "la manœuvre " + x + " n'est enseignée que par Ronan (annexe)"); });
+	egal(jeu.lire("Object.keys(MANOEUVRES_PORT).filter(function(k){ return MANOEUVRES_PORT[k] === 'Ronan'; }).sort().join(' ')"), "buildx manifest", "Ronan n'enseigne que buildx et manifest");
+	// Aucun maître, aucune étape ni aucun défi du Grand Port ne demande une notion d'annexe.
+	var textes = jeu.lire("QUETES_CH8.concat(QUETES_SECONDAIRES_CH8).map(function(q){ return q.titre + ' ' + (q.indice || ''); }).join('\\n')");
+	["podman", "unshare", "nsenter", "lsns", "skopeo", "hadolint", "nspawn", "machinectl", "buildx", "manifest inspect", "ip netns"].forEach(function(x){
+		verifier(textes.indexOf(x) === -1, "les étapes et défis du Grand Port ne demandent pas « " + x + " »");
+	});
+	var maitres = jeu.lire("Object.keys(MAITRES_PORT).map(function(k){ var g = MAITRES_PORT[k]; return [g.image(), g.syntaxe(), g.mission()].join(' '); }).join(' ')");
+	["podman", "skopeo", "hadolint", "nspawn", "machinectl", "buildx", "nsenter", "unshare"].forEach(function(x){
+		verifier(maitres.indexOf(x) === -1, "aucun maître du port n'enseigne « " + x + " »");
+	});
+	// Une annexe ne s'ouvre qu'au Grand Port, et ne touche pas au barème du chapitre.
+	var j2 = monde.nouveauMonde({});
+	j2.taper("chapitre 7", "oui");
+	egal(j2.lire("QUETES_ANNEXES.filter(function(a){ return a.id.indexOf('a8_') === 0 && a.ouverte(); }).length"), 0, "à Port-Aube, les annexes du Grand Port restent fermées");
+	var j3 = monde.nouveauMonde({});
+	j3.taper("chapitre 8", "oui");
+	egal(j3.lire("QUETES_ANNEXES.filter(function(a){ return a.id.indexOf('a8_') === 0 && !a.ouverte(); }).length"), 0, "départ direct au chapitre 8 : les annexes du port sont ouvertes");
+	j3.jouerSolution("cat Anissa");
+	vrai(j3, "!!(state.annexes.a8_podman || {}).proposee", "lire Anissa ouvre son annexe");
+	var xp9 = j3.lire("state.xp9");
+	j3.jouerSolution("ssh chaloupe");
+	j3.jouerSolution("sudo podman run -d --name canot alpine:3.20 sleep 3600");
+	egal(j3.lire("JSON.stringify((state.annexes.a8_podman || {}).etapes || [])").indexOf("true"), -1, "podman avec sudo : pas l'étape sans root");
+	j3.jouerSolution("podman run -d --name canot2 alpine:3.20 sleep 3600");
+	egal(j3.lire("!!(state.annexes.a8_podman.etapes || [])[0]"), true, "podman sans sudo : l'étape est cochée");
+	j3.jouerSolution("exit");
+	egal(j3.lire("state.xp9"), xp9, "une annexe ne change pas l'XP du chapitre 8");
+	// hadolint sur un autre fichier ne coche rien ; le plan de la balise non corrigé non plus.
+	j3.jouerSolution("ssh docks"); j3.jouerSolution("sudo usermod -aG docker <moi>"); j3.jouerSolution("exit");
+	j3.jouerSolution("cd ChantierNaval"); j3.jouerSolution("cat Idrissa"); j3.jouerSolution("ssh docks");
+	j3.jouerSolution("printf 'FROM debian:12\\nCMD [\\\"true\\\"]\\n' > ~/autre.Dockerfile; hadolint ~/autre.Dockerfile");
+	egal(j3.lire("JSON.stringify((state.annexes.a8_relecteur || {}).etapes || [])").indexOf("true"), -1, "hadolint sur un autre plan : rien n'est coché");
+	j3.jouerSolution("hadolint ~/relecture/Dockerfile");
+	egal(j3.lire("!!((state.annexes.a8_relecteur || {}).etapes || [])[0]"), true, "hadolint sur le plan de la balise : les trois remarques lues");
+	egal(j3.lire("!!((state.annexes.a8_relecteur || {}).etapes || [])[1]"), false, "le plan non corrigé : l'étape suivante n'est pas cochée");
 })();
 
 /* ================================================================== */

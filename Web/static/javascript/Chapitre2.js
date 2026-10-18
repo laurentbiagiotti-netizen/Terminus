@@ -1210,7 +1210,7 @@ Shell.sorts.chapitre = function(args, io){
 			"  5. Le Bastion    " + etat5 + "   Durcissement Linux : douze murs à dresser sur un serveur neuf avant l'inspection de l'aube. Note sur le CertificatBastion.\n" +
 			"  6. Lumen         " + etat6 + "   Exploitation Linux : rallumer seize quartiers d'une cité avant la Longue Nuit (disques, mémoire, services, RAID). Note sur le CertificatLumen.\n" +
 			"  7. Port-Aube     " + etat7 + "   Services réseau Linux : bâtir les dix maisons d'une cité avant la marée (DNS, courrier, NFS, Samba, LDAP, TLS, sauvegardes). Note sur le CertificatPortAube.\n" +
-			"  8. Le Grand Port " + etat8 + "  Les conteneurs, de zéro à héros : quatorze quais, cinq épreuves de rang et une bataille à l'aube (docker, compose, swarm). Note sur le CertificatGrandPort.\n\n" +
+			"  8. Le Grand Port " + etat8 + "   Les conteneurs, de zéro à héros : quatorze quais, cinq épreuves de rang et une bataille à l'aube (docker, compose, swarm). Note sur le CertificatGrandPort.\n\n" +
 			C.gris(conseil);
 	}
 	if (demande === "1") return mission ?

@@ -416,7 +416,7 @@ var MAITRES_PORT = {
 		suite: function(){ return "Adonis amarre sa barque. « Le chenal porte les noms. Maintenant, apprends à fermer : sans chenal, et un guichet qui ne regarde que le quai. »"; },
 		erreur: function(){ return null; },
 		fin: function(){ return "Adonis plante sa gaffe dans le quai. « Tu sais ouvrir, et tu sais fermer.\n\n" +
-			"Une base de données de test avait été publiée avec -p 5432:5432, « juste pour une heure ». Docker ouvre ses portes avant même le pare-feu de la machine. " +
+			"Une base de données de test avait été publiée avec -p 5432:5432, « juste pour une heure ». Le démon docker ouvre ses portes avant même le pare-feu de la machine. " +
 			"Trois jours plus tard, la base avait été copiée par un inconnu. 127.0.0.1:5432, et elle restait chez elle. »"; }
 	},
 	chantier: { nom: "Eden", q: "chantier",

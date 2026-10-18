@@ -106,12 +106,29 @@ if (jeu.lire("state.xp8") !== jeu.lire("state.xpMax8()")){
 }
 if (jeu.lire("state.noteTexte(8)") !== "20 / 20") problemes.push("le chapitre 7 n'a pas 20 sur 20 : " + jeu.lire("state.noteTexte(8)"));
 if (!jeu.lire("state.ch7 && state.ch7.premierPas === 'aron'")) problemes.push("le chapitre 7 : le premier étudiant n'est pas Aron");
+// Le chapitre 8 (le Grand Port, numéro 9 dans le code) : la solution doit mener au rapport de bataille contresigné, à 20 sur 20, Amiral, au cliffhanger, puis aux six quêtes annexes.
+if (!jeu.lire("state.quests.n8_rapport")) problemes.push("le chapitre 8 (le Grand Port) n'atteint pas le rapport de bataille (n8_rapport) ; dernier lieu : " + jeu.lire("current_room.room_name"));
+if (!jeu.lire("state.has('victoireCh8')")) problemes.push("le chapitre 8 : pas de victoire (victoireCh8)");
+var principales9 = jeu.lire("QUETES_CH8.filter(function(q){ return !state.quests[q.id]; }).map(function(q){ return q.id; }).join(' ')");
+if (principales9) problemes.push("étapes du chapitre 8 manquantes : " + principales9);
+var secondaires9 = jeu.lire("QUETES_SECONDAIRES_CH8.filter(function(q){ return !state.quests[q.id]; }).map(function(q){ return q.id; }).join(' ')");
+if (secondaires9) problemes.push("défis du chapitre 8 (le Grand Port) manquants : " + secondaires9);
+if (jeu.lire("QUETES_CH8.length") !== 44) problemes.push("le chapitre 8 devrait compter 44 étapes, il en a " + jeu.lire("QUETES_CH8.length"));
+if (jeu.lire("QUETES_SECONDAIRES_CH8.length") !== 89) problemes.push("le chapitre 8 devrait compter 89 défis, il en a " + jeu.lire("QUETES_SECONDAIRES_CH8.length"));
+if (!jeu.lire("state.has('platine_ch8')")) problemes.push("le badge platine du chapitre 8 n'est pas gagné");
+if (jeu.lire("state.xp9") !== jeu.lire("state.xpMax9()")){
+	problemes.push("le chapitre 8 (le Grand Port) n'atteint pas le score maximal : " + jeu.lire("state.xp9") + " sur " + jeu.lire("state.xpMax9()") + ". Sorts jamais lancés : [" +
+		jeu.lire("ORDRE_DES_SORTS_9.filter(function(x){ return !state.usages[x]; }).join(', ')") + "] ; lieux jamais visités : [" +
+		jeu.lire("lieuxVisitables(9).filter(function(l){ return !state.visited[l.id]; }).map(function(l){ return l.room_name; }).join(', ')") + "]");
+}
+if (jeu.lire("state.noteTexte(9)") !== "20 / 20") problemes.push("le chapitre 8 n'a pas 20 sur 20 : " + jeu.lire("state.noteTexte(9)"));
+if (jeu.lire("sCh8().rang") !== 5) problemes.push("le chapitre 8 : le joueur n'est pas Amiral (rang " + jeu.lire("sCh8().rang") + ")");
 var annexes = jeu.lire("QUETES_ANNEXES.filter(function(a){ return !state.quests[a.id]; }).map(function(a){ return a.id; }).join(' ')");
 if (annexes) problemes.push("quêtes annexes manquantes : " + annexes);
-[["ami_ch2", "Ami du campus"], ["ami_ch3", "Ami de la Crypte"], ["ami_ch4", "Ami de l'Académie"], ["ami_ch5", "Ami du Bastion"], ["ami_ch6", "Ami de Lumen"], ["ami_ch7", "Ami de Port-Aube"]].forEach(function(b){
+[["ami_ch2", "Ami du campus"], ["ami_ch3", "Ami de la Crypte"], ["ami_ch4", "Ami de l'Académie"], ["ami_ch5", "Ami du Bastion"], ["ami_ch6", "Ami de Lumen"], ["ami_ch7", "Ami de Port-Aube"], ["ami_ch8", "Ami du Grand Port"]].forEach(function(b){
 	if (!jeu.lire("state.has('" + b[0] + "')")) problemes.push("le badge " + b[1] + " n'est pas gagné");
 });
-if (jeu.lire("QUETES_ANNEXES.length") !== 36) problemes.push("il devrait y avoir 36 quêtes annexes, il y en a " + jeu.lire("QUETES_ANNEXES.length"));
+if (jeu.lire("QUETES_ANNEXES.length") !== 42) problemes.push("il devrait y avoir 42 quêtes annexes, il y en a " + jeu.lire("QUETES_ANNEXES.length"));
 if (jeu.lire("state.xp") !== jeu.lire("state.xpMax()")){
 	problemes.push("la solution n'atteint pas le score maximal. Sorts jamais lancés : [" +
 		jeu.lire("ORDRE_DES_SORTS.filter(function(x){ return !state.usages[x]; }).join(', ')") + "] ; lieux jamais visités : [" +
@@ -120,7 +137,7 @@ if (jeu.lire("state.xp") !== jeu.lire("state.xpMax()")){
 var sorts = jeu.lire("state.knownSpells().length + ' sur ' + tousLesSorts().length");
 
 console.log(commandes.length + " commandes jouées, " + sorts + " sorts appris, " +
-	jeu.lire("state.xp + ' XP sur ' + state.xpMax() + ', note ' + state.noteTexte() + ' ; chapitre 2 : ' + state.xp3 + ' XP sur ' + state.xpMax3() + ', note ' + state.noteTexte(3) + ' ; chapitre 3 : ' + state.xp2 + ' XP sur ' + state.xpMax2() + ', note ' + state.noteTexte(2) + ' ; chapitre 4 : ' + state.xp5 + ' XP sur ' + state.xpMax5() + ', note ' + state.noteTexte(5) + ' ; chapitre 5 : ' + state.xp6 + ' XP sur ' + state.xpMax6() + ', note ' + state.noteTexte(6) + ' ; chapitre 6 : ' + state.xp7 + ' XP sur ' + state.xpMax7() + ', note ' + state.noteTexte(7) + ' ; chapitre 7 : ' + state.xp8 + ' XP sur ' + state.xpMax8() + ', note ' + state.noteTexte(8)") + ".");
+	jeu.lire("state.xp + ' XP sur ' + state.xpMax() + ', note ' + state.noteTexte() + ' ; chapitre 2 : ' + state.xp3 + ' XP sur ' + state.xpMax3() + ', note ' + state.noteTexte(3) + ' ; chapitre 3 : ' + state.xp2 + ' XP sur ' + state.xpMax2() + ', note ' + state.noteTexte(2) + ' ; chapitre 4 : ' + state.xp5 + ' XP sur ' + state.xpMax5() + ', note ' + state.noteTexte(5) + ' ; chapitre 5 : ' + state.xp6 + ' XP sur ' + state.xpMax6() + ', note ' + state.noteTexte(6) + ' ; chapitre 6 : ' + state.xp7 + ' XP sur ' + state.xpMax7() + ', note ' + state.noteTexte(7) + ' ; chapitre 7 : ' + state.xp8 + ' XP sur ' + state.xpMax8() + ', note ' + state.noteTexte(8) + ' ; chapitre 8 : ' + state.xp9 + ' XP sur ' + state.xpMax9() + ', note ' + state.noteTexte(9)") + ".");
 if (problemes.length){
 	console.log("ÉCHEC :\n  " + problemes.join("\n  "));
 	process.exit(1);

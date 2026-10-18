@@ -103,6 +103,37 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
   59. [Le rapport de remise en service](#59-le-rapport-de-remise-en-service)
   60. [Les défis des gardiens, quartier par quartier](#60-les-défis-des-gardiens-quartier-par-quartier)
   61. [Les quêtes annexes : l'Ami de Lumen](#61-les-quêtes-annexes--lami-de-lumen)
+- [Chapitre 7 : Port-Aube, la cité à bâtir](#chapitre-7--port-aube-la-cité-à-bâtir-services-réseau-linux)
+  62. [Le quai de Port-Aube, Laurent et le plan de la cité](#62-le-quai-de-port-aube-laurent-et-le-plan-de-la-cité)
+  63. [La Maison des Noms et le Phare-Relais (Badis, Maeva)](#63-la-maison-des-noms-et-le-phare-relais-badis-maeva)
+  64. [La Poste et le Bureau des Lettres (Younes, Syrine)](#64-la-poste-et-le-bureau-des-lettres-younes-syrine)
+  65. [Le Grand Registre et les Greniers (Kamal, Noam)](#65-le-grand-registre-et-les-greniers-kamal-noam)
+  66. [Les Portes de la cité et la Halle (Lamia, Zélia)](#66-les-portes-de-la-cité-et-la-halle-lamia-zélia)
+  67. [La Forge des Sceaux et l'Arche (Miguel, Amina)](#67-la-forge-des-sceaux-et-larche-miguel-amina)
+  68. [Tenir la Tempête](#68-tenir-la-tempête)
+  69. [La Marée et le Premier Pas](#69-la-marée-et-le-premier-pas)
+  70. [Le rapport de mise en service](#70-le-rapport-de-mise-en-service)
+  71. [Après la fête : ce que personne n'a écrit](#71-après-la-fête--ce-que-personne-na-écrit)
+  72. [Les défis des maîtres, maison par maison](#72-les-défis-des-maîtres-maison-par-maison)
+  73. [Les quêtes annexes : l'Ami de Port-Aube](#73-les-quêtes-annexes--lami-de-port-aube)
+- [Chapitre 8 : la Flotte noire, le Grand Port](#chapitre-8--la-flotte-noire-le-grand-port-conteneurs-de-zéro-à-héros)
+  74. [Le Grand Port, Laurent et l'Ordre d'embarquement](#74-le-grand-port-laurent-et-lordre-dembarquement)
+  75. [Acte I, le Mousse : les Premiers Pas, la Capitainerie, l'Entrepôt des plans (Kylian, Julien, Grégoire)](#75-acte-i-le-mousse--les-premiers-pas-la-capitainerie-lentrepôt-des-plans-kylian-julien-grégoire)
+  76. [Épreuve de rang I : la caisse qui ne démarre pas (Matelot)](#76-épreuve-de-rang-i--la-caisse-qui-ne-démarre-pas-matelot)
+  77. [Acte II, le Matelot : les Soutes et les Chenaux (Chahla, Adonis)](#77-acte-ii-le-matelot--les-soutes-et-les-chenaux-chahla-adonis)
+  78. [Épreuve de rang II : le convoi muet (Quartier-maître)](#78-épreuve-de-rang-ii--le-convoi-muet-quartier-maître)
+  79. [Acte III, le Quartier-maître : le Chantier naval, les Cales, le Chantier des maîtres, le Registre du port (Eden, Megane, Jahmal, Déborah)](#79-acte-iii-le-quartier-maître--le-chantier-naval-les-cales-le-chantier-des-maîtres-le-registre-du-port-eden-megane-jahmal-déborah)
+  80. [Épreuve de rang III : le plan trop lourd (Second)](#80-épreuve-de-rang-iii--le-plan-trop-lourd-second)
+  81. [Acte IV, le Second : la Feuille de route et la Vigie (Elias, Remi)](#81-acte-iv-le-second--la-feuille-de-route-et-la-vigie-elias-remi)
+  82. [Épreuve de rang IV : la tempête dans le convoi (Capitaine)](#82-épreuve-de-rang-iv--la-tempête-dans-le-convoi-capitaine)
+  83. [Acte V, le Capitaine : l'Armurerie et la Douane (Ian, Soufiane)](#83-acte-v-le-capitaine--larmurerie-et-la-douane-ian-soufiane)
+  84. [Épreuve de rang V : le cheval de bois (Amiral)](#84-épreuve-de-rang-v--le-cheval-de-bois-amiral)
+  85. [Acte VI, l'Amiral : l'Escadre (Arnaud)](#85-acte-vi-lamiral--lescadre-arnaud)
+  86. [La bataille de l'aube](#86-la-bataille-de-laube)
+  87. [Le rapport de bataille](#87-le-rapport-de-bataille)
+  88. [Après la victoire : la signature](#88-après-la-victoire--la-signature)
+  89. [Les défis des maîtres, quai par quai](#89-les-défis-des-maîtres-quai-par-quai)
+  90. [Les quêtes annexes : l'Ami du Grand Port](#90-les-quêtes-annexes--lami-du-grand-port)
 - [L'épreuve finale : la Forteresse](#lépreuve-finale--la-forteresse-mission-spéciale)
 
 ## Le barème
@@ -115,7 +146,7 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
 | Première utilisation d'un sort (52) | 5 |
 | Lieu découvert (44) | 5 |
 
-Le total possible est de 3860 XP au chapitre 1. Les autres chapitres ont chacun leur barème, sur le même principe, et leur note sur 20 à part : 5790 XP pour la panne (22 étapes, 50 quêtes secondaires, 50 sorts, 28 lieux), 5625 XP pour la Crypte (22 étapes, 45 quêtes secondaires dont 14 autour de vim, 49 sorts, 48 lieux), 5175 XP pour le chapitre 4, l'Académie des Arcanes (20 étapes, 50 défis des maîtres, 23 sorts avancés, 26 lieux), noté sur le CertificatAvance, et 7500 XP pour le chapitre 5, le Bastion (29 étapes dont le rapport final à 300 XP, 74 défis, 42 sorts de durcissement, 14 lieux), noté sur le CertificatBastion, et 8795 XP pour le chapitre 6, Lumen (37 étapes dont le rapport final à 300 XP, 82 défis, 47 sorts d'exploitation, 18 lieux), noté sur le CertificatLumen ; les quêtes annexes de Lumen sont hors barème. La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
+Le total possible est de 3860 XP au chapitre 1. Les autres chapitres ont chacun leur barème, sur le même principe, et leur note sur 20 à part : 5790 XP pour la panne (22 étapes, 50 quêtes secondaires, 50 sorts, 28 lieux), 5625 XP pour la Crypte (22 étapes, 45 quêtes secondaires dont 14 autour de vim, 49 sorts, 48 lieux), 5175 XP pour le chapitre 4, l'Académie des Arcanes (20 étapes, 50 défis des maîtres, 23 sorts avancés, 26 lieux), noté sur le CertificatAvance, et 7500 XP pour le chapitre 5, le Bastion (29 étapes dont le rapport final à 300 XP, 74 défis, 42 sorts de durcissement, 14 lieux), noté sur le CertificatBastion, et 8795 XP pour le chapitre 6, Lumen (37 étapes dont le rapport final à 300 XP, 82 défis, 47 sorts d'exploitation, 18 lieux), noté sur le CertificatLumen, 6120 XP pour le chapitre 7, Port-Aube (27 étapes dont le rapport final à 300 XP, 53 défis, 31 sorts de services réseau, 21 lieux), noté sur le CertificatPortAube, et 9215 XP pour le chapitre 8, le Grand Port (44 étapes dont le rapport de bataille à 300 XP, 89 défis, 4 sorts et toutes les manœuvres de docker, 21 lieux), noté sur le CertificatGrandPort ; les quêtes annexes, de Lumen au Grand Port, sont hors barème. La note sur 20 est proportionnelle à l'XP, au demi-point près. Elle s'affiche en permanence au-dessus de l'image, et figure sur le diplôme final avec la mention.
 
 Ordres de grandeur : un parcours réduit au strict nécessaire (une quarantaine de commandes, impossible sans connaître la solution) donne 10 sur 20. La solution ci-dessous, dernier chapitre compris, donne 20 sur 20. Les derniers points se gagnent en visitant chaque lieu et en lançant chaque sort au moins une fois : `xp` liste ceux qui n'ont jamais servi.
 
@@ -148,7 +179,9 @@ Le chapitre 5 (le Bastion) s'ouvre ensuite : la Nuée a juré de revenir, et un 
 
 Le chapitre 6 (Lumen) s'ouvre enfin sous le Bastion : une cité souterraine, éclairée par une seule machine que personne n'entretient depuis des années, s'éteint quartier après quartier. En une journée, avant la Longue Nuit de 14 h, la recrue rallume seize quartiers (le disque, les inodes, les journaux, la mémoire, les processus, LVM, fstab, les unités systemd, la sauvegarde, les mesures, le RAID et SMART, fsck, apt et dpkg, le démarrage, les limites, strace et tmux), tient la Nuit en surveillant en direct, puis rend un rapport de remise en service qui dit aussi ce qui cassera ensuite. Ici, pas d'ennemi : l'usure, l'oubli et le manque d'entretien.
 
-Hormis Laurent, tous les personnages sont inventés. Ils portent des prénoms de pionniers de l'informatique (Ada, Grace, Hedy, Dennis, Linus, Margaret, Radia, Vint, Evi, Ken, Barbara, Tim, Annie, Alan ; au Bastion, Fernando, Butler, Tatu, Jean, Evelyn, Edsger, Joan, Robert, Katherine, Ralph, Adele ; à Lumen, Seymour, Kathleen, Ida, Gordon, Niklaus, Sophie, Lynn, Mary, Betty, Donald, Dorothy, Ruth, Charles, John, Kay, Klara). Les six habitants des quêtes annexes de Lumen ne portent que leur métier (la Logeuse, l'Allumeur, la Veilleuse, l'Horloger, l'Imprimeur, la Postière).
+Au chapitre 7, l'école fonde Port-Aube sur une île, et la recrue bâtit la cité en une journée, avant la marée. Au chapitre 8 (la Flotte noire), une flotte ennemie se rassemble derrière le phare noir, et ses navires portent des conteneurs : au Grand Port de Port-Aube, la recrue arrive Mousse, sans avoir jamais touché un conteneur, et doit, en trois jours, tenir quatorze quais (de la première caisse à l'escadre Swarm), gagner ses galons d'épreuve en épreuve jusqu'à Amiral, puis tenir la bataille de l'aube : un navire sombre, une mise à jour piégée arrive, et on la refuse en lisant son empreinte. Après la victoire, les Labels de l'image de l'éclaireur portent l'empreinte d'une clé de chez nous : quelqu'un, à Cybersup, construit leurs navires. Tout est défensif : l'image de l'éclaireur est inerte (un fichier-témoin, une phrase, des Labels), et ne se lance jamais.
+
+Hormis Laurent, tous les personnages sont inventés. Ils portent des prénoms de pionniers de l'informatique (Ada, Grace, Hedy, Dennis, Linus, Margaret, Radia, Vint, Evi, Ken, Barbara, Tim, Annie, Alan ; au Bastion, Fernando, Butler, Tatu, Jean, Evelyn, Edsger, Joan, Robert, Katherine, Ralph, Adele ; à Lumen, Seymour, Kathleen, Ida, Gordon, Niklaus, Sophie, Lynn, Mary, Betty, Donald, Dorothy, Ruth, Charles, John, Kay, Klara). Les six habitants des quêtes annexes de Lumen ne portent que leur métier (la Logeuse, l'Allumeur, la Veilleuse, l'Horloger, l'Imprimeur, la Postière). Au Grand Port, les quatorze maîtres du port s'appellent Kylian, Julien, Grégoire, Chahla, Adonis, Eden, Megane, Jahmal, Déborah, Elias, Remi, Ian, Soufiane et Arnaud, et ses six habitants Anissa, Edson, Mina, Ronan, Idrissa et Neil.
 
 ## Chapitre 1 : Terminus (l'épreuve de première année)
 
@@ -2819,6 +2852,665 @@ quetes annexes
 ```
 
 Les six annexes finies, les habitants viennent saluer l'Architecte sur le quai, et le badge « Ami de Port-Aube » s'ajoute à `badges port-aube`.
+
+## Chapitre 8 : la Flotte noire, le Grand Port (conteneurs, de zéro à héros)
+
+Numéro interne 9, affiché 8. Le chapitre s'ouvre à la fin de Port-Aube (le rapport de mise en service contresigné) : Laurent écrit qu'une flotte noire se rassemble derrière le phare, et le Grand Port de Port-Aube s'ouvre au bout de la cité (`cd ~/Cybersup/Embarcadere/PortAube/GrandPort`). On peut aussi y partir directement (la huitième enveloppe, « L'Ordre d'embarquement », ou `chapitre 8` en début de partie) : les sorts des chapitres 1 à 7 sont alors acquis, et la partie commence au Grand Port, qui est alors à `~/Cybersup/Embarcadere/GrandPort`. Une cinématique ouvre le chapitre dans les deux cas (`cinematique 8` la rejoue).
+
+On arrive Mousse, sans jamais avoir touché un conteneur ; on repart Amiral. Il est J1, 6 h. La flotte noire attaque à l'aube du J4. Chaque commande avance l'horloge de 5 minutes (chaque commande compte, même enchaînée avec `;`, jusqu'à huit par ligne ; les lignes d'un here-document ne comptent pas) ; à 22 h, c'est le bivouac, et l'on se lève à 6 h (`cat Horloge`, la barre d'état et la radio de Grace donnent l'heure, le rang et le compte à rebours). Une journée de port fait donc 192 commandes : il faut prévoir son budget de temps. Quatorze quais, quatorze maîtres du port, en six actes : Kylian (le Quai des Premiers Pas, le démon et la première caisse), Julien (la Capitainerie, la vie d'une caisse), Grégoire (l'Entrepôt des plans, les images et leurs couches), Chahla (les Soutes, les volumes), Adonis (les Chenaux, les réseaux), Eden (le Chantier naval, le Dockerfile), Megane (les Cales, le cache et les couches), Jahmal (le Chantier des maîtres, les étapes multiples et la santé), Déborah (le Registre du port, un registre privé gardé, sur `entrepot`), Elias (la Feuille de route, Compose), Remi (la Vigie, les redémarrages, les journaux, le démon), Ian (l'Armurerie, le durcissement des conteneurs et les secrets), Soufiane (la Douane, l'analyse d'une image suspecte, sur `douane`, sans jamais la lancer) et Arnaud (l'Escadre, Swarm, sur `docks` et `navire1` à `navire3`). Chaque maître explique son quai par une image et le vrai mot du métier, donne la syntaxe, confie la mission, réagit aux erreurs fréquentes, puis raconte une histoire du métier ; il enseigne ses manœuvres (les sous-commandes de `docker`), mais seulement à qui porte les galons de son quai. Chaque acte se termine par une épreuve de rang, qui donne le galon suivant : Matelot, Quartier-maître, Second, Capitaine, Amiral (`galons`, ou `rang`, dit ce qu'il manque). `port` (une commande du jeu) déploie le plan du Grand Port : les quatorze quais, les épreuves, l'heure, le rang, la flotte ennemie, et la puissance de la flotte sur 100 (5 au départ), lue sur l'état réel des machines.
+
+Tout est validé sur l'état réel des machines, pas sur la commande tapée : un conteneur qui tourne mais ne répond pas ne compte pas, un mot de passe en clair dans l'environnement non plus, un registre ouvert à tous non plus, une image « réparée » qui pèse toujours un gigaoctet non plus, une étape faite avant d'avoir les galons de son quai non plus. Les variantes légitimes sont acceptées (`printf`, `cat <<'FIN'`, `nano` ou `sed` pour écrire un fichier ; `docker container ls` ou `docker ps` ; une sauvegarde par `tar` ou par `cp`...). Après le dernier galon et le déploiement de la pile de l'école sur l'escadre (ou, en cas de retard, à l'aube du J4), la flotte noire attaque : un navire sombre, une mise à jour piégée arrive par un automate oublié, et chaque quai laissé en friche coûte à la flotte. Si l'aube du J4 arrive avant que l'escadre soit prête, l'assaut frappe le port : le registre tombe, et il faut le relever avant de pouvoir finir.
+
+| Repère | Où le trouver dans le jeu |
+| --- | --- |
+| `<moi>` | ton nom de compte (`whoami`) |
+| `<digest-ecole>` | l'empreinte du plan de l'école poussé à l'entrepôt (la ligne `digest: sha256:...` du `docker push`, ou `docker images --digests`, sur docks) |
+| `<digest-nginx>` | l'empreinte de l'ancienne nginx:1.27-alpine, celle que le web de l'école utilise (`docker images --digests` ou `docker compose images`, sur docks, à l'épreuve V) |
+| `<jeton-swarm>` | le jeton des navires, donné par `docker swarm init` (ou `docker swarm join-token worker`), sur docks |
+| `<digest-piege>` | l'empreinte de l'image piégée ecole:1.1 (`docker service ps --no-trunc ecole_app`, sur docks, pendant la bataille) |
+| `<puissance>` | la puissance de la flotte après la bataille (`port`) |
+| `<signature>` | l'empreinte de clé gravée dans les Labels de l'image de l'éclaireur (sur douane), la même que celle du Bastion dans le carnet des clés de docks (`ssh-keygen -lf /etc/ssh/ssh_known_hosts`) |
+| `<pid-conteneur:vigie>` | le PID de la vigie vu du quai (`docker inspect -f '{{.State.Pid}}' vigie`, sur docks) |
+
+Les mots de passe de cette solution (les choisir soi-même est permis, à condition de garder les mêmes partout) : le douanier de l'entrepôt (le compte du registre) a pour mot de passe `Sel-de-l-Entrepot` ; la base du convoi du matin, `Convoi-du-Matin` (la note de l'ancien équipage le donne).
+
+Les 89 défis du Grand Port (quêtes secondaires `s_n8_*`, 50 XP chacun) : six par maître, révélés en lisant le maître (il les coche quand ils sont faits), et cinq défis d'honneur de Laurent : Matelot avant la première nuit (J1 22:00), Capitaine avant la fin du J2, la bataille avant l'aube du J4, le rapport remis sans avoir acheté d'indice, et, après la victoire, l'empreinte du constructeur consignée dans le rapport avec la machine qui la porte. La solution ci-dessous tient les quatorze quais acte par acte (Matelot vers 11 h le premier jour, Capitaine à 7 h le J2), gagne la bataille le J2 en début d'après-midi, rend le rapport, regarde la nuit tomber, puis fait les défis, quai par quai, et enfin les quêtes annexes.
+
+### 74. Le Grand Port, Laurent et l'Ordre d'embarquement
+
+On entre au Grand Port, on écoute Laurent, on lit l'Ordre d'embarquement, la radio, l'horloge, la carte et le bestiaire, et on déploie le plan du port (c'est la puissance de départ).
+
+```
+cd ~/Cybersup/Embarcadere/PortAube/GrandPort
+cat Laurent; cat Ordre
+cat Radio; cat Horloge; cat Carte; cat Bestiaire
+port
+```
+
+La deuxième étape (`n8_port`) demande Laurent et l'Ordre lus, puis `port`. Ensuite, on entre dans chaque quai (`cd`), on lit son maître (il enseigne ses manœuvres), et on se connecte à sa machine (`ssh`) ; `exit` ramène au quai d'où l'on est parti.
+
+### 75. Acte I, le Mousse : les Premiers Pas, la Capitainerie, l'Entrepôt des plans (Kylian, Julien, Grégoire)
+
+Le démon tourne, mais `docker ps` est refusé : le socket appartient à root et au groupe docker. On entre dans l'équipage (le groupe se lit à la connexion : `exit`, puis `ssh docks`), la première caisse parle (`hello-world`), et un shell jetable s'ouvre dans une alpine (`--rm`), puis se referme. À la Capitainerie, la vigie du port (une nginx en fond, publiée sur 8080) : on la lit, on l'arrête, on la relance, on y entre, on l'inspecte de l'extérieur ; une variable passe à une caisse jetable, et le quai est nettoyé. À l'Entrepôt des plans, un plan reçoit un second nom, puis le perd ; les empreintes, les couches, la place prise, et les plans sans nom balayés.
+
+```
+cd QuaiDesPremiersPas; cat Kylian
+ssh docks
+systemctl status docker
+docker ps
+sudo usermod -aG docker <moi>
+exit
+ssh docks
+docker info
+docker run hello-world
+docker run -it --rm alpine:3.20 sh
+cat /etc/os-release
+exit
+docker ps -a
+exit
+cd ../Capitainerie; cat Julien
+ssh docks
+docker run -d --name vigie -p 8080:80 nginx:1.27-alpine
+curl -s localhost:8080
+docker logs vigie
+docker stop vigie; docker start vigie
+docker exec vigie ls /usr/share/nginx/html
+docker inspect -f '{{.State.Status}}' vigie
+docker top vigie
+docker run --rm -e QUAI=8 alpine:3.20 printenv QUAI
+docker container prune -f
+exit
+cd ../EntrepotDesPlans; cat Gregoire
+ssh docks
+docker tag alpine:3.20 alpine:quai-8
+docker images
+docker rmi alpine:quai-8
+docker images --digests
+docker history nginx:1.27-alpine
+docker system df
+docker image prune -f
+```
+
+### 76. Épreuve de rang I : la caisse qui ne démarre pas (Matelot)
+
+Les sept étapes de l'acte faites, l'épreuve s'ouvre : `cargaison` ne démarre pas. Son code de sortie et son erreur le disent : le port 8081 est déjà pris, par une caisse oubliée (`squatteur`). On la retire ; la caisse démarre, mais meurt aussitôt : son plan lance un programme qui n'existe pas, et la note de l'ancien équipage dit lequel lancer, et qu'il lui faut la variable QUAI. On la recrée, avec la bonne commande et la variable, et elle répond « Caisse ouverte ».
+
+```
+docker ps -a
+docker inspect -f '{{.State.ExitCode}} {{.State.Error}}' cargaison
+docker rm -f squatteur
+docker start cargaison
+cat ~/caisse/Dockerfile ~/caisse/NOTE.txt
+docker rm cargaison
+docker run -d --name cargaison -p 8081:8081 cargaison:1.0 python serveur.py
+docker logs cargaison
+docker rm -f cargaison
+docker run -d --name cargaison -p 8081:8081 -e QUAI=8 cargaison:1.0 python serveur.py
+curl -s localhost:8081
+exit
+galons
+```
+
+Kylian coud le premier galon : Matelot (avant la première nuit, c'est un défi d'honneur).
+
+### 77. Acte II, le Matelot : les Soutes et les Chenaux (Chahla, Adonis)
+
+Une soute nommée (un volume) survit à la caisse qui l'a écrite ; un dossier du quai monté en lecture seule dans une nginx (une caisse ne peut plus y écrire) ; la soute mise en caisse, dans une archive, sur le quai. Aux Chenaux, un réseau à soi, où les caisses se trouvent par leur nom ; une caisse sans réseau du tout ; un port publié seulement sur 127.0.0.1, que l'entrepôt ne peut pas joindre.
+
+```
+cd ../Soutes; cat Chahla
+ssh docks
+docker volume create cales
+docker run --rm -v cales:/cales alpine:3.20 sh -c 'echo "12 caisses de cordages, quai 8" > /cales/manifeste.txt'
+docker run --rm -v cales:/cales alpine:3.20 cat /cales/manifeste.txt
+mkdir -p ~/vitrine ~/sauvegardes; echo '<h1>Le Grand Port</h1>' > ~/vitrine/index.html
+docker run -d --name vitrine -p 8083:80 -v ~/vitrine:/usr/share/nginx/html:ro nginx:1.27-alpine
+curl -s localhost:8083
+docker exec vitrine touch /usr/share/nginx/html/x
+docker run --rm -v cales:/cales -v ~/sauvegardes:/sauve alpine:3.20 tar czf /sauve/cales.tgz -C /cales .
+tar -tzf ~/sauvegardes/cales.tgz
+exit
+cd ../Chenaux; cat Adonis
+ssh docks
+docker network create chenal
+docker run -d --name phare-nord --network chenal nginx:1.27-alpine
+docker run -d --name phare-sud --network chenal alpine:3.20 sleep infinity
+docker exec phare-sud wget -qO- phare-nord
+docker network inspect chenal
+docker run --rm --network none alpine:3.20 ip a
+docker run -d --name guichet -p 127.0.0.1:8084:80 nginx:1.27-alpine
+curl -s localhost:8084
+exit
+ssh entrepot
+curl -s -m 2 docks:8084
+exit
+```
+
+### 78. Épreuve de rang II : le convoi muet (Quartier-maître)
+
+Le convoi du matin crie dans le vide : `convoi-app` cherche sa base par son nom, mais les deux caisses sont sur le réseau par défaut, où les noms ne passent pas ; et la base n'a rien en mémoire (pas de soute, pas de registre initial). La note de l'ancien équipage donne le mot de passe et le registre `init.sql`. On recrée les deux caisses sur un réseau à elles, la base avec une soute et son registre initial, et l'appli répond « 12 cargaisons ».
+
+```
+ssh docks
+docker ps -a
+curl -s localhost:8082
+docker logs convoi-app
+cat ~/convoi/NOTE.txt
+docker network create convoi
+docker rm -f convoi-app convoi-base
+docker run -d --name convoi-base --network convoi -v convoi-donnees:/var/lib/postgresql/data -v ~/convoi/init.sql:/docker-entrypoint-initdb.d/init.sql:ro -e POSTGRES_USER=convoi -e POSTGRES_PASSWORD=Convoi-du-Matin -e POSTGRES_DB=convoi postgres:16-alpine
+docker run -d --name convoi-app --network convoi -p 8082:8000 -e DB_HOST=convoi-base -e DB_USER=convoi -e DB_PASSWORD=Convoi-du-Matin -e DB_NAME=convoi convoi-app:1.0
+curl -s localhost:8082
+exit
+```
+
+### 79. Acte III, le Quartier-maître : le Chantier naval, les Cales, le Chantier des maîtres, le Registre du port (Eden, Megane, Jahmal, Déborah)
+
+Le brouillon de Dockerfile de l'école est mauvais : une image complète, tout le dossier copié (le `.git`, les secrets, les données : `du -sh .` le pèse), pip réinstallé à chaque ligne changée, root, aucun port dit, aucune santé. On écrit un `.dockerignore` et un vrai plan : une image fine, un argument de construction, curl installé et les listes d'apt nettoyées dans le même RUN, les dépendances avant le code (pour le cache), un utilisateur qui n'est pas root, EXPOSE, HEALTHCHECK, LABEL. Aux Cales, une ligne de code changée : pip reste en cache. Au Chantier des maîtres, le phare se construit en deux étapes (une Debian pour compiler, rien du tout pour naviguer) et pèse moins de 30 Mo. Au Registre du port, sur `entrepot`, un registre privé gardé par un mot de passe (htpasswd au bcrypt) ; docks lui fait confiance (`daemon.json`, puis le démon relancé), se connecte, pousse le plan de l'école ; navire1 le tire, et le lance par son empreinte.
+
+```
+cd ../ChantierNaval; cat Eden
+ssh docks
+cd ~/ecole
+cat Dockerfile
+du -sh .
+printf '.git\nsecrets\ndata\n*.md\n' > .dockerignore
+printf 'FROM python:3.12-slim\nARG VERSION=1.0\nENV VERSION=$VERSION\nRUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*\nWORKDIR /app\nCOPY requirements.txt .\nRUN pip install --no-cache-dir -r requirements.txt\nCOPY . .\nUSER 1000\nEXPOSE 8000\nHEALTHCHECK --interval=10s CMD curl -fs localhost:8000/ || exit 1\nLABEL org.opencontainers.image.title=ecole\nCMD ["python", "app.py"]\n' > Dockerfile
+docker build --build-arg VERSION=1.0 -t ecole:1.0 .
+docker run -d --name ecole-essai -p 8000:8000 ecole:1.0
+curl -s localhost:8000/
+exit
+cd ../Cales; cat Megane
+ssh docks
+cd ~/ecole
+echo '# une retouche du soir' >> app.py
+docker build --build-arg VERSION=1.0 -t ecole:1.0 .
+docker history ecole:1.0
+exit
+cd ../ChantierDesMaitres; cat Jahmal
+ssh docks
+cd ~/phare
+printf 'FROM debian:12 AS build\nRUN apt-get update && apt-get install -y gcc make libc6-dev\nWORKDIR /src\nCOPY . .\nRUN make\n\nFROM scratch\nCOPY --from=build /src/phare /phare\nEXPOSE 8080\nCMD ["/phare"]\n' > Dockerfile
+docker build -t phare:1.0 .
+docker images phare
+docker run -d --name phare -p 8085:8080 phare:1.0
+curl -s localhost:8085
+docker inspect -f '{{.State.Health.Status}}' ecole-essai
+exit
+cd ../RegistreDuPort; cat Deborah
+ssh entrepot
+sudo usermod -aG docker <moi>
+exit
+ssh entrepot
+htpasswd -Bbn douanier Sel-de-l-Entrepot | sudo tee /srv/registre/auth/htpasswd
+docker run -d --name registre --restart always -p 5000:5000 -v registre-donnees:/var/lib/registry -v /srv/registre/auth:/auth:ro -e REGISTRY_AUTH=htpasswd -e REGISTRY_AUTH_HTPASSWD_REALM=entrepot -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd registry:2
+curl -s -o /dev/null -w '%{http_code}\n' localhost:5000/v2/
+exit
+ssh docks
+echo '{"insecure-registries": ["entrepot.port-aube.lan:5000"], "log-driver": "json-file", "log-opts": {"max-size": "10m", "max-file": "3"}}' | sudo tee /etc/docker/daemon.json
+sudo systemctl restart docker
+echo Sel-de-l-Entrepot | docker login entrepot.port-aube.lan:5000 -u douanier --password-stdin
+docker tag ecole:1.0 entrepot.port-aube.lan:5000/ecole:1.0
+docker push entrepot.port-aube.lan:5000/ecole:1.0
+exit
+ssh navire1
+sudo usermod -aG docker <moi>
+exit
+ssh navire1
+echo Sel-de-l-Entrepot | docker login entrepot.port-aube.lan:5000 -u douanier --password-stdin
+docker pull entrepot.port-aube.lan:5000/ecole:1.0
+docker run -d --name ecole-navire -p 8000:8000 entrepot.port-aube.lan:5000/ecole@<digest-ecole>
+docker logout entrepot.port-aube.lan:5000
+exit
+```
+
+Le registre répond 401 sans mot de passe : il est gardé. La ligne `log-opts` de `daemon.json` prépare déjà la Vigie (des journaux qui tournent).
+
+### 80. Épreuve de rang III : le plan trop lourd (Second)
+
+La carte des courants pèse plus d'un gigaoctet : une image complète, tout le dossier copié (dont un dossier de données énorme), et les dépendances installées après le code. On écrit un `.dockerignore`, un plan sur une image fine, les dépendances d'abord ; elle tombe sous 250 Mo, et une retouche de `carto.py` ne réinstalle plus rien (le second build reprend pip du cache).
+
+```
+ssh docks
+cd ~/carto
+docker images carto
+printf 'donnees\n.git\n' > .dockerignore
+printf 'FROM python:3.12-slim\nWORKDIR /carto\nCOPY requirements.txt .\nRUN pip install --no-cache-dir -r requirements.txt\nCOPY carto.py .\nEXPOSE 8090\nCMD ["python", "carto.py"]\n' > Dockerfile
+docker build -t carto:1.1 .
+echo '# la maree du soir' >> carto.py
+docker build -t carto:1.2 .
+docker images carto
+exit
+```
+
+### 81. Acte IV, le Second : la Feuille de route et la Vigie (Elias, Remi)
+
+La pile de l'école en convoi, dans `~/ecole/compose.yaml` : web (nginx, le seul publié), app (construite, durcie, son mot de passe en secret), base (postgres, sa santé, sa soute) et cache (redis). L'appli attend la santé de la base ; deux répliques de l'appli ; une inscription survit à `down` puis `up` (la soute tient). À la Vigie, le démon relancé : le convoi se relève seul (`restart: unless-stopped`) ; les vivres de chaque caisse, les événements de la dernière heure, le grand ménage (`system prune`) qui ne touche pas aux soutes nommées.
+
+```
+cd ../FeuilleDeRoute; cat Elias
+ssh docks
+cd ~/ecole
+docker rm -f ecole-essai
+cat > compose.yaml <<'FIN'
+services:
+  web:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./web/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+  app:
+    build: .
+    image: ecole:1.0
+    env_file: config/app.env
+    environment:
+      DB_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    depends_on:
+      base:
+        condition: service_healthy
+      cache:
+        condition: service_started
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+  base:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ecole
+      POSTGRES_DB: ecole
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    volumes:
+      - donnees:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ecole"]
+      interval: 10s
+      retries: 5
+    restart: unless-stopped
+  cache:
+    image: redis:7-alpine
+    restart: unless-stopped
+volumes:
+  donnees:
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+FIN
+docker compose config
+docker compose up -d
+curl -s localhost/sante
+docker compose up -d --scale app=2
+docker compose logs app
+curl -s -X POST -d prenom=aron localhost/inscriptions
+docker compose down
+docker compose up -d
+curl -s localhost/inscriptions
+exit
+cd ../Vigie; cat Remi
+ssh docks
+sudo systemctl restart docker
+docker compose -f ~/ecole/compose.yaml ps
+docker stats --no-stream
+docker events --since 1h --until 0s --filter type=container
+docker system prune -f
+docker volume ls
+```
+
+La relance du démon arrête les caisses qui n'ont pas de politique de redémarrage (la vigie, le phare, les caisses des chenaux) : le grand ménage les emporte, avec les réseaux devenus inutiles. Le convoi de l'école, lui, se relève seul, et ses soutes restent.
+
+### 82. Épreuve de rang IV : la tempête dans le convoi (Capitaine)
+
+La pile de `~/tempete`, montée à la hâte, tombe en boucle : la base publie un port déjà pris (5433), l'appli n'a que 8 Mo de vivres, et elle démarre sans attendre la santé de sa base. On corrige les trois fautes, et les quatre services tiennent debout, la base et l'appli en bonne santé.
+
+```
+cd ~/tempete
+docker compose up -d
+docker compose ps
+sed -i 's/ -p 5433//' compose.yaml
+sed -i 's/mem_limit: 8m/mem_limit: 256m/' compose.yaml
+sed -i 's/      - base$/      base:\n        condition: service_healthy/; s/      - cache$/      cache:\n        condition: service_started/' compose.yaml
+cat compose.yaml
+docker compose up -d
+docker compose ps
+exit
+```
+
+Elias et Remi cousent le quatrième galon : Capitaine (avant la fin du J2, c'est un défi d'honneur ; la solution y est au matin du J2).
+
+### 83. Acte V, le Capitaine : l'Armurerie et la Douane (Ian, Soufiane)
+
+À l'Armurerie, l'appli de l'école est déjà blindée par la feuille de route (pas root, système de fichiers en lecture seule, aucune capacité, pas de nouveaux privilèges, des vivres comptés) : on le vérifie, de l'intérieur et de l'extérieur. Aucun mot de passe ne traîne dans l'environnement ni dans les montages ; un sonar de l'ancien équipage écoute le socket du démon (qui vaut root) : on le désarme. À la Douane, sur `douane` (aucune route vers le large), l'image de l'éclaireur pris par la flotte se lit sans jamais la lancer : ses métadonnées, son histoire entière, puis son autopsie, couche par couche (`docker save`, `tar`, le manifeste), et une caisse créée mais jamais démarrée, dont on sort le fichier-témoin. Le témoin n'est qu'une phrase ; le reste de l'image ne fait rien, sinon dire qui l'a construite.
+
+```
+cd ../Armurerie; cat Ian
+ssh docks
+cd ~/ecole
+docker compose exec app touch /app/x
+docker inspect -f '{{.Config.User}} {{.HostConfig.ReadonlyRootfs}} {{.HostConfig.CapDrop}} {{.HostConfig.SecurityOpt}}' ecole-app-1
+docker ps --format '{{.Names}} {{.Mounts}}'
+docker rm -f sonar
+exit
+cd ../Douane; cat Soufiane
+ssh douane
+sudo usermod -aG docker <moi>
+exit
+ssh douane
+docker images
+docker image inspect eclaireur:prise
+docker history --no-trunc eclaireur:prise
+printf 'Le fichier ajouté : /usr/local/share/flotte/temoin.txt\nCe qu elle lancerait : /bin/sh /etc/profile.d/flotte.sh\nLe constructeur : P.G.\n' > ~/douane/indices.txt
+docker save -o eclaireur.tar eclaireur:prise
+mkdir autopsie; tar xf eclaireur.tar -C autopsie
+ls autopsie
+jq '.[0].Layers' autopsie/manifest.json
+tar -tf autopsie/blobs/sha256/9cf2840992f0bf789785b745aeb9a54c58fbb594b6dea07fad73b34634e5113c
+docker create --name autopsie eclaireur:prise
+docker cp autopsie:/usr/local/share/flotte/temoin.txt .
+cat temoin.txt
+sha256sum temoin.txt
+docker diff autopsie
+docker image inspect --format '{{json .Config.Labels}}' eclaireur:prise
+exit
+```
+
+La couche du témoin est la dernière de la liste de `jq '.[0].Layers'` (son nom de fichier est son empreinte). Les indices de la Douane (`~/douane/indices.txt`) disent ce que l'image ajoute, ce qu'elle lancerait, et qui l'a construite.
+
+### 84. Épreuve de rang V : le cheval de bois (Amiral)
+
+Pendant la nuit, la vigie automatique de l'ancien équipage a tiré la « dernière » nginx:1.27-alpine : même nom, autre empreinte. Le web de l'école tourne encore sur l'ancienne. On compare les empreintes (l'ancienne est devenue un plan sans nom), on épingle l'ancienne par son empreinte dans `compose.yaml`, on relance le convoi, et on retire l'intruse.
+
+```
+ssh docks
+cd ~/ecole
+docker images --digests
+docker compose images
+sed -i 's|image: nginx:1.27-alpine|image: nginx:1.27-alpine@<digest-nginx>|' compose.yaml
+docker compose up -d
+docker rmi nginx:1.27-alpine
+docker compose ps
+exit
+```
+
+Le cinquième galon : Amiral. Arnaud ouvre l'Escadre.
+
+### 85. Acte VI, l'Amiral : l'Escadre (Arnaud)
+
+docks prend le commandement (`swarm init`), et les trois navires le rejoignent avec son jeton (chacun entre d'abord dans l'équipage docker). Un service réparti sur la flotte, agrandi, mis à jour un navire à la fois, puis ramené en arrière, et retiré. Puis la pile de l'école, en mer : un secret de l'escadre, et `pile.yaml`, avec web épinglé par son empreinte, trois répliques de l'appli, la base posée sur navire1. Le déploiement lance la bataille.
+
+```
+cd ../Escadre; cat Arnaud
+ssh docks
+docker swarm init --advertise-addr 10.0.80.10
+exit
+ssh navire1
+docker swarm join --token <jeton-swarm> docks:2377
+exit
+ssh navire2
+sudo usermod -aG docker <moi>
+exit
+ssh navire2
+docker swarm join --token <jeton-swarm> docks:2377
+exit
+ssh navire3
+sudo usermod -aG docker <moi>
+exit
+ssh navire3
+docker swarm join --token <jeton-swarm> docks:2377
+exit
+ssh docks
+docker node ls
+docker service create --name app --replicas 3 --with-registry-auth -p 8000:8000 entrepot.port-aube.lan:5000/ecole:1.0
+docker service scale app=4
+docker service ps app
+docker service update --env-add VERSION=1.0.1 --update-parallelism 1 --update-delay 10s app
+docker service rollback app
+docker service rm app
+mkdir -p ~/escadre; cd ~/escadre
+docker secret create db_password ~/ecole/secrets/db_password.txt
+cat > pile.yaml <<'FIN'
+services:
+  web:
+    image: nginx:1.27-alpine@<digest-nginx>
+    ports:
+      - "8088:80"
+    deploy:
+      replicas: 2
+  app:
+    image: entrepot.port-aube.lan:5000/ecole:1.0
+    environment:
+      DB_HOST: base
+      CACHE_HOST: cache
+      DB_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+  base:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ecole
+      POSTGRES_DB: ecole
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    deploy:
+      placement:
+        constraints: [node.hostname == navire1]
+  cache:
+    image: redis:7-alpine
+secrets:
+  db_password:
+    external: true
+FIN
+docker stack deploy -c pile.yaml --with-registry-auth ecole
+docker stack services ecole
+```
+
+`--with-registry-auth` donne aux navires la clé de l'entrepôt (docks est connecté). Le gestionnaire résout `ecole:1.0` en son empreinte au déploiement : l'escadre tourne sur un plan approuvé.
+
+### 86. La bataille de l'aube
+
+La flotte noire attaque (le J2 en début d'après-midi dans cette solution, bien avant l'aube du J4) : navire2 sombre. On le sort de l'escadre (`drain`), et ses tâches reprennent ailleurs. Puis une mise à jour arrive sur `ecole_app`, que personne n'a lancée : ecole:1.1, poussée par un automate oublié. On lit son empreinte avant tout : ce n'est pas la nôtre (et c'est la couche-témoin de l'éclaireur qu'elle porte). Retour arrière. `port` relit la flotte : 100 sur 100 (il faut au moins 90).
+
+```
+port
+docker node ls
+docker node update --availability drain navire2
+docker service ls
+docker service ps --no-trunc ecole_app
+docker service inspect --pretty ecole_app
+docker service rollback ecole_app
+docker service ps ecole_app
+port
+exit
+```
+
+### 87. Le rapport de bataille
+
+Le rapport pour Laurent, dans la boîte du Grand Port : les quais, la flotte (sa puissance après la bataille), l'escadre, le piège (avec son empreinte, au moins ses douze premiers caractères) et ce qui reste à faire.
+
+```
+mkdir -p ~/grand-port
+cat > ~/grand-port/rapport.txt <<'FIN'
+Rapport de bataille du Grand Port, pour Laurent.
+Quais : les quatorze quais sont tenus, cinq épreuves de rang passées.
+Flotte : puissance <puissance> sur 100 après la bataille.
+Escadre : docks et trois navires ; navire2 a sombré, drainé, ses tâches reprises par les autres.
+Piège : ecole:1.1 refusée, empreinte <digest-piege>, retour arrière sur ecole:1.0.
+Reste : retrouver qui a construit l'image piégée, et relever navire2.
+FIN
+cd ..
+cp ~/grand-port/rapport.txt BoiteDeLaurent
+cat ~/CertificatGrandPort
+```
+
+La flotte noire vire de bord. Laurent contresigne : « Amiral. Le Grand Port est à toi. » Le CertificatGrandPort, posé dans la Maison, porte la note du chapitre 8 et son code de vérification ; le quiz du chapitre (`quiz 8`) s'ouvre, et `badges port` relit les leçons (une par quai, une par galon, le port, la flotte, le piège, le rapport, l'escadre avant l'aube) et le platine.
+
+### 88. Après la victoire : la signature
+
+La nuit tombe sur la baie illuminée. Sur la Douane, les Labels de l'image de l'éclaireur portent des initiales (P.G.) et une empreinte de clé SSH ; sur docks, le carnet des clés de l'école porte la même, à la ligne d'une machine de chez nous : le Bastion. Tout se constate, rien n'est à réparer : on le consigne dans le rapport (un défi d'honneur). La radio de Grace : « ... Quelqu'un, à Cybersup, construit leurs navires. » À suivre.
+
+```
+cd Douane; ssh douane
+docker image inspect --format '{{json .Config.Labels}}' eclaireur:prise
+exit; ssh docks
+ssh-keygen -lf /etc/ssh/ssh_known_hosts
+exit; cd ..
+echo "Signature : l'empreinte du constructeur est <signature>, celle de la clé du Bastion, dans le carnet des clés de docks." >> ~/grand-port/rapport.txt; cp ~/grand-port/rapport.txt BoiteDeLaurent
+```
+
+### 89. Les défis des maîtres, quai par quai
+
+Les 84 défis des quais, dans l'ordre des maîtres (la solution les fait après le rapport, au J2 et au J3 ; la relance du démon à la Vigie a emporté la vigie, le phare et le chenal : on les remonte). Les Premiers Pas : la version du démon seule, le socket, le nombre de caisses, la cale du dessous (`ctr`), la carte d'identité d'une caisse jetable, `ps -q`. La Capitainerie : `logs --tail`, `restart`, `docker port`, une caisse qui finit son quart (`wait`) puis rebaptisée, l'adresse sur le pont par défaut. L'Entrepôt des plans : un plan tiré par son empreinte, les plans sans nom, `history --no-trunc`, la plateforme, `system df -v`, un plan retiré par son identifiant court. Les Soutes : le point de montage, `--mount`, une soute sans nom laissée par un VOLUME d'image, `volume prune`, l'écoutille de root, la sauvegarde rouverte dans une soute neuve. Les Chenaux : `connect` et `disconnect`, `network prune`, un surnom sur le chenal, le pont par défaut où les noms ne passent pas, `network inspect --format`. Le Chantier naval : `build -f`, ENTRYPOINT et CMD (les arguments par défaut remplacés), WORKDIR vu de l'intérieur, `-P`, une instruction inconnue, un ARG sans défaut. Les Cales : `--no-cache`, `--progress=plain`, une cale de 0B, la cale des listes d'apt laissée par un RUN à part, la coque complète contre la coque fine, `builder prune`. Le Chantier des maîtres : `--target`, un navire sans shell. Le Registre du port : la clé rangée en clair dans `~/.docker/config.json`, un pull refusé sans clé, le catalogue et les versions d'un plan. La Feuille de route : `config --services`, `ps --format`, `top`, un secret lu là où il est monté, un convoi d'essai dont l'image vient du fichier `.env`, coulé avec ses soutes. La Vigie : `stats --format`, `update --memory`, une caisse relancée trois fois au plus, `dockerd --validate`, le journal du démon. L'Armurerie : `chown` refusé sans capacités, les verrous d'une caisse, pas de pleins pouvoirs, `--pids-limit`, et sur navire3, `userns-remap` (le root des caisses n'y est plus root du navire). L'Escadre : le jeton redemandé, une étiquette sur un navire, le journal d'un service, les secrets sans leur contenu. La Douane : l'Entrypoint lu sans lancer, les empreintes des plans en quarantaine, la caisse d'autopsie retirée, l'archive rechargée.
+
+```
+cd QuaiDesPremiersPas; ssh docks
+docker version --format '{{.Server.Version}}'; ls -l /var/run/docker.sock; docker info --format '{{.Containers}}'
+sudo ctr -n moby containers ls
+docker run --rm alpine:3.20 cat /etc/os-release
+docker ps -q
+docker run -d --name vigie -p 8080:80 nginx:1.27-alpine@<digest-nginx>
+docker logs --tail 3 vigie; docker restart vigie; docker port vigie
+docker inspect --format '{{.NetworkSettings.IPAddress}}' vigie
+docker run -d --name quart alpine:3.20 sleep 2; docker wait quart; docker rename quart quart-fini
+docker pull alpine@sha256:4d1f62d84b1346c5ba1ef21f47ab18dfd2226d8cc33ad3a6d7205148492d6a8a
+docker images --filter dangling=true; docker history --no-trunc alpine:3.20
+docker image inspect --format '{{.Os}}/{{.Architecture}}' alpine:3.20
+docker system df -v
+docker rmi 4671
+docker volume inspect --format '{{.Mountpoint}}' cales; sudo ls /var/lib/docker/volumes/cales/_data
+docker run --rm --mount type=volume,source=cales,target=/cales alpine:3.20 ls /cales
+docker volume create cales-neuve; docker run --rm -v cales-neuve:/cales -v ~/sauvegardes:/sauve alpine:3.20 tar xzf /sauve/cales.tgz -C /cales
+docker create --name soute-anonyme redis:7-alpine; docker volume ls
+docker rm -v soute-anonyme; docker volume prune -f
+docker network create quai-essai; docker network connect quai-essai vigie; docker network disconnect quai-essai vigie; docker network prune -f
+docker network create chenal; docker run -d --name balise --network chenal --network-alias feu alpine:3.20 sleep infinity
+docker run -d --name guetteur --network chenal alpine:3.20 sleep infinity; docker exec guetteur ping -c 1 feu
+docker run --rm alpine:3.20 ping -c 1 vigie
+docker network inspect --format '{{range .Containers}}{{.Name}} {{end}}' chenal
+mkdir -p ~/essais; cd ~/essais
+printf 'FROM alpine:3.20\nWORKDIR /quai\nENTRYPOINT ["echo"]\nCMD ["bonjour"]\nEXPOSE 9000\n' > Dockerfile.essai
+docker build -f Dockerfile.essai -t essai:1.0 .
+docker run --rm essai:1.0 au revoir
+docker exec ecole-app-1 pwd
+docker run -d -P --name pavillon phare:1.0; docker port pavillon
+printf 'FROM alpine:3.20\nCOPIE . .\n' > Dockerfile.faux; docker build -f Dockerfile.faux .
+printf 'FROM alpine:3.20\nARG QUAI\nRUN echo $QUAI > /quai.txt\n' > Dockerfile.arg; docker build -f Dockerfile.arg --build-arg QUAI=8 -t quai:8 .
+docker build --no-cache -f Dockerfile.essai -t essai:1.1 .
+docker build --progress=plain -f Dockerfile.essai -t essai:1.2 .
+printf 'FROM debian:12\nRUN apt-get update\nRUN apt-get install -y curl\n' > Dockerfile.apt; docker build -f Dockerfile.apt -t apt-lourd:1.0 .; docker history apt-lourd:1.0
+docker pull python:3.12; docker images python
+docker builder prune -f
+cd ~/phare; docker build --target build -t phare-build:1.0 .
+docker run -d --name phare -p 8085:8080 phare:1.0; docker exec phare sh
+cat ~/.docker/config.json
+cd ~/ecole; docker compose config --services; docker compose ps --format '{{.Service}} {{.State}}'; docker compose top
+docker compose exec app cat /run/secrets/db_password
+mkdir -p ~/essai-convoi; cd ~/essai-convoi
+printf 'QUAI_IMAGE=alpine:3.20\n' > .env; printf 'services:\n  canot:\n    image: ${QUAI_IMAGE}\n    command: sleep infinity\n    volumes:\n      - lest:/lest\nvolumes:\n  lest:\n' > compose.yaml
+docker compose config
+docker compose up -d; docker compose top; docker compose down -v
+docker stats --no-stream --format '{{.Name}} {{.MemUsage}}'
+docker update --memory 128m vigie
+docker run -d --name feu-follet --restart on-failure:3 alpine:3.20 sh -c 'sleep 1; exit 1'
+docker ps -a --filter name=feu-follet
+sudo dockerd --validate --config-file /etc/docker/daemon.json; sudo journalctl -u docker | tail -3
+docker run --rm --cap-drop ALL alpine:3.20 chown nobody /tmp
+docker inspect --format '{{.HostConfig.SecurityOpt}}' ecole-app-1; docker inspect --format '{{.HostConfig.Privileged}}' vigie
+docker run --rm --pids-limit 100 alpine:3.20 true
+docker swarm join-token worker; docker node update --label-add zone=nord navire1; docker service logs ecole_app | tail -3; docker secret ls
+exit
+ssh navire3
+echo '{"userns-remap": "default"}' | sudo tee /etc/docker/daemon.json; sudo systemctl restart docker
+docker info | grep -A8 'Security Options'
+exit
+ssh navire1
+docker pull entrepot.port-aube.lan:5000/ecole:1.0
+exit
+ssh entrepot
+curl -s -u douanier:Sel-de-l-Entrepot localhost:5000/v2/_catalog; curl -s -u douanier:Sel-de-l-Entrepot localhost:5000/v2/ecole/tags/list
+exit
+ssh douane
+docker image inspect --format '{{.Config.Entrypoint}}' eclaireur:prise
+docker image ls --digests
+docker rm autopsie
+docker load -i eclaireur.tar
+exit
+```
+
+Sur navire1, la clé de l'entrepôt a été rendue (`docker logout`) : le pull est refusé (`no basic auth credentials`). `docker rmi 4671` retire hello-world par le début de son identifiant (sa caisse a été balayée à la Capitainerie). Les défis notés pendant le parcours principal (la cale de 0B, `COPY --from`, la santé, le témoin lu, le tag versionné...) sont déjà cochés.
+
+### 90. Les quêtes annexes : l'Ami du Grand Port
+
+Six habitants du Grand Port ont chacun une petite histoire. Ces quêtes annexes sont facultatives et hors note : elles ne comptent ni dans l'XP du chapitre ni dans la note, et donnent un bonus d'XP à part, un souvenir déposé dans `~/Souvenirs`, puis, toutes finies, le badge « Ami du Grand Port ». Elles n'enseignent que des notions jamais vues dans les chapitres 1 à 8 : podman (des conteneurs sans démon et sans root), les espaces de noms à la main (`unshare`, `lsns`, `nsenter`, `ip netns`), skopeo (lire et copier une image de registre à registre sans démon), une image pour deux plateformes (`docker buildx`, `docker manifest`), la relecture d'un Dockerfile avec hadolint, et systemd-nspawn avec machinectl. Une annexe s'ouvre en lisant son habitant ; ses étapes se font dans l'ordre ; `quetes annexes` en donne l'avancée. Anissa et Ronan sont au Grand Port, Edson au Quai des Premiers Pas, Mina au Registre du port, Idrissa au Chantier naval, Neil à la Capitainerie.
+
+Dans le shell ouvert par `unshare` (puis par `systemd-nspawn` et `machinectl shell`), on tape les commandes suivantes, puis `exit`. Le PID de la vigie se lit avec `docker inspect` juste avant `nsenter`.
+
+```
+cd ~/Cybersup/Embarcadere/PortAube/GrandPort
+cat Anissa; cat Ronan; cat QuaiDesPremiersPas/Edson; cat RegistreDuPort/Mina; cat ChantierNaval/Idrissa; cat Capitainerie/Neil
+quetes annexes
+ssh chaloupe
+podman run -d --name canot alpine:3.20 sleep 3600
+podman ps; podman images
+ps aux | grep sleep
+exit
+ssh docks
+sudo unshare --pid --fork --mount-proc bash
+ps
+exit
+sudo lsns
+docker inspect -f '{{.State.Pid}}' vigie
+sudo nsenter -t <pid-conteneur:vigie> -n ip a
+sudo ip netns add essai; ip netns list; sudo ip netns exec essai ip a
+skopeo inspect docker://continent.lan/library/alpine:3.20
+skopeo list-tags docker://continent.lan/library/nginx
+skopeo copy --dest-tls-verify=false --dest-creds douanier:Sel-de-l-Entrepot docker://continent.lan/library/busybox:1.36 docker://entrepot.port-aube.lan:5000/busybox:1.36
+skopeo list-tags --tls-verify=false --creds douanier:Sel-de-l-Entrepot docker://entrepot.port-aube.lan:5000/busybox
+cd ~/ecole; docker buildx ls; docker buildx create --name continents --use
+docker buildx build --platform linux/amd64,linux/arm64 -t entrepot.port-aube.lan:5000/ecole:multi --push .
+docker manifest inspect --insecure entrepot.port-aube.lan:5000/ecole:multi
+cd ~/relecture; hadolint ~/relecture/Dockerfile
+printf 'FROM debian:12\nRUN apt-get update && apt-get install -y --no-install-recommends curl=7.88.1-10 && rm -rf /var/lib/apt/lists/*\nCMD ["curl", "-s", "http://phare.port-aube.lan:8080/"]\n' > Dockerfile
+hadolint ~/relecture/Dockerfile
+exit
+ssh cabine
+sudo systemd-nspawn -D /var/lib/machines/cabine-ancienne
+hostname; cat /etc/os-release
+exit
+sudo machinectl start cabine-ancienne; machinectl list
+sudo machinectl shell cabine-ancienne
+exit
+sudo machinectl poweroff cabine-ancienne
+exit
+quetes annexes
+```
+
+Les six annexes finies, les habitants viennent saluer l'Amiral sur la jetée, et le badge « Ami du Grand Port » s'ajoute à `badges port`.
 
 ## L'épreuve finale : la Forteresse (mission spéciale)
 
