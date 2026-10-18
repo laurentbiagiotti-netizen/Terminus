@@ -259,10 +259,9 @@ def war_room():
 
 
 if __name__ == "__main__":
-    war_room()
-    taverne()
-    chope()
-    luth()
-    citadelle()
-    sorcier_noir_final()
-    ecran_titre()
+    # Ces images du chapitre 1 sont désormais redessinées dans le style du chapitre 8 par outils/dessiner_terminus.py :
+    # on lui passe la main, pour ne pas écraser ses versions avec les anciennes.
+    import subprocess, sys
+    subprocess.run([sys.executable, os.path.join(ICI, "..", "outils", "dessiner_terminus.py"), "loc_warroom.gif", "loc_taverne.gif",
+                    "item_tavernier.gif", "item_barde.gif", "loc_citadelle.gif", "item_sorciernoir.gif", "titlescreen_cybersup.gif"],
+                   check=True)

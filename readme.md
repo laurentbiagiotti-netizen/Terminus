@@ -274,6 +274,7 @@ Le code est du JavaScript sans dépendance ni étape de construction.
 | `outils/dessiner_ile.py` | génère Port-Aube : l'Embarcadère, le quai (au petit jour et la nuit de la fête), les dix maisons, la baie des serveurs, le poste du quai, les dix maîtres, les six habitants, le Billet de traversée et les cinq plans de la cinématique |
 | `outils/dessiner_port.py` | génère le Grand Port : le port (au lever du jour, illuminé après la victoire), les quatorze quais, la flotte noire, la bataille, les bivouacs, les rangs, la cinématique, les maîtres et les habitants, l'Ordre d'embarquement |
 | `outils/dessiner_academie.py` | génère le hall et les huit ailes de l'Académie des Arcanes, et les portraits des huit maîtres |
+| `outils/dessiner_terminus.py` | redessine toutes les images du chapitre 1 (les lieux, les objets et les personnages de Terminus, Cybersup, la WarRoom) et l'écran titre, dans le style du chapitre 8, avec la palette de chaque image d'origine |
 | `outils/code_examen.js`, `outils/mot_de_passe_formateur.js` | changent le code d'accès de l'épreuve finale et le mot de passe du formateur (seules leurs empreintes vont dans le dépôt) |
 | `outils/version_cache.py` | change le numéro de version des scripts dans `index.html`, pour que les navigateurs prennent la nouvelle version |
 | `tests/monde.js` | le harnais des tests : charge le jeu dans node, sans navigateur (les outils du formateur s'en servent aussi) |

@@ -218,7 +218,9 @@ def enveloppe(nom, mission):
     im.resize((w*2, h*2), Image.NEAREST).save(OUT + nom)
 
 if __name__ == "__main__":
-    enveloppe("item_convocation.gif", False)
+    # la Convocation est redessinée avec les images du chapitre 1 (outils/dessiner_terminus.py)
+    import dessiner_terminus
+    dessiner_terminus.sauver_petit("item_convocation.gif", dessiner_terminus.enveloppe_convocation())
     enveloppe("item_mission.gif", True)
 
 # ------------------------------------------------------------------
@@ -230,21 +232,9 @@ def texte_centre(d, y, t, c=B):
     d.text(((W - w) / 2, y), t, fill=c)
 
 def cybersup():
-    im, d = toile()
-    # les tours de La Défense, au loin
-    for x, h in [(6, 70), (22, 96), (138, 84), (156, 60)]:
-        d.rectangle([x, 150-h, x+12, 150], outline=B)
-        for y in range(150-h+4, 148, 6): d.line([(x+3, y), (x+9, y)], fill=B)
-    boite(d, 40, 40, 136, 150, B, N, 2)
-    d.rectangle([40, 40, 136, 54], fill=B); texte_centre(d, 43, "CYBERSUP", N)
-    for r in range(4):
-        for k in range(4):
-            x, y = 48 + k*21, 62 + r*16
-            d.rectangle([x, y, x+14, y+10], outline=B)
-            if (r + k) % 3 == 0: d.rectangle([x+2, y+2, x+12, y+8], fill=V)
-    boite(d, 76, 126, 100, 150, B, N, 1); d.line([(88, 126), (88, 150)], fill=B)
-    sol(d, 152)
-    return im
+    # redessinée dans le style du chapitre 8 avec les images du chapitre 1 : outils/dessiner_terminus.py
+    import dessiner_terminus
+    return dessiner_terminus.cybersup()
 
 def sallereseau():
     im, d = toile()
