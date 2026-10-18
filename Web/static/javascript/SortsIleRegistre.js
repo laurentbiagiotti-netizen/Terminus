@@ -888,6 +888,15 @@ function nomGroupeAfficheIle(h, groupe){
 	var g = GROUPES_MACHINE_AVANT_ILE(h).filter(function(x){ return x.gid === +groupe; })[0] || chercherSssIle(h, "gid", +groupe);
 	return g ? g.nom : String(groupe);
 }
+/* Un dossier peut porter son groupe (un numéro venu d'ailleurs, comme sur les Greniers) tant que chgrp n'en a pas posé un. */
+var GROUPE_NOEUD_AVANT_ILE = groupeNoeud;
+groupeNoeud = function(h, noeud, chemin){
+	if (noeud instanceof Room && noeud.groupe !== undefined && estHoteIle(h)){
+		var c = chemin || cheminDuLieuMachine(noeud);
+		if (!(etatMachine(h).groupesDossiers || {})[c]) return noeud.groupe;
+	}
+	return GROUPE_NOEUD_AVANT_ILE.apply(this, arguments);
+};
 var LIGNE_LONGUE_AVANT_ILE = Shell.ligneLongue;
 Shell.ligneLongue = function(noeud, nom, io){
 	var h = ileIci();
@@ -895,9 +904,12 @@ Shell.ligneLongue = function(noeud, nom, io){
 	var o = noeud.owner, g = noeud.groupe, numerique = LS_NUMERIQUE_ILE;
 	var montre = numerique ? String(uidMachine(h, o)) : nomProprioIle(h, o);
 	noeud.owner = montre;
-	if (noeud instanceof Item && g !== undefined) noeud.groupe = numerique ? g : nomGroupeAfficheIle(h, g);
+	var gr = groupeNoeud(h, noeud), montreG = numerique ? (/^\d+$/.test(String(gr)) ? gr : String((groupesMachine(h).filter(function(x){ return x.nom === gr; })[0] || { gid: gr }).gid)) : nomGroupeAfficheIle(h, gr);
+	var c = noeud instanceof Room ? cheminDuLieuMachine(noeud) : null, GD = etatMachine(h).groupesDossiers || {}, gd = c ? GD[c] : undefined;
+	noeud.groupe = montreG;
+	if (c && gd !== undefined) GD[c] = montreG;
 	try { return LIGNE_LONGUE_AVANT_ILE.apply(this, arguments); }
-	finally { noeud.owner = o; if (noeud instanceof Item) noeud.groupe = g; }
+	finally { noeud.owner = o; if (g === undefined) delete noeud.groupe; else noeud.groupe = g; if (c && gd !== undefined) GD[c] = gd; }
 };
 var LS_NUMERIQUE_ILE = false;
 var LS_AVANT_ILE = Shell.sorts.ls;

@@ -235,6 +235,9 @@ function construireMachineIle(h, def){
 	D("/tmp", { mode: "rwxrwxrwt" });
 	D("/var/tmp", { mode: "rwxrwxrwt" });
 	D("/var/log");
+	D("/srv");
+	D("/mnt");
+	D("/opt");
 	D("/proc");
 	["meminfo", "loadavg", "uptime", "cpuinfo", "mounts", "version", "swaps"].forEach(function(n){
 		var it = P("/proc/" + n, "", { mode: "r--r--r--" });
@@ -446,7 +449,7 @@ var GreniersIle = poserMachineIle("greniers", { ip: IP_ILE.greniers, image: "loc
 			"# Example for NFSv4:\n# /srv/nfs4        gss/krb5i(rw,sync,fsid=0,crossmnt,no_subtree_check)\n# /srv/nfs4/homes  gss/krb5i(rw,sync,no_subtree_check)\n#\n");
 		D("/srv/homes", { mode: "rwxr-xr-x" });
 		BATISSEURS_ILE.forEach(function(b){
-			D("/srv/homes/" + b[0], { owner: String(b[1]), mode: "rwxr-x---" });
+			D("/srv/homes/" + b[0], { owner: String(b[1]), mode: "rwxr-x---" }).groupe = String(GID_BATISSEURS);
 			P("/srv/homes/" + b[0] + "/LISEZMOI", "Le dossier de " + b[2] + ", bâtisseur de Port-Aube.\n", { owner: String(b[1]) });
 		});
 		D("/root/.ssh", { mode: "rwx------" });
