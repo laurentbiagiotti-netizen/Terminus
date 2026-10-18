@@ -12,6 +12,8 @@ from dessiner_lieux import toile, finir, N, V, B, W, H  # noqa: E402
 from dessiner_fantasy import tramer, briques, arche, creneaux, torche, etoiles, lune  # noqa: E402
 from dessiner_academie import salle, texte, robe_mage, bras, jambes, pieds_robe  # noqa: E402
 from dessiner_panne import perso, yeux, sol_tirets  # noqa: E402
+import decor_arcanes as A  # noqa: E402
+from decor_arcanes import lin, robe_plis, manches, ceinture  # noqa: E402
 
 
 # ------------------------------------------------------------------
@@ -37,240 +39,480 @@ def murs_de_pierre(d, x0, y0, x1, y1):
 # Le hall et les douze tours
 # ------------------------------------------------------------------
 
+def pierre_inspection(im, d, x, y_sol, h=44, l=24, niveau=4, crans=6, lueur=True):
+    """La Pierre d'Inspection sur son socle : un monolithe taillé, sa face d'ombre, sa jauge de crans (niveau allumés)."""
+    if lueur:
+        A.halo(d, x, y_sol - h // 2, l * 1.8, V, 0.45, h * 0.8, im=im, sur=N)
+    d.polygon([(x - l // 2 - 8, y_sol), (x + l // 2 + 8, y_sol), (x + l // 2 + 4, y_sol - 6), (x - l // 2 - 4, y_sol - 6)], fill=B)
+    d.polygon([(x + l // 2 + 1, y_sol - 6), (x + l // 2 + 4, y_sol - 6), (x + l // 2 + 8, y_sol), (x + l // 2 + 3, y_sol)], fill=V)
+    top = y_sol - 6 - h
+    d.polygon([(x - l // 2, y_sol - 6), (x + l // 2, y_sol - 6), (x + l // 2 - 2, top + 4), (x, top), (x - l // 2 + 2, top + 4)], fill=B)
+    d.polygon([(x + l // 2 - 5, y_sol - 6), (x + l // 2, y_sol - 6), (x + l // 2 - 2, top + 4), (x + 2, top + 1)], fill=V)
+    gx0, gx1 = x - l // 2 + 5, x + l // 2 - 8
+    d.rectangle([gx0 - 1, top + 9, gx1 + 1, y_sol - 10], fill=N)
+    pas = (y_sol - 12 - (top + 11)) / crans
+    for k in range(crans):
+        yy = int(y_sol - 12 - (k + 1) * pas)
+        d.rectangle([gx0 + 1, yy + 1, gx1 - 1, int(yy + pas) - 1], fill=V if k < niveau else N)
+        if k >= niveau:
+            d.rectangle([gx0 + 1, yy + 1, gx1 - 1, int(yy + pas) - 1], outline=V)
+
+
 def bastion():
-    """Le hall du Bastion : des murs de pierre, une grande herse au fond, la Pierre d'Inspection au centre."""
+    """Le hall du Bastion : une cour pavée au petit jour, entourée de tours de pierre ; au centre, sur son socle,
+    la Pierre d'Inspection luit faiblement."""
     im, d = toile()
-    salle(d, 26, 14, 150, 104)
-    murs_de_pierre(d, 28, 16, 148, 102)
-    arche(d, 66, 26, 110, 102, fill=N)                                 # la grande porte, herse levée
-    for x in range(72, 106, 6):
-        d.line([(x, 30), (x, 50)], fill=B, width=2)
-    d.line([(70, 44), (106, 44)], fill=B, width=2)
-    torche(d, 48, 52); torche(d, 128, 52)
-    # la Pierre d'Inspection, posée au sol, et sa jauge
-    d.polygon([(74, 150), (78, 108), (98, 108), (102, 150)], fill=B)
-    d.rectangle([80, 116, 96, 144], fill=N)
-    for k in range(6):
-        d.rectangle([82, 140 - k * 4, 94, 142 - k * 4], fill=V if k < 4 else B)
+    A.ciel_aube(d, 92, 0.75, graine=5)
+    # le rempart du fond et ses tours, en contre-jour
+    d.rectangle([0, 70, W - 1, 100], fill=N)
+    A.creneaux(d, 0, W, 70, 6, 6, N, N)
+    for (x, l, h, toit) in ((18, 26, 62, True), (64, 20, 46, False), (112, 20, 46, False), (158, 26, 62, True)):
+        A.tour(im, d, x, 100, l, h, toit, 2)
+    d.rectangle([80, 74, 96, 100], fill=B)                                           # la poterne vers l'Académie
+    d.rectangle([82, 82, 94, 100], fill=N); d.ellipse([82, 76, 94, 88], fill=N)
+    A.halo(d, 88, 92, 8, V, 0.7, im=im, sur=N)
+    # la cour pavée
+    d.rectangle([0, 100, W - 1, H - 1], fill=N)
+    prof = H - 100
+    y, pas = 102, 3
+    r = 0
+    while y < H:
+        t = (y - 100) / prof
+        esp = 6 + t * 16
+        dec = (esp / 2) if r % 2 else 0
+        d.line([(0, y), (W, y)], fill=V)
+        x = -dec
+        while x < W:
+            d.line([(x, y), (x + (x - 88) * 0.08, y + pas)], fill=V)
+            x += esp
+        y += pas; pas += 1; r += 1
+    A.ombrer(im, 0, 100, W, 118, V, N, 0.6, 0.0)
+    # deux torches sur leurs poteaux
+    for x in (30, 146):
+        d.rectangle([x - 1, 104, x + 1, 150], fill=B)
+        d.rectangle([x, 104, x + 1, 150], fill=V)
+        A.torche_murale(im, d, x, 98, 22, 0.55)
+    pierre_inspection(im, d, 88, 156, 46, 26, 2, 6)
     return im
 
 
 def tour_herse():
-    """La Herse des Comptes : une herse de fer abaissée, et un tableau de clés sur le mur."""
+    """La Herse des Comptes : sous l'arche, une herse de fer à pointes abaissée et cadenassée ; au mur,
+    une clé pendue par barreau."""
     im, d = toile()
-    salle(d, 24, 14, 152, 104)
-    murs_de_pierre(d, 26, 16, 150, 102)
-    arche(d, 52, 24, 124, 104, fill=N)
-    for x in range(58, 122, 8):
-        d.line([(x, 34), (x, 104)], fill=B, width=3)
-        d.polygon([(x - 2, 104), (x + 2, 104), (x, 110)], fill=B)
-    for y in range(46, 104, 14):
-        d.line([(54, y), (122, y)], fill=B, width=2)
-    cadenas(d, 88, 72)
-    for k, x in enumerate((32, 40, 136, 144)):                         # les clés accrochées
-        d.ellipse([x - 3, 40, x + 3, 46], outline=V if k % 2 else B)
-        d.line([(x, 46), (x, 58)], fill=V if k % 2 else B, width=2)
-        d.line([(x, 54), (x + 3, 54)], fill=V if k % 2 else B)
+    A.salle_pierre(im, d, 24, 14, 152, 104, plafond='voute', graine=21)
+    d.rectangle([48, 22, 128, 104], fill=N)                                          # l'arche
+    d.pieslice([48, 22, 128, 102], 180, 360, fill=N)
+    d.arc([46, 20, 130, 104], 180, 360, fill=B, width=4)
+    d.rectangle([46, 62, 49, 104], fill=B); d.rectangle([127, 62, 130, 104], fill=B)
+    A.halo(d, 88, 104, 44, V, 0.4, 40, im=im, sur=N)                                 # la lueur du dehors, derrière
+    for x in range(56, 124, 8):                                                      # les barreaux et leurs pointes
+        d.rectangle([x - 1, 32 if 68 < x < 108 else 44, x + 1, 108], fill=B)
+        d.rectangle([x + 1, 32 if 68 < x < 108 else 44, x + 1, 108], fill=V)
+        d.polygon([(x - 2, 108), (x + 3, 108), (x, 114)], fill=B)
+    for y in range(50, 106, 14):
+        d.rectangle([50, y, 126, y + 2], fill=B)
+        d.line([(50, y + 2), (126, y + 2)], fill=V)
+    A.cadenas(d, 88, 76, V, 1)
+    for k, x in enumerate((30, 38, 138, 146)):                                       # les clés accrochées
+        d.rectangle([x - 4, 34, x + 4, 35], fill=B)
+        A.cle(d, x, 36, V if k % 2 else B, 12)
+    A.torche_murale(im, d, 34, 74, 18, 0.5)
+    A.torche_murale(im, d, 142, 74, 18, 0.5)
     return im
 
 
 def tour_sceau():
-    """Le Sceau du Roi : un pupitre, un parchemin des droits, et le grand sceau de cire posé dessus."""
+    """Le Sceau du Roi : sous une tenture, le parchemin des droits (une ligne qu'on raye) ; sur le pupitre,
+    le grand sceau de cire frappé d'une couronne."""
     im, d = toile()
-    salle(d, 26, 14, 150, 104)
-    d.rectangle([36, 20, 140, 30], fill=V)                              # une tenture
-    for x in range(40, 140, 12):
-        d.polygon([(x, 30), (x + 12, 30), (x + 6, 38)], fill=V)
-    d.rectangle([58, 44, 118, 98], fill=B); d.rectangle([62, 48, 114, 94], fill=N)
-    for y in range(54, 90, 8):
-        d.line([(66, y), (110, y)], fill=B)
-    d.line([(66, 78), (96, 78)], fill=V, width=2)                       # la ligne qu'on retire
-    d.line([(64, 74), (100, 82)], fill=V, width=2)
-    d.polygon([(70, 104), (106, 104), (100, 150), (76, 150)], fill=B)   # le pupitre
-    d.ellipse([100, 82, 126, 108], fill=V); d.ellipse([105, 87, 121, 103], fill=N)
-    d.polygon([(108, 98), (113, 89), (118, 98)], fill=V)                # une couronne dans la cire
+    A.salle_pierre(im, d, 26, 14, 150, 104, plafond='voute', graine=23)
+    d.rectangle([34, 16, 142, 28], fill=V)                                           # la tenture et ses plis
+    for x in range(38, 142, 12):
+        d.polygon([(x, 28), (x + 12, 28), (x + 6, 38)], fill=V)
+        d.line([(x + 6, 16), (x + 6, 34)], fill=N)
+    d.rectangle([34, 15, 142, 16], fill=B)
+    A.bougie(im, d, 44, 96, 9, 14); A.bougie(im, d, 132, 96, 9, 14)
+    d.rectangle([58, 42, 118, 98], fill=B)                                           # le parchemin
+    d.rectangle([60, 44, 116, 96], fill=N)
+    d.rectangle([62, 46, 114, 94], fill=B)
+    d.rectangle([56, 40, 120, 43], fill=V); d.rectangle([56, 97, 120, 100], fill=V)
+    for y in range(52, 90, 7):
+        d.line([(66, y), (110, y)], fill=N)
+    d.line([(64, 73), (102, 81)], fill=V, width=2)                                   # la ligne qu'on raye
+    d.polygon([(66, 104), (110, 104), (102, 156), (74, 156)], fill=B)                # le pupitre
+    d.polygon([(96, 104), (110, 104), (102, 156), (94, 156)], fill=V)
+    d.rectangle([62, 102, 114, 105], fill=B)
+    A.halo(d, 114, 96, 22, V, 0.5, im=im, sur=N)
+    d.ellipse([100, 82, 128, 110], fill=V)                                           # le sceau de cire
+    for k in range(8):
+        a = k * math.pi / 4
+        d.ellipse([114 + 14 * math.cos(a) - 2, 96 + 14 * math.sin(a) - 2, 114 + 14 * math.cos(a) + 2, 96 + 14 * math.sin(a) + 2], fill=V)
+    d.ellipse([105, 87, 123, 105], fill=N)
+    d.polygon([(107, 100), (107, 91), (110, 95), (114, 89), (118, 95), (121, 91), (121, 100)], fill=V)  # la couronne
+    d.arc([102, 84, 126, 108], 200, 260, fill=B)
     return im
 
 
 def tour_pontlevis():
-    """Le Pont-levis : la nuit, un pont relevé par ses chaînes au-dessus des douves, une porte bardée."""
+    """Le Pont-levis : la nuit, la tour d'entrée crénelée, le tablier relevé par ses chaînes au-dessus des douves,
+    une lanterne qui se reflète dans l'eau."""
     im, d = toile()
-    etoiles(d, n=16, graine=31, ymax=50)
-    lune(d, 24, 18, 8)
-    murs_de_pierre(d, 30, 30, 146, 118)
-    creneaux(d, 30, 146, 30, h=10, w=10)
-    arche(d, 62, 52, 114, 118, fill=N)
-    d.rectangle([66, 64, 110, 118], fill=B)                              # le tablier relevé
-    for x in range(70, 110, 8):
-        d.line([(x, 66), (x, 116)], fill=N)
-    d.line([(46, 40), (68, 66)], fill=V, width=2); d.line([(130, 40), (108, 66)], fill=V, width=2)
-    d.polygon([(0, 124), (176, 124), (176, 170), (0, 170)], fill=V)      # les douves
-    for y in range(132, 168, 8):
-        for x in range(6 + (y // 8 % 2) * 8, 176, 16):
-            d.line([(x, y), (x + 6, y)], fill=N)
-    cadenas(d, 88, 92, N)
+    A.ciel_nuit(d, 0, 0, W - 1, 118, graine=31, n=30, voile=0.4)
+    A.halo(d, 24, 20, 22, V, 0.5, im=im, sur=N)
+    d.ellipse([16, 12, 32, 28], fill=B); d.ellipse([21, 9, 37, 25], fill=N)
+    A.mur_plein(im, d, 24, 40, 152, 118, h=8, w=16, c=V)
+    A.creneaux(d, 24, 153, 40, 9, 9)
+    d.rectangle([24, 40, 152, 42], fill=B)
+    for x in (24, 152):                                                              # les deux tourelles
+        A.mur_plein(im, d, x - 12, 24, x + 12, 118, h=8, w=12); d.rectangle([x + 5, 24, x + 12, 118], fill=V)
+        A.creneaux(d, x - 13, x + 13, 24, 7, 5)
+        d.rectangle([x - 2, 44, x + 1, 56], fill=N)
+    d.rectangle([60, 56, 116, 118], fill=N)                                          # la porte voûtée
+    d.pieslice([60, 46, 116, 86], 180, 360, fill=N)
+    d.arc([58, 44, 118, 88], 180, 360, fill=B, width=3)
+    d.rectangle([64, 60, 112, 116], fill=B)                                          # le tablier relevé, ses planches
+    for x in range(68, 112, 6):
+        d.line([(x, 62), (x, 114)], fill=N)
+    for y in (70, 104):
+        d.rectangle([64, y, 112, y + 2], fill=V)
+        for x in range(68, 112, 8):
+            d.point((x, y + 1), fill=N)
+    d.line([(64, 60), (112, 60)], fill=B, width=2)
+    for (xa, xb) in ((44, 66), (132, 110)):                                         # les chaînes, vers les treuils
+        A.chaine(d, [(xa, 50), (xb, 62)], B)
+        d.ellipse([xa - 4, 46, xa + 4, 54], fill=B); d.ellipse([xa - 2, 48, xa + 2, 52], fill=N)
+    A.cadenas(d, 88, 88, V, 1)
+    d.line([(150, 70), (156, 70)], fill=B)                                           # la lanterne de la tourelle
+    A.halo(d, 158, 76, 16, V, 0.6, im=im, sur=N)
+    d.rectangle([155, 72, 161, 80], fill=B); d.rectangle([157, 74, 159, 78], fill=V)
+    d.rectangle([0, 118, W - 1, H - 1], fill=N)                                      # les douves
+    A.trame(d, 0, 118, W, 124, V, 0.5)
+    A.eau(d, 124, H, graine=4, c=V, reflet=158, larg=8)
+    for y in range(124, 150, 3):                                                     # le reflet sombre de la porte
+        d.line([(66 + (y % 2), y), (110 - (y % 2), y)], fill=N)
     return im
+
+
+def porte_bois(d, x0, y0, x1, y1, ouverte=False, clouee=False):
+    """Une porte de bois dans son chambranle de pierre : fermée (planches), condamnée (deux planches clouées
+    en croix), ou ouverte (une lumière verte dedans, le battant rabattu)."""
+    d.rectangle([x0 - 2, y0 - 2, x1 + 2, y1], fill=B)
+    if ouverte:
+        d.rectangle([x0, y0, x1, y1], fill=V)
+        d.rectangle([x0 + (x1 - x0) // 2, y0 + 6, x1 - 3, y1], fill=B)
+        d.polygon([(x0, y0), (x0 + (x1 - x0) // 3, y0 + 3), (x0 + (x1 - x0) // 3, y1), (x0, y1)], fill=N)
+        d.line([(x0 + (x1 - x0) // 3, y0 + 3), (x0 + (x1 - x0) // 3, y1)], fill=B)
+        return
+    d.rectangle([x0, y0, x1, y1], fill=N)
+    for x in range(x0 + 3, x1, 4):
+        d.line([(x, y0 + 1), (x, y1)], fill=V)
+    if clouee:
+        d.line([(x0 - 3, y0 + (y1 - y0) // 4), (x1 + 3, y0 + (y1 - y0) * 3 // 4)], fill=B, width=3)
+        d.line([(x0 - 3, y0 + (y1 - y0) * 3 // 4), (x1 + 3, y0 + (y1 - y0) // 4)], fill=B, width=3)
+        for (x, y) in ((x0, y0 + (y1 - y0) // 4), (x1, y0 + (y1 - y0) // 2)):
+            d.point((x, y), fill=N)
+    else:
+        d.rectangle([x1 - 3, (y0 + y1) // 2, x1 - 2, (y0 + y1) // 2 + 1], fill=B)
 
 
 def tour_portes():
-    """Les Portes condamnées : un couloir de portes ; on a cloué des planches sur celles qui ne servent à rien."""
+    """Les Portes condamnées : un mur percé de portes ; on a cloué des planches en croix sur celles qui ne
+    servent à rien, une seule reste ouverte et éclairée (la 22)."""
     im, d = toile()
-    salle(d, 22, 16, 154, 100)
-    for i, x in enumerate((30, 62, 94, 126)):
-        d.rectangle([x, 34, x + 20, 98], fill=B); d.rectangle([x + 3, 37, x + 17, 98], fill=N)
-        if i in (0, 2, 3):
-            d.line([(x - 2, 50), (x + 22, 66)], fill=V, width=3)
-            d.line([(x - 2, 72), (x + 22, 56)], fill=V, width=3)
-        else:
-            d.rectangle([x + 3, 37, x + 17, 98], fill=V)                 # la seule ouverte, éclairée
-            d.ellipse([x + 13, 66, x + 15, 68], fill=N)
-    texte(d, 70, 22, "22", V)
+    A.salle_pierre(im, d, 16, 16, 160, 108, plafond='poutres', graine=25, damier=False)
+    xs = (24, 52, 80, 108, 136)
+    A.halo(d, 62, 76, 34, V, 0.55, 46, im=im, sur=N)
+    for i, x in enumerate(xs):
+        porte_bois(d, x, 44, x + 18, 108, ouverte=(i == 1), clouee=(i != 1))
+    d.rectangle([52, 26, 70, 38], fill=N)
+    texte(d, 61 - d.textlength("22") / 2, 27, "22", V)
+    A.rayon(im, d, [(52, 108), (70, 108), (82, 150), (40, 150)], V, 0.5, 0.0, sur=N)  # la lumière de la porte ouverte, au sol
+    d.polygon([(30, 166), (74, 148), (78, 152), (34, 170)], fill=B)                   # des planches qui attendent, un marteau
+    d.polygon([(34, 170), (78, 152), (78, 154), (36, 170)], fill=V)
+    d.line([(110, 162), (126, 150)], fill=B, width=2)
+    d.rectangle([124, 145, 131, 150], fill=B)
+    for (x, y) in ((96, 160), (100, 164), (92, 166)):                                # des clous
+        d.line([(x, y), (x + 3, y)], fill=B)
     return im
+
+
+def lin_y(x, gauche, x0=64, y0=40, y1=92):
+    """Sur un mur de côté de la salle (arête du fond en x0 à gauche, W-1-x0 à droite), le haut et le bas du mur en x."""
+    t = x / x0 if gauche else (W - 1 - x) / x0
+    return (lin(0, y0, t), lin(H - 1, y1, t))
 
 
 def tour_remparts():
-    """Les Remparts : le mur crénelé, deux portes ouvertes (22 et 443), toutes les autres murées."""
+    """Les Remparts : le mur crénelé au petit jour, son chemin de ronde ; deux portes ouvertes (22 et 443),
+    toutes les autres murées."""
     im, d = toile()
-    etoiles(d, n=12, graine=17, ymax=40)
-    murs_de_pierre(d, 0, 52, 176, 130)
-    creneaux(d, 0, 176, 52, h=12, w=12)
+    A.ciel_aube(d, 70, 0.8, graine=17)
+    A.mur_plein(im, d, 0, 52, W - 1, 132, h=8, w=16); d.rectangle([0, 76, W - 1, 82], fill=V)
+    A.creneaux(d, 0, W, 52, 12, 11)
+    for x in range(10, W, 22):                                                       # les meurtrières
+        d.rectangle([x, 60, x + 1, 70], fill=N)
+    d.rectangle([0, 72, W - 1, 75], fill=B); d.line([(0, 75), (W - 1, 75)], fill=V)  # le chemin de ronde
     for x, t in ((36, "22"), (110, "443")):
-        arche(d, x, 78, x + 30, 130, fill=N)
-        texte(d, x + 15 - d.textlength(t) / 2, 66, t, V)
-    for x in (12, 78, 150):                                              # des portes murées
-        d.rectangle([x, 96, x + 14, 130], fill=N)
-        briques(d, x + 1, 97, x + 13, 129, h=5, w=7)
-    d.polygon([(0, 130), (176, 130), (176, 170), (0, 170)], fill=V)
-    tramer(d, 2, 161, 173, 168, c=N, pas=3)
+        d.rectangle([x - 2, 90, x + 32, 132], fill=B)
+        d.pieslice([x - 2, 78, x + 32, 112], 180, 360, fill=B)
+        d.rectangle([x, 95, x + 30, 132], fill=N)
+        d.pieslice([x, 80, x + 30, 110], 180, 360, fill=N)
+        A.degrade(d, x + 1, 82, x + 29, 132, V, 0.15, 0.7)                          # la lumière du dehors
+        d.rectangle([x + 22, 95, x + 30, 132], fill=N)
+        d.rectangle([x - 2, 78, x + 32, 79], fill=N)
+        d.rectangle([x + 4, 64, x + 26, 74], fill=N)
+        texte(d, x + 15 - d.textlength(t) / 2, 64, t, V)
+    for x in (10, 78, 146):                                                          # les portes murées
+        d.rectangle([x - 2, 94, x + 18, 132], fill=B)
+        d.pieslice([x - 2, 86, x + 18, 106], 180, 360, fill=B)
+        for r, y in enumerate(range(96, 132, 5)):
+            d.line([(x, y), (x + 16, y)], fill=V)
+            for xx in range(x + (3 if r % 2 else 0), x + 16, 6):
+                d.line([(xx, y), (xx, y + 5)], fill=V)
+        d.arc([x - 2, 86, x + 18, 106], 180, 360, fill=V)
+    d.rectangle([0, 132, W - 1, H - 1], fill=N)                                      # le fossé herbeux
+    d.rectangle([0, 133, W - 1, H - 1], fill=V)
+    for x in range(4, W, 11): d.line([(x, 140 + (x * 7) % 26), (x + 2, 136 + (x * 7) % 26)], fill=N)
+    d.line([(0, 132), (W, 132)], fill=B)
     return im
 
 
+def coffre(im, d, x, y, w=30, h=20, ouvert=False):
+    """Un coffre de fer en volume : la face, le dessus, les ferrures ; fermé d'un cadenas, ou ouvert sur une lueur."""
+    p = 6
+    d.rectangle([x, y, x + w, y + h], fill=B)
+    d.polygon([(x + w, y), (x + w + p, y - p), (x + w + p, y + h - p), (x + w, y + h)], fill=V)
+    for xx in (x + 4, x + w - 4):
+        d.line([(xx, y), (xx, y + h)], fill=N)
+    d.line([(x, y + 7), (x + w, y + 7)], fill=N, width=2)
+    if ouvert:
+        A.halo(d, x + w // 2 + 3, y - 12, 24, V, 0.6, 16, im=im, sur=N)
+        d.polygon([(x, y), (x + w, y), (x + w + p, y - p), (x + p, y - p)], fill=N)
+        d.polygon([(x + 2, y - 1), (x + w - 1, y - 1), (x + w + p - 2, y - p + 1), (x + p, y - p + 1)], fill=V)
+        d.polygon([(x + p, y - p), (x + w + p, y - p), (x + w + p - 2, y - p - 16), (x + p - 2, y - p - 16)], fill=B)
+        d.line([(x + p - 2, y - p - 12), (x + w + p - 2, y - p - 12)], fill=N, width=2)
+        A.eclats(d, [(x + 10, y - 12), (x + 22, y - 16)], B)
+    else:
+        d.polygon([(x, y), (x + w, y), (x + w + p, y - p), (x + p, y - p)], fill=B)
+        d.line([(x, y), (x + w, y)], fill=N)
+        A.cadenas(d, x + w // 2, y + 10, V, 1)
+
+
 def tour_coffres():
-    """La Salle des Coffres : des coffres cadenassés, un seul resté ouvert, des étagères de clés."""
+    """La Salle des Coffres : des coffres de fer cadenassés, un seul resté ouvert (un passe-partout oublié),
+    et au mur des tableaux de clés."""
     im, d = toile()
-    salle(d, 24, 14, 152, 104)
-    for x, y, ouvert in ((40, 104, False), (78, 112, True), (116, 104, False)):
-        d.rectangle([x, y, x + 28, y + 22], fill=B); d.rectangle([x + 2, y + 10, x + 26, y + 20], fill=N)
-        d.line([(x, y + 9), (x + 28, y + 9)], fill=N, width=2)
-        if ouvert:
-            d.polygon([(x, y), (x + 28, y), (x + 24, y - 14), (x + 4, y - 14)], fill=V)
-        else:
-            cadenas(d, x + 14, y + 12)
-    for y in (30, 52, 74):                                               # les étagères
-        d.line([(32, y), (144, y)], fill=B, width=2)
-    for k in range(9):
-        x = 38 + k * 12
-        d.rectangle([x, 22 + (k % 3) * 22, x + 6, 29 + (k % 3) * 22], fill=V if k % 2 else B)
+    A.salle_pierre(im, d, 24, 14, 152, 98, plafond='voute', graine=27)
+    for x0 in (34, 96):                                                              # les tableaux de clés
+        d.rectangle([x0, 24, x0 + 46, 62], fill=B); d.rectangle([x0 + 2, 26, x0 + 44, 60], fill=N)
+        for k in range(5):
+            d.point((x0 + 6 + k * 8, 30), fill=B)
+            A.cle(d, x0 + 6 + k * 8, 31, V if (k + x0) % 3 else B, 10 + (k % 2) * 4)
+    A.torche_murale(im, d, 88, 44, 18, 0.5)
+    for (x, y, ouvert) in ((14, 138, False), (128, 138, False), (70, 136, True)):
+        coffre(im, d, x, y, 30, 20, ouvert)
+    coffre(im, d, 38, 106, 22, 14, False)
+    coffre(im, d, 112, 106, 22, 14, False)
     return im
 
 
 def tour_coeur():
-    """Le Cœur : le moteur du Bastion, une grande roue et des leviers alignés (les réglages du noyau)."""
+    """Le Cœur : une salle ronde où bat le noyau, une grande roue lumineuse au mur ; devant, une rangée de leviers
+    (sysctl) et des tiroirs à pièces (les modules)."""
     im, d = toile()
-    salle(d, 22, 12, 154, 102)
-    d.ellipse([58, 22, 118, 82], fill=B); d.ellipse([64, 28, 112, 76], fill=N)
+    A.salle_pierre(im, d, 22, 12, 154, 100, plafond='voute', graine=29)
+    cx, cy = 88, 52
+    A.halo(d, cx, cy, 60, V, 0.65, 46, im=im, sur=N)
+    d.ellipse([cx - 34, cy - 34, cx + 34, cy + 34], fill=B)
+    d.ellipse([cx - 29, cy - 29, cx + 29, cy + 29], fill=N)
     for k in range(8):
-        a = k * math.pi / 4
-        d.line([(88, 52), (88 + 22 * math.cos(a), 52 + 22 * math.sin(a))], fill=V, width=3)
-    d.ellipse([82, 46, 94, 58], fill=V)
-    for i, x in enumerate(range(36, 146, 16)):                           # les leviers
-        d.rectangle([x - 4, 98, x + 4, 104], fill=B)
+        a = k * math.pi / 4 + 0.2
+        d.line([(cx, cy), (cx + 27 * math.cos(a), cy + 27 * math.sin(a))], fill=V, width=3)
+    for k in range(12):
+        a = k * math.pi / 6
+        d.rectangle([cx + 31 * math.cos(a) - 1, cy + 31 * math.sin(a) - 1, cx + 31 * math.cos(a) + 1, cy + 31 * math.sin(a) + 1], fill=N)
+    d.ellipse([cx - 8, cy - 8, cx + 8, cy + 8], fill=B)
+    d.ellipse([cx - 4, cy - 4, cx + 4, cy + 4], fill=V)
+    # le pupitre des leviers
+    d.polygon([(20, 112), (156, 112), (164, 124), (12, 124)], fill=B)
+    d.rectangle([12, 124, 164, 128], fill=V)
+    for i, x in enumerate(range(28, 152, 16)):
         haut = i % 3 != 1
-        d.line([(x, 98), (x + (-6 if haut else 6), 84 if haut else 112)], fill=V if haut else B, width=3)
+        d.rectangle([x - 4, 114, x + 4, 120], fill=N)
+        xt, yt = (x - 6, 96) if haut else (x + 7, 106)
+        d.line([(x, 117), (xt, yt)], fill=B, width=2)
+        d.ellipse([xt - 3, yt - 3, xt + 3, yt + 3], fill=V if haut else B)
+    # les tiroirs à pièces
+    for r in range(2):
+        for c in range(6):
+            x, y = 22 + c * 23, 134 + r * 15
+            d.rectangle([x, y, x + 20, y + 12], fill=B)
+            d.rectangle([x + 2, y + 2, x + 18, y + 10], fill=N if (r + c) % 4 else V)
+            d.rectangle([x + 7, y + 5, x + 13, y + 7], fill=B)
     return im
 
 
 def tour_poterne():
-    """La Poterne : la petite porte basse du pied de la tour, verrouillée ; un clavier aux trois touches barrées."""
+    """La Poterne : au pied du mur, une petite porte basse grillée et cadenassée ; devant, un clavier aux trois
+    touches barrées (Ctrl, Alt, Del)."""
     im, d = toile()
-    salle(d, 24, 14, 152, 104)
-    murs_de_pierre(d, 26, 16, 150, 102)
-    arche(d, 70, 54, 106, 102, fill=B)
-    d.rectangle([74, 72, 102, 102], fill=N)
-    for x in range(78, 102, 6):
-        d.line([(x, 72), (x, 102)], fill=B)
-    cadenas(d, 88, 84)
-    d.rectangle([44, 122, 132, 150], fill=B)                              # le clavier
+    A.salle_pierre(im, d, 24, 14, 152, 104, plafond='poutres', graine=31)
+    A.halo(d, 88, 84, 40, V, 0.45, 30, im=im, sur=N)
+    d.rectangle([68, 70, 108, 104], fill=B)                                          # la porte basse
+    d.pieslice([68, 52, 108, 90], 180, 360, fill=B)
+    d.rectangle([72, 72, 104, 104], fill=N); d.pieslice([72, 56, 104, 88], 180, 360, fill=N)
+    for x in range(76, 104, 6):
+        d.line([(x, 62 if 80 < x < 96 else 66), (x, 104)], fill=B, width=2)
+    for y in (78, 92):
+        d.line([(72, y), (104, y)], fill=B, width=2)
+    A.cadenas(d, 88, 88, V, 1)
+    A.torche_murale(im, d, 50, 66, 18, 0.5)
+    A.torche_murale(im, d, 126, 66, 18, 0.5)
+    d.polygon([(36, 124), (140, 124), (148, 152), (28, 152)], fill=B)                 # le clavier, sa tranche
+    d.rectangle([28, 152, 148, 156], fill=V)
     for i, t in enumerate(("Ctrl", "Alt", "Del")):
-        x = 50 + i * 28
-        d.rectangle([x, 128, x + 22, 144], fill=N)
-        texte(d, x + 11 - d.textlength(t) / 2, 130, t, B)
-        d.line([(x, 128), (x + 22, 144)], fill=V, width=2)
+        x = 40 + i * 34
+        d.rectangle([x, 129, x + 28, 147], fill=N)
+        d.rectangle([x, 145, x + 28, 147], fill=V)
+        texte(d, x + 14 - d.textlength(t) / 2, 131, t, B)
+        d.line([(x + 1, 130), (x + 27, 146)], fill=V, width=2)
     return im
 
 
 def tour_banniere():
-    """La Bannière : un mât, une bannière désormais muette, et un sceau vert de chiffrement."""
+    """La Bannière : au mât, l'étendard du Bastion désormais muet (la version barrée), le cadenas du chiffrement
+    et l'inscription https."""
     im, d = toile()
-    salle(d, 22, 12, 154, 104)
-    d.rectangle([56, 16, 60, 104], fill=B)
-    d.polygon([(60, 20), (128, 20), (118, 44), (128, 68), (60, 68)], fill=B)
-    d.polygon([(64, 24), (122, 24), (113, 44), (122, 64), (64, 64)], fill=N)
-    d.line([(70, 36), (100, 52)], fill=V, width=2); d.line([(70, 52), (100, 36)], fill=V, width=2)   # la version barrée
-    cadenas(d, 132, 86)
-    texte(d, 70, 80, "https", V)
+    A.salle_pierre(im, d, 22, 12, 154, 104, plafond='voute', graine=33)
+    A.halo(d, 96, 46, 54, V, 0.5, 40, im=im, sur=N)
+    d.rectangle([54, 14, 58, 108], fill=B); d.rectangle([57, 14, 58, 108], fill=V)   # le mât et sa pomme
+    d.ellipse([52, 9, 60, 17], fill=B)
+    d.polygon([(58, 20), (132, 20), (120, 44), (132, 68), (58, 68)], fill=B)          # l'étendard, en plis
+    d.polygon([(62, 24), (126, 24), (115, 44), (126, 64), (62, 64)], fill=N)
+    for x in (80, 104):
+        d.polygon([(x, 24), (x + 8, 24), (x + 8, 64), (x, 64)], fill=N)
+        d.line([(x + 8, 24), (x + 8, 64)], fill=V)
+    d.line([(70, 34), (102, 54)], fill=V, width=3); d.line([(70, 54), (102, 34)], fill=V, width=3)
+    d.rectangle([64, 76, 104, 92], fill=N, outline=B)
+    texte(d, 84 - d.textlength("https") / 2, 79, "https", V)
+    A.halo(d, 132, 84, 18, V, 0.6, im=im, sur=N)
+    A.cadenas(d, 132, 84, V, 2)
+    d.rectangle([44, 108, 68, 112], fill=B)                                          # le socle du mât
+    d.line([(44, 112), (68, 112)], fill=V)
     return im
 
 
 def tour_guet():
-    """La Tour de Guet : une lanterne, un œil grand ouvert, et le registre où tout s'écrit."""
+    """La Tour de Guet : par la grande baie, la nuit ; au-dessus, l'œil grand ouvert de la vigie ; une cloche,
+    et le registre ouvert où tout s'écrit."""
     im, d = toile()
-    salle(d, 22, 12, 154, 102)
-    d.ellipse([60, 22, 116, 58], fill=B); d.ellipse([66, 26, 110, 54], fill=N)
-    d.ellipse([78, 30, 98, 50], fill=V); d.ellipse([84, 36, 92, 44], fill=N)
+    A.salle_pierre(im, d, 22, 12, 154, 102, plafond='voute', graine=35)
+    d.rectangle([40, 52, 136, 96], fill=N)                                           # la baie sur la nuit
+    A.ciel_nuit(d, 40, 52, 136, 96, graine=8, n=14, voile=0.55)
+    d.rectangle([38, 50, 138, 52], fill=B); d.rectangle([38, 96, 138, 99], fill=B)
+    for x in (38, 70, 104, 136):
+        d.rectangle([x, 50, x + 2, 99], fill=B)
+    cx, cy = 88, 28                                                                  # l'œil, ses rayons
+    A.halo(d, cx, cy, 44, V, 0.5, 20, im=im, sur=N)
+    d.ellipse([cx - 26, cy - 13, cx + 26, cy + 13], fill=B)
+    d.ellipse([cx - 22, cy - 10, cx + 22, cy + 10], fill=N)
+    d.ellipse([cx - 9, cy - 9, cx + 9, cy + 9], fill=V)
+    d.ellipse([cx - 4, cy - 4, cx + 4, cy + 4], fill=N)
+    d.point((cx + 2, cy - 2), fill=B)
     for k in range(-2, 3):
-        d.line([(88 + k * 14, 18), (88 + k * 18, 10)], fill=B)
-    d.rectangle([48, 104, 128, 150], fill=B); d.rectangle([52, 108, 86, 146], fill=N); d.rectangle([90, 108, 124, 146], fill=N)
-    for y in range(114, 144, 6):
-        d.line([(56, y), (82, y)], fill=V if y % 12 else B); d.line([(94, y), (120, y)], fill=B)
-    torche(d, 30, 60); torche(d, 146, 60)
+        d.line([(cx + k * 13, cy - 15), (cx + k * 17, cy - 22)], fill=B)
+    d.line([(150, 14), (150, 30)], fill=B)                                           # la cloche
+    d.polygon([(142, 46), (158, 46), (155, 32), (145, 32)], fill=V)
+    d.rectangle([143, 30, 157, 32], fill=B); d.rectangle([148, 46, 152, 49], fill=B)
+    d.polygon([(150, 32), (155, 32), (158, 46), (152, 46)], fill=N)
+    A.halo(d, 88, 128, 40, V, 0.4, 18, ymin=104, im=im, sur=N)                       # le registre ouvert, sur son pupitre
+    d.polygon([(46, 118), (88, 110), (130, 118), (130, 146), (88, 140), (46, 146)], fill=B)
+    d.polygon([(46, 146), (88, 140), (130, 146), (130, 150), (88, 144), (46, 150)], fill=V)
+    d.line([(88, 110), (88, 140)], fill=N, width=2)
+    for k in range(6):
+        d.line([(52, 120 + k * 4), (82, 114 + k * 4)], fill=V if k % 2 else N)
+        d.line([(94, 114 + k * 4), (124, 120 + k * 4)], fill=N)
+    d.rectangle([80, 150, 96, 166], fill=B); d.rectangle([92, 150, 96, 166], fill=V)
+    A.torche_murale(im, d, 12, 74, 18, 0.5)
+    A.torche_murale(im, d, 164, 74, 18, 0.5)
     return im
 
 
 def tour_sceaux():
-    """Les Sceaux d'intégrité : des parchemins scellés, reliés par une chaîne d'empreintes."""
+    """Les Sceaux d'intégrité : trois parchemins scellés de cire, reliés par une chaîne d'empreintes ;
+    au pied du mur, des caisses de pièces neuves."""
     im, d = toile()
-    salle(d, 24, 14, 152, 104)
-    for i, x in enumerate((36, 76, 116)):
-        d.rectangle([x, 30, x + 26, 82], fill=B)
-        for y in range(36, 66, 6):
+    A.salle_pierre(im, d, 24, 14, 152, 104, plafond='voute', graine=37)
+    for i, x in enumerate((34, 75, 116)):
+        A.halo(d, x + 13, 56, 26, V, 0.4, 36, im=im, sur=N)
+        d.rectangle([x, 26, x + 26, 84], fill=B)
+        d.rectangle([x - 2, 24, x + 28, 27], fill=V); d.rectangle([x - 2, 83, x + 28, 86], fill=V)
+        for y in range(32, 64, 5):
             d.line([(x + 4, y), (x + 22, y)], fill=N)
-        d.ellipse([x + 6, 66, x + 20, 80], fill=V)
-        d.point((x + 13, 73), fill=N)
-    for x in (62, 102):                                                    # la chaîne
-        d.ellipse([x, 50, x + 8, 58], outline=V, width=2); d.ellipse([x + 6, 50, x + 14, 58], outline=V, width=2)
-    d.rectangle([40, 118, 136, 124], fill=B)
+        d.ellipse([x + 5, 64, x + 21, 80], fill=V)
+        d.ellipse([x + 8, 67, x + 18, 77], fill=N)
+        d.polygon([(x + 13, 68), (x + 17, 72), (x + 13, 76), (x + 9, 72)], fill=V)
+        d.line([(x + 9, 80), (x + 7, 90)], fill=V, width=2); d.line([(x + 17, 80), (x + 19, 90)], fill=V, width=2)
+    for xa in (60, 101):                                                             # la chaîne entre les sceaux
+        A.chaine(d, [(xa + 1, 72), (xa + 14, 72)], B)
+    for (x, y, w) in ((30, 136, 34), (68, 140, 30), (112, 134, 36)):                  # les caisses de pièces neuves
+        d.rectangle([x, y, x + w, y + 22], fill=B)
+        d.polygon([(x, y), (x + 6, y - 5), (x + w + 6, y - 5), (x + w, y)], fill=B)
+        d.polygon([(x + w, y), (x + w + 6, y - 5), (x + w + 6, y + 17), (x + w, y + 22)], fill=V)
+        d.line([(x, y), (x + w, y)], fill=N)
+        d.line([(x, y), (x + w, y + 22)], fill=N, width=2); d.line([(x + w, y), (x, y + 22)], fill=N, width=2)
+        d.rectangle([x + w // 2 - 6, y + 8, x + w // 2 + 6, y + 14], fill=V)
     return im
 
 
 def tour_garde():
-    """La Garde : un poste de garde, un bouclier, une hallebarde et une cage pour ceux qu'on bannit."""
+    """La Garde : le poste de garde, un écu au mur, une hallebarde, et une cellule grillée pour ceux qu'on bannit."""
     im, d = toile()
-    salle(d, 22, 12, 154, 102)
-    bouclier(d, 56, 34, 34)
-    d.line([(96, 20), (96, 100)], fill=B, width=3)
-    d.polygon([(90, 20), (104, 26), (96, 34)], fill=V)
-    d.rectangle([112, 44, 146, 100], fill=N)                                # la cage
-    for x in range(112, 148, 6):
-        d.line([(x, 44), (x, 100)], fill=B, width=2)
-    d.line([(110, 44), (148, 44)], fill=B, width=3); d.line([(110, 100), (148, 100)], fill=B, width=3)
-    cadenas(d, 129, 110)
+    A.salle_pierre(im, d, 22, 12, 154, 104, plafond='voute', graine=39)
+    A.halo(d, 50, 50, 30, V, 0.5, im=im, sur=N)
+    A.bouclier(d, 50, 28, 36, V)
+    d.line([(92, 16), (92, 112)], fill=B, width=3); d.line([(93, 16), (93, 112)], fill=V)  # la hallebarde
+    d.polygon([(86, 22), (100, 28), (100, 36), (92, 40), (92, 18)], fill=V)
+    d.polygon([(92, 8), (95, 18), (89, 18)], fill=B)
+    d.polygon([(86, 22), (92, 22), (92, 36), (88, 32)], fill=B)
+    d.rectangle([108, 38, 148, 112], fill=N)                                          # la cellule
+    A.trame(d, 108, 38, 148, 112, V, 0.12)
+    for x in range(110, 148, 6):
+        d.rectangle([x, 38, x + 1, 112], fill=B)
+    d.rectangle([106, 36, 150, 40], fill=B); d.rectangle([106, 108, 150, 112], fill=B)
+    d.rectangle([106, 70, 150, 72], fill=B)
+    A.cadenas(d, 130, 84, V, 1)
+    A.torche_murale(im, d, 30, 84, 18, 0.5)
+    d.rectangle([40, 128, 96, 134], fill=B); d.rectangle([40, 134, 96, 136], fill=V)  # le banc du poste
+    for x in (44, 88):
+        d.rectangle([x, 136, x + 4, 156], fill=B)
     return im
 
 
 def serveur_bastion():
-    """La machine bastion : une baie de serveurs au cœur de la tour, frappée d'un bouclier."""
+    """La machine bastion : une baie de serveurs au cœur de la tour de pierre, frappée d'un écu ; ses voyants verts."""
     im, d = toile()
-    salle(d, 30, 12, 146, 104)
-    murs_de_pierre(d, 32, 14, 144, 102)
-    d.rectangle([62, 18, 114, 140], fill=B); d.rectangle([66, 22, 110, 136], fill=N)
+    A.salle_pierre(im, d, 30, 12, 146, 104, plafond='voute', graine=41)
+    A.halo(d, 88, 80, 56, V, 0.5, 70, im=im, sur=N)
+    d.polygon([(62, 18), (110, 18), (118, 12), (70, 12)], fill=B)                    # le dessus de la baie
+    d.rectangle([62, 18, 110, 142], fill=B)
+    d.polygon([(110, 18), (118, 12), (118, 136), (110, 142)], fill=V)
+    d.rectangle([66, 22, 106, 138], fill=N)
     for k in range(8):
-        y = 28 + k * 13
-        d.rectangle([70, y, 106, y + 8], fill=B)
-        d.rectangle([73, y + 3, 76, y + 5], fill=V if k % 3 else N)
-        d.rectangle([80, y + 3, 83, y + 5], fill=V)
-    bouclier(d, 128, 40, 20)
-    torche(d, 44, 50)
+        y = 26 + k * 14
+        d.rectangle([69, y, 103, y + 10], fill=B)
+        d.line([(69, y + 10), (103, y + 10)], fill=V)
+        for xx in range(86, 102, 3):
+            d.line([(xx, y + 2), (xx, y + 7)], fill=N)
+        d.rectangle([72, y + 3, 75, y + 6], fill=V if k % 3 else N)
+        d.rectangle([78, y + 3, 81, y + 6], fill=V)
+    d.rectangle([62, 142, 110, 146], fill=V)
+    A.bouclier(d, 132, 34, 22, V)
+    A.torche_murale(im, d, 44, 52, 20, 0.5)
+    A.torche_murale(im, d, 132, 76, 16, 0.4)
+    for (xa, xb, y) in ((40, 62, 150), (110, 136, 154)):                              # les câbles au sol
+        d.line([(xa, y), (xb, y - 8)], fill=B, width=2)
     return im
 
 
@@ -295,152 +537,210 @@ def cle(r, x, y, c=V):
 
 
 def fernando_dessin(r):
-    # le gardien des comptes : vieux, barbe, un trousseau de clés et la liste des comptes
-    r(36, 8, 51, 12, B); tete(r, 12, B, barbe=True)
-    robe_mage(r, 33, 64, V, 35, 52)
-    bras(r, True, True, 36)
-    r(18, 38, 30, 58, B); r(19, 39, 29, 57, N)
-    for y in range(42, 56, 3): r(21, y, 27, y, B)
-    r(21, 48, 27, 48, V)
-    r(57, 46, 62, 48, B)
-    for k, x in enumerate((56, 60, 64)): cle(r, x, 49 + (k % 2) * 3, V if k != 1 else B)
-    pieds_robe(r); sol_tirets(r, 68)
+    # le gardien des comptes : vieux, calotte, longue barbe, robe ceinturée ; la liste des comptes (des lignes, une
+    # cochée en vert) dans une main, un gros trousseau de clés dans l'autre
+    r(36, 7, 51, 12, V); r(38, 5, 49, 7, V); r(43, 3, 44, 4, B)
+    tete(r, 12, B, barbe=True)
+    r(38, 37, 49, 40, B); r(41, 41, 46, 43, B); r(43, 32, 44, 39, V)
+    robe_plis(r, 33, 64, V, 35, 52)
+    r(36, 24, 51, 36, B); r(38, 37, 49, 40, B); r(41, 41, 46, 43, B)
+    r(40, 25, 47, 25, N); r(40, 30, 40, 35, V); r(44, 31, 44, 39, V); r(47, 30, 47, 35, V)
+    ceinture(r, 46, 35, 52, B, V)
+    manches(r, V, 34, True, True, B, 10)
+    r(16, 36, 30, 60, B); r(17, 37, 29, 59, N); r(15, 35, 31, 37, V); r(15, 59, 31, 61, V)   # la liste des comptes
+    for k, y in enumerate(range(40, 58, 3)):
+        r(19, y, 27 - (k % 3) * 2, y, V if k == 2 else B)
+        r(18, y, 18, y, N if k == 2 else B)
+    r(58, 46, 64, 47, B); r(60, 44, 62, 49, B)                               # l'anneau du trousseau
+    for k, x in enumerate((55, 60, 65)): cle(r, x, 49 + (k % 2) * 2, V if k != 1 else B)
+    r(37, 65, 42, 66, B); r(45, 65, 50, 66, B); sol_tirets(r, 68)
 
 
 def butler_dessin(r):
-    # le chancelier du Sceau du Roi : haute toque, le grand sceau à la main, un rouleau sous le bras
-    r(39, 2, 48, 11, V); r(37, 10, 50, 12, B)
+    # le chancelier du Sceau du Roi : haute toque, longue robe blanche à bande verte, le grand sceau à la main
+    # (la cire frappée d'une couronne), un rouleau scellé sous le bras
+    r(38, 0, 49, 10, V); r(37, 9, 50, 11, B); r(38, 2, 49, 3, B)
     tete(r, 12, V)
-    robe_mage(r, 33, 64, B, 35, 52); r(42, 33, 45, 64, V)
-    bras(r, True, True, 36)
-    r(58, 38, 63, 48, B); r(55, 48, 66, 52, V); r(54, 52, 67, 54, B)        # le sceau
-    r(20, 40, 32, 46, B); r(18, 41, 20, 45, V); r(32, 41, 34, 45, V)         # le rouleau
-    pieds_robe(r); sol_tirets(r, 68)
+    robe_plis(r, 33, 64, B, 35, 52, N)
+    r(41, 33, 46, 64, V); r(43, 34, 44, 64, N)
+    for y in (38, 46, 54): r(42, y, 45, y + 1, B)
+    r(35, 33, 52, 35, V)
+    manches(r, B, 34, True, True, B, 10)
+    r(57, 36, 62, 46, B); r(58, 37, 61, 45, N)                               # le manche du sceau
+    r(53, 46, 66, 51, V); r(52, 51, 67, 54, B)
+    r(56, 47, 56, 49, N); r(59, 48, 59, 49, N); r(62, 47, 62, 49, N); r(56, 50, 62, 50, N)   # la couronne
+    r(16, 40, 33, 47, B); r(17, 41, 32, 46, N); r(18, 42, 31, 45, B)          # le rouleau
+    r(14, 40, 16, 47, V); r(33, 40, 35, 47, V)
+    r(23, 46, 26, 50, V)
+    r(37, 65, 42, 66, B); r(45, 65, 50, 66, B); sol_tirets(r, 68)
 
 
 def tatu_dessin(r):
-    # le passeur du Pont-levis : jeune, écharpe, une grosse clé au bout d'une chaîne
-    for x in range(37, 51, 3): r(x, 9, x + 1, 12, V)
+    # le passeur du Pont-levis : jeune, cheveux en épis, longue écharpe, gilet ; une grosse clé au bout d'une chaîne
+    for x in range(36, 52, 3): r(x, 8, x + 1, 12, V)
     tete(r, 12, V)
-    r(35, 31, 52, 34, V); r(48, 34, 51, 42, V)                                # l'écharpe
-    r(35, 35, 52, 54, B); r(38, 36, 49, 54, N); r(39, 37, 48, 54, B)
+    r(35, 31, 52, 35, V); r(47, 35, 51, 46, V); r(48, 46, 51, 48, B)          # l'écharpe et sa frange
+    r(35, 35, 52, 54, B); r(38, 36, 46, 54, N); r(39, 37, 45, 54, V)
+    r(36, 51, 51, 52, V)
     bras(r, True, True, 36)
-    for k in range(6): r(58 + (k % 2), 47 + k * 3, 59 + (k % 2), 48 + k * 3, V)  # la chaîne
-    cle(r, 56, 64, B)
-    jambes(r); sol_tirets(r, 68)
+    for k in range(7):                                                       # la chaîne, en maillons alternés
+        if k % 2: r(57, 46 + k * 3, 58, 47 + k * 3, B)
+        else: r(56, 46 + k * 3, 59, 46 + k * 3, B)
+    r(53, 60, 62, 61, V); r(52, 59, 54, 66, V); r(61, 59, 63, 66, V); r(53, 66, 62, 67, V); r(55, 62, 60, 64, N)  # l'anneau
+    r(57, 52, 58, 58, B)
+    r(64, 62, 75, 64, V); r(71, 64, 72, 67, V); r(74, 64, 75, 66, V)          # la tige et le panneton
+    jambes(r); sol_tirets(r, 70)
 
 
 def jean_dessin(r):
-    # le menuisier des Portes condamnées : casquette, tablier, un marteau et une planche à clouer
-    r(36, 9, 51, 12, V); r(48, 11, 54, 12, V)
-    tete(r, 12, V)
-    r(35, 33, 52, 54, V); r(38, 35, 49, 56, B); r(40, 44, 47, 49, N)
+    # le menuisier des Portes condamnées : casquette, crayon à l'oreille, tablier à outils ; un marteau levé
+    # et une planche à clouer sous le bras, des clous dans la poche
+    r(36, 8, 51, 12, V); r(48, 11, 56, 12, V); r(37, 9, 50, 9, B)
+    tete(r, 12, V); r(51, 14, 53, 20, B); r(52, 14, 52, 15, V)
+    r(35, 33, 52, 54, V); r(38, 35, 49, 57, B); r(40, 44, 47, 50, N); r(41, 45, 42, 49, V); r(45, 45, 46, 49, B)
+    r(38, 35, 39, 37, V); r(48, 35, 49, 37, V)
     bras(r, True, True, 36)
-    r(57, 30, 58, 48, B); r(54, 27, 62, 31, B)                                # le marteau
-    r(14, 44, 32, 49, B); r(16, 46, 17, 47, N); r(29, 46, 30, 47, N)           # la planche
+    r(57, 26, 58, 48, B); r(58, 26, 58, 48, V); r(53, 22, 62, 27, B); r(53, 23, 54, 26, N); r(61, 22, 63, 24, B)   # le marteau
+    r(10, 43, 34, 49, B); r(10, 49, 34, 50, V); r(13, 45, 14, 46, N); r(30, 45, 31, 46, N)   # la planche
+    for x in range(16, 30, 5): r(x, 47, x + 2, 47, V)
     jambes(r); sol_tirets(r, 68)
 
 
 def vint_dessin(r):
-    # Vint, l'administrateur réseau revenu de vacances : casque audio, barbe courte, une truelle et une brique
+    # Vint, l'administrateur réseau revenu de vacances : casque audio, barbe courte, chemise à fleurs sous le gilet,
+    # une truelle à la main et une brique sous le bras
     tete(r, 12, B, barbe=True)
-    r(35, 12, 36, 22, V); r(51, 12, 52, 22, V); r(36, 10, 51, 11, V)          # le casque
-    r(35, 33, 52, 54, V); r(42, 33, 45, 54, B)
+    r(35, 12, 36, 22, V); r(51, 12, 52, 22, V); r(36, 9, 51, 11, V); r(34, 16, 36, 21, B); r(51, 16, 53, 21, B)   # le casque
+    r(35, 33, 52, 54, V); r(41, 33, 46, 54, B)
+    for (x, y) in ((42, 37), (45, 42), (42, 47), (45, 51)): r(x, y, x, y, V); r(x - 1, y, x + 1, y, N); r(x, y, x, y, V)
     bras(r, True, True, 36)
-    r(57, 46, 58, 52, B); r(54, 52, 62, 56, B)                                # la truelle
-    r(16, 44, 32, 52, B); r(17, 45, 23, 47, N); r(25, 45, 31, 47, N); r(20, 49, 27, 51, N)  # la brique
+    r(57, 46, 58, 51, B); r(53, 51, 63, 55, B); r(54, 52, 62, 54, V); r(56, 55, 60, 57, B)   # la truelle
+    r(14, 43, 32, 53, B); r(14, 53, 32, 54, V)                                # la brique, ses trous
+    r(17, 46, 21, 50, N); r(25, 46, 29, 50, N)
     jambes(r); sol_tirets(r, 68)
 
 
 def evelyn_dessin(r):
-    # la gardienne des Coffres : chignon, un cadenas en main, un petit coffre sous le bras
-    r(40, 4, 47, 10, V)
+    # la gardienne des Coffres : haut chignon, robe longue à ceinture de clés, un gros cadenas en main,
+    # un petit coffre ferré sous le bras
+    r(40, 2, 47, 9, V); r(42, 1, 45, 1, V)
     tete(r, 12, V)
     r(35, 12, 36, 24, V); r(51, 12, 52, 24, V)
-    robe_mage(r, 33, 64, B, 35, 52); r(37, 40, 50, 41, V)
-    bras(r, True, True, 36)
-    r(56, 42, 64, 44, B); r(55, 46, 65, 54, V); r(59, 49, 61, 51, N)          # le cadenas
-    r(16, 42, 32, 54, B); r(17, 47, 31, 53, N); r(17, 46, 31, 46, V); r(23, 48, 25, 50, V)  # le coffre
-    pieds_robe(r); sol_tirets(r, 68)
+    robe_plis(r, 33, 64, B, 35, 52, N)
+    r(35, 40, 52, 41, V)
+    cle(r, 39, 42, V)
+    manches(r, B, 34, True, True, B, 9)
+    r(57, 38, 63, 39, B); r(56, 39, 57, 44, B); r(63, 39, 64, 44, B)          # le cadenas
+    r(54, 44, 66, 54, V); r(64, 44, 66, 54, N); r(59, 47, 61, 51, N)
+    r(14, 42, 32, 56, B); r(15, 48, 31, 55, N); r(14, 46, 32, 47, V)          # le coffre ferré
+    r(22, 49, 24, 52, V); r(16, 42, 17, 56, V); r(29, 42, 30, 56, V)
+    r(37, 65, 42, 66, B); r(45, 65, 50, 66, B); sol_tirets(r, 68)
 
 
 def edsger_dessin(r):
-    # le mécanicien du Cœur : crâne dégarni, lunettes, une clé à molette et un engrenage
+    # le mécanicien du Cœur : crâne dégarni, lunettes, bleu de travail à bretelles ; une clé à molette levée et un
+    # engrenage, une burette d'huile à la ceinture
     r(36, 14, 37, 20, V); r(50, 14, 51, 20, V)
     tete(r, 12, B, lunettes=True)
-    r(35, 33, 52, 54, B); r(36, 34, 51, 54, V); r(42, 34, 45, 54, B)
+    r(35, 33, 52, 54, B); r(36, 34, 51, 54, V); r(39, 34, 40, 54, N); r(47, 34, 48, 54, N)
+    r(39, 34, 48, 40, V); r(41, 36, 46, 39, N); r(42, 37, 45, 38, B)          # la poche de poitrine
     bras(r, True, True, 36)
-    r(57, 30, 58, 46, B); r(54, 26, 61, 30, B); r(56, 27, 59, 28, N)         # la clé à molette
-    r(16, 42, 30, 56, B); r(19, 45, 27, 53, N); r(22, 48, 24, 50, V)
-    for x, y in ((22, 40), (22, 56), (14, 48), (30, 48)): r(x, y, x + 2, y + 1, B)
+    r(57, 30, 58, 46, B); r(58, 30, 58, 46, V); r(53, 24, 62, 30, B); r(55, 24, 60, 26, N)   # la clé à molette
+    for k in range(8):                                                       # l'engrenage
+        a = k * math.pi / 4
+        x, y = 23 + int(9 * math.cos(a)), 49 + int(9 * math.sin(a))
+        r(x - 1, y - 1, x + 1, y + 1, B)
+    r(16, 42, 30, 56, B); r(18, 44, 28, 54, V); r(21, 47, 25, 51, N); r(22, 48, 24, 50, B)
+    r(49, 52, 53, 57, B); r(51, 49, 52, 52, B)                                # la burette
     jambes(r); sol_tirets(r, 68)
 
 
 def joan_dessin(r):
-    # la gardienne de la Poterne : capuche, une lanterne levée, un gros cadenas à la ceinture
-    for k in range(5): r(40 - k - 2, 6 + k, 47 + k + 2, 6 + k, V)
-    r(33, 11, 54, 33, V); tete(r, 14, V)
-    robe_mage(r, 33, 64, V, 34, 53)
-    bras(r, True, True, 36)
-    r(56, 24, 57, 34, B); r(53, 34, 61, 44, B); r(55, 36, 59, 42, V)         # la lanterne
-    r(40, 48, 47, 56, B); r(42, 50, 45, 54, N); r(41, 45, 46, 47, B)          # le cadenas
-    pieds_robe(r); sol_tirets(r, 68)
+    # la gardienne de la Poterne : capuche pointue, cape, une lanterne levée qui éclaire ; un gros cadenas
+    # à la ceinture
+    for k in range(6): r(41 - k, 4 + k, 46 + k, 4 + k, V)
+    r(33, 10, 54, 34, V); r(36, 13, 51, 32, N); tete(r, 14, V)
+    robe_plis(r, 33, 64, V, 34, 53)
+    manches(r, V, 34, True, True, B, 9)
+    r(54, 22, 57, 24, B); r(55, 24, 56, 30, B)                                # la lanterne
+    r(51, 30, 60, 32, B); r(52, 32, 59, 42, B); r(53, 33, 58, 41, V); r(55, 34, 56, 39, B); r(51, 42, 60, 43, B)
+    for (x, y) in ((48, 30), (63, 30), (49, 40), (62, 40), (55, 27)): r(x, y, x, y, V)
+    r(40, 46, 47, 47, B); r(40, 47, 41, 50, B); r(46, 47, 47, 50, B)          # le cadenas
+    r(38, 50, 49, 58, B); r(47, 50, 49, 58, V); r(42, 52, 44, 56, N)
+    r(37, 65, 42, 66, B); r(45, 65, 50, 66, B); sol_tirets(r, 68)
 
 
 def robert_dessin(r):
-    # le porte-bannière : cheveux courts, un mât et une bannière roulée et muette
+    # le porte-bannière : cheveux courts, tunique à col, un mât à pointe ; la bannière muette, roulée et barrée
     tete(r, 12, V)
-    r(35, 33, 52, 54, V); r(38, 33, 49, 38, B)
+    r(35, 33, 52, 54, V); r(38, 33, 49, 38, B); r(42, 38, 45, 54, B)
+    ceinture(r, 47, 35, 52, N, B)
     bras(r, True, True, 36)
-    r(59, 8, 60, 66, B)                                                       # le mât
-    r(61, 10, 74, 26, B); r(62, 11, 73, 25, N); r(64, 14, 71, 22, V)          # la bannière
+    r(59, 6, 60, 66, B); r(60, 6, 60, 66, V); r(58, 2, 61, 5, B); r(59, 0, 60, 1, B)   # le mât
+    r(61, 8, 76, 28, B); r(62, 9, 75, 27, N)                                  # la bannière
+    for k in range(6): r(64 + k * 2, 12 + k * 2, 65 + k * 2, 13 + k * 2, V); r(73 - k * 2, 12 + k * 2, 74 - k * 2, 13 + k * 2, V)
+    r(61, 28, 76, 29, V); r(66, 30, 67, 33, B); r(72, 30, 73, 33, B)
     jambes(r, B); sol_tirets(r, 68)
 
 
 def katherine_dessin(r):
-    # la vigie de la Tour de Guet : une longue-vue, et le registre où tout s'écrit
-    r(36, 9, 51, 13, V); r(35, 12, 36, 26, V); r(51, 12, 52, 26, V)
+    # la vigie de la Tour de Guet : cheveux longs, manteau, une longue-vue tendue, et le registre où tout s'écrit
+    r(36, 9, 51, 13, V); r(34, 12, 36, 30, V); r(51, 12, 53, 30, V)
     tete(r, 12, V)
-    robe_mage(r, 33, 64, B, 35, 52); r(42, 33, 45, 64, V)
-    bras(r, True, True, 36)
-    r(54, 30, 70, 34, B); r(70, 29, 73, 35, V)                                # la longue-vue
-    r(16, 40, 31, 56, B); r(17, 41, 23, 55, N); r(24, 41, 30, 55, N)
-    for y in range(44, 54, 3): r(18, y, 22, y, V); r(25, y, 29, y, B)
-    pieds_robe(r); sol_tirets(r, 68)
+    robe_plis(r, 33, 64, B, 35, 52, N)
+    r(42, 33, 45, 64, V)
+    manches(r, B, 34, True, False, B, 9)
+    r(53, 33, 57, 36, B)
+    r(54, 28, 72, 33, B); r(56, 29, 71, 32, N); r(56, 29, 71, 29, V)          # la longue-vue, ses bagues
+    r(62, 28, 62, 33, V); r(68, 27, 69, 34, B); r(72, 27, 75, 35, V); r(73, 29, 74, 33, B)
+    r(14, 38, 32, 56, B); r(15, 39, 22, 55, N); r(24, 39, 31, 55, N); r(23, 38, 23, 57, V)   # le registre
+    for y in range(42, 54, 3): r(16, y, 21, y, V); r(25, y, 30, y, B)
+    r(37, 65, 42, 66, B); r(45, 65, 50, 66, B); sol_tirets(r, 68)
 
 
 def ralph_dessin(r):
-    # le gardien des Sceaux : barbe, une chaîne de sceaux en bandoulière, un tampon à empreinte
+    # le gardien des Sceaux : barbe, robe, une chaîne de sceaux de cire en bandoulière, un tampon à empreinte
     tete(r, 12, B, barbe=True)
-    robe_mage(r, 33, 64, V, 35, 52)
-    for k in range(6): r(37 + k * 2, 36 + k * 4, 39 + k * 2, 38 + k * 4, B)   # la chaîne en bandoulière
-    for x, y in ((38, 38), (44, 46), (49, 54)): r(x, y, x + 3, y + 3, B); r(x + 1, y + 1, x + 2, y + 2, V)
-    bras(r, True, True, 36)
-    r(57, 38, 61, 46, B); r(54, 46, 64, 50, B); r(55, 50, 63, 51, V)
-    pieds_robe(r); sol_tirets(r, 68)
+    robe_plis(r, 33, 64, V, 35, 52)
+    r(36, 24, 51, 36, B); r(40, 25, 47, 25, N); r(40, 30, 40, 35, V); r(47, 30, 47, 35, V)
+    for k in range(8): r(36 + k * 2, 36 + k * 3, 37 + k * 2, 37 + k * 3, B)   # la chaîne en bandoulière
+    for x, y in ((37, 39), (43, 48), (49, 57)):
+        r(x, y, x + 4, y + 4, B); r(x + 1, y + 1, x + 3, y + 3, V); r(x + 2, y + 2, x + 2, y + 2, N)
+    manches(r, V, 34, True, True, B, 10)
+    r(58, 36, 62, 44, B); r(59, 37, 61, 43, N)                                # le tampon
+    r(54, 44, 66, 48, B); r(53, 48, 67, 51, V); r(55, 49, 65, 50, N)
+    r(37, 65, 42, 66, B); r(45, 65, 50, 66, B); sol_tirets(r, 68)
 
 
 def adele_dessin(r):
-    # la capitaine de la Garde : casque à nasal, bouclier, hallebarde
-    r(36, 7, 51, 13, B); r(43, 13, 44, 18, B)
+    # la capitaine de la Garde : casque à nasal, cotte de mailles et tabard, un écu à croix, une hallebarde
+    r(36, 6, 51, 13, B); r(37, 6, 50, 7, V); r(43, 13, 44, 19, B); r(35, 12, 52, 13, V)
     tete(r, 12, B)
     r(35, 33, 52, 54, B); r(36, 34, 51, 54, N)
-    for y in range(36, 54, 4): r(37, y, 50, y + 1, B)
+    for y in range(35, 54, 2):
+        for x in range(36 + (y // 2) % 2, 52, 2): r(x, y, x, y, B)
+    r(39, 36, 48, 54, V); r(43, 36, 44, 54, B); r(39, 43, 48, 44, B)          # le tabard à croix
     bras(r, True, True, 36)
-    r(59, 4, 60, 66, B); r(56, 4, 63, 8, V); r(61, 8, 64, 13, V)              # la hallebarde
-    r(16, 38, 32, 50, B); r(18, 40, 30, 49, V); r(21, 50, 27, 55, V); r(24, 41, 24, 52, N)  # le bouclier
+    r(59, 4, 60, 66, B); r(60, 4, 60, 66, V)                                  # la hallebarde
+    r(59, 0, 60, 3, B); r(55, 6, 59, 13, V); r(61, 6, 64, 9, B); r(56, 7, 58, 11, B)
+    r(14, 37, 32, 50, B); r(16, 39, 30, 49, V); r(19, 50, 27, 55, V); r(21, 55, 25, 57, V)   # l'écu
+    r(22, 39, 24, 56, B); r(16, 44, 30, 45, B)
+    r(15, 50, 18, 51, B); r(28, 50, 31, 51, B)
     jambes(r); sol_tirets(r, 68)
 
 
 def pierre_dessin(r):
-    # la Pierre d'Inspection : un monolithe gravé, sa jauge, et le score qui monte
-    r(28, 6, 59, 66, B); r(30, 4, 57, 6, B)
-    r(33, 10, 54, 62, N)
+    # la Pierre d'Inspection : un monolithe taillé sur son socle, sa face d'ombre, sa jauge (le score qui monte)
+    for k in range(4): r(32 + k * 3, 4 - k, 55 - k * 3, 4 - k, B)
+    r(29, 5, 58, 64, B); r(52, 5, 58, 64, V); r(52, 2, 55, 4, V)
+    r(33, 10, 49, 60, N)
     for k in range(10):
-        r(37, 58 - k * 5, 50, 60 - k * 5, V if k < 6 else B)
-    r(26, 66, 61, 68, V)
-    for x, y in ((20, 12), (66, 18), (18, 40), (68, 46)): r(x, y, x + 1, y + 1, V)
-    sol_tirets(r, 70)
+        r(36, 56 - k * 5, 46, 58 - k * 5, V if k < 4 else N)
+        if k >= 4: r(36, 56 - k * 5, 46, 58 - k * 5, N); r(36, 58 - k * 5, 46, 58 - k * 5, V)
+    for (x, y) in ((54, 12), (56, 30), (53, 48)): r(x, y, x + 1, y + 3, N)
+    r(24, 64, 63, 67, B); r(58, 64, 63, 67, V); r(22, 67, 65, 68, V)
+    for x, y in ((18, 14), (68, 20), (16, 40), (70, 46), (20, 58)): r(x, y, x, y, B); r(x - 1, y, x + 1, y, V); r(x, y - 1, x, y + 1, V); r(x, y, x, y, B)
+    sol_tirets(r, 71)
 
 
 PORTRAITS = {
@@ -482,7 +782,7 @@ if __name__ == "__main__":
         if nom in LIEUX:
             finir(nom, LIEUX[nom]()); n += 1
         elif nom in PORTRAITS:
-            perso(nom, PORTRAITS[nom]); n += 1
+            A.perso_fini(nom, PORTRAITS[nom]); n += 1
         elif nom == "item_lettre_inspection.gif":
             lettre_inspection(nom); n += 1
     print(n, "dessins")

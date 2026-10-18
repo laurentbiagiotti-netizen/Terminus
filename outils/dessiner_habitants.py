@@ -11,6 +11,9 @@ from dessiner_academie import robe_mage, bras, jambes, pieds_robe  # noqa: E402
 from dessiner_panne import perso, sol_tirets  # noqa: E402
 from dessiner_bastion import tete, cle  # noqa: E402
 from dessiner_machines import for_lignes  # noqa: E402
+from decor_arcanes import robe_plis, manches, ceinture, perso_fini  # noqa: E402
+from dessiner_panne import yeux  # noqa: E402
+import math  # noqa: E402
 
 
 def gilet(r, c=V, fond=B):
@@ -141,122 +144,175 @@ def serrurier_dessin(r):
 # --- chapitre 4 : l'Académie ---
 
 def copiste_dessin(r):
-    # le copiste : manches tachées d'encre, un encrier, un grimoire
-    tete(r, 12, B, lunettes=True)
-    robe_mage(r, 33, 64, V, 35, 52)
-    bras(r, True, True, 36); r(30, 45, 33, 48, N); r(54, 45, 57, 48, N)
-    r(14, 40, 30, 56, B); r(16, 42, 28, 54, V); r(21, 42, 22, 54, N)
-    r(58, 50, 64, 56, B); r(59, 51, 63, 55, N); r(63, 40, 64, 50, V)
-    pieds_robe(r); sol_tirets(r, 68)
+    # le copiste : lunettes, robe verte aux manches tachées d'encre, un grimoire ouvert, un encrier et sa plume
+    tete(r, 12, B, lunettes=True); r(37, 10, 50, 12, V)
+    robe_plis(r, 33, 64, V, 35, 52)
+    manches(r, V, 34, True, True, B, 10)
+    r(29, 42, 31, 43, N); r(56, 40, 57, 42, N)                               # les taches d'encre
+    r(12, 40, 31, 55, B); r(13, 41, 21, 54, N); r(23, 41, 30, 54, N); r(22, 40, 22, 55, V)   # le grimoire
+    for y in range(43, 53, 3): r(14, y, 20, y, B); r(24, y, 29 - (y % 2), y, V)
+    r(12, 55, 31, 56, V)
+    r(59, 50, 66, 57, B); r(60, 52, 65, 56, N); r(60, 51, 65, 51, V)          # l'encrier
+    r(64, 36, 65, 50, B); r(65, 34, 67, 40, V)                                # la plume
+    r(37, 65, 42, 66, B); r(45, 65, 50, 66, B); sol_tirets(r, 68)
 
 
 def secretaire_dessin(r):
-    # la secrétaire : un tampon dans chaque main, des formulaires
-    r(38, 7, 49, 11, V); tete(r, 12, V)
-    r(35, 33, 52, 54, B); r(40, 33, 47, 40, V)
+    # la secrétaire : chignon, chemisier à col vert, un tampon dans chaque main, une pile de formulaires
+    r(39, 5, 48, 10, V); tete(r, 12, V)
+    r(35, 33, 52, 54, B); r(40, 33, 47, 38, V); r(43, 38, 44, 54, N)
+    for y in (42, 47, 52): r(42, y, 42, y, V)
     bras(r, True, True, 36)
-    for x in (24, 60): r(x, 44, x + 5, 47, V); r(x + 2, 40, x + 3, 44, B)
-    r(14, 50, 28, 60, B); for_lignes(r, 16, 52, 26, 59, N)
+    for x in (23, 59):                                                       # les deux tampons
+        r(x + 2, 40, x + 3, 44, B); r(x + 1, 38, x + 4, 40, V); r(x, 45, x + 5, 48, V); r(x, 48, x + 5, 49, B)
+    for k in range(4):                                                       # la pile de formulaires
+        r(12 + k % 2, 60 - k * 3, 28 + k % 2, 62 - k * 3, B); r(14 + k % 2, 61 - k * 3, 24, 61 - k * 3, N)
+    r(16, 48, 24, 49, V)
     jambes(r); sol_tirets(r, 68)
 
 
 def tresorier_dessin(r):
-    # le trésorier : rond, lunettes au bout du nez, une balance
-    tete(r, 12, B, lunettes=True)
-    r(32, 33, 55, 54, V); r(36, 37, 51, 52, B)
+    # le trésorier : rond, lunettes au bout du nez, gilet à boutons ; une balance à plateaux, une pile de pièces
+    tete(r, 12, B, lunettes=True); r(37, 10, 50, 12, V)
+    r(32, 33, 55, 55, V); r(36, 35, 51, 53, B); r(43, 35, 44, 53, N)
+    for y in (39, 44, 49): r(41, y, 41, y, V); r(46, y, 46, y, V)
+    r(37, 46, 41, 46, V); r(40, 46, 40, 49, V)                                # la chaîne de montre
     bras(r, True, True, 36)
-    r(62, 32, 63, 54, B); r(54, 34, 71, 35, B); r(52, 36, 58, 40, V); r(67, 36, 73, 40, V)
-    for k in range(4): r(16 + k * 3, 54 - k * 3, 26 + k * 3, 56 - k * 3, B)
+    r(63, 30, 64, 56, B); r(60, 56, 67, 58, B); r(62, 28, 65, 30, V)          # la balance
+    r(54, 32, 73, 33, B)
+    r(54, 34, 54, 38, B); r(73, 34, 73, 36, B)
+    r(50, 39, 58, 41, V); r(51, 41, 57, 42, B); r(69, 37, 77, 39, V); r(70, 39, 76, 40, B)
+    for k in range(5):                                                       # la pile de pièces
+        r(15 + (k % 2), 60 - k * 3, 27 + (k % 2), 62 - k * 3, B if k % 2 else V)
+        r(15 + (k % 2), 62 - k * 3, 27 + (k % 2), 62 - k * 3, N)
     jambes(r); sol_tirets(r, 68)
 
 
 def apprentie_dessin(r):
-    # l'apprentie : un chapeau pointu trop grand, une baguette à étoile
-    for k in range(10): r(43 - k, 1 + k, 44 + k, 1 + k, V)
-    r(30, 11, 57, 12, V); tete(r, 13, V)
-    robe_mage(r, 34, 64, B, 34, 53)
-    bras(r, True, True, 37)
-    r(59, 26, 60, 46, B); r(57, 22, 62, 26, V); r(59, 20, 60, 28, V)
-    pieds_robe(r); sol_tirets(r, 68)
+    # l'apprentie : un chapeau pointu bien trop grand qui lui tombe sur les yeux, une robe blanche,
+    # une baguette à étoile qui crépite
+    for k in range(13): r(43 - k * 2 // 3, 0 + k, 44 + k * 2 // 3, 0 + k, V)
+    r(47, 2, 49, 4, V); r(49, 4, 50, 5, V)
+    r(28, 13, 59, 15, V); r(30, 15, 57, 15, B)
+    r(37, 16, 50, 31, B); yeux(r, 38, 45, 18); r(37, 16, 50, 17, V)
+    r(43, 24, 44, 25, N); r(42, 28, 45, 28, N)
+    robe_plis(r, 34, 64, B, 34, 53, N)
+    r(34, 34, 53, 36, V)
+    manches(r, B, 35, True, True, B, 10)
+    r(60, 22, 61, 46, B)                                                     # la baguette et son étoile
+    r(60, 16, 61, 21, V); r(57, 18, 64, 19, V); r(58, 17, 63, 20, V); r(60, 17, 61, 20, B)
+    for (x, y) in ((55, 13), (66, 14), (66, 23), (55, 24)): r(x, y, x, y, B)
+    r(37, 65, 42, 66, B); r(45, 65, 50, 66, B); sol_tirets(r, 68)
 
 
 def messagere_dessin(r):
-    # la messagère : un pigeon sur l'épaule, un tube de message
-    tete(r, 12, V)
-    robe_mage(r, 33, 64, V, 35, 52); r(37, 40, 50, 41, B)
-    bras(r, True, True, 36)
-    r(53, 24, 61, 31, B); r(59, 22, 63, 26, B); r(61, 23, 62, 24, N); r(63, 24, 65, 25, V); r(52, 28, 54, 31, V)
-    r(16, 44, 30, 49, B); r(18, 45, 28, 48, N); r(14, 43, 16, 50, V); r(30, 43, 32, 50, V)
-    pieds_robe(r); sol_tirets(r, 68)
+    # la messagère : un bandeau, une cape de voyage, un pigeon voyageur perché sur l'épaule, un tube à message
+    tete(r, 12, V); r(37, 14, 50, 15, B)
+    robe_plis(r, 33, 64, V, 35, 52)
+    r(35, 40, 52, 41, B); r(41, 39, 46, 42, N); r(42, 40, 45, 41, V)
+    manches(r, V, 34, True, True, B, 10)
+    r(53, 24, 62, 31, B); r(52, 26, 53, 30, B); r(60, 21, 64, 25, B)          # le pigeon
+    r(62, 22, 62, 22, N); r(64, 23, 66, 24, V); r(54, 27, 59, 29, V); r(55, 32, 55, 33, V); r(58, 32, 58, 33, V)
+    r(12, 43, 30, 49, B); r(14, 44, 28, 48, N); r(15, 45, 27, 47, B)          # le tube à message et ses bouchons
+    r(10, 42, 12, 50, V); r(30, 42, 32, 50, V); r(20, 45, 22, 47, V)
+    r(37, 65, 42, 66, B); r(45, 65, 50, 66, B); sol_tirets(r, 68)
 
 
 def surveillante_dessin(r):
-    # la surveillante : un trousseau à la ceinture, un registre épais
-    r(37, 8, 50, 12, B); tete(r, 12, B)
-    robe_mage(r, 33, 64, V, 35, 52); r(35, 46, 52, 47, B)
-    bras(r, True, True, 36)
-    cle(r, 46, 48, B); cle(r, 50, 50, N)
-    r(14, 38, 30, 58, B); r(15, 39, 29, 57, N); r(17, 41, 27, 55, V); r(17, 47, 27, 48, N)
-    pieds_robe(r); sol_tirets(r, 68)
+    # la surveillante : cheveux tirés, robe sévère à ceinture, un trousseau de clés, un registre épais à fermoir
+    r(37, 8, 50, 12, B); r(41, 5, 46, 8, B); tete(r, 12, B); r(37, 11, 50, 11, N); r(40, 8, 47, 8, N)
+    robe_plis(r, 33, 64, V, 35, 52)
+    r(35, 46, 52, 47, B)
+    manches(r, V, 34, True, True, B, 10)
+    cle(r, 43, 48, B); cle(r, 48, 49, V)
+    r(12, 37, 31, 59, B); r(13, 38, 30, 58, V); r(14, 39, 29, 57, N)           # le registre et son fermoir
+    r(15, 40, 28, 56, V); r(15, 47, 28, 49, N); r(28, 46, 32, 50, B); r(29, 47, 30, 49, N)
+    r(16, 41, 17, 55, B)
+    r(37, 65, 42, 66, B); r(45, 65, 50, 66, B); sol_tirets(r, 68)
 
 
 # --- chapitre 5 : le Bastion ---
 
 def colporteur_dessin(r):
-    # le colporteur : poussiéreux, une besace de lettres en bandoulière
-    r(34, 9, 53, 11, B); r(38, 5, 49, 9, B); tete(r, 12, B, barbe=True)
-    r(35, 33, 52, 54, V)
-    for k in range(7): r(36 + k * 2, 34 + k * 3, 38 + k * 2, 36 + k * 3, B)
-    bras(r, True, True, 36)
-    r(50, 50, 66, 62, B); r(52, 52, 64, 60, N); r(54, 53, 62, 56, V)
+    # le colporteur : chapeau cabossé, barbe, poussiéreux, une besace de lettres en bandoulière, un bâton de marche
+    r(33, 9, 54, 11, B); r(37, 4, 50, 9, B); r(37, 7, 50, 8, V); tete(r, 12, B, barbe=True)
+    r(35, 37, 52, 56, V); r(36, 24, 51, 36, B); r(40, 25, 47, 25, N)
+    for k in range(9): r(36 + k * 2, 36 + k * 3, 38 + k * 2, 37 + k * 3, B)   # la bandoulière
+    bras(r, True, True, 37)
+    r(48, 52, 66, 64, B); r(49, 53, 65, 63, N); r(49, 53, 65, 55, B)          # la besace et ses lettres
+    r(52, 48, 58, 53, B); r(53, 49, 57, 52, N); r(54, 50, 56, 50, V)
+    r(59, 49, 64, 53, V); r(60, 50, 63, 50, N)
+    r(26, 20, 27, 67, V); r(25, 18, 28, 20, B)                                # le bâton
     jambes(r); sol_tirets(r, 68)
 
 
 def sergent_dessin(r):
-    # le sergent : un casque à nasal, un clairon
-    r(36, 7, 51, 13, V); r(43, 13, 44, 20, V); tete(r, 13, V)
+    # le sergent : casque à nasal, galons sur la manche, tunique ceinturée ; un clairon levé
+    r(36, 6, 51, 13, V); r(37, 6, 50, 7, B); r(43, 13, 44, 20, V); r(35, 12, 52, 13, B); tete(r, 13, V)
     r(35, 34, 52, 54, B); r(35, 34, 52, 36, V); r(42, 37, 45, 54, V)
+    ceinture(r, 46, 35, 52, N, V)
     bras(r, True, True, 37)
-    r(57, 40, 66, 41, V); r(66, 36, 70, 45, V); r(67, 38, 69, 43, N)
+    r(30, 40, 31, 41, V); r(30, 43, 31, 44, V)                                # les galons
+    r(56, 40, 66, 41, V); r(57, 42, 59, 43, V); r(61, 42, 63, 43, V)          # le clairon et son pavillon
+    for k in range(7): r(65 + k, 40 - k, 65 + k, 41 + k, V)
+    r(72, 33, 72, 48, B)
+    r(56, 39, 57, 42, B)
     jambes(r); sol_tirets(r, 68)
 
 
 def sentinelle_dessin(r):
-    # la sentinelle : une cotte de mailles, une lance, les yeux cernés
-    tete(r, 12, B); r(38, 21, 43, 21, V); r(45, 21, 50, 21, V)
+    # la sentinelle : un camail, une cotte de mailles, une longue lance, les yeux cernés d'avoir veillé
+    r(35, 9, 52, 32, V); r(37, 12, 50, 30, N); tete(r, 12, B)
+    r(38, 21, 43, 21, V); r(45, 21, 50, 21, V)
     r(35, 33, 52, 54, V)
-    for y in range(35, 54, 3):
-        for x in range(37 + (y % 2), 51, 3): r(x, y, x, y, N)
+    for y in range(35, 54, 2):
+        for x in range(36 + (y // 2) % 2, 52, 2): r(x, y, x, y, N)
+    ceinture(r, 47, 35, 52, B, V)
     bras(r, True, True, 36)
-    r(62, 2, 63, 66, B); r(60, 0, 65, 6, V)
+    r(62, 4, 63, 66, B); r(63, 4, 63, 66, V)                                  # la lance et son fanion
+    r(61, 0, 64, 4, B); r(62, 0, 63, 0, V)
+    r(64, 6, 71, 9, V); r(64, 10, 68, 11, V)
     jambes(r); sol_tirets(r, 68)
 
 
 def greffier_dessin(r):
-    # le greffier : une plume derrière l'oreille, un long registre déroulé
-    tete(r, 12, V, lunettes=True); r(51, 6, 52, 18, B)
-    robe_mage(r, 33, 64, B, 35, 52); r(42, 33, 45, 64, V)
-    bras(r, True, True, 36)
-    r(14, 36, 29, 39, V); r(16, 39, 27, 64, B); for_lignes(r, 18, 41, 25, 62, N); r(14, 62, 29, 65, V)
-    pieds_robe(r); sol_tirets(r, 68)
+    # le greffier : lunettes, une plume derrière l'oreille, robe noire à rabat ; un long registre déroulé
+    tete(r, 12, V, lunettes=True); r(51, 5, 52, 18, B); r(52, 4, 54, 9, V)
+    robe_plis(r, 33, 64, N, 35, 52, V)
+    for k, y in enumerate(range(33, 65)):
+        e = k // 6
+        r(35 - e, y, 35 - e, y, B); r(52 + e, y, 52 + e, y, B)
+    r(41, 33, 46, 40, B); r(43, 40, 44, 40, B)                                # le rabat
+    manches(r, N, 34, True, True, B, 10)
+    r(31, 34, 31, 43, B); r(56, 34, 56, 43, B)
+    r(12, 34, 29, 37, V); r(14, 37, 27, 63, B); r(12, 63, 29, 66, V)           # le registre déroulé
+    for y in range(40, 61, 3): r(16, y, 25 - (y % 2) * 2, y, N)
+    r(16, 49, 22, 49, V)
+    r(37, 65, 42, 66, B); r(45, 65, 50, 66, B); sol_tirets(r, 68)
 
 
 def cantiniere_dessin(r):
-    # la cantinière : un tablier taché, une louche, une petite marmite
-    r(37, 8, 50, 12, B); tete(r, 12, B)
-    r(33, 33, 54, 56, V); r(36, 36, 51, 58, B); r(40, 44, 41, 45, V); r(46, 50, 48, 51, V)
+    # la cantinière : un foulard, un grand tablier taché, une louche levée, une marmite fumante
+    r(36, 8, 51, 12, V); r(51, 10, 54, 14, V); tete(r, 12, B)
+    r(33, 33, 54, 56, V); r(36, 35, 51, 59, B); r(36, 35, 51, 36, N)
+    r(40, 44, 41, 45, V); r(46, 50, 48, 51, V); r(43, 54, 44, 55, V)
     bras(r, True, True, 36)
-    r(60, 28, 61, 46, B); r(57, 46, 64, 50, B)
-    r(14, 48, 30, 60, B); r(16, 50, 28, 58, N); r(12, 50, 14, 52, B); r(30, 50, 32, 52, B)
+    r(60, 26, 61, 46, B); r(57, 22, 64, 26, B); r(58, 23, 63, 25, V)          # la louche
+    r(12, 48, 32, 61, B); r(13, 52, 31, 60, N); r(13, 49, 31, 51, V)           # la marmite
+    r(10, 50, 12, 53, B); r(32, 50, 34, 53, B); r(14, 61, 30, 62, V)
+    for (x, y) in ((16, 44), (21, 40), (26, 44), (18, 36)): r(x, y, x + 1, y, B)
     jambes(r); sol_tirets(r, 68)
 
 
 def heraut_dessin(r):
-    # le héraut : un tabard frappé d'un sceau, une trompette à bannière
-    r(36, 8, 51, 12, V); tete(r, 12, V)
-    r(35, 33, 52, 56, B); r(38, 35, 49, 56, V); r(41, 40, 46, 47, B); r(42, 41, 45, 46, N); r(43, 42, 44, 45, V)
+    # le héraut : un chapeau à plume, un tabard frappé d'un sceau ; une trompette ornée d'une bannière
+    r(36, 7, 51, 12, V); r(48, 2, 50, 7, B); r(49, 1, 52, 3, B); tete(r, 12, V)
+    r(35, 33, 52, 56, B); r(38, 35, 49, 56, V); r(38, 55, 49, 56, B)
+    r(41, 40, 46, 47, B); r(42, 41, 45, 46, N); r(43, 42, 44, 45, V)
     bras(r, True, True, 36)
-    r(57, 38, 70, 39, V); r(70, 34, 74, 43, V); r(60, 40, 67, 48, B); r(61, 41, 66, 47, N); r(63, 43, 64, 45, V)
+    r(56, 38, 70, 39, V); r(70, 33, 75, 44, V); r(72, 35, 75, 42, N); r(73, 37, 75, 40, B)   # la trompette
+    r(59, 40, 68, 50, B); r(60, 41, 67, 49, N); r(62, 43, 65, 47, V)          # sa bannière
+    for x in (59, 63, 67): r(x, 51, x + 1, 52, B)
     jambes(r); sol_tirets(r, 68)
 
 
@@ -275,10 +331,15 @@ PORTRAITS = {
     "item_cantiniere.gif": cantiniere_dessin, "item_heraut.gif": heraut_dessin,
 }
 
+# Les habitants des chapitres 4 et 5, redessinés avec la finition du chapitre 8 (decor_arcanes.perso_fini).
+FINIS = {"item_copiste.gif", "item_secretaire.gif", "item_tresorier.gif", "item_apprentie.gif", "item_messagere.gif",
+         "item_surveillante.gif", "item_colporteur.gif", "item_sergent.gif", "item_sentinelle.gif", "item_greffier.gif",
+         "item_cantiniere.gif", "item_heraut.gif"}
+
 if __name__ == "__main__":
     noms = sys.argv[1:] or list(PORTRAITS)
     n = 0
     for nom in noms:
         if nom in PORTRAITS:
-            perso(nom, PORTRAITS[nom]); n += 1
+            (perso_fini if nom in FINIS else perso)(nom, PORTRAITS[nom]); n += 1
     print(n, "portraits")
