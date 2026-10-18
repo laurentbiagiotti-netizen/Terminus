@@ -101,6 +101,20 @@ function opensslGenrsaIle(args, io, h){
 }
 function opensslReqIle(args, io, h){
 	var x509 = args.indexOf("-x509") > -1, cleF = optionIle(args, ["-key"]), nouvelle = optionIle(args, ["-newkey"]);
+	// Relire une demande : req -in FICHIER -noout -subject (ou -text).
+	var entree = optionIle(args, ["-in"]);
+	if (entree && !x509 && !cleF && !nouvelle && args.indexOf("-new") === -1){
+		var csr = lireCsrIle(lireObjetIle(entree, io, "openssl", "X509 request"));
+		if (!csr || csr.inconnu) throw new ShellError("Could not read X509 request from " + entree + "\nUnable to load X509 request", 1);
+		var l = [];
+		if (args.indexOf("-text") > -1){
+			l.push("Certificate Request:", "    Data:", "        Version: 1 (0x0)", "        Subject: " + csr.sujet, "        Subject Public Key Info:", "            Public Key Algorithm: rsaEncryption");
+			if ((csr.san || []).length) l.push("        Attributes:", "            Requested Extensions:", "                X509v3 Subject Alternative Name: ", "                    " + csr.san.map(function(x){ return "DNS:" + x; }).join(", "));
+		}
+		if (args.indexOf("-subject") > -1) l.push("subject=" + csr.sujet);
+		if (args.indexOf("-noout") === -1) l.push(lireObjetIle(entree, io, "openssl", "X509 request").trim());
+		return l.join("\n");
+	}
 	var sortie = optionIle(args, ["-out"]), sortieCle = optionIle(args, ["-keyout"]), jours = +(optionIle(args, ["-days"]) || 30);
 	var subj = optionIle(args, ["-subj"]), sujet = sujetDepuisSubjIle(subj);
 	if (subj !== null && !sujet) throw new ShellError("req: Subject or issuer missing: name is expected to be in the format /type0=value0/type1=value1/type2=... where characters may be escaped by \\.", 1);

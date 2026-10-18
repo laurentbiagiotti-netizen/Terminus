@@ -948,7 +948,7 @@ function executerNsupdateIle(h, lignes, cle, io){
 			journalIle(hs, "named", "named", "client @0x7f3a2c02a168 " + ipIle(h) + "#" + (50000 + state.nbCommandes % 9000) + (nomCle ? "/key " + nomCle : "") + ": update '" + nomZone + "/IN' denied", 3);
 			sortie.push("update failed: REFUSED"); io.code = 2; ops = []; return;
 		}
-		if (z.gele){ sortie.push("update failed: SERVFAIL"); io.code = 2; ops = []; return; }
+		if (z.gele){ sortie.push("update failed: REFUSED"); io.code = 2; ops = []; return; }
 		var horsZone = ops.filter(function(o){ var n = o.rr.nom, orig = nomZone + "."; return !(n === orig || n.substring(n.length - orig.length - 1) === "." + orig); });
 		if (horsZone.length){ sortie.push("update failed: NOTZONE"); io.code = 2; ops = []; return; }
 		var serie = (z.serie || 0) + 1;

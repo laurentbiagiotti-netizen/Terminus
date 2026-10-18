@@ -244,6 +244,9 @@ Shell.verifierEcriture = function(lieu, io, cmd, nom){
 	var h = ileIci();
 	var m = h && montagesNfsIle(h).length ? montageDeNoeudIle(lieu) : null;
 	var ex = m ? exportDuMontageIle(m, h) : null;
+	if (ex && (!ex.options.rw || /(^|,)ro(,|$)/.test(m.options || "")))
+		throw new ShellError(cmd + " : impossible de créer « " + nom + " » : Système de fichiers accessible en lecture seulement\n" +
+			C.gris("(Read-only file system : " + m.serveur + " exporte ce dossier en lecture seule (ro), ou il est monté ainsi.)"));
 	if (ex && ex.options.rw && (ex.options.all_squash || (io && io.sudo && ex.options.root_squash)) && !Shell.bit(lieu, "w", io))
 		throw new ShellError(cmd + " : impossible de créer « " + nom + " » : Permission non accordée\n" +
 			C.gris("(Ce dossier vient de " + m.serveur + " par NFS, exporté en " + (ex.options.all_squash ? "all_squash" : "root_squash") + " : là-bas, ton sudo devient nobody, qui n'a pas le droit d'écrire ici. C'est voulu.)"));
@@ -461,6 +464,15 @@ Shell.appeler = function(nom, args, io){
 	finally { if (montagesNfsIle(h).length) pousserMontagesIle(h); }
 };
 
+/* Une redirection (echo ... > /mnt/fichier) s'écrit après le sort : à la fin de la ligne, on repousse aussi les montages. */
+var EXECUTER_AVANT_ILE_NFS = Shell.executer;
+Shell.executer = function(ligne){
+	try { return EXECUTER_AVANT_ILE_NFS.apply(this, arguments); }
+	finally {
+		try { var h = ileIci(); if (h && montagesNfsIle(h).length) pousserMontagesIle(h); } catch (e){ /* le miroir ne casse jamais une ligne */ }
+	}
+};
+
 /* ================================================================== */
 /* Samba : smb.conf et testparm                                         */
 /* ================================================================== */
@@ -642,6 +654,11 @@ function ouvrirSessionSmbIle(hClient, serveurNom, partage, nom, phrase, invite){
 	if (!invite){
 		var S = etatSambaIle(s).comptes[nom];
 		u = comptePourIle(s, nom);
+		if (S && !S.actif && S.mdp === phrase && u){
+			journalIle(s, "smbd", "smbd", "  check_ntlm_password:  Authentication for user [" + nom + "] -> [" + nom + "] FAILED with error NT_STATUS_ACCOUNT_DISABLED", 4);
+			evenementIle(s, "smbSession", { compte: nom, ok: false, depuis: hClient });
+			return { erreur: "session setup failed: NT_STATUS_ACCOUNT_DISABLED" };
+		}
 		if (!S || !S.actif || S.mdp !== phrase || !u){
 			journalIle(s, "smbd", "smbd", "  check_ntlm_password:  Authentication for user [" + nom + "] -> [" + nom + "] FAILED with error NT_STATUS_" + (S ? "WRONG_PASSWORD" : "NO_SUCH_USER"), 4);
 			evenementIle(s, "smbSession", { compte: nom, ok: false, depuis: hClient });

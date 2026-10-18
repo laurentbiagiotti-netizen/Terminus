@@ -387,6 +387,11 @@ Shell.sorts.systemctl = function(args, io){
 		});
 		if (noms.indexOf("systemd-journald.service") > -1 && /start|restart/.test(action)) appliquerJournald(h);
 	}
+	// Un service oneshot qui vient d'échouer : systemctl le dit, comme le vrai (le détail est dans le journal).
+	if (/^(start|restart)$/.test(action)){
+		var rate = Object.keys(avant).filter(function(u){ var s = (etatMachine(h).services || {})[u]; return /\.service$/.test(u) && etatUnite(h, u).echec && s && s.resultat === "exit-code" && s.fin === maintenantMachine(h) && limitesDepuisDirectives(directivesMachine(h, u)).type === "oneshot"; })[0];
+		if (rate) throw new ShellError("Job for " + rate + " failed because the control process exited with error code.\nSee \"systemctl status " + rate + "\" and \"journalctl -xeu " + rate + "\" for details.", 1);
+	}
 	return sortie;
 };
 function listeEchecs(h, io){
