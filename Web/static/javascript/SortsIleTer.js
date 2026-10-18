@@ -484,7 +484,7 @@ Shell.sorts.borg = function(args, io){
 		return "";
 	};
 	var verifierPhrase = function(p){ if (depot.chiffrement !== "none" && p !== depot.phrase){ evenementIle(h, "borg", { ordre: ordre, ok: false, phrase: false }); throw new ShellError("passphrase supplied in BORG_PASSPHRASE, by BORG_PASSCOMMAND or via BORG_PASSPHRASE_FD is incorrect.", 52); } };
-	var fin = function(infos){ var e = { ordre: ordre, ok: true, depot: d.chemin, hoteDepot: d.hote, depuis: h, restriction: cnx ? cnx.restriction : null, restrict: cnx ? cnx.options.restrict : null, commande: cnx ? cnx.options.commande : null }; for (var k in infos) e[k] = infos[k]; evenementIle(h, "borg", e); };
+	var fin = function(infos){ var e = { ordre: ordre, ok: true, depot: d.chemin, hoteDepot: d.hote, depuis: h, restriction: cnx ? cnx.restriction : null, restrict: cnx ? cnx.options.restrict : null, commande: cnx ? cnx.options.commande : null, args: args.slice() }; for (var k in infos) e[k] = infos[k]; evenementIle(h, "borg", e); };
 	switch (ordre){
 	case "init":
 		var chiffrement = optionIle(args, ["-e", "--encryption"]);

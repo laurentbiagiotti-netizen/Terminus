@@ -732,9 +732,11 @@ Shell.sorts.sftp = function(args, io){
 					}
 					else if (c === "put"){
 						var loc = Shell.objetLisible(mots[1], io, "sftp"), dst = reel(mots[2] || nomDe(mots[1]));
+						// Une destination qui est un dossier (rendus/, ou rendus) : le fichier y va, sous son nom.
+						if (mots[2] && dossierHote(s, dst)) dst = cheminNormal(dst + "/" + nomDe(mots[1]));
 						var dd = dossierHote(s, dossierDe(dst));
 						if (!dd || !droitUnixIle(s, dd, u, groupes, "w")) sortie = "dest open \"" + (mots[2] || sess.ici + "/" + nomDe(mots[1])) + "\": Permission denied";
-						else { moteurSeul(function(){ var it = poserFichierHote(s, dst, loc.item.getText(), {}); it.owner = compte; it.mode = "rw-r--r--"; }); sortie = "Uploading " + mots[1] + " to " + (sess.ici.replace(/\/$/, "") + "/" + (mots[2] || nomDe(mots[1]))); evenementIle(h, "sftpPut", { serveur: s, compte: compte, chemin: dst, chroot: chroot }); }
+						else { moteurSeul(function(){ var it = poserFichierHote(s, dst, loc.item.getText(), {}); it.owner = compte; it.mode = "rw-r--r--"; }); sortie = "Uploading " + mots[1] + " to " + cheminNormal("/" + dst.substring(cheminNormal(sess.racine).replace(/\/$/, "").length)); evenementIle(h, "sftpPut", { serveur: s, compte: compte, chemin: dst, chroot: chroot }); }
 					}
 					else if (c === "get"){
 						var it2 = fichierHote(s, reel(mots[1] || ""));

@@ -44,6 +44,8 @@ function resoudreHoteIle(nom){
 	if (/^\d+\.\d+\.\d+\.\d+$/.test(n)) return hoteDeIpIle(n);
 	var court = n.replace(new RegExp("\\." + DOMAINE_ILE.replace(/\./g, "\\.") + "$"), "");
 	if (HOTES.hasOwnProperty(court)) return court;
+	// La rive est sur le continent : son nom complet est dans l'ancien campus.
+	if (n === "rive.ancien-campus.lan") return "rive";
 	return null;
 }
 function journalIle(h, ident, unite, message, prio, pid){

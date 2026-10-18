@@ -246,7 +246,7 @@ var FamaIle = habitantCh7(maisonCh7("portes").lieu, "Fama", "item_fama.gif", fun
 		C.gris("Les outils (sur halle) : sudo groupadd devoirs ; sudo usermod -aG devoirs depot ; sudo mkdir -p /srv/devoirs/rendus ; sudo chown depot /srv/devoirs/rendus ; " +
 			"à la fin de /etc/ssh/sshd_config : Match Group devoirs / ChrootDirectory /srv/devoirs / ForceCommand internal-sftp ; sudo sshd -t ; sudo systemctl reload ssh. " +
 			"Depuis le quai : sftp depot@halle (pwd, ls, put FICHIER rendus/), puis ssh depot@halle.");
-}, ["sftp"]);
+}, ["sftp", "groupadd"]);
 declarerAnnexe({ id: "a7_devoirs", chapitre: 8, titre: "Le dépôt des devoirs", habitant: "Fama", lieu: "aux Portes de la cité", item: function(){ return FamaIle; }, ouverte: ouverteCh7,
 	indice: "sous l'auvent des Portes, une étudiante porte un cartable plein de copies.",
 	resume: "Un compte qui ne fait que du sftp, enfermé dans un dossier : Match Group, ForceCommand internal-sftp, ChrootDirectory à root.",

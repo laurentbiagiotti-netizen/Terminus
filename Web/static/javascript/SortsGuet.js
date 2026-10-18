@@ -1131,7 +1131,7 @@ function lireCertificat(texte){
 function lireCle(texte){
 	var brut = lirePem(texte, "PRIVATE KEY");
 	if (brut === null) return null;
-	var m = /terminus-key:([^:]+):([^:]+):/.exec(brut);
+	var m = /terminus-key:([^:]+):([a-z]+:\d+|[^:]+):/.exec(brut);
 	return m ? { id: m[1], algo: m[2] } : { inconnu: true };
 }
 /* La vérification d'un certificat, comme OpenSSL : { code, texte } (0 : ok). */
