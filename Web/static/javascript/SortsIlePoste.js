@@ -125,8 +125,8 @@ function nouvelIdPostfixIle(h){ return hexDe("qid:" + h + ":" + state.nbCommande
 function delaiTexteIle(ms){ return (Math.max(0, ms) / 1000).toFixed(2).replace(/\.00$/, ".02"); }
 /* Le texte complet d'un message, tel qu'il est rangé dans une boîte. */
 function texteMessageIle(h, msg, destinataire){
-	var d = new Date(msg.arrivee - DECALAGE_HISTOIRE * 3600000);
-	var dateTexte = JOURS_EN[d.getDay()] + ", " + d.getDate() + " " + MOIS_EN[d.getMonth()] + " " + d.getFullYear() + " " + deuxChiffres(d.getHours() + 2) + ":" + deuxChiffres(d.getMinutes()) + ":" + deuxChiffres(d.getSeconds()) + " +0200 (CEST)";
+	var d = dateIle(h, msg.arrivee);
+	var dateTexte = JOURS_EN[d.getDay()] + ", " + d.getDate() + " " + MOIS_EN[d.getMonth()] + " " + d.getFullYear() + " " + deuxChiffres(d.getHours()) + ":" + deuxChiffres(d.getMinutes()) + ":" + deuxChiffres(d.getSeconds()) + " " + texteDecalage(h);
 	var entetes = ["Return-Path: <" + msg.de + ">", "X-Original-To: " + destinataire, "Delivered-To: " + destinataire,
 		"Received: by " + h + "." + DOMAINE_ILE + " (Postfix, from userid " + (msg.uid === undefined ? 1000 : msg.uid) + ")", "\tid " + msg.id + "; " + dateTexte,
 		"From: " + (msg.deNom ? msg.deNom + " <" + msg.de + ">" : msg.de), "To: " + msg.a.join(", "), "Subject: " + (msg.sujet || ""), "Date: " + dateTexte,
@@ -138,8 +138,7 @@ function rangerMaildirIle(h, dossier, msg, texte, proprietaire, sousDossier){
 	var base = dossier.replace(/\/$/, "") + (sousDossier ? "/." + sousDossier : "");
 	moteurSeul(function(){
 		["", "/new", "/cur", "/tmp"].forEach(function(s){
-			var d = creerDossierHote(h, base + s, { owner: proprietaire, mode: "rwx------" });
-			if (d && !dossierHote(h, base + s).ileCree){ d.owner = proprietaire; d.mode = "rwx------"; d.ileCree = true; }
+			creerDossierHote(h, base + s, { owner: proprietaire, mode: "rwx------" });
 		});
 		var nom = Math.floor(maintenantMachine(h) / 1000) + ".M" + (100000 + Math.floor(alea("maildir" + msg.id + base) * 800000)) + "P" + (2000 + state.nbCommandes % 7000) + "." + h + ",S=" + texte.length;
 		poserFichierHote(h, base + "/new/" + nom, texte, { owner: proprietaire, mode: "rw-------" });

@@ -423,6 +423,7 @@ var PosteIle = poserMachineIle("poste", { ip: IP_ILE.poste, image: "loc_baie_ile
 		P("/etc/dovecot/conf.d/10-ssl.conf", DOVECOT_10_SSL);
 		P("/etc/dovecot/conf.d/10-master.conf", DOVECOT_10_MASTER);
 		P("/etc/dovecot/conf.d/15-lda.conf", DOVECOT_15_LDA);
+		P("/etc/dovecot/conf.d/auth-system.conf.ext", "# Authentication for system users. Included from 10-auth.conf.\n\npassdb {\n  driver = pam\n}\n\nuserdb {\n  driver = passwd\n}\n");
 		P("/etc/dovecot/conf.d/90-sieve.conf", DOVECOT_90_SIEVE);
 		P("/usr/share/dovecot/protocols.d/imapd.protocol", "protocols = $protocols imap\n");
 		P("/usr/share/dovecot/dh.pem", "-----BEGIN DH PARAMETERS-----\n(paramètres Diffie-Hellman, 4096 bits)\n-----END DH PARAMETERS-----\n");
