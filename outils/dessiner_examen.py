@@ -940,11 +940,29 @@ def florimond():
     return im
 
 
+def contre_jour(im, cx=88, cy=78, rx=74, ry=74, t0=0.36):
+    """Une lumière de scène derrière le personnage (comme les halos du chapitre 8) : un halo vert tramé sur le
+    fond noir seulement, qui s'éteint vers les bords et s'arrête à deux pixels de la silhouette, pour qu'elle
+    garde un contour net."""
+    from PIL import ImageFilter
+    from dessiner_fantasy import BAYER
+    masque = im.point(lambda v: 255 if v != N else 0).convert('L').filter(ImageFilter.MaxFilter(5))
+    px, m = im.load(), masque.load()
+    for y in range(H):
+        for x in range(W):
+            if px[x, y] != N or m[x, y]:
+                continue
+            dist = math.hypot((x - cx) / rx, (y - cy) / ry)
+            if dist < 1 and BAYER[y % 4][x % 4] < t0 * (1 - dist) * 16:
+                px[x, y] = V
+    return im
+
+
 DESSINS = {"item_myriam.gif": myriam, "item_dylan.gif": dylan, "item_elfe.gif": aidan, "item_rouxblanc.gif": rouxblanc, "item_david.gif": david, "item_laurana.gif": laurana,
     "item_manon.gif": manon, "item_wissam.gif": wissam, "item_jeanbaptiste.gif": jeanbaptiste, "item_gabriel.gif": gabriel, "item_timour.gif": timour, "item_steve.gif": steve, "item_florimond.gif": florimond}
 
 if __name__ == "__main__":
     noms = sys.argv[1:] or list(DESSINS)
     for nom in noms:
-        finir(nom, DESSINS[nom]())
+        finir(nom, contre_jour(DESSINS[nom]()))
     print(len(noms), "portraits")

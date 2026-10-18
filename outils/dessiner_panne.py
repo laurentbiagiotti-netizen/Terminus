@@ -118,41 +118,48 @@ def sol_tirets(r, y):
         r(x0, y + dy, x1, y + dy, B)
 
 def radia_dessin(r):
-    # les cheveux bouclés, en vert
-    for (x0, y0, x1, y1) in [(34, 9, 53, 12), (32, 11, 55, 14), (31, 13, 56, 27), (30, 16, 57, 25), (32, 27, 36, 30), (51, 27, 55, 30)]:
+    # les cheveux bouclés, en vert, avec des boucles qui dépassent et un reflet
+    for (x0, y0, x1, y1) in [(34, 9, 53, 12), (32, 11, 55, 14), (31, 13, 56, 27), (30, 16, 57, 25), (32, 27, 36, 31), (51, 27, 55, 31)]:
         r(x0, y0, x1, y1, V)
     for x in range(31, 57, 3): r(x, 8, x + 1, 8, V)
-    r(36, 15, 51, 31, B); r(36, 15, 51, 16, V)
+    for y in range(15, 30, 3): r(29, y, 29, y + 1, V); r(58, y, 58, y + 1, V)
+    r(36, 11, 39, 11, B)
+    r(36, 15, 51, 31, B); r(36, 15, 51, 16, V); r(36, 17, 38, 17, V); r(49, 17, 51, 17, V)
     yeux(r, 37, 45, 19)
     r(43, 24, 44, 27, N)
     r(40, 28, 47, 30, N); r(41, 29, 46, 29, B); r(42, 29, 42, 29, N); r(44, 29, 44, 29, N)
     # le casque et son micro
     r(32, 9, 55, 10, B); r(30, 10, 32, 12, B); r(55, 10, 57, 12, B)
     r(28, 18, 31, 26, B); r(29, 19, 30, 25, N); r(56, 18, 59, 26, B); r(57, 19, 58, 25, N)
-    r(31, 26, 32, 29, B); r(33, 29, 37, 30, B)
-    # le sweat, les bras, le portable et son câble
+    r(31, 26, 32, 29, B); r(33, 29, 37, 30, B); r(37, 29, 38, 30, V)
+    # le sweat (un liseré de lumière à gauche, la poche, les poignets), les bras, le portable et son câble
     r(42, 32, 45, 33, B); r(35, 34, 52, 52, V); r(41, 34, 46, 36, N); r(42, 34, 45, 35, B)
+    r(35, 34, 35, 52, B); r(52, 38, 52, 52, N)
     r(31, 36, 34, 37, B); r(30, 37, 31, 46, B); r(30, 46, 35, 47, B)
     r(53, 36, 56, 37, B); r(56, 37, 57, 46, B); r(52, 46, 57, 47, B)
     r(33, 40, 54, 49, B); r(35, 42, 52, 47, N)
-    r(36, 43, 37, 44, V); r(38, 44, 39, 45, V); r(41, 45, 45, 45, V)
-    r(31, 49, 56, 51, B)
-    r(56, 50, 60, 50, V); r(60, 50, 61, 58, V); r(59, 58, 62, 61, V)
+    r(36, 43, 37, 44, V); r(38, 44, 39, 45, V); r(41, 45, 45, 45, V); r(47, 43, 50, 43, B)
+    r(31, 49, 56, 51, B); r(31, 51, 56, 51, V)
+    r(56, 50, 60, 50, V); r(60, 50, 61, 58, V); r(59, 58, 62, 61, V); r(60, 59, 61, 60, N)
+    # le jean, ses coutures, les baskets à semelle blanche
     r(38, 53, 41, 63, B); r(46, 53, 49, 63, B); r(39, 54, 40, 62, N); r(47, 54, 48, 62, N)
-    r(36, 64, 42, 66, V); r(45, 64, 51, 66, V)
+    r(38, 58, 38, 58, N); r(49, 58, 49, 58, N)
+    r(36, 64, 42, 66, V); r(45, 64, 51, 66, V); r(36, 66, 42, 66, B); r(45, 66, 51, 66, B)
     sol_tirets(r, 68)
 
 def archiviste_dessin(r):
-    # grand et maigre, crâne dégarni, touffes vertes sur les côtés, lunettes rondes
-    r(36, 6, 51, 28, B)
-    r(33, 12, 36, 20, V); r(51, 12, 54, 20, V)
+    # grand et maigre, crâne dégarni et luisant, touffes vertes sur les côtés, lunettes rondes, sourcils broussailleux
+    r(36, 6, 51, 28, B); r(39, 7, 42, 8, V)
+    r(33, 12, 36, 20, V); r(51, 12, 54, 20, V); r(32, 14, 33, 18, V); r(54, 14, 55, 18, V)
+    r(37, 11, 42, 11, V); r(45, 11, 50, 11, V)
     yeux(r, 37, 45, 13)
     r(43, 14, 44, 15, N)                      # le pont des lunettes
     r(43, 18, 44, 22, N)
-    r(40, 24, 47, 25, N)
+    r(40, 24, 47, 25, N); r(41, 25, 46, 25, B)
     r(42, 29, 45, 30, B)
-    # le gilet vert et la pile de parchemins dans les bras
-    r(36, 31, 51, 54, V); r(42, 31, 45, 54, B)
+    # le col blanc, le gilet vert boutonné et la pile de parchemins dans les bras
+    r(38, 30, 49, 32, B); r(42, 31, 45, 33, N)
+    r(36, 31, 51, 54, V); r(42, 31, 45, 54, B); r(36, 31, 36, 54, B)
     for k in range(4): r(43, 34 + k * 5, 44, 35 + k * 5, N)
     r(31, 33, 35, 34, B); r(30, 34, 31, 44, B)
     r(52, 33, 56, 34, B); r(56, 34, 57, 44, B)
@@ -160,48 +167,68 @@ def archiviste_dessin(r):
         y = 38 + k * 5
         r(31, y, 56, y + 3, B); r(32, y + 1, 55, y + 2, N); r(33, y + 1, 54, y + 1, B)
         r(30, y, 31, y + 3, V); r(56, y, 57, y + 3, V)
-    # les jambes, le pantalon de velours, les chaussures
+    r(55, 37, 58, 38, V)                      # le ruban du parchemin du dessus
+    # les jambes, le pantalon de velours côtelé, les chaussures cirées
     r(38, 55, 41, 64, B); r(46, 55, 49, 64, B)
     r(39, 56, 40, 63, N); r(47, 56, 48, 63, N)
-    r(36, 65, 42, 66, V); r(45, 65, 51, 66, V)
+    r(36, 65, 42, 66, V); r(45, 65, 51, 66, V); r(37, 65, 38, 65, B); r(46, 65, 47, 65, B)
     sol_tirets(r, 68)
 
 def frances_dessin(r):
-    # la capuche du sweat du BDE, relevée, qui encadre le visage
+    # la capuche du sweat du BDE, relevée, qui encadre le visage ; une couture et un liseré de lumière
     r(33, 8, 54, 34, V); r(31, 12, 56, 30, V)
+    r(31, 12, 31, 30, B); r(33, 8, 35, 8, B)
     r(37, 13, 50, 32, B)
-    r(37, 13, 50, 15, V)                      # la mèche sous la capuche
+    r(37, 13, 50, 15, V); r(37, 16, 39, 16, V)  # la mèche sous la capuche
     yeux(r, 38, 45, 18)
     r(43, 23, 44, 25, N)
     r(41, 28, 46, 28, N)                      # un petit sourire en coin
     r(46, 27, 46, 27, N)
-    # le sweat, le cordon de la capuche, la poche ventrale
-    r(34, 33, 53, 54, V)
-    r(40, 34, 40, 41, B); r(47, 34, 47, 41, B)
-    r(38, 46, 49, 51, N); r(39, 47, 48, 50, V)
+    r(53, 14, 54, 30, N)                      # l'ombre de la capuche
+    # le sweat, le cordon de la capuche et ses embouts, la poche ventrale, la bande de la ceinture
+    r(34, 33, 53, 54, V); r(34, 33, 34, 54, B); r(53, 37, 53, 54, N)
+    r(40, 34, 40, 41, B); r(47, 34, 47, 41, B); r(40, 42, 40, 43, N); r(47, 42, 47, 43, N)
+    r(38, 46, 49, 51, N); r(39, 47, 48, 50, V); r(39, 47, 39, 50, B)
+    r(34, 53, 53, 54, B)
     # un bras le long du corps, l'autre fait tourner un stylo
     r(30, 35, 33, 36, B); r(29, 36, 30, 49, B); r(29, 49, 32, 50, B)
-    r(54, 35, 58, 36, B); r(58, 28, 59, 36, B); r(56, 26, 61, 27, B); r(62, 22, 63, 31, V)
+    r(54, 35, 58, 36, B); r(58, 28, 59, 36, B); r(56, 26, 61, 27, B); r(62, 22, 63, 31, V); r(62, 22, 63, 23, B)
+    r(64, 24, 65, 24, B); r(60, 20, 60, 20, B)      # le stylo qui tourne
     # le jean et les baskets
     r(37, 55, 41, 64, B); r(46, 55, 50, 64, B)
     r(38, 56, 40, 63, N); r(47, 56, 49, 63, N)
-    r(35, 65, 42, 66, V); r(45, 65, 52, 66, V)
+    r(35, 65, 42, 66, V); r(45, 65, 52, 66, V); r(35, 66, 42, 66, B); r(45, 66, 52, 66, B)
     sol_tirets(r, 68)
 
 def corbeau_dessin(r):
-    # un corbeau perché, en blocs : corps blanc, ailes à plumes vertes, oeil carré, bec vert
-    r(44, 14, 58, 27, B)                      # la tête
-    yeux(r, 49, 49, 17)
-    r(59, 19, 68, 21, V); r(59, 22, 64, 23, V)  # le bec
-    r(36, 26, 60, 46, B)                      # le corps
-    r(34, 30, 36, 44, B)
-    for k in range(4):                        # les plumes de l'aile
-        r(38 + k * 4, 31 + k, 40 + k * 4, 44, V)
-    r(20, 40, 36, 44, B); r(14, 44, 30, 48, B); r(10, 48, 22, 51, V)   # la queue
-    r(44, 47, 45, 54, V); r(52, 47, 53, 54, V)  # les pattes
-    r(41, 54, 47, 55, V); r(49, 54, 55, 55, V)
-    # la branche, puis le sol en tirets
-    r(8, 56, 78, 58, B); r(64, 50, 66, 56, B); r(66, 48, 70, 50, V)
+    # le Corbeau : un oiseau noir perché sous la lune, en contre-jour ; un liseré blanc dessine sa silhouette,
+    # ses plumes sont soulignées de vert, son œil luit
+    for y in range(4, 37):                    # la lune pleine, derrière lui
+        dy = y - 20
+        if abs(dy) <= 16:
+            dx = int((16 * 16 - dy * dy) ** 0.5)
+            r(54 - dx, y, 54 + dx, y, B)
+    r(46, 10, 50, 13, V); r(60, 26, 64, 28, V); r(40, 28, 43, 30, V)
+    def silhouette(c, e):
+        r(44 - e, 14 - e, 58 + e, 27 + e, c)                         # la tête
+        r(59 - e, 19 - e, 68 + e, 21 + e, c); r(59 - e, 22 - e, 64 + e, 23 + e, c)   # le bec
+        r(36 - e, 26 - e, 60 + e, 46 + e, c)                         # le corps
+        r(34 - e, 30 - e, 36 + e, 44 + e, c)
+        r(20 - e, 40 - e, 36 + e, 44 + e, c); r(14 - e, 44 - e, 30 + e, 48 + e, c); r(10 - e, 48 - e, 22 + e, 51 + e, c)   # la queue
+    silhouette(B, 1)
+    silhouette(N, 0)
+    r(59, 21, 68, 21, B); r(66, 19, 68, 19, B)                        # le fil du bec
+    r(50, 17, 53, 20, V); r(51, 18, 52, 19, B)                        # l'œil qui luit
+    for k in range(5):                                                # les plumes de l'aile
+        r(38 + k * 4, 31 + k, 38 + k * 4, 44, V)
+    r(37, 44, 58, 44, V)
+    for k in range(3):
+        r(14 + k * 6, 47 + (k == 2), 17 + k * 6, 47 + (k == 2), V)
+    r(44, 47, 45, 54, B); r(52, 47, 53, 54, B)                        # les pattes
+    r(41, 54, 47, 55, B); r(49, 54, 55, 55, B)
+    # la branche, sa brindille, puis le sol en tirets
+    r(8, 56, 78, 58, B); r(8, 58, 78, 58, V); r(64, 50, 66, 56, B); r(66, 48, 70, 50, V)
+    r(24, 58, 26, 61, B)
     sol_tirets(r, 68)
 
 
@@ -240,22 +267,36 @@ def ticket(nom):
     im.resize((w*2, h*2), Image.NEAREST).save(OUT + nom)
 
 
-# --- l'affiche du modèle OSI : la tour des sept étages, du câble jusqu'au web ---
+# --- l'affiche du modèle OSI : la tour des sept étages, du câble jusqu'au web, sous un ciel de nuit ---
 def osi():
+    from dessiner_fantasy import ciel, degrade
     im, d = toile()
+    ciel(d, 156, graine=13, n=22, voile=0.45, ymin=12)
     texte_centre(d, 2, "MODELE OSI", B)
     noms = ["PHYSIQUE", "LIAISON", "RESEAU", "TRANSPORT", "SESSION", "PRESENTATION", "APPLICATION"]
+    x0, x1, p = 22, 140, 10
+    # le flanc droit de la tour, en volume, avec ses fenêtres
+    d.polygon([(x1, 23), (x1 + p, 17), (x1 + p, 146), (x1, 152)], fill=V)
+    for k in range(7):
+        y1 = 150 - k*18
+        d.line([(x1, y1 + 1), (x1 + p, y1 - 5)], fill=N)
+        d.rectangle([x1 + 3, y1 - 12, x1 + 6, y1 - 7], fill=N)
     for k, nom in enumerate(noms):
         y1 = 150 - k*18; y0 = y1 - 15
-        x0 = 26; x1 = 150
-        boite(d, x0, y0, x1, y1, V if k in (0, 2, 6) else B, N, 1)
-        d.rectangle([x0+2, y0+2, x0+12, y1-2], fill=V if k in (0, 2, 6) else B)
+        clair = k in (0, 2, 6)
+        boite(d, x0, y0, x1, y1, V if clair else B, N, 1)
+        d.rectangle([x0+2, y0+2, x0+12, y1-2], fill=V if clair else B)
         d.text((x0+5, y0+3), str(k+1), fill=N)
         d.text((x0+17, y0+3), nom, fill=B)
-    # le toit, et le câble qui part du rez-de-chaussée
-    d.polygon([(30, 23), (88, 13), (146, 23)], fill=B)
-    d.line([(150, 146), (166, 146), (170, 162)], fill=V, width=2)
-    sol(d, 156)
+        d.rectangle([x0, y1 + 1, x1, y1 + 2], fill=B)
+    # le toit, son antenne, son feu
+    d.polygon([(x0 + 4, 23), (81, 13), (x1 - 4, 23)], fill=B)
+    d.polygon([(81, 13), (x1 - 4, 23), (x1 + p, 17), (84, 10)], fill=V)
+    # le sol, et le câble qui part du rez-de-chaussée
+    d.rectangle([0, 154, W, H], fill=V); d.line([(0, 154), (W, 154)], fill=B)
+    degrade(d, 0, 155, W, 162, N, 0.6, 0.0)
+    d.line([(x1 + p, 146), (164, 146), (170, 162)], fill=B, width=2)
+    d.rectangle([166, 160, 174, 166], fill=B)
     return im
 
 
