@@ -104,7 +104,7 @@ function say(texte){
 var COMMANDES_DU_JEU = [
 	["quetes", "ton journal de quêtes"], ["indice", "un coup de pouce quand tu es bloqué (les paliers payants coûtent des points)"],
 	["xp", "ton expérience et ta note"], ["bulletin", "ton relevé de compétences"], ["succes", "tes succès"], ["chrono", "ton temps de jeu, étape par étape"],
-	["chapitre", "les chapitres"], ["carte", "la carte des lieux visités"], ["schema", "la carte du réseau de l'école (chapitre 2)"],
+	["chapitres", "les huit chapitres, ta note ; aller N pour t'y rendre"], ["carte", "la carte des lieux visités"], ["schema", "la carte du réseau de l'école (chapitre 2)"],
 	["traque", "ton tableau de chasse au Corbeau (chapitre 3)"], ["son", "le son"], ["crt on/off", "le vieil écran"],
 	["logout", "fermer ta session (ta partie reste dans ton compte)"], ["recommencer", "repartir de zéro, avec le même compte"]];
 /* Le manuel des commandes du jeu : on dit franchement qu'elles ne sont pas de Linux. */
@@ -121,7 +121,7 @@ var MANUEL_DU_JEU = {
 		"machines touchées, ce qui a été trouvé, ce qui a été corrigé. Les vraies commandes, ce sont celles qui le remplissent :\n" +
 		"nmap, who, last, ss, sha256sum, find..."
 };
-var SORTS_DU_JEU = ["quetes", "indice", "chapitre", "xp", "score", "bulletin", "succes", "chrono", "son", "crt", "carte", "schema", "recommencer", "logout", "sorts", "aide"];
+var SORTS_DU_JEU = ["quetes", "indice", "chapitre", "chapitres", "aller", "xp", "score", "bulletin", "succes", "chrono", "son", "crt", "carte", "schema", "recommencer", "logout", "sorts", "aide"];
 
 /* Vraies commandes Linux absentes de ce monde : on le dit gentiment. */
 var COMMANDES_REELLES = ["vi", "vim", "nano", "emacs", "apt-get", "yum", "dnf", "pacman", "scp",
@@ -1503,7 +1503,7 @@ Shell.sorts.help = function(args, io){
 	}
 	lignes.push("");
 	if (connus.length < tous.length) lignes.push("", C.gris("Et " + (tous.length - connus.length) + " autres sorts appris dans les autres chapitres : help 1, help 2, help 3, help 4, help 5, help 6, help 7, help 8, ou help tout."));
-	lignes.push("Pour le détail d'un sort : " + C.vert("man SORT") + " (par exemple man ls).");
+	lignes.push("Pour le détail d'un sort : " + C.vert("man SORT") + " (man ls). D'une commande du jeu : " + C.jaune("help COMMANDE") + " (help badges, help quetes...).");
 	lignes.push("");
 	lignes.push(C.gras("Les commandes du JEU") + C.gris(" (elles n'existent pas sous Linux : elles t'aident seulement à jouer)"));
 	COMMANDES_DU_JEU.forEach(function(c){ lignes.push("  " + C.jaune(completerDroite(c[0], 12)) + c[1]); });
@@ -1677,6 +1677,8 @@ Shell.appeler = function(nom, args, io){
 		GameEvents.fire({ type: "aide", spell: nom });
 		return C.gras(nom) + " : " + MANUEL[nom].titre + "\n\n" + MANUEL[nom].page;
 	}
+	// Les commandes du jeu aussi : COMMANDE --help montre la même page que help COMMANDE (AideDuJeu.js).
+	if (args.indexOf("--help") > -1 && SORTS_DU_JEU.indexOf(nom) > -1 && typeof pageCommandeDuJeu === "function" && pageCommandeDuJeu(nom)) return pageCommandeDuJeu(nom);
 	var sortie = Shell.sorts[nom](args, io);
 	// Un sort hors barème (pas encore rangé dans un chapitre) ne rapporte pas d'XP de premier usage.
 	if (MANUEL[nom] && !MANUEL[nom].horsBareme) state.premierUsage(nom);

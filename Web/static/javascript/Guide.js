@@ -669,10 +669,7 @@ COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 2, 0,
 	["ambiance", "l'ambiance sonore de chaque chapitre"],
 	["texte + / -", "agrandir ou réduire le texte"],
 	["contraste", "le contraste fort, plus lisible"]);
-MANUEL_DU_JEU.quiz = "quiz n'est PAS une commande Linux : c'est une commande du jeu.\nÀ la fin de chaque chapitre, cinq questions tirées des leçons. quiz 1 à quiz 8 pour le rejouer.";
-MANUEL_DU_JEU.texte = "texte n'est PAS une commande Linux : elle règle la taille du texte du jeu.\n  texte +       plus grand\n  texte -       plus petit\n  texte normal  la taille d'origine";
-MANUEL_DU_JEU.contraste = "contraste n'est PAS une commande Linux : elle passe le jeu en contraste fort (texte blanc, couleurs vives, sans effet de vieil écran).";
-MANUEL_DU_JEU.ambiance = "ambiance n'est PAS une commande Linux : un fond sonore discret par chapitre. ambiance on, ambiance off.";
+/* Leurs pages d'aide (help quiz, quiz --help, man quiz...) sont dans AideDuJeu.js. */
 
 /* Au démarrage : l'affichage choisi, et le guide branché sur le terminal (une fois le terminal créé). */
 appliquerAffichage();
@@ -847,9 +844,8 @@ sceneDeChapitre = function(scene){
 /* La commande du jeu : revoir une cinématique. */
 if (typeof SORTS_DU_JEU !== "undefined" && SORTS_DU_JEU.indexOf("cinematique") === -1) SORTS_DU_JEU.push("cinematique");
 if (typeof COMMANDES_DU_JEU !== "undefined") COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 4, 0, ["cinematique", "revoir l'ouverture d'un chapitre (cinematique 1 à 8)"]);
-if (typeof MANUEL_DU_JEU !== "undefined") MANUEL_DU_JEU.cinematique = "cinematique n'est PAS une commande Linux : c'est une commande du jeu, comme quetes ou badges.\n" +
-	"Elle rejoue l'ouverture d'un chapitre : cinematique 1 (Terminus), 2 (la panne), 3 (la Crypte), 4 (l'Académie), 5 (le Bastion), 6 (Lumen), 7 (Port-Aube), 8 (le Grand Port).\n" +
-	"Sans numéro, celle du chapitre en cours. Entrée passe au plan suivant, Échap passe tout.";
+/* Sa page d'aide (help cinematique) est dans AideDuJeu.js. Les chapitres : 1 (Terminus), 2 (la panne), 3 (la Crypte), 4 (l'Académie),
+   5 (le Bastion), 6 (Lumen), 7 (Port-Aube), 8 (le Grand Port) ; sans numéro, celle du chapitre en cours. */
 Shell.sorts.cinematique = function(args){
 	var affiche = { 1: 1, 2: 3, 3: 2, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8 }[state.chapitreEnCours()] || 1;
 	var n = args && args[0] ? parseInt(args[0], 10) : affiche;

@@ -309,9 +309,13 @@ function texteBadges(quel){
 	 [6, "ami_ch5", "bastion", "ch5Ouvert", "les six habitants du Bastion", "Les quêtes annexes : known_hosts, pwquality, unités .path, sudoreplay, openssl enc, certificats SSH. Facultatif, hors note."]].forEach(function(a){
 		if (typeof AMIS_ANNEXES !== "undefined" && AMIS_ANNEXES[a[0]] && state.has(a[3]) && COMPETENCES[a[1]]) tous.push({ id: a[1], chap: a[2], nom: COMPETENCES[a[1]], image: a[4], couche: "", lecon: a[5] });
 	});
-	// badges reseau, badges cyber, ou un nom de compétence (badges dns, badges sudo...).
+	// badges reseau, badges cyber, ou un nom de compétence (badges dns, badges sudo...), ou un numéro de chapitre (badges 2 à badges 8).
+	if (filtre === "1") return "badges : le chapitre 1 ne donne pas de badge de compétence. " + C.gris("Son bilan, c'est bulletin ; les badges commencent au chapitre 2 (badges 2).");
+	var parNumero = { "2": "reseau", "3": "cyber", "4": "arcanes", "5": "bastion", "6": "lumen", "7": "ile", "8": "port" }[filtre];
+	if (parNumero && !tous.some(function(b){ return b.chap === parNumero; })) return "badges : le chapitre " + filtre + " n'est pas ouvert dans ta partie : ses badges apparaîtront avec lui. " + C.gris("(chapitres pour la liste.)");
 	var choisis = tous.filter(function(b){
 		if (!filtre) return true;
+		if (parNumero) return b.chap === parNumero;
 		if (filtre === "reseau" || filtre === "panne") return b.chap === "reseau";
 		if (filtre === "cyber" || filtre === "chasse" || filtre === "securite") return b.chap === "cyber";
 		if (filtre === "arcanes" || filtre === "academie" || filtre === "avance" || filtre === "linux") return b.chap === "arcanes";
