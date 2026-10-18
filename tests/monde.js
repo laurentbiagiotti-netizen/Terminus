@@ -40,7 +40,7 @@ function nouveauMonde(stockage, graine, options){
 	if (options.avant) vm.runInContext(options.avant, bac, { filename: "monde-de-test.js" });
 	// Un faux terminal : il note ce qui s'affiche et répond aux questions (mot de passe sudo).
 	vm.runInContext(
-		"var reponses = [];" +
+		"var reponses = []; var HEURE_FIXE_TESTS = 14;" +
 		"var term = { echo: function(t){ ecran.push(String(t)); }, effacer: function(){}, definirInvite: function(){}," +
 		"  demander: function(texte, masque, rappel){ ecran.push(texte); rappel(reponses.length ? reponses.shift() : ''); }," +
 		// nano : l'éditeur applique la transformation choisie par le test (ou quitte sans rien changer).

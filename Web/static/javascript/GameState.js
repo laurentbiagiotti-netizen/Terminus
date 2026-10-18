@@ -1812,7 +1812,8 @@ var SUCCES = [
 
 /* Appelée après chaque ligne : annonce les succès qui viennent d'être débloqués. */
 GameState.prototype.verifierSucces = function(){
-	var heure = new Date().getHours();
+	// Les tests fixent l'heure (HEURE_FIXE_TESTS) : sinon, joués entre minuit et 5 h, ils gagneraient « Noctambule ».
+	var heure = typeof HEURE_FIXE_TESTS === "number" ? HEURE_FIXE_TESTS : new Date().getHours();
 	if (heure >= 0 && heure < 5) this.set("nuit");
 	if (this.has("victoire") && !this.has("victoireNotee")){
 		this.set("victoireNotee");
