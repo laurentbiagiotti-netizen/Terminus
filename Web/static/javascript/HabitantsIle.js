@@ -6,7 +6,7 @@
  *   a7_imprimerie  Ilyès (le quai)              l'impression : lpadmin, lpstat, lp, cancel, cupsenable, cupsaccept
  *   a7_repondeur   Clara (la Poste)             le tri du courrier : un filtre Sieve (fileinto, vacation), sievec, dovecot-lda
  *   a7_fete        Mehdi (la Halle)             la découverte en .local : avahi-browse, avahi-resolve, avahi-publish, .service
- *   a7_pont        Sara (le Phare-Relais)       un tunnel WireGuard : wg genkey, wg pubkey, wg0.conf, wg-quick, wg show
+ *   a7_pont        Sara (le Phare-Relais)       un tunnel VPN (wg) : wg genkey, wg pubkey, wg0.conf, wg-quick, wg show
  *   a7_miroir      Rayan (le Grand Registre)    le démon rsync : rsyncd.conf (module, read only, hosts allow), rsync://
  *   a7_devoirs     Fama (les Portes)            sftp seul et enfermé : Match Group, ForceCommand internal-sftp, ChrootDirectory
  * Le mécanisme (proposition, étapes, récompenses, badge « Ami de Port-Aube ») est dans QuetesAnnexes.js.
@@ -167,7 +167,7 @@ function boutWgCh7(h){ var I = (etatIle(h).wg || {}).wg0; return I && I.haut ? I
 var SaraIle = habitantCh7(maisonCh7("phare").lieu, "Sara", "item_sara.gif", function(){
 	if (aFait("a7_pont")) return "Sara écoute le grésillement du câble. « Le pont tient. L'ancien campus et l'île se parlent, et personne au milieu ne comprend ce qu'ils se disent. »";
 	return "Une femme en ciré jaune vérifie un gros câble qui plonge dans la mer, au pied du phare.\n\n" +
-		"« Sara. De l'autre côté de cette mer, il y a l'ancien campus, et ma machine, rive. Je voudrais qu'elle parle au phare comme si la mer n'existait pas : un pont, un tunnel chiffré (WireGuard). " +
+		"« Sara. De l'autre côté de cette mer, il y a l'ancien campus, et ma machine, rive. Je voudrais qu'elle parle au phare comme si la mer n'existait pas : un pont, un tunnel chiffré (un VPN, la commande wg). " +
 		"Chaque bout a sa clé privée, qu'il garde, et donne sa clé publique à l'autre. J'ai préparé mon bout : sur rive, tout est écrit dans /etc/wireguard/wg0.conf, sauf la clé publique du phare (A_REMPLACER).\n\n" +
 		"Fabrique les clés du phare (lisibles par root seul), écris son bout du pont (10.99.0.1, vers rive, qui est 10.99.0.2), monte-le. Puis passe de mon côté, recopie la clé publique du phare, et monte le mien. " +
 		"Un ping à travers la mer, et je te crois. »\n\n" +
@@ -176,7 +176,7 @@ var SaraIle = habitantCh7(maisonCh7("phare").lieu, "Sara", "item_sara.gif", func
 }, ["wg", "wg-quick"]);
 declarerAnnexe({ id: "a7_pont", chapitre: 8, titre: "Le pont sous la mer", habitant: "Sara", lieu: "au Phare-Relais", item: function(){ return SaraIle; }, ouverte: ouverteCh7,
 	indice: "au pied du phare, quelqu'un vérifie un câble qui plonge dans la mer.",
-	resume: "Un tunnel WireGuard entre le phare et la rive : les clés (wg genkey, wg pubkey), wg0.conf, wg-quick up, wg show, un ping à travers.",
+	resume: "Un tunnel VPN (wg) entre le phare et la rive : les clés (wg genkey, wg pubkey), wg0.conf, wg-quick up, wg show, un ping à travers.",
 	etapes: [
 		{ titre: "Les clés du phare, lisibles par root seul (wg genkey, wg pubkey)", fait: function(){ return clesPhareCh7(); } },
 		{ titre: "Le bout du phare : wg0.conf (600), monté (wg-quick up)", fait: function(){ var it = fichierHote("phare", "/etc/wireguard/wg0.conf"); return clesPhareCh7() && !!boutWgCh7("phare") && !!it && it.mode === "rw-------"; } },

@@ -250,12 +250,12 @@ MANUEL["avahi-publish"] = page("annoncer un service sur le réseau local", "AVAH
 	"  avahi-publish -s 'La fete du port' _http._tcp 8080       le temps que le programme tourne\n\n" +
 	"Pour une annonce permanente : un fichier /etc/avahi/services/NOM.service (XML : service-group, name, service,\n" +
 	"type, port), que avahi-daemon lit tout seul.");
-MANUEL["wg"] = page("les clés et l'état d'un tunnel WireGuard", "WireGuard",
+MANUEL["wg"] = page("les clés et l'état d'un tunnel VPN", "WG",
 	"  umask 077 ; wg genkey | tee privatekey | wg pubkey > publickey      une paire de clés\n" +
 	"  sudo wg show              l'interface, ses pairs, et la dernière poignée de main (latest handshake)\n\n" +
 	"Chaque bout garde sa clé privée et donne sa clé publique à l'autre. Pas de handshake : une clé publique\n" +
 	"mal recopiée, un mauvais Endpoint, ou l'autre bout qui n'est pas monté.");
-MANUEL["wg-quick"] = page("monter et démonter un tunnel WireGuard", "WireGuard QUICK",
+MANUEL["wg-quick"] = page("monter et démonter un tunnel VPN", "WG-QUICK",
 	"/etc/wireguard/wg0.conf (chmod 600) :\n" +
 	"  [Interface]\n  PrivateKey = ...\n  Address = 10.99.0.1/24\n  ListenPort = 51820\n\n" +
 	"  [Peer]\n  PublicKey = (la clé publique de l'autre bout)\n  Endpoint = rive:51820\n  AllowedIPs = 10.99.0.2/32\n\n" +

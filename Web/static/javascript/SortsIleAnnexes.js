@@ -431,7 +431,7 @@ function publiqueWgIle(privee){ return cleWgIle("wg-pub:" + String(privee).trim(
 function cleWgValideIle(c){ return /^[A-Za-z0-9+\/]{43}=$/.test(String(c || "").trim()); }
 Shell.sorts.wg = function(args, io){
 	var h = ileIci();
-	if (!h || !fichierHote(h, "/usr/bin/wg")) throw new ShellError("wg: command not found" + (h ? astuce(io, "WireGuard est installé sur phare (et sur rive, de l'autre côté).") : ""), 127);
+	if (!h || !fichierHote(h, "/usr/bin/wg")) throw new ShellError("wg: command not found" + (h ? astuce(io, "Les outils du tunnel (wg) sont installés sur phare (et sur rive, de l'autre côté).") : ""), 127);
 	var ordre = args[0];
 	if (ordre === "genkey"){
 		var k = cleWgIle("wg-priv:" + h + ":" + state.nbCommandes + ":" + Math.random());
