@@ -71,6 +71,7 @@ function nouveauMonde(stockage, graine, options){
 			return commande
 				.replace(/<motdepasse>/g, lire("MOT_DE_PASSE_SUDO"))
 				.replace(/<moi>/g, lire("JOUEUR"))
+				.replace(/<archive>/g, function(){ return lire("typeof derniereArchiveCh7 === 'function' && derniereArchiveCh7() ? derniereArchiveCh7().nom : ''"); })
 				.replace(/<vint>/g, function(){ return lire("typeof IP_VINT !== 'undefined' ? IP_VINT : ''"); })
 				.replace(/<pierre-avant>/g, function(){ return String(lire("state.ch5 ? state.ch5.scoreDepart : ''")); })
 				.replace(/<pierre-apres>/g, function(){ return String(lire("state.ch5 ? state.ch5.scoreFinal : ''")); })
@@ -123,6 +124,9 @@ function nouveauMonde(stockage, graine, options){
 				// Dans nano : couper la ligne du Corbeau, enregistrer, quitter.
 				this.editer("function(t){ return t.split('\\n').filter(function(l){ return l.indexOf('corbeau@nid') === -1; }).join('\\n'); }");
 			}
+			// Port-Aube (chapitre 7) : les mots de passe et les phrases que demandent les services de l'île.
+			var ile = REPONSES_ILE(commande);
+			if (ile) return this.taper(commande, ile);
 			return this.taper(commande, commande.indexOf("sudo") === 0 ? mdp : undefined);
 		},
 		// Prépare ce que fera le joueur dans nano : une fonction (texte d'origine) -> nouveau texte, en JavaScript.
@@ -130,6 +134,26 @@ function nouveauMonde(stockage, graine, options){
 	};
 }
 
+
+/*
+ * Port-Aube (chapitre 7) : ce que le joueur répond aux questions des services de l'île, dans l'ordre où elles viennent.
+ * Les valeurs sont celles de docs/solution.md (le sceau du Registre, la phrase de l'Arche, les mots de passe de la Halle).
+ */
+var SCEAU_ILE = "Sceau-de-Port-Aube", PHRASE_ARCHE = "La-cite-ne-perd-rien", MDP_ZELIA = "Halle-de-Zelia", MDP_ARON = "Premier-pas-sur-l-ile";
+function REPONSES_ILE(c){
+	if (/(^|; )slappasswd$/.test(c)) return [SCEAU_ILE, SCEAU_ILE];
+	if (/ldappasswd .*-S/.test(c)) return [MDP_ARON, MDP_ARON, SCEAU_ILE];
+	if (/ldap(add|modify|delete) .*-W/.test(c)) return [SCEAU_ILE];
+	if (/smbpasswd -a zelia/.test(c)) return [MDP_ZELIA, MDP_ZELIA];
+	if (/smbpasswd -a aron/.test(c)) return [MDP_ARON, MDP_ARON];
+	if (/smbclient .*-U zelia/.test(c)) return [MDP_ZELIA];
+	if (/borg init/.test(c)) return [PHRASE_ARCHE, PHRASE_ARCHE, "N"];
+	if (/borg (list|check|info|prune|extract)/.test(c)) return [PHRASE_ARCHE];
+	if (/^ssh aron@quai$/.test(c)) return [MDP_ARON];
+	if (/sftp depot@halle$/.test(c)) return ["Rendus du soir 7", "pwd", "put devoir.txt rendus/", "ls rendus", "bye"];
+	if (/^ssh depot@halle$/.test(c)) return ["Rendus du soir 7"];
+	return null;
+}
 
 /*
  * Ce que fait le joueur dans vim, fichier par fichier, pour la solution : le texte obtenu

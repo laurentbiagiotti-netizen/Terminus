@@ -2469,6 +2469,357 @@ exit
 
 L'Imprimeur demande quel format garde le rouleau le plus petit : `ls -l` le montre (ici `xz`). Les six annexes finies, les habitants viennent saluer la recrue sur la place, et le badge « Ami de Lumen » s'ajoute à `badges lumen`.
 
+## Chapitre 7 : Port-Aube, la cité à bâtir (services réseau Linux)
+
+Numéro interne 8, affiché 7. Le chapitre s'ouvre à la fin de Lumen (le rapport de remise en service contresigné) : Laurent donne rendez-vous à l'aube, et un traversier allume son fanal au bout de la jetée du campus, l'Embarcadère (`cd ~/Cybersup/Embarcadere`). On peut aussi y partir directement (la septième enveloppe, « Le Billet de traversée », ou `chapitre 7` en début de partie) : les sorts des chapitres 1 à 6 sont alors acquis, et la partie commence sur le quai de Port-Aube. Une cinématique ouvre le chapitre dans les deux cas (`cinematique 7` la rejoue).
+
+Au large du continent, l'école a fondé un campus sur une île : Port-Aube. Les bâtisseurs ont monté les maisons, des serveurs Debian neufs, installés, câblés, mais vides. Il est 7 h. À 14 h, une tempête ; à 19 h, la marée haute, et le premier navire accoste avec cinq cents étudiants. Chaque commande avance l'horloge de 3 minutes (`cat Horloge`, la barre d'état et la radio de Grace donnent l'heure ; une ligne qui enchaîne plusieurs commandes avec `;` ne compte qu'une fois). Dix maisons, dix maîtres bâtisseurs : Badis (la Maison des Noms, le DNS primaire, machine `noms`), Maeva (le Phare-Relais, le DNS secondaire, la zone inverse et nsupdate, machine `phare`), Younes (la Poste, Postfix, machine `poste`), Syrine (le Bureau des Lettres, Dovecot, SPF, DKIM et DMARC, machine `poste`), Noam (les Greniers, NFS, machine `greniers`), Zélia (la Halle d'échange, Samba, machine `halle`), Kamal (le Grand Registre, LDAP, machine `registre`), Lamia (les Portes de la cité, sssd et autofs, machine `quai`), Miguel (la Forge des Sceaux, l'autorité de certification interne et TLS, machine `forge`) et Amina (l'Arche, borg et les sauvegardes, machines `greniers` et `arche`). Chaque maître est vivant comme à Lumen : il explique sa maison par une image et le vrai mot du métier, donne la syntaxe, confie la mission sans dicter la commande, réagit aux erreurs fréquentes, puis raconte une anecdote du métier et coche ses cinq défis. `chantier` (une commande du jeu) montre le plan de la cité : les dix maisons (rouge en friche, vert bâtie), l'heure, la marée, la Tempête, et la note de la cité sur 100 (10 au départ), lue sur l'état réel des machines.
+
+Tout est validé sur l'état réel des machines, pas sur la commande tapée : une zone écrite dans un `echo` ne compte pas tant que named ne la sert pas, un relais ouvert à tous ne passe pas, un export sans `root_squash` non plus, une clé de l'autorité copiée hors de la Forge annule la Forge, un faux dossier « restauré » ne prouve rien, et les variantes légitimes sont acceptées (`nano`, `tee` ou `sed` pour écrire un fichier, une zone inverse sur noms et sa copie sur phare, `-ZZ` ou `ldaps`, un fichier `.service` ou `avahi-publish`...). Les maisons se bâtissent dans l'ordre qu'on veut : celles qui dépendent d'une autre (les Portes lisent le Registre, la Halle aussi, l'Arche sauve les Greniers) le disent par la voix de leur maître. La Tempête tombe à 14 h, ou plus tôt dès que six maisons sont debout : sur chaque maison déjà bâtie, elle laisse un incident (un MX sans point final, un phare en retard d'une série, un relais rouvert à tous, une boîte qui appartient à root, `no_root_squash` remis, Zélia sortie de la promo, un cache sssd périmé, Dovecot revenu à son sceau de pacotille, un verrou sur le dépôt de l'Arche). La marée arrive à 19 h, ou plus tôt quand les dix maisons sont bâties et la Tempête tenue : le navire accoste, et sur chaque maison inachevée la cité le paie ; le capitaine, lui, inscrit son navire dans la zone à la main, sans changer la série. Le Premier Pas : le premier étudiant (Aron, ou le prénom qu'on lui choisit) se connecte depuis le quai, et ses six portes doivent s'ouvrir : son compte dans le Registre, sa maison montée depuis les Greniers, une lettre dans sa boîte, la Halle ouverte à la promo, le sceau de la Poste reconnu, sa maison déjà dans l'Arche.
+
+| Repère | Où le trouver dans le jeu |
+| --- | --- |
+| `<archive>` | le nom de la dernière archive de l'Arche (`sudo borg list --rsh 'ssh -i /root/.ssh/arche' borg@arche:/srv/borg/greniers`, sur greniers, par exemple greniers-2026-10-18T11:21:00) |
+
+Les mots de passe et phrases de cette solution (les choisir soi-même est permis, à condition de garder les mêmes partout) : le sceau du Registre (le mot de passe de `cn=admin`, demandé par `slappasswd`, `ldapadd -W`, `ldapmodify -W`, `ldapdelete -W`) est `Sceau-de-Port-Aube` ; Zélia, pour la Halle, `Halle-de-Zelia` ; Aron, dans le Registre et à la Halle, `Premier-pas-sur-l-ile` ; la phrase du dépôt de l'Arche (demandée par `borg init`, deux fois, puis par chaque `borg list`, `check`, `info`, `prune`, `extract`) est `La-cite-ne-perd-rien`, et `borg init` demande aussi s'il faut l'afficher : `N`. Le compte `depot` de la Halle a pour mot de passe « Rendus du soir 7 » (Fama le donne).
+
+Les 53 défis de Port-Aube (quêtes secondaires `s_p7_*`, 50 XP chacun) : cinq par maison, révélés en lisant le maître, et trois défis d'honneur, révélés par Laurent : les dix maisons bâties avant 14 h, le rapport remis sans avoir acheté d'indice, et, après la fête, l'inconnu consigné dans le rapport. La solution ci-dessous bâtit les dix maisons d'une traite (avant midi), tient la Tempête, accueille la Marée et le premier étudiant, rend le rapport, regarde la nuit tomber, puis fait les défis, maison par maison, et enfin les quêtes annexes.
+
+### 62. Le quai de Port-Aube, Laurent et le plan de la cité
+
+On prend le traversier, on écoute Laurent, on lit l'ordre de mission, la radio, l'horloge et le bestiaire, et on consulte le plan de la cité (c'est la note de départ).
+
+```
+cd ~/Cybersup/Embarcadere
+cat Traversier
+cd PortAube
+cat Laurent; cat Mission
+cat Radio; cat Horloge; cat Bestiaire
+chantier
+```
+
+La deuxième étape (`p7_chantier`) demande Laurent et l'ordre de mission lus, puis `chantier` : sa note est retenue comme note de départ. Ensuite, on entre dans chaque maison (`cd`), on lit son maître (il enseigne ses sorts), et on se connecte à sa machine (`ssh`) ; `exit` ramène sur le quai, dans la maison d'où l'on est parti.
+
+### 63. La Maison des Noms et le Phare-Relais (Badis, Maeva)
+
+Le brouillon de zone de Badis a deux fautes, que `named-checkzone` dit : une adresse impossible (10.0.70.380) et un nom qui est à la fois un alias et une adresse (imap : CNAME et A). On garde l'alias. Puis on déclare la zone (et seul le phare peut la copier), on la charge, on ajoute l'imprimerie et la bibliothèque, et la série monte. Au phare, la copie secondaire ; une autre machine que le phare se fait refuser le transfert. Puis la zone inverse : sur noms, avec une clé TSIG qui l'ouvre aux ajouts signés ; sa copie sur phare ; et le PTR de la capitainerie, ajouté à chaud par `nsupdate`, sans toucher au fichier.
+
+```
+cd MaisonDesNoms; cat Badis; ssh noms
+sudo named-checkzone port-aube.lan /etc/bind/zones/db.port-aube.lan
+sudo sed -i 's/10.0.70.380/10.0.70.38/; /^imap\t\tIN\tA/d' /etc/bind/zones/db.port-aube.lan
+printf 'zone "port-aube.lan" {\n\ttype primary;\n\tfile "/etc/bind/zones/db.port-aube.lan";\n\tallow-transfer { 10.0.70.54; };\n\talso-notify { 10.0.70.54; };\n};\n' | sudo tee -a /etc/bind/named.conf.local
+sudo named-checkconf -z && sudo rndc reload
+dig @noms poste.port-aube.lan +short
+printf 'imprimerie\tIN\tA\t10.0.70.31\nbibliotheque\tIN\tA\t10.0.70.73\n' | sudo tee -a /etc/bind/zones/db.port-aube.lan; sudo sed -i 's/2026101701/2026101702/' /etc/bind/zones/db.port-aube.lan
+sudo named-checkzone port-aube.lan /etc/bind/zones/db.port-aube.lan && sudo rndc reload
+dig @noms port-aube.lan SOA +short
+exit; cd ../PhareRelais; cat Maeva; ssh phare
+printf 'zone "port-aube.lan" {\n\ttype secondary;\n\tprimaries { 10.0.70.53; };\n\tfile "/var/cache/bind/db.port-aube.lan";\n};\n' | sudo tee -a /etc/bind/named.conf.local; sudo rndc reload
+dig @phare port-aube.lan SOA +short
+exit; ssh noms
+dig @noms port-aube.lan AXFR
+tsig-keygen cle-phare | sudo tee /etc/bind/cle-phare.key
+printf '$TTL\t3600\n@\tIN\tSOA\tnoms.port-aube.lan. hostmaster.port-aube.lan. (\n\t2026101701 3600 900 604800 300 )\n@\tIN\tNS\tnoms.port-aube.lan.\n@\tIN\tNS\tphare.port-aube.lan.\n53\tIN\tPTR\tnoms.port-aube.lan.\n54\tIN\tPTR\tphare.port-aube.lan.\n25\tIN\tPTR\tposte.port-aube.lan.\n20\tIN\tPTR\tgreniers.port-aube.lan.\n45\tIN\tPTR\thalle.port-aube.lan.\n38\tIN\tPTR\tregistre.port-aube.lan.\n100\tIN\tPTR\tquai.port-aube.lan.\n43\tIN\tPTR\tforge.port-aube.lan.\n22\tIN\tPTR\tarche.port-aube.lan.\n' | sudo tee /var/lib/bind/db.10.0.70
+printf 'include "/etc/bind/cle-phare.key";\nzone "70.0.10.in-addr.arpa" {\n\ttype primary;\n\tfile "/var/lib/bind/db.10.0.70";\n\tallow-update { key cle-phare; };\n\tallow-transfer { 10.0.70.54; };\n\talso-notify { 10.0.70.54; };\n};\n' | sudo tee -a /etc/bind/named.conf.local
+sudo named-checkconf -z && sudo rndc reload
+exit; ssh phare
+printf 'zone "70.0.10.in-addr.arpa" {\n\ttype secondary;\n\tprimaries { 10.0.70.53; };\n\tfile "/var/cache/bind/db.10.0.70";\n};\n' | sudo tee -a /etc/bind/named.conf.local; sudo rndc reload
+exit; ssh noms
+printf 'server 10.0.70.53\nzone 70.0.10.in-addr.arpa\nupdate add 60.70.0.10.in-addr.arpa. 3600 IN PTR capitainerie.port-aube.lan.\nsend\n' | sudo nsupdate -k /etc/bind/cle-phare.key
+dig -x 10.0.70.60 @noms +short; dig -x 10.0.70.25 @phare
+```
+
+Le transfert demandé depuis noms lui-même est refusé (`Transfer failed`) : seul le phare (10.0.70.54) a le droit de copier la zone. Une zone dynamique ne s'édite plus à la main : pour y toucher, `rndc freeze`, puis le fichier, puis `rndc thaw`.
+
+### 64. La Poste et le Bureau des Lettres (Younes, Syrine)
+
+Depuis l'aube, quatre lettres des bâtisseurs attendent dans la file (`mailq` dit pourquoi : le relais du continent ne répond pas). `postconf -n` dit le reste : une coquille (`mydomian`, inutilisée), un `mydestination` en double (le second écrase le premier), un relais injoignable, et un relais ouvert au monde entier. On corrige, on vérifie, on recharge, la file part, et une lettre arrive pour de bon (`status=sent` dans le journal). Au Bureau des Lettres, Dovecot cherche les boîtes au mauvais endroit : on lui donne celui de Postfix (des Maildir dans `/var/mail/NOM`). Puis on fabrique la clé DKIM de la Poste et on publie, dans la zone, SPF, DKIM et DMARC (la série monte encore).
+
+```
+exit; cd ../Poste; cat Younes; ssh poste
+mailq; postconf -n
+sudo sed -i '/^mydomian/d; $d' /etc/postfix/main.cf
+sudo postconf -e 'myhostname = poste.port-aube.lan' 'mydomain = port-aube.lan' 'mydestination = $myhostname, $mydomain, localhost' 'relayhost =' 'mynetworks = 127.0.0.0/8 10.0.70.0/24'
+sudo postfix check && sudo postfix reload
+sudo postqueue -f; mailq
+echo 'La Poste est ouverte.' | mail -s 'Premier courrier' $(whoami); sudo tail -3 /var/log/mail.log
+exit; cd ../BureauDesLettres; cat Syrine; ssh poste
+doveadm user $(whoami)
+sudo sed -i 's|^mail_location = .*|mail_location = maildir:/var/mail/%u|' /etc/dovecot/conf.d/10-mail.conf; sudo systemctl reload dovecot
+doveadm mailbox status messages INBOX; doveadm fetch 'hdr.subject' all
+sudo opendkim-genkey -s aube -d port-aube.lan -D /etc/opendkim/keys; sudo cat /etc/opendkim/keys/aube.txt > /tmp/aube.txt; scp /tmp/aube.txt noms:/tmp/
+exit; ssh noms
+printf '@\tIN\tTXT\t"v=spf1 mx -all"\n_dmarc\tIN\tTXT\t"v=DMARC1; p=quarantine; rua=mailto:postmaster@port-aube.lan"\n' | sudo tee -a /etc/bind/zones/db.port-aube.lan; cat /tmp/aube.txt | sudo tee -a /etc/bind/zones/db.port-aube.lan
+sudo sed -i 's/2026101702/2026101703/' /etc/bind/zones/db.port-aube.lan; sudo named-checkzone port-aube.lan /etc/bind/zones/db.port-aube.lan && sudo rndc reload
+dig @noms port-aube.lan TXT +short; dig @noms aube._domainkey.port-aube.lan TXT +short; dig @noms _dmarc.port-aube.lan TXT +short
+```
+
+`sed '$d'` retire la dernière ligne de `main.cf`, le `mydestination` en double. La clé privée DKIM reste sur la Poste ; seule la ligne publique (`aube.txt`) voyage jusqu'à la zone.
+
+### 65. Le Grand Registre et les Greniers (Kamal, Noam)
+
+Le sceau du Registre (le mot de passe de `cn=admin`) s'est perdu : on en forge un neuf avec `slappasswd`, et on le pose dans la configuration de slapd par la porte de root (`ldapi:///`, `-Y EXTERNAL`). Puis les branches `people` et `groups`, les deux groupes (batisseurs, 10000 ; promo, 10100), et les dix bâtisseurs : `ldapadd -c` dit les deux fautes du LDIF (Noam sans `uidNumber`, Lamia avec un `gidNumber` écrit en lettres), on les corrige et on relance (les huit déjà inscrits répondent `Already exists`). Enfin les membres, avec `ldapmodify`. Chaque `-W` demande le sceau.
+
+Aux Greniers, `/srv/homes` est publié à l'île seulement, en `root_squash` ; depuis le quai, on le voit, on le monte, et root du quai se fait refuser l'écriture (il y devient nobody). Le sixième toit posé, la Tempête arrive en avance : elle frappe les six maisons debout. La plus urgente, ici, est au Registre (Zélia n'est plus dans la promo, et la Halle en a besoin) : on la remet tout de suite.
+
+```
+exit; cd ../GrandRegistre; cat Kamal; ssh registre
+cd; printf 'dn: olcDatabase={1}mdb,cn=config\nchangetype: modify\nreplace: olcRootPW\nolcRootPW: %s\n' "$(slappasswd -s Sceau-de-Port-Aube)" > rootpw.ldif; sudo ldapmodify -Y EXTERNAL -H ldapi:/// -f rootpw.ldif
+printf 'dn: ou=people,dc=port-aube,dc=lan\nobjectClass: organizationalUnit\nou: people\n\ndn: ou=groups,dc=port-aube,dc=lan\nobjectClass: organizationalUnit\nou: groups\n\ndn: cn=batisseurs,ou=groups,dc=port-aube,dc=lan\nobjectClass: posixGroup\ncn: batisseurs\ngidNumber: 10000\n\ndn: cn=promo,ou=groups,dc=port-aube,dc=lan\nobjectClass: posixGroup\ncn: promo\ngidNumber: 10100\n' > branches.ldif; sudo cp /root/batisseurs.ldif .; sudo chown $(whoami) batisseurs.ldif; ldapadd -x -D cn=admin,dc=port-aube,dc=lan -W -f branches.ldif
+ldapadd -c -x -D cn=admin,dc=port-aube,dc=lan -W -f batisseurs.ldif
+sed -i 's/^gidNumber: dix-mille/gidNumber: 10000/; s/^uid: noam$/uid: noam\nuidNumber: 10005/' batisseurs.ldif; ldapadd -c -x -D cn=admin,dc=port-aube,dc=lan -W -f batisseurs.ldif
+printf 'dn: cn=batisseurs,ou=groups,dc=port-aube,dc=lan\nchangetype: modify\nadd: memberUid\nmemberUid: badis\nmemberUid: maeva\nmemberUid: younes\nmemberUid: syrine\nmemberUid: noam\nmemberUid: zelia\nmemberUid: kamal\nmemberUid: lamia\nmemberUid: miguel\nmemberUid: amina\n\ndn: cn=promo,ou=groups,dc=port-aube,dc=lan\nchangetype: modify\nadd: memberUid\nmemberUid: zelia\n' > membres.ldif; ldapmodify -x -D cn=admin,dc=port-aube,dc=lan -W -f membres.ldif
+ldapsearch -x -LLL '(uid=badis)'
+exit; cd ../Greniers; cat Noam; ssh greniers
+echo '/srv/homes 10.0.70.0/24(rw,sync,no_subtree_check,root_squash)' | sudo tee -a /etc/exports; sudo exportfs -ra; sudo exportfs -v
+exit; ssh quai
+showmount -e greniers; sudo mount -t nfs greniers:/srv/homes /mnt; ls -ln /mnt
+sudo touch /mnt/essai-de-root; sudo umount /mnt
+exit; ssh registre
+ldapsearch -x -LLL '(cn=promo)'
+cd; printf 'dn: cn=promo,ou=groups,dc=port-aube,dc=lan\nchangetype: modify\nadd: memberUid\nmemberUid: zelia\n' > zelia.ldif; ldapmodify -x -D cn=admin,dc=port-aube,dc=lan -W -f zelia.ldif
+```
+
+`slappasswd -s` hache la phrase sans la demander ; tapé seul, `slappasswd` la demande deux fois. Sur les Greniers, les dossiers n'ont que des numéros (`ls -ln`) : les noms viendront du Registre.
+
+### 66. Les Portes de la cité et la Halle (Lamia, Zélia)
+
+Sur le quai, sssd branche les comptes du Registre (son fichier lisible par root seul, sinon il refuse de démarrer), nsswitch le consulte après les fichiers, et `getent`, `id` reconnaissent les bâtisseurs ; autofs monte chaque maison depuis les Greniers à l'instant où l'on y entre (`&` prend le nom demandé). À la Halle, on décommente le partage de la promo (préparé par les bâtisseurs), on crée son dossier pour le groupe promo, on vérifie, on recharge, puis Zélia reçoit un mot de passe Samba (demandé deux fois), voit les partages et dépose le plan de la fête.
+
+```
+exit; cd ../PortesDeLaCite; cat Lamia; ssh quai
+printf '[sssd]\nservices = nss, pam\ndomains = port-aube\n\n[domain/port-aube]\nid_provider = ldap\nauth_provider = ldap\nldap_uri = ldap://registre.port-aube.lan\nldap_search_base = dc=port-aube,dc=lan\ncache_credentials = True\n' | sudo tee /etc/sssd/sssd.conf; sudo chmod 600 /etc/sssd/sssd.conf
+sudo sed -i 's/^\(passwd\|group\|shadow\):\( *\)files/&  sss/' /etc/nsswitch.conf; sudo systemctl enable --now sssd
+getent passwd badis; id badis
+echo '/home /etc/auto.home' | sudo tee /etc/auto.master.d/home.autofs; echo '* greniers:/srv/homes/&' | sudo tee /etc/auto.home; sudo systemctl reload autofs
+ls -ld /home/badis
+exit; cd ../Halle; cat Zélia; ssh halle
+id zelia; sudo sed -i 's/^;\(\[promo\]\)/\1/; s/^;\(   \)/\1/' /etc/samba/smb.conf; sudo mkdir /srv/promo; sudo chown root:promo /srv/promo; sudo chmod 2770 /srv/promo; testparm -s
+sudo systemctl reload smbd; sudo smbpasswd -a zelia
+sudo pdbedit -L; smbclient -L halle -U zelia
+cd; echo 'Le plan de la fête du port' > plan.txt; smbclient //halle/promo -U zelia -c 'put plan.txt; ls'
+```
+
+Chaque `smbclient -U zelia` demande le mot de passe Samba de Zélia. Si la Halle a gardé en cache une promo sans Zélia (en passant ici avant d'avoir réparé le Registre), `sudo sss_cache -E` lui fait oublier sa vieille page.
+
+### 67. La Forge des Sceaux et l'Arche (Miguel, Amina)
+
+À la Forge, l'autorité de la cité : une clé (que root seul lit, dans un dossier fermé, et qui ne sortira jamais de la forge) et son certificat autosigné. La Poste demande un sceau (une requête, avec son nom et celui d'imap), la Forge le signe, Dovecot le sert, et le quai apprend à faire confiance à la Forge : `s_client` finit sur `Verify return code: 0 (ok)`. Pour l'Arche, les Greniers fabriquent une clé ssh qui ne sert qu'à ça ; sur l'Arche, elle est enfermée (`command="borg serve --restrict-to-path ..."`, `restrict`). Puis le dépôt chiffré (la phrase, deux fois, puis `N`), la phrase gardée par root pour le service, une première sauvegarde par le service `sauvegarde-borg` (déjà écrit par les bâtisseurs), son timer de chaque nuit, et la preuve : on vérifie le dépôt, on restaure un dossier dans un coin vide et on le compare à l'original (`diff` ne dit rien : identique). Chaque `borg` demande la phrase du dépôt.
+
+```
+exit; cd ../ForgeDesSceaux; cat Miguel; ssh forge
+sudo openssl genrsa -out /srv/forge/forge.key 4096; sudo openssl req -x509 -new -key /srv/forge/forge.key -days 3650 -subj '/CN=Forge des Sceaux de Port-Aube' -out /srv/forge/forge.crt; sudo cp /srv/forge/forge.crt /srv/demandes/
+exit; ssh poste
+sudo openssl genrsa -out /etc/dovecot/private/poste.key 2048; sudo openssl req -new -key /etc/dovecot/private/poste.key -subj '/CN=poste.port-aube.lan' -addext 'subjectAltName=DNS:poste.port-aube.lan,DNS:imap.port-aube.lan' -out /tmp/poste.csr; scp /tmp/poste.csr forge:/srv/demandes/
+exit; ssh forge
+sudo openssl x509 -req -in /srv/demandes/poste.csr -CA /srv/forge/forge.crt -CAkey /srv/forge/forge.key -CAcreateserial -days 825 -copy_extensions copy -out /srv/demandes/poste.crt
+exit; ssh poste
+scp forge:/srv/demandes/poste.crt /tmp/; sudo cp /tmp/poste.crt /etc/dovecot/private/poste.pem
+sudo sed -i 's|^ssl_cert = .*|ssl_cert = </etc/dovecot/private/poste.pem|; s|^ssl_key = .*|ssl_key = </etc/dovecot/private/poste.key|' /etc/dovecot/conf.d/10-ssl.conf; sudo systemctl reload dovecot
+exit; ssh quai
+scp forge:/srv/demandes/forge.crt /tmp/; sudo cp /tmp/forge.crt /usr/local/share/ca-certificates/; sudo update-ca-certificates
+openssl s_client -connect poste.port-aube.lan:993 -verify_return_error
+exit; cd ../Arche; cat Amina; ssh greniers
+sudo ssh-keygen -t ed25519 -f /root/.ssh/arche -N ''; sudo cp /root/.ssh/arche.pub /tmp/; scp /tmp/arche.pub arche:/tmp/
+exit; ssh arche
+sed 's|^|command="borg serve --restrict-to-path /srv/borg/greniers",restrict |' /tmp/arche.pub | sudo tee /home/borg/.ssh/authorized_keys
+exit; ssh greniers
+sudo borg init -e repokey --rsh 'ssh -i /root/.ssh/arche' borg@arche:/srv/borg/greniers
+echo 'La-cite-ne-perd-rien' | sudo tee /root/.borg-phrase; sudo chmod 600 /root/.borg-phrase; sudo systemctl start sauvegarde-borg
+printf '[Unit]\nDescription=La sauvegarde de chaque nuit\n\n[Timer]\nOnCalendar=*-*-* 02:30\nPersistent=true\n\n[Install]\nWantedBy=timers.target\n' | sudo tee /etc/systemd/system/sauvegarde-borg.timer; sudo systemctl daemon-reload; sudo systemctl enable --now sauvegarde-borg.timer
+sudo borg list --rsh 'ssh -i /root/.ssh/arche' borg@arche:/srv/borg/greniers
+sudo borg check --rsh 'ssh -i /root/.ssh/arche' borg@arche:/srv/borg/greniers
+sudo mkdir /tmp/retour; cd /tmp/retour; sudo borg extract --rsh 'ssh -i /root/.ssh/arche' borg@arche:/srv/borg/greniers::<archive> srv/homes/badis
+sudo diff -r /srv/homes/badis /tmp/retour/srv/homes/badis
+```
+
+La dixième maison bâtie avant 14 h, le défi d'honneur de Laurent est réussi.
+
+### 68. Tenir la Tempête
+
+`chantier` dit ce que la Tempête a frappé (le regarder pendant la Tempête est demandé). On lit avant d'agir, et on répare une chose à la fois : le MX a perdu son point final (on le lui rend, et la série monte : le phare, qui avait gardé une vieille série, reçoit la nouvelle et rattrape son retard), la Poste est rouverte à tous les vents, ta boîte appartient à root, et `no_root_squash` est revenu sur les Greniers (Zélia est déjà revenue dans la promo). La Tempête tenue et les dix maisons debout, la marée monte en avance.
+
+```
+exit
+chantier
+ssh noms
+dig @noms port-aube.lan MX +short; dig @phare port-aube.lan SOA +short; dig @noms port-aube.lan SOA +short
+sudo sed -i 's/\(MX\t10 poste.port-aube.lan\)$/\1./; s/2026101705/2026101706/' /etc/bind/zones/db.port-aube.lan; sudo named-checkzone port-aube.lan /etc/bind/zones/db.port-aube.lan && sudo rndc reload
+dig @noms port-aube.lan MX +short; dig @phare port-aube.lan SOA +short
+exit; ssh poste
+postconf mynetworks; sudo postconf -e 'mynetworks = 127.0.0.0/8 10.0.70.0/24'; sudo postfix reload
+ls -ld /var/mail/$(whoami); sudo chown -R $(whoami) /var/mail/$(whoami); doveadm mailbox status messages INBOX
+exit; ssh greniers
+sudo exportfs -v; sudo sed -i 's/no_root_squash/root_squash/' /etc/exports; sudo exportfs -ra; sudo exportfs -v
+exit
+```
+
+La Tempête a fait monter la série deux fois (2026101705) : la nouvelle est 2026101706.
+
+### 69. La Marée et le Premier Pas
+
+Le navire est là. Le capitaine a inscrit son navire dans la zone, à la main, sans changer la série : la Maison des Noms le connaît, le phare non. On monte la série. Puis le premier étudiant, Aron : son compte dans le Registre (dans la promo, avec son mot de passe), sa maison sur les Greniers (à son numéro), une lettre de bienvenue, son compte Samba (son mot de passe, deux fois), et une sauvegarde fraîche qui le contient. Alors il se connecte depuis le quai (son mot de passe est demandé) : les six portes s'ouvrent.
+
+```
+ssh noms
+dig @phare navire.port-aube.lan +short; dig @noms navire.port-aube.lan +short; tail -3 /etc/bind/zones/db.port-aube.lan
+sudo sed -i 's/2026101706/2026101707/' /etc/bind/zones/db.port-aube.lan; sudo named-checkzone port-aube.lan /etc/bind/zones/db.port-aube.lan && sudo rndc reload; dig @phare navire.port-aube.lan +short
+exit; ssh registre
+cd; printf 'dn: uid=aron,ou=people,dc=port-aube,dc=lan\nobjectClass: inetOrgPerson\nobjectClass: posixAccount\nobjectClass: shadowAccount\nuid: aron\ncn: Aron\nsn: Aron\nuidNumber: 10011\ngidNumber: 10100\nhomeDirectory: /home/aron\nloginShell: /bin/bash\nmail: aron@port-aube.lan\nuserPassword: %s\n\ndn: cn=promo,ou=groups,dc=port-aube,dc=lan\nchangetype: modify\nadd: memberUid\nmemberUid: aron\n' "$(slappasswd -s Premier-pas-sur-l-ile)" > aron.ldif; ldapmodify -a -x -D cn=admin,dc=port-aube,dc=lan -W -f aron.ldif
+exit; ssh greniers
+sudo mkdir /srv/homes/aron; sudo chown 10011:10100 /srv/homes/aron; sudo chmod 700 /srv/homes/aron
+exit; ssh poste
+echo 'Bienvenue à Port-Aube, Aron. Ta maison est prête.' | mail -s 'Bienvenue' aron
+exit; ssh halle
+sudo smbpasswd -a aron
+exit; ssh greniers
+sudo systemctl start sauvegarde-borg
+exit
+ssh aron@quai
+chantier
+```
+
+`ldapmodify -a` ajoute les entrées sans `changetype` et applique les modifications : un seul fichier pour le compte et son entrée dans la promo. `chantier` après la Marée, au-dessus de 90 (ici 100), est retenu comme note finale.
+
+### 70. Le rapport de mise en service
+
+Le rapport porte cinq rubriques (les maisons, la tempête, la marée, le premier pas, ce qui reste), le prénom du premier étudiant et la vraie note du chantier après la Marée. Laurent ne le contresigne que si la Tempête est tenue, la Marée accueillie, le premier étudiant entré et le chantier au-dessus de 90 : déposé trop tôt, il le garde et dit ce qui reste ; sans le prénom ou la note, il les demande.
+
+```
+mkdir -p ~/port-aube
+cat > ~/port-aube/rapport.txt <<'FIN'
+RAPPORT DE MISE EN SERVICE - PORT-AUBE
+Les maisons : les dix maisons sont bâties (noms, phare, poste, lettres, greniers, halle, registre, portes, forge, arche).
+La tempête : MX sans point final, phare en retard de série, relais ouvert, boîte à root, no_root_squash, Zélia sortie de la promo. Tout est réparé.
+La marée : le navire inscrit à la main sans changer la série ; série montée, le phare le connaît.
+Le premier pas : aron est entré dans la cité, ses six portes ouvertes. Chantier : 100 sur 100.
+Ce qui reste : surveiller les sauvegardes de la nuit, et renouveler les sceaux avant leur expiration.
+FIN
+cp ~/port-aube/rapport.txt ~/Cybersup/Embarcadere/PortAube/BoiteDeLaurent
+cat ~/CertificatPortAube
+```
+
+Laurent contresigne : « Il y a des gens qui réparent les cités. Toi, tu viens d'en bâtir une. Port-Aube a un Architecte. » Le CertificatPortAube, posé dans la Maison, porte la note du chapitre 7 et son code de vérification ; le quiz du chapitre (`quiz 7`) s'ouvre, et `badges port-aube` relit les seize leçons (une par maison, la Tempête, la Marée, le Premier Pas, le Rapport, le chantier et les dix maisons avant 14 h) et le platine.
+
+### 71. Après la fête : ce que personne n'a écrit
+
+La nuit tombe, on danse sur le quai. Tard, une lettre de plus arrive dans ta boîte, signée d'une plume grise, que la file de la Poste n'a jamais vue ; un nom que personne n'a écrit répond dans la zone (`phare-noir`, vers une adresse hors de l'île), sans être dans aucun fichier ; et le Registre compte un passager inscrit à 03:12 la nuit dernière, avant que la cité n'existe. Tout se constate, rien n'est à réparer : on le consigne dans le rapport (le troisième défi d'honneur). La radio de Grace : « ... Ça, ce n'est pas nous. » À suivre.
+
+```
+ssh poste
+doveadm fetch 'hdr.from hdr.subject' all; mailq
+exit; ssh noms
+dig @noms phare-noir.port-aube.lan +short; grep -c phare-noir /etc/bind/zones/db.port-aube.lan
+exit; ssh registre
+ldapsearch -x -LLL '(uid=passager)'
+exit
+echo "Apres la fete : phare-noir.port-aube.lan repond 203.0.113.66 sans etre dans la zone ; un compte passager inscrit a 03:12 ; une lettre deposee sans passer par la file. Ce n'est pas nous." >> ~/port-aube/rapport.txt; cp ~/port-aube/rapport.txt ~/Cybersup/Embarcadere/PortAube/BoiteDeLaurent
+```
+
+### 72. Les défis des maîtres, maison par maison
+
+Les 50 défis des maisons, dans l'ordre des maîtres (la solution les fait après le rapport). La Maison des Noms : la série en une ligne, `named-checkconf -z`, `rndc status`, `dig NS`, un alias suivi jusqu'au bout. Le Phare-Relais : `rndc zonestatus`, le transfert permis depuis le phare, `tsig-keygen`, un nom retiré à chaud (puis remis), `dig -x 10.0.70.53`. La Poste : `postconf -d`, une lettre en attente ouverte avec `postcat -q` (une lettre pour le continent, qui ne part pas, puis supprimée avec `postsuper -d`), `sendmail -t`, `status=sent` dans le journal, `postqueue -p`. Le Bureau des Lettres : `doveconf -n`, `doveadm fetch`, `doveadm search`, la clé DKIM lue par `dig`, un SPF en `-all`. Les Greniers : `exportfs -s`, `showmount` depuis le quai, `mount -t nfs4`, `umount`, `ls -ln`. La Halle : `testparm -s`, `smbclient -c ls`, `get`, un invité refusé, `pdbedit -L -v`. Le Grand Registre : `slapcat`, `ldapwhoami`, un filtre à deux conditions, `cn=config` relu par la porte de root, `ldappasswd -S` (le nouveau mot de passe deux fois, puis le sceau). Les Portes : `getent group promo`, `id` d'un bâtisseur, `sss_cache -E`, le journal de sssd, des noms et plus des numéros. La Forge : `x509 -text` (CA:TRUE), `verify -CAfile`, la clé et le sceau qui vont ensemble (`-modulus`), le Registre lui aussi derrière un sceau de la Forge (`ldapsearch -ZZ` depuis le quai), la clé de l'autorité gardée. L'Arche : `borg info`, `borg prune --list --dry-run`, `borg check -v`, `systemctl list-timers`, le contenu d'une archive. Au passage, `ldapdelete` retire une branche de brouillon.
+
+```
+ssh noms
+sudo rndc status; dig NS port-aube.lan @noms; dig @noms imap.port-aube.lan
+exit; ssh phare
+sudo rndc zonestatus port-aube.lan; dig AXFR port-aube.lan @noms | head -5; dig -x 10.0.70.53 @phare +short
+exit; ssh noms
+printf 'server 10.0.70.53\nzone 70.0.10.in-addr.arpa\nupdate delete 60.70.0.10.in-addr.arpa. PTR\nsend\n' | sudo nsupdate -k /etc/bind/cle-phare.key
+printf 'server 10.0.70.53\nzone 70.0.10.in-addr.arpa\nupdate add 60.70.0.10.in-addr.arpa. 3600 IN PTR capitainerie.port-aube.lan.\nsend\n' | sudo nsupdate -k /etc/bind/cle-phare.key
+exit; ssh poste
+postconf -d mynetworks; sudo postqueue -p
+echo 'Port-Aube est debout.' | mail -s 'Nouvelles de l ile' laurent@ancien-campus.lan; mailq
+sudo postcat -q $(mailq | awk 'NR==2 {print $1}') | head -12
+sudo postsuper -d ALL; mailq
+printf 'To: badis@port-aube.lan\nSubject: Les noms tiennent\n\nLa zone a tenu la tempete.\n' | sendmail -t; sudo tail -2 /var/log/mail.log
+sudo doveconf -n | head -8; doveadm search mailbox INBOX subject Premier
+exit; ssh greniers
+sudo exportfs -s; sudo ls -ln /srv/homes; sudo systemctl list-timers
+sudo borg info --rsh 'ssh -i /root/.ssh/arche' borg@arche:/srv/borg/greniers
+sudo borg prune --list --dry-run --keep-daily 7 --rsh 'ssh -i /root/.ssh/arche' borg@arche:/srv/borg/greniers
+sudo borg check -v --rsh 'ssh -i /root/.ssh/arche' borg@arche:/srv/borg/greniers
+sudo borg list --rsh 'ssh -i /root/.ssh/arche' borg@arche:/srv/borg/greniers::<archive>
+exit; ssh quai
+sudo mount -t nfs4 greniers:/srv/homes /mnt; mount -t nfs4; sudo umount /mnt
+getent group promo; sudo sss_cache -E; sudo journalctl -u sssd | tail -3
+exit; ssh halle
+smbclient //halle/promo -U zelia -c 'ls; get plan.txt /tmp/plan-repris.txt'
+smbclient //halle/promo -N -c ls
+sudo pdbedit -L -v | head -6
+exit; ssh registre
+sudo slapcat | head -12; ldapwhoami -x
+ldapsearch -x -LLL '(&(objectClass=posixAccount)(gidNumber=10100))' uid
+sudo ldapsearch -Y EXTERNAL -H ldapi:/// -b cn=config '(olcRootDN=*)' olcRootDN
+ldappasswd -x -D cn=admin,dc=port-aube,dc=lan -W -S uid=aron,ou=people,dc=port-aube,dc=lan
+cd; printf 'dn: ou=brouillons,dc=port-aube,dc=lan\nobjectClass: organizationalUnit\nou: brouillons\n' > brouillons.ldif; ldapadd -x -D cn=admin,dc=port-aube,dc=lan -W -f brouillons.ldif
+ldapdelete -x -D cn=admin,dc=port-aube,dc=lan -W ou=brouillons,dc=port-aube,dc=lan
+sudo openssl genrsa -out /etc/ldap/registre.key 2048; sudo chown openldap /etc/ldap/registre.key; sudo openssl req -new -key /etc/ldap/registre.key -subj '/CN=registre.port-aube.lan' -addext 'subjectAltName=DNS:registre.port-aube.lan' -out /tmp/registre.csr; scp /tmp/registre.csr forge:/srv/demandes/
+exit; ssh forge
+sudo openssl x509 -in /srv/forge/forge.crt -noout -text | head -20
+sudo openssl verify -CAfile /srv/forge/forge.crt /srv/demandes/poste.crt
+sudo openssl x509 -noout -modulus -in /srv/forge/forge.crt; sudo openssl rsa -noout -modulus -in /srv/forge/forge.key
+sudo openssl x509 -req -in /srv/demandes/registre.csr -CA /srv/forge/forge.crt -CAkey /srv/forge/forge.key -CAcreateserial -days 825 -copy_extensions copy -out /srv/demandes/registre.crt
+exit; ssh registre
+scp forge:/srv/demandes/registre.crt /tmp/; sudo cp /tmp/registre.crt /etc/ldap/registre.crt
+cd; printf 'dn: cn=config\nchangetype: modify\nreplace: olcTLSCertificateFile\nolcTLSCertificateFile: /etc/ldap/registre.crt\n-\nreplace: olcTLSCertificateKeyFile\nolcTLSCertificateKeyFile: /etc/ldap/registre.key\n' > tls.ldif; sudo ldapmodify -Y EXTERNAL -H ldapi:/// -f tls.ldif
+exit; ssh quai
+ldapsearch -x -ZZ -H ldap://registre.port-aube.lan -b dc=port-aube,dc=lan '(uid=badis)' uid
+exit
+```
+
+La clé du Registre appartient à openldap : slapd doit pouvoir la lire. Le quai fait déjà confiance à la Forge (`update-ca-certificates`), donc au sceau du Registre.
+
+### 73. Les quêtes annexes : l'Ami de Port-Aube
+
+Six habitants de Port-Aube ont chacun un service à demander. Ces quêtes annexes sont facultatives et hors note : elles ne comptent ni dans l'XP du chapitre ni dans la note, et donnent un bonus d'XP à part, un souvenir déposé dans `~/Souvenirs`, puis, toutes finies, le badge « Ami de Port-Aube ». Elles n'enseignent que des notions jamais vues dans les chapitres 1 à 7 (l'impression avec CUPS, le tri du courrier par un filtre Sieve, la découverte de services en `.local` avec avahi, un tunnel WireGuard, le démon rsync et ses modules, un compte enfermé dans sftp par `Match Group` et `ChrootDirectory`). Une annexe s'ouvre en lisant son habitant ; ses étapes se font dans l'ordre ; `quetes annexes` en donne l'avancée. Ilyès est sur le quai, Clara à la Poste, Mehdi à la Halle, Sara au Phare-Relais, Rayan au Grand Registre, Fama aux Portes de la cité.
+
+Pour le dépôt des devoirs, `sftp depot@halle` demande le mot de passe du compte (« Rendus du soir 7 »), puis on tape, à l'invite `sftp>` : `pwd` (la prison se voit comme `/`), `put devoir.txt rendus/`, `ls rendus`, `bye`. `ssh depot@halle` (même mot de passe) est ensuite refusé : « This service allows sftp connections only. » Pour le pont sous la mer, chaque bout publie sa clé publique dans `/tmp` pour que l'autre la recopie (`/etc/wireguard` est fermé à tous sauf root).
+
+```
+cd ~/Cybersup/Embarcadere/PortAube
+cat Ilyes; cat Poste/Clara; cat Halle/Mehdi; cat PhareRelais/Sara; cat GrandRegistre/Rayan; cat PortesDeLaCite/Fama
+quetes annexes
+ssh imprimerie
+lpstat -t
+cancel 1; lpadmin -p gazette -v ipp://presse.port-aube.lan/ipp/print -m everywhere; lpadmin -d gazette
+cupsenable gazette; cupsaccept gazette; lp -d gazette /srv/gazette/gazette-du-port.txt; lpstat -W completed -o
+exit; ssh poste
+printf 'require ["fileinto", "vacation"];\nif header :contains "subject" "horaire" {\n  fileinto "Horaires";\n}\nvacation :days 1 :subject "Le capitaine est en mer" "Le capitaine est en mer, sans reseau. Il vous lira au retour.";\n' | sudo tee /home/capitaine/sieve/repondeur.sieve
+sudo sievec /home/capitaine/sieve/repondeur.sieve; sudo doveadm sieve activate -u capitaine repondeur
+sudo sed -i 's/^  #mail_plugins = $mail_plugins$/  mail_plugins = $mail_plugins sieve/' /etc/dovecot/conf.d/15-lda.conf; sudo systemctl reload dovecot
+sudo postconf -e 'mailbox_command = /usr/lib/dovecot/dovecot-lda -f "$SENDER" -a "$RECIPIENT"'; sudo postfix reload
+echo 'A quelle heure part le navire ?' | mail -s 'Question sur les horaires' capitaine; sudo doveadm mailbox list -u capitaine
+doveadm fetch 'hdr.subject' mailbox INBOX
+exit; ssh quai
+avahi-browse -a -t; avahi-resolve -n halle.local
+printf '<?xml version="1.0" standalone="no"?>\n<!DOCTYPE service-group SYSTEM "avahi-service.dtd">\n<service-group>\n  <name>La fete du port</name>\n  <service>\n    <type>_http._tcp</type>\n    <port>8080</port>\n  </service>\n</service-group>\n' | sudo tee /etc/avahi/services/fete.service
+avahi-browse -t _http._tcp
+exit; ssh phare
+wg genkey | sudo tee /etc/wireguard/privatekey | wg pubkey | sudo tee /etc/wireguard/publickey; sudo chmod 600 /etc/wireguard/privatekey; sudo cp /etc/wireguard/publickey /tmp/phare.pub
+exit; ssh rive
+sudo cp /etc/wireguard/publickey /tmp/rive.pub; scp phare:/tmp/phare.pub /tmp/; sudo sed -i "s|A_REMPLACER|$(cat /tmp/phare.pub)|" /etc/wireguard/wg0.conf; sudo wg-quick up wg0
+exit; ssh phare
+scp rive:/tmp/rive.pub /tmp/; printf '[Interface]\nPrivateKey = %s\nAddress = 10.99.0.1/24\nListenPort = 51820\n\n[Peer]\nPublicKey = %s\nEndpoint = rive.ancien-campus.lan:51820\nAllowedIPs = 10.99.0.2/32\n' "$(sudo cat /etc/wireguard/privatekey)" "$(cat /tmp/rive.pub)" | sudo tee /etc/wireguard/wg0.conf; sudo chmod 600 /etc/wireguard/wg0.conf
+sudo wg-quick up wg0; ping -c 2 10.99.0.2; sudo wg show
+exit; ssh bibliotheque
+printf '[archives]\n\tpath = /srv/bibliotheque/archives\n\tcomment = Les archives de la traversee\n\tread only = yes\n\thosts allow = 10.0.70.0/24\n' | sudo tee /etc/rsyncd.conf; sudo systemctl start rsync
+exit; ssh quai
+rsync rsync://bibliotheque/; rsync -av rsync://bibliotheque/archives/ /tmp/miroir/
+exit; ssh halle
+sudo groupadd devoirs; sudo usermod -aG devoirs depot; sudo mkdir -p /srv/devoirs/rendus; sudo chown depot /srv/devoirs/rendus
+printf '\nMatch Group devoirs\n\tChrootDirectory /srv/devoirs\n\tForceCommand internal-sftp\n' | sudo tee -a /etc/ssh/sshd_config; sudo sshd -t && sudo systemctl reload ssh
+exit; ssh quai
+cd; echo 'Mon devoir sur le DNS' > devoir.txt; sftp depot@halle
+ssh depot@halle
+exit
+quetes annexes
+```
+
+Les six annexes finies, les habitants viennent saluer l'Architecte sur le quai, et le badge « Ami de Port-Aube » s'ajoute à `badges port-aube`.
+
 ## L'épreuve finale : la Forteresse (mission spéciale)
 
 Une partie à part, ouverte avec `examen` et un code d'accès que le formateur donne le jour de l'épreuve. Quarante épreuves sur les trois chapitres, en huit sceaux (dont le Sceau du Grimoire : `man`, `top`, `bash` ; et le Sceau du Réseau : `ip a`, `ip r`, `dig`, `curl`, `iptables`), notées sur 20 (bonus si tout est fini tôt, petit malus au-delà de 30 fausses manœuvres, indices à -0,25), dont le quiz de Steve dans `/dev/random` (chaque bonne réponse compte, même si la copie est rendue avant la troisième question). La note finale compte aussi le parcours : 80 % la note de l'épreuve, 20 % les badges de compétence gagnés dans la partie normale (chapitres 2 et 3, 42 badges platines compris), relevés à l'entrée dans l'épreuve ; `verifier` liste les badges gagnés et ceux qui manquent, avec les notes des chapitres 2 et 3, le temps de jeu et le nombre de commandes de la partie normale (relevés eux aussi à l'entrée), pour juger si les badges sont plausibles. Il termine par des contrôles de vraisemblance : copie rendue après 3 h, horloge du poste reculée pendant l'épreuve, épreuves faites trop vite ou avec trop peu de commandes, badges sans la note de chapitre qui va avec, épreuves cochées que la Forteresse démentait au scellement. Ce sont des signaux à vérifier avec l'étudiant, pas des preuves. La partie est gardée dans le navigateur : l'épreuve se passe sur le poste et le navigateur où l'on a joué, sinon le jeu prévient qu'il ne trouve aucun badge. `kamikaze` rend la copie à tout moment. Dans les quartiers de la recrue, Florimond, le barde de la Taverne du chapitre 1, raconte l'histoire de l'épreuve (`cat Barde`), jamais deux fois de suite de la même façon ; Manon (`/`), Wissam (`/home`), Jean-Baptiste (`/etc`), Gabriel et Cheb Timour (`/opt/atelier`), Laurana (`/var/www`), David (`/tmp`) et Steve (`/dev/random`) parlent aussi avec `cat`.
