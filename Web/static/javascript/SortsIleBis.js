@@ -388,7 +388,7 @@ GameEvents.addListener("machine", function(e){
 		montagesNfsIle(e.hote).filter(function(m){ return m.auto; }).forEach(function(m){ demonterNfsIle(e.hote, m.cible); var d = dossierHote(e.hote, dossierDe(m.cible)); if (d){ var c = d.getChildFromName(nomDe(m.cible)); if (c !== -1 && !c.items.length) d.children = d.children.filter(function(x){ return x !== c; }); } });
 	}
 });
-/* La ligne d'une carte pour une clé : { options, emplacement } ; le joker * et & (la clé). */
+/* La ligne d'une carte pour une clé : { options, emplacement } ; le joker * et l'esperluette (la clé). */
 function entreeCarteIle(h, carte, cle){
 	var f = carte.replace(/^file:/, "");
 	var texte = lireIle(h, f);

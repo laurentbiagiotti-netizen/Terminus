@@ -410,7 +410,10 @@ function sssdQuaiOkCh7(){
 }
 function autofsOkCh7(){
 	if (!autofsTourne("quai")) return false;
-	return (etatAutofsIle("quai").charge || []).some(function(x){ var e = entreeCarteIle("quai", x.carte, "badis"); return e && /^greniers(\.port-aube\.lan)?:\/srv\/homes\/badis$/.test(e.emplacement) && x.point === "/home"; }) && vuCh7("autofsMonte");
+	// La carte doit donner à chacun SA maison : on l'éprouve sur deux habitants.
+	return (etatAutofsIle("quai").charge || []).some(function(x){
+		return x.point === "/home" && ["badis", "kamal"].every(function(nom){ var e = entreeCarteIle("quai", x.carte, nom); return e && new RegExp("^greniers(\\.port-aube\\.lan)?:/srv/homes/" + nom + "$").test(e.emplacement); });
+	}) && vuCh7("autofsMonte");
 }
 /* La Forge : l'autorité de la cité (un certificat CA autosigné et sa clé, dans /srv/forge). */
 function autoriteForgeCh7(){
@@ -429,10 +432,11 @@ function autoriteForgeCh7(){
 }
 function cleForgeSortieCh7(id){
 	var sortie = false;
+	var garde = dossierHote("forge", "/srv/forge");
 	HOTES_ILE.forEach(function(h){
-		if (sortie || h === "forge" || !estMaMachineIle(h)) return;
+		if (sortie || !estMaMachineIle(h)) return;
 		(function visiter(l){
-			if (sortie || !l) return;
+			if (sortie || !l || l === garde) return;
 			l.items.forEach(function(it){ var t = it.getText ? it.getText() : ""; if (typeof t === "string" && t.indexOf("PRIVATE KEY") > -1){ var c = lireCle(t); if (c && c.id === id) sortie = true; } });
 			l.children.forEach(function(c){ if (c.parents[0] === l) visiter(c); });
 		})(racineIle(h));
@@ -551,7 +555,12 @@ function noterCh7(h, nom, args, sortie, io, erreur){
 	if (nom === "ldapsearch" && !erreur && /uid: /.test(sortie) && /badis/.test(sortie)) noterVuCh7("ldapsearchX");
 	if (nom === "getent" && args[0] === "passwd" && h === "quai" && /:\/home\//.test(sortie) && BATISSEURS_ILE.some(function(b){ return sortie.indexOf(b[0] + ":") === 0; })) noterVuCh7("getentQuai");
 	if (nom === "id" && h === "quai" && /uid=100\d\d/.test(sortie)) noterVuCh7("idQuai");
-	if (nom === "diff" && !erreur && sortie.trim() === "" && !io.code && args.some(function(a){ return /\/srv\/homes/.test(a); }) && args.some(function(a){ return /srv\/homes/.test(a) && !/^\/srv\/homes/.test(a); })) noterVuCh7("restaurationComparee");
+	// La comparaison ne vaut que contre ce que borg a vraiment restauré (un dossier copié à la main ne prouve rien).
+	if (nom === "diff" && h === "greniers" && !erreur && sortie.trim() === "" && !io.code && args.some(function(a){ return /^\/srv\/homes\//.test(a); })){
+		var ici = cheminDuLieuMachine(current_room) || "/";
+		var restaures = (sCh7().extraits || []).filter(function(x){ return x.hote === "greniers"; });
+		if (args.some(function(a){ var p = cheminNormal(a.charAt(0) === "/" ? a : ici + "/" + a); return restaures.some(function(x){ return p.indexOf(cheminNormal(x.ou + "/srv/homes/")) === 0; }); })) noterVuCh7("restaurationComparee");
+	}
 	if (nom === "chantier" && sCh7().tempete) noterVuCh7("chantierTempete");
 }
 var APPELER_AVANT_CH7 = Shell.appeler;
@@ -578,7 +587,10 @@ GameEvents.addListener("ile", function(e){
 	if (e.cmd === "ldapModify" && /^uid=|^cn=/.test(e.dn || "") && (e.attrs || []).some(function(a){ return /^memberuid$/i.test(a); })) noterVuCh7("ldapmodifyMembre");
 	if (e.cmd === "autofs" && e.ok && e.hote === "quai") noterVuCh7("autofsMonte");
 	if (e.cmd === "s_client" && e.hote === "quai" && e.serveur === "poste" && e.ok && e.verification === 0) noterVuCh7("sclientOk");
-	if (e.cmd === "borg" && e.ordre === "extract" && e.ok && !e.essai) noterVuCh7("borgExtract");
+	if (e.cmd === "borg" && e.ordre === "extract" && e.ok && !e.essai && e.extraits > 0){
+		noterVuCh7("borgExtract");
+		var cx = sCh7(); cx.extraits = cx.extraits || []; cx.extraits.push({ hote: e.hote, ou: e.ou });
+	}
 	if (e.cmd === "borg" && e.ordre === "check" && e.ok) noterVuCh7("borgCheck");
 	if (e.cmd === "smbclient" && e.ok && e.liste && partagePromoCh7()) noterVuCh7("smbListe");
 	if (e.cmd === "nsupdate" && e.hote === "noms" && e.zone){
@@ -917,6 +929,7 @@ function verifierChapitre7(){
 	var c = state.ch7;
 	if (!c.base) c.base = baseJourCh7();
 	relierPortAube();
+	declarerUnitesIle();      // l'état de départ des unités (une partie rechargée en a besoin aussi)
 	seminerCh7();
 	avancerHorlogeCh7();
 	reessaisPosteCh7();
