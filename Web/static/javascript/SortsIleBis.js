@@ -238,6 +238,17 @@ Shell.bit = function(noeud, lettre, io){
 	var c = noeud.mode.charAt(base + "rwx".indexOf(lettre));
 	return c !== "-" && c !== "S" && c !== "T";
 };
+/* Écrire à travers un montage NFS : quand c'est le squash qui refuse, on le dit. */
+var VERIFIER_ECRITURE_AVANT_ILE = Shell.verifierEcriture;
+Shell.verifierEcriture = function(lieu, io, cmd, nom){
+	var h = ileIci();
+	var m = h && montagesNfsIle(h).length ? montageDeNoeudIle(lieu) : null;
+	var ex = m ? exportDuMontageIle(m, h) : null;
+	if (ex && ex.options.rw && (ex.options.all_squash || (io && io.sudo && ex.options.root_squash)) && !Shell.bit(lieu, "w", io))
+		throw new ShellError(cmd + " : impossible de créer « " + nom + " » : Permission non accordée\n" +
+			C.gris("(Ce dossier vient de " + m.serveur + " par NFS, exporté en " + (ex.options.all_squash ? "all_squash" : "root_squash") + " : là-bas, ton sudo devient nobody, qui n'a pas le droit d'écrire ici. C'est voulu.)"));
+	return VERIFIER_ECRITURE_AVANT_ILE.apply(this, arguments);
+};
 var CHOWN_AVANT_ILE = Shell.sorts.chown;
 Shell.sorts.chown = function(args, io){
 	var h = ileIci();

@@ -109,7 +109,7 @@ var DEFIS_ILE = [
 	{ id: "s_p7_sssd_journal", m: "portes", titre: "Portes : le journal de sssd (journalctl -u sssd)",
 	  appel: function(n, a, s){ return n === "journalctl" && /sssd/.test(a.join(" ")) && /sssd/.test(s); } },
 	{ id: "s_p7_ls_noms", m: "portes", titre: "Portes : des noms, et plus des numéros (ls -l d'un dossier monté, sur le quai)",
-	  appel: function(n, a, s, io, h){ return n === "ls" && h === "quai" && oCh7(a).indexOf("l") > -1 && BATISSEURS_ILE.some(function(b){ return new RegExp("\\s" + b[0] + "\\s").test(s); }); } },
+	  appel: function(n, a, s, io, h){ return n === "ls" && h === "quai" && oCh7(a).indexOf("l") > -1 && BATISSEURS_ILE.some(function(b){ return new RegExp("^\\S+\\s+\\d+\\s+" + b[0] + "\\s", "m").test(s); }); } },
 	// La Forge des Sceaux (Miguel)
 	{ id: "s_p7_x509_text", m: "forge", titre: "Forge : lire la racine en entier (openssl x509 -text : CA:TRUE)",
 	  appel: function(n, a, s){ return n === "openssl" && a[0] === "x509" && a.indexOf("-text") > -1 && /CA:TRUE/.test(s); } },
@@ -229,16 +229,19 @@ var MAITRES_ILE = {
 			"  dig port-aube.lan AXFR @noms                                   depuis une autre machine : refusé\n\n" +
 			"La zone inverse, sur noms : un fichier db.10.0.70 (SOA, NS, et 25 IN PTR poste.port-aube.lan.), sa zone \"70.0.10.in-addr.arpa\" ;\n" +
 			"sa copie sur phare ; dig -x 10.0.70.25.\n\n" +
-			"  tsig-keygen cle-phare | sudo tee /etc/bind/cle-phare.key       une clé, à inclure dans named.conf (include)\n" +
-			"  allow-update { key cle-phare; };                               dans la zone qui l'accepte\n" +
-			"  sudo nsupdate -k /etc/bind/cle-phare.key                       server, zone, update add, send »"; },
-		mission: function(){ return "« Ta mission : donne au phare la copie de port-aube.lan, et à lui seul : qu'une autre machine se fasse refuser le transfert sous tes yeux. Puis la zone inverse, sur noms et sa copie sur phare. Et un nom ajouté à chaud, signé, sans toucher au fichier. »"; },
+			"  tsig-keygen cle-phare | sudo tee /etc/bind/cle-phare.key       une clé, à inclure dans named.conf.local (include)\n" +
+			"  allow-update { key cle-phare; };                               dans la zone inverse : elle accepte les ajouts signés\n" +
+			"  sudo nsupdate -k /etc/bind/cle-phare.key                       server, zone, update add, send\n\n" +
+			"Une zone dynamique ne s'édite plus à la main : rndc freeze, puis éditer, puis rndc thaw. Sinon, le journal de named\n" +
+			"et le fichier ne disent plus la même chose. »"; },
+		mission: function(){ return "« Ta mission : donne au phare la copie de port-aube.lan, et à lui seul : qu'une autre machine se fasse refuser le transfert sous tes yeux. Puis la zone inverse, sur noms et sa copie sur phare, ouverte aux ajouts signés. Et ajoutes-y à chaud le PTR de la capitainerie (10.0.70.60), sans toucher au fichier. »"; },
 		entre: function(premier){ return premier ? "Maeva sourit : la lentille tourne. « La copie est au phare. Maintenant, le chemin inverse : 70.0.10.in-addr.arpa. Et un nom ajouté avec nsupdate. »" :
 			"« La zone inverse brille. Mais le phare n'a pas encore la copie de port-aube.lan, ou n'importe qui peut la prendre. »"; },
 		erreur: function(){
 			var zs = zoneCh7("phare");
 			if (!aFait("p7_secondaire") && zs && zs.serie !== serieCh7("noms")) return "Maeva fronce les sourcils. « Le phare a une copie, mais pas la dernière : la série du primaire a bougé sans qu'il le sache. rndc retransfer sur le phare, ou rndc notify sur noms. »";
 			if (!aFait("p7_secondaire") && zoneCh7("noms") && !transfertRestreintCh7()) return "« N'importe qui peut copier la zone : allow-transfer { 10.0.70.54; }; dans la zone du primaire. »";
+			if ((sCh7().ajoutsDyn || []).length && !ajoutDynamiqueCh7()) return "Maeva s'assombrit. « Ton ajout à chaud a disparu : le fichier de la zone inverse a été réécrit derrière le dos de named. Une zone dynamique s'édite avec rndc freeze, puis rndc thaw. Refais l'ajout avec nsupdate. »";
 			return null;
 		},
 		fin: function(){ return "Maeva allume la lentille, et le faisceau balaie la mer. « Deux voix disent les noms de l'île, maintenant.\n\n" +

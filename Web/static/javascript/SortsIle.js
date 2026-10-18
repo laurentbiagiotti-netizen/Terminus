@@ -992,8 +992,8 @@ function executerNsupdateIle(h, lignes, cle, io){
 			if (action === "add"){
 				if (ttl === null && !ttlDefaut){ sortie.push("ttl must be specified"); io.code = 1; continue; }
 				if (!type || !donnees){ sortie.push("failed to read rdata"); io.code = 1; continue; }
-				var lu = lireZoneIle("$TTL " + (ttl || ttlDefaut) + "\n@ IN SOA a. b. 1 1 1 1 1\n@ IN NS a.\n" + nom + " " + type + " " + donnees, "tmp.invalid", "nsupdate");
-				var rr = lu.enregistrements.filter(function(x){ return x.nom === nom; })[0];
+				var lu = lireZoneIle("$TTL " + (ttl || ttlDefaut) + "\n@ IN SOA a. b. 1 1 1 1 1\n@ IN NS a.\n" + nom + " " + type + " " + donnees, nom.replace(/\.$/, ""), "nsupdate");
+				var rr = lu.enregistrements.filter(function(x){ return x.nom === nom && x.type === type; }).pop();
 				var err = lu.erreurs.filter(function(x){ return !/no NS|SOA|has no address/.test(x); })[0];
 				if (err || !rr){ sortie.push(err ? err.replace(/^.*?: nsupdate:\d+: /, "") : "failed to read rdata"); io.code = 1; continue; }
 				rr.ttl = ttl || ttlDefaut;
@@ -1001,7 +1001,7 @@ function executerNsupdateIle(h, lignes, cle, io){
 				ops.push({ action: "add", rr: rr });
 			} else {
 				var rrd = { nom: nom, type: type || null };
-				if (type && donnees){ var lu2 = lireZoneIle("$TTL 1\n@ IN SOA a. b. 1 1 1 1 1\n@ IN NS a.\n" + nom + " " + type + " " + donnees, "tmp.invalid", "nsupdate"); var x2 = lu2.enregistrements.filter(function(x){ return x.nom === nom; })[0]; if (x2) rrd.donnees = x2.donnees; }
+				if (type && donnees){ var lu2 = lireZoneIle("$TTL 1\n@ IN SOA a. b. 1 1 1 1 1\n@ IN NS a.\n" + nom + " " + type + " " + donnees, nom.replace(/\.$/, ""), "nsupdate"); var x2 = lu2.enregistrements.filter(function(x){ return x.nom === nom && x.type === type; }).pop(); if (x2) rrd.donnees = x2.donnees; }
 				ops.push({ action: "delete", rr: rrd });
 			}
 			continue;

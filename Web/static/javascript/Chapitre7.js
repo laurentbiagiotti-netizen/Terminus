@@ -178,7 +178,7 @@ var QUETES_CH7 = [
 	{ id: "p7_secondaire", titre: "Phare-Relais : la copie des noms, transférée au phare seulement",
 	  indice: "Phare-Relais (Maeva). Sur phare : une zone type secondary (primaries { 10.0.70.53; }), rndc reload ; sur noms, allow-transfer { 10.0.70.54; }. Puis un dig AXFR refusé depuis une autre machine." },
 	{ id: "p7_inverse", titre: "Phare-Relais : la zone inverse, et un ajout à chaud (nsupdate)",
-	  indice: "La zone 70.0.10.in-addr.arpa (PTR) sur noms, sa copie sur phare, dig -x 10.0.70.25 ; puis une clé tsig-keygen, allow-update sur port-aube.lan, et sudo nsupdate -k pour ajouter un nom sans toucher au fichier." },
+	  indice: "La zone 70.0.10.in-addr.arpa (des PTR) sur noms, avec allow-update { key cle-phare; } (la clé de tsig-keygen, incluse dans named.conf.local), sa copie sur phare, dig -x 10.0.70.25 ; puis sudo nsupdate -k pour y ajouter un PTR à chaud, sans toucher au fichier." },
 	{ id: "p7_postfix", titre: "La Poste : un main.cf juste, vérifié et rechargé",
 	  indice: "La Poste (Younes). Sur poste : postconf -n et sudo postfix check montrent les fautes (un doublon, une coquille, un relais injoignable, un relais ouvert à tous). sudo postconf -e, puis sudo postfix reload." },
 	{ id: "p7_courrier", titre: "La Poste : la file vidée, une lettre qui part et qui arrive",
@@ -230,7 +230,7 @@ var INDICES_CH7 = {
 	p7_zone: ["La zone a deux fautes (une adresse impossible, un nom à la fois CNAME et A) et n'est déclarée nulle part.", "ssh noms ; sudo named-checkzone port-aube.lan /etc/bind/zones/db.port-aube.lan ; sudo sed -i 's/10.0.70.380/10.0.70.38/; /^imap.*IN.A/d' /etc/bind/zones/db.port-aube.lan ; printf 'zone \"port-aube.lan\" {\\n\\ttype primary;\\n\\tfile \"/etc/bind/zones/db.port-aube.lan\";\\n\\tallow-transfer { 10.0.70.54; };\\n\\talso-notify { 10.0.70.54; };\\n};\\n' | sudo tee -a /etc/bind/named.conf.local ; sudo named-checkconf -z ; sudo rndc reload ; dig @noms poste.port-aube.lan"],
 	p7_serie: ["Deux lignes A, et la série : 2026101701 devient 2026101702.", "printf 'imprimerie\\tIN\\tA\\t10.0.70.31\\nbibliotheque\\tIN\\tA\\t10.0.70.73\\n' | sudo tee -a /etc/bind/zones/db.port-aube.lan ; sudo sed -i 's/2026101701/2026101702/' /etc/bind/zones/db.port-aube.lan ; sudo named-checkzone port-aube.lan /etc/bind/zones/db.port-aube.lan ; sudo rndc reload ; dig @noms port-aube.lan SOA +short"],
 	p7_secondaire: ["Le secondaire ne garde rien à la main : il copie (type secondary, primaries).", "ssh phare ; printf 'zone \"port-aube.lan\" {\\n\\ttype secondary;\\n\\tprimaries { 10.0.70.53; };\\n\\tfile \"/var/cache/bind/db.port-aube.lan\";\\n};\\n' | sudo tee -a /etc/bind/named.conf.local ; sudo rndc reload ; dig @phare port-aube.lan SOA +short ; exit ; ssh quai ; dig port-aube.lan AXFR @noms"],
-	p7_inverse: ["La zone inverse s'écrit à l'envers : 70.0.10.in-addr.arpa, des PTR. Pour nsupdate, la clé doit être connue de named (include) et autorisée (allow-update).", "Sur noms : un fichier db.10.0.70 (SOA, NS, PTR), sa zone dans named.conf.local ; sur phare, sa copie secondaire ; dig -x 10.0.70.25 ; tsig-keygen cle-phare | sudo tee /etc/bind/cle-phare.key ; include et allow-update { key cle-phare; } ; sudo nsupdate -k /etc/bind/cle-phare.key"],
+	p7_inverse: ["La zone inverse s'écrit à l'envers : 70.0.10.in-addr.arpa, des PTR. Pour nsupdate, la clé doit être connue de named (include) et autorisée dans la zone (allow-update).", "Sur noms : tsig-keygen cle-phare | sudo tee /etc/bind/cle-phare.key ; un fichier db.10.0.70 (SOA, NS, PTR) ; dans named.conf.local, include de la clé et la zone 70.0.10.in-addr.arpa (allow-update { key cle-phare; }) ; rndc reload ; sur phare, sa copie secondaire ; dig -x 10.0.70.25 ; printf 'server 10.0.70.53\\nzone 70.0.10.in-addr.arpa\\nupdate add 60.70.0.10.in-addr.arpa. 3600 IN PTR capitainerie.port-aube.lan.\\nsend\\n' | sudo nsupdate -k /etc/bind/cle-phare.key"],
 	p7_postfix: ["Quatre fautes : mydestination écrit deux fois (le dernier gagne, sans le domaine), mydomian, relayhost vers un relais mort, mynetworks ouvert à tous.", "ssh poste ; postconf -n ; sudo postfix check ; sudo sed -i '/^mydomian/d' /etc/postfix/main.cf ; sudo postconf -e 'myhostname = poste.port-aube.lan' 'mydomain = port-aube.lan' 'mydestination = $myhostname, $mydomain, localhost' 'relayhost =' 'mynetworks = 127.0.0.0/8 10.0.70.0/24' ; sudo postfix check ; sudo postfix reload"],
 	p7_courrier: ["Les lettres attendent un relais mort : une fois main.cf juste, la file repart.", "mailq ; sudo postqueue -f ; mailq ; echo 'La Poste est ouverte' | mail -s 'Ouverture' badis ; sudo tail -3 /var/log/mail.log"],
 	p7_imap: ["Postfix range un Maildir dans /var/mail/NOM/ (la barre finale de mail_spool_directory) ; Dovecot doit regarder au même endroit.", "doveadm user " + "TOI ; doveadm mailbox list ; sudo sed -i 's|^mail_location = .*|mail_location = maildir:/var/mail/%u|' /etc/dovecot/conf.d/10-mail.conf ; sudo systemctl reload dovecot ; doveadm mailbox status messages INBOX"],
@@ -333,7 +333,10 @@ function transfertRestreintCh7(){
 	var z = zoneCh7("noms");
 	return !!z && listeAccepteIle(z.allowTransfer || [], IP_ILE.phare, null) && !listeAccepteIle(z.allowTransfer || [], IP_ILE.quai, null) && !listeAccepteIle(z.allowTransfer || [], IP_ILE.rive, null);
 }
-function ajoutDynamiqueCh7(){ var z = zoneCh7("noms"); return !!z && (z.dyn || []).some(function(op){ return op.action === "add"; }); }
+/* Un nom ajouté à chaud (nsupdate) dans la zone inverse, et toujours servi par la Maison des Noms. */
+function ajoutDynamiqueCh7(){
+	return (sCh7().ajoutsDyn || []).some(function(a){ return a.zone === "70.0.10.in-addr.arpa" && reponsesCh7("noms", a.nom, a.type).length > 0; });
+}
 /* La Poste : la configuration chargée. */
 function paramsPosteCh7(){ var p = etatPostfixIle("poste"); return p.charge || null; }
 function valeurPosteCh7(k){ var p = paramsPosteCh7(); return p ? developperPostfixIle("poste", p, valeurPostfixIle("poste", p, k)).trim() : null; }
@@ -537,18 +540,17 @@ function noterCh7(h, nom, args, sortie, io, erreur){
 	if (nom === "postconf" && o.indexOf("n") > -1) noterVuCh7("postconfN");
 	if (nom === "postfix" && args.indexOf("check") > -1 && io.sudo && !erreur && sortie.trim() === "") noterVuCh7("postfixCheck");
 	if ((nom === "mailq" || (nom === "postqueue" && o.indexOf("p") > -1)) && /Connection timed out|deferred|\(.*\)/.test(sortie)) noterVuCh7("mailqVue");
-	if (nom === "doveadm" && args[0] === "user" && /uid/.test(sortie)) noterVuCh7("doveadmUser");
-	if (nom === "doveadm" && args[0] === "mailbox" && (args[1] === "list" || args[1] === "status")) noterVuCh7("doveadmListe");
+	if (nom === "doveadm" && !erreur && args[0] === "user" && /uid/.test(sortie)) noterVuCh7("doveadmUser");
+	if (nom === "doveadm" && !erreur && args[0] === "mailbox" && (args[1] === "list" || args[1] === "status") && sortie.trim()) noterVuCh7("doveadmListe");
 	if (nom === "exportfs" && o.indexOf("v") > -1 && /\/srv\/homes/.test(sortie)) noterVuCh7("exportfsV");
 	if (nom === "showmount" && /\/srv\/homes/.test(sortie) && h !== "greniers") noterVuCh7("showmount");
-	if (io.sudo && /Permission non accordée|Permission denied|Operation not permitted/.test(t) && montagesNfsIle(h).some(function(m){ return args.some(function(a){ var p = a.charAt(0) === "/" ? cheminNormal(a) : cheminNormal((cheminDuLieuMachine(current_room) || "/") + "/" + a); return p === m.cible || p.indexOf(m.cible + "/") === 0; }); })) noterVuCh7("squash");
+	if (h && io.sudo && /Permission non accordée|Permission denied|Operation not permitted/.test(t) && montagesNfsIle(h).some(function(m){ return args.some(function(a){ var p = a.charAt(0) === "/" ? cheminNormal(a) : cheminNormal((cheminDuLieuMachine(current_room) || "/") + "/" + a); return p === m.cible || p.indexOf(m.cible + "/") === 0; }); })) noterVuCh7("squash");
 	if (nom === "testparm" && /\[promo\]/.test(sortie)) noterVuCh7("testparm");
 	if (nom === "pdbedit" && o.indexOf("L") > -1 && sortie.trim()) noterVuCh7("pdbeditL");
 	if (nom === "smbclient" && /Sharename/.test(sortie) && /promo/.test(sortie)) noterVuCh7("smbListe");
 	if (nom === "ldapsearch" && !erreur && /uid: /.test(sortie) && /badis/.test(sortie)) noterVuCh7("ldapsearchX");
 	if (nom === "getent" && args[0] === "passwd" && h === "quai" && /:\/home\//.test(sortie) && BATISSEURS_ILE.some(function(b){ return sortie.indexOf(b[0] + ":") === 0; })) noterVuCh7("getentQuai");
 	if (nom === "id" && h === "quai" && /uid=100\d\d/.test(sortie)) noterVuCh7("idQuai");
-	if (nom === "borg" && args.indexOf("check") > -1 && !erreur) noterVuCh7("borgCheck");
 	if (nom === "diff" && !erreur && sortie.trim() === "" && !io.code && args.some(function(a){ return /\/srv\/homes/.test(a); }) && args.some(function(a){ return /srv\/homes/.test(a) && !/^\/srv\/homes/.test(a); })) noterVuCh7("restaurationComparee");
 	if (nom === "chantier" && sCh7().tempete) noterVuCh7("chantierTempete");
 }
@@ -558,7 +560,7 @@ Shell.appeler = function(nom, args, io){
 	try { sortie = APPELER_AVANT_CH7.apply(this, arguments); }
 	catch (e){ erreur = e; }
 	try {
-		if (h || (nom === "chantier" && ileOuverte())) noterCh7(h, nom, args || [], typeof sortie === "string" ? sansAnsi(sortie) : "", io || {}, erreur ? sansAnsi(String(erreur.message || erreur)) : null);
+		if (h || ileOuverte()) noterCh7(h, nom, args || [], typeof sortie === "string" ? sansAnsi(sortie) : "", io || {}, erreur ? sansAnsi(String(erreur.message || erreur)) : null);
 	} catch (x){ /* une lecture ne doit jamais casser un sort */ }
 	if (erreur) throw erreur;
 	return sortie;
@@ -577,6 +579,12 @@ GameEvents.addListener("ile", function(e){
 	if (e.cmd === "autofs" && e.ok && e.hote === "quai") noterVuCh7("autofsMonte");
 	if (e.cmd === "s_client" && e.hote === "quai" && e.serveur === "poste" && e.ok && e.verification === 0) noterVuCh7("sclientOk");
 	if (e.cmd === "borg" && e.ordre === "extract" && e.ok && !e.essai) noterVuCh7("borgExtract");
+	if (e.cmd === "borg" && e.ordre === "check" && e.ok) noterVuCh7("borgCheck");
+	if (e.cmd === "smbclient" && e.ok && e.liste && partagePromoCh7()) noterVuCh7("smbListe");
+	if (e.cmd === "nsupdate" && e.hote === "noms" && e.zone){
+		var c = sCh7(); c.ajoutsDyn = c.ajoutsDyn || [];
+		(e.ops || []).forEach(function(o){ if (o.action === "add" && o.nom && o.type) c.ajoutsDyn.push({ zone: e.zone.replace(/\.$/, ""), nom: o.nom, type: o.type }); });
+	}
 });
 
 /* La Poste fait d'elle-même ce que fait qmgr : elle retente la file de temps en temps (toutes les cinq minutes). */
