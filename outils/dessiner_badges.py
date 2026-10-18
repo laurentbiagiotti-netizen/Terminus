@@ -1,4 +1,4 @@
-"""Dessine les badges de compétence (chapitres 2 à 7) : des médailles en pixels, une couleur par rang.
+"""Dessine les badges de compétence (chapitres 2 à 8) : des médailles en pixels, une couleur par rang.
 
 Bronze, argent, or et platine, comme les rangs d'un tableau de trophées ; le dessin est propre au jeu :
 une médaille hexagonale, deux rubans, et au centre le sigle de la compétence (OSI, DNS, SUID...).
@@ -58,6 +58,21 @@ BADGES = [
     ('maison_arche', 'BORG', 'or'), ('p7_chantier', 'PLAN', 'bronze'), ('p7_tempete', 'SOS', 'or'),
     ('p7_maree', '19H', 'or'), ('p7_premier_pas', 'E2E', 'or'), ('p7_rapport', 'DOC', 'or'),
     ('s_p7_avant_tempete', '14H', 'or'), ('platine_ch7', 'SRV', 'platine'),
+    # chapitre 8 : le Grand Port, la Flotte noire (un badge par quai tenu, puis le port, la flotte, le piège, le rapport)
+    ('quai_premiers', 'RUN', 'bronze'), ('quai_capitainerie', 'LOGS', 'bronze'), ('quai_plans', 'TAG', 'bronze'),
+    ('quai_soutes', 'VOL', 'argent'), ('quai_chenaux', 'NET', 'argent'), ('quai_chantier', 'FROM', 'argent'),
+    ('quai_cales', 'HIT', 'argent'), ('quai_maitres', 'SLIM', 'or'), ('quai_registre', 'PUSH', 'argent'),
+    ('quai_feuille', 'YAML', 'argent'), ('quai_vigie', 'STAT', 'argent'), ('quai_armurerie', 'CAP', 'or'),
+    ('quai_douane', 'SHA', 'or'), ('quai_escadre', 'NODE', 'or'),
+    ('n8_port', 'PORT', 'bronze'), ('n8_flotte', 'FLOT', 'or'), ('n8_piege', 'DGST', 'or'), ('n8_rapport', 'DOC', 'or'),
+    ('s_n8_avant_aube', 'J4', 'or'), ('platine_ch8', 'CNTR', 'platine'),
+]
+
+# Les galons du chapitre 8 (un par rang : Mousse, Matelot, Quartier-maître, Second, Capitaine, Amiral) : une forme
+# à part, la patte d'épaule, avec l'ancre et autant de galons que le rang en compte ; le métal monte avec le rang.
+GALONS = [
+    ('galon_mousse', 0, 'bronze'), ('galon_matelot', 1, 'bronze'), ('galon_quartier_maitre', 2, 'argent'),
+    ('galon_second', 3, 'argent'), ('galon_capitaine', 4, 'or'), ('galon_amiral', 5, 'platine'),
 ]
 
 # Les badges « Ami » (toutes les quêtes annexes d'un chapitre) : une médaille ronde, à part des badges de
@@ -75,9 +90,11 @@ ICONES_AMI = {
     'ami_ch6': ['...###...', '....#....', '..#####..', '..#.#.#..', '..##.##..', '..#.#.#..', '..#####..', '...###...', '....#....'],
     # Port-Aube : une ancre
     'ami_ch7': ['...###...', '...#.#...', '...###...', '.#######.', '....#....', '#...#...#', '##..#..##', '.##.#.##.', '..#####..'],
+    # le Grand Port : une grue à portique et son conteneur suspendu
+    'ami_ch8': ['......#..', '.....###.', '#########', '.#...#.#.', '.#...#.#.', '###..###.', '###..#.#.', '###..#.#.', '....##.##'],
 }
 RUBANS_AMI = {'ami_ch2': (70, 140, 230), 'ami_ch3': (150, 90, 210), 'ami_ch4': (60, 170, 90), 'ami_ch5': (200, 60, 60), 'ami_ch6': (240, 150, 40),
-              'ami_ch7': (40, 60, 140)}
+              'ami_ch7': (40, 60, 140), 'ami_ch8': (60, 190, 170)}
 NOIR = (0, 0, 0)
 # Une police de 3 x 5 pixels, pour les sigles de quatre caractères.
 PETITE_POLICE = {
@@ -167,6 +184,37 @@ def badge_ami(ident):
     return im.resize((80, 80), Image.NEAREST)
 
 
+def badge_galon(n, rang):
+    """Un galon de rang : une patte d'épaule au métal du rang, un bouton, une ancre (plus petite quand les galons
+    montent), n barrettes ; l'Amiral a trois étoiles à la place de l'ancre."""
+    clair, sombre, eclat = RANGS[rang]
+    im = Image.new('RGB', (40, 40), NOIR)
+    d = ImageDraw.Draw(im)
+    d.polygon([(7, 11), (20, 2), (33, 11), (33, 38), (7, 38)], fill=clair)
+    d.polygon([(9, 12), (20, 5), (31, 12), (31, 36), (9, 36)], fill=sombre)
+    d.polygon([(11, 13), (20, 7), (29, 13), (29, 34), (11, 34)], fill=NOIR)
+    d.line([(8, 11), (19, 3)], fill=eclat)
+    d.ellipse([18, 8, 22, 12], fill=eclat)
+    if n == 5:
+        for x in (14, 20, 26):
+            d.point([(x, 15), (x - 1, 15), (x + 1, 15), (x, 14), (x, 16)], fill=eclat)
+    elif n >= 3:
+        d.line([(20, 14), (20, 19)], fill=eclat); d.line([(18, 15), (22, 15)], fill=eclat)
+        d.point([(17, 18), (23, 18), (18, 19), (22, 19), (19, 20), (21, 20)], fill=eclat)
+    else:
+        d.line([(20, 14), (20, 24)], fill=eclat); d.line([(17, 16), (23, 16)], fill=eclat)
+        d.arc([15, 18, 25, 26], 10, 170, fill=eclat)
+        d.point([(15, 21), (25, 21)], fill=eclat)
+    for k in range(n):
+        y = 31 - k * 3
+        d.rectangle([12, y, 28, y + 1], fill=clair)
+        d.line([(12, y), (28, y)], fill=eclat)
+    if rang == 'platine':
+        for x, y in [(4, 4), (35, 6), (36, 30), (3, 31)]:
+            d.point([(x, y), (x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)], fill=eclat)
+    return im.resize((80, 80), Image.NEAREST)
+
+
 if __name__ == '__main__':
     import sys
     choix = sys.argv[1:]
@@ -178,4 +226,9 @@ if __name__ == '__main__':
         if choix and ident not in choix:
             continue
         badge_ami(ident).convert('P', palette=Image.ADAPTIVE, colors=16).save(os.path.join(OUT, 'badge_' + ident + '.gif'))
-    print(len([b for b in BADGES if not choix or b[0] in choix]) + len([i for i in ICONES_AMI if not choix or i in choix]), 'badges')
+    for ident, n, rang in GALONS:
+        if choix and ident not in choix:
+            continue
+        badge_galon(n, rang).convert('P', palette=Image.ADAPTIVE, colors=16).save(os.path.join(OUT, 'badge_' + ident + '.gif'))
+    print(len([b for b in BADGES if not choix or b[0] in choix]) + len([i for i in ICONES_AMI if not choix or i in choix])
+          + len([g for g in GALONS if not choix or g[0] in choix]), 'badges')
