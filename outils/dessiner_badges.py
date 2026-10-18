@@ -1,4 +1,4 @@
-"""Dessine les badges de compétence (chapitres 2 à 6) : des médailles en pixels, une couleur par rang.
+"""Dessine les badges de compétence (chapitres 2 à 7) : des médailles en pixels, une couleur par rang.
 
 Bronze, argent, or et platine, comme les rangs d'un tableau de trophées ; le dessin est propre au jeu :
 une médaille hexagonale, deux rubans, et au centre le sigle de la compétence (OSI, DNS, SUID...).
@@ -51,6 +51,13 @@ BADGES = [
     ('quartier_marche', 'APT', 'argent'), ('quartier_labyrinthe', 'BOOT', 'argent'), ('quartier_limites', 'CGRP', 'argent'),
     ('quartier_guetteur', 'TRCE', 'bronze'), ('m6_lanterne', 'PHAR', 'bronze'), ('m6_nuit', 'NUIT', 'or'),
     ('m6_rapport', 'DOC', 'or'), ('s_m6_avant_midi', '12H', 'or'), ('platine_ch6', 'OPS', 'platine'),
+    # chapitre 7 : Port-Aube, la cité à bâtir (un badge par maison bâtie, puis le plan, la Tempête, la Marée, le Premier Pas, le rapport)
+    ('maison_noms', 'DNS', 'argent'), ('maison_phare', 'PTR', 'argent'), ('maison_poste', 'MTA', 'argent'),
+    ('maison_lettres', 'DKIM', 'or'), ('maison_greniers', 'NFS', 'argent'), ('maison_halle', 'SMB', 'argent'),
+    ('maison_registre', 'LDAP', 'or'), ('maison_portes', 'SSSD', 'argent'), ('maison_forge', 'CA', 'or'),
+    ('maison_arche', 'BORG', 'or'), ('p7_chantier', 'PLAN', 'bronze'), ('p7_tempete', 'SOS', 'or'),
+    ('p7_maree', '19H', 'or'), ('p7_premier_pas', 'E2E', 'or'), ('p7_rapport', 'DOC', 'or'),
+    ('s_p7_avant_tempete', '14H', 'or'), ('platine_ch7', 'SRV', 'platine'),
 ]
 
 # Les badges « Ami » (toutes les quêtes annexes d'un chapitre) : une médaille ronde, à part des badges de
@@ -66,8 +73,11 @@ ICONES_AMI = {
     'ami_ch5': ['#.#.#.#.#', '#########', '.#######.', '.###.###.', '.#######.', '.#######.', '.###.###.', '.##...##.', '.##...##.'],
     # Lumen : une lanterne allumée
     'ami_ch6': ['...###...', '....#....', '..#####..', '..#.#.#..', '..##.##..', '..#.#.#..', '..#####..', '...###...', '....#....'],
+    # Port-Aube : une ancre
+    'ami_ch7': ['...###...', '...#.#...', '...###...', '.#######.', '....#....', '#...#...#', '##..#..##', '.##.#.##.', '..#####..'],
 }
-RUBANS_AMI = {'ami_ch2': (70, 140, 230), 'ami_ch3': (150, 90, 210), 'ami_ch4': (60, 170, 90), 'ami_ch5': (200, 60, 60), 'ami_ch6': (240, 150, 40)}
+RUBANS_AMI = {'ami_ch2': (70, 140, 230), 'ami_ch3': (150, 90, 210), 'ami_ch4': (60, 170, 90), 'ami_ch5': (200, 60, 60), 'ami_ch6': (240, 150, 40),
+              'ami_ch7': (40, 60, 140)}
 NOIR = (0, 0, 0)
 # Une police de 3 x 5 pixels, pour les sigles de quatre caractères.
 PETITE_POLICE = {
