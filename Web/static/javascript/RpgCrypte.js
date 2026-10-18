@@ -238,7 +238,7 @@ var RANGS_DES_BADGES = {
 	c_sudo: "argent", c_cle: "argent", c_preuves: "argent", c_gpg: "or", c_corbeau: "or", platine_reseau: "platine", platine_cyber: "platine"
 };
 function rangDuBadge(id){ return RANGS_DES_BADGES[id] || "bronze"; }
-function badgeGagne(id){ return /^(platine_|tour_|quartier_|ami_)/.test(id) ? state.has(id) : !!state.quests[id]; }
+function badgeGagne(id){ return /^(platine_|tour_|quartier_|maison_|ami_)/.test(id) ? state.has(id) : !!state.quests[id]; }
 function idDuBadge(nom){ for (var k in COMPETENCES){ if (COMPETENCES[k] === nom) return k; } return null; }
 function nomDuBadge(id){ return COMPETENCES[id] || ""; }
 
@@ -288,6 +288,13 @@ function texteBadges(quel){
 		tous.push({ id: "platine_ch6", chap: "lumen", nom: COMPETENCES.platine_ch6, image: "tous les badges de Lumen", couche: "", lecon: "Mesurer, réparer quartier par quartier, tenir la Nuit, rendre compte : tu sais remettre en service un serveur Linux de bout en bout." });
 		if (typeof AMIS_ANNEXES !== "undefined" && AMIS_ANNEXES[7]) tous.push({ id: "ami_ch6", chap: "lumen", nom: COMPETENCES.ami_ch6, image: "les six habitants de Lumen", couche: "", lecon: "Les quêtes annexes : quotas et setgid, tâches et signaux, journaux compressés, horloge matérielle, compressions, dates de fichiers. Facultatif, hors note." });
 	}
+	if (state.has("ch7Ouvert") && typeof TROPHEES_CH7 !== "undefined"){
+		Object.keys(TROPHEES_CH7).forEach(function(id){
+			tous.push({ id: id, chap: "ile", nom: COMPETENCES[id], image: TROPHEES_CH7[id][0], couche: "", lecon: TROPHEES_CH7[id][1] });
+		});
+		tous.push({ id: "platine_ch7", chap: "ile", nom: COMPETENCES.platine_ch7, image: "tous les badges de Port-Aube", couche: "", lecon: "Mesurer, bâtir maison par maison, tenir la Tempête, accueillir la Marée, rendre compte : tu sais monter les services réseau d'une infrastructure Linux de bout en bout." });
+		if (typeof AMIS_ANNEXES !== "undefined" && AMIS_ANNEXES[8]) tous.push({ id: "ami_ch7", chap: "ile", nom: COMPETENCES.ami_ch7, image: "les six habitants de Port-Aube", couche: "", lecon: "Les quêtes annexes : l'impression (CUPS), un filtre Sieve, la découverte en .local (avahi), un tunnel WireGuard, un démon rsync, sftp enfermé. Facultatif, hors note." });
+	}
 	// Les badges « Ami » des quêtes annexes (facultatives, hors note), chapitre par chapitre.
 	[[3, "ami_ch2", "reseau", "panneOuverte", "les six habitants du campus", "Les quêtes annexes : le matériel (lscpu, lspci, lsusb, dmidecode), nc -l, ~/.ssh/config, ssh -J, ssh -L, les sections du manuel. Facultatif, hors note."],
 	 [2, "ami_ch3", "cyber", "crypteOuverte", "les six habitants de la Crypte", "Les quêtes annexes : nombres magiques (hexdump), liens (readlink, realpath, liens durs), tail -F, timeout, ssh-agent, mots de passe (pwgen, openssl). Facultatif, hors note."],
@@ -303,10 +310,11 @@ function texteBadges(quel){
 		if (filtre === "arcanes" || filtre === "academie" || filtre === "avance" || filtre === "linux") return b.chap === "arcanes";
 		if (filtre === "bastion" || filtre === "durcissement" || filtre === "hardening") return b.chap === "bastion";
 		if (filtre === "lumen" || filtre === "exploitation" || filtre === "machines") return b.chap === "lumen";
+		if (filtre === "port-aube" || filtre === "portaube" || filtre === "ile" || filtre === "services") return b.chap === "ile";
 		return sansAccent(b.nom).indexOf(filtre) > -1;
 	});
 	if (filtre && !choisis.length) return "badges : aucune compétence ne correspond à « " + quel + " ». " + C.gris("Exemples : badges reseau, badges cyber, badges dns, badges sudo.");
-	[["reseau", "RÉSEAU : LA PANNE DE L'ÉCOLE"], ["cyber", "CYBERSÉCURITÉ : LA CHASSE AU CORBEAU"], ["arcanes", "LINUX AVANCÉ : L'ACADÉMIE DES ARCANES"], ["bastion", "DURCISSEMENT LINUX : LE BASTION"], ["lumen", "EXPLOITATION LINUX : LUMEN"]].forEach(function(c){
+	[["reseau", "RÉSEAU : LA PANNE DE L'ÉCOLE"], ["cyber", "CYBERSÉCURITÉ : LA CHASSE AU CORBEAU"], ["arcanes", "LINUX AVANCÉ : L'ACADÉMIE DES ARCANES"], ["bastion", "DURCISSEMENT LINUX : LE BASTION"], ["lumen", "EXPLOITATION LINUX : LUMEN"], ["ile", "SERVICES RÉSEAU LINUX : PORT-AUBE"]].forEach(function(c){
 		var liste = choisis.filter(function(b){ return b.chap === c[0]; });
 		if (!liste.length) return;
 		// Le même compte que schema et traque : les badges d'étape ; le platine vient en plus.
@@ -331,4 +339,4 @@ if (typeof MANUEL_DU_JEU !== "undefined") MANUEL_DU_JEU.badges = "badges n'est P
 	"Chaque étape franchie rapporte un badge de compétence (Adressage IP, Résolution DNS, Bit SUID...). badges les liste,\n" +
 	"avec la leçon de chacun : c'est ton aide-mémoire, à relire avant une évaluation.\n\n" +
 	"  badges           tous tes badges\n  badges reseau    ceux du réseau (la panne, couche par couche)\n" +
-	"  badges cyber     ceux de la cybersécurité (la chasse au Corbeau)\n  badges arcanes   ceux de Linux avancé (l'Académie des Arcanes)\n  badges bastion   ceux du durcissement Linux (le Bastion)\n  badges lumen     ceux de l'exploitation Linux (Lumen)\n  badges dns       un badge précis, par le nom de sa compétence";
+	"  badges cyber     ceux de la cybersécurité (la chasse au Corbeau)\n  badges arcanes   ceux de Linux avancé (l'Académie des Arcanes)\n  badges bastion   ceux du durcissement Linux (le Bastion)\n  badges lumen     ceux de l'exploitation Linux (Lumen)\n  badges port-aube ceux des services réseau Linux (Port-Aube)\n  badges dns       un badge précis, par le nom de sa compétence";

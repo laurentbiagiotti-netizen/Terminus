@@ -1270,6 +1270,7 @@ function etatChapitre6(nom){
 					"l'horloge de la Tour sonne de nouveau l'heure juste, l'eau du Puits chante dans ses deux sources, et le Phare de Lumen brûle si haut qu'on le voit depuis l'école. " +
 					"Les gardiens sortent sur leurs seuils, et toute la cité lève les yeux vers toi." + (typeof texteAmiFinaleCh6 === "function" ? texteAmiFinaleCh6() : ""));
 				say("Laurent lit ton rapport jusqu'à la dernière ligne, puis le contresigne. « Lumen brille. Pas parce que rien ne cassera plus : parce que tu sais ce qui cassera ensuite, et que c'est écrit. »");
+				say("Puis il range le rapport dans sa veste et regarde vers l'ouest, comme s'il voyait la mer à travers la roche. « Demain, à l'aube, rejoins-moi à l'Embarcadère, au bout du campus. Une île nous attend. »");
 				say(C.gris("(Ton CertificatLumen est posé dans ta Maison : cat ~/CertificatLumen. Il porte la note du chapitre 6 et son code de vérification.)"));
 			}
 			break;
