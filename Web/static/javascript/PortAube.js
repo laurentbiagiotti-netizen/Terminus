@@ -108,6 +108,7 @@ var UNITES_ILE = {
 	"cups.service": uniteIle("CUPS Scheduler", { texte: "ExecStart=/usr/sbin/cupsd -l\nType=notify\nRestart=on-failure", unit: "Documentation=man:cupsd(8)\nAfter=sssd.service network.target nss-user-lookup.target nslcd.service\nRequires=cups.socket\n" }, "Also=cups.socket cups.path\nWantedBy=printer.target multi-user.target"),
 	"avahi-daemon.service": uniteIle("Avahi mDNS/DNS-SD Stack", { texte: "Type=dbus\nBusName=org.freedesktop.Avahi\nExecStart=/usr/sbin/avahi-daemon -s\nExecReload=/usr/sbin/avahi-daemon -r\nNotifyAccess=main", unit: "Requires=avahi-daemon.socket\n" }, "WantedBy=multi-user.target\nAlso=avahi-daemon.socket\nAlias=dbus-org.freedesktop.Avahi.service"),
 	"rsync.service": uniteIle("fast remote file copy program daemon", { texte: "ExecStart=/usr/bin/rsync --daemon --no-detach\nRestart=on-failure\nProtectSystem=full\nPrivateDevices=on\nNoNewPrivileges=on", unit: "Documentation=man:rsync(1) man:rsyncd.conf(5)\nConditionPathExists=/etc/rsyncd.conf\nAfter=network.target network-online.target\n" }),
+	"sauvegarde-borg.service": uniteIle("La sauvegarde de la cité vers l'Arche", { texte: "Type=oneshot\nExecStart=/usr/local/bin/sauvegarde-borg\nNice=10\nIOSchedulingClass=idle", unit: "Documentation=man:borg(1)\nAfter=network-online.target\nWants=network-online.target\n" }, "WantedBy=multi-user.target"),
 	"wg-quick@wg0.service": uniteIle("WireGuard via wg-quick(8) for wg0", { texte: "Type=oneshot\nRemainAfterExit=yes\nExecStart=/usr/bin/wg-quick up wg0\nExecStop=/usr/bin/wg-quick down wg0\nExecReload=/bin/bash -c 'exec /usr/bin/wg syncconf wg0 <(exec /usr/bin/wg-quick strip wg0)'\nEnvironment=WG_ENDPOINT_RESOLUTION_RETRIES=infinity", unit: "After=network-online.target nss-lookup.target\nWants=network-online.target nss-lookup.target\nPartOf=wg-quick.target\nDocumentation=man:wg-quick(8)\n" }, "WantedBy=multi-user.target")
 };
 /* Les processus de chaque service (le premier est le principal) et les ports qu'ils tiennent. */
@@ -384,7 +385,7 @@ function ldifBatisseursIle(){
 /* Les neuf machines des maisons                                       */
 /* ------------------------------------------------------------------ */
 
-function binairesIle(P, liste){ liste.forEach(function(b){ P(b, "ELF " + b.split("/").pop() + "\n", { mode: "rwxr-xr-x" }); }); }
+function binairesIle(P, liste){ liste.forEach(function(b){ P(b, "ELF " + b.split("/").pop() + "\n", { mode: "rwxr-xr-x", binaire: { sortie: "" } }); }); }
 
 var NomsIle = poserMachineIle("noms", { ip: IP_ILE.noms, image: "loc_baie_ile.gif",
 	intro: "La machine noms : la Maison des Noms. Un serveur neuf, BIND installé ; il ne connaît encore aucun nom de l'île.",
@@ -443,7 +444,7 @@ var PosteIle = poserMachineIle("poste", { ip: IP_ILE.poste, image: "loc_baie_ile
 var GreniersIle = poserMachineIle("greniers", { ip: IP_ILE.greniers, image: "loc_baie_ile.gif", materiel: { srv: 500 },
 	intro: "La machine greniers : les Greniers de la cité. Un grand disque, /srv/homes, où chaque habitant aura son dossier ; personne ne peut encore y monter.",
 	comptes: [["statd", 109, 65534, "", "/var/lib/nfs", "/usr/sbin/nologin"], ["_rpc", 110, 65534, "", "/run/rpcbind", "/usr/sbin/nologin"]],
-	unites: [["nfs-server.service", true, true]],
+	unites: [["nfs-server.service", true, true], ["sauvegarde-borg.service", false, false]],
 	construire: function(P, D){
 		P("/etc/exports", "# /etc/exports: the access control list for filesystems which may be exported\n#\t\tto NFS clients.  See exports(5).\n#\n# Example for NFSv2 and NFSv3:\n# /srv/homes       hostname1(rw,sync,no_subtree_check) hostname2(ro,sync,no_subtree_check)\n#\n" +
 			"# Example for NFSv4:\n# /srv/nfs4        gss/krb5i(rw,sync,fsid=0,crossmnt,no_subtree_check)\n# /srv/nfs4/homes  gss/krb5i(rw,sync,no_subtree_check)\n#\n");
@@ -506,7 +507,7 @@ var ForgeIle = poserMachineIle("forge", { ip: IP_ILE.forge, image: "loc_baie_ile
 	intro: "La machine forge : la Forge des Sceaux. Une machine à part, qui ne sert à rien d'autre : c'est ici que naîtra l'autorité qui signe les sceaux de l'île.",
 	construire: function(P, D){
 		D("/srv/forge", { mode: "rwx------" });
-		D("/srv/forge/demandes", { mode: "rwxrwxrwt" });
+		D("/srv/demandes", { mode: "rwxrwxrwt" });
 		binairesIle(P, ["/usr/bin/openssl"]);
 	} });
 var ArcheIle = poserMachineIle("arche", { ip: IP_ILE.arche, image: "loc_baie_ile.gif", materiel: { srv: 1000 },
