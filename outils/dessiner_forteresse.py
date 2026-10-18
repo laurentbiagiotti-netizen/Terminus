@@ -1,12 +1,15 @@
 """Les lieux de la Forteresse (l'épreuve finale), dans le style des lieux du chapitre 1 et des chapitres 2 et 3 :
-une pièce en perspective (mur du fond, sol vert, arêtes blanches), de grands objets pleins, des détails au pixel près.
+une pièce en perspective (mur du fond, sol vert carrelé qui s'assombrit au pied du mur, arêtes blanches), de grands
+objets pleins, des détails au pixel près ; et, comme au chapitre 8, la lumière en trames : le halo des flammes et des
+écrans, le rayon de lune qui tombe des fenêtres, les faisceaux des projecteurs, les ombres portées au sol.
 
 Usage : python3 outils/dessiner_forteresse.py [nom...]   (OUT=dossier pour un aperçu ailleurs)
 """
 import os, sys, math
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from dessiner_lieux import finir, toile, N, V, B, W, H  # noqa: E402
-from dessiner_fantasy import piece, tramer, briques, arche, torche, flamme, etoiles, lune, livres, etagere  # noqa: E402
+from dessiner_fantasy import salle, tramer, briques, arche, torche, flamme, etoiles, lune, livres, etagere  # noqa: E402
+from dessiner_fantasy import halo, faisceau, degrade, boite3d  # noqa: E402
 
 
 def fenetre(d, x0, y0, x1, y1, nuit=True):
@@ -22,9 +25,11 @@ def quartiers():
     """Les quartiers de la recrue : un lit de camp, une lampe à huile, un coffre, une lucarne étoilée,
     et l'ordre de mission glissé sous la porte."""
     im, d = toile()
-    piece(d, 34, 22, 142, 112)
+    salle(d, 34, 22, 142, 112)
     briques(d, 36, 24, 140, 110, h=7, w=16, fond=N, joint=V)
+    halo(d, 34, 100, 34, V, 0.55, 30)
     fenetre(d, 100, 32, 126, 70)
+    faisceau(d, 113, 70, 96, 150, 150, 0.35, 0.08)
     # la porte, à gauche, et la lettre glissée dessous
     d.rectangle([44, 50, 72, 112], fill=B)
     d.rectangle([47, 53, 69, 112], fill=N)
@@ -43,6 +48,8 @@ def quartiers():
     d.line([(98, 138), (98, 150)], fill=B, width=2); d.line([(166, 138), (166, 150)], fill=B, width=2)
     d.line([(86, 112), (86, 126)], fill=B, width=2)
     # le coffre et la lampe à huile posée dessus
+    degrade(d, 8, 146, 52, 152, N, 0.7, 0.0)
+    d.polygon([(44, 120), (50, 116), (50, 142), (44, 146)], fill=B)
     d.rectangle([10, 120, 44, 146], fill=V, outline=B)
     d.chord([10, 112, 44, 128], 180, 360, fill=V, outline=B)
     d.line([(10, 128), (44, 128)], fill=N)
@@ -57,8 +64,10 @@ def quartiers():
 def couloir():
     """Le couloir des quartiers (/home) : des portes de chaque côté, des torches, un long tapis, et la théière de Wissam."""
     im, d = toile()
-    piece(d, 66, 40, 110, 96)
+    salle(d, 66, 40, 110, 96)
     arche(d, 76, 50, 100, 96, fill=N)
+    halo(d, 88, 80, 12, B, 0.45, 18, dans=lambda x, y: 78 <= x <= 98 and y >= 56)
+    halo(d, 58, 44, 24, V, 0.55); halo(d, 118, 44, 24, V, 0.55)
     # les murs latéraux et leurs portes en perspective
     for cote in (-1, 1):
         for k, (xa, xb) in enumerate(((8, 30), (36, 52))):
@@ -99,7 +108,7 @@ def proclamations():
     """La Tour des Proclamations (/var/www) : une grande baie ouverte sur la ville endormie, un pupitre et son parchemin,
     les bannières de Cybersup, et un socle vide où se tenait le héraut."""
     im, d = toile()
-    piece(d, 30, 16, 146, 108)
+    salle(d, 30, 16, 146, 108)
     briques(d, 32, 18, 144, 106, h=7, w=16, fond=N, joint=V)
     # la grande baie, et la ville dehors
     arche(d, 62, 22, 114, 104, fill=N, outline=B, ep=3)
@@ -112,6 +121,7 @@ def proclamations():
     d.rectangle([62, 96, 114, 104], fill=B)
     for x in range(64, 114, 6):
         d.rectangle([x, 92, x + 2, 96], fill=B)
+    faisceau(d, 88, 104, 62, 132, 160, 0.3, 0.05)
     # les deux bannières
     for x in (38, 124):
         d.line([(x, 20), (x + 14, 20)], fill=B, width=2)
@@ -139,7 +149,8 @@ def atelier():
     """L'Atelier des Composants (/opt/atelier) : un établi couvert de barrettes et de processeurs, des outils au mur,
     une carte mère épinglée, et le petit réchaud où mijote le tajine de Timour."""
     im, d = toile()
-    piece(d, 26, 18, 150, 100)
+    salle(d, 26, 18, 150, 100)
+    halo(d, 143, 118, 30, V, 0.5, 26)
     # le panneau à outils au mur
     d.rectangle([32, 26, 92, 70], fill=N, outline=B)
     for x in range(36, 90, 6):
@@ -158,7 +169,9 @@ def atelier():
         d.rectangle([x, 32, x + 2, 46], fill=N)
     d.point([(102, 28), (142, 28), (102, 68), (142, 68)], fill=N)
     # l'établi
-    d.rectangle([10, 106, 120, 112], fill=B)
+    degrade(d, 10, 150, 124, 156, N, 0.7, 0.0)
+    d.polygon([(120, 106), (126, 100), (126, 106), (120, 112)], fill=V)
+    d.rectangle([10, 106, 120, 112], fill=B); d.line([(10, 112), (120, 112)], fill=N)
     d.rectangle([14, 112, 18, 150], fill=B); d.rectangle([112, 112, 116, 150], fill=B)
     d.line([(18, 140), (112, 140)], fill=B)
     for k, x in enumerate(range(16, 70, 14)):
@@ -187,13 +200,16 @@ def atelier():
 def gardiens():
     """Les gardiens (/opt/gardiens) : quatre statues dans leurs niches ; l'une a les yeux qui brillent de vert."""
     im, d = toile()
-    piece(d, 20, 20, 156, 116)
+    salle(d, 20, 20, 156, 116)
     briques(d, 22, 22, 154, 114, h=7, w=16, fond=N, joint=V)
     for k, x in enumerate((26, 60, 94, 128)):
         arche(d, x, 32, x + 24, 112, fill=N, outline=B)
         cx = x + 12
+        if k == 1:
+            halo(d, cx, 58, 16, V, 0.6, 22, dans=lambda xx, yy, x=x: x + 2 <= xx <= x + 22)
         d.ellipse([cx - 6, 52, cx + 6, 64], fill=B)                    # la tête
         d.polygon([(cx - 8, 66), (cx + 8, 66), (cx + 10, 108), (cx - 10, 108)], fill=B)
+        d.polygon([(cx + 3, 66), (cx + 8, 66), (cx + 10, 108), (cx + 4, 108)], fill=V)
         d.line([(cx, 68), (cx, 106)], fill=N)
         d.line([(cx - 8, 78), (cx + 8, 78)], fill=N)
         d.rectangle([cx - 11, 104, cx + 11, 110], fill=B)
@@ -202,7 +218,7 @@ def gardiens():
             d.rectangle([cx - 4, 56, cx - 2, 58], fill=V); d.rectangle([cx + 2, 56, cx + 4, 58], fill=V)
             for a in range(0, 360, 60):
                 r = math.radians(a)
-                d.point((cx + round(13 * math.cos(r)), 58 + round(13 * math.sin(r))), fill=V)
+                d.point((cx + round(13 * math.cos(r)), 58 + round(13 * math.sin(r))), fill=B)
         else:
             d.point([(cx - 3, 57), (cx + 3, 57)], fill=N)
         d.line([(cx + 8, 70), (cx + 8, 102)], fill=B, width=2)           # la lance
@@ -218,9 +234,10 @@ def horloge():
     """Les tâches planifiées (/etc/cron.d) : une grande horloge à engrenages, ses cinq aiguilles (minute, heure, jour, mois,
     jour de la semaine), et un sablier qui ne se vide jamais."""
     im, d = toile()
-    piece(d, 28, 16, 148, 108)
+    salle(d, 28, 16, 148, 108)
     # l'horloge
     cx, cy, r = 88, 60, 36
+    halo(d, cx, cy, r + 22, V, 0.4)
     d.ellipse([cx - r - 4, cy - r - 4, cx + r + 4, cy + r + 4], fill=B)
     d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=N)
     for k in range(12):
@@ -259,8 +276,10 @@ def horloge():
 def chambre_myriam():
     """La chambre de Myriam (/home/myriam) : un chaudron qui bouillonne, un grimoire ouvert, son chapeau pendu, des bougies."""
     im, d = toile()
-    piece(d, 30, 20, 146, 110)
+    salle(d, 30, 20, 146, 110)
     briques(d, 32, 22, 144, 108, h=7, w=16, fond=N, joint=V)
+    halo(d, 82, 118, 50, V, 0.5, 40)
+    halo(d, 20, 120, 18, V, 0.55)
     # le chapeau pendu au mur
     d.line([(120, 30), (120, 36)], fill=B, width=2)
     d.ellipse([102, 54, 140, 62], fill=V, outline=B)
@@ -297,11 +316,12 @@ def plateau():
     """Le plateau de Questions pour un Linux (/dev/random) : un grand écran, trois pupitres et leurs buzzers,
     des projecteurs, un public d'ombres au premier rang."""
     im, d = toile()
-    piece(d, 22, 14, 154, 104)
+    salle(d, 22, 14, 154, 104)
+    halo(d, 88, 41, 62, V, 0.4, 32)
     # les projecteurs et leurs faisceaux
     for x in (30, 88, 146):
         d.polygon([(x - 5, 14), (x + 5, 14), (x + 3, 20), (x - 3, 20)], fill=B)
-        tramer(d, x - 10, 22, x + 10, 100, c=V, pas=5)
+        faisceau(d, x, 20, x - 16, x + 16, 128, 0.35, 0.1, B)
     # le grand écran et son titre
     d.rectangle([40, 20, 136, 62], fill=B)
     d.rectangle([44, 24, 132, 58], fill=N)
