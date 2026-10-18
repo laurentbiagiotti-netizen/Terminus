@@ -51,10 +51,23 @@ BADGES = [
     ('quartier_marche', 'APT', 'argent'), ('quartier_labyrinthe', 'BOOT', 'argent'), ('quartier_limites', 'CGRP', 'argent'),
     ('quartier_guetteur', 'TRCE', 'bronze'), ('m6_lanterne', 'PHAR', 'bronze'), ('m6_nuit', 'NUIT', 'or'),
     ('m6_rapport', 'DOC', 'or'), ('s_m6_avant_midi', '12H', 'or'), ('platine_ch6', 'OPS', 'platine'),
-    ('ami_ch6', 'AMI', 'or'),
-    # les quêtes annexes des chapitres 2 à 5 : le badge « Ami » de chaque chapitre
-    ('ami_ch2', 'AMI', 'or'), ('ami_ch3', 'AMI', 'or'), ('ami_ch4', 'AMI', 'or'), ('ami_ch5', 'AMI', 'or'),
 ]
+
+# Les badges « Ami » (toutes les quêtes annexes d'un chapitre) : une médaille ronde, à part des badges de
+# compétence, avec l'emblème du décor du chapitre et un ruban à sa couleur.
+ICONES_AMI = {
+    # le campus : une antenne qui émet
+    'ami_ch2': ['#.......#', '.#..#..#.', '..#.#.#..', '....#....', '...###...', '....#....', '...#.#...', '..#...#..', '.#######.'],
+    # la Crypte : une clé
+    'ami_ch3': ['..###....', '.#...#...', '.#...#...', '..###....', '...#.....', '...##....', '...#.....', '...##....', '...#.....'],
+    # l'Académie : un grimoire ouvert
+    'ami_ch4': ['##.....##', '#.##.##.#', '#...#...#', '#.##.##.#', '#...#...#', '#.##.##.#', '#...#...#', '#########', '....#....'],
+    # le Bastion : une tour crénelée
+    'ami_ch5': ['#.#.#.#.#', '#########', '.#######.', '.###.###.', '.#######.', '.#######.', '.###.###.', '.##...##.', '.##...##.'],
+    # Lumen : une lanterne allumée
+    'ami_ch6': ['...###...', '....#....', '..#####..', '..#.#.#..', '..##.##..', '..#.#.#..', '..#####..', '...###...', '....#....'],
+}
+RUBANS_AMI = {'ami_ch2': (70, 140, 230), 'ami_ch3': (150, 90, 210), 'ami_ch4': (60, 170, 90), 'ami_ch5': (200, 60, 60), 'ami_ch6': (240, 150, 40)}
 NOIR = (0, 0, 0)
 # Une police de 3 x 5 pixels, pour les sigles de quatre caractères.
 PETITE_POLICE = {
@@ -116,6 +129,34 @@ def badge(sigle, rang):
     return im.resize((80, 80), Image.NEAREST)
 
 
+def badge_ami(ident):
+    clair, sombre, eclat = RANGS['or']
+    ruban = RUBANS_AMI[ident]
+    fonce = tuple(c * 6 // 10 for c in ruban)
+    im = Image.new('RGB', (40, 40), NOIR)
+    d = ImageDraw.Draw(im)
+    # deux rubans à la couleur du chapitre, en V
+    d.polygon([(11, 27), (17, 27), (14, 39), (11, 36), (8, 39)], fill=ruban)
+    d.polygon([(23, 27), (29, 27), (32, 39), (29, 36), (26, 39)], fill=fonce)
+    # la médaille ronde : un anneau d'or perlé, un cœur sombre
+    d.ellipse([3, 1, 37, 35], fill=clair)
+    for k in range(16):
+        import math
+        a = k * math.pi / 8
+        x, y = 20 + 16 * math.cos(a), 18 + 16 * math.sin(a)
+        d.point((round(x), round(y)), fill=eclat)
+    d.ellipse([6, 4, 34, 32], fill=sombre)
+    d.ellipse([8, 6, 32, 30], fill=NOIR)
+    d.line([(10, 10), (15, 6)], fill=eclat, width=1)
+    # l'emblème du chapitre, 9 x 9 pixels, doublé : 18 x 18
+    icone = ICONES_AMI[ident]
+    for y, ligne in enumerate(icone):
+        for x, p in enumerate(ligne):
+            if p == '#':
+                d.rectangle([11 + 2 * x, 9 + 2 * y, 12 + 2 * x, 10 + 2 * y], fill=eclat)
+    return im.resize((80, 80), Image.NEAREST)
+
+
 if __name__ == '__main__':
     import sys
     choix = sys.argv[1:]
@@ -123,4 +164,8 @@ if __name__ == '__main__':
         if choix and ident not in choix:
             continue
         badge(sigle, rang).convert('P', palette=Image.ADAPTIVE, colors=16).save(os.path.join(OUT, 'badge_' + ident + '.gif'))
-    print(len([b for b in BADGES if not choix or b[0] in choix]), 'badges')
+    for ident in ICONES_AMI:
+        if choix and ident not in choix:
+            continue
+        badge_ami(ident).convert('P', palette=Image.ADAPTIVE, colors=16).save(os.path.join(OUT, 'badge_' + ident + '.gif'))
+    print(len([b for b in BADGES if not choix or b[0] in choix]) + len([i for i in ICONES_AMI if not choix or i in choix]), 'badges')
