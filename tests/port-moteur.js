@@ -25,6 +25,7 @@ function port(){
 	jeu.taper("chapitre 7", "oui");
 	jeu.lire("tousLesSorts().concat(SORTS_PORT, SORTS_ANNEXES_PORT, ['ssh', 'sudo', 'usermod', 'curl', 'tar', 'jq', 'ssh-keygen', 'ip', 'ps', 'tee', 'printf']).forEach(function(s){ state.spells[s] = true; })");
 	jeu.lire("state.applyState('ch8Ouvert')");
+	jeu.lire("sCh8().verrouManoeuvres = false; sCh8().horlogeLibre = true");
 	return jeu;
 }
 /* La sortie d'une commande, sans ce que le jeu ajoute (XP, quêtes, radio, badges, lieux). */

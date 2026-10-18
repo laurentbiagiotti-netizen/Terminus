@@ -480,7 +480,7 @@ function composePort(h, a, io){
 }
 function composeConfigPort(h, p, a, io){
 	var d = lireDrapeauxPort(a, { court: { q: "quiet" }, booleens: ["quiet", "services", "volumes", "images", "hash", "no-interpolate", "resolve-image-digests"], valeurs: ["format", "output"] }, "compose config");
-	evenementPort(h, "composeConfig", { projet: p.nom, services: Object.keys(p.config.services), option: d.o.services ? "services" : (d.o.volumes ? "volumes" : (d.o.quiet ? "quiet" : "tout")) });
+	evenementPort(h, "composeConfig", { projet: p.nom, dossier: p.dossier, services: Object.keys(p.config.services), option: d.o.services ? "services" : (d.o.volumes ? "volumes" : (d.o.quiet ? "quiet" : "tout")) });
 	if (d.o.quiet) return "";
 	if (d.o.services) return p.ordre.join("\n");
 	if (d.o.volumes) return Object.keys(p.config.volumes).join("\n");

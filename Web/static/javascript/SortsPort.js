@@ -88,7 +88,7 @@ function idPort(graine){ return hexDe("port:" + graine, 64); }
 function courtPort(id){ return String(id || "").replace(/^sha256:/, "").substring(0, 12); }
 function evenementPort(h, cmd, infos){
 	var e = { type: "port", hote: h, cmd: cmd };
-	for (var k in (infos || {})) if (infos.hasOwnProperty(k)) e[k === "type" ? "typeInfo" : k] = infos[k];
+	for (var k in (infos || {})) if (infos.hasOwnProperty(k)) e[k === "type" ? "typeInfo" : (k === "cmd" ? "commande" : k)] = infos[k];   /* « cmd » nomme l'événement : la commande lancée devient « commande » */
 	try { GameEvents.fire(e); } catch (x){}
 	return e;
 }

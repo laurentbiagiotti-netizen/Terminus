@@ -538,7 +538,7 @@ function tableauTachesPort(taches, noTrunc, quiet){
 			var sv = s.services[t.service];
 			var nom = (sv ? sv.nom : "?") + (typeof t.slot === "number" ? "." + t.slot : "." + t.slot);
 			var err = t.erreur ? (noTrunc ? "\"" + t.erreur + "\"" : "\"" + (t.erreur.length > 29 ? t.erreur.substring(0, 28) + "…" : t.erreur) + "\"") : "";
-			lignes.push([noTrunc ? t.id : t.id.substring(0, 12), (i === 0 ? "" : " \\_ ") + nom, t.image.replace(/@sha256:[0-9a-f]+$/, ""), t.noeud, t.etatVoulu === "running" ? "Running" : "Shutdown", texteEtatTachePort(t), err, ""]);
+			lignes.push([noTrunc ? t.id : t.id.substring(0, 12), (i === 0 ? "" : " \\_ ") + nom, (noTrunc ? t.image : t.image.replace(/@sha256:[0-9a-f]+$/, "")), t.noeud, t.etatVoulu === "running" ? "Running" : "Shutdown", texteEtatTachePort(t), err, ""]);
 		});
 	});
 	if (quiet) return lignes.map(function(l){ return l[0]; }).join("\n");

@@ -702,14 +702,14 @@ verifier(jr5.lire("state.xp2 === state.xpMax2()"), "vieille sauvegarde : la note
 	var guide = fs.readFileSync(path.join(__dirname, "..", "Web", "static", "javascript", "Guide.js"), "utf8");
 	var bloc = guide.substring(guide.indexOf("var CINEMATIQUES = {"), guide.indexOf("var SCENE_CHAPITRE_1"));
 	var images = bloc.match(/image: "([^"]+)"/g) || [];
-	verifier(images.length === 29, "cinématiques : 7 chapitres, quatre plans pour les six premiers, cinq pour Port-Aube (" + images.length + " images)");
+	verifier(images.length === 35, "cinématiques : 8 chapitres, quatre plans pour les six premiers, cinq pour Port-Aube, six pour le Grand Port (" + images.length + " images)");
 	images.forEach(function(m){
 		var f = /image: "([^"]+)"/.exec(m)[1];
 		verifier(fs.existsSync(path.join(__dirname, "..", "Web", "static", "img", f)), "cinématique : l'image " + f + " existe");
 	});
 	verifier(bloc.indexOf("—") === -1 && bloc.indexOf(" & ") === -1, "cinématiques : ni tiret cadratin ni esperluette");
 	// Port-Aube (chapitre 7) : cinq plans, chacun avec son image dessinée pour lui (outils/dessiner_ile.py), des textes courts.
-	var c7 = bloc.substring(bloc.search(/\n\t7: \{/));
+	var c7 = bloc.substring(bloc.search(/\n\t7: \{/), bloc.search(/\n\t8: \{/));
 	var plans7 = c7.match(/\{ image: "([^"]+)", texte: "((?:[^"\\]|\\.)*)" \}/g) || [];
 	verifier(plans7.length === 5, "cinématique 7 : cinq plans (" + plans7.length + ")");
 	var vus = {};
@@ -722,7 +722,29 @@ verifier(jr5.lire("state.xp2 === state.xpMax2()"), "vieille sauvegarde : la note
 	["cine7_mer_aube.gif", "cine7_quai_laurent.gif", "cine7_maisons_vides.gif", "cine7_phare_orage.gif", "cine7_maree.gif"].forEach(function(f){ verifier(!!vus[f], "cinématique 7 : le plan " + f); });
 	verifier(/île/.test(c7.split("}] }")[0]) && /Laurent/.test(c7) && /14 h/.test(c7) && /19 h/.test(c7), "cinématique 7 : l'île, Laurent, l'orage de 14 h, la marée de 19 h");
 	verifier(/PREMIERE_SCENE = \{[^}]*7: "p7_quai"/.test(guide) && /\n\tp7_quai: \{ image:/.test(guide), "cinématique 7 : elle précède la scène de l'arrivée sur le quai (p7_quai)");
-	verifier(/cinematique 1 à 7/.test(guide) && /7 \(Port-Aube\)/.test(guide), "la commande cinematique connaît le chapitre 7");
+	verifier(/cinematique 1 à 8/.test(guide) && /7 \(Port-Aube\)/.test(guide), "la commande cinematique connaît le chapitre 7");
+	// Le Grand Port (chapitre 8) : six plans, chacun avec son image (outils/dessiner_port.py), des textes courts et épiques.
+	var c8 = bloc.substring(bloc.search(/\n\t8: \{/));
+	var plans8 = c8.match(/\{ image: "([^"]+)", texte: "((?:[^"\\]|\\.)*)" \}/g) || [];
+	verifier(plans8.length === 6, "cinématique 8 : six plans (" + plans8.length + ")");
+	var vus8 = {};
+	plans8.forEach(function(p){
+		var m = /image: "([^"]+)", texte: "((?:[^"\\]|\\.)*)"/.exec(p);
+		verifier(/^cine8_/.test(m[1]) && !vus8[m[1]], "cinématique 8 : une image dédiée par plan (" + m[1] + ")");
+		vus8[m[1]] = true;
+		verifier(m[2].length <= 110, "cinématique 8 : un texte court (" + m[2].length + " caractères) : " + m[2]);
+	});
+	["cine8_lettre.gif", "cine8_phare_noir.gif", "cine8_port_eveil.gif", "cine8_galons.gif", "cine8_quais_vides.gif", "cine8_flotte_horizon.gif"].forEach(function(f){ verifier(!!vus8[f], "cinématique 8 : le plan " + f); });
+	verifier(/Laurent/.test(c8) && /Mousse/.test(c8) && /quatorze quais/i.test(c8) && /quatrième jour/.test(c8), "cinématique 8 : Laurent, le Mousse, les quatorze quais, l'aube du quatrième jour");
+	verifier(/PREMIERE_SCENE = \{[^}]*8: "n8_quai"/.test(guide) && /\n\tn8_quai: \{ image:/.test(guide), "cinématique 8 : elle précède la scène de l'arrivée au Grand Port (n8_quai)");
+	verifier(/8 \(le Grand Port\)/.test(guide), "la commande cinematique connaît le chapitre 8");
+	[function(j){ j.taper("chapitre 8", "oui"); }, function(j){ j.taper("chapitre 7", "oui"); j.lire("state.complete('p7_rapport'); verifierMonde()"); j.taper("cd ~/Cybersup/Embarcadere/PortAube"); }].forEach(function(depart, k){
+		var j = nouveauMonde({});
+		j.lire("var SCENES_JOUEES_TEST = []; var COMPLETE_TEST = GameState.prototype.complete; GameState.prototype.complete = function(id){ var deja = this.quests[id]; COMPLETE_TEST.call(this, id); if (!deja && id === 'n8_quai' && !this.has('rejeuEnCours')) SCENES_JOUEES_TEST.push(id); };");
+		depart(j);
+		j.taper("cd " + j.lire("Shell.cheminAffiche(GrandPortCh8)")); j.taper("cd .."); j.taper("cd GrandPort");
+		verifier(j.lire("SCENES_JOUEES_TEST.length") === 1, "cinématique 8 : déclenchée une fois, " + (k ? "en continuant depuis Port-Aube" : "en départ direct"));
+	});
 	// Elle se joue en départ direct comme après Lumen : l'arrivée sur le quai est une vraie étape, hors du rejeu, une seule fois.
 	[function(j){ j.taper("chapitre 7", "oui"); }, function(j){ j.taper("chapitre 6", "oui"); j.lire("state.complete('m6_rapport'); verifierMonde()"); j.taper("cd ~/Cybersup/Embarcadere/PortAube"); }].forEach(function(depart, k){
 		var j = nouveauMonde({});

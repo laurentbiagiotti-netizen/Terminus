@@ -1185,10 +1185,13 @@ Shell.sorts.chapitre = function(args, io){
 		var etat4 = state.quests["d_fin"] ? C.vert("terminé") : (state.has("ch4Ouvert") ? C.jaune("ouvert") : (state.has("ch5Direct") ? C.gris("non joué (renfort)") : C.gris("fermé")));
 		var etat5 = state.quests["h_rapport"] ? C.vert("terminé") : (state.has("ch5Ouvert") ? C.jaune("ouvert") : (state.has("ch6Direct") ? C.gris("non joué (renfort)") : C.gris("fermé")));
 		var etat6 = state.quests["m6_rapport"] ? C.vert("terminé") : (state.has("ch6Ouvert") ? C.jaune("ouvert") : (state.has("ch7Direct") ? C.gris("non joué (renfort)") : C.gris("fermé")));
-		var etat7 = state.quests["p7_rapport"] ? C.vert("terminé") : (state.has("ch7Ouvert") ? C.jaune("ouvert") : C.gris("fermé"));
+		var etat7 = state.quests["p7_rapport"] ? C.vert("terminé") : (state.has("ch7Ouvert") ? C.jaune("ouvert") : (state.has("ch8Direct") ? C.gris("non joué (renfort)") : C.gris("fermé")));
+		var etat8 = state.quests["n8_rapport"] ? C.vert("terminé") : (state.has("ch8Ouvert") ? C.jaune("ouvert") : C.gris("fermé"));
 		var conseil;
-		if (chapitre2Possible()) conseil = "La panne (chapitre 2) s'ouvre en battant le Sorcier Noir, la Crypte (chapitre 3) en réparant le réseau, l'Académie (chapitre 4) après la Crypte, le Bastion (chapitre 5) après l'Académie, Lumen (chapitre 6) après le Bastion, Port-Aube (chapitre 7) après Lumen. " +
-			"Si tu connais déjà les bases, tu peux aussi partir tout de suite : chapitre 2 (la panne), chapitre 3 (la mission cyber), chapitre 4 (l'Académie des Arcanes), chapitre 5 (le Bastion), chapitre 6 (Lumen) ou chapitre 7 (Port-Aube).";
+		if (chapitre2Possible()) conseil = "La panne (chapitre 2) s'ouvre en battant le Sorcier Noir, la Crypte (chapitre 3) en réparant le réseau, l'Académie (chapitre 4) après la Crypte, le Bastion (chapitre 5) après l'Académie, Lumen (chapitre 6) après le Bastion, Port-Aube (chapitre 7) après Lumen, le Grand Port (chapitre 8) après Port-Aube. " +
+			"Si tu connais déjà les bases, tu peux aussi partir tout de suite : chapitre 2 (la panne), chapitre 3 (la mission cyber), chapitre 4 (l'Académie des Arcanes), chapitre 5 (le Bastion), chapitre 6 (Lumen), chapitre 7 (Port-Aube) ou chapitre 8 (le Grand Port).";
+		else if (state.quests["n8_rapport"]) conseil = "La flotte noire a viré de bord : ton CertificatGrandPort est dans ta Maison (cat ~/CertificatGrandPort).";
+		else if (state.has("ch8Ouvert")) conseil = "Le Grand Port est " + (state.has("ch8Direct") && !state.has("ch7Ouvert") ? "au bout de l'Embarcadère (cd ~/Cybersup/Embarcadere/GrandPort)" : "au bout du quai de Port-Aube (cd ~/Cybersup/Embarcadere/PortAube/GrandPort)") + ". Tape quetes pour l'étape en cours, port pour le plan, galons pour ton rang.";
 		else if (state.quests["p7_rapport"]) conseil = "Port-Aube brille : ton CertificatPortAube est dans ta Maison (cat ~/CertificatPortAube).";
 		else if (state.has("ch7Ouvert")) conseil = "Port-Aube est au large : cd ~/Cybersup/Embarcadere, puis cd PortAube. Tape quetes pour l'étape en cours, chantier pour le plan.";
 		else if (state.quests["m6_rapport"]) conseil = "Lumen brille : ton CertificatLumen est dans ta Maison (cat ~/CertificatLumen).";
@@ -1206,7 +1209,8 @@ Shell.sorts.chapitre = function(args, io){
 			"  4. L'Académie    " + etat4 + "   Niveau avancé : une nuit de réponse à incident face à la Nuée (jq, awk, sed, rsync, timers, scripts). Note sur le CertificatAvance.\n" +
 			"  5. Le Bastion    " + etat5 + "   Durcissement Linux : douze murs à dresser sur un serveur neuf avant l'inspection de l'aube. Note sur le CertificatBastion.\n" +
 			"  6. Lumen         " + etat6 + "   Exploitation Linux : rallumer seize quartiers d'une cité avant la Longue Nuit (disques, mémoire, services, RAID). Note sur le CertificatLumen.\n" +
-			"  7. Port-Aube     " + etat7 + "   Services réseau Linux : bâtir les dix maisons d'une cité avant la marée (DNS, courrier, NFS, Samba, LDAP, TLS, sauvegardes). Note sur le CertificatPortAube.\n\n" +
+			"  7. Port-Aube     " + etat7 + "   Services réseau Linux : bâtir les dix maisons d'une cité avant la marée (DNS, courrier, NFS, Samba, LDAP, TLS, sauvegardes). Note sur le CertificatPortAube.\n" +
+			"  8. Le Grand Port " + etat8 + "  Les conteneurs, de zéro à héros : quatorze quais, cinq épreuves de rang et une bataille à l'aube (docker, compose, swarm). Note sur le CertificatGrandPort.\n\n" +
 			C.gris(conseil);
 	}
 	if (demande === "1") return mission ?
@@ -1256,7 +1260,18 @@ Shell.sorts.chapitre = function(args, io){
 		});
 		return "";
 	}
-	if (demande !== "2" && demande !== "3") throw new ShellError("chapitre : il n'y a que les chapitres 1, 2, 3, 4, 5, 6 et 7. Tape chapitre pour la liste.");
+	if (demande === "8"){
+		if (state.has("ch8Ouvert")) return "Le chapitre 8 est déjà ouvert : le Grand Port t'attend (" + (state.has("ch8Direct") && !state.has("ch7Ouvert") ? "cd ~/Cybersup/Embarcadere/GrandPort" : "cd ~/Cybersup/Embarcadere/PortAube/GrandPort") + ").";
+		if (!chapitre2Possible()) return "Tu as déjà commencé une partie : le chapitre 8 (le Grand Port) s'ouvre à la fin de Port-Aube, ou se choisit au tout début d'une partie neuve.\n" +
+			C.gris("(Pour partir directement au Grand Port : recommencer, puis chapitre 8.)");
+		if (typeof commencerChapitre8 !== "function") return "Le chapitre 8 n'est pas encore disponible.";
+		term.demander("Partir directement au Grand Port (chapitre 8, les conteneurs) ? Les chapitres 1 à 7 ne seront pas notés pour toi. Tape oui pour confirmer : ", false, function(reponse){
+			if (String(reponse).trim().toLowerCase() !== "oui"){ term.echo("Bien. Les chapitres précédents t'attendent."); return; }
+			if (commencerChapitre8()) Shell.fin();
+		});
+		return "";
+	}
+	if (demande !== "2" && demande !== "3") throw new ShellError("chapitre : il n'y a que les chapitres 1, 2, 3, 4, 5, 6, 7 et 8. Tape chapitre pour la liste.");
 	if (demande === "2"){
 		if (state.has("panneSautee")) return "Tu es venu en renfort pour la mission cyber : la panne du réseau ne fait pas partie de ta mission.";
 		if (state.has("panneOuverte")) return "Le chapitre 2 est déjà ouvert : Radia t'attend au BatimentB de Cybersup (cd ~/Cybersup/BatimentB).";

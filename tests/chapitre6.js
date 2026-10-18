@@ -93,7 +93,7 @@ var QUARTIERS = {
 	var s = jb.taper("ssh lumen");
 	verifier(/Could not resolve/.test(s) && /n'apparaît/.test(s), "ssh lumen avant l'ouverture (au Bastion) : refusé");
 	contient(jeu.taper("chapitre"), "6. ", "chapitre : la ligne 6");
-	contient(jeu.taper("chapitre 8"), "1, 2, 3, 4, 5, 6 et 7", "chapitre 8 : il n'existe pas");
+	contient(jeu.taper("chapitre 9"), "1, 2, 3, 4, 5, 6, 7 et 8", "chapitre 9 : il n'existe pas");
 })();
 
 /* ================================================================== */

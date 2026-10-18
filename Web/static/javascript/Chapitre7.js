@@ -961,6 +961,7 @@ function etatChapitre7(nom){
 					"Dans le Registre, un compte de plus que prévu, inscrit à 03:12 la nuit dernière, avant que la cité n'existe.\n" +
 					C.gris("(doveadm fetch, mailq, dig phare-noir.port-aube.lan, ldapsearch -x '(uid=passager)' : tout se constate, rien n'est à réparer.)"));
 				say(C.gris("(Radio : « Grace : ... Ça, ce n'est pas nous. »)") + "\n\n" + C.gras("À suivre."));
+				if (typeof QUETES_CH8 !== "undefined") say("Au petit matin, un message de Laurent t'attend sur la capitainerie. « Viens au bout du quai. Il y a une grille que personne n'a encore ouverte : le Grand Port. Et regarde vers le phare noir. »");
 			}
 			break;
 	}

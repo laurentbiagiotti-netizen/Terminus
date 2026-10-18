@@ -8,7 +8,7 @@ var vm = require("vm");
 
 var bavard = process.argv.indexOf("-v") > -1;
 var dossier = path.join(__dirname, "..", "Web", "static", "javascript");
-var fichiers = ["EventTarget.js", "Partie.js", "Item.js", "Room.js", "Manuel.js", "Shell.js", "Interpreteur.js", "SortsAvances.js", "GameObjects.js", "Chapitre2.js", "CommandesCyber.js", "Texte.js", "Awk.js", "Reseau.js", "Panne.js", "CommandesPanne.js", "Annexe.js", "Adresses.js", "RpgPanne.js", "SortsCrypte.js", "RpgCrypte.js", "GameState.js", "Examen.js", "SortsArcanes.js", "Chapitre4.js", "Academie.js", "SortsBastion.js", "SortsGuet.js", "Chapitre5.js", "Bastion.js", "SortsMachines.js", "SortsProcessus.js", "SortsSystemd.js", "SortsExploitation.js", "ManuelMachines.js", "Chapitre6.js", "Machines.js", "QuetesAnnexes.js", "Habitants.js", "SortsAnnexes.js", "HabitantsCampus.js", "HabitantsCrypte.js", "SortsAnnexesBis.js", "HabitantsAcademie.js", "SortsAnnexesTer.js", "HabitantsBastion.js", "SortsIle.js", "SortsIlePoste.js", "SortsIleRegistre.js", "SortsIleBis.js", "SortsIleTer.js", "SortsIleAnnexes.js", "PortAube.js", "ManuelIle.js", "Chapitre7.js", "Ile.js", "HabitantsIle.js", "SortsPort.js", "SortsPortShell.js", "SortsPortProgrammes.js", "SortsPortCli.js", "SortsPortBuild.js", "SortsPortCompose.js", "SortsPortSwarm.js", "SortsPortAnnexes.js", "GrandPort.js", "ManuelPort.js"];
+var fichiers = ["EventTarget.js", "Partie.js", "Item.js", "Room.js", "Manuel.js", "Shell.js", "Interpreteur.js", "SortsAvances.js", "GameObjects.js", "Chapitre2.js", "CommandesCyber.js", "Texte.js", "Awk.js", "Reseau.js", "Panne.js", "CommandesPanne.js", "Annexe.js", "Adresses.js", "RpgPanne.js", "SortsCrypte.js", "RpgCrypte.js", "GameState.js", "Examen.js", "SortsArcanes.js", "Chapitre4.js", "Academie.js", "SortsBastion.js", "SortsGuet.js", "Chapitre5.js", "Bastion.js", "SortsMachines.js", "SortsProcessus.js", "SortsSystemd.js", "SortsExploitation.js", "ManuelMachines.js", "Chapitre6.js", "Machines.js", "QuetesAnnexes.js", "Habitants.js", "SortsAnnexes.js", "HabitantsCampus.js", "HabitantsCrypte.js", "SortsAnnexesBis.js", "HabitantsAcademie.js", "SortsAnnexesTer.js", "HabitantsBastion.js", "SortsIle.js", "SortsIlePoste.js", "SortsIleRegistre.js", "SortsIleBis.js", "SortsIleTer.js", "SortsIleAnnexes.js", "PortAube.js", "ManuelIle.js", "Chapitre7.js", "Ile.js", "HabitantsIle.js", "SortsPort.js", "SortsPortShell.js", "SortsPortProgrammes.js", "SortsPortCli.js", "SortsPortBuild.js", "SortsPortCompose.js", "SortsPortSwarm.js", "SortsPortAnnexes.js", "GrandPort.js", "ManuelPort.js", "Chapitre8.js", "Port.js", "HabitantsPort.js"];
 
 /* options.avant : du JavaScript lancé après les fichiers du jeu, avant le chargement de la sauvegarde (un monde de test). */
 function nouveauMonde(stockage, graine, options){
@@ -90,6 +90,14 @@ function nouveauMonde(stockage, graine, options){
 				.replace(/<pid-tunnel>/g, function(){ return String(lire("(current_room.procs || []).filter(function(p){ return /^ssh -f -N /.test(p.name); }).map(function(p){ return p.pid; })[0]")); })
 				.replace(/<mot-grille>/g, function(){ return lire("typeof AX_MOT_GRILLE !== 'undefined' ? AX_MOT_GRILLE : ''"); })
 				.replace(/<pid-ecoute>/g, function(){ var p = lire("procCorbeau()"); return p ? String(p.pid) : "0"; })
+				// Le Grand Port (chapitre 8) : les empreintes, le jeton de l'escadre, le PID d'un conteneur, la puissance finale.
+				.replace(/<digest-ecole>/g, function(){ return lire("(function(){ var im = imagePort('docks', 'entrepot.port-aube.lan:5000/ecole:1.0'); var d = im ? (im.digests || []).filter(function(x){ return /ecole@sha256:/.test(x); })[0] : null; return d ? d.split('@')[1] : ''; })()"); })
+				.replace(/<digest-nginx>/g, function(){ return lire("imageCataloguePort('nginx').digestDepot"); })
+				.replace(/<digest-piege>/g, function(){ return lire("sCh8().digestPiege || ''"); })
+				.replace(/<jeton-swarm>/g, function(){ return lire("swarmPort() ? swarmPort().jetons.worker : ''"); })
+				.replace(/<puissance>/g, function(){ return String(lire("sCh8().scoreFinal")); })
+				.replace(/<signature>/g, function(){ return lire("signatureBastionPort()"); })
+				.replace(/<pid-conteneur:([a-z0-9_.-]+)>/g, function(tout, nom){ return String(lire("(function(){ var c = conteneurPort(portIci() || 'docks', " + JSON.stringify(nom) + "); return c ? c.etat.pid : 0; })()")); })
 				.replace(/<pid:([a-z_-]+)>/g, function(tout, nom){
 					return String(lire("(current_room.procs || []).filter(function(p){ return p.name === " + JSON.stringify(nom) + "; }).map(function(p){ return p.pid; })[0]"));
 				});

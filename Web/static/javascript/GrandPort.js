@@ -61,7 +61,7 @@ function texteAvantFlotteCh8(){
 /* Compter une commande (chaque commande simple au premier niveau ; ; && et tubes compris), plafonné par ligne. */
 function compterCommandeCh8(n){
 	if (!grandPortOuvert()) return;
-	if (typeof QUETES_CH8 !== "undefined" && !(state.quests && state.quests["n8_quai"])) return;
+	if (typeof QUETES_CH8 !== "undefined" && !(state.quests && state.quests["n8_quai"]) && !sCh8().horlogeLibre) return;
 	var c = sCh8();
 	if (c.derniereLigne !== state.nbCommandes){ c.derniereLigne = state.nbCommandes; c.compteLigne = 0; }
 	var k = Math.min(n || 1, PLAFOND_LIGNE_CH8 - c.compteLigne);

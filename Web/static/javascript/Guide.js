@@ -119,7 +119,8 @@ var MINUTES_AVANT_PISTE = 4;
 function detailsDeQuete(id){
 	return INDICES_DETAILLES[id] || (typeof INDICES_CHAPITRE2 !== "undefined" && INDICES_CHAPITRE2[id]) ||
 		(typeof INDICES_PANNE !== "undefined" && INDICES_PANNE[id]) || (typeof INDICES_CH5 !== "undefined" && INDICES_CH5[id]) ||
-		(typeof INDICES_CH6 !== "undefined" && INDICES_CH6[id]) || [];
+		(typeof INDICES_CH6 !== "undefined" && INDICES_CH6[id]) || (typeof INDICES_CH7 !== "undefined" && INDICES_CH7[id]) ||
+		(typeof INDICES_CH8 !== "undefined" && INDICES_CH8[id]) || [];
 }
 
 var MAJ_OBJECTIF_SANS_GUIDE = majObjectif;
@@ -212,7 +213,9 @@ var SCENES = {
 	m6_entree: { image: "loc_lumen.gif", titre: "Chapitre 6 · Lumen, la cité qui s'éteint", chapitre: 6,
 		lignes: ["Sous l'école dort une cité, et une seule machine l'éclaire : le Cœur.", "Seize quartiers sont éteints. À 14 h, la Longue Nuit tombera sur eux.", "Seize gardiens : mesure, répare, prévois, rends compte."] },
 	p7_quai: { image: "loc_port_aube.gif", titre: "Chapitre 7 · Port-Aube, la cité à bâtir", chapitre: 7,
-		lignes: ["Une île au large, dix maisons debout, et pas une lumière.", "À 14 h, la tempête. À 19 h, la marée, et cinq cents étudiants.", "Dix maîtres bâtisseurs : bâtis, vérifie, sauvegarde. Tu es l'Architecte."] }
+		lignes: ["Une île au large, dix maisons debout, et pas une lumière.", "À 14 h, la tempête. À 19 h, la marée, et cinq cents étudiants.", "Dix maîtres bâtisseurs : bâtis, vérifie, sauvegarde. Tu es l'Architecte."] },
+	n8_quai: { image: "loc_grand_port.gif", titre: "Chapitre 8 · La Flotte noire", chapitre: 8,
+		lignes: ["Derrière le phare noir, une flotte de conteneurs se rassemble.", "Elle paraîtra à l'aube du quatrième jour. Il est 6 h, le premier.", "Quatorze quais, cinq épreuves : tu entres Mousse, tu sortiras Amiral."] }
 };
 function sceneDeChapitre(scene){
 	var fond = document.createElement("div");
@@ -239,14 +242,14 @@ function sceneDeChapitre(scene){
 	// La carte des chapitres : celui qui commence s'allume.
 	var carte = document.createElement("p");
 	carte.className = "scene-carte";
-	["Terminus", "La panne", "La Crypte", "L'Académie", "Le Bastion", "Lumen", "Port-Aube"].forEach(function(nom, i){
+	["Terminus", "La panne", "La Crypte", "L'Académie", "Le Bastion", "Lumen", "Port-Aube", "Le Grand Port"].forEach(function(nom, i){
 		var etape = document.createElement("span");
 		var n = i + 1;
-		var fini = n < scene.chapitre || (n === 1 && state.has("victoire")) || (n === 2 && state.quests["r_fin"]) || (n === 3 && state.quests["c_rapport"]) || (n === 4 && state.quests["d_fin"]) || (n === 5 && state.quests["h_rapport"]) || (n === 6 && state.quests["m6_rapport"]) || (n === 7 && state.quests["p7_rapport"]);
+		var fini = n < scene.chapitre || (n === 1 && state.has("victoire")) || (n === 2 && state.quests["r_fin"]) || (n === 3 && state.quests["c_rapport"]) || (n === 4 && state.quests["d_fin"]) || (n === 5 && state.quests["h_rapport"]) || (n === 6 && state.quests["m6_rapport"]) || (n === 7 && state.quests["p7_rapport"]) || (n === 8 && state.quests["n8_rapport"]);
 		etape.className = "scene-etape" + (n === scene.chapitre ? " scene-ici" : (fini ? " scene-fait" : ""));
 		etape.textContent = (n === scene.chapitre ? "● " : (fini ? "✓ " : "○ ")) + nom;
 		carte.appendChild(etape);
-		if (i < 6){ var trait = document.createElement("span"); trait.className = "scene-trait"; trait.textContent = " ── "; carte.appendChild(trait); }
+		if (i < 7){ var trait = document.createElement("span"); trait.className = "scene-trait"; trait.textContent = " ── "; carte.appendChild(trait); }
 	});
 	cadre.appendChild(carte);
 	var suite = document.createElement("p");
@@ -295,6 +298,7 @@ function recapChapitre(chapitre){
 	else if (chapitre === 6){ minutes = Math.round((state.tempsMs - (state.debutChapitre6 || 0)) / 60000); }
 	else if (chapitre === 7){ minutes = Math.round((state.tempsMs - (state.debutChapitre7 || 0)) / 60000); }
 	else if (chapitre === 8){ minutes = Math.round((state.tempsMs - (state.debutChapitre8 || 0)) / 60000); }
+	else if (chapitre === 9){ minutes = Math.round((state.tempsMs - (state.debutChapitre9 || 0)) / 60000); }
 	else { minutes = Math.round((state.tempsMs - (state.debutChapitre2 || 0)) / 60000); }
 	if (chapitre === 3 && typeof RELIQUES !== "undefined") badges = Object.keys(RELIQUES).filter(function(id){ return state.quests[id]; });
 	if (chapitre === 2 && typeof TROPHEES_CRYPTE !== "undefined") badges = Object.keys(TROPHEES_CRYPTE).filter(function(id){ return state.quests[id]; });
@@ -302,6 +306,7 @@ function recapChapitre(chapitre){
 	if (chapitre === 6 && typeof TROPHEES_CH5 !== "undefined") badges = Object.keys(TROPHEES_CH5).filter(function(id){ return badgeGagne(id); });
 	if (chapitre === 7 && typeof TROPHEES_CH6 !== "undefined") badges = Object.keys(TROPHEES_CH6).filter(function(id){ return badgeGagne(id); });
 	if (chapitre === 8 && typeof TROPHEES_CH7 !== "undefined") badges = Object.keys(TROPHEES_CH7).filter(function(id){ return badgeGagne(id); });
+	if (chapitre === 9 && typeof TROPHEES_CH8 !== "undefined") badges = Object.keys(TROPHEES_CH8).filter(function(id){ return badgeGagne(id); });
 	sorts = Object.keys(state.frequences || {}).filter(function(s){ return SORTS_DU_JEU.indexOf(s) === -1; }).filter(function(s){ return chapitreDuSort(s) === chapitre || (chapitre === 1 && ["ls", "cd", "cat"].indexOf(s) > -1); });
 	sorts.sort(function(a, b){ return state.frequences[b] - state.frequences[a]; });
 	return { minutes: minutes, badges: badges, top: sorts.slice(0, 3).map(function(s){ return s + " ×" + state.frequences[s]; }) };
@@ -413,6 +418,18 @@ var QUIZ = {
 		["Pour que getent passwd interroge l'annuaire après les fichiers locaux :", ["passwd: files sss dans /etc/nsswitch.conf", "Ajouter le compte dans /etc/passwd", "Redémarrer slapd", "Monter /home en NFS"], 0, "nsswitch dit dans quel ordre le système cherche : les fichiers, puis sss."],
 		["La clé privée d'une autorité de certification interne :", ["Ne quitte jamais sa machine", "Se copie sur chaque serveur qui doit faire confiance", "Se met dans /usr/local/share/ca-certificates", "S'envoie avec chaque certificat"], 0, "On distribue le certificat racine ; la clé, jamais : qui la tient signe au nom de tous."],
 		["Dans authorized_keys, command=\"borg serve --restrict-to-path ...\",restrict sert à :", ["Que cette clé ne puisse faire qu'une sauvegarde, dans un seul dépôt", "Chiffrer la sauvegarde", "Accélérer ssh", "Donner un shell à borg"], 0, "Même volée, la clé ne sait faire que ça : pas de shell, pas de tunnel, pas d'autre dépôt."]
+	],
+	9: [
+		["Qu'est-ce qu'un conteneur, pour le noyau ?", ["Un processus de l'hôte, cloisonné (espaces de noms) et rationné (cgroups)", "Une machine virtuelle avec son propre noyau", "Un fichier compressé", "Un utilisateur sans mot de passe"], 0, "Il partage le noyau de l'hôte : c'est pour ça qu'il démarre en un instant, et pour ça qu'on le cloisonne avec soin."],
+		["Pourquoi ne met-on pas n'importe qui dans le groupe docker ?", ["Parce qu'il donne l'équivalent de root sur la machine", "Parce qu'il ralentit le démon", "Parce qu'il efface les images", "Parce qu'il bloque ssh"], 0, "Qui parle au démon peut lancer un conteneur qui monte / : le groupe docker vaut root."],
+		["Une base de données tourne dans un conteneur sans volume. On le supprime et on le recrée. Les données ?", ["Perdues : elles étaient dans la couche du conteneur", "Intactes, dans l'image", "Intactes, dans /tmp de l'hôte", "Sauvées par docker stop"], 0, "Ce qui doit survivre au conteneur va dans un volume (ou un montage)."],
+		["Sur le réseau bridge par défaut, ping NOM_DU_CONTENEUR échoue. La solution ?", ["Un réseau défini par l'utilisateur (docker network create), où le DNS donne les noms", "Publier tous les ports", "Lancer les conteneurs en root", "Ajouter le nom dans /etc/hosts de l'hôte"], 0, "Seuls les réseaux définis par l'utilisateur ont la résolution des noms entre conteneurs."],
+		["Dans un Dockerfile, pourquoi COPY requirements.txt et pip install AVANT COPY . . ?", ["Pour que pip reste en cache quand seul le code change", "Parce que COPY . . est interdit en premier", "Pour que l'image soit en lecture seule", "Pour que pip soit plus rapide à l'exécution"], 0, "Une couche changée invalide toutes celles du dessus : on copie en dernier ce qui change le plus souvent."],
+		["RUN apt-get update, puis dans un autre RUN rm -rf /var/lib/apt/lists/*. L'image est-elle allégée ?", ["Non : la première couche garde les listes, cachées sous la seconde", "Oui, d'autant", "Oui, après docker image prune", "Non, sauf avec --squash obligatoire"], 0, "Une couche ne s'efface jamais : on nettoie dans le même RUN, avec &&."],
+		["Une construction en plusieurs étapes (multi-stage) sert surtout à :", ["N'emporter dans l'image finale que le résultat, sans les outils de compilation", "Construire deux images à la fois", "Accélérer le réseau", "Chiffrer l'image"], 0, "FROM ... AS build, puis COPY --from=build : le compilateur reste dans l'étape de construction."],
+		["depends_on avec la forme courte, dans compose, attend :", ["Seulement le démarrage du service, pas qu'il soit prêt", "Que le service soit healthy", "Que le service ait fini", "Rien du tout"], 0, "condition: service_healthy attend le bilan de santé de la dépendance."],
+		["Pourquoi ne jamais monter /var/run/docker.sock dans un conteneur ?", ["Qui tient le socket commande le démon, donc toute la machine", "Parce que le conteneur ne démarre pas", "Parce que les journaux se perdent", "Parce que les ports se ferment"], 0, "Le socket, c'est la clé du coffre : un conteneur qui l'a peut en lancer un autre, privilégié, qui monte le disque de l'hôte."],
+		["Le tag nginx:1.27-alpine a changé de contenu sur le registre. Comment déployer à coup sûr l'ancien ?", ["L'épingler par son digest : nginx:1.27-alpine@sha256:...", "Utiliser latest", "Faire docker pull deux fois", "Redémarrer le démon"], 0, "Un tag est une étiquette mobile ; le digest est le sceau du contenu."]
 	]
 };
 
@@ -500,10 +517,10 @@ function lancerQuiz(chapitre){
 }
 
 Shell.sorts.quiz = function(args, io){
-	var choix = { "1": 1, "2": 3, "3": 2, "4": 5, "5": 6, "6": 7, "7": 8 }[args[0]] || (state.chapitreEnCours ? state.chapitreEnCours() : 1);
-	var fini = choix === 1 ? state.has("victoire") : (choix === 3 ? !!state.quests["r_fin"] : (choix === 5 ? !!state.quests["d_fin"] : (choix === 6 ? !!state.quests["h_rapport"] : (choix === 7 ? !!state.quests["m6_rapport"] : (choix === 8 ? !!state.quests["p7_rapport"] : !!state.quests["c_rapport"])))));
+	var choix = { "1": 1, "2": 3, "3": 2, "4": 5, "5": 6, "6": 7, "7": 8, "8": 9 }[args[0]] || (state.chapitreEnCours ? state.chapitreEnCours() : 1);
+	var fini = choix === 1 ? state.has("victoire") : (choix === 3 ? !!state.quests["r_fin"] : (choix === 5 ? !!state.quests["d_fin"] : (choix === 6 ? !!state.quests["h_rapport"] : (choix === 7 ? !!state.quests["m6_rapport"] : (choix === 8 ? !!state.quests["p7_rapport"] : (choix === 9 ? !!state.quests["n8_rapport"] : !!state.quests["c_rapport"]))))));
 	if (choix === 5 && (typeof QUIZ === "undefined" || !QUIZ[5])) return fini ? "Le quiz du chapitre 4 arrivera bientôt." : "Le quiz du chapitre 4 s'ouvrira à la fin du chapitre.";
-	if (!fini) return "Le quiz du chapitre " + numeroAffiche(choix) + " s'ouvre à la fin du chapitre. " + C.gris("(quiz 1, quiz 2, quiz 3, quiz 4, quiz 5, quiz 6 ou quiz 7 pour un chapitre déjà terminé)");
+	if (!fini) return "Le quiz du chapitre " + numeroAffiche(choix) + " s'ouvre à la fin du chapitre. " + C.gris("(quiz 1, quiz 2, quiz 3, quiz 4, quiz 5, quiz 6, quiz 7 ou quiz 8 pour un chapitre déjà terminé)");
 	setTimeout(function(){ lancerQuiz(choix); }, 50);
 	return C.gris("(Le quiz du chapitre " + numeroAffiche(choix) + " : 5 questions tirées au hasard. 1 à 4 pour répondre, Échap pour sortir.)");
 };
@@ -574,6 +591,10 @@ function lancerAmbiance(chapitre){
 		// Le village : un accord tenu, et de temps en temps quelques notes de luth.
 		bourdon(196, "sine", 0.18); bourdon(293.66, "sine", 0.1);
 		ambiance.minuteurs.push(setInterval(function(){ if (Math.random() < 0.6) note(gamme[Math.floor(Math.random() * gamme.length)], 0.9, "triangle", 0.18); }, 2600));
+	} else if (chapitre === 9){
+		// Le Grand Port : la houle lourde, un bourdon grave de guerre, et de temps en temps la corne d'un navire au loin.
+		souffle(220, 0.48); bourdon(49, "sine", 0.22); bourdon(73.4, "sine", 0.08);
+		ambiance.minuteurs.push(setInterval(function(){ if (Math.random() < 0.35) note(110 + Math.floor(Math.random() * 2) * 27.5, 1.6, "sawtooth", 0.035, 300); }, 5200));
 	} else if (chapitre === 8){
 		// Le port de l'île : la houle sur la jetée, un bourdon de mer, et de temps en temps le cri d'une mouette.
 		souffle(260, 0.42); bourdon(55, "sine", 0.2); bourdon(82.4, "sine", 0.07);
@@ -648,7 +669,7 @@ COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 2, 0,
 	["ambiance", "l'ambiance sonore de chaque chapitre"],
 	["texte + / -", "agrandir ou réduire le texte"],
 	["contraste", "le contraste fort, plus lisible"]);
-MANUEL_DU_JEU.quiz = "quiz n'est PAS une commande Linux : c'est une commande du jeu.\nÀ la fin de chaque chapitre, cinq questions tirées des leçons. quiz 1, quiz 2, quiz 3, quiz 4 ou quiz 5 pour le rejouer.";
+MANUEL_DU_JEU.quiz = "quiz n'est PAS une commande Linux : c'est une commande du jeu.\nÀ la fin de chaque chapitre, cinq questions tirées des leçons. quiz 1 à quiz 8 pour le rejouer.";
 MANUEL_DU_JEU.texte = "texte n'est PAS une commande Linux : elle règle la taille du texte du jeu.\n  texte +       plus grand\n  texte -       plus petit\n  texte normal  la taille d'origine";
 MANUEL_DU_JEU.contraste = "contraste n'est PAS une commande Linux : elle passe le jeu en contraste fort (texte blanc, couleurs vives, sans effet de vieil écran).";
 MANUEL_DU_JEU.ambiance = "ambiance n'est PAS une commande Linux : un fond sonore discret par chapitre. ambiance on, ambiance off.";
@@ -703,13 +724,20 @@ var CINEMATIQUES = {
 		{ image: "cine7_quai_laurent.gif", texte: "Sur le quai, Laurent attend, le col relevé. « Voici Port-Aube. Tu vas la bâtir. »" },
 		{ image: "cine7_maisons_vides.gif", texte: "Dix maisons neuves regardent la mer. Pas un nom, pas une lettre, pas une lumière." },
 		{ image: "cine7_phare_orage.gif", texte: "À l'horizon, l'orage roule sur les vagues. Il frappera à 14 h. Le phare attend sa flamme." },
-		{ image: "cine7_maree.gif", texte: "Ce soir, à la marée de 19 h, cinq cents étudiants. Bienvenue, Architecte." }] }
+		{ image: "cine7_maree.gif", texte: "Ce soir, à la marée de 19 h, cinq cents étudiants. Bienvenue, Architecte." }] },
+	8: { titre: "Chapitre 8 · La Flotte noire", plans: [
+		{ image: "cine8_lettre.gif", texte: "Au matin de la fête, une lettre sur la table. Une plume grise. « Nous aussi, nous avons un navire. »" },
+		{ image: "cine8_phare_noir.gif", texte: "Derrière le phare noir, sous une lune énorme, une flotte se rassemble. Ses navires portent des conteneurs." },
+		{ image: "cine8_port_eveil.gif", texte: "Le Grand Port s'éveille. Une à une, les grues allument leurs feux verts dans le soleil levant." },
+		{ image: "cine8_galons.gif", texte: "Laurent te tend une patte d'épaule, nue. « Mousse. Tout le monde commence ici. Même les amiraux. »" },
+		{ image: "cine8_quais_vides.gif", texte: "Quatorze quais vides dans la brume. Une grue immobile. Une caisse oubliée. Tout est à construire." },
+		{ image: "cine8_flotte_horizon.gif", texte: "L'orage gronde sur l'horizon noir de voiles. À l'aube du quatrième jour, ils seront là." }] }
 };
 /* La carte du chapitre 1 (les autres sont dans SCENES, à l'entrée de chaque chapitre). */
 var SCENE_CHAPITRE_1 = { image: "item_convocation.gif", titre: "Chapitre 1 · Terminus", chapitre: 1,
 	lignes: ["Ta Maison d'abord : regarde autour de toi.", "Chaque sort appris ouvre un bout du monde.", "Le tutoriel, à droite, te guide pour les premiers pas."] };
 /* La première carte de chaque chapitre : c'est elle que la cinématique précède. */
-var PREMIERE_SCENE = { 2: "r_batiment", 3: "c_crypte", 4: "d_entree", 5: "h_entree", 6: "m6_entree", 7: "p7_quai" };
+var PREMIERE_SCENE = { 2: "r_batiment", 3: "c_crypte", 4: "d_entree", 5: "h_entree", 6: "m6_entree", 7: "p7_quai", 8: "n8_quai" };
 
 function lancerCinematique(n, apres, forcer){
 	var cine = CINEMATIQUES[n];
@@ -818,14 +846,14 @@ sceneDeChapitre = function(scene){
 
 /* La commande du jeu : revoir une cinématique. */
 if (typeof SORTS_DU_JEU !== "undefined" && SORTS_DU_JEU.indexOf("cinematique") === -1) SORTS_DU_JEU.push("cinematique");
-if (typeof COMMANDES_DU_JEU !== "undefined") COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 4, 0, ["cinematique", "revoir l'ouverture d'un chapitre (cinematique 1 à 7)"]);
+if (typeof COMMANDES_DU_JEU !== "undefined") COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 4, 0, ["cinematique", "revoir l'ouverture d'un chapitre (cinematique 1 à 8)"]);
 if (typeof MANUEL_DU_JEU !== "undefined") MANUEL_DU_JEU.cinematique = "cinematique n'est PAS une commande Linux : c'est une commande du jeu, comme quetes ou badges.\n" +
-	"Elle rejoue l'ouverture d'un chapitre : cinematique 1 (Terminus), 2 (la panne), 3 (la Crypte), 4 (l'Académie), 5 (le Bastion), 6 (Lumen), 7 (Port-Aube).\n" +
+	"Elle rejoue l'ouverture d'un chapitre : cinematique 1 (Terminus), 2 (la panne), 3 (la Crypte), 4 (l'Académie), 5 (le Bastion), 6 (Lumen), 7 (Port-Aube), 8 (le Grand Port).\n" +
 	"Sans numéro, celle du chapitre en cours. Entrée passe au plan suivant, Échap passe tout.";
 Shell.sorts.cinematique = function(args){
-	var affiche = { 1: 1, 2: 3, 3: 2, 5: 4, 6: 5, 7: 6, 8: 7 }[state.chapitreEnCours()] || 1;
+	var affiche = { 1: 1, 2: 3, 3: 2, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8 }[state.chapitreEnCours()] || 1;
 	var n = args && args[0] ? parseInt(args[0], 10) : affiche;
-	if (!CINEMATIQUES[n]) throw new ShellError("cinematique : un numéro de chapitre, de 1 à 7. Exemple : cinematique 3");
+	if (!CINEMATIQUES[n]) throw new ShellError("cinematique : un numéro de chapitre, de 1 à 8. Exemple : cinematique 3");
 	if (calmeDemande) return C.gris("(Ton système demande de réduire les animations : les cinématiques sont coupées.)");
 	setTimeout(function(){ lancerCinematique(n, function(){ var champ = document.getElementById("saisie"); if (champ) champ.focus(); }, true); }, 50);
 	return "";
