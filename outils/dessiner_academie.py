@@ -410,11 +410,24 @@ def aile_invocation():
 
 
 # ------------------------------------------------------------------
-# Les huit maîtres, dans le style des personnages des chapitres 2 et 3 (dessiner_panne.perso) :
-# une silhouette en pied, gros pixels, tête carrée, yeux carrés à pupille noire, sol en tirets.
+# Les huit maîtres, dessinés au pixel près comme les personnages d'origine du chapitre 1 (le professeur,
+# le marchand, l'homme mystérieux) : chacun sa silhouette (voûté, rond, accroupi, de profil...), un visage
+# caricatural, l'objet de son métier bien lisible, et deux ou trois traits blancs de sol sous les pieds.
 # ------------------------------------------------------------------
 from dessiner_panne import perso, yeux, sol_tirets  # noqa: E402
 from decor_arcanes import robe_plis, manches, ceinture, ligne_r  # noqa: E402
+import textwrap  # noqa: E402
+
+COULEURS_PIXELS = {'#': B, 'o': V, ':': N}
+
+
+def pixels(r, x0, y0, dessin):
+    """Pose un morceau de personnage écrit en caractères, un caractère par gros pixel de la grille (88 x 85) :
+    # blanc, o vert, : noir (pour creuser un trait dans un aplat), . rien (on voit ce qui est dessous)."""
+    for j, ligne in enumerate(textwrap.dedent(dessin).strip('\n').split('\n')):
+        for i, c in enumerate(ligne):
+            if c in COULEURS_PIXELS:
+                r(x0 + i, y0 + j, x0 + i, y0 + j, COULEURS_PIXELS[c])
 
 
 def robe_mage(r, haut=33, bas=64, c=V, x0=35, x1=52):
@@ -439,220 +452,778 @@ def pieds_robe(r):
 
 
 def henry_dessin(r):
-    # le vieux maître des Runes : chapeau pointu à bandeau gravé, longue barbe, robe étoilée, bâton à cristal,
-    # une tablette de pierre gravée de runes (^ $ [ ])
-    for k in range(11): r(43 - k // 2 - (k > 6), 1 + k, 44 + k // 2 + (k > 6), 1 + k, V)
-    r(43, 0, 44, 1, V); r(45, 1, 46, 2, V)
-    r(30, 12, 57, 13, V); r(31, 14, 56, 14, B)
-    r(37, 9, 50, 11, B); r(41, 9, 42, 10, N); r(45, 10, 46, 11, N)            # le bandeau gravé
-    r(37, 15, 50, 30, B); yeux(r, 38, 45, 17)
-    r(37, 15, 43, 15, V); r(44, 15, 50, 15, V)                               # les sourcils broussailleux
-    r(43, 22, 44, 23, N)
-    r(35, 24, 52, 30, B); r(36, 31, 51, 38, B); r(38, 39, 49, 43, B); r(41, 44, 46, 46, B)   # la barbe
-    r(40, 26, 47, 26, N); r(39, 30, 39, 37, V); r(43, 32, 43, 42, V); r(48, 30, 48, 37, V)
-    robe_plis(r, 33, 64, V, 35, 52)
-    r(36, 36, 51, 39, N)                                                     # le col sous la barbe
-    r(36, 31, 51, 38, B); r(38, 39, 49, 43, B); r(41, 44, 46, 46, B)
-    r(39, 30, 39, 37, V); r(43, 32, 43, 42, V); r(48, 30, 48, 37, V)
-    for x, y in [(37, 50), (50, 54), (40, 58), (47, 60), (36, 61)]: r(x, y, x, y, B); r(x - 1, y, x + 1, y, B); r(x, y - 1, x, y + 1, B)
-    manches(r, V, 34, True, True, B, 11)
-    # la tablette de pierre, tenue à gauche
-    r(16, 38, 31, 56, B); r(17, 39, 30, 55, N); r(29, 40, 31, 56, V)
-    r(19, 42, 20, 42, V); r(18, 43, 19, 43, V); r(20, 43, 21, 43, V)          # ^
-    r(25, 41, 26, 46, V); r(24, 42, 27, 42, V); r(24, 45, 27, 45, V)          # $
-    r(19, 49, 19, 53, B); r(19, 49, 20, 49, B); r(19, 53, 20, 53, B)          # [ ]
-    r(26, 49, 26, 53, B); r(25, 49, 26, 49, B); r(25, 53, 26, 53, B)
-    # le bâton et son cristal
-    r(61, 10, 62, 66, B); r(62, 10, 62, 66, V)
-    r(61, 2, 62, 3, B); r(59, 4, 64, 7, B); r(60, 8, 63, 8, B); r(61, 9, 62, 9, B); r(60, 4, 61, 6, V)
-    for (x, y) in ((56, 2), (67, 4), (57, 10), (66, 11)): r(x, y, x, y, V)
-    r(57, 45, 61, 47, B)
-    r(37, 65, 42, 66, B); r(45, 65, 50, 66, B); sol_tirets(r, 68)
+    # le vieux maître des Runes, voûté sous son chapeau pointu qui retombe : sourcils en broussaille, gros nez,
+    # une barbe jusqu'aux genoux, robe semée de croix ; il brandit la tablette gravée (^ $ [ ]) et s'appuie sur
+    # son bâton à cristal
+    pixels(r, 12, 10, """
+        .........ooo
+        ..........ooooo
+        ............oooo
+        .............ooooo..........................ooo
+        .............oooooo........................o###o
+        ............ooo#oooo......................o#ooo#o
+        ............ooooooooo.....................o#o#o#o
+        ...........oooooo#oooo.....................o###o
+        ...........oo#oooooooooo....................ooo
+        ..........oooooooooo#ooo.....................#
+        ..........ooooo#oooooooooo...................#
+        .........##################..................#
+        .........#.##.#.##.#.###.##..................#
+        ...ooooooooooooooooooooooooooooo.............#
+        .....ooooooooooooooooooooooooo...............#
+        .........oo############oo....................#
+        ........oooooooo###ooooooo...................#
+        ..........o###..####..###....................#
+        ..........o###..####..####...................#
+        ...........#########.######..................#
+        ...........########.########.................#
+        ...........#######.##########................#
+        ...........########.......##.................#
+        ..........####.###.####.###..................#
+        .........#####.#########.###.................#
+        ........######.###.###.#.####................#
+        .......#######.###.###.##.#####..............#
+        ......oo######.###.###.##.######............###
+        .....ooo######.###.###.##.##.####......ooo.####
+        ....oooo.#####.###.###.##.##.#####..oooooo.####
+        ...ooooo.#####.###.###.##.##.######ooooooo..###
+        ...oooooo.####.###.###.##.##.######ooooooo...#
+        ..ooooooo.####.###.###.##.##.##.###.oooooo...#
+        ..ooooooo..###.###.###.##.##.##.###..oooo....#
+        ..oooooooo.###..##.###.##.##.##.###..........#
+        .##########.##..##.###.##.##.##.##...........#
+        .#........#..#..##.###.##.##.##.##...........#
+        .#.o..ooo.#..#...#.###.##.##.##.#............#
+        .#o.o.o...#oo#...#..##.##.##.#.#.............#
+        .#....ooo.#ooo#..##..#.##.##.#..o............#
+        .#......o.#oooo#.###...##.#...ooo............#
+        .#....ooo.#ooooo..####.....#.oooo............#
+        .#........#oooooo..#####.##.ooooo............#
+        .#oo....oo#oooooooo...........oooo...........#
+        .#o......o#ooo#oooooooooooooooooooo..........#
+        .#oo....oo#ooooooooooooooooooo#ooooo.........#
+        .##########oooooo#oooooooooooooooooo.........#
+        ..oooooooooooooo###ooooooooo#oooooooo........#
+        ...oooooooooooooo#ooooooooo###ooooooooo......#
+        ...oooo#oooooooooooooooooooo#oooooo#ooo......#
+        ....ooooooooooooo#ooooooooooooooooo###oo.....#
+        ....oooooo#ooooo###oooo#oooooooooooo#ooo.....#
+        .....ooooooooooo.#ooooooooooooooooooooooo....#
+        .....ooooooooooo.oooooooooo#oooooooo.oooo....#
+        ......oooooo#ooo.ooooooooooooooooooo.ooooo...#
+        ......oooooooooo.ooooooooooooooooooo..oooo...#
+        .......ooooooooo..oooooooooo#ooooooo..ooooo..#
+        .......oooooooo...ooooooooooooooooo...ooooo..#
+        ........###.###....###....######.......###...#
+        .....######.#####..#####..########.....###...#
+        .
+        .####.######################..###########..####...#####
+        .
+        .........##########.....#########..........###
+        .
+        .................######
+        """)
 
 
 def alfred_dessin(r):
-    # le devin d'awk : grande capuche pointue, robe à pan blanc, une boule de cristal qui découpe la lumière en
-    # trois colonnes ($1 $2 $3), posée sur un socle
-    for k in range(8): r(43 - k, 2 + k, 44 + k, 2 + k, V)
-    r(33, 10, 54, 33, V); r(43, 1, 44, 2, V)
-    r(36, 13, 51, 31, N)                                                     # l'ombre de la capuche
-    r(37, 14, 50, 31, B); yeux(r, 38, 45, 18); r(43, 23, 44, 25, N)
-    r(41, 28, 46, 28, N); r(37, 14, 50, 15, N)
-    robe_plis(r, 33, 64, V, 34, 53)
-    r(41, 34, 46, 64, B)                                                     # le pan blanc de la robe
-    for y in range(37, 63, 5): r(43, y, 44, y + 1, V)
-    manches(r, V, 34, True, True, B, 9)
-    # la boule de cristal, tenue à deux mains, ses trois colonnes
-    for (x0, x1, y) in [(38, 49, 38), (36, 51, 39), (35, 52, 40), (34, 53, 41), (34, 53, 42), (34, 53, 43), (34, 53, 44),
-                        (34, 53, 45), (34, 53, 46), (35, 52, 47), (36, 51, 48), (38, 49, 49)]:
-        r(x0, y, x1, y, B)
-    r(36, 40, 51, 47, N); r(35, 41, 52, 46, N)
-    for x in (37, 43, 49): r(x, 40, x + 1, 47, V)
-    r(38, 39, 40, 39, N); r(37, 40, 38, 41, B)                                # le reflet
-    r(38, 50, 49, 51, V); r(36, 52, 51, 53, B)                                # le socle
-    for x, y in [(26, 30), (61, 33), (24, 48), (63, 50), (28, 58), (60, 60)]:   # des éclats de lumière
-        r(x, y, x, y, B); r(x - 1, y, x + 1, y, V); r(x, y - 1, x, y + 1, V); r(x, y, x, y, B)
-    r(37, 65, 42, 66, B); r(45, 65, 50, 66, B); sol_tirets(r, 68)
+    # le devin d'awk, tout entier dans sa capuche : on ne voit qu'un nez crochu, deux yeux qui luisent et un bout de
+    # barbe ; ses mains entourent la boule de cristal qui découpe la lumière en trois colonnes ($1 $2 $3)
+    pixels(r, 14, 16, """
+        ......................o
+        .....................ooo
+        ....................ooooo
+        ...................ooooooo
+        ..................ooooooooo
+        .................ooooooooooo
+        ................ooooooooooooo
+        ...............ooooo.....oooooo
+        ..............oooo.........oooooo
+        .............oooo...........oooooo
+        ............oooo.............ooooo
+        ............ooo....##........ooooo
+        ...........oooo...##.....##...oooo
+        ...........ooo....#o.....#o...oooo
+        ...........ooo.........#.......oooo
+        ...........ooo.........##......ooooo
+        ...........ooo.........###.....ooooo
+        ...........oooo........####....ooooo
+        ...........oooo.........##.....oooooo
+        ..........oooooo..#.#.#.#.#..ooooooo
+        ..........ooooooo..#.#.#.#..oooooooo
+        .........ooooooooo.........ooooooooo
+        ........ooooooooooooo....ooooooooooooo
+        .......oooooooooooooooooooooooooooooooo
+        ......oooooooooooooooooooooooooooooooooo
+        .....oooo.ooooooooooooooooooooooo.oooooooo
+        ....oooo.ooooooooooooooooooooooooo.ooooooo
+        ...oooo.ooooooo##ooooooooooo##ooooo.oooooo
+        ...ooo.oooooo######ooooooo######ooooo.ooooo
+        ..oooo.ooooo###..###########..###oooo.ooooo
+        ..ooo.oooooo##.................##oooo.ooooo
+        ..ooo.ooooo##...................##ooo.ooooo
+        .oooo.ooooo#..o....o....o........#ooo.oooooo
+        .ooo.oooo###..o....o....o........###oo.ooooo
+        .ooo.ooo###...o....o....o.........###o.ooooo
+        .ooo.ooo###...o....o....o..#......###o.oooooo
+        oooo.ooo###...o....o....o...##....###oo.ooooo
+        oooo.ooo###...o....o....o...##....###oo.ooooo
+        oooo.oooo###..o....o....o........###ooo.ooooo
+        oooo.oooooo#..o....o....o........#ooooo.oooooo
+        oooo.ooooooo##.................##oooooo.oooooo
+        oooo.oooooooo###.............###ooooooo.oooooo
+        oooo.ooooooooo.###############.oooooooo.oooooo
+        oooo.ooooooooooo.....#####.....ooooooooo.ooooo
+        ooooo.ooooooooo..#############..oooooooo.ooooo
+        ooooo.oooooooo..###############..ooooooo.ooooo
+        ooooo.oooooooo.#################.ooooooo.oooooo
+        ooooo.ooooooooo.................oooooooo.oooooo
+        oooooo.oooooooooooooooooooooooooooooooo.ooooooo
+        oooooo.ooooooooooooooooooooooooooooooooo.oooooo
+        ooooooo.oooooooooooooooooooooooooooooooo.oooooo
+        .ooooooo.ooooooooooooooooooooooooooooooo.ooooo
+        ...ooooooooooooooooooooooooooooooooooooooooo
+        .....###.####....#####.....######...#####
+        .
+        #######.###########################.#####.##########
+        .
+        ..........#########......###########.......#####
+        .
+        ........................######
+        """)
 
 
 def lee_dessin(r):
-    # la maîtresse de la Transmutation : chignon piqué d'une épingle, lunettes rondes, blouse d'alchimiste à poches,
-    # une plume levée qui réécrit un parchemin (a > b), une fiole fumante dans l'autre main
-    r(40, 2, 47, 8, V); r(39, 4, 48, 6, V); r(46, 1, 50, 1, B)               # le chignon et l'épingle
-    r(35, 9, 52, 14, V); r(34, 12, 36, 24, V); r(51, 12, 53, 24, V)
-    r(37, 12, 50, 30, B); r(37, 12, 50, 13, V); yeux(r, 38, 45, 16)
-    r(37, 15, 44, 15, N); r(44, 17, 45, 17, N); r(45, 15, 51, 15, N)         # les lunettes
-    r(43, 21, 44, 23, N); r(41, 26, 46, 26, N); r(41, 25, 41, 25, N); r(46, 25, 46, 25, N)
-    r(42, 31, 45, 32, B)
-    r(34, 33, 53, 56, B); r(42, 33, 45, 38, V); r(43, 39, 44, 56, N)          # la blouse, le col vert
-    r(36, 33, 41, 35, N); r(46, 33, 51, 35, N)
-    r(36, 44, 41, 49, N); r(37, 45, 40, 48, B); r(38, 43, 38, 46, V)           # les poches et un crayon
-    r(46, 44, 51, 49, N); r(47, 45, 50, 48, B)
-    for y in (38, 42, 46, 50): r(42, y, 42, y, V)
-    bras(r, True, True, 35)
-    r(56, 22, 57, 36, B)                                                     # la plume levée
-    r(57, 12, 59, 16, V); r(58, 16, 61, 20, V); r(59, 20, 61, 24, V); r(58, 13, 58, 22, B)
-    r(60, 28, 72, 42, B); r(61, 29, 71, 41, N); r(60, 28, 72, 29, V)          # le parchemin : a > b
-    r(62, 32, 64, 32, B); r(62, 33, 62, 34, B); r(64, 33, 64, 34, B)
-    r(66, 32, 66, 34, V); r(67, 33, 67, 33, V)
-    r(68, 32, 70, 32, V); r(68, 33, 68, 34, V); r(70, 34, 70, 34, V); r(69, 34, 69, 34, V)
-    r(62, 37, 70, 37, B); r(62, 39, 67, 39, B)
-    r(24, 34, 26, 39, B); r(21, 40, 29, 49, B); r(22, 44, 28, 48, V); r(22, 41, 28, 43, N); r(23, 42, 23, 42, B)   # la fiole
-    for (x, y) in ((23, 31), (26, 28), (24, 25)): r(x, y, x + 1, y, B)
-    jambes(r); sol_tirets(r, 68)
+    # la maîtresse de la Transmutation, chignon piqué d'une épingle, lunettes rondes, blouse et bas rayés : elle lève
+    # sa plume vers le parchemin qui se réécrit tout seul, une fiole fumante au bout de l'autre bras
+    pixels(r, 12, 19, """
+        .............................oooo.............ooo
+        ............................oooooo..#.........#ooo
+        ...........................oooooooo#..........#.oo
+        ...........................ooooooo#o.........#..o
+        ............................ooooo#...........#
+        .........................ooooooooooo........#
+        ........................ooooooooooooo......##
+        .......................oo###########oo....###
+        .......................o#ooooo#ooooo#o....###
+        .......................o#o#.#o#o#.#o#o...####.##########
+        .......................o#ooooo#ooooo#o....##..#........#
+        .......................oo####.######oo...###..#.oo..o..#
+        .......................oo####..#####oo..###...#.o.o.o..#
+        ........................o###########o..###....#.oo..o..#
+        ........................o##.....####..###....##........#
+        .........................####...###..###......#..ooo...#
+        .........................##########.###.......#...o....#
+        ..........................########.####.......#.o.ooo..#
+        ............................###..####.........#.ooo....#
+        ......................######oo###oo####
+        .....................########oo#oo#####
+        ....................###.######o#o######
+        ...................###..#######o#######
+        ..................###..########.########
+        .................###...########.########
+        ................###....########.########
+        ...............###.....########.#.######
+        ........o.....###.....#########.#########
+        ..........o..###......#########.#########
+        .........o..###.......#########.#########
+        ...........###........#########.#.#######
+        ..........#..........#......###.#####
+        ..........#..........##########.##########
+        .........###.........###.######.#######.##
+        ........#ooo#........###.######.#.#####.##
+        ........#ooo#.......###.#######.########.##
+        ........#####.......####.######.#######.###
+        ....................####.######.#######.###
+        ....................####.######.#######.###
+        ...................#####.######.#######.####
+        ...................#####.######.#######.####
+        ...................#####.######.#######.####
+        ...................######.#####.######.#####
+        ..................######.######.#######.#####
+        ..................####
+        ...................ooo.......ooo
+        ...................#o#.......#o#
+        ...................ooo.......ooo
+        ...................#o#.......#o#
+        ...................ooo.......ooo
+        ...................#o#.......#o#
+        ...................ooo.......ooo
+        ..................#####.....#####
+        .
+        .......#####.##################.######
+        .
+        ................#########......#######
+        """)
 
 
 def stephen_dessin(r):
-    # le bibliothécaire des Grimoires : crâne lisse, grosses lunettes vertes, gilet ; un grimoire ouvert dont la page
-    # gauche porte { } et une branche (un JSON), une loupe accrochée au gilet
-    r(37, 6, 50, 29, B); r(38, 6, 49, 7, V)
-    r(34, 13, 37, 21, V); r(50, 13, 53, 21, V)
-    r(36, 14, 43, 20, V); r(44, 14, 51, 20, V); yeux(r, 38, 45, 15)
-    r(43, 22, 44, 24, N); r(41, 26, 46, 26, N)
-    r(42, 30, 45, 31, B)
-    r(35, 32, 52, 54, V); r(41, 32, 46, 54, B); r(43, 33, 44, 36, N)            # le gilet, la chemise, la cravate
-    for y in (38, 43, 48): r(39, y, 39, y, B); r(48, y, 48, y, B)
-    r(31, 34, 34, 35, V); r(30, 35, 31, 41, V); r(53, 34, 56, 35, V); r(56, 35, 57, 41, V)
-    # le grimoire ouvert, tenu devant lui
-    r(22, 39, 65, 53, B); r(23, 40, 42, 52, N); r(45, 40, 64, 52, N); r(43, 39, 44, 54, V)
-    r(22, 53, 65, 54, V)
-    r(26, 42, 27, 50, V); r(28, 41, 29, 41, V); r(28, 51, 29, 51, V); r(25, 46, 25, 46, V)   # {
-    r(39, 42, 40, 50, V); r(37, 41, 38, 41, V); r(37, 51, 38, 51, V); r(41, 46, 41, 46, V)   # }
-    r(31, 46, 36, 46, B); r(33, 43, 33, 49, B); r(35, 43, 36, 43, B); r(35, 49, 36, 49, B)   # une branche
-    for y in (43, 46, 49): r(48, y, 61 - (y % 3), y, B)
-    r(30, 38, 31, 39, B); r(56, 38, 57, 39, B)                                # les mains sur la reliure
-    r(48, 56, 51, 59, B); r(49, 57, 50, 58, N); r(51, 59, 52, 61, B)          # la loupe
-    jambes(r); sol_tirets(r, 68)
+    # le bibliothécaire des Grimoires, crâne lisse et grosses lunettes : une tour de livres sur un bras, le grimoire
+    # du dessus ouvert d'où pousse un arbre (le JSON), l'index levé comme pour une leçon
+    pixels(r, 14, 10, """
+        ........o.o.....o
+        .......ooooo..oooo
+        ......oo.o.oo.o.oo
+        .....o..ooo..ooo.o
+        .......o.#.o.o.#
+        ......oo.#..o..#.oo
+        .....o..##..o..##..o
+        ........#...o...#
+        ........##..o..##
+        .........#..o..#
+        ...#############.#############
+        ....##:#:##:##:#:#:##:#:##:##
+        ....###########:#:###########
+        ...ooooooooooooo#ooooooooooooo
+        ......##################
+        ......#:oooooooooooooo:#
+        ......##################
+        ....oooooooooooooooooooo
+        ....o#o#oooooooooooo#o#o
+        ....oooooooooooooooooooo
+        .......##################
+        .......##:#:#:######:#:##
+        .......##################
+        .....oooooooooooooooooooo
+        .....ooo#oooooooooooo#ooo
+        .....oooooooooooooooooooo
+        ....###################
+        ....#:##::##:#####:##::#
+        ....###################
+        ......ooooooooooooooooooo
+        ......o###ooooooooooo###o
+        ......ooooooooooooooooooo
+        .....####################
+        .....##:#:#:######:#:#:##
+        .....####################
+        ...oooooooooooooooooooooo
+        ...ooo#ooooooooooooo#oooo
+        ...oooooooooooooooooooooo
+        ..........#######
+        """)
+    pixels(r, 47, 14, """
+        .....#####
+        ...#########
+        ..###########:o
+        .#############o
+        .##############
+        .##############
+        oooooo#oooooo#
+        o####o#o####o#
+        o#::#ooo#::#o##
+        o####o#o####o##
+        oooooo#oooooo##
+        .#######:#######
+        .######:########
+        .#####::########
+        .##############
+        ..###:::::####
+        ..###::###:###
+        ...##########
+        .....#####
+        """)
+    pixels(r, 43, 33, """
+        ........#####
+        ..oooooo#####ooooooo......##
+        .ooooooo#:#:#oooooooo....##
+        oooooooo##:##ooooooooo..##
+        ooooooooo#:#oooooooooo.##
+        ooooooooo#:#ooooooooooo##
+        ooo:ooooo#:#ooooo:ooooo#
+        oooooooo#:::#oooooooooo
+        oooo:ooo#:::#oooo:oooo
+        .ooooooo#:::#oooooooo
+        .ooo:ooo##:##oooo:ooo
+        .oooooooo###ooooooooo
+        .oooo:oooo#oooooo:ooo
+        .ooooooooo#ooo##oooooo
+        .oooooooooooo#..#ooooo
+        .ooooooooooooo##.oooooo
+        .oooooooooooooo#..ooooo
+        ..ooooooooooooooo#ooooo
+        """)
+    pixels(r, 65, 23, """
+        ..##
+        ..##
+        .###
+        .###
+        ####
+        ####
+        .###
+        .##
+        .##
+        ##
+        """)
+    pixels(r, 39, 35, """
+        ....ooo
+        ...ooo
+        ..ooo
+        .ooo
+        .ooo
+        .ooo
+        .ooo
+        .ooo
+        .ooo
+        .ooo
+        .ooo
+        .ooo
+        .ooo
+        ####
+        ####
+        """)
+    pixels(r, 45, 51, """
+        ooooooooooooooooooo
+        ooooooooooooooooooo
+        ooooooooo.ooooooooo
+        .ooooooo...ooooooo
+        ..ooooo.....ooooo
+        ..ooooo.....ooooo
+        ..oo:oo.....oo:oo
+        ..ooooo.....ooooo
+        ..oo:oo.....oo:oo
+        ..ooooo.....ooooo
+        ..oo:oo.....oo:oo
+        ..ooooo.....ooooo
+        ..ooooo.....ooooo
+        ..ooooo.....ooooo
+        ..ooooo.....ooooo
+        .#######...#######
+        #########..########
+        """)
+    pixels(r, 14, 71, """
+        .....########.###################.######
+        .
+        ........#####.....##############....###########
+        .
+        ...................#######
+        """)
 
 
 def doug_dessin(r):
-    # le maître de l'Alchimie : lunettes de forge sur le front, favoris, grand sourire, tablier de cuir ;
-    # un tuyau de cuivre coudé sur l'épaule, des gants, un petit alambic fumant à ses pieds
-    r(37, 8, 50, 30, B)
-    r(36, 8, 51, 10, V); r(37, 10, 42, 14, V); r(45, 10, 50, 14, V); r(38, 11, 41, 13, N); r(46, 11, 49, 13, N)
-    r(39, 11, 39, 11, B); r(47, 11, 47, 11, B)
-    yeux(r, 38, 45, 16); r(43, 21, 44, 23, N)
-    r(39, 26, 48, 28, N); r(40, 26, 47, 26, B)                               # le grand sourire
-    r(36, 22, 38, 30, V); r(49, 22, 51, 30, V)                               # les favoris
-    r(42, 31, 45, 32, B)
-    r(35, 33, 52, 54, V)
-    r(38, 33, 49, 57, B); r(39, 36, 48, 56, N); r(40, 37, 47, 56, B)         # le tablier et ses bretelles
-    r(38, 33, 39, 36, B); r(48, 33, 49, 36, B)
-    r(41, 44, 46, 49, N); r(42, 45, 45, 48, V)
-    r(40, 51, 47, 51, N)
-    # le tuyau coudé, porté sur l'épaule, ses colliers
-    r(53, 34, 56, 35, V); r(56, 22, 58, 36, B); r(56, 20, 70, 23, B); r(67, 23, 70, 42, B); r(66, 42, 71, 44, V)
-    r(56, 21, 70, 21, V); r(68, 24, 68, 41, V)
-    for y in (28, 36): r(66, y, 71, y, V)
-    r(53, 44, 58, 48, V); r(57, 36, 58, 44, V)                                # bras et gant droit
-    r(30, 35, 34, 36, V); r(29, 36, 30, 44, V); r(27, 45, 32, 49, V)          # gant gauche
-    # le petit alambic, sa flamme, sa fumée
-    r(17, 56, 27, 64, B); r(18, 60, 26, 63, V); r(18, 57, 26, 58, N); r(21, 50, 23, 56, B); r(23, 50, 29, 51, B)
-    r(20, 65, 24, 66, V); r(21, 64, 23, 64, B)
-    for (x, y) in ((28, 46), (30, 43), (28, 40)): r(x, y, x + 1, y, B)
-    jambes(r, B); sol_tirets(r, 68)
+    # le maître de l'Alchimie, tout rond, lunettes de forge sur le front, favoris et grand sourire, poing sur la hanche :
+    # il tourne la vanne du tuyau de cuivre, une goutte verte tombe, un petit alambic fume à ses pieds
+    pixels(r, 26, 19, """
+        .......#########
+        .....#############
+        ...oooooo###oooooo
+        ..oo#oooooo#oo#ooooo
+        oooooooooooooooooooooo
+        ..oooooo###oooooo####
+        ..o##################o
+        .oo####:#####:#######oo
+        .oo###:#:###:#:######oo
+        .oo##################oo
+        .oo#######::#########oo
+        .oo######:##:########oo
+        .oo#######::#########oo
+        .oo##:::::::::::::###oo
+        ..o##:###########:###o
+        ...###:::::::::::####
+        ....################
+        ......############
+        """)
+    pixels(r, 18, 38, """
+        ................#######
+        .........###################
+        ......#####ooooooooooooooo#######
+        .....####ooooooooooooooooooo#####
+        ...#####ooooooooooooooooooooo#####
+        ..####.ooooooooooooooooooooooo.####
+        .####.oooooooo:oooooo:ooooooooo.#####
+        .###..ooooooooooooooooooooooooo..#######
+        ####..oooooooooooooooooooooooooo...#######
+        .###..oooooo:::::::::::::oooooooo....######
+        ..###.oooooo:ooooooooooo:oooooooo......####
+        ...##.oooooo:ooo:ooo:ooo:oooooooo.......###
+        ....#.oooooo:ooooooooooo:oooooooo
+        ...##.oooooo:::::::::::::oooooooo
+        ..###.ooooooooooooooooooooooooooo
+        .####.ooooooooooooooooooooooooooo
+        ..###..ooooooooooooooooooooooooo
+        .......oooooooooooooooooooooooo
+        ........oooooooooooooooooooooo
+        .........oooooooooooooooooooo
+        ...........oooooooooooooooo
+        .............####...####
+        .............####...####
+        .............oooo...oooo
+        .............oooo...oooo
+        ...........######...######
+        ..........#######...#######
+        """)
+    pixels(r, 57, 17, """
+        ...ooooo
+        ...o###o
+        ...ooooo
+        ....###
+        ....###
+        ....###
+        ....###
+        .....###
+        ...##..##
+        ..#.#.#..#
+        .#..#.#...#
+        .###########
+        .#..#.#...#
+        ..#.#.#..#
+        ...##..##
+        ....###
+        ....###
+        ....###
+        ....###
+        ....###
+        ....###
+        ....###
+        ....###
+        ....###
+        ....###
+        ....###.....o
+        ....###
+        ....###....o
+        ....###
+        ....###.....o
+        ....###
+        ...#####...o#o
+        ...#####...ooo
+        ....###....ooo
+        ....###
+        ....###
+        ....###
+        ....###
+        ....###
+        ....###
+        ....###
+        ..#######
+        .#########
+        """)
+    pixels(r, 8, 57, """
+        .......o
+        ........o
+        .......o
+        .....#####
+        ......###
+        ....#######
+        ...#ooooooo#
+        ..#ooooooooo#
+        ..#####ooo###
+        ...#########
+        .....#####
+        .....#.#.#
+        """)
+    pixels(r, 8, 71, """
+        ....####.#############..#####################...####
+        .
+        .......#########.......####################
+        .
+        .....................######
+        """)
 
 
 def paul_dessin(r):
-    # l'horloger de la Chronomancie : haut-de-forme à ruban, monocle, moustache, veste et gilet,
-    # montre à gousset au bout de sa chaîne ; un sablier levé
-    r(37, 0, 50, 10, B); r(38, 1, 49, 9, N); r(38, 7, 49, 8, V); r(33, 11, 54, 12, B); r(38, 1, 38, 6, B)
-    r(37, 13, 50, 30, B); yeux(r, 38, 45, 16)
-    r(44, 15, 51, 15, V); r(44, 15, 44, 20, V); r(51, 15, 51, 20, V); r(44, 20, 51, 20, V)   # le monocle
-    r(51, 21, 51, 27, V)
-    r(43, 21, 44, 23, N); r(39, 25, 48, 26, N); r(38, 26, 39, 27, N); r(48, 26, 49, 27, N)   # la moustache
-    r(41, 28, 46, 28, N)
-    r(42, 31, 45, 32, B)
-    r(35, 33, 52, 54, N); r(35, 33, 36, 54, B); r(51, 33, 52, 54, B)          # la veste noire, liserée
-    r(38, 34, 49, 54, V); r(42, 33, 45, 36, B)                               # le gilet vert, le col
-    for y in (39, 44, 49): r(43, y, 44, y + 1, B)
-    r(39, 41, 42, 41, B); r(38, 42, 38, 45, B)                                # chaîne et montre
-    r(35, 45, 39, 50, B); r(36, 46, 38, 49, N); r(37, 46, 37, 48, V)
-    r(31, 34, 34, 35, N); r(30, 35, 31, 44, N); r(30, 35, 30, 44, B); r(29, 45, 32, 47, B)
-    r(53, 34, 56, 35, N); r(56, 26, 57, 35, N); r(57, 26, 57, 35, B)
-    # le sablier, levé
-    r(57, 22, 68, 24, B); r(57, 42, 68, 44, B)
-    for k in range(8):
-        r(59 + k // 2, 25 + k, 66 - k // 2, 25 + k, B)
-        r(59 + k // 2, 41 - k, 66 - k // 2, 41 - k, B)
-    r(60, 26, 65, 28, N); r(62, 29, 63, 32, V); r(62, 33, 63, 37, V); r(61, 38, 64, 40, V)
-    r(60, 26, 61, 27, V)
-    r(57, 25, 57, 41, V); r(68, 25, 68, 41, V)
-    r(55, 34, 56, 36, B)
-    jambes(r, B); sol_tirets(r, 68)
+    # l'horloger de la Chronomancie, long et maigre, haut-de-forme, monocle et moustache en guidon : il écoute couler
+    # le sablier tenu contre son oreille, la tête penchée ; la montre à gousset pend au bout de sa chaîne
+    pixels(r, 38, 16, """
+        .........##########
+        ........###########
+        ........##########
+        .......###########
+        .......##########
+        ......###########
+        ......ooooooooooo
+        ......###########
+        ...#################
+        """)
+    pixels(r, 38, 25, """
+        .......############
+        ......##:::###:::##
+        ......###:####.ooooo
+        .....######.#.o###o
+        .....######.#.o#:#o
+        .....#####:##.ooooo
+        ......####::######..o
+        ......##########....o
+        ....o::::::::::::o..o
+        ...oo.:#######:...oo
+        .......########.....o
+        ........######
+        .........####
+        """)
+    pixels(r, 38, 38, """
+        .........###
+        .....##########
+        ...####:oooo:####
+        ..###:ooooooo:####
+        ..###:oooooo:##:####
+        ..###:ooo:ooo:##.:####
+        ..###:oooooo:##...:####
+        ..###:ooo:ooo:##....:##
+        ..###:oooooo:##......##
+        ..###:ooo:ooo:##.....##
+        ..###:oooooo:##......##
+        ..###:oooooooo:##....###
+        ..###:oooooooo:##
+        ..####:oooooo:###
+        ..#####::::::####
+        ..######...######
+        ...#####...#####
+        ...####.....####
+        ...####.....####
+        ....###.....###
+        ....###.....###
+        ....###.....###
+        ....###.....###
+        ....###.....###
+        ....###.....###
+        ....###.....###
+        ....###.....###
+        ...####.....####
+        ..#####.....#####
+        .######.....######
+        """)
+    pixels(r, 57, 19, """
+        ...#########
+        ....#:::::#
+        .....#ooo#
+        ......#o#
+        .......#
+        ......#:#
+        .....#:o:#
+        ....#ooooo#
+        ...#########
+        .....##
+        .....##
+        ....###
+        ....###
+        ...###
+        ..###
+        .###
+        ###
+        ##
+        """)
+    pixels(r, 34, 44, """
+        ....#
+        ...#
+        ..#
+        ..#
+        ..##
+        .####
+        #:##:#
+        #:o::#
+        #::::#
+        .####
+        """)
+    pixels(r, 16, 71, """
+        ....#######.##########.######################
+        .
+        ........##########......##################
+        .
+        .....................#########
+        """)
 
 
 def andrew_dessin(r):
-    # l'archiviste : bonnet, barbe, cache-poussière ceinturé de rouleaux ; le Miroir (rsync) dans une main,
-    # l'Aiguille et son fil vert qui ondule (patch) dans l'autre
-    r(36, 5, 51, 12, V); r(35, 11, 52, 13, B); r(41, 3, 46, 5, V)
-    r(37, 13, 50, 30, B); yeux(r, 38, 45, 17); r(43, 22, 44, 24, N)
-    r(36, 24, 51, 31, B); r(40, 26, 47, 26, N); r(39, 28, 39, 30, V); r(44, 29, 44, 31, V); r(48, 28, 48, 30, V)
-    r(36, 24, 37, 28, V); r(50, 24, 51, 28, V)
-    robe_plis(r, 33, 62, V, 35, 52)
-    r(35, 40, 52, 42, B); r(35, 50, 52, 51, B)                               # la ceinture de rouleaux
-    for x in (37, 42, 47): r(x, 43, x + 2, 49, B); r(x + 1, 44, x + 1, 48, N)
-    manches(r, V, 34, True, True, B, 10)
-    # le Miroir : un ovale sur un manche, son reflet
-    r(19, 24, 27, 25, B); r(17, 26, 29, 41, B); r(19, 42, 27, 43, B); r(19, 26, 27, 41, N); r(18, 27, 28, 40, N)
-    r(20, 28, 21, 32, V); r(22, 29, 22, 30, V); r(24, 36, 26, 39, V)
-    r(22, 44, 24, 48, B); r(24, 46, 28, 47, B)
-    # l'Aiguille et son fil vert
-    r(60, 20, 61, 40, B); r(60, 21, 61, 22, N); r(61, 34, 61, 40, V)
-    for (x, y) in [(62, 22), (64, 25), (65, 29), (64, 33), (66, 37), (68, 41), (67, 45), (65, 49)]:
-        r(x, y, x + 1, y + 2, V)
-    r(59, 44, 61, 47, B)
-    r(37, 63, 42, 64, B); r(45, 63, 50, 64, B); sol_tirets(r, 68)
+    # l'archiviste, petit et barbu, bonnet sur les yeux, une aiguille et son fil vert piqués dedans : il frotte de la
+    # manche le grand miroir sur pied, qui reflète une pile de dossiers
+    pixels(r, 22, 26, """
+        .......##########
+        .....##############
+        ....################
+        ...##################
+        ..####:#####:####:####
+        ..ooooooooooooooooooooo
+        .oooooooooooooooooooooo
+        """)
+    pixels(r, 22, 30, """
+        ............................#
+        ...........................#
+        ..........................#
+        .........................#
+        ........................#
+        .......................o
+        .......................o
+        ..........................o
+        ............................o
+        .............................o
+        ............................o
+        """)
+    pixels(r, 24, 37, """
+        ..o#################o
+        ..o####::#####::####o
+        ..o####::#####::####o
+        ..o#################o
+        ..o#######:#########o
+        ..o######:::########o
+        .###################
+        ###:##:#:#:##:#:##:##
+        ####:##:#:#:#:##:####
+        ####:#:##:#:##:#:####
+        .####:#:#:#:##:#:###
+        ..####:#:#:#:##:###
+        ...#####:#:##:####
+        .....#####:#####
+        """)
+    pixels(r, 18, 51, """
+        .......oooooooooooo
+        .....oooooooooooooooo
+        ....ooooooooooooooooooo
+        ...ooo:oooooooooooo:oooo
+        ..oooo:oooooooooooo:ooooo
+        .ooooo:oooooooooooo:oooooo
+        #####o:ooo#o#o#oooo:oooooo
+        ######:ooo#o#o#oooo:oooooo
+        ##:###:ooo#o#o#oooo:ooooooo
+        ######:ooooooooooooo:oooooo
+        .####oo:oooooooooooo:ooooooo
+        .....oo:ooooooooooooo:oooooo
+        .....oo:ooooooooooooo:oooooo
+        ....ooo:ooooooooooooo:ooooooo
+        ....ooo:ooooooooooooo:ooooooo
+        ....ooooooooooooooooooooooooo
+        .....########.....#########
+        ....#########.....##########
+        """)
+    pixels(r, 49, 28, """
+        ........#########
+        ......###:::::::###
+        .....##:::::::::::##
+        ....##::o:::::::::::#
+        ....#::o:::::::::::::#
+        ...##:o:::::::::::::::#
+        ...#:::::::::::::::::##
+        ...#::::####::::::::::#
+        ...#::::#::#::::::::::#
+        ...#::::####::::::::::#
+        ...#::::#::#::::::::::#
+        ...#::::####::::o:::::#
+        ...#::::#::#:::o::::::#
+        ...#::::####::o:::::::#
+        ...##::::::::o:::::::##
+        ....#:::::::::::::::##
+        ....##:::::::::::::##
+        .....###:::::::::###
+        .......###########
+        ...........###
+        ...........###
+        ...........###
+        ...........###
+        ...........###
+        ...........###
+        ...........###
+        ...........###
+        ...........###
+        ...........###
+        .......###########
+        .....#####.....#####
+        .....###.........###
+        """)
+    pixels(r, 41, 52, """
+        .........#####
+        .......######
+        .....ooooo
+        ...ooooo
+        .ooooo
+        ooooo
+        """)
+    pixels(r, 14, 71, """
+        ...######.#######################.....#############
+        .
+        ........##########....#######################
+        .
+        ...................#######
+        """)
 
 
 def brian_dessin(r):
-    # le jeune enchanteur de l'Invocation : cheveux en bataille, veste à boutons, une craie levée qui crépite,
-    # un parchemin #! et un cercle d'invocation tracé à ses pieds
-    for x in range(35, 53, 3): r(x, 5, x + 1, 9, V)
-    r(36, 3, 37, 4, V); r(48, 3, 49, 4, V)
-    r(35, 9, 52, 14, V)
-    r(37, 12, 50, 30, B); r(37, 12, 50, 13, V); yeux(r, 38, 45, 16)
-    r(43, 21, 44, 23, N); r(41, 26, 46, 26, N); r(46, 25, 46, 25, N)
-    r(42, 31, 45, 32, B)
-    r(35, 33, 52, 54, V); r(43, 33, 44, 54, B); r(40, 33, 47, 35, B)
-    for y in (38, 44, 50): r(40, y, 41, y + 1, B); r(46, y, 47, y + 1, B)
-    r(35, 54, 52, 54, B)
-    # la craie levée, qui crépite
-    r(53, 34, 56, 35, V); r(56, 24, 57, 35, V); r(55, 19, 58, 23, B); r(56, 15, 57, 18, B)
-    for x, y in [(60, 12), (62, 17), (52, 12), (58, 9), (63, 13)]: r(x, y, x, y, V)
-    r(60, 12, 60, 12, B); r(58, 9, 58, 9, B)
-    # le parchemin, avec #!
-    r(30, 35, 34, 36, V); r(29, 36, 30, 40, V)
-    r(15, 37, 31, 57, B); r(16, 38, 30, 56, N); r(14, 36, 32, 38, V); r(14, 56, 32, 58, V)
-    r(18, 41, 18, 46, V); r(21, 41, 21, 46, V); r(17, 42, 22, 42, V); r(17, 45, 22, 45, V)   # #
-    r(25, 41, 25, 44, B); r(25, 46, 25, 46, B)                                                # !
-    for y in (49, 52): r(18, y, 28 - (y % 2) * 3, y, B)
-    jambes(r)
-    for k in range(0, 360, 15):                                               # le cercle d'invocation
-        x = 43 + int(26 * math.cos(math.radians(k))); y = 66 + int(4 * math.sin(math.radians(k)))
-        r(x, y, x + 1, y, V)
-    for (x, y) in ((17, 66), (69, 66), (43, 62), (43, 70)): r(x, y, x + 1, y, B)
-    sol_tirets(r, 72)
+    # le jeune enchanteur de l'Invocation, cheveux en bataille, une jambe en l'air : il lève une craie qui crépite,
+    # son parchemin #! sous le bras, au milieu du cercle d'invocation qui luit au sol
+    pixels(r, 55, 25, """
+        o...o..o
+        ..o.#.o
+        o...#...o
+        ..o.#.o
+        ...###
+        ..####
+        ..####
+        ...##
+        """)
+    pixels(r, 47, 33, """
+        .........###
+        ........###
+        .......###
+        ......###
+        .....###
+        ....###
+        ...###
+        ..###
+        .###
+        ###
+        """)
+    pixels(r, 32, 31, """
+        .....o..o.o..o
+        ....oo.ooooo.oo
+        ...ooooooooooooo.o
+        ..ooooooooooooooooo
+        .oooo###########ooo
+        .ooo#############oo
+        .ooo#####:####:##oo
+        .oo####:#:##:#:##o
+        .oo##############o
+        .oo#######:######o
+        .ooo#####::######o
+        ..oo#############
+        ...o###:::::::##
+        ....####:::::##
+        .....#########
+        .......#####
+        """)
+    pixels(r, 30, 46, """
+        ........###########
+        ......oooooooooooooo#
+        .....ooooo:##:oooooooo
+        ....oooooo:##:ooooooo
+        ...ooooooo:##:ooooooo
+        ..oooooooo:##:ooooooo
+        .####ooooo:##:oooooo
+        #####ooo#o:##:o#oooo
+        ####.ooooo:##:oooooo
+        .....ooooo:##:oooooo
+        .....ooo#o:##:o#oooo
+        .....ooooo:##:oooooo
+        .....ooooo:##:oooooo
+        .....ooo#o:##:o#oooo
+        .....oooooo::oooooooo
+        .....ooooooooooooooooo
+        ......ooooo....oooooo
+        ......oooo......oooo
+        ......oooo.......oooo
+        ......oooo........oooo
+        ......oooo.........ooooo
+        .....######.........#####
+        ....#######.........######
+        """)
+    pixels(r, 24, 47, """
+        ..##############
+        ..#::::::::::::#
+        ..#:o:o:::#::::#
+        ..#ooooo::#::::#
+        ..#:o:o:::#::::#
+        ..#ooooo:::::::#
+        ..#:o:o:::#::::#
+        ..#::::::::::::#
+        ..#:###:#####::#
+        ..#::::::::::::#
+        ..#:####:###:::#
+        ..#::::::::::::#
+        ..##############
+        """)
+    pixels(r, 24, 69, """
+        .............ooo..ooo..ooo..ooo
+        .......ooo.......................ooo
+        .....oo.....######.######.#####.....oo
+        .......ooo.......................ooo
+        .............ooo..ooo..ooo..ooo
+        .
+        .........#########.....############
+        """)
 
 
 def lettre_academie(nom="item_lettre_academie.gif"):
@@ -698,6 +1269,6 @@ if __name__ == "__main__":
     noms = sys.argv[1:] or list(DESSINS) + list(PORTRAITS) + ["item_lettre_academie.gif"]
     for nom in noms:
         if nom == "item_lettre_academie.gif": lettre_academie(nom)
-        elif nom in PORTRAITS: A.perso_fini(nom, PORTRAITS[nom])
+        elif nom in PORTRAITS: perso(nom, PORTRAITS[nom])
         else: finir(nom, DESSINS[nom]())
     print(len(noms), "dessins")
