@@ -732,11 +732,15 @@ function valider(){
 
 	if (!state.quests["d_alchimie_fantomes"]){
 		var fant = lireAcademie("fantomes.txt");
-		var listeEgale = fant !== null && memeEnsemble(lignesPropres(fant), COMPTES_FANTOMES.slice());
+		var absentDuSysteme = function(n){ return !new RegExp("^" + n.replace(/[.*+?^${}()|[\]\\-]/g, "\\$&") + ":", "m").test(PasswdArchives.getText()); };
+		// Un fantôme déjà supprimé (userdel, avant la comparaison) n'est plus dans /etc/passwd : comm ne peut plus le voir.
+		// Il compte comme trouvé, sinon la liste ne pourrait plus jamais être complète.
+		var listes = fant === null ? [] : lignesPropres(fant);
+		COMPTES_FANTOMES.forEach(function(n){ if (absentDuSysteme(n) && listes.indexOf(n) === -1) listes.push(n); });
+		var listeEgale = fant !== null && memeEnsemble(listes, COMPTES_FANTOMES.slice());
 		var verrouilles = COMPTES_FANTOMES.every(function(n){
 			var ligne = lignesDe(ShadowArchives.getText()).filter(function(l){ return l.split(":")[0] === n; })[0];
-			var absent = !new RegExp("^" + n.replace(/[.*+?^${}()|[\]\\-]/g, "\\$&") + ":", "m").test(PasswdArchives.getText());
-			return absent || (ligne && ligne.split(":")[1].charAt(0) === "!");
+			return absentDuSysteme(n) || (ligne && ligne.split(":")[1].charAt(0) === "!");
 		});
 		if (listeEgale && verrouilles) state.complete("d_alchimie_fantomes");
 	}

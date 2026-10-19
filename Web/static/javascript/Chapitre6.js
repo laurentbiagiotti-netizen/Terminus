@@ -681,7 +681,7 @@ var QUETES_CH6 = [
 var QUETES_SECONDAIRES_CH6 = [];   // les défis des gardiens et de Laurent : Machines.js
 
 var INDICES_CH6 = {
-	m6_entree: ["L'escalier part du hall du Bastion.", "cd ~/Cybersup/SalleServeurs/Academie/Bastion, puis cd Lumen"],
+	m6_entree: ["L'escalier part du hall du Bastion.", "Depuis le hall du Bastion (cd ~/Cybersup/SalleServeurs/Academie/Bastion, ou cd ~/Cybersup/SalleServeurs/Bastion si tu es parti directement au Bastion), puis cd Lumen"],
 	m6_lanterne: ["Laurent et l'ordre de mission sont sur la place ; lanterne est une commande du jeu.", "cat Laurent ; cat Mission ; lanterne"],
 	m6_disque: ["Le coupable est dans /var/backups : une archive de plus de 200 jours.", "ssh lumen ; df -h ; sudo du -sh /var/* | sort -h ; sudo find /var -size +500M ; sudo rm /var/backups/lumen-2024.tar.gz"],
 	m6_fantome: ["lsof +L1 liste les fichiers dont le dernier lien a disparu (NLINK 0) : le service les tient ouverts.", "sudo lsof +L1 ; sudo systemctl restart lumen-web ; df -h /var"],
@@ -1237,6 +1237,21 @@ function rapportManqueCh6(){
 	return l;
 }
 
+/* Les sessions des habitants connectés jetées avec les vieilles (un find sans -mmin, un rm de tout le dossier) :
+   comme le dit Kathleen, les habitants se reconnectent quelques minutes plus tard. Sans cela, l'étape des Archives
+   (qui veut les sessions récentes intactes) resterait fermée pour toujours. Vaut aussi pour une partie en cours. */
+function reconnecterHabitantsCh6(){
+	var c = sCh6(), gs = groupesVirtuels(H6, "/var/lib/lumen/sessions");
+	if (state.quests["m6_inodes"] || !gs) return;
+	if (sessionsRecentesCh6() >= 20){ c.sessionsJetees = null; return; }
+	if (c.sessionsJetees === null || c.sessionsJetees === undefined){ c.sessionsJetees = c.horloge; return; }
+	if (c.horloge - c.sessionsJetees < 3 * PAS_HORLOGE_CH6) return;
+	c.sessionsJetees = null;
+	c.reconnexions = (c.reconnexions || 0) + 1;
+	gs.push({ prefixe: "sess_", nombre: 20, ageMin: 2, taille: 210, graine: "lumen-retour-" + c.reconnexions, owner: "www-data", mode: "rw-------" });
+	if (!state.has("rejeuEnCours")) say(C.gris("(Sur lumen, les habitants déconnectés se reconnectent un à un : vingt sessions neuves dans /var/lib/lumen/sessions. Les sessions récentes, on les laisse ; seules celles de plus d'une heure partent.)"));
+}
+
 /* Le monde réagit, à chaque tour. */
 function verifierChapitre6(){
 	function une(nom, cond){ if (!state.has(nom) && cond) state.applyState(nom); }
@@ -1249,6 +1264,7 @@ function verifierChapitre6(){
 	declarerMondeLumen();
 	seminerCh6();
 	avancerHorlogeCh6();
+	reconnecterHabitantsCh6();
 	validerCh6();
 }
 

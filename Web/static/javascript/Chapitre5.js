@@ -1053,7 +1053,7 @@ var QUETES_CH5 = [
 	{ id: "h_apparmor", titre: "La Garde : AppArmor enferme Apache",
 	  indice: "sudo aa-status, puis sudo aa-enforce /etc/apparmor.d/usr.sbin.apache2." },
 	{ id: "h_aube", titre: "L'aube : relire la Tour de Guet et les Sceaux, réparer ce que la Nuée a laissé",
-	  indice: "À 6 h, la Nuée éprouve les murs. Ensuite, sur bastion : journalctl ou ausearch pour savoir ce qu'elle a tenté, aide --check ou debsums pour ce qui a changé, et répare chaque trace." },
+	  indice: "À 6 h, la Nuée éprouve les murs. La nuit n'avance qu'avec tes commandes (3 minutes chacune) : en attendant l'aube, relève les défis des maîtres. Ensuite, sur bastion : journalctl ou ausearch pour savoir ce qu'elle a tenté, aide --check ou debsums pour ce qui a changé, et répare chaque trace." },
 	{ id: "h_pierre_finale", titre: "La Pierre d'Inspection au-dessus de 85",
 	  indice: "Après l'aube, sudo lynis audit system sur bastion : le Hardening index doit dépasser 85. La Pierre du hall dit ce qui manque." },
 	{ id: "h_rapport", titre: "Rédiger le rapport d'inspection et le remettre à Laurent",
@@ -1688,11 +1688,18 @@ var FrancesBastion = new Item("Frances", "", "item_frances.gif").personnage();
 HallBastion.addItem(FrancesBastion);
 var CertificatBastion = new Item("CertificatBastion", "", "item_manuscript.gif");
 
+/* La nuit n'avance qu'avec les commandes : le dire au joueur qui attend l'aube (sinon il attend devant l'écran). */
+function attenteAubeCh5(){
+	var m = Math.max(0, minutesAvantAube());
+	return "La nuit n'avance qu'avec tes commandes : chacune compte " + PAS_HORLOGE_CH5 + " minutes" +
+		(m > 0 ? " (encore " + Math.ceil(m / PAS_HORLOGE_CH5) + " commandes environ avant l'aube)" : "") + ".";
+}
 function texteHorlogeCh5(){
 	var c = sCh5(), l = "L'HORLOGE DE LA NUIT\n\nIl est " + heureCh5() + ".\n";
 	if (c.assaut) return l + "\nL'aube est passée : la Nuée a éprouvé les murs. L'inspecteur arrive.";
 	return l + "\nL'aube (6 h) dans " + Math.max(0, minutesAvantAube()) + " min : la Nuée éprouvera chaque mur encore ouvert.\n" +
-		(c.horloge < QUATRE_HEURES_CH5 ? "Défi d'honneur de Laurent : les douze tours fermées avant 4 h (encore " + (QUATRE_HEURES_CH5 - c.horloge) + " min)." : "4 h est passé.");
+		(c.horloge < QUATRE_HEURES_CH5 ? "Défi d'honneur de Laurent : les douze tours fermées avant 4 h (encore " + (QUATRE_HEURES_CH5 - c.horloge) + " min)." : "4 h est passé.") +
+		"\n" + C.gris(attenteAubeCh5());
 }
 function textePierreCh5(){
 	if (!state.has("ch5Ouvert")) return "Une pierre grise, froide, muette.";
@@ -1713,6 +1720,7 @@ function texteRadioCh5(){
 	if (!q) return "La radio grésille. « Grace : inspection passée, rapport contresigné. Le Bastion tient debout, et la Nuée est repartie bredouille. Beau travail, la recrue. »";
 	var c = sCh5();
 	var heure = "Il est " + heureCh5() + (c.assaut ? ", l'aube est passée. " : ", l'aube à 6 h. ");
+	if (q.id === "h_aube" && !c.assaut) return "La radio grésille. « Grace : " + heure + "Tes murs sont dressés : reste à tenir jusqu'à l'aube. Relève les défis des maîtres en attendant. »\n" + C.gris(attenteAubeCh5());
 	return "La radio grésille. « Grace : " + heure + (CONSEILS_CH5[q.id] || "Je te suis.") + (METIER_CH5[q.id] ? " " + METIER_CH5[q.id] : "") + " »";
 }
 function texteFrancesCh5(){
@@ -1724,7 +1732,7 @@ function texteFrancesCh5(){
 		if (restes.length) return "Frances montre le registre de la Tour de Guet.\n\n« L'aube est passée. Il reste des traces de la Nuée dans " + restes.map(function(k){ return tourCh5(k).titre; }).join(", ") + ". Retrouve-les dans les journaux, et répare. »";
 		return "Frances hoche la tête.\n\n« L'aube est passée, et il ne reste aucune trace. Maintenant, la Pierre, puis le rapport pour Laurent. »";
 	}
-	if (!ouvertes.length) return "Frances repose son carnet.\n\n« J'ai éprouvé les douze murs : tous tiennent. Il ne reste qu'à attendre l'aube. Relève les défis des maîtres en attendant. »";
+	if (!ouvertes.length) return "Frances repose son carnet.\n\n« J'ai éprouvé les douze murs : tous tiennent. Il ne reste qu'à attendre l'aube. Relève les défis des maîtres en attendant. »\n" + C.gris(attenteAubeCh5());
 	return "Frances passe derrière toi, un carnet à la main. Elle éprouve chaque mur, sans rien casser : elle regarde seulement s'il tient.\n\n" +
 		"« Cèdent encore : " + ouvertes.map(function(t){ return t.titre; }).join(", ") + ". »\n\n" +
 		(toursFermeesCh5().length ? "« Tiennent déjà : " + toursFermeesCh5().map(function(t){ return t.titre; }).join(", ") + ". »" : "« Aucun ne tient encore. Commence par la Pierre, puis par la tour que tu veux. »");
