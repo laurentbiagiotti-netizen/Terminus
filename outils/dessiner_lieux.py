@@ -459,7 +459,7 @@ def corbeau():
     return im
 
 if __name__ == "__main__":
-    finir("item_corbeau.gif", corbeau())
+    # item_corbeau.gif est dessiné par dessiner_panne.py (corbeau_dessin), au pixel près comme les personnages d'origine.
     print("ok 3")
 
 

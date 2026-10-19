@@ -1490,28 +1490,62 @@ def _grille_vers_toile(dessin):
 
 
 def gaspard():
-    """Gaspard, le régisseur de l'Annexe : bonnet vert, tablier vert à poche, un trousseau de clés à la ceinture,
-    une montre qu'il regarde en tapant du pied. Même grille et même style que les autres personnages."""
-    from dessiner_bastion import tete
-    from dessiner_academie import bras
-    from dessiner_panne import sol_tirets
+    """Gaspard, le régisseur de l'Annexe, dans la grille 88 x 85 des portraits, au pixel près comme les personnages
+    d'origine du chapitre 1."""
+    from dessiner_panne import pixels, sol_traits
     def dessin(r):
-        r(36, 6, 51, 12, V); r(35, 11, 52, 12, V); r(37, 7, 50, 7, B); r(41, 4, 46, 6, V)       # le bonnet
-        tete(r, 12, V)
-        r(40, 26, 47, 26, N)                                                             # la bouche pincée
-        r(35, 33, 52, 54, B)                                                             # la chemise
-        r(37, 36, 50, 56, V); r(37, 36, 50, 36, B); r(36, 33, 37, 36, V); r(50, 33, 51, 36, V)   # le tablier
-        r(40, 44, 47, 49, N); r(41, 45, 46, 45, V)                                       # la poche
-        bras(r, True, True, 36)
-        r(56, 47, 58, 49, B); r(59, 49, 64, 51, B)                                       # l'anneau du trousseau
-        for k, x in enumerate((58, 61, 64)):
-            r(x, 52, x + 1, 58, V if k != 1 else B); r(x, 58, x + 2, 59, V if k != 1 else B)
-        r(29, 44, 33, 47, V); r(30, 45, 32, 46, N)                                       # la montre au poignet
-        r(38, 57, 41, 64, B); r(46, 57, 49, 62, B); r(39, 58, 40, 63, N); r(47, 58, 48, 61, N)
-        r(36, 65, 42, 66, V); r(45, 62, 51, 63, V)                                       # le pied qui tape
-        for k in range(3):
-            r(53 + k * 3, 60 - k, 54 + k * 3, 60 - k, B)
-        sol_tirets(r, 68)
+        # Gaspard, le régisseur de l'Annexe : petit et rond, bonnet vert, grosse moustache, tablier vert à poche ; il fixe
+        # sa montre en tapant du pied, le trousseau de clés de Vint à la ceinture
+        pixels(r, 18, 22, r"""
+..................##.#
+.................######
+...............##########
+.............##############
+............################
+...........#.#.#.#.#.#.#.#.##
+...........oooooooooooooooooo
+..........oooooooooooooooooooo
+..........oo####oooooooo####oo
+..........ooooo###oooo###ooooo
+.........oooo::oooooooo::ooooooo
+.........oooo::oooooooo::ooooo:o
+.........ooooooooooooooooooooo::o
+.........oooooooooo::ooooooooooo
+.........ooooooooo::::oooooooooo
+..........ooo##############oooo
+..........oo################ooo
+...........##################o
+...........o####::::::::####o
+............oooooooooooooooo
+.......:.......oooooooooo.........
+.oooo.:::...######oooo######......
+oo::oo.:..##########oo#########...
+o:o::o####################o######..
+o::::o#######:#######################
+oo::oooo####..##############.##########
+.oooooo..#....###oooooooooo###..##########
+...oooo.......###oooooooooo####...########
+..............###oooooooooo####.....#####o
+..............###oooooooooo####......####oo
+..............###oo::::::oo####.....:ooooo
+..............###oooooooooo####.....ooooooo
+..............###oo::::::oo####.....oooooo
+..............###oooooooooo####.....oo#.
+..............###oooooooooo####.....o#o#
+..............####oooooooo#####......#o#o
+...............####oooooo#####.......o#o#
+................#############.........#.#
+.................####...####
+.................####...####
+.................####...####...o
+.................####...####..o
+.................####...####.o.
+................#####...#####.
+..............oooooo.......oooooo
+.............ooooooo......ooooooo
+.............:::::::......:::::::
+""")
+        sol_traits(r, 68)
     im, d = _grille_vers_toile(dessin)
     return im
 
