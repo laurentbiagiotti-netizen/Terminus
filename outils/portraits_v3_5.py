@@ -140,10 +140,13 @@ def allumeur_v3():
     t.oeil(90, 45, l=11, h=9, regard=(3, -1), paupiere=2)
     t.peindre(t.trait([(102, 50), (104, 48)]) | t.trait([(102, 53), (104, 53)]), N)
     # le grand nez, long et un peu crochu, pointé vers la perche
-    nez = t.poly([(89, 54), (92, 54), (97, 61), (102, 66), (98, 69), (90, 68), (87, 65)])
+    t.peindre(t.courbe([(90, 52), (93, 57), (96, 62)]), N)
+    t.damier(t.poly([(91, 53), (94, 53), (97, 61), (95, 61)]), V)
+    nez = t.ell(90, 60, 102, 69)
     t.piece(nez, B, ombre=0)
     t.damier(t.bord(nez, 1, 1, 2), V)
-    t.point(92, 66, N); t.point(93, 66, N)
+    t.point(94, 66, N); t.point(95, 66, N)
+    t.peindre(t.courbe([(89, 66), (88, 63), (90, 61)]), N)
     # le sourire en coin, la fossette
     t.pixels(78, 70, """
 .............:.
@@ -572,10 +575,10 @@ def donald_v3():
     manchette(t, [(122, 44), (134, 44), (134, 50), (122, 50)])
     poing(t, 122, 26, 138, 44, 3, vertical=True)
     # la tête, renversée vers la lunette
+    t.piece(t.ell(60, 52, 70, 64), B, ombre=0)
+    t.peindre(t.courbe([(63, 55), (62, 58), (63, 61)]), N)
     tete = t.ell(66, 34, 104, 78)
     t.piece(tete, B, ombre=0)
-    t.piece(t.ell(60, 50, 70, 64), B, ombre=0)
-    t.peindre(t.courbe([(63, 53), (61, 57), (63, 61)]), N)
     # la longue barbe blanche, sur la robe verte
     barbe = t.poly([(70, 62), (78, 70), (96, 70), (104, 60), (104, 74), (100, 92), (92, 108), (88, 118), (90, 126),
                     (84, 120), (80, 106), (72, 90)])
@@ -595,7 +598,8 @@ def donald_v3():
 .::......::
 :..........
 """)
-    t.peindre(t.trait([(68, 53), (66, 55)]), N)
+    for (x0, y0) in ((68, 49), (69, 46)):
+        t.point(x0, y0, N)
     t.piece(t.fuseau([(86, 42), (93, 39), (100, 41)], 4, 3), V, ombre=0)
     ocul = t.ell(86, 44, 102, 60)
     t.piece(ocul, V, ombre=0)
@@ -810,9 +814,20 @@ def horloger_v3():
     t.damier(tete & t.bord(tete, -1, 0, 2) & t.rect(0, 40, 176, 66), V)
     for pts in ([(44, 46), (36, 40), (34, 50)], [(46, 54), (38, 54), (38, 62)], [(84, 42), (92, 36), (94, 44)]):
         t.piece(t.fuseau(pts, 6, 2), V, ombre=0, lumiere=False)
-    crane = t.ell(44, 22, 86, 44) & t.rect(0, 0, 176, 36)
-    t.piece(crane, V, ombre=2)
-    t.peindre(t.courbe([(52, 28), (60, 24), (68, 24)]), B)
+    # le crâne dégarni, la loupe frontale d'horloger relevée sur le front
+    band = t.courbe([(43, 36), (64, 31), (85, 34)], 3)
+    t.piece(band, V, ombre=0, lumiere=False)
+    t.peindre(t.courbe([(44, 35), (64, 30), (84, 33)]), B)
+    t.piece(t.trait([(62, 30), (60, 24)], 3), V, ombre=0)
+    t.piece(t.ell(56, 26, 64, 33), B, ombre=0)
+    t.point(60, 29, N)
+    lentille = t.ell(48, 10, 72, 30)
+    t.piece(lentille, V, ombre=2)
+    verre = t.ell(52, 14, 68, 26)
+    t.piece(verre, B, bord=N, ombre=0)
+    t.peindre(t.courbe([(55, 20), (57, 17), (61, 16)]), V)
+    t.point(64, 22, V); t.point(65, 23, V)
+    t.etoile(76, 12, B, 1)
     # la barbe en pointe
     barbe = t.poly([(52, 66), (64, 72), (76, 66), (72, 80), (64, 92), (60, 82)])
     t.piece(barbe, V, ombre=0)
@@ -922,9 +937,10 @@ def ida_v3():
         t.peindre(t.trait([(x, 41 - (x - 60) // 8), (x + 2, 45 - (x - 60) // 8)]) & vis, N)
     t.peindre(t.trait([(60, 42), (100, 36)]), B)
     # la mèche rebelle
-    meche = t.fuseau([(70, 36), (66, 22), (76, 14), (82, 20)], 7, 2)
-    t.piece(meche, V, ombre=0)
-    t.peindre(t.courbe([(70, 32), (68, 22), (75, 17)]), N)
+    for pts in ([(68, 38), (62, 30), (60, 22)], [(74, 37), (74, 26), (82, 20)], [(80, 37), (88, 30), (94, 30)]):
+        t.piece(t.fuseau(pts, 6, 1), V, ombre=0, lumiere=False)
+    t.peindre(t.courbe([(74, 34), (75, 26), (80, 22)]), N)
+    t.peindre(t.courbe([(66, 34), (62, 26)]), N)
     # bouche bée, sourcils très hauts, les yeux qui lisent
     t.peindre(t.courbe([(58, 52), (63, 49), (69, 51)], 2), N)
     t.peindre(t.courbe([(75, 51), (81, 48), (87, 50)], 2), N)
