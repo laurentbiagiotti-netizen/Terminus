@@ -1617,6 +1617,7 @@ Shell.sortInconnu = function(nom){
 
 /* Les sorts que personne n'enseigne dès le départ : ils s'apprennent en cours d'histoire. */
 var SORTS_APPRIS_EN_ROUTE = {
+	"grep": "Il s'apprend auprès de la Bibliothecaire, dans l'ArriereSalle de la Bibliotheque du village : le passage s'ouvre en lisant le LevierDiscret de la Bibliotheque (less LevierDiscret).",
 	"cp": "Il s'apprend auprès de l'Artisane, à l'Atelier du village, quand on lui apporte un Rouage.",
 	"bash": "Il s'apprend auprès de l'Artisane, à l'Atelier du village, une fois ses rouages copiés.",
 	"cowsay": "Ce n'est pas un sort mais un paquet : il s'installe avec sudo apt install cowsay (au chapitre 1, l'Affiche de la SalleDeCours explique apt).",
@@ -1926,7 +1927,12 @@ Shell.tuyau = function(jetons){
 				else sortie = Shell.appeler(nom, args, io);
 			} catch (e){
 				if (!(e instanceof ShellError)) throw e;
-				io.erreurs.push(Shell.situer(e.message));
+				// « Tu ne connais pas encore le sort » : c'est le jeu qui parle, pas le sort. Ni 2>/dev/null ni un tuyau ne le
+				// cachent, sinon find ... 2>/dev/null se tait et l'étudiant ne sait pas vers qui aller pour l'apprendre.
+				if (sorties[2].t !== "ecran" && /ne connais pas encore le sort|ne sais pas encore lancer un script/.test(e.message)){
+					Shell.ecranErreur(Shell.situer(e.message));
+					jouerSon("erreur");
+				} else io.erreurs.push(Shell.situer(e.message));
 				sortie = "";
 				echec = true;
 				io.code = e.code || 1;

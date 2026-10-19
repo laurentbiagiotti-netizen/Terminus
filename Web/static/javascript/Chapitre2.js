@@ -1177,6 +1177,14 @@ function commencerChapitre2(cible){
 	return true;
 }
 
+/* La Crypte attend le compte rendu fait à Radia (r_fin) : chapitre 3 et aller 3 le disent, et nomment Radia. */
+function texteCrypteAttendRadia(){
+	var restantes = typeof QUETES_PANNE === "undefined" ? [] : QUETES_PANNE.filter(function(q){ return q.id !== "r_fin" && !state.quests[q.id]; });
+	return "Le chapitre 3 (la Crypte) s'ouvre à la fin de la panne (chapitre 2) : quand le réseau de l'école est réparé et que Radia a eu ton compte rendu. " +
+		(restantes.length ? "Il te reste des étapes de la panne (quetes pour le journal) ; ensuite, va" : "Tout remarche : il ne te reste qu'à aller") +
+		" voir Radia au BatimentB de Cybersup (cd ~/Cybersup/BatimentB, puis cat Radia). aller 2 t'y emmène.";
+}
+
 Shell.sorts.chapitre = function(args, io){
 	var demande = args[0];
 	var mission = state.has("chapitre1Saute");
@@ -1248,7 +1256,7 @@ Shell.sorts.chapitre = function(args, io){
 		return "Le chapitre 3 est déjà ouvert : la Crypte est sous la Citadelle. Depuis n'importe où : ssh citadelle, puis cd Crypte. aller 3 t'y emmène.";
 	}
 	if (!chapitre2Possible()){
-		if (demande === "3" && state.has("panneOuverte")) return "Le chapitre 3 s'ouvrira quand le réseau de l'école sera réparé (chapitre 2) : Radia t'attend au BatimentB de Cybersup.";
+		if (demande === "3" && state.has("panneOuverte")) return texteCrypteAttendRadia();
 		return "Tu as commencé l'épreuve de première année : le chapitre " + demande + " s'ouvrira " + (demande === "2" ? "quand tu auras battu le Sorcier Noir." : "après le chapitre 2.") + "\n" +
 			C.gris("(Le renfort se choisit au tout début d'une partie. Pour repartir de zéro et le choisir : recommencer.)");
 	}

@@ -434,6 +434,7 @@ Shell.sorts.aller = function(args, io){
 			C.gris("(Pour la jouer : recommencer, puis chapitre 2, sur une partie neuve.)");
 		return "Le chapitre 2 (la panne) s'ouvre quand tu auras battu le Sorcier Noir : il suit l'épreuve de première année. Il ne s'ouvre pas en renfort.";
 	}
+	if (n === 3 && state.has("panneOuverte") && typeof texteCrypteAttendRadia === "function") return texteCrypteAttendRadia();
 	if (n === 3) return "Le chapitre 3 (la Crypte) s'ouvre à la fin de la panne (chapitre 2), dans l'ordre de l'histoire : il ne s'ouvre pas en renfort en cours de partie.\n" +
 		C.gris("(Pour partir directement en mission cyber : recommencer, puis chapitre 3, sur une partie neuve.)");
 	var refus = renfortRefuseNav(n);
