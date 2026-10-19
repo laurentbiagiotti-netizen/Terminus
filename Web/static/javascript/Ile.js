@@ -185,7 +185,9 @@ function texteMaitreIle(g){
 	var erreur = null;
 	try { erreur = g.erreur ? g.erreur() : null; } catch (x){ erreur = null; }
 	var corps = (e1 || e2) ? g.entre(e1) : g.entree() + "\n\n" + g.image() + "\n\n" + g.syntaxe() + "\n\n" + g.mission();
-	return corps + (erreur ? "\n\n" + C.jaune(erreur) : "") + tempete + "\n\n" + C.gris(g.metier) + defis;
+	// Qui vient voir un maître sans avoir écouté Laurent apprend où le trouver : sans lui, la journée ne commence pas.
+	var rappel = rappelLaurentCh7();
+	return corps + (erreur ? "\n\n" + C.jaune(erreur) : "") + (rappel ? "\n\n" + C.jaune(g.nom + " lève les yeux. « " + rappel + " »") : "") + tempete + "\n\n" + C.gris(g.metier) + defis;
 }
 
 var MAITRES_ILE = {
@@ -633,6 +635,8 @@ function texteChantier(){
 	var lignes = [C.gras("LE PLAN DE PORT-AUBE"), C.jaune("commande du jeu, pas Linux (man chantier)"), C.gris("rouge : la maison est en friche · vert : elle est bâtie · l'état est lu sur les machines de l'île"), ""];
 	lignes.push("  Il est " + C.gras(heureCh7()) + (c.maree ? C.gris(" · le navire est à quai") : C.gris(" · " + (c.tempete ? "la Tempête souffle" : "la Tempête dans " + Math.max(0, TEMPETE_CH7 - c.horloge) + " min") + " · la marée dans " + texteAvantMaree())));
 	lignes.push("  La cité : " + C.gras(score + " / 100") + (c.scoreDepart !== null && c.scoreDepart !== undefined ? C.gris(" (départ : " + c.scoreDepart + ", objectif : plus de 90 après la Marée)") : C.gris(" (objectif : plus de 90 après la Marée)")), "");
+	var rappel = rappelLaurentCh7();
+	if (rappel) lignes.push(C.jaune("  " + rappel), "");
 	MAISONS_CH7.forEach(function(m){
 		var ok = maisonBatieCh7(m.cle), faites = m.etapes.filter(aFait).length, defis = idsDefisMaison(m.cle).filter(aFait).length;
 		var etats = m.etapes.filter(function(id){ try { return ETATS_CH7[id](); } catch (e){ return false; } }).length;

@@ -1144,12 +1144,32 @@ function mesuresManquantesCh8(){ return MESURES_PUISSANCE_CH8.filter(function(m)
 /* L'avancée du chapitre                                               */
 /* ------------------------------------------------------------------ */
 
+/* Ce qui manque pour l'étape n8_port (Laurent, l'Ordre, le plan du port) ; null quand c'est fait.
+ * Sans elle, aucune étape des quais ne se valide : un étudiant qui file droit aux quais sans écouter Laurent travaille pour rien.
+ * Le plan du port, les maîtres et la radio le lui disent, en nommant Laurent et la grande grue. */
+function rappelLaurentCh8(){
+	if (state.quests["n8_port"] || !state.has("ch8Ouvert") || !state.quests["n8_quai"]) return null;
+	var c = sCh8(), l = [];
+	if (!state.has("ch8LaurentLu")) l.push("l'écouter (cat Laurent)");
+	if (!state.has("ch8OrdreLu")) l.push("lire l'Ordre de mission (cat Ordre)");
+	if (c.scoreDepart === null || c.scoreDepart === undefined) l.push("déployer le plan du port (port)");
+	if (!l.length) return null;
+	var fin = l.pop();
+	return "Laurent t'attend au pied de la grande grue (cd " + Shell.cheminAffiche(GrandPortCh8) + ") : il te reste à " + (l.length ? l.join(", ") + " et " : "") + fin +
+		". Tant que ce n'est pas fait, aucun quai ne compte : ni étape, ni galon.";
+}
 function validerCh8(){
 	var c = sCh8();
 	try { reposerPlansAnciensCh8(); } catch (e){}
 	if (!state.quests["n8_port"] && state.has("ch8LaurentLu") && state.has("ch8OrdreLu") && c.scoreDepart !== null && c.scoreDepart !== undefined){
 		state.complete("n8_port");
 		if (!state.has("galon_mousse")){ state.set("galon_mousse"); if (!state.has("rejeuEnCours")) say(C.jaune("Laurent épingle sur ta manche une patte d'épaule nue, une ancre et pas un galon. « Mousse. Tout le monde commence ici. Même les amiraux. »")); }
+	}
+	// Une étape des quais déjà faite, mais Laurent pas écouté : Grace le dit une fois (le plan du port et les maîtres le redisent ensuite).
+	var rappel = rappelLaurentCh8();
+	if (rappel && !c.rappelLaurent && ACTES_CH8[0].etapes.some(function(id){ try { return VALIDATIONS_CH8[id](); } catch (e){ return false; } })){
+		c.rappelLaurent = true;
+		if (!state.has("rejeuEnCours")) say(C.gris("(Radio : « Grace : bien manœuvré, mousse. Mais " + rappel + " »)"));
 	}
 	// La mémoire de l'école : les inscriptions vues, et leur retour après un down puis un up (sans -v).
 	var nInscr = inscriptionsCh8();

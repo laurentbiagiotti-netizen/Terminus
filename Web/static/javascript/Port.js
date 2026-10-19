@@ -283,15 +283,17 @@ function rangRequisPort(q){ return Math.max(0, q.acte - 1); }
 function texteMaitrePort(g){
 	var q = quaiCh8(g.q);
 	var defis = "\n\n" + C.gras("Les défis " + (/^[AEIOUHaeiouhÉ]/.test(g.nom) ? "d'" : "de ") + g.nom) + C.gris(" (des quêtes secondaires, sur " + q.machine + ")") + "\n" + listeDefisQuaiPort(g.q);
+	// Qui vient voir un maître sans avoir écouté Laurent apprend où le trouver : sans lui, aucun quai ne compte.
+	var rappel = rappelLaurentCh8(), mot = rappel ? "\n\n" + C.jaune(g.nom + " fronce les sourcils. « " + rappel + " »") : "";
 	if (rangCh8() < rangRequisPort(q)) return g.entree() + "\n\n" + C.jaune(g.nom + " pose la main sur ta manche et compte tes galons. « Ce quai s'ouvre aux " + ["Mousses", "Matelots", "Quartiers-maîtres", "Seconds", "Capitaines", "Amiraux"][rangRequisPort(q)] + ". Tu es " + nomRangCh8() + ". " +
-		"Reviens avec tes galons : galons te dira ce qu'il te manque. »");
+		"Reviens avec tes galons : galons te dira ce qu'il te manque. »") + mot;
 	var faites = q.etapes.filter(aFait).length;
 	if (faites === q.etapes.length) return g.fin() + defis;
 	var erreur = null;
 	try { erreur = g.erreur ? g.erreur() : null; } catch (x){ erreur = null; }
 	var etapes = "\n\n" + C.gras("Ton quai") + "\n" + q.etapes.map(function(id){ var x = QUETES_CH8.filter(function(y){ return y.id === id; })[0]; return "  " + (aFait(id) ? C.vert("[x]") : "[ ]") + " " + x.titre.replace(/^[^:]+ : /, ""); }).join("\n");
 	var corps = faites ? g.suite() + "\n\n" + g.syntaxe() : g.entree() + "\n\n" + g.image() + "\n\n" + g.syntaxe() + "\n\n" + g.mission();
-	return corps + etapes + (erreur ? "\n\n" + C.jaune(erreur) : "") + "\n\n" + C.gris(g.metier) + defis;
+	return corps + etapes + (erreur ? "\n\n" + C.jaune(erreur) : "") + mot + "\n\n" + C.gris(g.metier) + defis;
 }
 function manoeuvresDePort(nom){ return Object.keys(MANOEUVRES_PORT).filter(function(k){ return MANOEUVRES_PORT[k] === nom; }); }
 
@@ -666,6 +668,53 @@ GameEvents.addListener("read", function(e){
 	});
 });
 
+/* Où apprendre un sort : le maître nommé doit être joignable dans CETTE partie. Un départ direct (chapitre 7) ne relie
+ * ni le Grand Port, ni Lumen, ni l'Académie, ni le Bastion : « auprès de Kylian, dans QuaiDesPremiersPas » enverrait
+ * l'étudiant vers un quai qu'il ne peut pas atteindre. On nomme alors un autre maître joignable s'il y en a un, sinon le
+ * chapitre où il se trouve et la façon de l'ouvrir (aller N, en renfort). Les chapitres 1 à 3 ont leurs propres phrases. */
+function lieuAtteignablePort(lieu){
+	if (typeof racineDe === "function" && racineDe(lieu)) return true;   // une machine : ssh, sa phrase est déjà juste
+	var r = Home;
+	for (var g = 0; r.parents && r.parents[0] && g++ < 50; ) r = r.parents[0];
+	var vus = [r];
+	for (var i = 0; i < vus.length; i++){
+		if (vus[i] === lieu) return true;
+		(vus[i].children || []).forEach(function(c){ if (vus.indexOf(c) === -1) vus.push(c); });
+	}
+	return false;
+}
+function phraseMaitrePort(it, lieu){
+	var parent = lieu.parents[0];
+	return "Il s'apprend " + (it.person ? "auprès de " : "en lisant ") + it.itemname + ", dans " + lieu.room_name + (parent && parent !== Home ? " (du côté de " + parent.room_name + ")" : "") + ".";
+}
+var OU_APPRENDRE_AVANT_PORT = Shell.ouApprendre;
+Shell.ouApprendre = function(sort){
+	var t = OU_APPRENDRE_AVANT_PORT.apply(this, arguments);
+	try {
+		var m = /^Il s'apprend (?:auprès de|en lisant) ([^,]+), dans [^.]*\./.exec(t);
+		if (m){
+			var maitres = [];
+			Object.keys(World.rooms).forEach(function(id){
+				var l = World.rooms[id];
+				if ((l.chapitre || 1) < 5) return;
+				l.items.forEach(function(it){ if (it.teaches.indexOf(sort) > -1) maitres.push({ it: it, lieu: l, ok: lieuAtteignablePort(l) }); });
+			});
+			var nomme = maitres.filter(function(x){ return x.it.itemname === m[1]; })[0];
+			if (nomme && !nomme.ok){
+				var autre = maitres.filter(function(x){ return x.ok; })[0], phrase;
+				if (autre) phrase = phraseMaitrePort(autre.it, autre.lieu);
+				else {
+					var n = numeroAffiche(nomme.lieu.chapitre), refus = typeof renfortRefuseNav === "function" ? renfortRefuseNav(n) : "";
+					phrase = phraseMaitrePort(nomme.it, nomme.lieu).replace(/\.$/, "") + ", au chapitre " + n + " : ce chapitre n'est pas encore ouvert dans ta partie" +
+						(refus ? "." : " (aller " + n + " l'ouvre en renfort, sans rien perdre).");
+				}
+				t = phrase + t.substring(m[0].length);
+			}
+		}
+	} catch (e){ /* la phrase d'origine reste */ }
+	return t.replace(/auprès de ([AEIOUYÉÈÊ])/g, "auprès d'$1");
+};
+
 /* ------------------------------------------------------------------ */
 /* Le bestiaire du Grand Port                                          */
 /* ------------------------------------------------------------------ */
@@ -811,6 +860,8 @@ function textePortCh8(){
 	lignes.push("  " + C.gras(heureCh8()) + C.gris(" · ") + C.gras(nomRangCh8()) + C.gris(" · ") + (c.bataille ? C.rouge("la flotte noire attaque") : C.jaune(texteAvantFlotteCh8())));
 	if (!c.bataille) lignes.push(barreFlotteCh8());
 	lignes.push("  La puissance de ta flotte : " + C.gras(p + " / 100") + C.gris(" (départ : " + (c.scoreDepart !== null && c.scoreDepart !== undefined ? c.scoreDepart : p) + ", objectif : au moins 90 après la bataille)"), "");
+	var rappel = rappelLaurentCh8();
+	if (rappel) lignes.push(C.jaune("  " + rappel), "");
 	ACTES_CH8.forEach(function(a){
 		lignes.push(C.gras("  Acte " + ["", "I", "II", "III", "IV", "V", "VI"][a.n] + " · " + a.titre) + C.gris(rangCh8() >= a.n - 1 ? "" : "  (fermé : il faut être " + RANGS_CH8[a.n - 1].nom + ")"));
 		QUAIS_CH8.filter(function(q){ return q.acte === a.n; }).forEach(function(q){
@@ -870,7 +921,7 @@ function texteGalonsCh8(){
 		var a = acteCh8(r + 1);
 		var reste = a.etapes.filter(function(id){ return !aFait(id); });
 		l.push("", C.gras("  Pour devenir " + RANGS_CH8[r + 1].nom));
-		if (!aFait("n8_port")) l.push("    Écouter Laurent, lire l'Ordre, et déployer le plan du port (port).");
+		if (!aFait("n8_port")) l.push("    " + (rappelLaurentCh8() ? C.jaune(rappelLaurentCh8()) : "Écouter Laurent, lire l'Ordre, et déployer le plan du port (port)."));
 		reste.forEach(function(id){ var q = QUETES_CH8.filter(function(x){ return x.id === id; })[0]; l.push("    [ ] " + q.titre); });
 		l.push("    " + (epreuveOuverteCh8(r + 1) ? C.rouge("⚔ L'épreuve de rang est ouverte : ") : C.gris("⚔ Puis l'épreuve de rang : ")) + a.nomEpreuve);
 	} else l.push("", C.gras("  Tu portes les trois étoiles.") + (state.quests["n8_rapport"] ? " Le Grand Port est à toi." : " Il reste à rassembler l'escadre, et à tenir la bataille."));

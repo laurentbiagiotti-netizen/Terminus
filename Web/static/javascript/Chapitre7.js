@@ -836,6 +836,21 @@ function scoreChantierCh7(){
 /* L'avancée du chapitre                                               */
 /* ------------------------------------------------------------------ */
 
+/* Liste lisible : « a, b et c ». */
+function listeEtCh7(l){ return l.length < 2 ? l.join("") : l.slice(0, -1).join(", ") + " et " + l[l.length - 1]; }
+/* Ce qui manque pour lancer la journée (l'étape p7_chantier) : Laurent, l'ordre de mission, le plan. null quand c'est fait.
+ * Un étudiant qui file droit aux maisons sans écouter Laurent bâtit pour rien : la Tempête, la Marée et le rapport attendent
+ * cette étape. Le plan, les maîtres et la radio le lui disent, en nommant Laurent et le quai. */
+function rappelLaurentCh7(){
+	if (state.quests["p7_chantier"] || !state.has("ch7Ouvert")) return null;
+	var c = sCh7(), l = [];
+	if (!state.has("ch7LaurentLu")) l.push("l'écouter (cat Laurent)");
+	if (!state.has("ch7MissionLue")) l.push("lire l'ordre de mission (cat Mission)");
+	if (c.scoreDepart === null || c.scoreDepart === undefined) l.push("dérouler le plan de la cité (chantier)");
+	if (!l.length) return null;
+	return "Laurent t'attend au bout du quai de Port-Aube (cd " + Shell.cheminAffiche(HallPortAube) + ") : il te reste à " + listeEtCh7(l) +
+		". Tant que ce n'est pas fait, la journée ne commence pas : ni Tempête, ni Marée, ni rapport.";
+}
 function validerCh7(){
 	var c = sCh7();
 	if (!state.quests["p7_chantier"] && state.has("ch7LaurentLu") && state.has("ch7MissionLue") && c.scoreDepart !== null && c.scoreDepart !== undefined) state.complete("p7_chantier");
@@ -845,6 +860,12 @@ function validerCh7(){
 		try { ok = VALIDATIONS_CH7[id](); } catch (e){ ok = false; }
 		if (ok) state.complete(id);
 	});
+	// Une étape des maisons faite sans avoir écouté Laurent : Grace le dit une fois (le plan et les maîtres le redisent ensuite).
+	var rappel = rappelLaurentCh7();
+	if (rappel && !c.rappelLaurent && QUETES_CH7.slice(2).some(function(q){ return !!state.quests[q.id]; })){
+		c.rappelLaurent = true;
+		if (!state.has("rejeuEnCours")) say(C.gris("(Radio : « Grace : beau travail, Architecte. Mais " + rappel + " »)"));
+	}
 	// Chaque maison bâtie : une phrase, une fois.
 	MAISONS_CH7.forEach(function(m){
 		if (!maisonBatieCh7(m.cle) || c.baties[m.cle] !== undefined) return;
