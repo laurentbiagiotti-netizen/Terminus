@@ -456,13 +456,168 @@ def osi():
     return im
 
 
+# ------------------------------------------------------------------
+# Portraits v3 : grille fine de 176 x 170 cases (2 x 2 pixels), dessinés par pièces avec portrait_v3.Toile
+# (liseré noir, aplat, lumière, ombre tramée), visages détaillés, objet de métier lisible. Voir la méthode
+# dans portrait_v3.py. Ils remplacent les portraits en grille 88 x 85 de même nom (gardés plus haut).
+# ------------------------------------------------------------------
+import math  # noqa: E402
+import random  # noqa: E402
+from portrait_v3 import Toile, texte as texte_v3  # noqa: E402
+
+
+def radia_v3():
+    t = Toile()
+    # le câble qui descend de la prise et s'enroule au sol
+    cable = t.courbe([(126, 30), (146, 40), (150, 90), (138, 130), (150, 152), (166, 150)], 3)
+    t.piece(cable, V, ombre=0, lumiere=False)
+    boucle = t.ell(136, 144, 168, 160) & ~t.ell(140, 147, 164, 157)
+    t.piece(boucle, V, ombre=0, lumiere=False)
+    # les jambes : jean à coutures, l'une tendue, l'autre levée d'enthousiasme
+    jambe1 = t.poly([(68, 116), (82, 116), (82, 152), (70, 152)])
+    t.piece(jambe1, V, ombre=2)
+    t.peindre(t.trait([(76, 120), (76, 150)]), N)
+    jambe2 = t.poly([(84, 116), (98, 116), (108, 132), (112, 144), (102, 148), (96, 136), (86, 126)])
+    t.piece(jambe2, V, ombre=2)
+    t.peindre(t.trait([(92, 122), (104, 140)]), N)
+    t.piece(t.rect(68, 146, 82, 149), B, ombre=0)
+    t.piece(t.poly([(98, 142), (108, 136), (111, 140), (101, 146)]), B, ombre=0)
+    # les baskets
+    for pts in ([(64, 150), (84, 150), (86, 158), (60, 158), (60, 154)], [(100, 144), (114, 140), (122, 146), (118, 152), (104, 152)]):
+        b = t.poly(pts)
+        t.piece(b, B, ombre=0)
+        t.damier(t.bord(b, 0, 1, 1), V)
+    t.peindre(t.trait([(60, 158), (86, 158)]), N)
+    t.pixels(70, 151, ":.:.:\n.:.:.")
+    t.pixels(108, 144, ":.:.\n.:.:")
+    # le sweat à capuche
+    sweat = t.poly([(62, 76), (100, 76), (104, 96), (102, 118), (60, 118), (58, 96)])
+    t.piece(sweat, V, ombre=3)
+    t.peindre(t.rect(60, 113, 102, 114), N)
+    t.peindre(t.rect(60, 115, 102, 118) & sweat, V)
+    poche = t.poly([(68, 100), (94, 100), (98, 112), (64, 112)])
+    t.peindre(poche & ~t.poly([(69, 101), (93, 101), (97, 111), (65, 111)]), N)
+    # le logo du sweat : trois nœuds reliés (un petit réseau)
+    t.pixels(74, 84, """
+....ooo....
+....o:o....
+.....o.....
+....o.o....
+...o...o...
+.ooo...ooo.
+.o:o...o:o.
+.ooo...ooo.
+""")
+    # les cordons blancs
+    t.peindre(t.trait([(76, 78), (75, 92)]) | t.trait([(86, 78), (88, 92)]), B)
+    t.point(75, 93, B); t.point(88, 93, B)
+    # le badge au cordon
+    t.peindre(t.trait([(66, 78), (70, 98)]), N)
+    t.piece(t.rect(66, 98, 73, 107), B, ombre=0)
+    t.peindre(t.rect(68, 100, 71, 102), V); t.peindre(t.rect(68, 104, 71, 104), N)
+    # le bras levé qui brandit la prise RJ45
+    bras = t.fuseau([(98, 82), (114, 64), (122, 40)], 11, 8)
+    t.piece(bras, V, ombre=2)
+    t.peindre(t.courbe([(106, 70), (112, 66)]), N)
+    t.piece(t.poly([(115, 44), (127, 44), (128, 50), (114, 50)]), B, ombre=0)
+    t.peindre(t.trait([(116, 46), (126, 46)]), V)
+    poing = t.ell(114, 30, 130, 46)
+    t.piece(poing, B, ombre=0)
+    for y in (34, 38, 42):
+        t.peindre(t.trait([(116, y), (121, y)]), N)
+    t.peindre(t.trait([(125, 33), (128, 38)]), N)
+    prise = t.poly([(115, 12), (127, 12), (128, 30), (114, 30)])
+    t.piece(prise, B, ombre=0)
+    t.peindre(t.rect(116, 14, 126, 19), N)
+    for x in range(117, 126, 2):
+        t.peindre(t.rect(x, 15, x, 18), V)
+    t.peindre(t.poly([(117, 22), (125, 22), (124, 27), (118, 27)]), V)
+    t.peindre(t.trait([(121, 6), (121, 9)]) | t.trait([(113, 8), (111, 6)]) | t.trait([(129, 8), (131, 6)]), B)
+    for (x, y) in [(106, 14), (136, 18), (110, 2)]:
+        t.etincelle(x, y)
+    # l'autre bras, plié, qui porte le portable ouvert
+    bras2 = t.fuseau([(62, 82), (56, 100), (50, 110)], 10, 8)
+    t.piece(bras2, V, ombre=2)
+    ecran = t.rect(14, 72, 58, 102)
+    t.piece(ecran, B, ombre=0)
+    t.peindre(t.rect(17, 75, 55, 99), N)
+    texte_v3(t, 19, 77, "$ ip a", V)
+    texte_v3(t, 19, 84, "eth0", B)
+    texte_v3(t, 37, 84, "up", V)
+    texte_v3(t, 19, 91, "$", V)
+    t.peindre(t.rect(24, 95, 26, 95), B)
+    base = t.poly([(12, 103), (60, 103), (64, 109), (10, 109)])
+    t.piece(base, B, ombre=0)
+    t.peindre(t.trait([(16, 105), (58, 105)]) & (((t.xx) % 2) == 0), N)
+    t.peindre(t.trait([(14, 107), (60, 107)]) & (((t.xx) % 2) == 1), N)
+    main2 = t.ell(44, 106, 56, 116)
+    t.piece(main2, B, ombre=0)
+    t.peindre(t.trait([(46, 110), (52, 110)]), N)
+    # la crinière bouclée : une seule masse au contour irrégulier, creusée de boucles
+    rnd = random.Random(7)
+    masse = t.ell(50, 8, 112, 60) | t.ell(44, 30, 70, 76) | t.ell(92, 30, 118, 76)
+    for (x, y, r) in [(54, 14, 7), (68, 6, 7), (84, 4, 7), (100, 8, 7), (110, 20, 6), (46, 26, 6), (116, 34, 6),
+                      (42, 46, 6), (120, 50, 6), (44, 64, 6), (118, 66, 6), (50, 76, 5), (112, 78, 5)]:
+        masse |= t.ell(x - r, y - r, x + r, y + r)
+    t.piece(masse, V, ombre=3, lumiere=False)
+    for _ in range(46):
+        x, y = rnd.randint(42, 122), rnd.randint(2, 82)
+        if masse[y, x] and masse[min(169, y + 4), x] and masse[y, min(175, x + 4)]:
+            t.peindre(t.courbe([(x + 3, y), (x, y - 1), (x - 1, y + 2), (x + 1, y + 4), (x + 4, y + 3)]), N)
+            if rnd.random() < 0.4:
+                t.peindre(t.trait([(x - 1, y - 3), (x + 2, y - 4)]), B)
+    # le visage
+    visage = t.ell(62, 28, 100, 72)
+    t.piece(visage, B, ombre=0)
+    t.damier(visage & t.bord(visage, 1, 0, 3) & t.rect(0, 40, 176, 66), V)
+    # la frange en boucles
+    frange = t.ell(60, 22, 74, 36) | t.ell(70, 20, 84, 32) | t.ell(80, 20, 94, 32) | t.ell(90, 22, 104, 36)
+    t.piece(frange, V, ombre=0, lumiere=False)
+    for x, y, sx in ((64, 28, 1), (75, 25, -1), (86, 26, 1), (96, 29, -1)):
+        t.peindre(t.courbe([(x + 3 * sx, y), (x, y - 1), (x - sx, y + 2), (x + sx, y + 4), (x + 4 * sx, y + 3)]), N)
+        t.peindre(t.trait([(x - 1, y - 4), (x + 2, y - 5)]), B)
+    # sourcils levés, yeux qui regardent la prise, grand sourire
+    t.peindre(t.courbe([(66, 40), (72, 36), (78, 38)], 2), N)
+    t.peindre(t.courbe([(85, 38), (91, 35), (97, 38)], 2), N)
+    t.oeil(66, 43, l=12, h=9, regard=(2, -2), paupiere=2, cils=-1)
+    t.oeil(85, 43, l=12, h=9, regard=(2, -2), paupiere=2, cils=1)
+    t.pixels(79, 50, """
+..:..
+..:..
+.:o::
+:::::
+""")
+    t.pixels(72, 56, """
+:..............:
+.::::::::::::::.
+.:oooooooooooo:.
+..:oooooooooo:..
+...::######::...
+.....::::::.....
+""")
+    for (x, y) in [(67, 54), (69, 55), (71, 54), (90, 54), (92, 55), (94, 54)]:
+        t.point(x, y, V)
+    # le casque audio autour du cou
+    t.peindre(t.courbe([(62, 76), (80, 86), (100, 76)], 2), B)
+    for x in (58, 94):
+        cup = t.ell(x, 70, x + 10, 82)
+        t.piece(cup, V, ombre=0)
+        t.peindre(t.ell(x + 3, 73, x + 7, 79), N)
+    t.sol(160)
+    return t.image()
+
+
+PORTRAITS_V3 = {"item_radia.gif": radia_v3}
+
+
 if __name__ == "__main__":
     finir("item_osi.gif", osi())
     for nom, f in [("loc_batimentb.gif", batimentb), ("loc_posteb.gif", posteb), ("loc_routeur.gif", routeur), ("loc_intranet.gif", intranet),
                    ("loc_batimentb_ok.gif", batimentb_ok)]:
         finir(nom, f())
     ticket("item_ticket.gif")
-    for nom, dessin in [("item_radia.gif", radia_dessin), ("item_archiviste.gif", archiviste_dessin),
+    finir("item_radia.gif", radia_v3())
+    for nom, dessin in [("item_archiviste.gif", archiviste_dessin),
                         ("item_frances.gif", frances_dessin), ("item_corbeau.gif", corbeau_dessin)]:
         perso(nom, dessin)
     print("ok panne")

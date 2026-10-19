@@ -862,8 +862,372 @@ DESSINS = {"item_myriam.gif": myriam_dessin, "item_dylan.gif": dylan_dessin, "it
            "item_gabriel.gif": gabriel_dessin, "item_timour.gif": timour_dessin, "item_steve.gif": steve_dessin,
            "item_florimond.gif": florimond_dessin}
 
+
+# ------------------------------------------------------------------
+# Portraits v3 : grille fine de 176 x 170 cases (2 x 2 pixels), dessinés par pièces avec portrait_v3.Toile
+# (liseré noir, aplat, lumière, ombre tramée), visages détaillés, objet de métier lisible. Voir la méthode
+# dans portrait_v3.py. Ils remplacent les portraits en grille 88 x 85 de même nom (gardés plus haut).
+# ------------------------------------------------------------------
+import math  # noqa: E402
+from portrait_v3 import Toile  # noqa: E402
+
+
+def rouxblanc_v3():
+    t = Toile()
+    # la cape qui vole derrière lui, vers la gauche, doublure blanche retournée
+    cape = t.poly([(70, 82), (58, 92), (44, 110), (32, 130), (20, 152), (34, 148), (44, 156), (56, 150), (64, 158),
+                   (72, 124), (80, 86)])
+    t.piece(cape, V, ombre=0)
+    for pts in ([(62, 96), (46, 130), (36, 150)], [(68, 104), (56, 136), (50, 152)]):
+        t.peindre(t.courbe(pts), N)
+    doublure = t.poly([(32, 130), (20, 152), (34, 148), (44, 156), (40, 136)])
+    t.piece(doublure, B, ombre=2)
+    # la robe
+    robe = t.poly([(64, 84), (108, 84), (114, 104), (116, 130), (124, 154), (112, 158), (100, 154), (88, 159),
+                   (76, 154), (64, 158), (52, 154), (56, 128), (58, 104)])
+    t.piece(robe, V, ombre=4)
+    for x0, x1 in [(68, 62), (80, 78), (100, 104), (110, 116)]:
+        t.peindre(t.courbe([(x0, 118), (x0 - 1, 134), (x1, 150)]), N)
+    for (x, y) in [(60, 132), (78, 138), (114, 132), (96, 140), (88, 124)]:
+        t.etoile(x, y, B, 1)
+    # deux galons blancs qui descendent de la ceinture, brodés de runes
+    for x in (66, 104):
+        g = t.poly([(x, 118), (x + 5, 118), (x + 7 + (x - 86) // 6, 146), (x + 1 + (x - 86) // 6, 146)]) & robe
+        t.piece(g, B, ombre=0)
+        for y in range(122, 144, 5):
+            t.pixels(x + 1 + (y - 118) * (x - 86) // 170, y, ":o:\no::")
+    galon = t.poly([(52, 146), (122, 144), (125, 152), (50, 154)]) & robe
+    t.peindre(galon, N)
+    t.peindre(t.trait([(52, 146), (122, 144)]) & robe, B)
+    for x in range(54, 122, 7):
+        t.pixels(x, 148, "o:o:\n:o::\no:o:")
+    # les chaussons pointus
+    for x in (70, 94):
+        p = t.poly([(x, 154), (x + 14, 154), (x + 18, 157), (x + 22, 152), (x + 21, 159), (x, 159)])
+        t.piece(p, V, bord=N, ombre=0)
+        t.peindre(t.trait([(x, 159), (x + 21, 159)]), B)
+    # la ceinture, la boucle et le petit grimoire pendu
+    ceint = t.poly([(56, 112), (116, 112), (117, 118), (55, 118)]) & robe
+    t.piece(ceint, N, bord=None, lumiere=False)
+    t.peindre(t.rect(57, 113, 115, 113), V)
+    t.piece(t.rect(84, 111, 92, 119), B, ombre=0)
+    t.peindre(t.rect(86, 113, 90, 117), N)
+    t.peindre(t.trait([(100, 118), (102, 122)]), B)
+    livre = t.poly([(96, 122), (110, 120), (112, 136), (98, 138)])
+    t.piece(livre, B, ombre=0)
+    t.peindre(t.poly([(99, 124), (109, 122), (110, 134), (100, 135)]), V)
+    t.pixels(102, 126, "ooo\no:o\nooo")
+    # la pèlerine étoilée sur les épaules, au bord festonné
+    pel = t.poly([(60, 84), (112, 84), (118, 98), (110, 102), (102, 98), (94, 103), (86, 99), (78, 103), (70, 98),
+                  (62, 102), (54, 98)])
+    t.piece(pel, V, ombre=2)
+    t.peindre(t.trait([(54, 98), (62, 102), (70, 98), (78, 103), (86, 99), (94, 103), (102, 98), (110, 102),
+                       (118, 98)]), B)
+    # le bras levé (manche évasée, revers blanc) qui tient le bâton
+    manche = t.poly([(102, 84), (114, 78), (130, 64), (140, 70), (134, 82), (124, 102), (114, 106), (106, 98)])
+    t.piece(manche, V, ombre=3)
+    t.peindre(t.courbe([(116, 84), (122, 78), (130, 68)]), N)
+    revers = t.poly([(126, 66), (136, 58), (146, 72), (136, 78)])
+    t.piece(revers, B, ombre=0)
+    t.peindre(t.trait([(130, 68), (138, 62)]) | t.trait([(133, 73), (141, 67)]), V)
+    # le bâton noueux
+    baton = t.fuseau([(144, 26), (140, 96), (145, 160)], 4, 5)
+    t.piece(baton, V, ombre=0)
+    for y in (84, 112, 138):
+        t.peindre(t.trait([(139, y), (146, y + 2)]), N)
+    t.peindre(t.trait([(146, 100), (151, 94), (150, 90)], 2), V)
+    for pts in ([(144, 28), (135, 20), (136, 8)], [(144, 28), (153, 20), (151, 8)], [(144, 28), (145, 18), (145, 6)]):
+        t.piece(t.fuseau(pts, 3, 1), V, ombre=0)
+    gemme = t.poly([(144, 2), (152, 12), (144, 24), (136, 12)])
+    t.piece(gemme, B, ombre=0)
+    t.peindre(t.poly([(144, 4), (144, 22), (138, 12)]), V)
+    t.peindre(t.trait([(144, 3), (144, 23)]), N)
+    t.peindre(t.trait([(137, 12), (151, 12)]), N)
+    t.point(140, 10, B); t.point(141, 9, B)
+    for k in range(12):
+        a = k * math.pi / 6 + 0.26
+        x0, y0 = 144 + 14 * math.cos(a), 13 + 14 * math.sin(a)
+        x1, y1 = 144 + (21 if k % 2 == 0 else 17) * math.cos(a), 13 + (21 if k % 2 == 0 else 17) * math.sin(a)
+        t.peindre(t.trait([(x0, y0), (x1, y1)]), B)
+    # la main qui serre le bâton
+    t.pixels(135, 60, """
+..::::::::...
+.:oooooooo:..
+:oo:ooo:ooo:.
+:ooooooooooo:
+:::::::::::o:
+:ooooooooooo:
+:::::::::::o:
+:ooooooooooo:
+:::::::::::o:
+.:oooooooooo:
+..::::::::::.
+""")
+    # l'autre bras, tendu vers l'avant gauche ; la paume ouverte porte une sphère de lumière
+    manche2 = t.poly([(66, 86), (56, 92), (42, 104), (34, 112), (46, 120), (58, 110), (70, 104)])
+    t.piece(manche2, V, ombre=3)
+    rev2 = t.poly([(32, 106), (42, 100), (52, 116), (44, 122)])
+    t.piece(rev2, B, ombre=0)
+    t.peindre(t.trait([(37, 108), (46, 104)]) | t.trait([(40, 113), (49, 109)]), V)
+    paume = t.ell(18, 104, 40, 116)
+    for x, y0 in [(19, 100), (24, 98), (29, 98), (34, 100)]:
+        t.piece(t.fuseau([(x + 1, 108), (x, y0 + 3), (x + 1, y0)], 4, 3), B, ombre=0)
+    t.piece(t.fuseau([(38, 110), (42, 104), (44, 100)], 5, 3), B, ombre=0)
+    t.piece(paume, B, ombre=0)
+    t.peindre(t.courbe([(22, 110), (28, 113), (36, 110)]), N)
+    t.damier(t.bord(paume, 0, 1, 2), V)
+    orbe = t.ell(16, 70, 38, 92)
+    t.piece(orbe, B, ombre=0)
+    t.peindre(t.ell(19, 73, 35, 89), V)
+    t.peindre(t.courbe([(20, 84), (24, 76), (32, 78), (30, 84), (26, 82)]), B)
+    t.peindre(t.ell(23, 75, 27, 78), B)
+    for k in range(8):
+        a = k * math.pi / 4
+        t.peindre(t.trait([(27 + 14 * math.cos(a), 81 + 14 * math.sin(a)),
+                           (27 + 18 * math.cos(a), 81 + 18 * math.sin(a))]), B)
+    for (x, y) in [(8, 66), (44, 70), (6, 96), (40, 62)]:
+        t.etincelle(x, y)
+    # les cheveux roux qui tombent sur les épaules
+    t.piece(t.fuseau([(68, 34), (60, 54), (62, 74)], 9, 3), V, ombre=0, lumiere=False)
+    t.piece(t.fuseau([(104, 34), (112, 54), (110, 72)], 9, 3), V, ombre=0, lumiere=False)
+    for pts in ([(64, 44), (61, 56), (62, 68)], [(108, 44), (111, 56), (110, 66)]):
+        t.peindre(t.courbe(pts), N)
+    # la tête
+    visage = t.ell(62, 26, 110, 82)
+    t.piece(visage, B, ombre=0)
+    t.damier(visage & t.rect(0, 0, 176, 41), V)
+    # la grande barbe blanche, striée de mèches rousses (vertes) : Rouxblanc
+    barbe = t.poly([(64, 62), (70, 74), (78, 78), (94, 78), (102, 74), (108, 62), (110, 80), (106, 100), (100, 114),
+                    (94, 124), (88, 132), (90, 138), (84, 136), (80, 126), (72, 112), (66, 96), (62, 80)])
+    t.piece(barbe, B, ombre=3, sens_ombre=(1, 1))
+    for pts in ([(70, 82), (72, 100), (80, 118)], [(78, 84), (80, 104), (85, 126)], [(94, 84), (94, 104), (90, 120)],
+                [(102, 80), (100, 98), (96, 110)]):
+        t.peindre(t.courbe(pts), N)
+    for pts in ([(74, 80), (76, 102), (82, 122)], [(98, 82), (97, 100), (93, 114)]):
+        t.piece(t.fuseau(pts, 4, 1), V, bord=None, lumiere=False)
+    t.peindre(t.courbe([(86, 84), (87, 110), (86, 130)]), N)
+    # le chapeau : bord large, cône étoilé dont la pointe retombe en arrière
+    bord = t.ell(38, 22, 134, 40)
+    t.piece(bord, V, ombre=2)
+    cone = t.poly([(60, 32), (112, 32), (104, 16), (94, 6), (86, 0), (80, 4), (70, 18)])
+    t.piece(cone, V, ombre=3)
+    pointe = t.fuseau([(86, 2), (74, -3), (60, 0), (52, 8)], 7, 2)
+    t.piece(pointe, V, ombre=0)
+    t.etoile(51, 10, B, 2)
+    bande = t.poly([(62, 24), (110, 24), (112, 32), (60, 32)]) & cone
+    t.peindre(bande, N)
+    t.pixels(70, 25, "::o::o:oo::o::o:o:oo::o:\n:o:o::o:o:o::o:o::o:o::o\n::o::o:oo::o::o:o:oo::o:")
+    for (x, y) in [(82, 12), (96, 18), (74, 20), (90, 6)]:
+        t.etoile(x, y, B, 1)
+    # le visage : une ombre douce sur la joue droite
+    t.damier(visage & t.bord(visage, 1, 0, 3) & t.rect(0, 44, 176, 66), V)
+    # sourcils roux en broussaille, levés (l'air bienveillant et inspiré)
+    t.piece(t.fuseau([(65, 44), (71, 40), (80, 42)], 2, 4), V, ombre=0)
+    t.piece(t.fuseau([(107, 44), (101, 40), (92, 42)], 2, 4), V, ombre=0)
+    # les lunettes rondes, cerclage fin
+    for x in (65, 91):
+        verre = t.ell(x, 46, x + 15, 59)
+        t.peindre(verre & ~t.ell(x + 1, 47, x + 14, 58), N)
+        t.point(x + 3, 49, V); t.point(x + 4, 48, V)
+    t.peindre(t.courbe([(81, 51), (86, 49), (90, 51)]), N)
+    t.peindre(t.trait([(61, 51), (65, 52)]), N); t.peindre(t.trait([(106, 52), (111, 51)]), N)
+    OEIL = """
+..::::::..
+.:ooo###:.
+:ooo#o::#:
+:ooo#:::#:
+.:ooo###:.
+..::::::..
+"""
+    t.pixels(68, 49, OEIL)
+    t.pixels(94, 49, OEIL)
+    for x in (69, 95):
+        t.peindre(t.courbe([(x, 56), (x + 4, 57), (x + 8, 56)]), N)
+    # les rides du sourire au coin des yeux
+    t.peindre(t.trait([(63, 56), (61, 54)]), N); t.peindre(t.trait([(63, 58), (61, 58)]), N)
+    t.peindre(t.trait([(108, 56), (110, 54)]), N); t.peindre(t.trait([(108, 58), (110, 58)]), N)
+    # le nez, rond et franc
+    nez = t.poly([(85, 52), (88, 59), (92, 63), (90, 67), (86, 68), (81, 67), (79, 63), (83, 59)])
+    t.piece(nez, B, ombre=0)
+    t.damier(t.bord(nez, 1, 0, 2) | t.bord(nez, 0, 1, 1), V)
+    t.point(83, 66, N); t.point(88, 66, N); t.point(82, 62, B)
+    # la moustache en guidon : rousse à gauche, blanche à droite ; le sourire
+    md = t.piece(t.fuseau([(85, 67), (74, 71), (64, 67), (62, 60)], 8, 2), V, ombre=0)
+    t.peindre(t.courbe([(82, 68), (74, 70), (66, 66)]) & md, N)
+    mg = t.piece(t.fuseau([(87, 67), (98, 71), (108, 67), (110, 60)], 8, 2), V, ombre=0)
+    t.peindre(t.courbe([(90, 68), (98, 70), (106, 66)]) & mg, N)
+    t.peindre(t.trait([(86, 66), (86, 70)]), N)
+    t.pixels(78, 70, """
+:o.............o:
+.:::::::::::::::.
+.:ooooooooooooo:.
+..:o:o:o:o:o:o:..
+...:#########:...
+....:::::::::....
+""")
+    t.sol(160)
+    return t.image()
+
+
+OEIL_MYRIAM = """
+:..::::::...
+.:::ooo##:..
+..:ooo#o:#:.
+..:ooo#::#:.
+...:ooo##:..
+....::::....
+"""
+
+
+
+def myriam_v3():
+    t = Toile()
+    # la chevelure, longue et ondulée, derrière tout le reste
+    chev = t.poly([(60, 36), (52, 50), (50, 70), (44, 90), (46, 108), (40, 120), (54, 116), (60, 104), (64, 86),
+                   (100, 86), (104, 100), (110, 112), (118, 110), (112, 96), (110, 74), (104, 50), (96, 36)])
+    t.piece(chev, V, ombre=3)
+    for pts in ([(56, 52), (52, 80), (46, 104)], [(62, 60), (58, 88), (52, 112)], [(102, 56), (106, 82), (112, 104)],
+                [(98, 64), (102, 88), (106, 104)]):
+        t.peindre(t.courbe(pts), N)
+    for pts in ([(58, 48), (54, 66)], [(100, 50), (104, 66)]):
+        t.peindre(t.courbe(pts), B)
+    # la robe : la jupe évasée qui traîne au sol vers la gauche
+    jupe = t.poly([(68, 108), (92, 108), (104, 124), (118, 146), (126, 160), (100, 158), (80, 160), (56, 158),
+                   (26, 160), (36, 150), (48, 136), (60, 120)])
+    t.piece(jupe, V, ombre=4)
+    for pts in ([(72, 112), (64, 136), (56, 158)], [(84, 112), (84, 138), (82, 158)], [(94, 114), (104, 138), (108, 158)]):
+        t.peindre(t.courbe(pts), N)
+    for (x, y) in [(70, 128), (92, 132), (60, 146), (100, 150), (78, 150), (112, 148), (48, 152)]:
+        t.etoile(x, y, B, 1)
+    t.point(86, 122, B); t.point(66, 140, B); t.point(96, 144, B)
+    # le jupon blanc, dentelé, qui paraît par la fente de la robe
+    jupon = t.poly([(80, 112), (86, 112), (100, 158), (66, 158)]) & jupe
+    t.piece(jupon, B, ombre=0)
+    for y in range(120, 156, 6):
+        w = (y - 112) * 17 // 46
+        t.peindre(t.trait([(83 - w + 2, y), (83 + w - 2, y)]) & jupon & (((t.xx) % 2) == 0), N)
+    t.damier(t.bord(jupon, 1, 0, 2), V)
+    ourlet = t.bord(jupe, 0, 1, 4)
+    t.peindre(ourlet, B)
+    for x in range(26, 128, 6):
+        t.peindre(t.trait([(x, 160), (x + 3, 156), (x + 6, 160)]) & ourlet, N)
+    # le corsage, taille fine, et la ceinture à boucle de lune
+    corsage = t.poly([(68, 78), (94, 78), (96, 92), (92, 110), (68, 110), (64, 92)])
+    t.piece(corsage, V, ombre=2)
+    t.peindre(t.trait([(80, 82), (80, 106)]), N)
+    for y in (86, 92, 98):
+        t.point(77, y, B); t.point(83, y, B)
+        t.peindre(t.trait([(77, y), (83, y + 2)]) | t.trait([(83, y), (77, y + 2)]), B)
+    ceint = t.rect(64, 106, 96, 111)
+    t.piece(ceint, N, bord=N, lumiere=False)
+    t.peindre(t.rect(65, 107, 95, 107), V)
+    t.piece(t.ell(75, 103, 85, 114), B, ombre=0)
+    t.peindre(t.ell(78, 104, 86, 112), N)
+    # le grand col dressé, pointu, blanc
+    col = t.poly([(66, 80), (54, 60), (60, 62), (70, 72), (90, 72), (100, 62), (106, 60), (96, 80)])
+    t.piece(col, B, ombre=2)
+    t.peindre(t.trait([(60, 64), (68, 76)]) | t.trait([(100, 64), (92, 76)]), V)
+    # le bras sur la hanche (coude en dehors)
+    bras = t.fuseau([(68, 84), (52, 94), (66, 106)], 9, 6)
+    t.piece(bras, V, ombre=2)
+    t.piece(t.poly([(58, 100), (62, 96), (66, 104), (62, 106)]), B, ombre=0)
+    main = t.ell(62, 101, 72, 110)
+    t.piece(main, B, ombre=0)
+    t.peindre(t.trait([(65, 105), (70, 104)]) | t.trait([(65, 108), (70, 107)]), N)
+    # le bâton à orbe, levé haut ; une chauve-souris de compagnie perchée dessus
+    baton = t.fuseau([(132, 30), (130, 100), (134, 160)], 3, 4)
+    t.piece(baton, V, ombre=0)
+    for y in (90, 120, 146):
+        t.peindre(t.trait([(129, y), (135, y + 1)]), N)
+    t.piece(t.fuseau([(132, 32), (124, 22), (126, 12), (132, 8)], 3, 2), V, ombre=0)
+    t.piece(t.fuseau([(132, 32), (140, 22), (138, 12), (132, 8)], 3, 2), V, ombre=0)
+    orbe = t.ell(124, 4, 140, 20)
+    t.piece(orbe, B, ombre=0)
+    t.peindre(t.ell(126, 6, 138, 18), V)
+    t.peindre(t.ell(127, 7, 135, 17) & ~t.ell(130, 6, 140, 16), B)
+    t.point(134, 9, B)
+    for k in range(10):
+        a = k * math.pi / 5 + 0.3
+        r0, r1 = 12, (17 if k % 2 == 0 else 14)
+        t.peindre(t.trait([(132 + r0 * math.cos(a), 12 + r0 * math.sin(a)), (132 + r1 * math.cos(a), 12 + r1 * math.sin(a))]), B)
+    # le bras levé qui tient le bâton, manche en pointe
+    manche = t.poly([(92, 80), (104, 74), (122, 62), (128, 68), (116, 82), (106, 92), (96, 92)])
+    t.piece(manche, V, ombre=2)
+    t.piece(t.poly([(104, 92), (110, 86), (112, 100)]), V, ombre=0)
+    t.piece(t.poly([(118, 60), (126, 54), (134, 66), (126, 72)]), B, ombre=0)
+    t.pixels(126, 58, """
+.::::::::.
+:oooooooo:
+::::::::o:
+:oooooooo:
+::::::::o:
+:oooooooo:
+.::::::::.
+""")
+    # la tête
+    visage = t.ell(64, 32, 96, 74)
+    t.piece(visage, B, ombre=0)
+    t.damier(visage & t.bord(visage, 1, 0, 3) & t.rect(0, 40, 176, 66), V)
+    # la frange en mèches
+    t.piece(t.poly([(62, 38), (98, 38), (98, 48), (92, 44), (86, 50), (80, 44), (72, 50), (66, 44), (62, 52)]), V,
+            ombre=0)
+    # le chapeau pointu dont la pointe est cassée
+    bordc = t.ell(40, 30, 120, 44)
+    t.piece(bordc, V, ombre=2)
+    cone = t.poly([(58, 38), (102, 38), (96, 24), (90, 10), (84, 4), (78, 14), (66, 28)])
+    t.piece(cone, V, ombre=3)
+    pointe = t.fuseau([(85, 6), (96, 2), (104, 8), (106, 18)], 6, 2)
+    t.piece(pointe, V, ombre=0)
+    t.peindre(t.trait([(84, 8), (90, 4)]), N)
+    bande = t.poly([(62, 30), (98, 30), (100, 38), (60, 38)]) & cone
+    t.peindre(bande, N)
+    t.piece(t.rect(76, 30, 84, 38), B, ombre=0)
+    t.peindre(t.rect(78, 32, 82, 36), N)
+    for (x, y) in [(84, 16), (90, 28), (66, 34)]:
+        t.etoile(x, y, B, 1)
+    # la pièce cousue sur le chapeau, et la chauve-souris perchée sur le bord
+    piece_ = t.poly([(68, 18), (79, 16), (80, 27), (69, 28)])
+    t.piece(piece_, B, ombre=0)
+    t.peindre(piece_ & ~t.poly([(70, 20), (77, 19), (78, 25), (71, 26)]) & (((t.xx + t.yy) % 2) == 0), N)
+    t.peindre(t.poly([(71, 21), (76, 20), (77, 24), (72, 25)]), V)
+    t.pixels(101, 26, """
+.##...............##.
+####....#...#....####
+#####..:##:##:..#####
+.#######o###o#######.
+..:####:#:#:#####:...
+....:##.#####.##:....
+.....:..::.::..:.....
+""")
+    # le visage : sourcil levé, cils, regard en coin, sourire sûr de lui
+    t.peindre(t.courbe([(67, 52), (72, 49), (78, 51)]), N)
+    t.peindre(t.courbe([(84, 50), (89, 46), (95, 48)]), N)
+    t.peindre(t.courbe([(84, 51), (89, 47), (95, 49)]), N)
+    t.pixels(66, 53, OEIL_MYRIAM)
+    t.pixels(83, 53, OEIL_MYRIAM)
+    t.pixels(80, 57, """
+..:..
+..:..
+..::.
+.::::
+""")
+    t.pixels(74, 64, """
+...........::
+:........:::.
+.:......::#..
+..::::::##...
+...#####.....
+""")
+    t.damier(t.ell(66, 60, 72, 64), V); t.damier(t.ell(88, 60, 94, 64), V)
+    t.sol(161)
+    return t.image()
+
+
+PORTRAITS_V3 = {"item_rouxblanc.gif": rouxblanc_v3, "item_myriam.gif": myriam_v3}
+
+
 if __name__ == "__main__":
     noms = sys.argv[1:] or list(DESSINS)
     for nom in noms:
-        finir(nom, grille(DESSINS[nom]))
+        finir(nom, PORTRAITS_V3[nom]() if nom in PORTRAITS_V3 else grille(DESSINS[nom]))
     print(len(noms), "portraits")

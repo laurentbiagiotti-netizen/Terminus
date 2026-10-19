@@ -1797,6 +1797,131 @@ def heraut_dessin(r):
         """)
 
 
+# ------------------------------------------------------------------
+# Portraits v3 : grille fine de 176 x 170 cases (2 x 2 pixels), dessinés par pièces avec portrait_v3.Toile
+# (liseré noir, aplat, lumière, ombre tramée), visages détaillés, objet de métier lisible. Voir la méthode
+# dans portrait_v3.py. Ils remplacent les portraits en grille 88 x 85 de même nom (gardés plus haut).
+# ------------------------------------------------------------------
+from dessiner_lieux import finir  # noqa: E402
+from portrait_v3 import Toile, texte as texte_v3  # noqa: E402
+
+
+def coursier_v3():
+    t = Toile()
+    # les traits de vitesse
+    for (x0, x1, y) in [(6, 40, 64), (14, 52, 78), (2, 30, 92), (20, 56, 108), (8, 44, 124), (26, 50, 140),
+                        (30, 46, 54)]:
+        t.peindre(t.rect(x0, y, x1, y + 1), B)
+        t.peindre(t.rect(x1 + 4, y, x1 + 6, y + 1), B)
+    # la jambe arrière, talon relevé
+    cuisse2 = t.fuseau([(86, 106), (74, 122), (66, 132)], 13, 10)
+    t.piece(cuisse2, V, ombre=2)
+    mollet2 = t.fuseau([(68, 130), (56, 122), (48, 112)], 9, 7)
+    t.piece(mollet2, B, ombre=2)
+    t.peindre(t.rect(44, 100, 60, 130) & mollet2 & t.bord(mollet2, 1, 0, 3), V)
+    basket2 = t.poly([(36, 104), (50, 100), (54, 112), (42, 118), (34, 112)])
+    t.piece(basket2, V, ombre=0)
+    t.peindre(t.trait([(36, 112), (44, 116)], 2), B)
+    t.peindre(t.trait([(40, 106), (48, 103)]) & (((t.xx) % 2) == 0), N)
+    # le bras arrière qui balance
+    bras2 = t.fuseau([(96, 78), (84, 96), (72, 102)], 9, 7)
+    t.piece(bras2, V, ombre=2)
+    t.piece(t.ell(64, 96, 76, 108), B, ombre=0)
+    t.peindre(t.trait([(66, 101), (72, 100)]), N)
+    # le gros sac de livraison sur le dos
+    sac = t.poly([(54, 46), (96, 38), (104, 90), (62, 98)])
+    t.piece(sac, B, ombre=4)
+    t.peindre(t.poly([(58, 54), (96, 47), (98, 56), (60, 63)]), V)
+    t.peindre(t.trait([(59, 64), (99, 57)]), N)
+    t.peindre(t.trait([(55, 48), (95, 40)]), N)
+    texte_v3(t, 64, 70, "->", V, 3)
+    t.peindre(t.trait([(64, 88), (100, 82)]) & (((t.xx) % 3) != 0), N)
+    t.peindre(t.courbe([(70, 40), (76, 30), (84, 37)], 2), V)
+    # le torse penché, maillot à bandes
+    torse = t.poly([(96, 70), (118, 68), (112, 96), (102, 112), (82, 110), (86, 90)])
+    t.piece(torse, V, ombre=3)
+    t.rayures(torse & ~t.bord(torse, -1, -1, 1), N, 8, 2, vertical=False)
+    t.peindre(t.courbe([(96, 72), (90, 92), (86, 108)], 2), N)
+    t.peindre(t.trait([(98, 70), (90, 96)], 2), B)
+    # le cuissard et la jambe avant, tendue
+    cuisse = t.fuseau([(92, 106), (106, 118), (114, 124)], 13, 10)
+    t.piece(cuisse, V, ombre=2)
+    t.peindre(t.trait([(92, 110), (110, 124)]), B)
+    mollet = t.fuseau([(114, 124), (118, 138), (120, 148)], 9, 7)
+    t.piece(mollet, B, ombre=2)
+    basket = t.poly([(112, 146), (126, 146), (138, 152), (138, 158), (110, 158)])
+    t.piece(basket, V, ombre=0)
+    t.peindre(t.rect(110, 156, 138, 158), B)
+    t.peindre(t.trait([(116, 149), (128, 149)]) & (((t.xx) % 2) == 0), N)
+    t.peindre(t.rect(110, 159, 138, 159), N)
+    # le bras avant, tendu, qui tient le casque de vélo
+    bras = t.fuseau([(112, 76), (126, 88), (140, 90)], 9, 7)
+    t.piece(bras, V, ombre=2)
+    t.peindre(t.trait([(118, 80), (124, 86)]) & bras, B)
+    casque = t.ell(136, 74, 168, 100) & t.rect(0, 0, 176, 92)
+    t.piece(casque, B, ombre=2)
+    for x in (144, 151, 158):
+        t.peindre(t.poly([(x, 78), (x + 3, 78), (x + 4, 86), (x + 1, 86)]), N)
+    t.peindre(t.trait([(138, 90), (166, 90)]), N)
+    t.piece(t.rect(138, 91, 166, 93), V, ombre=0)
+    t.peindre(t.courbe([(140, 94), (150, 104), (160, 94)]), V)
+    main = t.ell(134, 86, 146, 98)
+    t.piece(main, B, ombre=0)
+    t.peindre(t.trait([(137, 90), (142, 90)]) | t.trait([(137, 93), (142, 93)]), N)
+    # la tête, tendue vers l'avant
+    tete = t.ell(108, 30, 144, 72)
+    t.piece(tete, B, ombre=0)
+    oreille = t.ell(106, 46, 116, 60)
+    t.piece(oreille, B, ombre=0)
+    t.peindre(t.courbe([(112, 49), (109, 53), (112, 57)]), N)
+    # les mèches qui dépassent de la casquette
+    for pts in ([(110, 40), (102, 42), (98, 50)], [(110, 46), (100, 52), (98, 60)]):
+        t.piece(t.fuseau(pts, 5, 1), V, ombre=0)
+    # la casquette à l'envers
+    cas = t.ell(106, 22, 142, 46) & t.rect(0, 0, 176, 38)
+    t.piece(cas, V, ombre=2)
+    t.peindre(t.courbe([(112, 26), (124, 22), (136, 26)]), N)
+    t.piece(t.ell(122, 20, 126, 24), V, ombre=0)
+    visiere = t.poly([(108, 34), (96, 36), (88, 42), (100, 42), (110, 40)])
+    t.piece(visiere, V, ombre=0)
+    t.damier(visiere, N)
+    t.peindre(t.trait([(108, 37), (140, 37)]) & cas, B)
+    # le visage : sourcils froncés de détermination, grand sourire d'effort
+    t.piece(t.fuseau([(118, 44), (124, 45), (129, 48)], 2, 3), V, ombre=0)
+    t.piece(t.fuseau([(133, 48), (137, 44), (141, 43)], 3, 2), V, ombre=0)
+    t.oeil(118, 47, l=11, h=8, regard=(2, 0))
+    t.oeil(132, 48, l=9, h=7, regard=(2, 0))
+    nez = t.poly([(138, 52), (146, 60), (144, 63), (138, 62)])
+    t.piece(nez, B, ombre=0)
+    t.damier(t.bord(nez, 0, 1, 1), V)
+    t.pixels(122, 62, """
+:...............:
+.:::::::::::::::.
+.:ooooooooooooo:.
+..:::::::::::::..
+...:##:####:#:...
+....:::::::::....
+""")
+    t.damier(t.ell(116, 58, 122, 62), V)
+    # la goutte de sueur qui s'envole
+    t.pixels(100, 22, """
+...:...
+..:o:..
+.:ooo:.
+:ooo#o:
+:oo##o:
+.:ooo:.
+..:::..
+""")
+    t.peindre(t.trait([(92, 20), (96, 22)]) | t.trait([(94, 16), (98, 19)]), B)
+    t.sol(160, cx=92)
+    return t.image()
+
+
+PORTRAITS_V3 = {"item_coursier.gif": coursier_v3}
+
+
+
 PORTRAITS = {
     "item_gestionnaire.gif": gestionnaire_dessin, "item_appariteur.gif": appariteur_dessin,
     "item_documentaliste.gif": documentaliste_dessin, "item_coursier.gif": coursier_dessin,
@@ -1820,6 +1945,8 @@ if __name__ == "__main__":
     noms = sys.argv[1:] or list(PORTRAITS)
     n = 0
     for nom in noms:
-        if nom in PORTRAITS:
+        if nom in PORTRAITS_V3:
+            finir(nom, PORTRAITS_V3[nom]()); n += 1
+        elif nom in PORTRAITS:
             (perso_fini if nom in FINIS else perso)(nom, PORTRAITS[nom]); n += 1
     print(n, "portraits")
