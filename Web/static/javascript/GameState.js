@@ -1716,7 +1716,13 @@ toute la journée, avec les mêmes sorts. Sauf que ce ne sont pas des chopes. »
 aux B3, et Laurent m'a demandé de garder un œil sur Grep. C'est plutôt lui qui me surveille. » Grep hausse les épaules. « Greeep. »");
     		Vendor.addCmdText("less", "Le marchand retire ses dents en or : un dentier de farces et attrapes. « Tim, M1, trésorier du BDE. \
 Laurent m'a donné le rôle parce que j'ai, paraît-il, une tête à vendre des sorts. Si tu veux un vrai sweat, la boutique est au local du BDE, à l'école. »");
-    		Artisan.addCmdText("less", "« Annie. Dans la vraie vie, je viens le jeudi parler d'automatisation aux M1 : tout ce qu'on fait deux fois, \
+    		// Si l'atelier n'est pas fini (rouages, remonter.sh), l'Artisane garde sa demande en cours :
+    		// c'est elle qui apprend à lancer un script (./), indispensable pour la suite.
+    		var demandeArtisane = Artisan.getText();
+    		var atelierFini = this.knows("bash");
+    		Artisan.addCmdText("less", (atelierFini ? "" : "« Annie. Dans la vraie vie, je viens le jeudi parler d'automatisation aux M1 : tout ce qu'on fait deux fois, \
+on l'écrit dans un script. Mais toi, tu n'as pas fini mon atelier, et c'est ici qu'on apprend à lancer un script. Je reprends mon rôle. »\n\n" + demandeArtisane) ||
+    			"« Annie. Dans la vraie vie, je viens le jeudi parler d'automatisation aux M1 : tout ce qu'on fait deux fois, \
 on l'écrit dans un script. Tu l'as vu avec le dragon. Les horloges, en revanche, sont vraiment à moi. »");
     		Farmer.addCmdText("less", "« Alan, B2, en alternance chez un hébergeur. Le coup de l'épi unique, c'est moi qui l'ai proposé : \
 chez nous, on appelle ça ne pas avoir de sauvegarde. Depuis, j'en fais deux. »");

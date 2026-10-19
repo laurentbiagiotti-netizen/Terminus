@@ -1711,7 +1711,8 @@ Shell.capturer = function(fonction){
 Shell.lancerScript = function(chemin, io, direct, args, options){
 	if (!state.knows("bash")){
 		throw new ShellError(direct ?
-			chemin + " : tu ne sais pas encore lancer un script. Quelqu'un qui automatise son travail pourra te l'apprendre." :
+			chemin + " : tu ne sais pas encore lancer un script. Quelqu'un qui automatise son travail pourra te l'apprendre." +
+				C.gris("\n(L'Artisane, à l'Atelier de la PlaceDuVillage : finis ses rouages, elle te donnera son script. less Artisane dit où tu en es.)") :
 			"Tu ne connais pas encore le sort « bash ». " + Shell.ouApprendre("bash"));
 	}
 	var r = Shell.chercher(chemin, io, "bash");
