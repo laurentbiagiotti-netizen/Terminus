@@ -428,14 +428,15 @@ def frances():
 
 # ------------------------------------------------------------------ le Corbeau
 def corbeau():
-    """Le Corbeau : un gros oiseau perché sur une branche noueuse sous un croissant de lune, l'œil rond et malin, le
-    bec crochu ; une plume se détache et tombe en virevoltant."""
+    """Le Corbeau : un grand corbeau noir, élancé, perché sur une branche noueuse sous un croissant de lune ; le plumage
+    noir est dessiné par des liserés et des reflets blancs, avec quelques reflets verts ; le bec est droit et épais,
+    l'œil petit et malin ; une plume se détache et tombe en virevoltant."""
     t = Toile()
     # le croissant de lune et les étoiles
     lune = t.ell(10, 6, 40, 36) & ~t.ell(18, 2, 46, 32)
     t.piece(lune, B, ombre=2)
     t.point(16, 26, V); t.point(18, 30, V); t.point(14, 20, V)
-    for (x, y, n) in [(52, 10, 2), (70, 4, 1), (8, 52, 1), (44, 44, 1), (90, 8, 1), (168, 14, 1)]:
+    for (x, y, n) in [(52, 10, 2), (70, 4, 1), (8, 52, 1), (44, 44, 1), (90, 8, 1), (168, 14, 1), (160, 70, 1)]:
         t.etoile(x, y, B, n)
     # le tronc mort et la branche noueuse
     tronc = t.poly([(148, 160), (152, 128), (156, 112), (164, 102), (176, 98), (176, 160)])
@@ -443,98 +444,94 @@ def corbeau():
     for pts in ([(156, 158), (158, 134), (164, 112)], [(166, 158), (168, 130), (172, 108)]):
         t.peindre(t.courbe(pts), N)
     t.peindre(t.ell(160, 134, 168, 146), N); t.peindre(t.ell(162, 137, 166, 143), V)
-    branche = t.fuseau([(158, 112), (110, 120), (70, 128), (24, 126)], 11, 5)
+    branche = t.fuseau([(158, 112), (110, 118), (70, 126), (24, 124)], 11, 5)
     t.piece(branche, V, ombre=2)
-    t.peindre(t.courbe([(146, 118), (108, 122), (70, 129), (30, 127)]), N)
-    for pts in ([(40, 127), (30, 118), (24, 108)], [(60, 128), (56, 140), (50, 146)]):
+    t.peindre(t.courbe([(154, 114), (108, 120), (70, 127), (30, 125)]), N)
+    for pts in ([(40, 125), (30, 116), (24, 106)], [(128, 116), (134, 128), (140, 134)]):
         t.piece(t.fuseau(pts, 4, 1), V, ombre=0)
-    for (x, y) in [(22, 104), (48, 148)]:
-        f = t.fuseau([(x, y + 4), (x - 3, y), (x, y - 5)], 1, 1) | t.ell(x - 3, y - 4, x + 3, y + 4)
+    for (x, y) in [(22, 102), (142, 138)]:
+        f = t.ell(x - 3, y - 4, x + 3, y + 4)
         t.piece(f, B, ombre=0)
         t.peindre(t.trait([(x, y - 3), (x, y + 3)]), V)
-    # la queue en éventail, qui pend derrière la branche
-    for (pts, e) in (([(70, 118), (54, 138), (40, 158)], 12), ([(76, 118), (66, 140), (60, 160)], 12),
-                     ([(64, 116), (44, 132), (26, 148)], 11)):
-        q = t.fuseau(pts, e, e - 2)
-        t.piece(q, V, ombre=2)
-        t.peindre(t.courbe(pts), N)
-        t.peindre(t.bord(q, -1, 0, 1) & t.rect(0, 130, 176, 170), B)
-        t.trame(q & ~t.bord(q, -1, 0, 2), N, 0.3)
-    # les pattes qui serrent la branche
-    for x in (88, 104):
-        p = t.trait([(x, 112), (x - 2, 122)], 4)
-        t.piece(p, V, ombre=0)
-        t.pixels(x - 8, 120, """
+    # la longue queue en coin, qui pend derrière la branche
+    queue = t.poly([(72, 112), (88, 118), (60, 152), (44, 158), (40, 150)])
+    t.piece(queue, N, bord=B, lumiere=False)
+    for pts in ([(78, 116), (50, 154)], [(84, 118), (58, 152)], [(74, 114), (44, 150)]):
+        t.peindre(t.trait(pts), B)
+    t.trame(queue & ~t.bord(queue, 0, 0, 1), V, 0.12)
+    for pts in ([(78, 116), (50, 154)], [(84, 118), (58, 152)], [(74, 114), (44, 150)]):
+        t.peindre(t.trait(pts), B)
+    # les pattes noires, griffes blanches, qui serrent la branche
+    for x in (94, 108):
+        p = t.trait([(x, 106), (x - 1, 118)], 3)
+        t.piece(p, N, bord=B, lumiere=False)
+        t.pixels(x - 6, 116, """
 .:::.:::.:::.
 :ooo:ooo:ooo:
-:ooo:ooo:oo:.
 .:o:.:o:.:o:.
 ..:...:...:..
 """)
-    # le corps, gonflé
-    corps = t.poly([(96, 40), (118, 46), (130, 62), (130, 88), (120, 106), (104, 118), (80, 120), (64, 114),
-                    (54, 98), (60, 76), (78, 56)])
-    t.piece(corps, V, ombre=4)
-    # le plastron : des rangs d'écailles de plumes
-    for row, y in enumerate(range(66, 112, 7)):
+    # le corps élancé, noir, poitrail en écailles liserées de blanc
+    corps = t.poly([(106, 44), (122, 52), (130, 72), (126, 94), (114, 108), (96, 116), (80, 118), (74, 110),
+                    (82, 88), (94, 62)])
+    t.piece(corps, N, bord=B, lumiere=False)
+    t.trame(corps & t.bord(corps, -1, 0, 4) & ~t.bord(corps, -1, 0, 1), V, 0.25)
+    for row, y in enumerate(range(60, 112, 6)):
         for x in range(100 + (row % 2) * 4, 130, 8):
-            if corps[y + 3, x] and corps[y, x - 3]:
-                t.peindre(t.courbe([(x - 3, y), (x, y + 3), (x + 3, y)]) & corps, N)
-                t.point(x, y + 1, B) if row < 2 else None
-    t.trame(corps & ~t.bord(corps, -1, -1, 3) & t.rect(0, 84, 176, 170), N, 0.25)
-    # l'aile repliée : les rémiges longues, bordées de blanc, puis les couvertures en écailles
-    for pts in ([(96, 92), (72, 118), (46, 136)], [(100, 96), (78, 120), (54, 138)], [(104, 98), (86, 120), (64, 136)],
-                [(106, 100), (94, 120), (76, 132)]):
-        r = t.fuseau(pts, 10, 3)
-        t.piece(r, V, ombre=0, lumiere=False)
-        t.peindre(t.bord(r, -1, -1, 1) & ~t.rect(0, 0, 176, 104), B)
-        t.peindre(t.courbe(pts) & r & ~t.rect(0, 0, 176, 108), N)
-    aile = t.poly([(98, 54), (110, 70), (108, 92), (96, 106), (80, 114), (68, 108), (66, 90), (76, 70)])
-    t.piece(aile, V, ombre=3)
-    for row, y in enumerate(range(64, 108, 7)):
-        for x in range(66 + (row % 2) * 4, 110, 8):
+            if corps[y + 3, x] and corps[y - 2, x] and corps[y, x + 3]:
+                t.peindre(t.courbe([(x - 3, y), (x, y + 2), (x + 3, y)]), B if row % 3 else V)
+    t.peindre(t.courbe([(124, 58), (130, 74), (126, 92)]) & corps, B)
+    # l'aile repliée : rémiges longues et pointues vers la queue, couvertures en écailles
+    for pts in ([(112, 86), (86, 112), (58, 136)], [(116, 90), (92, 114), (66, 134)], [(118, 94), (98, 114), (74, 130)]):
+        r = t.fuseau(pts, 9, 2)
+        t.piece(r, N, bord=B, lumiere=False)
+        t.peindre(t.courbe(pts) & r & ((t.xx % 2) == 0), V)
+        t.trame(eroder_h(r, 1) & ~t.courbe(pts, 2), V, 0.12)
+    aile = t.poly([(102, 52), (116, 64), (120, 84), (112, 100), (96, 110), (84, 112), (84, 96), (92, 70)])
+    t.piece(aile, N, bord=B, lumiere=False)
+    t.trame(aile & t.bord(aile, -1, -1, 5) & ~t.bord(aile, -1, -1, 1), V, 0.25)
+    t.peindre(t.courbe([(94, 64), (100, 56), (108, 54)], 2), B)
+    for row, y in enumerate(range(62, 108, 7)):
+        for x in range(84 + (row % 2) * 4, 120, 8):
             if aile[y + 4, x] and aile[y - 1, x] and aile[y, x - 4] and aile[y, x + 4]:
-                t.peindre(t.courbe([(x - 4, y), (x, y + 4), (x + 4, y)]), N)
-                t.point(x - 3, y, B); t.point(x - 2, y + 1, B)
-    # la tête, légèrement penchée, avec ses plumes ébouriffées
-    for pts in ([(104, 28), (96, 22), (92, 22)], [(102, 36), (92, 34), (88, 36)]):
-        t.piece(t.fuseau(pts, 6, 1), V, ombre=0, lumiere=False)
-    tete = t.ell(98, 18, 142, 60)
-    t.piece(tete, V, ombre=3)
-    for pts in ([(104, 40), (108, 50), (114, 56)], [(110, 30), (106, 36)]):
-        t.peindre(t.courbe(pts), N)
-    # le jabot ébouriffé des corbeaux, sous le bec
-    for (x0, y0, x1, y1) in [(134, 52, 128, 66), (128, 54, 120, 68), (122, 54, 114, 66), (138, 50, 136, 62)]:
+                t.peindre(t.courbe([(x - 4, y), (x, y + 3), (x + 4, y)]), B)
+    for pts in ([(96, 66), (106, 58)], [(92, 80), (104, 70)], [(100, 96), (112, 84)]):
+        t.peindre(t.trait(pts), V)
+    # le jabot hérissé des corbeaux, sous le bec
+    for (x0, y0, x1, y1) in [(126, 52, 120, 68), (120, 52, 112, 66),
+                             (132, 50, 128, 64), (114, 50, 106, 60)]:
         pl = t.fuseau([(x0, y0), ((x0 + x1) / 2 + 1, (y0 + y1) / 2), (x1, y1)], 6, 1)
-        t.piece(pl, V, ombre=0, lumiere=False)
-        t.peindre(t.courbe([(x0, y0 + 2), (x1 + 1, y1 - 2)]) & pl, N)
-    # le bec crochu, blanc tramé, la commissure souriante
-    bec = t.poly([(132, 28), (150, 28), (162, 34), (170, 42), (170, 50), (164, 44), (152, 44), (134, 46)])
-    t.piece(bec, B, ombre=0)
-    t.damier(t.bord(bec, 0, 1, 2) | t.rect(132, 28, 140, 46) & bec, V)
-    t.peindre(t.trait([(140, 31), (150, 31)]), V)
-    bas = t.poly([(134, 46), (156, 46), (162, 50), (152, 54), (138, 54)])
-    t.piece(bas, B, ombre=0)
-    t.damier(t.bord(bas, 0, 1, 2), V)
-    t.peindre(t.courbe([(132, 46), (146, 47), (160, 46)]), N)
-    t.peindre(t.courbe([(130, 44), (134, 49), (138, 47)]), N)
-    t.point(146, 34, N); t.point(147, 34, N)
-    # l'œil rond, malin : un sourcil de plumes froncé, la pupille vers le joueur
-    t.piece(t.ell(114, 28, 130, 44), B, ombre=0)
-    t.peindre(t.ell(115, 29, 129, 43), N)
-    t.peindre(t.ell(116, 30, 128, 42), V)
-    t.peindre(t.ell(118, 32, 128, 42), N)
-    t.peindre(t.ell(119, 33, 122, 36), B)
-    t.point(126, 40, B)
-    t.peindre(t.fuseau([(110, 24), (120, 24), (134, 30)], 3, 5), N)
-    t.peindre(t.fuseau([(112, 22), (122, 22), (134, 27)], 1, 2), B)
+        t.piece(pl, N, bord=B, lumiere=False)
+        t.peindre(t.courbe([(x0, y0 + 2), (x1 + 1, y1 - 3)]) & pl, V)
+    # la tête, plate et allongée
+    tete = t.ell(102, 26, 138, 56)
+    t.piece(tete, N, bord=B, lumiere=False)
+    t.trame(tete & t.bord(tete, 0, -1, 5) & ~t.bord(tete, 0, -1, 1), V, 0.5)
+    t.peindre(t.courbe([(106, 32), (114, 28), (126, 28)], 2), B)
+    t.peindre(t.courbe([(104, 40), (106, 48), (110, 54)]), B)
+    # le bec droit et épais, noir, arête et commissure soulignées de blanc
+    bec = t.poly([(130, 31), (148, 33), (164, 39), (172, 44), (164, 46), (148, 49), (132, 52)])
+    t.piece(bec, N, bord=B, lumiere=False)
+    t.peindre(t.courbe([(134, 33), (150, 35), (166, 41), (171, 44)]), B)
+    t.peindre(t.trait([(134, 45), (166, 44)]), B)
+    t.peindre(t.trait([(140, 38), (156, 39)]) & ((t.xx % 2) == 0), V)
+    for k in range(4):
+        t.peindre(t.trait([(130 + k * 2, 36 + k * 2), (136 + k * 2, 34 + k * 2)]), V)
+    # l'œil petit et malin, cerclé de blanc, sourcil froncé
+    oeil = t.ell(116, 32, 126, 42)
+    t.peindre(dilater_h(t, oeil) & ~oeil, B)
+    t.peindre(oeil, N)
+    t.peindre(t.ell(118, 34, 124, 40), V)
+    t.peindre(t.ell(119, 35, 123, 39), N)
+    t.point(120, 36, B)
+    t.peindre(t.fuseau([(112, 30), (120, 29), (130, 33)], 2, 3), B)
     # la plume qui se détache et tombe, en virevoltant
     p = t.fuseau([(30, 96), (40, 80), (54, 70)], 3, 8) | t.fuseau([(54, 70), (58, 66)], 6, 1)
-    t.piece(p, V, ombre=0, lumiere=False)
+    t.piece(p, N, bord=B, lumiere=False)
     t.peindre(t.courbe([(28, 100), (40, 80), (58, 66)]), B)
     for k in range(4):
         x, y = 38 + k * 5, 84 - k * 4
-        t.peindre(t.trait([(x, y), (x - 3, y - 4)]) & p, N)
+        t.peindre(t.trait([(x, y), (x - 3, y - 4)]) & p, V)
     t.peindre(t.courbe([(62, 58), (70, 64), (68, 72)]) & ((t.yy % 3) != 0), B)
     t.peindre(t.courbe([(20, 102), (14, 110), (20, 116)]) & ((t.yy % 3) != 0), B)
     t.sol(160, cx=120, l=54)
