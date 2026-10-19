@@ -276,8 +276,8 @@ def megane():
 # ------------------------------------------------------------------ Jahmal, le maître du Chantier des maîtres
 
 def jahmal():
-    """Trapu, tablier de cuir, masque de soudeur relevé sur le front, grande barbe ; il tient à bout de bras le
-    petit navire fini, poli comme un galet, et le contemple en se grattant la barbe."""
+    """Trapu, tablier de cuir, masque de soudeur relevé sur le front, grande barbe ; poing sur la hanche, il lève
+    dans sa paume le petit navire fini, poli comme un galet, et le contemple, fier de son atelier."""
     t = Toile()
     # les jambes courtes et solides, bottes de chantier
     for x in (62, 92):
@@ -290,7 +290,7 @@ def jahmal():
         t.peindre(t.rect(x - 6, 157, x + 26, 158), B)
         t.peindre(t.trait([(x - 2, 152), (x + 8, 150)]), B)
     # le corps large : chemise verte manches retroussées
-    corps = t.poly([(52, 84), (126, 84), (136, 104), (130, 130), (52, 130), (44, 104)])
+    corps = t.poly([(56, 86), (122, 86), (128, 104), (124, 130), (56, 130), (52, 104)])
     t.piece(corps, V, ombre=4)
     # le tablier de cuir, blanc, piqué, avec sa grande poche à outils
     tab = t.poly([(64, 92), (114, 92), (118, 142), (60, 142)])
@@ -302,52 +302,75 @@ def jahmal():
     t.peindre(t.trait([(70, 116), (108, 116)]) & ((t.xx % 3) == 0), V)
     t.peindre(t.trait([(89, 116), (89, 132)]), N)
     # le marteau et la clé dans la poche
-    t.piece(t.rect(76, 102, 80, 116), V, ombre=0)
-    t.piece(t.rect(70, 98, 86, 104), V, ombre=0)
-    t.piece(t.trait([(98, 116), (102, 100)], 4), V, ombre=0)
-    t.piece(t.ell(97, 94, 107, 104) & ~t.rect(100, 94, 103, 99), V, ombre=0)
+    t.piece(t.rect(76, 108, 80, 116), V, ombre=0)
+    t.piece(t.rect(70, 104, 86, 109), V, ombre=0)
+    t.piece(t.trait([(98, 116), (100, 110)], 4), V, ombre=0)
+    t.piece(t.ell(95, 102, 105, 112) & ~t.rect(98, 102, 101, 106), V, ombre=0)
     # la sangle du tablier
-    t.peindre(t.trait([(64, 92), (58, 86)], 3) | t.trait([(114, 92), (120, 86)], 3), B)
-    t.peindre(t.rect(52, 124, 126, 128) & corps & ~tab, N)
-    # le bras levé vers la barbe (il se gratte le menton), à gauche
-    bras2 = t.fuseau([(60, 88), (44, 100), (30, 106)], 16, 13)
+    t.peindre(t.trait([(64, 92), (60, 86)], 3) | t.trait([(114, 92), (118, 86)], 3), B)
+    t.peindre(t.rect(54, 124, 128, 128) & corps & ~tab, N)
+    # le bras gauche, poing sur la hanche, coude écarté
+    bras2 = t.fuseau([(54, 94), (42, 104), (32, 114)], 15, 12) | t.ell(46, 84, 64, 102)
     t.piece(bras2, V, ombre=3)
-    t.peindre(t.courbe([(54, 96), (44, 102), (36, 104)]), N)
-    avb = t.fuseau([(30, 104), (40, 92), (54, 84)], 12, 10)
+    t.peindre(t.courbe([(50, 92), (44, 100)]), N)
+    avb = t.fuseau([(32, 116), (42, 122), (54, 124)], 12, 11)
     t.piece(avb, B, ombre=2)
-    t.peindre(t.courbe([(34, 100), (42, 92), (50, 87)]), V)
-    t.peindre(t.trait([(28, 98), (34, 110)], 4), B)
-    t.peindre(t.trait([(29, 99), (33, 109)]) & ((t.yy % 2) == 0), V)
-    # le bras tendu qui porte le navire
-    bras = t.fuseau([(120, 90), (130, 100), (140, 102)], 16, 13)
+    t.peindre(t.courbe([(36, 120), (44, 123), (50, 124)]), V)
+    manchette(t, [(28, 110), (34, 122)], 5)
+    t.peindre(t.trait([(30, 112), (32, 120)]) & ((t.yy % 2) == 0), V)
+    poing(t, 50, 116, 64, 130, 3, sens=-1)
+    # le bras droit, plié, qui lève le navire à hauteur d'yeux
+    bras = t.fuseau([(122, 94), (134, 104), (144, 110)], 15, 12) | t.ell(114, 84, 132, 102)
     t.piece(bras, V, ombre=3)
-    t.peindre(t.courbe([(124, 94), (130, 99), (136, 100)]), N)
-    t.peindre(t.trait([(138, 96), (140, 108)], 3), B)
-    t.peindre(t.trait([(139, 97), (141, 107)]) & ((t.yy % 2) == 0), V)
-    avbras = t.fuseau([(142, 102), (150, 96), (156, 88)], 12, 10)
+    t.peindre(t.courbe([(122, 96), (132, 104), (140, 108)]), N)
+    t.peindre(t.trait([(142, 104), (146, 116)], 4), B)
+    t.peindre(t.trait([(143, 106), (146, 115)]) & ((t.yy % 2) == 0), V)
+    avbras = t.fuseau([(148, 110), (152, 100), (154, 90)], 12, 10)
     t.piece(avbras, B, ombre=2)
-    t.peindre(t.courbe([(146, 98), (151, 93), (154, 89)]), V)
-    # la paume ouverte sous le navire
-    paume = t.ell(142, 78, 170, 90)
+    t.peindre(t.courbe([(150, 106), (152, 98), (153, 92)]), V)
+    # la paume ouverte, doigts relevés autour de la coque
+    paume = t.ell(134, 82, 172, 94)
+    paume |= t.fuseau([(168, 88), (172, 82), (172, 76)], 6, 4) | t.fuseau([(138, 88), (134, 82), (134, 76)], 6, 4)
     t.piece(paume, B, ombre=0)
-    t.piece(t.fuseau([(166, 82), (170, 78), (172, 74)], 5, 3), B, ombre=0)
-    t.peindre(t.trait([(148, 86), (162, 86)]), N)
-    # le petit navire, poli comme un galet : coque, cheminée, fumée
-    coque = t.poly([(138, 66), (172, 66), (166, 78), (144, 78)])
+    for x in (160, 165):
+        t.peindre(t.trait([(x, 88), (x + 2, 92)]), N)
+    t.peindre(t.courbe([(140, 91), (152, 93), (164, 91)]), N)
+    # le petit navire, poli comme un galet : coque, ligne de flottaison, hublots, passerelle, cheminée
+    coque = t.poly([(126, 64), (174, 62), (170, 72), (164, 82), (142, 82), (132, 74)])
     t.piece(coque, V, ombre=2)
-    t.peindre(t.trait([(140, 69), (170, 69)]), B)
-    for x in (148, 154, 160):
-        t.piece(t.ell(x, 71, x + 3, 74), B, ombre=0)
-    pont = t.rect(146, 56, 164, 66)
+    t.peindre(t.trait([(130, 70), (170, 69)]) | t.trait([(130, 71), (170, 70)]), B)
+    t.peindre(t.trait([(140, 79), (164, 79)]) & ((t.xx % 2) == 0), N)
+    for x in (140, 147, 154, 161):
+        t.piece(t.ell(x, 73, x + 3, 76), B, ombre=0)
+    t.peindre(t.trait([(128, 63), (172, 61)]), B)
+    for x in range(130, 172, 4):
+        t.peindre(t.trait([(x, 58), (x, 62)]), B)
+    t.peindre(t.trait([(130, 58), (172, 56)]), B)
+    cab = t.rect(138, 48, 166, 61)
+    t.piece(cab, B, ombre=2)
+    for x in (141, 147, 153, 159):
+        t.peindre(t.rect(x, 52, x + 3, 55), V)
+    pont = t.rect(144, 40, 160, 48)
     t.piece(pont, B, ombre=2)
-    t.peindre(t.rect(149, 59, 152, 62) | t.rect(156, 59, 159, 62), V)
-    chem = t.rect(152, 44, 158, 56)
+    t.peindre(t.rect(146, 42, 158, 44), N)
+    t.peindre(t.rect(147, 43, 148, 43) | t.rect(151, 43, 152, 43) | t.rect(155, 43, 156, 43), V)
+    mat = t.trait([(134, 26), (134, 62)], 2)
+    t.piece(mat, B, ombre=0)
+    t.peindre(t.trait([(130, 40), (138, 40)]), B)
+    t.piece(t.poly([(135, 26), (144, 29), (135, 32)]), V, ombre=0)
+    chem = t.poly([(160, 26), (168, 26), (168, 48), (160, 48)])
     t.piece(chem, V, ombre=0)
-    t.peindre(t.rect(152, 48, 158, 49), B)
-    for (x, y, r) in [(156, 36, 3), (162, 30, 3), (168, 22, 2)]:
+    t.peindre(t.rect(160, 31, 168, 33), B)
+    t.peindre(t.rect(160, 26, 168, 27), N)
+    for (x, y, r) in [(166, 18, 3), (172, 10, 2), (160, 8, 2)]:
         t.peindre(t.ell(x - r, y - r, x + r, y + r) & ~t.ell(x - r + 1, y - r + 1, x + r - 1, y + r - 1), B)
-    t.etincelle(136, 50); t.etincelle(170, 50)
-    t.etoile(130, 64, B, 1)
+    # les doigts qui tiennent la coque, le pouce de l'autre côté
+    for pts in ([(164, 90), (168, 84), (168, 78)], [(158, 92), (162, 86), (163, 80)]):
+        t.piece(t.fuseau(pts, 6, 5), B, ombre=0)
+    t.piece(t.fuseau([(140, 90), (136, 84), (134, 78)], 6, 5), B, ombre=0)
+    t.peindre(t.trait([(166, 82), (167, 80)]) | t.trait([(161, 84), (162, 82)]), N)
+    t.etincelle(124, 50); t.etincelle(174, 46)
+    t.etoile(120, 70, B, 1)
     # la tête, la grande barbe, le masque de soudeur relevé
     for x in (50, 106):
         o = t.ell(x, 46, x + 10, 62)
@@ -355,21 +378,16 @@ def jahmal():
         t.peindre(t.courbe([(x + 3, 49), (x + 7, 54), (x + 3, 59)]), N)
     tete = t.ell(54, 26, 112, 86)
     t.piece(tete, B, ombre=0)
-    barbe = (t.ell(54, 46, 112, 102) & ~t.ell(62, 34, 106, 72) & t.rect(0, 58, 176, 170))
-    barbe |= t.fuseau([(84, 94), (84, 104), (88, 110)], 14, 2)
+    barbe = (t.ell(54, 46, 112, 100) & ~t.ell(62, 34, 106, 72) & t.rect(0, 58, 176, 170))
+    for (x0, y0, x1, y1) in [(60, 82, 78, 98), (74, 86, 94, 102), (90, 82, 108, 98)]:
+        barbe |= t.ell(x0, y0, x1, y1)
+    barbe |= t.fuseau([(84, 98), (86, 104), (90, 108)], 10, 2)
     barbe &= ~t.ell(72, 64, 98, 87)
     t.piece(barbe, V, ombre=3)
-    for pts in ([(64, 70), (66, 82), (72, 92)], [(74, 78), (76, 90), (80, 98)], [(96, 78), (94, 90), (90, 98)],
-                [(104, 70), (102, 82), (98, 92)]):
+    for pts in ([(66, 78), (70, 84), (66, 90), (68, 94)], [(84, 90), (81, 96), (84, 102)],
+                [(102, 78), (98, 84), (102, 90)]):
         t.peindre(t.courbe(pts), N)
-    t.peindre(t.courbe([(60, 66), (62, 74)]) | t.courbe([(70, 84), (72, 90)]), B)
-    t.peindre(t.courbe([(86, 102), (90, 106), (86, 106)]), N)
-    # la main qui gratte la barbe
-    main2 = t.ell(50, 74, 64, 88)
-    t.piece(main2, B, ombre=0)
-    doigts = t.fuseau([(58, 78), (64, 76), (68, 79)], 4, 3) | t.fuseau([(58, 82), (65, 81), (69, 84)], 4, 3)
-    t.piece(doigts, B, ombre=0)
-    t.peindre(t.trait([(52, 80), (57, 79)]), N)
+    t.peindre(t.courbe([(62, 68), (63, 76)]) | t.courbe([(76, 96), (77, 102)]), B)
     # la moustache et la bouche contente
     t.pixels(76, 76, """
 :............:
@@ -1083,130 +1101,154 @@ def neil():
     """Assis sur un tonneau, voûté, casquette de capitaine fatiguée, grande barbe blanche ; la lanterne pend au
     bout d'un bras, la grosse clé de sa vieille cabine posée sur le genou."""
     t = Toile()
-    # le tonneau
-    ton = t.poly([(46, 116), (110, 116), (116, 138), (110, 160), (46, 160), (40, 138)])
+    # le tonneau, sous lui
+    ton = t.poly([(38, 112), (100, 112), (106, 136), (100, 160), (38, 160), (32, 136)])
     t.piece(ton, B, ombre=4)
-    for x in (58, 70, 82, 94):
-        t.peindre(t.courbe([(x, 117), (x - 2 + (x - 78) // 8, 138), (x, 159)]), V)
-    for y in (122, 152):
-        cer = t.poly([(42, y), (114, y), (114, y + 4), (42, y + 4)]) & ton
+    for x in (48, 60, 72, 84):
+        t.peindre(t.courbe([(x, 113), (x - 2 + (x - 66) // 8, 136), (x, 159)]), V)
+    for y in (120, 150):
+        cer = t.poly([(30, y), (108, y), (108, y + 4), (30, y + 4)]) & ton
         t.piece(cer, V, ombre=0, lumiere=False)
-        t.peindre(t.trait([(44, y + 2), (112, y + 2)]) & ((t.xx % 6) == 0), B)
-    t.peindre(t.rect(40, 159, 116, 160), N)
+        t.peindre(t.trait([(32, y + 2), (106, y + 2)]) & ((t.xx % 6) == 0), B)
+    t.peindre(t.rect(30, 159, 108, 160), N)
+    # la jambe du fond : cuisse, genou, tibia, botte
+    cu2 = t.fuseau([(84, 126), (100, 130), (114, 132)], 15, 13) | t.ell(108, 124, 124, 140)
+    t.piece(cu2, V, ombre=3)
+    ti2 = t.fuseau([(116, 136), (118, 144), (118, 150)], 12, 10)
+    t.piece(ti2, V, ombre=2)
+    bt2 = t.poly([(110, 146), (124, 146), (132, 151), (132, 159), (108, 159)])
+    t.piece(bt2, B, ombre=2)
+    t.peindre(t.rect(108, 157, 132, 159), V)
+    t.peindre(t.rect(110, 146, 124, 148), V)
+    # la jambe de devant, genou en avant
+    cu = t.fuseau([(86, 118), (110, 120), (132, 122)], 17, 15) | t.ell(124, 112, 144, 132)
+    t.piece(cu, V, ombre=3)
+    t.peindre(t.courbe([(96, 113), (114, 113), (130, 114)]), B)
+    t.peindre(t.courbe([(104, 124), (116, 126), (126, 127)]), N)
+    ti = t.fuseau([(136, 128), (139, 140), (140, 148)], 14, 11)
+    t.piece(ti, V, ombre=2)
+    t.peindre(t.courbe([(134, 132), (135, 140), (136, 145)]), N)
+    bt = t.poly([(130, 145), (146, 145), (158, 151), (158, 159), (128, 159)])
+    t.piece(bt, B, ombre=2)
+    t.peindre(t.rect(128, 157, 158, 159), V)
+    t.peindre(t.rect(130, 145, 146, 147), V)
+    t.peindre(t.trait([(132, 152), (144, 151)]) & ((t.xx % 2) == 0), V)
     # le bras qui pend et la lanterne au bout
-    bras2 = t.fuseau([(58, 78), (44, 96), (36, 112)], 12, 10)
+    bras2 = t.fuseau([(54, 80), (40, 96), (30, 108)], 12, 10)
     t.piece(bras2, V, ombre=2)
-    manchette(t, [(32, 110), (42, 114)], 4)
+    manchette(t, [(26, 106), (36, 110)], 4)
     for k in range(12):
         a = k * math.pi / 6
-        r0, r1 = 20, (28 if k % 2 == 0 else 24)
-        if -0.3 < math.sin(a) and math.cos(a) > 0.3:
+        r0, r1 = 18, (26 if k % 2 == 0 else 22)
+        if math.cos(a) > 0.3 and math.sin(a) > -0.6:
             continue
-        cx, cy = 26, 136
+        cx, cy = 18, 134
         t.peindre(t.trait([(cx + r0 * math.cos(a), cy + r0 * math.sin(a)),
                            (cx + r1 * math.cos(a), cy + r1 * math.sin(a))]), B)
-    t.peindre(t.ell(28, 112, 38, 122) & ~t.ell(30, 114, 36, 120), V)
-    poing(t, 30, 108, 42, 120, 2)
-    toit = t.poly([(16, 124), (26, 118), (36, 124), (34, 128), (18, 128)])
+    t.peindre(t.ell(18, 110, 28, 120) & ~t.ell(20, 112, 26, 118), V)
+    poing(t, 24, 104, 36, 116, 2)
+    toit = t.poly([(8, 122), (18, 116), (28, 122), (26, 126), (10, 126)])
     t.piece(toit, V, ombre=0)
-    lant = t.rect(16, 128, 36, 150)
+    lant = t.rect(8, 126, 28, 148)
     t.piece(lant, V, ombre=0, lumiere=False)
-    t.peindre(t.rect(19, 130, 24, 147) | t.rect(28, 130, 33, 147), B)
-    t.peindre(t.ell(22, 133, 30, 146), B)
-    t.peindre(t.poly([(26, 134), (29, 140), (26, 144), (23, 140)]), V)
-    t.point(26, 139, B)
-    t.piece(t.rect(14, 150, 38, 154), V, ombre=0)
-    # les jambes : genoux en avant, bottes de mer
-    for (y, xg) in ((116, 128), (124, 140)):
-        cu = t.fuseau([(84, y), (110, y), (xg, y + 2)], 16, 14) | t.ell(xg - 9, y - 6, xg + 7, y + 10)
-        t.piece(cu, V, ombre=3)
-        t.peindre(t.courbe([(100, y - 2), (112, y - 3), (xg - 4, y - 2)]), B)
-    for (x, d) in ((124, 0), (136, 8)):
-        mol = t.fuseau([(x + 2, 118 + d), (x + 2, 134), (x + 1, 148)], 15, 12)
-        t.piece(mol, V, ombre=2)
-        t.peindre(t.courbe([(x - 2, 124 + d), (x - 3, 134), (x - 2, 142)]), N)
-        bt = t.poly([(x - 6, 146), (x + 8, 146), (x + 18, 152), (x + 18, 159), (x - 6, 159)])
-        t.piece(bt, B, ombre=2)
-        t.peindre(t.rect(x - 6, 157, x + 18, 159), V)
-        t.peindre(t.trait([(x - 4, 150), (x + 6, 149)]) & ((t.xx % 2) == 0), V)
-    # le caban, dos rond
-    cab = t.poly([(54, 72), (92, 66), (110, 82), (112, 112), (100, 128), (56, 128), (46, 104), (46, 84)])
+    t.peindre(t.rect(11, 128, 16, 145) | t.rect(20, 128, 25, 145), B)
+    t.peindre(t.ell(14, 131, 22, 144), B)
+    t.peindre(t.poly([(18, 132), (21, 138), (18, 142), (15, 138)]), V)
+    t.point(18, 137, B)
+    t.piece(t.rect(6, 148, 30, 152), V, ombre=0)
+    # le caban, dos rond, col relevé, ourlet clair
+    cab = t.poly([(54, 72), (94, 68), (106, 84), (106, 102), (96, 112), (46, 116), (40, 100), (44, 82)])
     t.piece(cab, V, ombre=4)
-    t.peindre(t.courbe([(54, 82), (50, 100), (54, 124)]), N)
-    t.peindre(t.courbe([(62, 90), (60, 106), (64, 122)]), N)
-    poche = t.poly([(58, 106), (74, 104), (74, 109), (58, 111)])
+    t.peindre(t.courbe([(50, 84), (46, 100), (50, 116)]), N)
+    t.piece(t.poly([(42, 110), (98, 108), (94, 116), (44, 118)]), B, ombre=0)
+    t.peindre(t.trait([(44, 113), (96, 112)]) & ((t.xx % 3) != 0), V)
+    poche = t.poly([(52, 98), (68, 96), (68, 101), (52, 103)])
     t.piece(poche, B, ombre=0)
-    t.peindre(t.trait([(60, 108), (72, 106)]) & ((t.xx % 2) == 0), V)
-    t.peindre(t.trait([(48, 124), (100, 124)]) & ((t.xx % 3) != 0), B)
-    for (x, y) in [(82, 104), (96, 102), (82, 116), (96, 114)]:
+    t.peindre(t.trait([(54, 100), (66, 98)]) & ((t.xx % 2) == 0), V)
+    for (x, y) in [(76, 94), (92, 92), (76, 103), (92, 101)]:
         t.piece(t.ell(x - 2, y - 2, x + 2, y + 2), B, ombre=0)
         t.point(x, y, N)
-    # le bras de devant, la main posée sur le genou qui tient la grosse clé
-    bras = t.fuseau([(96, 80), (106, 100), (118, 112)], 12, 10)
+    for pts in ([(56, 70), (62, 82), (60, 92)], [(100, 70), (98, 82), (102, 90)]):
+        t.piece(t.fuseau(pts, 8, 4), B, ombre=0)
+    # le bras de devant, la main sur le genou qui tient la grosse clé
+    bras = t.fuseau([(98, 78), (112, 94), (122, 104)], 12, 10)
     t.piece(bras, V, ombre=2)
-    manchette(t, [(114, 108), (120, 114)], 4)
-    # la grosse clé de la vieille cabine
-    anneau = t.ell(100, 102, 116, 118) & ~t.ell(104, 106, 112, 114)
-    tige = t.rect(114, 108, 158, 112)
-    dents = t.rect(150, 112, 154, 120) | t.rect(144, 112, 147, 118) | t.rect(156, 112, 158, 116)
+    manchette(t, [(118, 100), (124, 106)], 4)
+    anneau = t.ell(106, 98, 122, 114) & ~t.ell(110, 102, 118, 110)
+    tige = t.rect(120, 104, 166, 108)
+    dents = t.rect(158, 108, 162, 116) | t.rect(152, 108, 155, 114) | t.rect(164, 108, 166, 112)
     t.piece(anneau | tige | dents, B, ombre=0)
-    t.peindre(t.rect(116, 110, 156, 110) & ((t.xx % 3) == 0), V)
-    t.etincelle(162, 102)
-    poing(t, 116, 104, 130, 118, 3)
-    # la tête, la grande barbe blanche
-    tete = t.ell(60, 30, 104, 80)
-    t.piece(tete, B, ombre=0)
+    t.peindre(t.rect(122, 106, 164, 106) & ((t.xx % 3) == 0), V)
+    t.etincelle(170, 96)
+    t.etoile(148, 94, B, 1)
+    poing(t, 122, 100, 136, 114, 3)
+    # la tête
     o = t.ell(98, 48, 108, 64)
     t.piece(o, B, ombre=0)
     t.peindre(t.courbe([(104, 51), (101, 56), (104, 61)]), N)
-    barbe = (t.ell(56, 50, 106, 100) & t.rect(0, 60, 176, 170)) | t.fuseau([(80, 96), (78, 106), (84, 112)], 18, 2)
-    barbe &= ~t.ell(68, 50, 96, 76)
-    t.piece(barbe, B, ombre=3)
-    for pts in ([(64, 70), (66, 84), (72, 94)], [(74, 80), (76, 92), (78, 102)], [(88, 80), (88, 92), (86, 102)],
-                [(98, 70), (98, 82), (94, 94)]):
+    tete = t.ell(60, 30, 104, 82)
+    t.piece(tete, B, ombre=0)
+    # la grande barbe blanche : une masse, des lobes, peu de mèches
+    barbe = t.ell(56, 56, 108, 104) & t.rect(0, 64, 176, 170)
+    for (x0, y0, x1, y1) in [(58, 90, 76, 108), (70, 96, 90, 114), (84, 90, 102, 108)]:
+        barbe |= t.ell(x0, y0, x1, y1)
+    barbe |= t.fuseau([(80, 108), (82, 116), (88, 120)], 10, 2)
+    trou = t.ell(66, 48, 98, 84)
+    t.contour(barbe | (trou & tete), N)
+    barbe &= ~trou
+    t.piece(barbe, B, bord=None, ombre=3)
+    for pts in ([(62, 66), (64, 72)], [(102, 66), (100, 72)]):
         t.peindre(t.courbe(pts), N)
-    t.peindre(t.courbe([(80, 104), (84, 110), (80, 110)]), N)
-    # la moustache, la bouche douce
-    m1 = t.piece(t.fuseau([(80, 72), (72, 74), (64, 72)], 7, 2), B, ombre=0)
-    m2 = t.piece(t.fuseau([(82, 72), (90, 74), (98, 72)], 7, 2), B, ombre=0)
-    t.peindre(t.courbe([(78, 73), (70, 74)]) & m1, V)
-    t.peindre(t.courbe([(84, 73), (92, 74)]) & m2, V)
-    t.pixels(74, 78, """
+    for pts in ([(66, 86), (70, 92), (66, 98), (68, 102)], [(82, 92), (78, 100), (82, 106), (84, 112)],
+                [(96, 86), (92, 92), (96, 98), (94, 102)]):
+        t.peindre(t.courbe(pts), N)
+    t.peindre(t.trait([(62, 76), (63, 82)]) | t.trait([(74, 98), (75, 102)]), V)
+    # la moustache en deux grosses mèches, la bouche qui sourit
+    t.pixels(73, 81, """
 :.........:
 .:::::::::.
-..:ooooo:..
-...:::::...
+.:ooooooo:.
+..:::::::..
+...:###:...
+....:::....
 """)
-    # le gros nez rond, les yeux plissés et bienveillants
-    nez = t.ell(76, 58, 88, 70)
+    m1 = t.piece(t.fuseau([(82, 75), (76, 78), (70, 78), (67, 75)], 8, 3), B, ombre=0)
+    m2 = t.piece(t.fuseau([(82, 75), (88, 78), (94, 78), (97, 75)], 8, 3), B, ombre=0)
+    t.peindre(t.courbe([(80, 76), (75, 78), (71, 77)]) & m1, V)
+    t.peindre(t.courbe([(84, 76), (89, 78), (93, 77)]) & m2, V)
+    # le gros nez rond
+    nez = t.ell(75, 60, 89, 74)
     t.piece(nez, B, ombre=0)
     t.damier(t.bord(nez, 1, 1, 2), V)
-    t.point(79, 68, N); t.point(84, 68, N)
-    t.piece(t.fuseau([(62, 48), (68, 44), (78, 47)], 5, 3), V, ombre=0)
-    t.piece(t.fuseau([(86, 47), (94, 44), (100, 47)], 3, 5), V, ombre=0)
-    t.oeil(66, 50, l=11, h=8, regard=(3, 1), paupiere=2)
-    t.oeil(86, 50, l=11, h=8, regard=(3, 1), paupiere=2)
-    for (x, sx) in ((64, -1), (98, 1)):
+    t.point(79, 72, N); t.point(85, 72, N)
+    t.peindre(t.trait([(77, 63), (78, 62)]), V)
+    # les sourcils broussailleux, les yeux bienveillants tournés vers la clé
+    t.piece(t.fuseau([(62, 46), (68, 42), (76, 45)], 6, 3), B, ombre=0)
+    t.piece(t.fuseau([(88, 45), (96, 42), (102, 46)], 3, 6), B, ombre=0)
+    t.peindre(t.courbe([(64, 46), (70, 43), (75, 45)]) | t.courbe([(89, 45), (95, 43), (100, 46)]), V)
+    t.oeil(64, 49, l=12, h=10, regard=(3, 2), paupiere=2)
+    t.oeil(87, 49, l=12, h=10, regard=(3, 2), paupiere=2)
+    for (x, sx) in ((62, -1), (100, 1)):
         t.peindre(t.trait([(x, 55), (x + 3 * sx, 53)]) | t.trait([(x, 58), (x + 3 * sx, 59)]), N)
+    t.damier(t.ell(64, 62, 72, 68) | t.ell(92, 62, 100, 68), V)
     # la vieille casquette de capitaine, molle et inclinée
-    cal = t.poly([(54, 28), (66, 14), (100, 12), (114, 24), (108, 38), (58, 40)])
+    cal = t.poly([(54, 26), (66, 12), (100, 10), (114, 22), (108, 36), (58, 38)])
     t.piece(cal, V, ombre=3)
-    t.peindre(t.courbe([(62, 24), (82, 18), (106, 22)]), N)
-    t.peindre(t.courbe([(70, 20), (84, 16), (96, 16)]), B)
-    band = t.poly([(58, 34), (108, 32), (108, 40), (58, 42)])
+    t.peindre(t.courbe([(62, 22), (82, 16), (106, 20)]), N)
+    t.peindre(t.courbe([(70, 18), (84, 14), (96, 14)]), B)
+    band = t.poly([(58, 32), (108, 30), (108, 37), (58, 39)])
     t.piece(band, B, ombre=0)
-    t.peindre(t.trait([(60, 38), (106, 36)]) & (((t.xx) % 4) < 2), V)
-    t.pixels(80, 24, """
+    t.peindre(t.trait([(60, 35), (106, 33)]) & (((t.xx) % 4) < 2), V)
+    t.pixels(80, 22, """
 ..:o:..
 .:o#o:.
 ..:o:..
 """)
-    vis = t.poly([(56, 40), (90, 40), (96, 44), (60, 46), (50, 44)])
+    vis = t.poly([(56, 38), (90, 38), (96, 42), (60, 44), (50, 42)])
     t.piece(vis, V, ombre=0, lumiere=False)
-    t.peindre(t.trait([(56, 41), (90, 41)]), B)
-    t.sol(161, cx=88, l=74)
+    t.peindre(t.trait([(56, 39), (90, 39)]), B)
+    t.sol(161, cx=90, l=76)
     return t.image()
-
 
 PORTRAITS = {
     "item_kylian.gif": kylian, "item_megane.gif": megane, "item_jahmal.gif": jahmal,
