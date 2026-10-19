@@ -298,5 +298,61 @@ verifier(horsExamen.length === 0, "l'épreuve finale donne tous les sorts des pe
 verifier(/\[SORTS_DE_DEPART, ORDRE_DES_SORTS, ORDRE_DES_SORTS_2, ORDRE_DES_SORTS_3\]/.test(d2.lire("demarrerExamen.toString()")),
 	"l'épreuve finale apprend d'office les sorts des chapitres 1 à 3");
 
+/* --- 8. Shell.ouApprendre ne répond jamais « quelqu'un, quelque part » : il nomme l'objet ou le personnage, le lieu,
+       et le moment où il apparaît ; ou il dit honnêtement que rien ne l'enseigne. Avec l'article qui convient. --- */
+function ou(jeu, s){
+	return jeu.lire("(function(){ var k = state.spells[" + JSON.stringify(s) + "]; delete state.spells[" + JSON.stringify(s) + "];" +
+		" var r = Shell.ouApprendre(" + JSON.stringify(s) + "); if (k) state.spells[" + JSON.stringify(s) + "] = k; return r; })()");
+}
+function aucunQuelquun(jeu, quand){
+	var vagues = jeu.lire("Object.keys(MANUEL)").filter(function(s){ return /Quelqu'un, quelque part/.test(ou(jeu, s)); });
+	verifier(vagues.length === 0, quand + " : ouApprendre répond « quelqu'un, quelque part » pour " + vagues.join(", "));
+}
+var neuf = nouveauMonde({}, 4242);
+aucunQuelquun(neuf, "partie neuve");
+["nmap", "uname", "which", "dmesg"].forEach(function(s){
+	var r = ou(neuf, s);
+	contient(r, "MementoReseau", s + " avant la Crypte : l'objet qui l'enseigne");
+	contient(r, "SalleReseau", s + " avant la Crypte : le lieu");
+	contient(r, "ouverture de la Crypte", s + " avant la Crypte : le moment");
+});
+["scp", "tee"].forEach(function(s){
+	var r = ou(neuf, s);
+	contient(r, "ProcedurePreuves", s + " : l'objet qui l'enseigne");
+	contient(r, "SalleServeurs", s + " : le lieu");
+	contient(r, "clé du Corbeau retirée", s + " : le moment");
+});
+["fsck.ext4", "locate", "updatedb", "lvdisplay", "pvdisplay"].forEach(function(s){
+	contient(ou(neuf, s), "Aucun personnage ni objet ne l'enseigne", s + " : rien ne l'enseigne, le jeu le dit");
+});
+contient(ou(neuf, "touch"), "auprès de l'Artisane", "élision : l'Artisane");
+contient(ou(neuf, "mv"), "auprès du Professeur", "article : du Professeur");
+contient(ou(neuf, "cut"), "auprès du Tavernier", "article : du Tavernier");
+contient(neuf.lire("Shell.chezQui(Radia)"), "auprès de Radia", "un prénom sans article : Radia");
+contient(neuf.lire("Shell.chezQui({ itemname: 'Logeuse', person: true })"), "auprès de la Logeuse", "article : la Logeuse");
+contient(neuf.lire("Shell.chezQui({ itemname: 'Tresorier', person: true })"), "auprès du Tresorier", "article : du Tresorier");
+contient(neuf.lire("Shell.chezQui({ itemname: 'Horloger', person: true })"), "auprès de l'Horloger", "élision : l'Horloger");
+var tousLesPersonnages = neuf.lire("(function(){ var n = {}; Object.keys(World.items).forEach(function(k){ var it = World.items[k]; if (it.person && it.teaches.length) n[it.itemname] = Shell.chezQui(it); }); return n; })()");
+Object.keys(tousLesPersonnages).forEach(function(nom){
+	// Un nom de métier (un mot en -eur, -euse, -ice, -iste, -ier...) prend son article : pas de « auprès de Logeuse ».
+	var metier = /(eur|euse|ice|iste|ane|ier|iere|aire|elle|ante|ent|aut|in|de|ste|SSI)$/.test(nom) && /^[A-Z][a-z]+([A-Z][a-z]+)?$|^RSSI$/.test(nom) &&
+		["Adele", "Butler", "Kylian", "Robert", "Laurent", "Clara", "Remi"].indexOf(nom) === -1;
+	verifier(!/auprès de le /.test(tousLesPersonnages[nom]) && (!metier || tousLesPersonnages[nom] !== "auprès de " + nom),
+		"grammaire : " + nom + " => " + tousLesPersonnages[nom]);
+});
+// En mission cyber (panne sautée), la Tutrice et la Gestionnaire du BatimentB sont hors d'atteinte : le jeu le dit.
+var cyber = nouveauMonde({}, 4444);
+cyber.taper("chapitre 3", "oui");
+aucunQuelquun(cyber, "mission cyber");
+["apropos", "whatis"].forEach(function(s){
+	var r = ou(cyber, s);
+	contient(r, "En mission cyber, rien ne l'enseigne", s + " en mission cyber : honnête");
+	contient(r, "la Tutrice", s + " en mission cyber : qui l'enseigne pendant la panne");
+});
+["dmidecode", "lscpu", "lspci", "lsusb"].forEach(function(s){
+	contient(ou(cyber, s), "la Gestionnaire", s + " en mission cyber : qui l'enseigne pendant la panne");
+});
+contient(ou(cyber, "nmap"), "MementoReseau", "nmap, Crypte ouverte : le MementoReseau, posé");
+
 console.log(verifications + " vérifications, " + echecs + " échec" + (echecs > 1 ? "s" : "") + ".");
 process.exit(echecs ? 1 : 0);
