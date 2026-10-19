@@ -13,7 +13,29 @@ import sys
 import numpy as np
 
 from dessiner_lieux import finir, N, V, B
-from portrait_v3 import Toile, texte
+from portrait_v3 import Toile, POLICE, texte as texte_base
+
+
+# la police 3 x 5 de portrait_v3, avec un g à jambage (une rangée sous la ligne) pour qu'il ne se lise pas « 9 »
+G_JAMBAGE = "...|.##|#.#|#.#|.##|..#|##."
+
+
+def texte(t, x, y, s, c=None, echelle=1):
+    from dessiner_lieux import B as _B
+    c = _B if c is None else c
+    x0 = x
+    for ch in s:
+        if ch.lower() == 'g':
+            for dy, ligne in enumerate(G_JAMBAGE.split('|')):
+                for dx, p_ in enumerate(ligne):
+                    if p_ == '#':
+                        for i in range(echelle):
+                            for j in range(echelle):
+                                t.point(x + dx * echelle + i, y + dy * echelle + j, c)
+            x += 4 * echelle
+        else:
+            x += texte_base(t, x, y, ch, c, echelle)
+    return x - x0
 
 
 # ---------------------------------------------------------------- petites aides communes
@@ -1016,7 +1038,7 @@ def lynn_v3():
     t.peindre(t.bord(capuche, 0, 1, 3) & (((t.xx + t.yy) % 2) == 0), B)
     # les bras, et la liste tenue à deux mains devant elle
     t.piece(t.fuseau([(102, 80), (114, 98), (122, 110)], 11, 9), V, ombre=2)
-    t.piece(t.fuseau([(56, 80), (64, 102), (80, 114)], 12, 9), V, ombre=2)
+    t.piece(t.fuseau([(56, 80), (60, 104), (72, 118)], 12, 9), V, ombre=2)
     feuille = t.poly([(80, 80), (122, 76), (124, 114), (82, 116)])
     t.piece(feuille, B, ombre=0)
     t.piece(t.ell(78, 72, 126, 84) & ~t.ell(82, 75, 122, 82) & t.rect(0, 0, 176, 80), B, ombre=0)
@@ -1025,7 +1047,7 @@ def lynn_v3():
     for k in range(3):
         t.pixels(112, 84 + k * 7, "....o\n...o.\no.o..\n.o...".replace("o", ":"))
     t.peindre(t.rect(112, 105, 116, 109) & ~t.rect(113, 106, 115, 108), N)
-    poing(t, 74, 108, 88, 122, vertical=True)
+    poing(t, 66, 112, 80, 126, vertical=True)
     poing(t, 116, 104, 130, 118, vertical=True)
     # le visage dans la capuche, bordé d'un galon blanc
     galon = t.ell(54, 22, 104, 76) & ~t.ell(58, 26, 100, 72) & t.rect(0, 0, 176, 74)
