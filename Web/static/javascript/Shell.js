@@ -1617,11 +1617,36 @@ Shell.sortInconnu = function(nom){
 
 /* Les sorts que personne n'enseigne dès le départ : ils s'apprennent en cours d'histoire. */
 var SORTS_APPRIS_EN_ROUTE = {
+	"grep": "Il s'apprend auprès de la Bibliothecaire, dans l'ArriereSalle de la Bibliotheque du village : le passage s'ouvre en lisant le LevierDiscret de la Bibliotheque (less LevierDiscret).",
 	"cp": "Il s'apprend auprès de l'Artisane, à l'Atelier du village, quand on lui apporte un Rouage.",
 	"bash": "Il s'apprend auprès de l'Artisane, à l'Atelier du village, une fois ses rouages copiés.",
 	"cowsay": "Ce n'est pas un sort mais un paquet : il s'installe avec sudo apt install cowsay (au chapitre 1, l'Affiche de la SalleDeCours explique apt).",
 	"ssh-keygen": "Il s'apprend au chapitre 3, avec les ConsignesDuCoffre qu'Evi pose dans la SalleServeurs de Cybersup.",
 	"tree": "Il s'apprend dans un drapeau caché de la SalleServeurs de Cybersup, ou en cadeau à la fin du chapitre 1."
+};
+
+/* Les personnages qu'on désigne par leur métier, avec leur article ; les autres portent un prénom (auprès de Radia). */
+var ARTICLES_DES_PERSONNAGES = {
+	le: ["Barde", "Colporteur", "Copiste", "Formateur", "Fossoyeur", "Greffier", "Heraut", "Passeur", "Professeur", "RSSI",
+		"Sacristain", "Sergent", "Serrurier", "Tavernier", "Tresorier"],
+	la: ["Bibliothecaire", "Cantiniere", "Gestionnaire", "Logeuse", "Messagere", "Secretaire", "Sentinelle", "Surveillante", "Tutrice", "Veilleuse"],
+	"l'": ["AdminReseau", "Administratrice", "Allumeur", "Appariteur", "ApprentiCopiste", "Apprentie", "Archiviste", "Artisane",
+		"Enlumineur", "EtudianteCurieuse", "Horloger", "Imprimeur"]
+};
+/* « auprès de la Logeuse », « auprès du Trésorier », « auprès de l'Horloger », « auprès de Radia », ou « en lisant CahierDuRouteur ». */
+Shell.chezQui = function(item){
+	var nom = item.itemname;
+	if (!item.person) return "en lisant " + nom;
+	if (ARTICLES_DES_PERSONNAGES.le.indexOf(nom) > -1) return "auprès du " + nom;
+	if (ARTICLES_DES_PERSONNAGES.la.indexOf(nom) > -1) return "auprès de la " + nom;
+	if (ARTICLES_DES_PERSONNAGES["l'"].indexOf(nom) > -1) return "auprès de l'" + nom;
+	return "auprès de " + nom;
+};
+
+/* Les objets qui n'apparaissent qu'en cours d'histoire : où et quand ils seront posés. */
+var OBJETS_POSES_EN_ROUTE = {
+	"MementoReseau": "dans la SalleReseau de Cybersup, où Vint le punaise à l'ouverture de la Crypte (chapitre 3)",
+	"ProcedurePreuves": "dans la SalleServeurs de Cybersup, où Evi la pose au chapitre 3, une fois la clé du Corbeau retirée"
 };
 
 /* Où apprendre un sort : on cherche dans le monde l'objet ou le personnage qui l'enseigne. */
@@ -1632,34 +1657,40 @@ Shell.ouApprendre = function(sort){
 	var chapitre = typeof chapitreDuSort === "function" ? chapitreDuSort(sort) : 1;
 	var ids = Object.keys(World.rooms);
 	ids.sort(function(a, b){ return ((World.rooms[b].chapitre || 1) === chapitre) - ((World.rooms[a].chapitre || 1) === chapitre); });
+	var horsMission = null;
 	for (var n = 0; n < ids.length; n++){
 		var lieu = World.rooms[ids[n]];
-		// En mission cyber, la panne n'est pas au programme : ses lieux n'enseignent rien.
-		if (lieu.chapitre === 3 && state.has("panneSautee")) continue;
 		for (var i = 0; i < lieu.items.length; i++){
 			if (lieu.items[i].teaches.indexOf(sort) === -1) continue;
+			// En mission cyber, la panne n'est pas au programme : ses lieux sont fermés, ils n'enseignent rien.
+			if (lieu.chapitre === 3 && state.has("panneSautee")){ if (!horsMission) horsMission = { item: lieu.items[i], lieu: lieu }; continue; }
+			var qui = Shell.chezQui(lieu.items[i]);
 			var parent = lieu.parents[0];
 			if (lieu.chapitre === 2 && !state.has("crypteOuverte")) return "Il s'apprend au chapitre 3, sous la Citadelle.";
 			if (lieu.chapitre === 3 && !state.has("panneOuverte")) return "Il s'apprend au chapitre 2, pendant la panne du réseau de l'école.";
 			if (typeof SORTS_ANNEXE !== "undefined" && SORTS_ANNEXE.indexOf(sort) > -1 && !annexeOuverte()) return "Il s'apprend plus tard dans la panne, à l'Annexe, une fois le bâtiment B réparé.";
-			if (lieu === current_room) return "Il s'apprend ici même, " + (lieu.items[i].person ? "auprès de " : "en lisant ") + lieu.items[i].itemname +
-				" : cat " + lieu.items[i].itemname;
+			if (lieu === current_room) return "Il s'apprend ici même, " + qui + " : cat " + lieu.items[i].itemname;
 			var machine = typeof racineDe === "function" ? racineDe(lieu) : null;
-			if (machine && typeof PosteB !== "undefined" && machine === PosteB) return "Il s'apprend en lisant " + lieu.items[i].itemname +
+			if (machine && typeof PosteB !== "undefined" && machine === PosteB) return "Il s'apprend " + qui +
 				", sur le Poste du BatimentB (cd ~/Cybersup/BatimentB/Poste" + (lieu === machine ? "" : ", puis cd " + Shell.cheminAffiche(lieu)) + ").";
-			if (machine) return "Il s'apprend " + (lieu.items[i].person ? "auprès de " : "en lisant ") + lieu.items[i].itemname +
+			if (machine) return "Il s'apprend " + qui +
 				", sur la machine " + machine.racineHote + " (ssh " + machine.racineHote + ")" + (lieu === machine ? "" : ", dans " + Shell.cheminAffiche(lieu)) + ".";
 			if (typeof Citadelle !== "undefined" && lieu !== Citadelle && Shell.racineAbsolue(lieu) === Citadelle){
 				var morceaux = [];
 				for (var l = lieu, garde = 0; l && l !== Citadelle && garde++ < 50; l = l.parents[0]) morceaux.unshift(l.room_name);
-				return "Il s'apprend " + (lieu.items[i].person ? "auprès de " : "en lisant ") + lieu.items[i].itemname +
-					", dans /" + morceaux.join("/") + " de la Citadelle (ssh citadelle, puis cd " + morceaux.join("/") + ").";
+				return "Il s'apprend " + qui + ", dans /" + morceaux.join("/") + " de la Citadelle (ssh citadelle, puis cd " + morceaux.join("/") + ").";
 			}
-			return "Il s'apprend " + (lieu.items[i].person ? "auprès de " : "en lisant ") + lieu.items[i].itemname +
-				", dans " + lieu.room_name + (parent && parent !== Home ? " (du côté de " + parent.room_name + ")" : "") + ".";
+			return "Il s'apprend " + qui + ", dans " + lieu.room_name + (parent && parent !== Home ? " (du côté de " + parent.room_name + ")" : "") + ".";
 		}
 	}
-	return "Quelqu'un, quelque part en ce monde, pourra te l'enseigner.";
+	// Un objet qui n'est pas encore posé dans le monde : on dit où et quand il le sera.
+	var plusTard = Object.keys(World.items).map(function(k){ return World.items[k]; }).filter(function(it){
+		return it.teaches.indexOf(sort) > -1 && OBJETS_POSES_EN_ROUTE[it.itemname];
+	})[0];
+	if (plusTard) return "Il s'apprend " + Shell.chezQui(plusTard) + ", " + OBJETS_POSES_EN_ROUTE[plusTard.itemname] + ".";
+	if (horsMission) return "En mission cyber, rien ne l'enseigne : il s'apprend " + Shell.chezQui(horsMission.item) +
+		", dans " + horsMission.lieu.room_name + ", pendant la panne du réseau (chapitre 2), qui ne fait pas partie de ta mission.";
+	return "Aucun personnage ni objet ne l'enseigne dans Terminus : ce sort n'est au programme d'aucun chapitre.";
 };
 
 Shell.appeler = function(nom, args, io){
@@ -1926,7 +1957,12 @@ Shell.tuyau = function(jetons){
 				else sortie = Shell.appeler(nom, args, io);
 			} catch (e){
 				if (!(e instanceof ShellError)) throw e;
-				io.erreurs.push(Shell.situer(e.message));
+				// « Tu ne connais pas encore le sort » : c'est le jeu qui parle, pas le sort. Ni 2>/dev/null ni un tuyau ne le
+				// cachent, sinon find ... 2>/dev/null se tait et l'étudiant ne sait pas vers qui aller pour l'apprendre.
+				if (sorties[2].t !== "ecran" && /ne connais pas encore le sort|ne sais pas encore lancer un script/.test(e.message)){
+					Shell.ecranErreur(Shell.situer(e.message));
+					jouerSon("erreur");
+				} else io.erreurs.push(Shell.situer(e.message));
 				sortie = "";
 				echec = true;
 				io.code = e.code || 1;
