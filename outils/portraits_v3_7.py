@@ -235,31 +235,40 @@ def noam():
     t.piece(t.fuseau([(64, 84), (60, 96)], 14, 13), V, ombre=2)
     poing(t, 58, 114, 72, 126)
     # le bras levé qui fait tinter le trousseau
-    bras2 = t.fuseau([(114, 98), (122, 94), (126, 72)], 11, 9)
-    t.piece(bras2, B, ombre=2)
-    t.peindre(t.courbe([(121, 92), (124, 84)]), N)
     t.piece(t.fuseau([(100, 84), (118, 98)], 14, 13), V, ombre=2)
-    t.piece(t.poly([(112, 92), (122, 98), (118, 104), (110, 98)]), B, ombre=0)
-    # l'anneau, les clés qui pendent et tintent
-    anneau = t.ell(118, 52, 146, 78) & ~t.ell(122, 56, 142, 74)
+    bras2 = t.fuseau([(116, 98), (124, 94), (132, 60)], 11, 9)
+    t.piece(bras2, B, ombre=2)
+    t.peindre(t.courbe([(123, 90), (127, 80)]), N)
+    t.piece(t.poly([(110, 92), (122, 96), (120, 104), (108, 100)]), B, ombre=0)
+    t.peindre(t.trait([(110, 96), (121, 100)]) & (((t.xx) % 3) == 0), V)
+    # l'anneau qui pend du poing, les clés qui tintent
+    anneau = t.ell(136, 50, 162, 76) & ~t.ell(140, 54, 158, 72)
     t.piece(anneau, V, ombre=0, lumiere=False)
-    t.peindre(t.courbe([(124, 56), (130, 53), (138, 54)]), B)
-    for (x0, y0, a, lg) in [(124, 76, 1.9, 22), (132, 78, 1.65, 26), (140, 76, 1.35, 22), (146, 68, 0.9, 20)]:
+    t.peindre(t.courbe([(142, 54), (149, 51), (156, 54)]), B)
+    for (x0, y0, a, lg) in [(141, 72, 1.95, 20), (149, 76, 1.6, 24), (157, 72, 1.25, 20)]:
         x1, y1 = x0 + lg * math.cos(a), y0 + lg * math.sin(a)
-        tige = t.trait([(x0, y0), (x1, y1)], 3)
+        tige = t.trait([(x0, y0 + 4), (x1, y1)], 3)
         t.piece(tige, B, ombre=0)
-        tete_c = t.ell(x0 - 4, y0 - 3, x0 + 4, y0 + 5)
+        tete_c = t.ell(x0 - 4, y0 - 3, x0 + 4, y0 + 6)
         t.piece(tete_c, B, ombre=0)
         t.peindre(t.ell(x0 - 1, y0, x0 + 1, y0 + 2), N)
         dx, dy = -math.sin(a), math.cos(a)
-        for k in (4, 8):
-            xb, yb = x1 - k * math.cos(a) * 0.6, y1 - k * math.sin(a) * 0.6
-            t.peindre(t.trait([(xb, yb), (xb + 4 * dx * -1, yb + 4 * dy * -1)], 2), B)
-    for pts in ([(110, 72), (106, 78), (110, 84)], [(152, 84), (158, 90), (154, 98)], [(150, 100), (156, 106)]):
+        for k in (2, 7):
+            xb, yb = x1 - k * math.cos(a) * 0.7, y1 - k * math.sin(a) * 0.7
+            t.peindre(t.trait([(xb, yb), (xb - 4 * dx, yb - 4 * dy)], 2), B)
+    for pts in ([(166, 64), (170, 72), (166, 80)], [(132, 84), (128, 90), (132, 96)], [(168, 92), (172, 100)]):
         t.peindre(t.courbe(pts), B)
-    for (x, y) in [(158, 62), (114, 100), (162, 78)]:
+    for (x, y) in [(166, 44), (126, 40), (170, 108)]:
         t.etincelle(x, y)
-    poing(t, 118, 62, 134, 78, sens=-1)
+    # le poing qui tient l'anneau, les doigts passés dedans
+    manchette(t, [(126, 60), (138, 58), (139, 64), (127, 66)])
+    pg = t.ell(124, 42, 142, 60)
+    t.piece(pg, B, ombre=0)
+    for y in (46, 50, 54):
+        t.peindre(t.trait([(132, y), (140, y)]), N)
+    t.peindre(t.courbe([(127, 46), (126, 51), (128, 56)]), N)
+    t.peindre(t.ell(136, 50, 162, 76) & ~t.ell(140, 54, 158, 72) & t.rect(136, 48, 143, 58), V)
+    t.contour(t.ell(136, 50, 162, 76) & ~t.ell(140, 54, 158, 72) & t.rect(136, 48, 143, 58), N)
     # la tête
     tete = t.ell(62, 22, 102, 78)
     t.piece(tete, B, ombre=0)
@@ -268,16 +277,17 @@ def noam():
         t.piece(o, B, ombre=0)
     t.peindre(t.courbe([(60, 47), (59, 51), (61, 55)]) | t.courbe([(103, 47), (104, 51), (102, 55)]), N)
     # les cheveux courts en brosse, une mèche sur le front
-    ch = (t.ell(62, 16, 102, 44) & ~t.ell(64, 30, 100, 76)) | t.fuseau([(66, 32), (76, 26), (84, 30)], 6, 2)
+    ch = (t.ell(60, 14, 104, 46) & ~t.ell(63, 28, 101, 80))
+    for pts in ([(68, 22), (64, 16)], [(80, 16), (78, 10)], [(92, 16), (96, 11)]):
+        ch |= t.fuseau(pts, 8, 3)
+    ch &= ~t.ell(63, 28, 101, 80)
     t.piece(ch, V, ombre=2)
-    for x in range(68, 100, 5):
-        t.peindre(t.trait([(x, 20 + abs(x - 82) // 6), (x + 2, 26 + abs(x - 82) // 6)]), N)
-    t.peindre(t.courbe([(70, 20), (82, 17), (94, 20)]), B)
+    for pts in ([(70, 26), (78, 20), (90, 18)], [(86, 16), (94, 18), (100, 26)], [(66, 30), (70, 24)]):
+        t.peindre(t.courbe(pts), N)
+    t.peindre(t.courbe([(74, 18), (84, 14)]), B)
     # la barbe taillée en carré, la bouche qui sourit dedans
-    barbe = t.poly([(63, 60), (70, 70), (94, 70), (101, 60), (102, 74), (97, 98), (67, 98), (62, 74)])
-    barbe &= ~t.rect(0, 95, 176, 120)
-    for x in range(66, 94, 7):
-        barbe |= t.ell(x, 90, x + 8, 100)
+    barbe = (t.ell(60, 46, 104, 102) & ~t.ell(65, 22, 99, 72)) | t.ell(68, 80, 96, 102)
+    barbe &= t.rect(0, 60, 176, 170)
     barbe &= ~t.ell(75, 67, 91, 81)
     t.piece(barbe, V, ombre=3, lumiere=False)
     t.contour(barbe & t.rect(0, 86, 176, 104), B)
@@ -791,7 +801,7 @@ o:.:o
     t.peindre(t.trait([(98, 8), (104, 2)], 2), B)
     tete = t.ell(68, 20, 108, 76)
     t.piece(tete, B, ombre=0)
-    ch = t.ell(66, 16, 110, 48) & ~t.ell(70, 30, 106, 80)
+    ch = t.ell(66, 14, 110, 44) & ~t.ell(68, 25, 108, 82)
     t.piece(ch, V, ombre=2)
     for x in (78, 86, 94, 100):
         t.peindre(t.courbe([(88, 22), (x, 28), (x + 2, 34)]) & ch, N)
@@ -984,7 +994,8 @@ def rayan():
     t.piece(o, B, ombre=0)
     t.peindre(t.courbe([(65, 45), (64, 49), (66, 53)]), N)
     # les cheveux ondulés, la raie sur le côté
-    ch = (t.ell(62, 14, 106, 44) & ~t.ell(66, 25, 112, 80)) | t.fuseau([(72, 24), (88, 20), (104, 28)], 6, 3)
+    ch = (t.ell(62, 14, 106, 44) & ~t.ell(66, 25, 112, 80)) | t.fuseau([(72, 21), (88, 17), (104, 24)], 5, 2)
+    ch &= ~t.rect(70, 29, 104, 44)
     t.piece(ch, V, ombre=2)
     for pts in ([(72, 22), (80, 20), (88, 24)], [(70, 30), (78, 28), (84, 32)], [(92, 22), (100, 26), (104, 32)]):
         t.peindre(t.courbe(pts) & ch, N)
