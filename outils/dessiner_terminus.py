@@ -3066,8 +3066,13 @@ PETITS = {
 }
 
 
+
+# Les personnages et objets du chapitre 1 gardent leur dessin d'origine (choix de l'utilisateur : plus de caractère).
+# Les fonctions restent ici, mais on ne les génère que si on les demande par leur nom.
+PERSONNAGES_ORIGINAUX = {"grep.gif", "item_TA.gif", "item_artisan.gif", "item_barde.gif", "item_boulder.gif", "item_box.gif", "item_boy.gif", "item_brambles.gif", "item_cage.gif", "item_cagedboy.gif", "item_citizen1.gif", "item_citizen2.gif", "item_clockdragon.gif", "item_corn.gif", "item_dummy.gif", "item_farmer.gif", "item_fatpony.gif", "item_gear.gif", "item_grad.gif", "item_historybook.gif", "item_lady.gif", "item_lever.gif", "item_librarian.gif", "item_locker.gif", "item_man.gif", "item_manuscript.gif", "item_merchant.gif", "item_mysteryman.gif", "item_portal.gif", "item_professor.gif", "item_radspellbook.gif", "item_rat.gif", "item_romancenovel.gif", "item_sign.gif", "item_sorciernoir.gif", "item_student.gif", "item_supertroll.gif", "item_tavernier.gif", "item_trinket.gif", "item_troll1.gif", "item_troll2.gif", "item_workstation.gif"}
+
 if __name__ == "__main__":
-    noms = sys.argv[1:] or list(DESSINS) + list(PETITS)
+    noms = sys.argv[1:] or [n for n in list(DESSINS) + list(PETITS) if n not in PERSONNAGES_ORIGINAUX]
     for nom in noms:
         if nom in PETITS:
             sauver_petit(nom, PETITS[nom]())
