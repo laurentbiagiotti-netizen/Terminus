@@ -886,6 +886,39 @@ function poserChevalCh8(){
 	});
 	journalMachine(DOCKS_CH8, { unite: "vigie-auto", prio: 5, message: "docker pull nginx:1.27-alpine : Status: Downloaded newer image for nginx:1.27-alpine (" + p.image.digestDepot.substring(0, 19) + "...)" });
 }
+/* Les plans de l'ancien équipage (cargaison:1.0 pour l'épreuve I, convoi-app:1.0 pour l'épreuve II) et la prise de la Douane
+ * (eclaireur:prise) ne se retirent d'aucun registre : un docker image prune -a, un system prune -a ou un rmi les efface pour de
+ * bon, et l'étape ne se ferait plus jamais. Tant qu'elle n'est pas réussie, le port en redépose une copie (une partie déjà en
+ * cours aussi, au rechargement), et la caisse de l'épreuve ouverte avec, si elle n'existe plus. */
+var PLANS_ANCIENS_CH8 = [
+	{ h: "docks", tag: "cargaison:1.0", fin: "n8_rang1",
+	  poser: function(){ return construireSilencieuxPort("docks", PROJETS_PORT.caisseDockerfile, homeCh8() + "/caisse", "cargaison:1.0"); },
+	  caisse: function(img){
+		if (!epreuveOuverteCh8(1) || conteneurPort("docks", "cargaison")) return;
+		var c = creerConteneurPort("docks", img, { nom: "cargaison", ports: [{ ip: "", hp: 8081, cp: 8081, proto: "tcp" }] }, "cargaison:1.0");
+		demarrerConteneurPort("docks", c, {});
+	  },
+	  radio: "le plan cargaison:1.0 avait été balayé de docks. L'ancien équipage en gardait une copie : la revoilà. Un plan qu'on ne sait pas reconstruire, on ne le balaie pas (image prune -a emporte tout plan qu'aucune caisse n'utilise)." },
+	{ h: "docks", tag: "convoi-app:1.0", fin: "n8_rang2",
+	  poser: function(){ return construireSilencieuxPort("docks", PROJETS_PORT.convoiDockerfile, homeCh8() + "/convoi", "convoi-app:1.0"); },
+	  caisse: function(img){
+		if (!epreuveOuverteCh8(2) || conteneurPort("docks", "convoi-app")) return;
+		var a = creerConteneurPort("docks", img, { nom: "convoi-app", env: ["DB_HOST=localhost", "DB_USER=convoi", "DB_PASSWORD=Convoi-du-Matin", "DB_NAME=convoi"], ports: [{ ip: "", hp: 8082, cp: 8000, proto: "tcp" }] }, "convoi-app:1.0");
+		demarrerConteneurPort("docks", a, {});
+	  },
+	  radio: "le plan convoi-app:1.0 avait été balayé de docks. L'ancien équipage en gardait une copie : la revoilà. Un plan qu'on ne sait pas reconstruire, on ne le balaie pas (image prune -a emporte tout plan qu'aucune caisse n'utilise)." },
+	{ h: "douane", tag: "eclaireur:prise", fin: "n8_autopsie",
+	  poser: function(){ var p = poserImagePort("douane", imageEclaireurPort(), "eclaireur:prise", null); p.ajoute = maintenantPort("douane") - 5 * 3600000; return p; },
+	  radio: "l'image de l'éclaireur avait disparu de la Douane. C'est une pièce à conviction : on la lit, on ne la détruit pas. Soufiane en a remis une copie en quarantaine sur douane." }
+];
+function reposerPlansAnciensCh8(){
+	PLANS_ANCIENS_CH8.forEach(function(x){
+		if (state.quests[x.fin] || !estHoteDockerPort(x.h) || imagePort(x.h, x.tag)) return;
+		var img = null;
+		moteurSeul(function(){ try { img = x.poser(); if (img && x.caisse) x.caisse(img); } catch (e){} });
+		if (img && !state.has("rejeuEnCours")) say(C.gris("(Radio : « Grace : " + x.radio + " »)"));
+	});
+}
 var TEXTES_EPREUVES_CH8 = {
 	1: function(){ return "Au bout du Quai des Premiers Pas, une caisse refuse de s'ouvrir : cargaison, la caisse du quai 8. Elle devait répondre « Caisse ouverte » sur docks:8081. " +
 		"Elle ne démarre pas, et personne ne sait pourquoi. " + C.gris("(Notes de l'ancien équipage : ~/caisse sur docks.)"); },
@@ -1113,6 +1146,7 @@ function mesuresManquantesCh8(){ return MESURES_PUISSANCE_CH8.filter(function(m)
 
 function validerCh8(){
 	var c = sCh8();
+	try { reposerPlansAnciensCh8(); } catch (e){}
 	if (!state.quests["n8_port"] && state.has("ch8LaurentLu") && state.has("ch8OrdreLu") && c.scoreDepart !== null && c.scoreDepart !== undefined){
 		state.complete("n8_port");
 		if (!state.has("galon_mousse")){ state.set("galon_mousse"); if (!state.has("rejeuEnCours")) say(C.jaune("Laurent épingle sur ta manche une patte d'épaule nue, une ancre et pas un galon. « Mousse. Tout le monde commence ici. Même les amiraux. »")); }

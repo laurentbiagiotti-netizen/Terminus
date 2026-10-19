@@ -180,7 +180,7 @@ Shell.appeler = function(nom, args, io){
 function texteMaitreIle(g){
 	var m = maisonCh7(g.m), e1 = aFait(m.etapes[0]), e2 = aFait(m.etapes[1]);
 	var defis = "\n\n" + C.gras("Les défis " + (/^[AEIOUHaeiouhÉ]/.test(g.nom) ? "d'" : "de ") + g.nom) + C.gris(" (des quêtes secondaires, sur la machine " + m.machine + ")") + "\n" + listeDefisMaison(g.m);
-	var tempete = sCh7().incidentsTempete && sCh7().incidentsTempete[g.m] && !INCIDENTS_TEMPETE_CH7[g.m].reparee() ? "\n\n" + C.rouge("La Tempête : " + INCIDENTS_TEMPETE_CH7[g.m].phrase + ".") : "";
+	var tempete = sCh7().incidentsTempete && sCh7().incidentsTempete[g.m] && !INCIDENTS_TEMPETE_CH7[g.m].reparee() ? "\n\n" + C.rouge("La Tempête : " + phraseIncidentCh7(g.m) + ".") : "";
 	if (e1 && e2) return g.fin() + tempete + defis;
 	var erreur = null;
 	try { erreur = g.erreur ? g.erreur() : null; } catch (x){ erreur = null; }
@@ -342,7 +342,7 @@ var MAITRES_ILE = {
 			"Samba garde ses propres mots de passe : chaque compte doit exister pour le système (ici, par le Registre) ET pour Samba (smbpasswd -a). " +
 			"Et le dossier lui-même doit appartenir au groupe promo, avec le droit d'écrire pour le groupe. »"; },
 		syntaxe: function(){ return "« Sur halle :\n\n" +
-			"  sudo mkdir -p /srv/promo ;  sudo chgrp promo /srv/promo ;  sudo chmod 2770 /srv/promo\n" +
+			"  sudo mkdir -p /srv/promo ;  sudo chown root:promo /srv/promo ;  sudo chmod 2770 /srv/promo\n" +
 			"  /etc/samba/smb.conf :   [promo]  path = /srv/promo   valid users = @promo   read only = no\n" +
 			"  testparm -s                      Samba relit sa configuration (et dit ce qu'il ignore)\n" +
 			"  sudo smbpasswd -a NOM            un compte Samba ;  sudo pdbedit -L : la liste\n\n" +
@@ -638,7 +638,7 @@ function texteChantier(){
 		var etats = m.etapes.filter(function(id){ try { return ETATS_CH7[id](); } catch (e){ return false; } }).length;
 		var incident = c.incidentsTempete && c.incidentsTempete[m.cle] && !INCIDENTS_TEMPETE_CH7[m.cle].reparee();
 		lignes.push("  " + (ok ? C.vert : C.rouge)("●") + " " + C.gras(completerDroite(m.nom, 18)) + completerDroite(m.maitre, 8) + C.gris(" (" + m.machine + ")") + (current_room === m.lieu ? C.jaune("  ◀ toi") : ""));
-		lignes.push("      " + (ok ? C.vert(faites + " sur 2 étapes") : C.gris(faites + " sur 2 étapes")) + C.gris(" · " + etats + " sur 2 en place sur la machine · " + defis + " sur 5 défis") + (incident ? C.rouge(" · la Tempête : " + INCIDENTS_TEMPETE_CH7[m.cle].phrase) : ""));
+		lignes.push("      " + (ok ? C.vert(faites + " sur 2 étapes") : C.gris(faites + " sur 2 étapes")) + C.gris(" · " + etats + " sur 2 en place sur la machine · " + defis + " sur 5 défis") + (incident ? C.rouge(" · la Tempête : " + phraseIncidentCh7(m.cle)) : ""));
 	});
 	if (c.maree && !SURPRISE_MAREE_CH7.reparee()) lignes.push("", "  " + C.rouge("●") + " La capitainerie : " + SURPRISE_MAREE_CH7.phrase);
 	if (c.maree && (c.inacheveesMaree || []).length) lignes.push("", C.gris("  À la marée, il manquait : " + c.inacheveesMaree.map(function(k){ return maisonCh7(k).titre; }).join(", ") + "."));
@@ -697,6 +697,14 @@ function verifierIle(){
 		if (!state.has("rejeuEnCours") && cle !== "p7_chantier") say(C.gris("(Nouveau message de Grace : cat " + Shell.cheminAffiche(HallPortAube) + "/Radio.)"));
 	}
 }
+/* chgrp ne s'apprend que dans une quête annexe de Lumen : qui le tape (pour la Halle, par exemple) apprend ce qui le remplace. */
+var OU_APPRENDRE_AVANT_ILE = Shell.ouApprendre;
+Shell.ouApprendre = function(sort){
+	var t = OU_APPRENDRE_AVANT_ILE.apply(this, arguments);
+	if (sort === "chgrp") t += " En attendant, chown PROPRIO:GROUPE CHEMIN (ou chown :GROUPE CHEMIN) change le groupe tout aussi bien.";
+	return t;
+};
+
 var VERIFIER_CH7_AVANT_ILE = verifierChapitre7;
 verifierChapitre7 = function(){
 	VERIFIER_CH7_AVANT_ILE();

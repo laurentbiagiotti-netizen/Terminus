@@ -237,7 +237,7 @@ var INDICES_CH7 = {
 	p7_usurpation: ["Trois TXT dans la zone : @ (SPF), aube._domainkey (DKIM, la ligne que opendkim-genkey a écrite), _dmarc (DMARC).", "sudo opendkim-genkey -s aube -d port-aube.lan -D /etc/opendkim/keys ; sudo cat /etc/opendkim/keys/aube.txt ; puis sur noms, dans la zone : @ IN TXT \"v=spf1 mx -all\", la ligne aube._domainkey, _dmarc IN TXT \"v=DMARC1; p=quarantine\" ; la série ; sudo rndc reload ; dig TXT port-aube.lan +short"],
 	p7_exports: ["Une ligne dans /etc/exports, sans espace entre le réseau et la parenthèse.", "ssh greniers ; echo '/srv/homes 10.0.70.0/24(rw,sync,root_squash,no_subtree_check)' | sudo tee -a /etc/exports ; sudo exportfs -ra ; sudo exportfs -v ; exit ; ssh quai ; showmount -e greniers"],
 	p7_squash: ["Monter, puis essayer d'écrire en root dans le dossier d'un bâtisseur.", "ssh quai ; sudo mkdir -p /mnt/greniers ; sudo mount -t nfs greniers:/srv/homes /mnt/greniers ; sudo touch /mnt/greniers/badis/essai ; sudo umount /mnt/greniers"],
-	p7_partage: ["Le groupe promo vient du Registre : la Halle le voit par sssd.", "ssh halle ; sudo mkdir -p /srv/promo ; sudo chgrp promo /srv/promo ; sudo chmod 2770 /srv/promo ; printf '[promo]\\n   comment = Le partage de la promo\\n   path = /srv/promo\\n   valid users = @promo\\n   read only = no\\n' | sudo tee -a /etc/samba/smb.conf ; testparm -s"],
+	p7_partage: ["Le groupe promo vient du Registre : la Halle le voit par sssd.", "ssh halle ; sudo mkdir -p /srv/promo ; sudo chown root:promo /srv/promo ; sudo chmod 2770 /srv/promo ; printf '[promo]\\n   comment = Le partage de la promo\\n   path = /srv/promo\\n   valid users = @promo\\n   read only = no\\n' | sudo tee -a /etc/samba/smb.conf ; testparm -s"],
 	p7_promo_acces: ["Samba garde ses propres mots de passe : smbpasswd -a, pour un compte qui existe déjà (ici, par le Registre).", "sudo smbpasswd -a zelia ; sudo pdbedit -L ; exit ; ssh quai ; smbclient -L //halle -N ; echo 'Bienvenue a la promo' > /tmp/affiche.txt ; smbclient //halle/promo -U zelia -c 'put /tmp/affiche.txt affiche.txt; ls'"],
 	p7_annuaire: ["D'abord le sceau (olcRootPW, par ldapi en root), puis les branches, puis les dix (le LDIF a deux fautes : un uidNumber oublié, un nombre en lettres).", "ssh registre ; slappasswd ; sudo ldapmodify -Y EXTERNAL -H ldapi:/// (replace: olcRootPW) ; ldapadd -x -D cn=admin,dc=port-aube,dc=lan -W -f base.ldif ; sudo cp /root/batisseurs.ldif ~/ ; corrige-le ; ldapadd -c -x -D cn=admin,dc=port-aube,dc=lan -W -f ~/batisseurs.ldif ; ldapsearch -x -LLL '(objectClass=posixAccount)' uid"],
 	p7_groupes: ["posixGroup : cn, gidNumber, et un memberUid par membre.", "ldapadd -x -D cn=admin,dc=port-aube,dc=lan -W -f groupes.ldif ; puis un ldapmodify (add: memberUid) pour ajouter un membre"],
@@ -661,10 +661,18 @@ var INCIDENTS_TEMPETE_CH7 = {
 			if (dovecotTourne("poste")) chargerDovecotIle("poste");
 		},
 		reparee: function(){ return sceauPosteOkCh7(); } },
-	arche: { phrase: "la foudre a coupé une sauvegarde en plein vol : un verrou est resté sur le dépôt de l'Arche (borg list)",
+	arche: { phrase: "la foudre a coupé une sauvegarde en plein vol : un verrou est resté sur le dépôt de l'Arche, et plus rien ne s'y sauvegarde (sur les Greniers : systemctl status sauvegarde-borg, borg check)",
 		poser: function(){ poserVerrouBorgIle("arche", "/srv/borg/greniers"); },
+		// Le verrou levé, il manque encore une sauvegarde faite après la Tempête : on le dit, sinon le plan resterait rouge sans raison visible.
+		suite: function(){ var d = depotArcheCh7(); return d && !d.verrou ? "le verrou est levé, mais aucune sauvegarde n'a tourné depuis la Tempête (sur les Greniers : sudo systemctl start sauvegarde-borg)" : null; },
 		reparee: function(){ var d = depotArcheCh7(), c = sCh7(); return !!d && !d.verrou && d.archives.some(function(a){ return a.date >= (c.tempeteDebut || 0); }); } }
 };
+/* Ce que le plan et le maître disent d'un incident encore ouvert : la phrase de la Tempête, ou ce qu'il reste à faire. */
+function phraseIncidentCh7(cle){
+	var inc = INCIDENTS_TEMPETE_CH7[cle], s = null;
+	try { s = inc.suite ? inc.suite() : null; } catch (e){ s = null; }
+	return s || inc.phrase;
+}
 var NOTIFY_COUPE_CH7 = false;
 var NOTIFIER_AVANT_CH7 = notifierIle;
 notifierIle = function(h, nom){ if (NOTIFY_COUPE_CH7) return; return NOTIFIER_AVANT_CH7.apply(this, arguments); };
