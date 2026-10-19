@@ -17,6 +17,7 @@ from dessiner_academie import texte, robe_mage, bras, jambes, pieds_robe  # noqa
 from dessiner_panne import perso, sol_tirets  # noqa: E402
 from dessiner_bastion import tete, cle, cadenas  # noqa: E402
 from dessiner_machines import reverbere, phare, engrenage, caisse, sol, lampe_suspendue, flamme, rayon, for_lignes  # noqa: E402
+from dessiner_machines import sprite, trait, sol_traits  # noqa: E402
 from dessiner_port import (trame, degrade, halo, ombrer, mer, nuages, eclair, pluie, mouettes, feu_artifice,  # noqa: E402
                            lune_pleine, ciel_nuit, soleil, personnage_ombre, reflet_silhouette, ligne_r, rayures,
                            phare_clair, bitte)
@@ -917,193 +918,733 @@ def port_aube_fete():
 # Les maîtres bâtisseurs et les habitants, en pied
 # ------------------------------------------------------------------
 
+# Dans le style des sprites d'origine du chapitre 1 (item_farmer, item_merchant, item_professor...) : des silhouettes
+# toutes différentes, des poses vivantes, des visages dessinés au pixel près (sprite), un objet de métier lisible.
+
 def badis_dessin(r):
-    # le bibliothécaire des noms : bonnet, gilet, une pile d'étiquettes vierges et une plume
-    r(36, 7, 51, 12, V); r(36, 10, 51, 10, B); r(42, 5, 45, 7, B); tete(r, 12, V)
-    r(35, 33, 52, 54, B); r(38, 35, 49, 54, V); r(43, 35, 44, 54, N)
-    for y in (39, 45, 51): r(41, y, 41, y, B); r(46, y, 46, y, B)
-    bras(r, True, True, 36)
-    for k in range(4): r(55, 34 + k * 5, 69, 37 + k * 5, B); r(57, 35 + k * 5, 66, 36 + k * 5, N); r(67, 35 + k * 5, 68, 36 + k * 5, V)
-    r(19, 26, 20, 46, B); r(17, 24, 22, 30, V); r(15, 22, 18, 26, V); r(19, 46, 20, 48, N)
-    jambes(r); sol_tirets(r, 68)
+    # le bibliothécaire des noms : perché sur son escabeau, bonnet à pompon, il brandit sa plume comme une épée,
+    # l'autre main pleine d'étiquettes vierges qui dépassent en éventail ; le sourire de celui qui va tout nommer
+    cx = 36
+    ligne_r(r, cx - 10, 50, cx - 15, 67, B, 2); ligne_r(r, cx + 9, 50, cx + 14, 67, B, 2)    # l'escabeau
+    for y in (56, 62): r(cx - 13 + (y - 56) // 6, y, cx + 12 - (y - 56) // 6, y + 1, V)
+    r(cx - 12, 49, cx + 11, 51, B); r(cx - 11, 50, cx + 10, 50, N)
+    r(cx - 6, 30, cx + 6, 42, B); r(cx - 4, 31, cx + 4, 42, V); r(cx, 31, cx, 42, N)   # le gilet
+    for y in (34, 38): r(cx - 2, y, cx - 2, y, B); r(cx + 2, y, cx + 2, y, B)
+    r(cx - 5, 42, cx + 5, 44, N); r(cx - 5, 43, cx - 1, 48, V); r(cx + 1, 43, cx + 5, 48, V)
+    r(cx - 7, 47, cx - 1, 49, B); r(cx + 1, 47, cx + 7, 49, B)
+    trait(r, [(cx + 6, 32), (cx + 12, 26), (cx + 15, 16)], 2, B)              # la plume brandie
+    sprite(r, cx + 13, 0, """
+|          #
+|         ##
+|        ###
+|       ##g#
+|      ##g##
+|     ##g##
+|    ##g##
+|   ##g##
+|  ##g#
+|  #g#
+|  ##
+| ##
+|##
+""")
+    trait(r, [(cx - 6, 32), (cx - 12, 36), (cx - 15, 32)], 2, B)              # l'éventail d'étiquettes
+    for k in range(5):
+        a = math.radians(-150 + k * 22)
+        x1, y1 = cx - 16 + round(12 * math.cos(a)), 31 + round(12 * math.sin(a))
+        ligne_r(r, cx - 16, 31, x1, y1, N, 3); ligne_r(r, cx - 16, 31, x1, y1, B if k % 2 else V, 2)
+        r(x1 - 1, y1 - 1, x1 + 2, y1 + 2, B); r(x1, y1, x1 + 1, y1 + 1, N)
+    sprite(r, cx - 9, 6, """
+|        ##
+|       #..#
+|       #..#
+|     ggggggggg
+|    ggggggggggg
+|   g.g.g.g.g.g.g
+|   ###############
+|   #.############.
+|   #.##...###...##
+|   #.##.#.###.#.##
+|   ###............
+|  .################.
+|  #.######..######.#
+|   .#####.##.#####.
+|    ####.####.####
+|    ####.#....####
+|     ####.##..###
+|      ###....###
+|        #######
+""")
+    sol_traits(r, 68, 16, 62, 31)
 
 
 def maeva_dessin(r):
-    # la gardienne du phare : ciré, cheveux au vent, une lanterne allumée à la main
-    for (x0, y0, x1, y1) in [(34, 9, 53, 13), (32, 12, 36, 28), (51, 12, 57, 24), (57, 14, 62, 18), (61, 16, 65, 18)]:
-        r(x0, y0, x1, y1, V)
-    tete(r, 12, V)
-    robe_mage(r, 33, 64, V, 35, 52)
-    r(38, 33, 49, 40, B); r(43, 40, 44, 64, N)
-    for y in (44, 50, 56): r(41, y, 41, y, B); r(46, y, 46, y, B)
-    bras(r, True, True, 36)
-    r(59, 40, 63, 42, B); r(56, 43, 66, 58, B); r(58, 46, 64, 55, V); r(60, 48, 62, 53, B); r(55, 58, 67, 59, B); r(58, 46, 58, 55, N)
-    pieds_robe(r); sol_tirets(r, 68)
+    # la gardienne du phare : le ciré qui claque, les cheveux emportés par le vent ; campée face à la tempête, elle
+    # lève haut sa lanterne allumée, qui rayonne ; des traits de vent passent devant elle
+    cx = 38
+    for y in range(32, 62):                                                  # le ciré, la pointe qui s'envole
+        hw = 7 + (y - 32) // 4
+        r(cx - hw + (y - 32) // 6, y, cx + hw + (y - 32) // 3, y, V)
+    r(cx - 1, 33, cx + 1, 61, N); r(cx - 4, 33, cx + 4, 36, B)
+    for y in (40, 46, 52): r(cx + 3, y, cx + 4, y, B)
+    r(cx - 4, 62, cx - 2, 65, B); r(cx + 3, 62, cx + 5, 65, B)
+    r(cx - 7, 65, cx - 2, 67, V); r(cx + 3, 65, cx + 8, 67, V)
+    trait(r, [(cx - 7, 34), (cx - 12, 26), (cx - 13, 18)], 3, V)              # la lanterne levée haut
+    r(cx - 19, 2, cx - 7, 17, N); r(cx - 18, 4, cx - 8, 15, B); r(cx - 16, 6, cx - 10, 13, V); r(cx - 14, 8, cx - 12, 12, B)
+    r(cx - 18, 3, cx - 8, 4, V); r(cx - 18, 15, cx - 8, 16, V); r(cx - 15, 0, cx - 11, 2, B)
+    for (a, b) in (((cx - 23, 9), (cx - 28, 9)), ((cx - 22, 3), (cx - 26, 0)), ((cx - 22, 15), (cx - 26, 18)), ((cx - 3, 4), (cx + 1, 1))):
+        ligne_r(r, a[0], a[1], b[0], b[1], B)
+    trait(r, [(cx + 8, 34), (cx + 12, 42), (cx + 10, 48)], 3, V)              # le poing sur la hanche
+    for (y, x0, x1) in ((24, cx + 22, cx + 34), (40, cx + 24, cx + 36), (54, cx + 26, cx + 40), (30, cx - 30, cx - 22)):
+        r(x0, y, x1, y, B)
+    sprite(r, cx - 9, 8, """
+|        ggggggggg
+|      ggggggggggggggg gg
+|     ggggggggggggggggggggg  g
+|    gggg.ggggggg.ggggggggggggg
+|    ggg######ggggggggggggg  gg
+|    gg#########ggggggggggg
+|    g###########gggggggg  ggg
+|    g##..###..###ggggggg
+|    ##.#.##.#.###gggggg
+|    ###..###..####gggg
+|   .######..#####ggg
+|   #.####.##.####gg
+|    .###.####.###g
+|     ###.###...##
+|     ####...####
+|      ##.###.##
+|       ##...##
+|        #####
+""")
+    sol_traits(r, 68, 14, 64, 32)
 
 
 def younes_dessin(r):
-    # le facteur : casquette à visière, sacoche en bandoulière, une lettre levée
-    r(36, 9, 51, 12, V); r(49, 11, 56, 12, V); r(42, 9, 45, 10, B); tete(r, 12, V)
-    r(35, 33, 52, 54, B); r(38, 35, 49, 54, N); r(35, 33, 36, 54, V); r(51, 33, 52, 54, V)
-    for k in range(7): r(38 + k * 2, 34 + k * 3, 40 + k * 2, 36 + k * 3, V)
-    bras(r, True, True, 36)
-    r(52, 46, 68, 60, V); r(54, 48, 66, 58, N); r(54, 48, 66, 51, V); r(59, 51, 61, 53, B)
-    r(14, 22, 32, 34, B); r(15, 23, 31, 24, N); ligne_r(r, 15, 24, 23, 29, N); ligne_r(r, 23, 29, 31, 24, N); r(27, 29, 30, 32, V)
-    jambes(r); sol_tirets(r, 68)
+    # le facteur : assis tout en haut d'une pile de sacs postaux, la casquette de travers, une jambe ballante ; il
+    # tend vers nous la lettre tamponnée à l'aube, l'air de dire « toujours là »
+    for (x0, y0, x1, y1) in ((14, 52, 40, 66), (38, 54, 62, 66), (24, 42, 52, 54)):    # les sacs postaux
+        r(x0, y0, x1, y1, N); r(x0 + 1, y0 + 1, x1 - 1, y1 - 1, B)
+        r(x0 + 3, y0 + 2, x0 + 4, y0 + 2, N); r(x1 - 4, y0 + 2, x1 - 3, y0 + 2, N)
+        r((x0 + x1) // 2 - 3, (y0 + y1) // 2, (x0 + x1) // 2 + 3, (y0 + y1) // 2 + 2, V)
+        r((x0 + x1) // 2 - 2, (y0 + y1) // 2 + 1, (x0 + x1) // 2 + 2, (y0 + y1) // 2 + 1, N)
+    cx = 38
+    r(cx - 6, 26, cx + 6, 40, V); r(cx - 4, 26, cx + 4, 28, B); r(cx, 28, cx, 40, N)  # la veste
+    ligne_r(r, cx - 6, 27, cx + 6, 39, B)
+    trait(r, [(cx - 4, 40), (cx - 12, 41), (cx - 13, 50)], 3, V); r(cx - 17, 50, cx - 11, 52, B)   # une jambe ballante
+    trait(r, [(cx + 3, 40), (cx + 10, 40), (cx + 14, 46)], 3, V); r(cx + 13, 46, cx + 19, 48, B)
+    r(cx + 6, 34, cx + 16, 42, N); r(cx + 7, 35, cx + 15, 41, V); r(cx + 7, 35, cx + 15, 36, B)    # la sacoche
+    trait(r, [(cx - 6, 28), (cx - 12, 24), (cx - 15, 18)], 2, B)              # la lettre tendue
+    r(cx - 26, 7, cx - 10, 19, N); r(cx - 25, 8, cx - 11, 18, B)
+    ligne_r(r, cx - 25, 8, cx - 18, 13, N); ligne_r(r, cx - 18, 13, cx - 11, 8, N)
+    r(cx - 15, 14, cx - 12, 17, V); r(cx - 24, 15, cx - 19, 16, V)
+    trait(r, [(cx + 6, 28), (cx + 9, 33), (cx + 6, 37)], 2, B)
+    sprite(r, cx - 8, 6, """
+|      gggggggggg
+|    gggggg##ggggg
+|    ggggggggggggggggggg
+|    ##############
+|   ###..#####..####
+|   ##.#.#####.#.###
+|   ###..#####..####.
+|   .######..######.#
+|   #.####.##.#####.
+|    .###.####.####
+|    ####.##..####
+|    #####......##
+|     #####.##.##
+|      ###....##
+|       #######
+|         ###
+""")
+    sol_traits(r, 68, 10, 68, 33)
 
 
 def syrine_dessin(r):
-    # la gardienne des casiers : chignon, lunettes, un sceau de cire et un tampon
-    r(40, 4, 47, 10, V); r(42, 2, 45, 4, V); tete(r, 12, V, lunettes=True)
-    robe_mage(r, 33, 64, B, 35, 52); r(39, 33, 48, 36, V); r(43, 36, 44, 64, N)
-    bras(r, True, True, 36)
-    r(55, 43, 69, 57, V); r(54, 46, 70, 54, V); r(58, 46, 66, 54, N); r(60, 48, 64, 52, V); r(61, 49, 63, 51, N)
-    r(18, 38, 22, 50, B); r(17, 36, 23, 38, V); r(14, 50, 26, 56, V); r(14, 55, 26, 56, B)
-    pieds_robe(r); sol_tirets(r, 68)
+    # la gardienne des casiers : chignon tiré, lunettes carrées, l'air décidé ; elle abat son tampon d'un grand
+    # geste (des traits de mouvement), le sceau de cire rond tenu dans l'autre main
+    cx = 34
+    for y in range(32, 66):                                                  # la robe
+        hw = 6 + (y - 32) // 6
+        r(cx - hw, y, cx + hw, y, B)
+    r(cx - 4, 32, cx + 4, 38, V); r(cx - 1, 33, cx + 1, 37, N); r(cx - 7, 44, cx + 7, 45, V)
+    for x in (cx - 3, cx + 3): r(x, 48, x, 65, N)
+    r(cx - 5, 66, cx - 2, 67, B); r(cx + 2, 66, cx + 5, 67, B)
+    trait(r, [(cx + 6, 34), (cx + 14, 30), (cx + 20, 22)], 2, B)              # le tampon levé
+    r(cx + 18, 13, cx + 26, 22, N); r(cx + 20, 14, cx + 24, 17, V); r(cx + 19, 17, cx + 25, 21, B); r(cx + 19, 21, cx + 25, 21, V)
+    for (a, b) in (((cx + 28, 12), (cx + 32, 10)), ((cx + 29, 17), (cx + 34, 17)), ((cx + 28, 22), (cx + 32, 25))):
+        ligne_r(r, a[0], a[1], b[0], b[1], B)
+    r(cx + 24, 55, cx + 36, 57, B); r(cx + 25, 56, cx + 35, 56, N)            # la boîte aux lettres qu'elle va sceller
+    r(cx + 22, 57, cx + 38, 66, N); r(cx + 23, 58, cx + 37, 66, V); r(cx + 26, 60, cx + 34, 61, N)
+    r(cx + 28, 63, cx + 32, 66, B)
+    trait(r, [(cx - 6, 34), (cx - 11, 41), (cx - 9, 46)], 2, B)               # le sceau de cire
+    sprite(r, cx - 17, 42, """
+|   ######
+|  #gggggg#
+| #gg####gg#
+| #g#g##g#g#
+| #g##gg##g#
+| #g#g##g#g#
+| #gg####gg#
+|  #gggggg#
+|   ######
+""")
+    r(cx - 2, 26, cx + 2, 32, B)
+    sprite(r, cx - 9, 3, """
+|       gggg
+|      gggggg
+|      gg.ggg
+|       gggg
+|    gggggggggggg
+|   gggggggggggggg
+|  ggg##########ggg
+|  gg############gg
+|  g#.....##.....#g
+|  g#.#.#....#.#.#g
+|  g#.....##.....#g
+|  g######.#######g
+|  g#####.########g
+|  gg####..######gg
+|   g###......##g
+|   g####.##.###g
+|    ####....###
+|     ##########
+|       ######
+""")
+    sol_traits(r, 68, 16, 68, 34)
 
 
 def noam_dessin(r):
-    # le gardien des greniers : barbe, gilet de travail, un trousseau et un dossier
-    r(36, 10, 51, 12, B); tete(r, 12, B, barbe=True)
-    r(35, 33, 52, 54, V); r(38, 35, 49, 54, B); r(40, 38, 47, 52, N); r(40, 44, 47, 45, V)
-    bras(r, True, True, 36)
-    r(55, 42, 66, 43, B)
-    for k, x in enumerate((56, 61)): cle(r, x, 44 + k * 3, B)
-    r(14, 36, 30, 58, V); r(16, 38, 28, 56, N); r(18, 41, 26, 41, B); for_lignes(r, 18, 45, 26, 55, V); r(14, 34, 20, 36, V)
-    jambes(r); sol_tirets(r, 68)
+    # le gardien des greniers : grande barbe taillée en carré, gilet de travail à poches ; il fait tinter son gros
+    # trousseau de clés levé à hauteur d'épaule, le dossier calé sous le bras ; un clin d'œil
+    cx = 36
+    r(cx - 8, 32, cx + 8, 56, B); r(cx - 6, 33, cx + 6, 56, V); r(cx - 1, 33, cx + 1, 56, B)   # le gilet à poches
+    for (x, y) in ((cx - 5, 42), (cx + 2, 42), (cx - 5, 49), (cx + 2, 49)): r(x, y, x + 3, y + 3, N); r(x, y, x + 3, y, B)
+    r(cx - 6, 56, cx - 2, 64, V); r(cx + 2, 56, cx + 6, 64, V); r(cx - 1, 56, cx + 1, 64, N)
+    r(cx - 8, 64, cx - 2, 67, B); r(cx + 2, 64, cx + 8, 67, B); r(cx - 8, 66, cx + 8, 66, N)
+    trait(r, [(cx + 8, 34), (cx + 14, 36), (cx + 17, 28)], 3, B)              # le trousseau levé
+    r(cx + 14, 18, cx + 22, 26, N); r(cx + 15, 19, cx + 21, 25, V); r(cx + 17, 21, cx + 19, 23, N)
+    for k, (dx, l) in enumerate(((-3, 8), (2, 10), (7, 7), (11, 9))):
+        x = cx + 16 + dx
+        ligne_r(r, cx + 18, 25, x, 25 + l, B)
+        r(x - 1, 25 + l, x + 1, 25 + l + 1, B if k % 2 else V)
+    for (a, b) in (((cx + 26, 18), (cx + 30, 15)), ((cx + 27, 23), (cx + 31, 23))):
+        ligne_r(r, a[0], a[1], b[0], b[1], B)
+    trait(r, [(cx - 8, 34), (cx - 13, 42), (cx - 9, 47)], 3, B)               # le dossier sous le bras
+    r(cx - 22, 38, cx - 8, 52, N); r(cx - 21, 39, cx - 9, 51, V); r(cx - 21, 39, cx - 9, 41, B)
+    r(cx - 19, 44, cx - 11, 48, N); r(cx - 18, 45, cx - 12, 45, B); r(cx - 18, 47, cx - 14, 47, B)
+    sprite(r, cx - 10, 7, """
+|      #########
+|    #############
+|   ######.########
+|   ###############
+|  ##gggg###ggggg##
+|  ###..####.....##
+|  ##.#.####...####
+|  ###..#####..####
+| .#######..#######.
+| #.#####.##.#####.#
+|  ######.##.######
+|  gggggg....gggggg
+|  ggggg######ggggg
+|  ggggggg..ggggggg
+|  gggg.gggggg.gggg
+|  gggggg.gg.gggggg
+|  gggg.gggggg.gggg
+|  gggggggggggggggg
+|   gggggg.ggggggg
+""")
+    sol_traits(r, 68, 14, 64, 35)
 
 
 def zelia_dessin(r):
-    # la marchande de la Halle : foulard, robe à rayures, un panier et des rubans de la promo
-    r(35, 9, 52, 13, V); r(52, 12, 56, 20, V); r(55, 18, 58, 22, V); tete(r, 12, V)
-    robe_mage(r, 33, 64, V, 35, 52)
-    for y in range(38, 64, 6): r(34 - (y - 33) // 6, y, 53 + (y - 33) // 6, y + 1, B)
-    bras(r, True, True, 36)
-    r(53, 46, 71, 58, B); r(55, 48, 69, 56, N)
-    for x in range(56, 69, 3): r(x, 48, x, 56, V)
-    r(56, 40, 68, 46, B); r(58, 42, 66, 46, N)
-    r(16, 38, 18, 58, V); r(20, 38, 22, 54, B); r(24, 38, 26, 60, V); r(15, 36, 27, 38, B)
-    pieds_robe(r); sol_tirets(r, 68)
+    # la marchande de la Halle : foulard noué sur le côté, grandes boucles d'oreilles ; le panier calé sur la hanche,
+    # elle lève une poignée de rubans de la promo qui ondulent au vent ; la jupe rayée tourne
+    cx = 34
+    for y in range(32, 64):                                                  # la jupe rayée qui tourne
+        hw = 6 + (y - 32) // 3
+        r(cx - hw, y, cx + hw, y, V if y < 42 else (B if ((y - 42) // 3) % 2 else V))
+    r(cx - 4, 32, cx + 4, 41, B); r(cx - 2, 33, cx + 2, 35, N); r(cx - 8, 41, cx + 8, 42, N)
+    r(cx - 4, 64, cx - 1, 66, B); r(cx + 2, 64, cx + 5, 66, B)
+    trait(r, [(cx + 6, 34), (cx + 12, 40), (cx + 10, 46)], 2, B)              # le panier sur la hanche
+    r(cx + 8, 44, cx + 26, 56, N); r(cx + 9, 45, cx + 25, 55, B)
+    for x in range(cx + 10, cx + 25, 3): r(x, 45, x, 55, V)
+    for y in (48, 52): r(cx + 9, y, cx + 25, y, N)
+    ligne_r(r, cx + 9, 45, cx + 17, 38, B); ligne_r(r, cx + 17, 38, cx + 25, 45, B)
+    r(cx + 12, 42, cx + 15, 44, V); r(cx + 19, 41, cx + 22, 44, V)
+    trait(r, [(cx - 6, 34), (cx - 11, 28), (cx - 13, 18)], 2, B)              # les rubans levés
+    r(cx - 15, 15, cx - 11, 18, B)
+    for k in range(3):                                                         # trois rubans qui ondulent au vent
+        pts = [(cx - 14 - j * 2, 15 - k * 3 + round(2.5 * math.sin(j / 1.4 + k * 2))) for j in range(0, 11)]
+        for (p0, p1) in zip(pts, pts[1:]): ligne_r(r, p0[0], p0[1], p1[0], p1[1], (V, B, V)[k], 2)
+    sprite(r, cx - 9, 7, """
+|      gggggggggg
+|    ggg.gggg.gggggg  g
+|   gggggggg.ggggggggggg
+|   gggg.ggggggg.ggggg  g
+|   gg############gg
+|   g###...###...##g
+|   ##.#.#.###.#.###
+|   ##.###.###.###.##
+|  .########..######.
+|  #.######.#######.#
+|  #.######..######.#
+|   .####.#...####.
+|   #.###.......##g
+|   g.####.###.###g
+|   g  ####...###  g
+|  ggg  ########  ggg
+|   g     ####     g
+""")
+    sol_traits(r, 68, 14, 64, 36)
 
 
 def kamal_dessin(r):
-    # le greffier du Registre : calotte, longue robe à étole, un énorme livre sous le bras
-    r(38, 8, 49, 12, B); r(42, 6, 45, 8, V); tete(r, 12, B)
-    robe_mage(r, 33, 64, B, 35, 52)
-    r(39, 33, 41, 64, V); r(46, 33, 48, 64, V)
-    bras(r, True, True, 36)
-    r(53, 28, 73, 56, V); r(55, 30, 71, 54, N); r(53, 28, 55, 56, B); r(57, 33, 69, 33, B); r(57, 37, 65, 37, B)
-    r(57, 41, 69, 41, V); r(57, 45, 67, 45, V); r(71, 30, 73, 54, B)
-    pieds_robe(r); sol_tirets(r, 68)
+    # le greffier du Registre : calotte, longue robe à étole ; il porte à bout de bras un livre immense, si lourd qu'il
+    # se penche en arrière pour faire contrepoids ; une plume coincée derrière l'oreille
+    cx = 30
+    for y in range(32, 66):                                                  # la longue robe, penchée en arrière
+        sh = (66 - y) // 6
+        hw = 6 + (y - 32) // 6
+        r(cx - hw - sh, y, cx + hw - sh, y, B)
+    for y in range(32, 66):
+        sh = (66 - y) // 6
+        r(cx - 3 - sh, y, cx - 2 - sh, y, V); r(cx + 2 - sh, y, cx + 3 - sh, y, V)
+    r(cx - 5, 66, cx - 1, 67, B); r(cx + 1, 66, cx + 5, 67, B)
+    r(cx + 6, 22, cx + 38, 52, N)                                             # le livre immense
+    r(cx + 7, 23, cx + 37, 51, V); r(cx + 9, 25, cx + 35, 49, B); r(cx + 9, 25, cx + 10, 49, V)
+    r(cx + 12, 28, cx + 32, 32, N); r(cx + 13, 29, cx + 31, 31, V)
+    for y in range(36, 48, 3): r(cx + 13, y, cx + 32 - (y % 7), y, N)
+    r(cx + 37, 30, cx + 39, 34, B); r(cx + 37, 40, cx + 39, 44, B)
+    trait(r, [(cx + 4, 35), (cx + 6, 42), (cx + 8, 48)], 3, B)
+    trait(r, [(cx + 2, 34), (cx + 5, 30), (cx + 8, 28)], 3, B)
+    for (a, b) in (((cx + 18, 54), (cx + 18, 57)), ((cx + 26, 54), (cx + 27, 57))): ligne_r(r, a[0], a[1], b[0], b[1], V)
+    r(cx - 3, 24, cx + 2, 33, B)
+    sprite(r, cx - 14, 6, """
+|              #
+|             #
+|            g#
+|     gggggg#g
+|    ggggggg#g
+|   ##########
+|  ############
+|  ###...##...#
+|  ##.#.###.#.##.
+|  ###...##...###
+|  ######..######
+| .#####.##.####.
+| #.###.####.###.#
+|  .##.##....###.
+|   ###.####.###
+|   ####....###
+|    ##########
+|     ########
+|      ######
+""")
+    sol_traits(r, 68, 12, 66, 37)
 
 
 def lamia_dessin(r):
-    # la portière des Portes : cape, un badge, une grande clé et la liste des arrivants
-    r(33, 11, 54, 33, V); r(35, 13, 52, 15, B); tete(r, 12, V)
-    robe_mage(r, 33, 64, V, 34, 53); r(37, 33, 50, 64, B)
-    r(38, 38, 44, 45, V); r(39, 39, 43, 41, N); r(39, 43, 43, 43, N)
-    bras(r, True, True, 36)
-    r(57, 38, 63, 44, B); r(58, 39, 62, 43, N); r(59, 44, 61, 60, B); r(61, 54, 65, 55, B); r(61, 58, 64, 59, B)
-    r(14, 36, 28, 60, B); r(15, 37, 27, 59, N)
-    for y in range(41, 57, 3): r(17, y, 22, y, V); r(24, y, 25, y + 1, B)
-    pieds_robe(r); sol_tirets(r, 68)
+    # la portière des Portes : adossée à la borne du quai, les bras croisés sur la liste des arrivants, la grande clé
+    # passée dans la ceinture ; la cape tombe droit, le badge brille, un demi-sourire tranquille
+    r(52, 30, 62, 66, N); r(53, 31, 61, 66, B); r(54, 33, 60, 41, N); r(55, 34, 59, 37, V)    # la borne du quai
+    for (x, y) in ((55, 39), (57, 39), (59, 39)): r(x, y, x, y, V)
+    r(54, 44, 60, 45, V); r(52, 28, 62, 30, V)
+    cx = 40
+    for y in range(28, 66):                                                  # la cape, penchée vers la borne
+        sh = (66 - y) // 8
+        hw = 7 + (y - 28) // 6
+        r(cx - hw + sh, y, cx + hw + sh, y, V)
+    for y in range(28, 66):
+        sh = (66 - y) // 8
+        r(cx - 3 + sh, y, cx + 3 + sh, y, B)
+    r(cx - 3, 36, cx + 2, 40, N); r(cx - 2, 37, cx + 1, 39, V)                 # le badge
+    r(cx - 5, 66, cx - 1, 67, B); r(cx + 2, 66, cx + 6, 67, B)
+    r(cx - 8, 42, cx + 12, 52, N); r(cx - 7, 43, cx + 11, 51, B)             # la liste, contre elle, bras croisés
+    for y in range(45, 51, 2): r(cx - 5, y, cx + 6, y, N)
+    trait(r, [(cx - 8, 31), (cx - 11, 38), (cx - 9, 44)], 3, V)
+    trait(r, [(cx + 9, 31), (cx + 12, 38), (cx + 10, 44)], 3, V)
+    r(cx - 10, 44, cx + 12, 48, N); r(cx - 9, 45, cx + 11, 47, V); r(cx - 9, 45, cx + 1, 45, B)
+    r(cx - 11, 44, cx - 8, 48, B); r(cx + 10, 44, cx + 13, 48, B)
+    r(cx + 3, 53, cx + 9, 59, N); r(cx + 4, 54, cx + 8, 58, B); r(cx + 5, 55, cx + 7, 57, N)   # la grande clé
+    trait(r, [(cx + 6, 59), (cx + 6, 66)], 2, B, False); r(cx + 7, 63, cx + 9, 64, B)
+    sprite(r, cx - 10, 5, """
+|      ggggggggg
+|    ggggggggggggg
+|   ggggggggggggggg
+|  ggg...........ggg
+|  gg.#########gg.gg
+|  g.####ggg######.g
+|  g.##############.g
+|  g.##.....##.....#.g
+|  g.##.##.##.###..#.g
+|  g.##############.g
+|  g.#######..#####.g
+|  g.######.########.g
+|  gg.#####...#####.gg
+|  gg.###.....#.###.gg
+|  ggg.####...####.ggg
+|  gggg.#########.gggg
+|  ggggg.........ggggg
+|   ggggggggggggggggg
+""")
+    sol_traits(r, 68, 16, 68, 38)
 
 
 def miguel_dessin(r):
-    # le forgeron des sceaux : bandeau, tablier de cuir, un marteau et un sceau rougeoyant
-    r(36, 13, 51, 14, V); r(50, 13, 54, 16, V); tete(r, 12, V, barbe=True)
-    r(35, 33, 52, 54, B); r(37, 35, 50, 57, V); r(37, 35, 50, 36, N)
-    for (x, y) in ((39, 40), (48, 40), (39, 52), (48, 52)): r(x, y, x, y, B)
-    bras(r, True, True, 36)
-    r(57, 24, 58, 48, B); r(52, 18, 63, 25, B); r(53, 19, 55, 24, V)
-    r(10, 46, 28, 62, V); r(11, 45, 27, 47, V); r(14, 50, 24, 58, N); r(17, 52, 21, 56, V); r(18, 53, 20, 55, N)
-    r(8, 44, 9, 46, B); r(28, 42, 29, 44, B)
-    jambes(r, B); sol_tirets(r, 68)
+    # le forgeron des sceaux : bandeau noué, avant-bras puissants, tablier de cuir ; il abat son marteau sur
+    # l'enclume où rougeoie le sceau, et des étincelles jaillissent en gerbe
+    cx = 30
+    r(cx - 8, 32, cx + 8, 56, B); r(cx - 6, 36, cx + 6, 60, V); r(cx - 6, 36, cx + 6, 36, N)   # le tablier
+    for (x, y) in ((cx - 4, 40), (cx + 3, 40), (cx - 4, 56), (cx + 3, 56)): r(x, y, x, y, B)
+    r(cx - 6, 60, cx - 2, 64, V); r(cx + 2, 60, cx + 6, 64, V)
+    r(cx - 8, 64, cx - 2, 67, B); r(cx + 2, 64, cx + 8, 67, B); r(cx - 8, 66, cx + 8, 66, N)
+    sprite(r, cx + 10, 44, """
+|  ###################
+| #####################
+|  .#################.
+|     ..###########..
+|       .#########.
+|        #########
+|       ###########
+|      #############
+|      #############
+""")
+    sprite(r, cx + 15, 39, """
+|   #######
+|  #ggggggg#
+|  #g#####g#
+""")
+    for (a, b) in (((cx + 20, 37), (cx + 18, 30)), ((cx + 24, 36), (cx + 30, 28)), ((cx + 27, 38), (cx + 35, 34)),
+                   ((cx + 16, 38), (cx + 10, 33)), ((cx + 22, 35), (cx + 23, 27))):
+        ligne_r(r, a[0], a[1], b[0], b[1], V); r(b[0], b[1], b[0], b[1], B)
+    trait(r, [(cx + 8, 34), (cx + 14, 30), (cx + 15, 22)], 4, B)              # le bras qui frappe
+    trait(r, [(cx + 15, 22), (cx + 23, 31)], 2, B)
+    sprite(r, cx + 18, 26, """
+|    ..
+|   .##.
+|  .####.
+| .######.
+|.#####g##.
+| .###g##.
+|  .#g##.
+|   .##.
+|    ..
+""")
+    trait(r, [(cx - 8, 34), (cx - 13, 42), (cx - 9, 49)], 4, B)              # le poing sur la hanche
+    sprite(r, cx - 10, 7, """
+|      #########
+|    ##.#######.##
+|   ###.#########.#
+|   gggggggggggggggggg
+|   ggggggggggggggggg ggg
+|   ##############   gg
+|   ##ggggg##gggg#
+|   ##.....##....##
+|   ##.#.####.#.###.
+|  .#################
+|  #.######.#######.
+|   .#####.#.#####.
+|    ####.###.####
+|    ###.......###
+|    ####.###.####
+|     ####...####
+|      #########
+|        #####
+""")
+    sol_traits(r, 68, 14, 66, 39)
 
 
 def amina_dessin(r):
-    # la gardienne de l'Arche : capuche, un coffre scellé et une lampe
-    r(33, 9, 54, 33, B); r(35, 11, 52, 31, N); tete(r, 12, B)
-    robe_mage(r, 33, 64, B, 34, 53); r(38, 33, 49, 64, N); r(36, 46, 51, 47, V)
-    bras(r, True, True, 36)
-    r(53, 42, 71, 60, V); r(55, 44, 69, 58, N); r(53, 49, 71, 50, B); r(60, 48, 64, 54, V); r(61, 50, 63, 52, N)
-    r(53, 42, 71, 43, B)
-    r(20, 30, 24, 34, B); r(16, 34, 28, 48, B); r(18, 36, 26, 46, V); r(20, 38, 24, 44, B); r(15, 48, 29, 49, B)
-    pieds_robe(r); sol_tirets(r, 68)
+    # la gardienne de l'Arche : sur sa colline, la capuche rabattue par le vent ; elle tient haut une lampe et
+    # regarde au loin, la main en visière ; le coffre scellé à ses pieds, cerclé de fer, le sceau au milieu
+    for x in range(8, 80):                                                   # le haut de la colline
+        y = 66 + round(((x - 40) / 30.0) ** 2 * 3)
+        r(x, y, x, y, B)
+    cx = 30
+    for y in range(28, 66):                                                  # la cape qui vole vers la droite
+        hw = 7 + (y - 28) // 5
+        r(cx - hw, y, cx + hw + (y - 28) // 3, y, B)
+    r(cx - 1, 30, cx + 1, 65, N); r(cx - 8, 44, cx + 10, 45, V)
+    for y in range(48, 65, 4): r(cx + 8 + (y - 28) // 3, y, cx + 10 + (y - 28) // 3, y, N)
+    trait(r, [(cx + 7, 30), (cx + 12, 22), (cx + 10, 14)], 2, B)              # la lampe levée
+    r(cx + 6, 4, cx + 14, 14, N); r(cx + 7, 6, cx + 13, 13, V); r(cx + 9, 8, cx + 11, 11, B); r(cx + 9, 2, cx + 11, 4, B)
+    for (a, b) in (((cx + 3, 6), (cx, 4)), ((cx + 17, 6), (cx + 20, 4)), ((cx + 17, 11), (cx + 21, 12))):
+        ligne_r(r, a[0], a[1], b[0], b[1], V)
+    trait(r, [(cx - 7, 30), (cx - 11, 26), (cx - 6, 18)], 2, B)               # la main en visière
+    x0, y0 = cx + 18, 50                                                      # le coffre scellé
+    r(x0, y0, x0 + 24, y0 + 15, N); r(x0 + 1, y0 + 1, x0 + 23, y0 + 14, V); r(x0 + 1, y0 + 1, x0 + 23, y0 + 4, B)
+    r(x0 + 1, y0 + 5, x0 + 23, y0 + 5, N)
+    for x in (x0 + 5, x0 + 19): r(x, y0 + 1, x + 1, y0 + 14, B)
+    r(x0 + 9, y0 + 7, x0 + 15, y0 + 12, N); r(x0 + 10, y0 + 8, x0 + 14, y0 + 11, B); r(x0 + 11, y0 + 9, x0 + 13, y0 + 10, V)
+    sprite(r, cx - 11, 7, """
+|       gggggggg
+|     gggggggggggg
+|    gggggggggggggggg
+|   gggg........gggggggg
+|   ggg.########.gggggggggg
+|  ggg.##########.gggg  gggg
+|  gg.###.....####.ggg     gg
+|  gg.###.#.#.####.gg
+|  gg.####...#####.gg
+|  gg.#######.####.g
+|  g.#######..#####.g
+|  g.######.######.g
+|  g.#######.....#.g
+|  gg.#####.###.##.g
+|  ggg.####.....#.gg
+|  gggg.#######.ggg
+|  ggggg.......gggg
+|   gggggggggggggg
+""")
+    sol_traits(r, 70, 16, 64, 40)
 
 
 def ilyes_dessin(r):
-    # le gamin de la gazette : casquette, manches noires d'encre, une liasse de feuilles
-    r(36, 9, 51, 12, B); r(49, 11, 56, 12, B); r(42, 8, 45, 9, V); tete(r, 12, B)
-    r(35, 33, 52, 54, V); r(38, 33, 49, 35, B)
-    r(30, 36, 34, 47, N); r(53, 36, 57, 47, N); r(30, 46, 34, 47, B); r(53, 46, 57, 47, B)
-    bras(r, True, True, 36)
-    r(30, 36, 33, 46, N); r(54, 36, 57, 46, N)
-    r(53, 36, 71, 58, B); r(55, 38, 69, 56, N); r(55, 38, 69, 43, V)
-    for y in range(46, 56, 3): r(56, y, 68, y, B)
-    jambes(r); sol_tirets(r, 68)
+    # le gamin de la gazette : petit, la casquette à l'envers, la bouche grande ouverte (« Édition spéciale ! ») ;
+    # il agite une gazette au-dessus de sa tête, la liasse sous l'autre bras, les manches noires d'encre
+    cx = 38
+    r(cx - 6, 38, cx + 6, 54, V); r(cx - 3, 38, cx + 3, 40, B); r(cx - 6, 46, cx + 6, 46, N)   # la veste trop grande
+    r(cx - 5, 54, cx - 2, 62, B); r(cx + 2, 54, cx + 5, 62, B); r(cx - 4, 55, cx - 3, 62, N); r(cx + 3, 55, cx + 4, 62, N)
+    r(cx - 7, 62, cx - 2, 64, V); r(cx + 2, 62, cx + 7, 64, V); r(cx - 7, 64, cx - 2, 64, B); r(cx + 2, 64, cx + 7, 64, B)
+    trait(r, [(cx + 6, 40), (cx + 11, 32), (cx + 13, 24)], 2, N)              # la gazette agitée
+    r(cx + 11, 22, cx + 15, 25, B)
+    r(cx + 6, 6, cx + 28, 23, N); r(cx + 7, 7, cx + 27, 22, B); r(cx + 9, 9, cx + 25, 12, N); r(cx + 10, 10, cx + 24, 11, V)
+    for y in range(14, 22, 2): r(cx + 9, y, cx + 16, y, N); r(cx + 18, y, cx + 25, y, N)
+    r(cx + 18, 14, cx + 25, 18, V)
+    for (a, b) in (((cx + 30, 4), (cx + 33, 1)), ((cx + 31, 10), (cx + 35, 10)), ((cx + 3, 4), (cx, 1))):
+        ligne_r(r, a[0], a[1], b[0], b[1], B)
+    trait(r, [(cx - 6, 40), (cx - 10, 46), (cx - 7, 50)], 2, N)               # la liasse sous le bras
+    r(cx - 20, 42, cx - 6, 54, N); r(cx - 19, 43, cx - 7, 53, B)
+    for y in range(45, 53, 2): r(cx - 18, y, cx - 8, y, N)
+    r(cx - 12, 42, cx - 11, 54, V)
+    r(cx - 12, 40, cx - 8, 44, N); r(cx - 11, 41, cx - 9, 43, B)
+    r(cx - 2, 31, cx + 2, 38, B)
+    sprite(r, cx - 9, 16, """
+|          ggg
+|     gggggggggg
+|   ggggggggggggg
+|  gggggggggggggg
+|    #############
+|   #...####...###
+|   #.#.####.#.###
+|   #...####...###.
+|  .######..######.
+|  #.####.##.#####.#
+|   .##..........#.
+|   ###.##########
+|   ###.#.......#
+|    ##.#.ggg..#
+|    ###.......#
+|     ###########
+|       ######
+""")
+    sol_traits(r, 66, 16, 64, 41)
 
 
 def clara_dessin(r):
-    # la secrétaire du capitaine : cheveux au carré, caban croisé, un carnet de bord
-    r(35, 9, 52, 12, V); r(33, 12, 36, 28, V); r(51, 12, 54, 28, V); tete(r, 12, V)
-    r(35, 33, 52, 54, B); r(38, 33, 49, 54, N); r(40, 33, 47, 37, B)
-    for y in range(39, 53, 5): r(40, y, 41, y + 1, B); r(46, y, 47, y + 1, B)
-    bras(r, True, True, 36)
-    r(14, 38, 30, 56, V); r(16, 40, 28, 54, N); r(14, 38, 16, 56, B); for_lignes(r, 18, 43, 26, 53, V); r(18, 43, 26, 43, B)
-    jambes(r); sol_tirets(r, 68)
+    # la secrétaire du capitaine : cheveux au carré avec une frange nette, le crayon derrière l'oreille ; caban
+    # croisé à boutons ; elle écrit, appliquée, dans le carnet de bord, la langue entre les dents
+    cx = 36
+    r(cx - 8, 32, cx + 8, 58, V); r(cx - 6, 32, cx + 6, 35, B); r(cx - 2, 32, cx + 2, 34, N)  # le caban croisé
+    for y in (39, 45, 51): r(cx - 4, y, cx - 3, y + 1, B); r(cx + 3, y, cx + 4, y + 1, B)
+    r(cx - 8, 47, cx + 8, 47, N)
+    r(cx - 5, 58, cx - 2, 64, B); r(cx + 2, 58, cx + 5, 64, B)
+    r(cx - 7, 64, cx - 2, 66, V); r(cx + 2, 64, cx + 7, 66, V)
+    r(cx - 20, 36, cx - 2, 48, N); r(cx - 19, 37, cx - 11, 47, B); r(cx - 10, 37, cx - 3, 47, B)   # le carnet de bord
+    r(cx - 11, 37, cx - 10, 47, V)
+    for y in range(39, 47, 2): r(cx - 18, y, cx - 13, y, N); r(cx - 9, y, cx - 4 - (y % 3), y, N)
+    trait(r, [(cx - 8, 34), (cx - 14, 40), (cx - 15, 47)], 2, V)
+    trait(r, [(cx + 8, 34), (cx + 4, 42), (cx - 3, 42)], 2, V)               # la main qui écrit
+    ligne_r(r, cx - 4, 44, cx, 38, B, 1); r(cx, 37, cx, 37, V)
+    sprite(r, cx - 10, 7, """
+|     ggggggggg
+|   ggggggggggggg
+|  ggggggggggggggg
+|  gggggggggggggggg
+|  gg.g.g.g.g.g.ggg   #
+|  gg#############g  #
+|  gg#############g #
+|  gg##..####..###g#
+|  gg#.#.####.#.##gg
+|  gg############.gg
+|  gg######..#####gg
+|  gg#####.##.####gg
+|  gg####.....####gg
+|  ggg####.g.####ggg
+|  ggg#####.#####ggg
+|   gg###########gg
+|        ####
+""")
+    sol_traits(r, 68, 16, 62, 42)
 
 
 def mehdi_dessin(r):
-    # l'organisateur de la fête : grand, foulard, une guirlande de lampions sur l'épaule
-    r(36, 9, 51, 12, B); tete(r, 12, B)
-    r(35, 33, 52, 54, V); r(38, 35, 49, 54, B); r(37, 31, 50, 34, V); r(46, 34, 48, 40, V)
-    bras(r, True, True, 36)
-    pts = [(8 + k * 9, int(42 + 14 * math.sin(math.pi * k / 8))) for k in range(9)]       # la guirlande, tenue à deux mains
-    for (a, b) in zip(pts, pts[1:]):
-        ligne_r(r, a[0], a[1], b[0], b[1], B)
-    for k, (x, y) in enumerate(pts):
-        r(x - 2, y + 1, x + 2, y + 6, V if k % 2 else B); r(x - 1, y + 7, x + 1, y + 7, V if k % 2 else B)
-    jambes(r); sol_tirets(r, 68)
+    # l'organisateur de la fête : grand et dégingandé, une écharpe qui flotte, un large sourire ; il tend à bout de
+    # bras une guirlande de lampions, d'une main à l'autre, comme on présente une banderole
+    cx = 44
+    r(cx - 6, 30, cx + 6, 54, B); r(cx - 4, 32, cx + 4, 54, V); r(cx - 4, 42, cx + 4, 42, N)
+    r(cx - 6, 29, cx + 6, 32, V); trait(r, [(cx + 4, 30), (cx + 14, 26), (cx + 22, 28)], 2, V, False)   # l'écharpe
+    r(cx + 20, 27, cx + 24, 30, V)
+    r(cx - 4, 54, cx - 1, 64, B); r(cx + 1, 54, cx + 4, 64, B); r(cx - 3, 55, cx - 2, 64, N); r(cx + 2, 55, cx + 3, 64, N)
+    r(cx - 7, 64, cx - 1, 66, V); r(cx + 1, 64, cx + 7, 66, V)
+    trait(r, [(cx - 6, 32), (cx - 16, 26), (cx - 26, 22)], 2, B)              # les bras grands ouverts
+    trait(r, [(cx + 6, 34), (cx + 14, 38), (cx + 24, 36)], 2, B)
+    pts = [(cx - 28 + k * 7, round(22 + 14 * math.sin(math.pi * k / 7.5))) for k in range(8)]   # la guirlande
+    pts[-1] = (cx + 24, 36)
+    for (a, b) in zip(pts, pts[1:]): ligne_r(r, a[0], a[1], b[0], b[1], B)
+    for k, (x, y) in enumerate(pts[1:-1]):
+        c = V if k % 2 else B
+        r(x - 2, y + 1, x + 2, y + 7, N); r(x - 1, y + 1, x + 1, y + 7, c); r(x - 2, y + 3, x + 2, y + 5, c)
+        r(x, y + 8, x, y + 9, c)
+    r(cx - 2, 26, cx + 2, 29, B)
+    sprite(r, cx - 9, 10, """
+|      gg gg gg
+|    ggggggggggggg
+|   gggg.gggg.ggggg
+|   gg.gggggggg.ggg
+|   gg###########gg
+|   g####.####.###g
+|   g###.#.##.#.##g
+|   ################.
+|  .#######..######.#
+|  #.#####.##.#####.
+|   .####.####.####
+|    ####.##..####
+|    ###..........
+|    ####.######.
+|     ####......
+|      #########
+|        #####
+""")
+    sol_traits(r, 68, 18, 66, 43)
 
 
 def sara_dessin(r):
-    # l'ingénieure du câble : ciré à capuche (vert), un câble enroulé sur l'épaule
-    r(34, 9, 53, 13, V); r(33, 12, 36, 24, V); tete(r, 12, V)
-    robe_mage(r, 33, 64, V, 35, 52); r(42, 33, 45, 64, B)
-    for y in (42, 50, 58): r(39, y, 40, y + 1, N); r(47, y, 48, y + 1, N)
-    bras(r, True, True, 36)
-    for k, rr in enumerate((10, 8, 6)):                                                      # le câble enroulé
-        for j in range(48):
-            a = j * 2 * math.pi / 48
-            x, y = round(61 + rr * math.cos(a)), round(38 + rr * 1.05 * math.sin(a))
+    # l'ingénieure du câble : le ciré vert à capuche, des bottes ; un gros câble enroulé sur l'épaule, elle en colle
+    # l'extrémité à son oreille, les yeux fermés, et écoute le grésillement (de petites ondes)
+    cx = 36
+    for y in range(30, 62):                                                  # le ciré
+        hw = 7 + (y - 30) // 6
+        r(cx - hw, y, cx + hw, y, V)
+    r(cx - 1, 30, cx + 1, 61, N)
+    for y in (38, 46, 54): r(cx - 4, y, cx - 3, y + 1, B); r(cx + 3, y, cx + 4, y + 1, B)
+    r(cx - 5, 62, cx - 1, 67, B); r(cx + 1, 62, cx + 5, 67, B); r(cx - 5, 64, cx + 5, 64, N)
+    for k, rr in enumerate((11, 9, 7)):                                       # le câble enroulé sur l'épaule
+        for j in range(60):
+            a = j * 2 * math.pi / 60
+            x, y = round(cx + 12 + rr * math.cos(a)), round(36 + rr * 0.9 * math.sin(a))
+            r(x, y, x + 1, y + 1, N)
+        for j in range(60):
+            a = j * 2 * math.pi / 60
+            x, y = round(cx + 12 + rr * math.cos(a)), round(36 + rr * 0.9 * math.sin(a))
             r(x, y, x, y, B if k != 1 else V)
-    ligne_r(r, 61, 48, 64, 60, V); r(62, 60, 66, 62, B)
-    pieds_robe(r); sol_tirets(r, 68)
+    trait(r, [(cx - 7, 32), (cx - 12, 26), (cx - 9, 18)], 2, B)               # le bout du câble à l'oreille
+    pts = [(cx + 1, 44), (cx - 8, 46), (cx - 16, 40), (cx - 16, 26), (cx - 11, 18)]
+    for (a, b) in zip(pts, pts[1:]): ligne_r(r, a[0], a[1], b[0], b[1], B, 2)
+    r(cx - 12, 15, cx - 9, 19, V)
+    for (a, b) in (((cx - 16, 12), (cx - 20, 10)), ((cx - 17, 16), (cx - 22, 16)), ((cx - 16, 20), (cx - 20, 22))):
+        ligne_r(r, a[0], a[1], b[0], b[1], V)
+    sprite(r, cx - 9, 6, """
+|       ggggggg
+|     ggggggggggg
+|    ggggggggggggg
+|   gggg.......gggg
+|   ggg.#######.ggg
+|   gg.#########.gg
+|   gg.#########.gg
+|   gg.##...#...#.gg
+|   gg.###########.g
+|   gg.######..###.g
+|   gg.#####.##.##.g
+|   ggg.###.####.#.g
+|   ggg.###.......gg
+|   gggg.###...##.gg
+|   ggggg.#######ggg
+|   gggggg.......ggg
+|    ggggggggggggggg
+""")
+    sol_traits(r, 68, 16, 66, 44)
 
 
 def rayan_dessin(r):
-    # le bibliothécaire : lunettes rondes, gilet, une pile de livres numérisés
-    r(36, 10, 51, 12, B); tete(r, 12, B, lunettes=True)
-    r(35, 33, 52, 54, B); r(38, 35, 49, 54, V); r(43, 35, 44, 54, N)
-    bras(r, True, True, 36)
-    for k in range(5):
-        r(53 + (k % 2), 54 - k * 5, 70 - (k % 2) * 2, 57 - k * 5, V if k % 2 else B); r(56, 55 - k * 5, 57, 56 - k * 5, N)
-        r(66 - (k % 2) * 2, 55 - k * 5, 67 - (k % 2) * 2, 56 - k * 5, N if k % 2 else V)
-    jambes(r); sol_tirets(r, 68)
+    # le bibliothécaire : lunettes rondes, le nez dans le livre qu'il lit en marchant ; sous l'autre bras, une pile
+    # de livres numérisés qui tangue, un marque-page vert qui dépasse
+    cx = 34
+    r(cx - 7, 32, cx + 7, 54, B); r(cx - 5, 33, cx + 5, 54, V); r(cx, 33, cx, 54, N)       # le gilet
+    for y in (37, 42, 47): r(cx - 2, y, cx - 2, y, B); r(cx + 2, y, cx + 2, y, B)
+    trait(r, [(cx - 3, 54), (cx - 7, 66)], 3, B); trait(r, [(cx + 3, 54), (cx + 6, 66)], 3, B)   # il marche
+    r(cx - 11, 66, cx - 6, 67, V); r(cx + 5, 66, cx + 10, 67, V)
+    r(cx + 6, 18, cx + 24, 30, N); r(cx + 7, 19, cx + 14, 29, B); r(cx + 16, 19, cx + 23, 29, B); r(cx + 15, 19, cx + 15, 29, V)  # le livre ouvert
+    for y in range(21, 29, 2): r(cx + 8, y, cx + 13, y, N); r(cx + 17, y, cx + 22, y, N)
+    r(cx + 14, 30, cx + 15, 34, V)
+    trait(r, [(cx + 6, 34), (cx + 10, 33), (cx + 9, 29)], 2, B)
+    trait(r, [(cx - 7, 34), (cx - 11, 42), (cx - 8, 47)], 2, B)              # la pile sous le bras
+    for k in range(6):
+        y = 52 - k * 4; x = cx - 22 + (k % 3) - (1 if k == 4 else 0)
+        r(x - 1, y - 1, x + 14, y + 3, N); r(x, y, x + 13, y + 2, V if k % 2 else B); r(x + 2, y + 1, x + 11, y + 1, B if k % 2 else N)
+    r(cx - 19, 26, cx - 18, 31, V)
+    sprite(r, cx - 9, 8, """
+|      ########
+|    ###.##.#####
+|   ##############
+|   #.##########.#
+|   ##.ggg###ggg.##
+|   ##g###g#g###g##
+|   ##g..#ggg..#g###
+|   ##g###g#g###g.#.#
+|   ###ggg###ggg.###
+|   #######.#####.#
+|   ######.#######
+|    ####.##..###
+|    ####.......
+|     ####.###.
+|      ###...
+|       #####
+""")
+    sol_traits(r, 68, 14, 62, 45)
 
 
 def fama_dessin(r):
-    # l'étudiante qui corrige : tresses, un cartable plein de copies, un stylo vert
-    r(36, 9, 51, 12, B); r(32, 14, 35, 36, B); r(52, 14, 55, 36, B)
-    for y in range(16, 36, 4): r(32, y, 35, y, N); r(52, y, 55, y, N)
-    tete(r, 12, B)
-    robe_mage(r, 33, 64, V, 35, 52); r(37, 44, 50, 45, B)
-    bras(r, True, True, 36)
-    r(53, 44, 71, 62, B); r(55, 46, 69, 60, N); r(55, 46, 69, 50, V); r(61, 50, 63, 52, B)
-    r(56, 38, 68, 46, B); r(58, 40, 66, 46, N); for_lignes(r, 57, 40, 67, 45, V)
-    r(20, 32, 21, 50, V); r(20, 50, 21, 52, B); r(20, 30, 21, 32, B)
-    pieds_robe(r); sol_tirets(r, 68)
+    # l'étudiante qui corrige : deux tresses relevées en macarons, un air malicieux ; elle brandit une copie barrée
+    # d'une grande coche verte, le stylo vert dans l'autre main, le cartable bourré de copies à ses pieds
+    cx = 34
+    for y in range(32, 64):                                                  # la robe
+        hw = 6 + (y - 32) // 5
+        r(cx - hw, y, cx + hw, y, V)
+    r(cx - 4, 32, cx + 4, 36, B); r(cx - 1, 33, cx + 1, 35, N); r(cx - 8, 46, cx + 8, 47, B)
+    r(cx - 4, 64, cx - 1, 66, B); r(cx + 2, 64, cx + 5, 66, B)
+    trait(r, [(cx + 6, 34), (cx + 12, 28), (cx + 14, 20)], 2, B)              # la copie brandie
+    r(cx + 9, 4, cx + 27, 22, N); r(cx + 10, 5, cx + 26, 21, B)
+    for y in range(7, 21, 2): r(cx + 12, y, cx + 24, y, N)
+    for k in range(4): r(cx + 13 + k, 13 + k, cx + 14 + k, 15 + k, N); r(cx + 13 + k, 13 + k, cx + 14 + k, 14 + k, V)
+    ligne_r(r, cx + 16, 16, cx + 25, 6, N, 3); ligne_r(r, cx + 16, 16, cx + 25, 6, V, 2)
+    trait(r, [(cx - 6, 34), (cx - 11, 40), (cx - 13, 36)], 2, B)              # le stylo vert
+    r(cx - 15, 28, cx - 13, 36, V); r(cx - 15, 28, cx - 13, 29, B); r(cx - 14, 37, cx - 14, 38, B)
+    r(cx - 22, 52, cx - 6, 66, N); r(cx - 21, 53, cx - 7, 65, V); r(cx - 21, 53, cx - 7, 56, B)   # le cartable
+    r(cx - 15, 56, cx - 13, 58, B)
+    for (x, h) in ((cx - 20, 5), (cx - 17, 7), (cx - 12, 6), (cx - 9, 4)): r(x, 52 - h, x + 2, 52, B); r(x, 52 - h, x + 2, 52 - h, N)
+    ligne_r(r, cx - 19, 52, cx - 14, 47, V); ligne_r(r, cx - 14, 47, cx - 9, 52, V)
+    sprite(r, cx - 13, 6, """
+|   ####            ####
+|  #.##.#          #.##.#
+|  #.##.#  ggggggg #.##.#
+|   ####ggggggggggg####
+|     ggggggggggggggg
+|     ggg#########ggg
+|     gg###########gg
+|     g###..###..###g
+|     g##.#.##.#.###
+|     g###..###..###
+|     .######..#####.
+|     #.####.##.###.#
+|      .###.####.##.
+|       ##.##...#.#
+|       ###.....##
+|        ###...##
+|         ######
+""")
+    sol_traits(r, 68, 14, 66, 46)
 
 
 PORTRAITS = {

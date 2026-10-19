@@ -13,9 +13,8 @@ import os, sys, math, random
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from PIL import Image, ImageDraw  # noqa: E402
 from dessiner_lieux import toile, finir, N, V, B, W, H, PAL, OUT  # noqa: E402
-from dessiner_academie import robe_mage, bras, jambes, pieds_robe  # noqa: E402
-from dessiner_panne import perso, yeux, sol_tirets  # noqa: E402
-from dessiner_bastion import tete, cle  # noqa: E402
+from dessiner_panne import perso  # noqa: E402
+from dessiner_bastion import cle  # noqa: E402
 
 
 # ------------------------------------------------------------------
@@ -1620,264 +1619,1974 @@ def rayures(r, x0, y0, x1, y1, c=V, pas=3):
         r(x0, y, x1, y, c)
 
 
-def bachi(r, c=B, pompon=V):
-    """Le bonnet de marin, son ruban et son pompon."""
-    r(36, 8, 51, 12, c); r(35, 11, 52, 12, c); r(36, 12, 51, 12, N)
-    r(41, 5, 46, 7, pompon)
+# Les portraits sont dessinés au pixel près, dans l'esprit des sprites d'origine du chapitre 1 : des silhouettes et
+# des poses toutes différentes (penché, voûté, assis, en plein saut, de profil, tourné à gauche), des visages
+# caricaturaux (gros nez, sourcils, moustaches, barbes), un objet de métier lisible et un peu d'humour.
+
+def art(r, x0, y0, lignes):
+    """Un motif dessiné au pixel près : W blanc, G vert, k noir (pour creuser), tout le reste laissé tel quel."""
+    for j, ligne in enumerate(lignes):
+        for i, ch in enumerate(ligne):
+            c = {'W': B, 'G': V, 'k': N}.get(ch)
+            if c is not None:
+                r(x0 + i, y0 + j, x0 + i, y0 + j, c)
 
 
-def casquette(r, c=B, visiere=N, insigne=V):
-    r(35, 7, 52, 12, c); r(36, 6, 51, 7, c); r(34, 12, 53, 13, visiere)
-    r(42, 8, 45, 10, insigne)
+def sol(r, y, segs):
+    """Les ombres en tirets blancs sous les pieds, comme dans les sprites d'origine."""
+    for (x0, x1, dy) in segs:
+        r(x0, y + dy, x1, y + dy, B)
 
 
-def casque(r, c=V):
-    r(36, 6, 51, 12, c); r(34, 12, 53, 13, c); r(42, 4, 45, 6, c); r(38, 7, 39, 11, B)
+def miroir(r):
+    """Le même pinceau, retourné de gauche à droite (pour tourner un personnage vers la gauche)."""
+    return lambda x0, y0, x1, y1, c: r(87 - x1, y0, 87 - x0, y1, c)
 
 
-def veste(r, c=B, rev=V, boutons=True):
-    r(35, 33, 52, 54, c); r(40, 33, 43, 40, rev); r(44, 33, 47, 40, rev)
-    if boutons:
-        for y in (42, 46, 50):
-            r(41, y, 41, y, N if c != N else B); r(46, y, 46, y, N if c != N else B)
+def tonneau_couche(r, x0, y0, l=26, h=22):
+    """Un tonneau couché vu de côté : le ventre bombé, les douelles en lignes noires, deux cercles blancs."""
+    for i in range(l):
+        b = 2 if i in (0, l - 1) else (1 if i in (1, l - 2) else 0)
+        r(x0 + i, y0 + b, x0 + i, y0 + h - b, B if b == 2 or i in (1, l - 2) else V)
+        r(x0 + i, y0 + b, x0 + i, y0 + b, B); r(x0 + i, y0 + h - b, x0 + i, y0 + h - b, B)
+    for y in range(y0 + 5, y0 + h - 2, 4):
+        r(x0 + 2, y, x0 + l - 3, y, N)
+    for x in (x0 + 5, x0 + l - 7):
+        r(x, y0, x + 1, y0 + h, B)
+def membre(r, pts, c, ep=3):
+    """Un bras, une jambe ou un manche : une ligne brisée épaisse qui passe par les articulations."""
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        ligne_r(r, x0 - ep // 2, y0 - ep // 2, x1 - ep // 2, y1 - ep // 2, c, ep)
+
+
+def main(r, x, y):
+    """Une main blanche de 4 x 4, les doigts marqués d'un trait noir."""
+    art(r, x - 2, y - 2, [".WWW", "WWWW", "WkWW", ".WWW"])
+
+
+def disque(r, cx, cy, ra, c, rb=None):
+    rb = rb or ra
+    for y in range(int(cy - rb), int(cy + rb) + 1):
+        for x in range(int(cx - ra), int(cx + ra) + 1):
+            if ((x - cx) / ra) ** 2 + ((y - cy) / rb) ** 2 <= 1:
+                r(x, y, x, y, c)
 
 
 def kylian_dessin(r):
-    # le premier maître : bonnet à pompon, marinière rayée, un petit conteneur sous le bras
-    bachi(r); tete(r, 12, B)
-    r(35, 33, 52, 54, B); rayures(r, 35, 35, 52, 54, V, 3)
-    bras(r, True, True, 36)
-    r(54, 42, 72, 52, V); r(54, 52, 72, 52, N)
-    for x in range(56, 72, 2): r(x, 43, x, 51, N)
-    jambes(r); sol_tirets(r, 68)
+    # le premier maître, celui qui accueille les mousses : il jaillit du conteneur où il était assis, un bras en
+    # l'air, une petite caisse sous l'autre ; bonnet à pompon, marinière, sourire jusqu'aux oreilles
+    # le conteneur ouvert, derrière lui
+    art(r, 0, 24, [
+        "WWWWWWWWWWWWWWWWWW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WGkGkGkGkGkGkGkGGW",
+        "WWWWWWWWWWWWWWWWWW",
+    ])
+    # la porte grande ouverte, vue de biais
+    for k in range(8):
+        r(18 + k, 22 + k, 18 + k, 68 - k, B if k in (0, 7) else (N if k % 2 else V))
+    # les jambes en plein saut : un genou levé, l'autre jambe qui traîne
+    membre(r, [(42, 46), (50, 50), (47, 57)], V, 5)
+    membre(r, [(37, 46), (32, 53), (26, 56)], V, 5)
+    art(r, 45, 56, ["WWWWWW", "WWWWWWW", "kkkkkkk"]); art(r, 20, 54, ["WWWWW", "WWWWW", "WWWW"])
+    # la marinière
+    art(r, 33, 30, [
+        "...WWWWWWWWWWWW...",
+        "..WWWWWWWWWWWWWWW.",
+        "..GGGGGGGGGGGGGGG.",
+        "..WWWWWWWWWWWWWWW.",
+        "..GGGGGGGGGGGGGGG.",
+        "..WWWWWWWWWWWWWWW.",
+        "..GGGGGGGGGGGGGGG.",
+        "..WWWWWWWWWWWWWWW.",
+        "..GGGGGGGGGGGGGGG.",
+        "..WWWWWWWWWWWWWWW.",
+        "..GGGGGGGGGGGGGGG.",
+        "..WWWWWWWWWWWWWWW.",
+        "..GGGGGGGGGGGGGGG.",
+        "...GGGGGGGGGGGGG..",
+        "...GGGGGGGGGGGGG..",
+        "...GGGGGGGGGGGGG..",
+        "...GGGGGGGGGGGGG..",
+    ])
+    # le bras levé qui salue (deux traits de mouvement), la petite caisse sous l'autre bras
+    membre(r, [(48, 33), (56, 26), (58, 16)], B, 3)
+    art(r, 55, 8, [".W.W.", ".WWWW", "WWWWW", "WWkWW", ".WWW."])
+    art(r, 62, 8, ["W.", ".W", "..", "W.", ".W"]); art(r, 52, 4, ["W", ".W"])
+    art(r, 22, 34, [
+        "WWWWWWWWWWWWW",
+        "WGkGkGkGkGkGW",
+        "WGkGkGkGkGkGW",
+        "WGkGkGkGkGkGW",
+        "WGkGkGkGkGkGW",
+        "WGkGkGkGkGkGW",
+        "WGkGkGkGkGkGW",
+        "WWWWWWWWWWWWW",
+    ])
+    membre(r, [(37, 33), (33, 38), (34, 42)], B, 3)
+    main(r, 34, 42)
+    # la tête : bonnet à pompon, les yeux plissés de joie, le grand sourire
+    art(r, 31, 8, [
+        "........WWW.........",
+        ".......WWWWW........",
+        "........WWW.........",
+        "....GGGGGGGGGGG.....",
+        "...GGWGGWGGWGGWG....",
+        "..GGGWGGWGGWGGWGG...",
+        "..WWWWWWWWWWWWWWWW..",
+        "..kkkkkkkkkkkkkkkk..",
+        "..GGWWWWWWWWWWWWWW..",
+        ".GGWWWWWkWWWWWkWWWW.",
+        ".GWWWWWkWkWWWkWkWWW.",
+        ".GWkWWWWWWWWWWWWWWWW",
+        ".Gk.WWWWWWWWWWWWWWWWW",
+        ".GkWWWWWWWWWWWWWWWWW",
+        "..WWWWkWWWWWWWWWWkWW",
+        "..WWWWkkkkkkkkkkkkW.",
+        "...WWWkWWWWWWWWWkWW.",
+        "....WWWkkkkkkkkkWW..",
+        ".....WWWWWWWWWWWW...",
+        ".......WWWWWWWW.....",
+        ".........WWWW.......",
+        ".........WWWW.......",
+    ])
+    # l'ombre au sol, loin sous les pieds : il est en l'air
+    sol(r, 68, [(24, 34, 0), (37, 56, 0), (60, 66, 0), (30, 50, 2), (38, 44, 4)])
 
 
 def julien_dessin(r):
-    # le capitaine de port : casquette à visière et insigne, veste croisée à boutons, une lanterne de signaux
-    casquette(r); tete(r, 12, B)
-    veste(r, N, B)
-    r(35, 33, 52, 54, N); r(35, 33, 36, 54, B); r(51, 33, 52, 54, B); r(40, 33, 47, 38, B)
-    for y in (41, 46, 51): r(40, y, 41, y + 1, V); r(46, y, 47, y + 1, V)
-    r(35, 34, 38, 35, V); r(49, 34, 52, 35, V)
-    bras(r, True, True, 36)
-    r(57, 46, 59, 48, B); r(55, 48, 63, 60, B); r(57, 50, 61, 58, V); r(54, 60, 64, 61, B)
-    jambes(r, B); sol_tirets(r, 68)
+    # le capitaine de port, tourné vers la gauche : droit comme un mât, le torse bombé, une main dans le dos ;
+    # il lève haut sa lanterne de signaux qui rayonne ; casquette à ancre, grande moustache en guidon
+    r = miroir(r)
+    # les jambes, raides
+    art(r, 32, 54, [
+        "..GGGGGGGGGGGGG..",
+        "..GGGGGG.GGGGGG..",
+        "..GGGGG...GGGGG..",
+        "..GGGGG...GGGGG..",
+        "..GGGGG...GGGGG..",
+        "..GGGGG...GGGGG..",
+        "..GGGGG...GGGGG..",
+        "..GGGGG...GGGGG..",
+        "..GGGGG...GGGGG..",
+        "..GGGGG...GGGGG..",
+        "WWWWWWW...WWWWWWWW",
+        "WWWWWWW...WWWWWWWWW",
+        "kkkkkkk...kkkkkkkkk",
+    ])
+    # la veste croisée, le torse bombé, deux rangs de boutons, les galons à la manche
+    art(r, 30, 30, [
+        "......WWWWWWWW.......",
+        "....WWGGGWWGGGGGG....",
+        "...GGGGGGGkkGGGGGGG..",
+        "..GGGGGGGGkGGGGGGGGG.",
+        "..GGGGGGGGkGGGGGGGGGG",
+        "..GGGGGGGGkGGGGGGGGGG",
+        "..GGGGGGWGGGGWGGGGGGG",
+        "..GGGGGGGGGGGGGGGGGGG",
+        "..GGGGGGGGGGGGGGGGGGG",
+        "..GGGGGGWGGGGWGGGGGGG",
+        "..GGGGGGGGGGGGGGGGGG.",
+        "..GGGGGGGGGGGGGGGGGG.",
+        "..GGGGGGWGGGGWGGGGG..",
+        "..GGGGGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGG..",
+        "..GGGGGGWGGGGWGGGGG..",
+        "..GGGGGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGG..",
+        "...GGGGGGGGGGGGGGG...",
+    ])
+    # le bras dans le dos
+    membre(r, [(33, 34), (30, 42), (34, 48)], V, 4); r(29, 40, 31, 41, B)
+    # le bras levé et la lanterne
+    membre(r, [(48, 33), (55, 26), (58, 14)], V, 4)
+    r(55, 22, 58, 23, B); r(54, 25, 57, 26, B)
+    art(r, 51, 0, [
+        "......WW......",
+        ".....W..W.....",
+        "....WWWWWW....",
+        "...WWWWWWWW...",
+        "..WWWWWWWWWW..",
+        "...WGGGGGGW...",
+        "...WGGWWGGW...",
+        "...WGWWWWGW...",
+        "...WGWWWWGW...",
+        "...WGGWWGGW...",
+        "...WGGGGGGW...",
+        "..WWWWWWWWWW..",
+        "...WWWWWWWW...",
+    ])
+    main(r, 58, 15)
+    for (x0, y0, x1, y1) in [(44, 4, 48, 4), (66, 4, 70, 4), (46, 0, 49, 2), (65, 2, 68, 0), (46, 9, 49, 11), (65, 11, 68, 9),
+                             (66, 7, 72, 7), (42, 7, 48, 7), (60, 14, 63, 17)]:
+        ligne_r(r, x0, y0, x1, y1, V)
+    # la tête : casquette à ancre, sourcil sévère, nez droit, grande moustache verte en guidon
+    art(r, 28, 8, [
+        ".......GGGGGGGGGGG......",
+        ".....GGGGGGGGGGGGGGG....",
+        "....GGGGGGGWWWGGGGGGG...",
+        "....GGGGGGGWkWGGGGGGG...",
+        "....GGGGGGWWWWWGGGGGG...",
+        "....WWWWWWWWWWWWWWWWWW..",
+        "....GGGGGGGGGGGGGGGGGGGG",
+        "....WWWWWWWWWWWWWWWW....",
+        "...WWWWWWWWWWkkkkkWWW...",
+        "...WWWWWWWWWWWWWWWWWW...",
+        "...WkWWWWWWWWWWkkWWWW...",
+        "...k.WWWWWWWWWWkkWWWWW..",
+        "...WkWWWWWWWWWWWWWWWWWW.",
+        "...WWWWWWWWWWWWWWWWWWWW.",
+        "....WWWWWWWWWWWWWWkWWW..",
+        "....WWWWWWGGGGGGGGGGGG..",
+        "G...WWWWWGGGGGGGGGGGGGG.G",
+        "GG..WWWWWWGGGGG..GGGGGGGG",
+        ".GGGGG.WWWWWWWWWWWWW.GG..",
+        "......WWWWWkkkkkWWW.....",
+        ".......WWWWWWWWWWWW.....",
+        ".........WWWWWWWW.......",
+    ])
+    sol(r, 66, [(20, 30, 0), (33, 58, 0), (62, 70, 0), (26, 40, 2), (44, 54, 2), (36, 44, 4)])
 
 
 def gregoire_dessin(r):
-    # le gardien des plans : lunettes, gilet, un grand plan roulé sous le bras et un cachet à la main
-    r(36, 9, 51, 12, B); tete(r, 12, B, lunettes=True)
-    r(35, 33, 52, 54, V); r(38, 33, 49, 54, B); r(40, 36, 47, 52, N); r(43, 38, 44, 50, V)
-    bras(r, True, True, 36)
-    r(12, 40, 34, 45, B); r(13, 41, 33, 44, V); r(11, 41, 12, 44, N); r(14, 42, 32, 42, N)
-    r(12, 40, 13, 45, B); r(15, 40, 16, 45, N)
-    r(57, 38, 59, 46, B); r(55, 37, 61, 38, B); r(54, 47, 62, 50, V); r(55, 50, 61, 51, N)
-    jambes(r); sol_tirets(r, 68)
+    # le gardien des plans : vieux, voûté sur son pupitre sous la lampe, crâne chauve et touffes blanches,
+    # lunettes rondes au bout d'un gros nez ; il appose le cachet de cire sur le plan, « tac ! », un autre plan
+    # roulé sous le bras
+    # la lampe suspendue et sa lumière
+    r(66, 0, 66, 8, B)
+    art(r, 59, 8, ["....WWWWWW....", "..WWWWWWWWWW..", ".WWGGGGGGGGWW.", "WWWWWWWWWWWWWW", "......WW......"])
+    for (x0, y0, x1, y1) in [(62, 16, 56, 26), (70, 16, 76, 26), (66, 17, 66, 27)]:
+        ligne_r(r, x0, y0, x1, y1, V)
+    # le pupitre et le plan déroulé
+    art(r, 50, 42, [
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+        "WGGGGGGGGGGGGGGGGGGGGGGGGGGGGW",
+        "WGkkkkkkkkkGGGGkkkkGGGGkkkkGGW",
+        "WGGGGGGGGGkGGGGkGGkGGGGkGGkGGW",
+        "WGkkkkkGGGkGGGGkkkkGGGGkkkkGGW",
+        "WGGGGGkGGGGGGGGGGGGGGGGGGGGGGW",
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+    ] + ["..W.......................W..."] * 15 + [".WWW.....................WWW..", "WWWWW...................WWWWW."])
+    # les jambes maigres, un peu fléchies
+    membre(r, [(30, 46), (30, 56), (28, 64)], V, 4); membre(r, [(38, 46), (40, 56), (40, 64)], V, 4)
+    art(r, 24, 63, ["WWWWWWW", "kkkkkkk"]); art(r, 38, 63, ["WWWWWWWW", "kkkkkkkk"])
+    # le dos rond sous la longue blouse
+    art(r, 22, 22, [
+        "..........GGGGGGGG.....",
+        "........GGGGGGGGGGGGG..",
+        "......GGGGGGGGGGGGGGGGG",
+        ".....GGGGGGGGGGGGGGGGGG",
+        "....GGGGGGGGGGGGGGGGGGG",
+        "...GGGGGGGGGGGGGGGGGGG.",
+        "...GGGGGGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGGGG..",
+    ] + ["..GGGGGGGGGGGGGGGGGG..."] * 14 + ["...GGGGGGGGGGGGGGGGG...", "....GGGGGGGGGGGGGGGG...", "....GGGGGGGGGGGGGGG...."])
+    # le plan roulé sous le bras
+    art(r, 16, 32, [".WWWWWWWWWWWW.", "WkWGGGGGGGGGGW", "WWkGGGGGGGGGGW", "WkWGGGGGGGGGGW", ".WWWWWWWWWWWW."])
+    membre(r, [(30, 28), (28, 36), (32, 38)], V, 4)
+    # la tête basse, en avant : crâne chauve, touffes blanches en bataille, lunettes rondes, gros nez
+    art(r, 38, 10, [
+        "......WWWWWWWW......",
+        "....WWWWWWWWWWWW....",
+        "...WWWWWWWWWWWWWW...",
+        "W.WWWWWWWWWWWWWWWW..",
+        "WWW.WWWWWWWWWWWWWWW.",
+        ".W.WWWWWWWWkkkkkWWW.",
+        "WWWWWWWWWWWWWWWWWWW.",
+        ".WkWWWWWWWkkkkkWkkkk",
+        "W.k.WWWWWkWWWWWkWWWk",
+        "WWkWWWWWWkWWkkWkWkWk",
+        ".WWWWWWWWkWWWWWkWWWk",
+        "..WWWWWWWWkkkkkWkkkkWW",
+        "...WWWWWWWWWWWWWWWWWWWW",
+        "....WWWWWWWWWWWWWWWWWWWW",
+        ".....WWWWWWWWWWWWWWWkWW.",
+        "......WWWWWWkkkkWWWWW...",
+        ".......WWWWWWWWWWWWW....",
+        ".........WWWWWWWW.......",
+    ])
+    # le bras qui appose le cachet sur le plan : « tac ! »
+    membre(r, [(46, 30), (54, 36), (60, 38)], V, 4)
+    art(r, 59, 36, [".WWW.", ".WWW.", "WWWWW", "WGGGW", "WWWWW"])
+    main(r, 61, 36)
+    art(r, 53, 37, ["W....", ".....", "WW..."]); art(r, 66, 36, ["...W", "....", "..WW"]); art(r, 58, 31, ["W...W"])
+    sol(r, 66, [(18, 34, 0), (37, 50, 0), (54, 62, 0), (72, 82, 0), (24, 44, 2), (60, 76, 2), (32, 40, 4)])
 
 
 def chahla_dessin(r):
-    # la gardienne des soutes : foulard noué, tablier, un tonneau cerclé dans les bras
-    r(35, 8, 52, 13, V); r(33, 11, 36, 30, V); r(51, 11, 54, 30, V); r(52, 13, 58, 16, V); r(56, 16, 59, 20, V)
-    tete(r, 12, V)
-    robe_mage(r, 33, 64, B, 35, 52)
-    r(38, 40, 49, 64, V); r(38, 40, 49, 41, N)
-    bras(r, True, True, 36)
-    r(52, 40, 70, 62, V); r(52, 40, 70, 42, B); r(53, 41, 69, 41, N)
-    r(52, 46, 70, 47, B); r(52, 56, 70, 57, B)
-    r(66, 43, 70, 61, N); r(67, 46, 70, 47, B); r(67, 56, 70, 57, B)
-    for x in (56, 60, 64): r(x, 48, x, 55, N)
-    pieds_robe(r); sol_tirets(r, 68)
+    # la gardienne des soutes : penchée de tout son poids, elle roule un gros tonneau ; foulard noué dont les
+    # deux pans volent derrière elle, la mâchoire serrée de l'effort
+    # le tonneau, vu par son fond : cercles, douelles, la bonde
+    r(67, 41, 80, 67, B); r(68, 42, 79, 66, V)
+    for y in (46, 51, 56, 61): r(68, y, 79, y, N)
+    r(74, 41, 75, 67, B)
+    disque(r, 80, 54, 4, B, 13); disque(r, 80, 54, 3, V, 12)
+    disque(r, 67, 54, 13, B); disque(r, 67, 54, 11, V); disque(r, 67, 54, 8, N); disque(r, 67, 54, 7, V)
+    for k in range(-6, 7, 3):
+        r(67 + k, 48, 67 + k, 60, N)
+    r(60, 53, 74, 54, V); disque(r, 67, 54, 2, B)
+    art(r, 82, 46, ["G.", ".G", ".G", "G."]); art(r, 84, 58, ["G", ".G", "G"])
+    art(r, 50, 66, [".W.W..", "W.....", ".W...."])
+    # les jambes : l'une tendue loin derrière, l'autre pliée sous elle
+    membre(r, [(33, 48), (24, 58), (14, 64)], V, 5)
+    membre(r, [(37, 48), (46, 56), (44, 64)], V, 5)
+    art(r, 9, 63, ["WWWWWW", "WWWWWWW", "kkkkkkk"]); art(r, 40, 64, ["WWWWWWW", "WWWWWWWW", "kkkkkkkk"])
+    # le buste penché en avant, la ceinture
+    ligne_r(r, 28, 38, 40, 26, V, 13)
+    r(28, 46, 41, 47, B)
+    # la tête, le foulard et son nœud
+    art(r, 40, 6, [
+        ".....GGGGGGGGGG.....",
+        "...GGGGGGGGGGGGGG...",
+        "..GGGGWWGGGGGGGGGG..",
+        ".GGGGGGGGGGGGGGGGGG.",
+        ".GGGGGGGkGGGGkGGGGG.",
+        "GGGGGGGGWWWWWWWWWWWG",
+        "GGGGGGGWWWWWWWkkkWWW",
+        "GGGGGGWWWWWWWWWWWWWW",
+        "GGGGGGWWWWWWWWWWkkWWW",
+        ".GGGGGWWWWWWWWWWkkWWWW",
+        ".GGGGGWWWWWWWWWWWWWWWWW",
+        "..GGGGWWWWWWWWWWWWWWWW.",
+        "..GGGGWWWWWWWWWWWWWWW..",
+        "...GGGWWWWWWWWWkkkkkW..",
+        "....GGWWWWWWWWWkWkWkW..",
+        ".....GWWWWWWWWWWWWWW...",
+        ".......WWWWWWWWWWW.....",
+        ".........WWWWWW........",
+        ".........WWWWWW........",
+    ])
+    art(r, 28, 10, [
+        "..........GGG.",
+        "......GGGGGGGG",
+        "...GGGGGGG.GGG",
+        ".GGGGGG....GGG",
+        "GGGG.......GG.",
+        "GG.........G..",
+    ])
+    # les deux bras tendus, les mains à plat sur le tonneau
+    membre(r, [(46, 28), (52, 36), (56, 44)], V, 4)
+    membre(r, [(42, 30), (48, 40), (55, 52)], V, 4)
+    membre(r, [(52, 36), (56, 44)], B, 2); membre(r, [(48, 40), (55, 52)], B, 2)
+    main(r, 57, 45); main(r, 56, 53)
+    # deux gouttes d'effort
+    art(r, 62, 2, [".W.", "WWW", ".W."]); art(r, 66, 8, [".W", "WW"])
+    sol(r, 68, [(6, 20, 0), (24, 50, 0), (54, 80, 0), (12, 30, 2), (40, 70, 2), (34, 46, 4), (60, 66, 4)])
 
 
 def adonis_dessin(r):
-    # le pilote des chenaux : ciré à capuche, une gaffe de batelier et un rouleau de cordage
-    r(33, 8, 54, 30, V); r(35, 10, 52, 28, N); tete(r, 12, N)
-    r(35, 30, 52, 31, V)
-    robe_mage(r, 32, 60, V, 34, 53)
-    for y in (40, 46, 52): r(43, y, 44, y + 1, N)
-    bras(r, True, True, 36)
-    r(62, 2, 63, 66, B); r(60, 2, 65, 3, B); r(64, 4, 67, 5, B)
-    for k in range(3): r(14 + k, 44 + k, 30 - k, 45 + k, B); r(14 + k, 44 + k, 15 + k, 56 - k, B); r(29 - k, 44 + k, 30 - k, 56 - k, B); r(14 + k, 55 - k, 30 - k, 56 - k, B)
-    jambes(r, B); sol_tirets(r, 68)
+    # le passeur des chenaux : grand gars en ciré et suroît, debout dans sa barque, penché sur sa gaffe qu'il
+    # pousse de toute sa longueur ; un rouleau de cordage dans la barque, l'eau qui clapote
+    # la gaffe, plantée dans l'eau derrière la barque
+    ligne_r(r, 66, 4, 30, 76, B, 2)
+    art(r, 64, 0, [".WWW", "WW.W", "...W", "..WW"])
+    # les jambes et les bottes
+    membre(r, [(30, 46), (26, 58)], V, 6); membre(r, [(38, 46), (44, 58)], V, 6)
+    art(r, 21, 56, ["WWWWWW", "WWWWWW", "WWWWWWWW"]); art(r, 41, 56, ["WWWWWW", "WWWWWW", "WWWWWWWW"])
+    # le ciré, penché en avant
+    art(r, 24, 22, [
+        "..........GGGGGGGG..",
+        "........GGGGGGGGGGGG",
+        ".......GGGGGGGGGGGGG",
+        "......GGGGGGGGGGGGGG",
+        ".....GGGGGGGGGkGGGGG",
+        ".....GWWWWWWWWWWWWWG",
+        "....GGGGGGGGGGkGGGGG",
+        "....GGGGGGGGGkGGGGG.",
+        "...GGGGGGGGGGkGGGGG.",
+        "...GGGGGGGGGWGGGGG..",
+        "..GGGGGGGGGGkGGGGG..",
+        "..GGGGGGGGGkGGGGGG..",
+        ".GGGGGGGGGGkGGGGGG..",
+        ".GGGGGGGGGWGGGGGGG..",
+        ".GGGGGGGGGkGGGGGGGG.",
+        "GGGGGGGGGGkGGGGGGGG.",
+        "GGGGGGGGGkGGGGGGGGGG",
+        "GGGGGGGGGkGGGGGGGGGG",
+        "GGGGGGGGGkGGGGGGGGGG",
+        "GGGGGGGGGkGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGGGGGG",
+        ".GGGGGGGGGGGGGGGGGG.",
+    ])
+    # la tête sous le suroît (le bord tombe plus bas derrière), le menton en avant, l'air décidé
+    art(r, 28, 3, [
+        "........GGGGGGGGG.......",
+        "......GGGGGGGGGGGGG.....",
+        ".....GGGWWWGGGGGGGGG....",
+        ".....GGGGGGGGGGGGGGGG...",
+        "...WWWWWWWWWWWWWWWWWWWWW",
+        "..WWGGGGWWWWWWWWWWWWW...",
+        ".WWGGGGGWWWWWWWkkkWWW...",
+        "WWGGGGGWWWWWWWWWWWWWW...",
+        "WGGGGGWWWWWWWWWWWkkWWW..",
+        "WGGGGGk.WWWWWWWWWkkWWWW.",
+        ".GGGGGkWWWWWWWWWWWWWWWWW",
+        "..GGGGWWWWWWWWWWWWWWWW..",
+        "...GGGWWWWWWWWWWWWWWW...",
+        "......WWWWWWWWWWkkkWW...",
+        "......WWWWWWWWWWWWWW....",
+        ".......WWWWWWWWWWWWWW...",
+        "........WWWWWWWWWWW.....",
+        "..........WWWW..........",
+        "..........WWWW..........",
+    ])
+    # les bras : les deux mains serrées sur la gaffe
+    membre(r, [(42, 26), (50, 28), (54, 24)], V, 4)
+    membre(r, [(36, 30), (44, 38), (49, 34)], V, 4)
+    main(r, 55, 23); main(r, 49, 33)
+    # la barque
+    art(r, 4, 58, [
+        "WW...........................................WWW",
+        "WWWW......................................WWWWW.",
+        ".WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+        "..WGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGW...",
+        "..WkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkW...",
+        "...WGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGW....",
+        "....WkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkW.....",
+        ".....WGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGW......",
+        "......WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW.......",
+    ])
+    # le rouleau de cordage, à la proue
+    art(r, 10, 51, [
+        "..WWWWWWWW..",
+        ".WkkkkkkkkW.",
+        "WkWWWWWWWWkW",
+        "WkWkkkkkkWkW",
+        "WkWWWWWWWWkW",
+        ".WkkkkkkkkW.",
+        "..WWWWWWWW..",
+    ])
+    # l'eau
+    for (x, y, l) in [(2, 68, 8), (14, 69, 12), (34, 69, 20), (60, 68, 18), (8, 72, 20), (36, 73, 24), (66, 72, 12), (20, 76, 10), (44, 77, 10)]:
+        r(x, y, x + l, y, B)
+    art(r, 25, 74, ["G.......G", ".GG...GG.", "...GGG..."])
 
 
 def eden_dessin(r):
-    # la constructrice de navires : casque de chantier, gilet à bandes, un marteau levé et un plan plié
-    casque(r, V); r(34, 13, 36, 22, V); r(51, 13, 53, 22, V); tete(r, 12, V)
-    r(35, 33, 52, 54, V); r(35, 44, 52, 45, B); r(35, 49, 52, 50, B); r(42, 33, 45, 54, N); r(36, 34, 40, 37, B)
-    bras(r, True, True, 36)
-    r(59, 28, 60, 50, B); r(55, 24, 65, 29, B); r(55, 25, 57, 28, V)
-    r(14, 42, 28, 54, B); r(15, 43, 27, 53, N); r(17, 45, 25, 45, V); r(17, 48, 23, 48, V); r(17, 51, 21, 51, V)
-    jambes(r, B); sol_tirets(r, 68)
+    # la maîtresse du chantier, tournée vers la gauche : campée jambes écartées, le poing sur la hanche, le gros
+    # marteau posé sur l'épaule ; casque de chantier, visière de soudeuse relevée, gilet à bandes ; un plan roulé
+    # coincé sous le bras
+    r = miroir(r)
+    # les jambes écartées, les grosses chaussures de sécurité
+    membre(r, [(34, 48), (28, 58), (26, 64)], V, 6); membre(r, [(44, 48), (50, 58), (52, 64)], V, 6)
+    art(r, 18, 63, ["WWWWWWWWW", "WWWWWWWWW", "kkkkkkkkk"]); art(r, 47, 63, ["WWWWWWWWWW", "WWWWWWWWWW", "kkkkkkkkkk"])
+    # le gilet à bandes
+    art(r, 28, 28, [
+        "......WWWWWWWW.......",
+        "....GGGGGGGGGGGGG....",
+        "...GGGGGGGWGGGGGGG...",
+        "..GGGGGGGGWGGGGGGGG..",
+        "..GGGGGGGGWGGGGGGGG..",
+        "..GGGGGGGGWGGGGGGGG..",
+        "..WWWWWWWWWWWWWWWWW..",
+        "..GGGGGGGGWGGGGGGGG..",
+        "..GGGGGGGGWGGGGGGGG..",
+        "..GGGGGGGGWGGGGGGGG..",
+        "..WWWWWWWWWWWWWWWWW..",
+        "..GGGGGGGGWGGGGGGGG..",
+        "..GGGGGGGGWGGGGGGGG..",
+        "..GGGGGGGGWGGGGGGGG..",
+        "..GGGGGGGGWGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGG..",
+        "...GGGGGGGGGGGGGGG...",
+        "...GGGGGGGGGGGGGGG...",
+    ])
+    # le poing sur la hanche, le plan roulé coincé dessous
+    membre(r, [(31, 31), (22, 38), (29, 44)], B, 3)
+    art(r, 16, 33, [".WWWWWWWWWW.", "WkWGGGGGGGGW", "WWkGGGGGGGGW", "WkWGGGGGGGGW", ".WWWWWWWWWW."])
+    main(r, 30, 44)
+    # le bras plié qui lève le gros marteau
+    membre(r, [(47, 32), (56, 36), (60, 26)], B, 3)
+    ligne_r(r, 58, 34, 68, 10, B, 2)
+    art(r, 60, 2, [
+        "...WWWWWWWWW...",
+        "..WWWWWWWWWWWW.",
+        ".WWkWWWWWWWWWWW",
+        ".WWkWWWWWWWWWW.",
+        "..WWWWWWWWWWW..",
+        "...WWWWWWWWW...",
+    ])
+    main(r, 61, 26)
+    art(r, 76, 8, ["W.", ".W", "..", "W."]); art(r, 56, 2, ["W", "", ".W"])
+    # la tête : casque de chantier, la visière de soudeuse relevée, le menton levé, sourire en coin
+    art(r, 31, 4, [
+        ".......GGGGGGGG.......",
+        ".....GGGGGGGGGGGG.....",
+        "....GGGGWWGGGGGGGG....",
+        "...GGGGGGGGGGGGGGGG...",
+        "..WWWWWWWWWWWWWWWWWWW.",
+        "...kkkkkkkkkkkkkkkkk..",
+        "....WWWWWWWWWWWWWWWW..",
+        "...GWWWWWWWWWWWWWWWWW.",
+        "...GWWWWWWWWWWkkkWWWW.",
+        "..GGWWWWWWWWWWWWWWWWW.",
+        "..GGkWWWWWWWWWkkWWWWW.",
+        "..Gk.WWWWWWWWWkkWWWWWW",
+        "..GGkWWWWWWWWWWWWWWWWW",
+        "..GGGWWWWWWWWWWWWWWWW.",
+        "...GGWWWWWWWWWWWkWWW..",
+        "...GGWWWWWWWWkkkkWW...",
+        "....GWWWWWWWWWWWWW....",
+        "......WWWWWWWWWWW.....",
+        ".........WWWW.........",
+        ".........WWWW.........",
+    ])
+    art(r, 33, 2, ["..WWWWWWWWWWWWWW", ".WkkkkkkkkkkkkkW", ".WWWWWWWWWWWWWWW"])
+    sol(r, 66, [(12, 30, 0), (34, 44, 0), (46, 64, 0), (20, 36, 2), (42, 58, 2), (30, 40, 4)])
 
 
 def megane_dessin(r):
-    # la maîtresse des cales : queue de cheval, salopette, une pile de plateaux empilés comme des couches
-    r(36, 9, 51, 12, B); r(51, 10, 58, 13, B); r(56, 13, 59, 26, B); tete(r, 12, B)
-    r(35, 33, 52, 54, B); r(37, 38, 50, 54, V); r(37, 33, 39, 38, V); r(48, 33, 50, 38, V); r(41, 42, 46, 46, N)
-    bras(r, True, True, 36)
-    for k, c in enumerate((V, B, V, B, V)):
-        r(53 + k % 2, 58 - k * 5, 71 - k % 2, 61 - k * 5, c); r(55, 59 - k * 5, 69, 59 - k * 5, N)
-    jambes(r); sol_tirets(r, 68)
+    # la maîtresse des cales : elle marche cambrée sous une pile de plateaux qui tangue et passe la tête sur le côté
+    # pour voir où elle va ; queue de cheval au vent, salopette ; chaque plateau est un pont du navire (une couche)
+    art(r, 16, 50, [
+        "......GGGGGGGGG.....",
+        ".....GGGGGGGGGGG....",
+        "....GGGGG..GGGGGG...",
+        "...GGGGG....GGGGGG..",
+        "..GGGGG......GGGGG..",
+        "..GGGG........GGGGG.",
+        ".GGGG..........GGGG.",
+        ".GGGG..........GGGG.",
+        "GGGG............GGGG",
+        "GGG.............GGGG",
+        "WWWW............WWWWWW",
+        "WWWWW...........WWWWWWW",
+        "kkkkk...........kkkkkkk",
+    ])
+    art(r, 14, 30, [
+        "......WWWWWWWWWWW.......",
+        "....WWWWWWWWWWWWWWW.....",
+        "...WWWGGWWWWWWWGGWWW....",
+        "...WWWGGWWWWWWWGGWWWW...",
+        "...WWWGGGGGGGGGGGWWWW...",
+        "...WWWGGkkkkkkkkGGWWW...",
+        "...WWWGGkGGGGGGkGGWWW...",
+        "....WWGGkkkkkkkkGGWW....",
+        ".....GGGGGGGGGGGGGG.....",
+        ".....GGGGGGGGGGGGGG.....",
+        ".....GGGGGGGGGGGGGG.....",
+        ".....GGGGGGGGkGGGGG.....",
+        ".....GGGGGGGGkGGGGG.....",
+        ".....GGGGGGGGkGGGGG.....",
+        ".....GGGGGGGGkGGGGG.....",
+        ".....GGGGGGGGkGGGGG.....",
+        ".....GGGGGGGGkGGGGG.....",
+        ".....GGGGGGGGkGGGGG.....",
+        ".....GGGGGGGGkGGGGG.....",
+        ".....GGGGGGGGkGGGGG.....",
+        ".....GGGGGGGGkGGGGG.....",
+    ])
+    # les bras tendus vers la pile
+    art(r, 30, 34, [
+        "WWW...........",
+        ".WWWW.........",
+        "...WWWWW......",
+        ".....WWWWWW...",
+        ".......WWWWWW.",
+    ])
+    # la tête penchée sur le côté, sourcils inquiets, la bouche en o
+    art(r, 12, 10, [
+        "......GGGGGGGGGG......",
+        "....GGGGGGGGGGGGGG....",
+        "...GGGGGGGGGGGGGGGG...",
+        "..GGGGGGGWWWWWWWWGGG..",
+        "..GGGGGWWWWWWWWWWWWG..",
+        "..GGGGWWWWWWkWWWWWkWW.",
+        "..GGGGWWWWWkWWWWWWWkW.",
+        "..GGGWWWWWWWWWWWWWWWW.",
+        "..GGGkWWWWWkkWWWWkkWW.",
+        "..GGk.WWWWWkkWWWWkkWWW",
+        "..GGGkWWWWWWWWWWWWWWWW",
+        "..GGGWWWWWWWWWWWWWWWkW",
+        "...GGWWWWWWWWWWWWWWWW.",
+        "...GGWWWWWWWWWkkWWWW..",
+        "....GWWWWWWWWWkkWWW...",
+        ".....WWWWWWWWWWWWW....",
+        ".......WWWWWWWWW......",
+        ".........WWWWW........",
+        ".........WWWWW........",
+        ".........WWWWW........",
+    ])
+    # la queue de cheval qui vole au vent
+    art(r, 0, 9, [
+        "...........WW......",
+        "..GG......GGGG.....",
+        ".GGGG...GGGGGGGWWGG",
+        "GGGGGGGGGGGGGGGWWGG",
+        "GG.GGGGGGG...GGWWGG",
+        "G....GGG.......GGGG",
+        "..................G",
+    ])
+    # la pile de plateaux qui tangue, et les deux mains qui la retiennent
+    dx = [0, 0, 1, 1, 2, 3, 5, 7]
+    for k in range(8):
+        art(r, 38 + dx[k], 44 - k * 5, [
+            "WWWWWWWWWWWWWWWWWWWWW",
+            "WGGGGGGGGGGGGGGGGGGGW",
+            "WGkGGGGGGGGGGGGGGGkGW",
+            "WWWWWWWWWWWWWWWWWWWWW",
+            "..k...............k..",
+        ])
+    art(r, 36, 39, ["WWW.", "WWWW", "WkWW", "WWW."])
+    art(r, 58, 38, [".WWW", "WWWW", "WWkW", ".WWW"])
+    art(r, 68, 4, ["W..", "...", ".W.", "...", "W.."]); art(r, 41, 3, ["..W", "...", ".W.", "...", "..W"])
+    art(r, 70, 9, ["G", "G.", ".G"]); art(r, 40, 9, [".G", "G", "G"])
+    sol(r, 63, [(8, 22, 0), (26, 44, 0), (48, 62, 0), (12, 20, 2), (24, 50, 2), (30, 40, 4)])
 
 
 def jahmal_dessin(r):
-    # le maître du chantier : masque de soudeur relevé sur le front, tablier de cuir, un petit navire fini dans la main
-    r(34, 2, 53, 11, V); r(37, 5, 50, 8, N); r(38, 6, 41, 7, B); r(33, 9, 34, 13, B); r(53, 9, 54, 13, B)
-    tete(r, 12, B, barbe=True)
-    r(35, 33, 52, 54, B); r(37, 36, 50, 60, N); r(38, 37, 49, 59, V); r(37, 36, 38, 40, B); r(49, 36, 50, 40, B)
-    for y in (44, 50): r(40, y, 47, y, N)
-    bras(r, True, True, 36)
-    r(54, 44, 72, 47, B); r(56, 47, 70, 50, N); r(56, 46, 70, 46, V)
-    r(60, 36, 61, 44, B); r(62, 37, 67, 43, V); r(57, 40, 59, 44, B)
-    jambes(r, B); sol_tirets(r, 68)
+    # le maître du chantier : trapu, tablier de cuir, masque de soudeur relevé sur le front, grande barbe ; il tient à
+    # bout de bras le petit navire fini, poli comme un galet, et le contemple en se grattant la barbe
+    # les jambes courtes et solides
+    art(r, 26, 56, [
+        "...GGGGGG...GGGGGG...",
+        "...GGGGGG...GGGGGG...",
+        "...GGGGGG...GGGGGG...",
+        "...GGGGGG...GGGGGG...",
+        "...GGGGGG...GGGGGG...",
+        "..WWWWWWW...WWWWWWWW.",
+        ".WWWWWWWW...WWWWWWWWW",
+        ".kkkkkkkk...kkkkkkkkk",
+    ])
+    # le gros buste et le tablier de cuir, ses coutures
+    art(r, 20, 28, [
+        ".......WWWWWWWWWWWWWW.......",
+        ".....GGGGGGGGGGGGGGGGGG.....",
+        "...GGGGGGGGGGGGGGGGGGGGGG...",
+        "..GGGGGGGGGGGGGGGGGGGGGGGG..",
+        ".GGGGGGWWWWWWWWWWWWWWGGGGGG.",
+        ".GGGGGGWWWWWWWWWWWWWWGGGGGG.",
+        ".GGGGGGWWWWWWWWWWWWWWGGGGGG.",
+        ".GGGGGGWWWWWWWWWWWWWWGGGGGG.",
+        ".GGGGGGWWWWWWWWWWWWWWGGGGGG.",
+        ".GGGGGGWWWWWWWWWWWWWWGGGGGG.",
+        ".GGGGGGWWWWWWWWWWWWWWGGGGGG.",
+        ".GGGGGGWWWWWWWWWWWWWWGGGGGG.",
+        ".GGGGGGWWWWWWWWWWWWWWGGGGGG.",
+        ".GGGGGGWWWWWWWWWWWWWWGGGGGG.",
+        ".GGGGGGWWWWWWWWWWWWWWGGGGGG.",
+        "..GGGGGWWWWkkkkkkkWWWGGGGG..",
+        "..GGGGGWWWWkWWWWWkWWWGGGGG..",
+        "..GGGGGWWWWkkkkkkkWWWGGGGG..",
+        "...GGGGWWWWWWWWWWWWWWGGGG...",
+        "...GGGGWWWWWWWWWWWWWWGGGG...",
+        "...GGGGWWWWWWWWWWWWWWGGGG...",
+        "...GGGGWWWWWWWWWWWWWWGGGG...",
+        "...GGGGWWWWWWWWWWWWWWGGGG...",
+        "...GGGGWWWWWWWWWWWWWWGGGG...",
+        "....GGGGGGGGGGGGGGGGGGGG....",
+        "....GGGGGGGGGGGGGGGGGGGG....",
+        "....GGGGGGGGGGGGGGGGGGGG....",
+        "....GGGGGGGGGGGGGGGGGGGG....",
+        "....GGGGGGGGGGGGGGGGGGGG....",
+    ])
+    # la tête : le masque de soudeur relevé, l'œil plissé de connaisseur, la grande barbe verte
+    art(r, 24, 2, [
+        "......GGGGGGGGGGGGG.......",
+        "....GGGGGGGGGGGGGGGGG.....",
+        "...GGGGGGGGGGGGGGGGGGG....",
+        "...GGkkkkkkkkkkkkkkkGG....",
+        "...GGkWWWWWWWWWWWWWkGG....",
+        "...GGkkkkkkkkkkkkkkkGG....",
+        "...GGGGGGGGGGGGGGGGGGG....",
+        "....WWWWWWWWWWWWWWWWW.....",
+        "...WWWWWWWWWWWWWWWWWWW....",
+        "...WWWWWWWWWWWkkkkkWWW....",
+        "...WkWWWWWWWWWWWWWWWWW....",
+        "...k.WWWWWWWWWkkkkkWWWW...",
+        "...WkWWWWWWWWWWWWWWWWWWW..",
+        "...WWWWWWWWWWWWWWWWWWWWWW.",
+        "...GWWWWWWWWWWWWWWWWkWWWW.",
+        "...GGWWWWWWWWWWWWWWWWWWW..",
+        "...GGGGGGGGGGGGGGGGGGGG...",
+        "...GGGGGGGGGkkkkkkkGGGG...",
+        "...GGGGGGGGGGGGGGGGGGG....",
+        "...GGGGWGGGGGWGGGGGWGG....",
+        "....GGGGGGWGGGGGWGGGG.....",
+        ".....GGGGGGGGWGGGGGG......",
+        "......GGGWGGGGGGGGG.......",
+        "........GGGGGWGGG.........",
+        "..........GGGGG...........",
+    ])
+    art(r, 22, 4, ["WW", "WW", "WW", "WW"]); art(r, 46, 4, ["WW", "WW", "WW", "WW"])
+    # la main qui gratte la barbe
+    membre(r, [(24, 32), (20, 40), (28, 30)], V, 4)
+    art(r, 26, 24, [".WWW", "WWWW", "WkWW", "WWW.", ".k.."])
+    # le bras tendu, le petit navire posé sur la paume, ses éclats
+    membre(r, [(46, 32), (56, 30), (62, 26)], V, 4)
+    art(r, 58, 22, ["WWWWWWWW", ".WkWkWW."])
+    art(r, 54, 10, [
+        "...........W......",
+        "...........W......",
+        "......WWWWWWWW....",
+        ".......WWWWWW.....",
+        "........WGGW......",
+        "...WWWWWWWWWWWWWW.",
+        "WWWWWWWWWWWWWWWWWWW",
+        ".WGGGGGGGGGGGGGGGW.",
+        "..WWWWWWWWWWWWWWW..",
+    ])
+    art(r, 50, 6, ["..W..", ".....", "W.W.W", ".....", "..W.."]); art(r, 74, 4, ["..W..", "W...W", "..W.."])
+    art(r, 76, 16, [".W.", "W.W", ".W."])
+    sol(r, 64, [(16, 28, 0), (31, 56, 0), (60, 70, 0), (22, 40, 2), (44, 52, 2), (34, 42, 4)])
 
 
 def deborah_dessin(r):
-    # la gardienne du registre : tresses, longue robe, un registre épais et un trousseau de clés
-    r(36, 9, 51, 12, B); r(32, 13, 35, 40, B); r(52, 13, 55, 40, B)
-    for y in range(16, 40, 4): r(32, y, 35, y, N); r(52, y, 55, y, N)
-    tete(r, 12, B)
-    robe_mage(r, 33, 64, V, 35, 52)
-    r(42, 33, 45, 64, B)
-    bras(r, True, True, 36)
-    r(54, 36, 70, 56, B); r(56, 38, 68, 54, N); r(58, 41, 66, 41, V); r(58, 44, 64, 44, V); r(58, 47, 66, 47, V); r(54, 36, 56, 56, V)
-    cle(r, 18, 40, B); cle(r, 22, 44, V)
-    pieds_robe(r); sol_tirets(r, 68)
+    # la gardienne du registre, tournée vers la gauche : grande et droite, de longues tresses jusqu'à la taille ;
+    # le gros registre de cuir ouvert sur le bras, elle lève et fait tinter son trousseau de clés
+    r = miroir(r)
+    # les tresses, dans le dos
+    for x in (25, 29):
+        r(x, 18, x + 2, 50, V)
+        for y in range(20, 50, 3):
+            r(x, y, x + 1, y, N)
+        r(x, 51, x + 2, 52, B); r(x + 1, 53, x + 1, 53, B)
+    # la longue robe, évasée jusqu'au sol
+    art(r, 26, 30, [
+        "........WWWWWWWW........",
+        "......GGGGGGGGGGGG......",
+        ".....GGGGGGGGGGGGGG.....",
+        ".....GGGGGGGGGGGGGG.....",
+        ".....GGGGGGGWGGGGGG.....",
+        ".....GGGGGGGWGGGGGG.....",
+        ".....GGGGGGGWGGGGGG.....",
+        ".....GGGGGGGWGGGGGG.....",
+        ".....WWWWWWWWWWWWWW.....",
+        ".....GGGGGGGGGGGGGG.....",
+        "....GGGGGGGGGGGGGGGG....",
+        "....GGGGGGkGGGGGGGGG....",
+        "....GGGGGGkGGGGGkGGG....",
+        "...GGGGGGkGGGGGGkGGGG...",
+        "...GGGGGGkGGGGGGGkGGG...",
+        "...GGGGGkGGGGGGGGkGGG...",
+        "..GGGGGGkGGGGGGGGGkGGG..",
+        "..GGGGGkGGGGGGGGGGkGGG..",
+        "..GGGGGkGGGGGGGGGGGkGGG.",
+        ".GGGGGkGGGGGGGGGGGGkGGG.",
+        ".GGGGGkGGGGGGGGGGGGGkGGG",
+        ".GGGGkGGGGGGGGGGGGGGkGGG",
+        "GGGGGkGGGGGGGGGGGGGGGkGG",
+        "GGGGGGGGGGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGGGGGGGGGG",
+        "WWWWWWWWWWWWWWWWWWWWWWWW",
+        "...WWWWWW......WWWWWW...",
+        "...kkkkkk......kkkkkk...",
+    ])
+    # le registre ouvert, tenu contre elle
+    membre(r, [(34, 33), (28, 40), (24, 40)], V, 4)
+    art(r, 12, 30, [
+        "WW.........WW..",
+        "WWWW.....WWWW..",
+        "WGGWWW.WWWGGW..",
+        "WGkkGWWWGkkGW..",
+        "WGGGGWWWGGGGW..",
+        "WGkkGWWWGkkkW..",
+        "WGGGGWWWGGGGW..",
+        "WGkkkWWWGkkGW..",
+        "WGGGGWWWGGGGW..",
+        "WWWWWWWWWWWWW..",
+        ".WWWWWWWWWWW...",
+    ])
+    main(r, 24, 40)
+    # le bras levé, le trousseau qui tinte
+    membre(r, [(46, 33), (56, 26), (60, 16)], V, 4)
+    art(r, 58, 4, [
+        "..WWWWW..",
+        ".WW...WW.",
+        ".W.....W.",
+        ".W.....W.",
+        ".WW...WW.",
+        "..WWWWW..",
+    ])
+    cle(r, 55, 10, B); cle(r, 60, 11, V); cle(r, 65, 10, B)
+    main(r, 61, 13)
+    art(r, 52, 2, ["W.", ".W", "..", "WW"]); art(r, 70, 2, [".W", "W.", "..", "WW"]); art(r, 73, 16, ["W.", ".W", "..", "W."])
+    # la tête droite, le regard en coin, les cheveux tirés
+    art(r, 30, 6, [
+        "......GGGGGGGGGG......",
+        "....GGGGGGGGGGGGGG....",
+        "...GGGGGGGGGGGGGGGG...",
+        "...GGGWWWWWWWWWWWGGG..",
+        "...GGWWWWWWWWWWWWWGG..",
+        "...GGWWWkkkWWWWkkkWG..",
+        "...GGWWWWWWWWWWWWWWG..",
+        "...GGWWWWWWkkWWWWWkkW.",
+        "...GGkWWWWWkkWWWWWkkW.",
+        "...Gk.WWWWWWWWWWWWWWWW",
+        "...GGkWWWWWWWWWWWWWWWW",
+        "...GGWWWWWWWWWWWWWWWW.",
+        "...GGWWWWWWWWWWWWWWW..",
+        "...GGGWWWWWWWkkkkWW...",
+        "....G.WWWWWWWWWWWW....",
+        "........WWWWWWWW......",
+        ".........WWWWWW.......",
+    ])
+    sol(r, 61, [(14, 26, 0), (29, 56, 0), (60, 72, 0), (22, 36, 2), (40, 62, 2), (32, 44, 4)])
 
 
 def elias_dessin(r):
-    # le navigateur : tricorne vert, long manteau, une carte roulée sous le bras et un compas à pointes
-    r(31, 9, 56, 11, V); r(34, 5, 53, 9, V); r(41, 3, 46, 5, V); r(31, 7, 33, 9, V); r(54, 7, 56, 9, V)
-    r(36, 9, 51, 9, B)
-    tete(r, 12, B)
-    robe_mage(r, 33, 64, B, 35, 52)
-    r(38, 33, 49, 64, N); r(40, 33, 47, 38, B); r(42, 38, 45, 40, V)
-    for y in (42, 48, 54): r(39, y, 39, y, V); r(48, y, 48, y, V)
-    bras(r, True, True, 36)
-    r(56, 30, 60, 58, V); r(57, 31, 59, 57, N); r(56, 30, 60, 31, B); r(56, 57, 60, 58, B)
-    r(21, 36, 24, 39, B); ligne_r(r, 21, 39, 16, 56, B, 2); ligne_r(r, 23, 39, 28, 56, B, 2)
-    pieds_robe(r); sol_tirets(r, 68)
+    # le maître des convois : tricorne, long manteau à revers, une carte roulée sous le bras ; il arpente la route
+    # avec un compas à pointes plus grand que sa jambe, comme on marche avec une canne
+    # le grand compas, ouvert, les pointes au sol
+    ligne_r(r, 62, 22, 52, 66, B, 2); ligne_r(r, 63, 22, 76, 66, B, 2)
+    ligne_r(r, 57, 46, 70, 46, V, 1)
+    art(r, 60, 18, [".WWW.", "WWkWW", ".WWW.", "..W.."])
+    # les jambes en marche, les bottes à revers
+    membre(r, [(34, 50), (28, 58), (24, 63)], V, 5); membre(r, [(42, 50), (46, 57), (48, 63)], V, 5)
+    art(r, 18, 60, ["WWWWW..", "WWWWWWW", "WWWWWWWW", "kkkkkkkk"]); art(r, 44, 60, ["WWWWW..", "WWWWWWWW", "WWWWWWWWW", "kkkkkkkkk"])
+    # le long manteau, ses pans qui volent derrière
+    art(r, 22, 28, [
+        "..........WWWWWWW.......",
+        "........GGGGGGGGGGG.....",
+        ".......GGGGGWWWGGGGG....",
+        "......GGGGGGWkWGGGGGG...",
+        "......GGGGGGWWWGGGGGG...",
+        "......GGGGGGGWGGGGGGG...",
+        "......GGGGGGGkGGGGGGG...",
+        "......GGGGGGGWGGGGGGG...",
+        "......GGGGGGGkGGGGGGG...",
+        "......GGGGGGGWGGGGGGG...",
+        "......GGGGGGGkGGGGGGG...",
+        "......WWWWWWWWWWWWWWW...",
+        ".....GGGGGGGGkGGGGGGGG..",
+        "....GGGGGGGGGkGGGGGGGG..",
+        "...GGGGGGGGGGkGGGGGGGGG.",
+        "..GGGGGGGGGGGkGGGGGGGGG.",
+        ".GGGGGGGGGGG...GGGGGGGGG",
+        "GGGGGGGGGGG.....GGGGGGGG",
+        "GGGGGGGGGG.......GGGGGGG",
+        "GGGGGGGG..........GGGGG.",
+        ".GGGG...................",
+    ])
+    # la carte roulée sous le bras
+    art(r, 14, 34, [".WWWWWWWWWWWWWW.", "WkWGGGGGGGGGGGGW", "WWkGGGGGGGGGGGGW", "WkWGGGGGGGGGGGGW", ".WWWWWWWWWWWWWW."])
+    membre(r, [(30, 31), (26, 38), (32, 40)], V, 4)
+    # le bras tendu qui tient le compas par la tête
+    membre(r, [(42, 32), (52, 28), (60, 22)], V, 4)
+    main(r, 61, 21)
+    # la tête : le tricorne, le nez en bec, le regard sur l'horizon
+    art(r, 22, 2, [
+        ".........GGGG...........",
+        "......GGGGGGGGGG........",
+        "...GGGGGGGGGGGGGGGG.....",
+        "WGGGGGGGGGGGGGGGGGGGGGW.",
+        ".WWGGGGGWWWWGGGGGGGGWW..",
+        "...WWWWWWWWWWWWWWWWWW...",
+        "......WWWWWWWWWWWWWW....",
+        ".....GWWWWWWWWWkkkkWW...",
+        ".....GWWWWWWWWWWWWWWW...",
+        ".....GWkWWWWWWWWWkkWWW..",
+        ".....Gk.WWWWWWWWWkkWWWW.",
+        ".....GWkWWWWWWWWWWWWWWWW",
+        ".....GGWWWWWWWWWWWWWWWWWW",
+        "......GWWWWWWWWWWWWWWkkW.",
+        "......GWWWWWWWWWWWWWWW...",
+        ".......WWWWWWWWWkkkWW....",
+        "........WWWWWWWWWWWW.....",
+        "..........WWWWWWW........",
+        "...........WWWWW.........",
+        "...........WWWWW.........",
+    ])
+    sol(r, 66, [(12, 30, 0), (34, 46, 0), (49, 58, 0), (70, 80, 0), (20, 40, 2), (52, 74, 2), (30, 38, 4)])
 
 
 def remi_dessin(r):
-    # le guetteur de la vigie : bonnet de laine, caban, une longue-vue dépliée
-    r(36, 6, 51, 12, V); rayures(r, 36, 7, 51, 11, B, 2); r(42, 4, 45, 6, B); tete(r, 12, V)
-    r(35, 33, 52, 54, B); r(38, 33, 49, 54, N)
-    for y in range(37, 53, 5): r(40, y, 41, y + 1, B); r(46, y, 47, y + 1, B)
-    r(34, 33, 53, 35, V)
-    bras(r, True, True, 36)
-    r(56, 34, 76, 37, B); r(58, 35, 74, 36, V); r(74, 33, 78, 38, B); r(58, 33, 59, 38, N); r(64, 33, 65, 38, N)
-    jambes(r); sol_tirets(r, 68)
+    # le guetteur, tout en haut du grand mât : dans le nid-de-pie, bonnet de laine à pompon, longue-vue à l'œil ;
+    # il ne la baisse même pas pour te parler ; le vent, une mouette, le pavillon qui claque
+    # le mât, les haubans et le pavillon
+    r(41, 0, 43, 84, B); r(42, 0, 42, 84, V)
+    art(r, 44, 0, [
+        "GGGGGGGGGGGG",
+        "GGWWGGGGGGG.",
+        "GGGGGGGGGG..",
+        "GGGGGGGGG...",
+        "GGGGGGGGGG..",
+        "GGGGGGGGGGG.",
+    ])
+    for k in range(18):
+        r(26 - k, 66 + k, 26 - k, 66 + k, B); r(56 + k, 66 + k, 56 + k, 66 + k, B)
+        r(34 - k // 2, 66 + k, 34 - k // 2, 66 + k, V); r(50 + k // 2, 66 + k, 50 + k // 2, 66 + k, V)
+    # le guetteur
+    art(r, 30, 30, [
+        "......WWWWWWWWW.......",
+        "....GGGGGGGGGGGGG.....",
+        "...GGGGGGGGGGGGGGG....",
+        "..GGGGGGGGGGGGGGGGG...",
+        "..GGGGGGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGGG..",
+        "....GGGGGGGGGGGGG.....",
+        "...GGGGGGGGGGGGGGG....",
+        "..GGGGGGGGGGGGGGGGG...",
+        "..GGGGGGGGGGGGGGGGGG..",
+        "..GGWGGGGGGGGGGGGGGG..",
+        "..GGWGGGGGGGGGGGGGGG..",
+        "..GGWGGGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGGG..",
+    ])
+    art(r, 28, 12, [
+        "........WWW.........",
+        ".......WWWWW........",
+        "........WWW.........",
+        ".....GGGGGGGGG......",
+        "....GWGWGWGWGWGG....",
+        "...GGWGWGWGWGWGGG...",
+        "...GGWGWGWGWGWGGGG..",
+        "...WWWWWWWWWWWWWWW..",
+        "...WWWWWWWWWWWWWWWW.",
+        "...WWWWWWWWWWWWWWWW.",
+        "..WWkWWWWWWWWWkkkkWW",
+        "..W.WWWWWWWWWWWkkkkW",
+        "..WkWWWWWWWWWWkkkkkW",
+        "...WWWWWWWWWWWWWWWWW",
+        "...WWWWWWWWWWWWWWWWWW",
+        "....WWWWWWkkkkWWWWW..",
+        ".....WWWWWWWWWWWWW...",
+        ".......WWWWWWWWW.....",
+    ])
+    # la longue-vue dépliée en trois tubes, tenue à deux mains
+    art(r, 46, 22, [
+        "...................WWW",
+        "..........WWWWWWWWWWWW",
+        "WWWWWWWWWWWGGGGGGGGWWW",
+        "WGGGGGGGGGWGGGGGGGGWWW",
+        "WGGGGGGGGGWWWWWWWWWWWW",
+        "WWWWWWWWWWW........WWW",
+    ])
+    art(r, 46, 25, [
+        ".WWWW......WWWW...",
+        "WWWWW.....WWWWWW..",
+        "WkWkW.....WkWkWW..",
+        "GWWW.......WWWW...",
+        "GGG........GGG....",
+        ".GGG......GGG.....",
+        "..GGG...GGGG......",
+        "...GGGGGGG........",
+    ])
+    # le nid-de-pie, une corbeille de planches cerclée
+    art(r, 24, 44, [
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+        "WkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkW",
+        "WGGGkGGGGkGGGGkGGGGkGGGGkGGGGkGGGGW",
+        "WGGGkGGGGkGGGGkGGGGkGGGGkGGGGkGGGGW",
+        "WGGGkGGGGkGGGGkGGGGkGGGGkGGGGkGGGGW",
+        "WGGGkGGGGkGGGGkGGGGkGGGGkGGGGkGGGGW",
+        "WGGGkGGGGkGGGGkGGGGkGGGGkGGGGkGGGGW",
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+        ".WGGkGGGGkGGGGkGGGGkGGGGkGGGGkGGGW.",
+        ".WGGkGGGGkGGGGkGGGGkGGGGkGGGGkGGGW.",
+        "..WGkGGGGkGGGGkGGGGkGGGGkGGGGkGGW..",
+        "..WGkGGGGkGGGGkGGGGkGGGGkGGGGkGGW..",
+        "...WWWWWWWWWWWWWWWWWWWWWWWWWWWWW...",
+        "...........WWWWWWWWWWWWW...........",
+        "....................................",
+    ])
+    # le vent et une mouette
+    for (x, y, l) in [(6, 18, 10), (2, 24, 14), (8, 30, 8), (70, 40, 12), (74, 46, 9)]:
+        r(x, y, x + l, y, B)
+    art(r, 8, 6, ["WW...WW", "..W.W..", "...W..."])
 
 
 def ian_dessin(r):
-    # l'armurier : casque rond, épaulières, un bouclier marqué d'un cadenas
-    r(35, 5, 52, 12, B); r(33, 11, 54, 13, B); r(37, 6, 50, 8, V); tete(r, 12, B)
-    r(35, 33, 52, 54, V); r(31, 32, 37, 37, B); r(50, 32, 56, 37, B); r(35, 42, 52, 43, B)
-    for x in range(36, 52, 3): r(x, 46, x, 52, N)
-    bras(r, True, True, 38)
-    r(52, 38, 72, 58, B); r(54, 40, 70, 56, N); r(54, 56, 62, 62, B); r(62, 56, 70, 58, B)
-    r(58, 46, 66, 53, V); r(59, 42, 65, 46, V); r(60, 43, 64, 46, N); r(61, 48, 63, 51, N)
-    jambes(r, B); sol_tirets(r, 68)
+    # l'armurier : un genou à terre devant la caisse blindée, il serre un dernier boulon avec une clé énorme, la
+    # langue au coin des lèvres ; casque rond, épaulières ; le bouclier au cadenas posé contre sa jambe
+    # la caisse blindée, ses plaques et ses rivets
+    art(r, 54, 36, [
+        "WWWWWWWWWWWWWWWWWWWWWWWW",
+        "WGGGGGGGGGGGWGGGGGGGGGGW",
+        "WGWGGGGGGGWGWGWGGGGGGGWW",
+        "WGGGGGGGGGGGWGGGGGGGGGGW",
+        "WGGGGGGGGGGGWGGGGGGGGGGW",
+        "WGGGGGGGGGGGWGGGGGGGGGGW",
+        "WGGGGGGGGGGGWGGGGGGGGGGW",
+        "WGWGGGGGGGWGWGWGGGGGGGWW",
+        "WWWWWWWWWWWWWWWWWWWWWWWW",
+        "WGGGGGGGGGGGWGGGGGGGGGGW",
+        "WGWGGGGGGGWGWGWGGGGGGGWW",
+        "WGGGGGGGGGGGWGGGGGGGGGGW",
+        "WGGGGGGGGGGGWGGGGGGGGGGW",
+        "WGGGGGGGGGGGWGGGGGGGGGGW",
+        "WGGGGGGGGGGGWGGGGGGGGGGW",
+        "WGWGGGGGGGWGWGWGGGGGGGWW",
+        "WGGGGGGGGGGGWGGGGGGGGGGW",
+        "WGGGGGGGGGGGWGGGGGGGGGGW",
+        "WGGGGGGGGGGGWGGGGGGGGGGW",
+        "WGGGGGGGGGGGWGGGGGGGGGGW",
+        "WGWGGGGGGGWGWGWGGGGGGGWW",
+        "WGGGGGGGGGGGWGGGGGGGGGGW",
+        "WGGGGGGGGGGGWGGGGGGGGGGW",
+        "WGGGGGGGGGGGWGGGGGGGGGGW",
+        "WGGGGGGGGGGGWGGGGGGGGGGW",
+        "WGWGGGGGGGWGWGWGGGGGGGWW",
+        "WWWWWWWWWWWWWWWWWWWWWWWW",
+        "kkkkkkkkkkkkkkkkkkkkkkkk",
+    ])
+    # le genou à terre : la jambe pliée devant, l'autre genou au sol
+    membre(r, [(30, 46), (42, 48), (44, 58)], V, 6)
+    membre(r, [(26, 46), (24, 60), (12, 62)], V, 6)
+    art(r, 40, 56, ["WWWWWWW", "WWWWWWWWW", "WWWWWWWWW", "kkkkkkkkk"]); art(r, 6, 59, ["WWWWW", "WWWWW", "WWWWW"])
+    # le bouclier au cadenas, posé contre la jambe
+    art(r, 14, 40, [
+        "WWWWWWWWWWWWWWW",
+        "WGGGGGGGGGGGGGW",
+        "WGGGGGWWWGGGGGW",
+        "WGGGGWGGGWGGGGW",
+        "WGGGGWGGGWGGGGW",
+        "WGGGWWWWWWWGGGW",
+        "WGGGWWWkWWWGGGW",
+        "WGGGWWWkWWWGGGW",
+        "WGGGWWWWWWWGGGW",
+        "WGGGGGGGGGGGGGW",
+        ".WGGGGGGGGGGGW.",
+        ".WGGGGGGGGGGGW.",
+        "..WGGGGGGGGGW..",
+        "...WGGGGGGGW...",
+        "....WGGGGGW....",
+        ".....WWWWW.....",
+    ])
+    # le buste trapu, penché vers la caisse, les épaulières
+    art(r, 24, 26, [
+        "......GGGGGGGGGGGG..",
+        "....GGGGGGGGGGGGGGGG",
+        "..GGGGGGGGGGGGGGGGGG",
+        ".GGGGGGGGGGGGGGGGGGG",
+        ".GGGGGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGGGGG.",
+        "GGGGGGGGGGGGGGGGGGG.",
+        "GGGGGGGGGGGGGGGGGG..",
+        "WWWWWWWWWWWWWWWWWW..",
+        "GGGGGGGGGGGGGGGGGG..",
+        "GGGGGGGGGGGGGGGGGG..",
+        "GGGGGGGGGGGGGGGGG...",
+        ".GGGGGGGGGGGGGGG....",
+        "..GGGGGGGGGGGGG.....",
+    ])
+    art(r, 34, 24, [
+        "....WWWWWW....",
+        "..WWWWWWWWWW..",
+        ".WWkWWkWWkWWW.",
+        "WWWWWWWWWWWWWW",
+    ])
+    # la tête sous le casque rond, la langue tirée de concentration
+    art(r, 38, 6, [
+        "......GGGGGGGG......",
+        "....GGGGGGGGGGGG....",
+        "...GGGWWGGGGGGGGG...",
+        "..GGGGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGG.",
+        ".WWWWWWWWWWWWWWWWWWW",
+        "..kkkkkkkkkkkkkkkkk.",
+        "..GWWWWWWWWWWWWWWW..",
+        "..GWWWWWWWWWkkkWWWW.",
+        "..GkWWWWWWWWWWWWWWW.",
+        "..k.WWWWWWWWWkWkWWWW",
+        "..GkWWWWWWWWWWWWWWWWW",
+        "..GWWWWWWWWWWWWWWWWWW",
+        "...WWWWWWWWWWWWWWWkW.",
+        "...WWWWWWWWWWWWWWWW..",
+        "....WWWWWWWWWWkkkkW..",
+        ".....WWWWWWWWWWWWWGG.",
+        ".......WWWWWWWWW..G..",
+    ])
+    # les deux bras sur la grosse clé, le boulon qui grince
+    membre(r, [(40, 30), (48, 36), (56, 34)], V, 4); membre(r, [(36, 32), (46, 42), (56, 44)], V, 4)
+    ligne_r(r, 56, 44, 64, 26, B, 3)
+    art(r, 60, 20, ["WWW.WWW", "WWW.WWW", "WWWWWWW", ".WWWWW.", "..WWW.."])
+    main(r, 57, 34); main(r, 57, 44)
+    art(r, 70, 20, ["..W", ".W.", "...", "WW.", "...", ".W.", "..W"])
+    sol(r, 64, [(2, 12, 0), (15, 36, 0), (40, 54, 0), (56, 82, 0), (8, 30, 2), (44, 70, 2), (26, 40, 4)])
 
 
 def soufiane_dessin(r):
-    # le douanier : képi à bande, uniforme boutonné, une grande loupe et une planchette d'inspection
-    r(37, 4, 50, 11, B); r(37, 8, 50, 9, V); r(35, 11, 52, 12, N); r(35, 12, 52, 12, B)
-    tete(r, 12, B)
-    r(35, 33, 52, 54, B); r(43, 33, 44, 54, N)
-    for y in (38, 43, 48): r(41, y, 41, y, V)
-    r(36, 36, 40, 39, N)
-    bras(r, True, True, 36)
-    r(58, 32, 72, 46, B); r(60, 34, 70, 44, V); r(62, 36, 67, 39, B); r(56, 46, 59, 50, B); r(54, 50, 57, 54, B)
-    r(14, 38, 28, 58, B); r(15, 41, 27, 57, N); r(19, 37, 23, 40, V)
-    for y in range(44, 56, 3): r(17, y, 18, y, V); r(20, y, 25, y, B)
-    jambes(r, B); sol_tirets(r, 68)
+    # le douanier : penché en avant, il inspecte à la loupe sans jamais toucher ; dans la lentille, son œil devient
+    # énorme ; képi à bande, uniforme boutonné, la planchette d'inspection tenue dans le dos
+    # les jambes : la jambe avant droite, l'autre tendue en arrière
+    art(r, 20, 44, [
+        "........GGGGGGGGGG....",
+        ".......GGGGGGGGGGG....",
+        "......GGGGGG.GGGGG....",
+        ".....GGGGG...GGGGG....",
+        "....GGGGG....GGGGG....",
+        "...GGGGG.....GGGGG....",
+        "...GGGG......GGGGG....",
+        "..GGGG.......GGGGG....",
+        "..GGGG.......GGGGG....",
+        ".GGGG........GGGGG....",
+        ".GGGG........GGGGG....",
+        "GGGG.........GGGGG....",
+        "GGGG.........GGGGG....",
+        "GGGG.........GGGGG....",
+        "GGGG.........GGGGG....",
+        "GGGG.........GGGGG....",
+        "GGGG.........GGGGG....",
+        "WWWWW........WWWWWWWW.",
+        "WWWWWW.......WWWWWWWWW",
+        "kkkkkk.......kkkkkkkkk",
+    ])
+    # le buste penché, la bande blanche des boutons en diagonale, le ceinturon
+    art(r, 25, 26, [
+        "...............GGGGGGG...",
+        ".............GGGGGGGGGGG.",
+        "...........GGGGGGGGGGGGGG",
+        ".........GGGGGGGGGGGWGGGG",
+        ".......GGGGGGGGGGGGWGGGGG",
+        ".....GGGGGGGGGGGGGGGGGGG.",
+        "....GGGGGGGGGGGGWGGGGGG..",
+        "...GGGGGGGGGGGGGGGGGGG...",
+        "..GGGGGGGGGGGWGGGGGGG....",
+        "..GGGGGGGGGGGGGGGGG......",
+        "..GGGGGGGGGWGGGGGG.......",
+        "..GGGGGGGGGGGGGGG........",
+        "..WWWWWWWWWWWWWWW........",
+        "..WWWWWWkkWWWWWWW........",
+        "..GGGGGGGGGGGGGGG........",
+        "..GGGGGGGGGGGGGGG........",
+        "..GGGGGGGGGGGGGGG........",
+        "...GGGGGGGGGGGGGG........",
+    ])
+    # la planchette tenue dans le dos
+    art(r, 10, 26, [
+        "....WWWWW......",
+        "..WWWWWWWWWW...",
+        "..W........W...",
+        "..W.GGGGGG.W...",
+        "..W........W...",
+        "..W.GGG.GG.W...",
+        "..W........W...",
+        "..W.GGGGG..W...",
+        "..W........W...",
+        "..W.GG.GGG.W...",
+        "..W........W...",
+        "..WWWWWWWWWW...",
+    ])
+    art(r, 20, 30, [
+        "..........GG",
+        "........GGG.",
+        "......GGG...",
+        ".....GGG....",
+        "...WWWW.....",
+        "..WWWWW.....",
+        "..WkWWW.....",
+    ])
+    # la tête : képi à bande, sourcil levé, bouche pincée de concentration
+    art(r, 42, 10, [
+        ".....GGGGGGGGGG.....",
+        ".....GWWWWWWWWGG....",
+        ".....GGGGGGGGGGG....",
+        ".....GGGGGkGGGGG....",
+        "....WWWWWWWWWWWWW...",
+        "....GGGGGGGGGGGGGGGGG",
+        "....WWWWWWWWWWWWW....",
+        "...WWWWWWWWWkkkkWW...",
+        "...WkWWWWWWWWWWWWW...",
+        "...k.WWWWWWWWkkWWWW..",
+        "...WkWWWWWWWWkkWWWWW.",
+        "...WWWWWWWWWWWWWWWWWW",
+        "....WWWWWWWWWWWWWkWWW",
+        "....WWWWWWWWWWWWWWW..",
+        ".....WWWWWWWWkkkWW...",
+        "......WWWWWWWWWWW....",
+        "........WWWWWWW......",
+        ".........WWWWW.......",
+    ])
+    # le bras tendu et la grande loupe ; dans la lentille, l'œil grossi
+    art(r, 46, 30, [
+        "GGG...........",
+        ".GGG..........",
+        "..GGG.........",
+        "...GGG........",
+        "....GGG.......",
+        ".....WWWW.....",
+        ".....WWWWW....",
+        ".....WkWkW....",
+        ".....WWWW.....",
+    ])
+    ligne_r(r, 54, 36, 63, 26, B, 2)
+    art(r, 60, 12, [
+        "....WWWWWWW....",
+        "..WWWWWWWWWWW..",
+        ".WWkkkkkkkkkWW.",
+        ".WkkWWWWWWWkkW.",
+        "WWkWWWWWWWWWkWW",
+        "WkWWWWkkkWWWWkW",
+        "WkWWWkkkkkWWWkW",
+        "WkWWWkkWWkWWWkW",
+        "WkWWWkkWWkWWWkW",
+        "WkWWWkkkkkWWWkW",
+        "WkWWWWkkkWWWWkW",
+        "WWkWWWWWWWWWkWW",
+        ".WkkWWWWWWWkkW.",
+        ".WWkkkkkkkkkWW.",
+        "..WWWWWWWWWWW..",
+        "....WWWWWWW....",
+    ])
+    art(r, 74, 10, ["G..G", ".G..", "...G"]); art(r, 58, 9, ["G.G", ".G."])
+    sol(r, 64, [(12, 30, 0), (33, 46, 0), (50, 60, 0), (18, 26, 2), (30, 52, 2), (36, 44, 4)])
 
 
 def arnaud_dessin(r):
-    # le commandant de l'escadre : bicorne, épaulettes à franges, manteau croisé, deux pavillons de signaux
-    r(30, 8, 57, 11, B); r(36, 3, 51, 8, B); r(42, 5, 45, 7, V); r(30, 11, 33, 13, B); r(54, 11, 57, 13, B)
-    tete(r, 12, B)
-    robe_mage(r, 33, 64, N, 35, 52)
-    r(35, 33, 52, 64, N); r(35, 33, 36, 64, B); r(51, 33, 52, 64, B)
-    r(30, 32, 38, 35, V); r(49, 32, 57, 35, V)
-    for x in range(30, 38, 2): r(x, 36, x, 38, V)
-    for x in range(50, 58, 2): r(x, 36, x, 38, V)
-    for y in (40, 45, 50, 55): r(40, y, 41, y + 1, B); r(46, y, 47, y + 1, B)
-    bras(r, True, True, 38)
-    r(18, 26, 19, 52, B); r(20, 26, 30, 34, V); r(20, 34, 30, 34, B); r(24, 28, 26, 32, N)
-    r(62, 22, 63, 52, B); r(64, 22, 74, 30, B); r(64, 26, 74, 26, V); r(68, 22, 69, 30, V)
-    pieds_robe(r); sol_tirets(r, 68)
+    # le commandant de l'escadre, tourné vers la gauche : un énorme bicorne en travers, épaulettes à franges, le
+    # torse bombé et le menton haut ; d'une main il fait claquer la drisse de pavillons qui monte vers le ciel
+    r = miroir(r)
+    # la drisse et ses pavillons de signaux, qui montent en diagonale
+    ligne_r(r, 56, 38, 86, 4, B, 1)
+    for k, (x, y) in enumerate([(60, 34), (67, 26), (74, 18), (81, 10)]):
+        motifs = [
+            ["WWWWWW", "WGGGGW", "WGGGGW", "WGGGGW", "WWWWWW"],
+            ["WWWWWW", "WGGWWW", "WGGWWW", "WWWGGW", "WWWWWW"],
+            ["WWWWWW", "WWGGWW", "WGGGGW", "WWGGWW", "WWWWWW"],
+            ["WWWWWW", "WkkkkW", "WWWWWW", "WkkkkW", "WWWWWW"],
+        ]
+        art(r, x - 3 if k else x - 2, y + 1, motifs[k])
+    # les jambes, bottes hautes
+    art(r, 30, 52, [
+        "..GGGGGGGGGGGGGGG..",
+        "..GGGGGGG.GGGGGGG..",
+        "..GGGGGG...GGGGGG..",
+        "..GGGGGG...GGGGGG..",
+        "..WWWWWW...WWWWWW..",
+        "..WWWWWW...WWWWWW..",
+        "..WWWWWW...WWWWWW..",
+        "..WWWWWW...WWWWWW..",
+        "..WWWWWW...WWWWWW..",
+        "..WWWWWW...WWWWWW..",
+        "WWWWWWWW...WWWWWWWWW",
+        "kkkkkkkk...kkkkkkkkk",
+    ])
+    # le manteau croisé au torse bombé, les épaulettes à franges, le ceinturon
+    art(r, 26, 28, [
+        "........WWWWWWWW.........",
+        "..WWWWWGGGGGGGGGGGWWWWW..",
+        ".WWWWWWGGGGGGGGGGGWWWWWW.",
+        ".WkWkWGGGGGGGGGGGGGWkWkW.",
+        ".WkWkWGGWGGGGGGGWGGWkWkW.",
+        "....GGGGGGGGGGGGGGGGGGGG.",
+        "....GGGGGGGGGGGGGGGGGGGGG",
+        "....GGGGGWGGGGGGGWGGGGGGG",
+        "....GGGGGGGGGGGGGGGGGGGGG",
+        "....GGGGGGGGGGGGGGGGGGGG.",
+        "....GGGGGWGGGGGGGWGGGGGG.",
+        "....GGGGGGGGGGGGGGGGGGG..",
+        "....GGGGGGGGGGGGGGGGGGG..",
+        "....GGGGGWGGGGGGGWGGGGG..",
+        "....WWWWWWWWWkWWWWWWWWW..",
+        "....GGGGGGGGGGGGGGGGGGG..",
+        "....GGGGGGGGGGGGGGGGGGG..",
+        "....GGGGGGGGGkGGGGGGGGG..",
+        "...GGGGGGGGGGkGGGGGGGGGG.",
+        "...GGGGGGGGGGkGGGGGGGGGG.",
+        "...GGGGGGGGGGkGGGGGGGGGG.",
+        "...GGGGGGGGGGkGGGGGGGGGG.",
+        "..GGGGGGGGGGGkGGGGGGGGGGG",
+        "..GGGGGGGGGGGkGGGGGGGGGGG",
+        "..GGGGGGGGGGGkGGGGGGGGGGG",
+    ])
+    # la main sur la hanche, l'autre qui tire la drisse
+    membre(r, [(30, 34), (24, 40), (30, 46)], V, 4); main(r, 30, 45)
+    membre(r, [(48, 33), (54, 38), (56, 38)], V, 4); main(r, 57, 38)
+    # la tête, menton levé, sous l'énorme bicorne en travers
+    art(r, 18, 6, [
+        "..............WWWW................",
+        "..........GGGGGGGGGGGG............",
+        "......GGGGGGGGGGGGGGGGGGGG........",
+        "..GGGGGGGGGGGGGWWWWGGGGGGGGGGG....",
+        "WGGGGGGGGGGGGGWWkkWWGGGGGGGGGGGGGW",
+        ".WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW.",
+    ])
+    art(r, 30, 12, [
+        "...WWWWWWWWWWWWWW....",
+        "..WWWWWWWWWWWWWWWW...",
+        "..WWWWWWWWWWkkkkkWW..",
+        "..WkWWWWWWWWWWWWWWW..",
+        "..k.WWWWWWWWWWkkWWW..",
+        "..WkWWWWWWWWWWWWWWWW.",
+        "..WWWWWWWWWWWWWWWWWWW",
+        "..WWWWWWWWWWWWWWWkWWW",
+        "...WWWWWWGGGGGGGGGGW.",
+        "...WWWWWGGGGGGGGGGGG.",
+        "....WWWWWWWWkkkkWWW..",
+        ".....WWWWWWWWWWWWW...",
+        "......WWWWWWWWWWWW...",
+        "........WWWWWWWW.....",
+        ".........WWWWWW......",
+        ".........WWWWWW......",
+    ])
+    sol(r, 64, [(20, 30, 0), (33, 60, 0), (64, 72, 0), (26, 44, 2), (48, 56, 2), (36, 46, 4)])
 
 
 def anissa_dessin(r):
-    # la marinière de la chaloupe : cheveux longs au vent, bandeau, une rame portée en travers de l'épaule
-    r(34, 9, 53, 12, V); r(33, 12, 36, 32, V); r(51, 11, 57, 20, V); r(56, 13, 62, 18, V); r(61, 15, 66, 17, V)
-    r(35, 11, 52, 12, B)
-    tete(r, 12, V)
-    r(35, 33, 52, 54, B); rayures(r, 35, 36, 52, 54, V, 4)
-    bras(r, True, True, 36)
-    ligne_r(r, 14, 58, 66, 22, B, 2)
-    r(10, 56, 18, 64, V); r(11, 57, 17, 63, B)
-    jambes(r); sol_tirets(r, 68)
+    # la marinière de la chaloupe : elle marche à grandes enjambées, la rame posée en travers de l'épaule, les
+    # cheveux longs et le bandeau qui flottent au vent ; un clin d'œil
+    # la rame, en travers de l'épaule
+    ligne_r(r, 10, 48, 70, 16, B, 2)
+    art(r, 66, 8, [
+        "....WWWW...",
+        "..WWWWWWWW.",
+        ".WWGGGGGWWW",
+        "WWGGGGGGGWW",
+        "WGGGGGGGWW.",
+        "WWGGGGWWW..",
+        ".WWWWWW....",
+    ])
+    # les jambes en grande enjambée
+    membre(r, [(34, 48), (26, 56), (20, 63)], V, 5); membre(r, [(40, 48), (48, 55), (50, 63)], V, 5)
+    art(r, 14, 62, ["WWWWWWW", "WWWWWWW", "kkkkkkk"]); art(r, 46, 62, ["WWWWWWWW", "WWWWWWWW", "kkkkkkkk"])
+    # la marinière à rayures
+    art(r, 28, 30, [
+        "......WWWWWWW.....",
+        "...WWWWWWWWWWWWW..",
+        "..GGGGGGGGGGGGGGG.",
+        "..WWWWWWWWWWWWWWW.",
+        "..GGGGGGGGGGGGGGG.",
+        "..WWWWWWWWWWWWWWW.",
+        "..GGGGGGGGGGGGGGG.",
+        "..WWWWWWWWWWWWWWW.",
+        "..GGGGGGGGGGGGGGG.",
+        "..WWWWWWWWWWWWWWW.",
+        "..GGGGGGGGGGGGGGG.",
+        "..WWWWWWWWWWWWWWW.",
+        "...GGGGGGGGGGGGG..",
+        "...GGGGGGGGGGGGG..",
+        "...GGGGGGGGGGGGG..",
+        "...GGGGGGGGGGGGG..",
+        "...GGGGGGGGGGGGG..",
+        "...GGGGGGGGGGGGG..",
+        "...GGGGGGGGGGGGG..",
+    ])
+    # les bras : l'un tient la rame sur l'épaule, l'autre balance
+    membre(r, [(42, 33), (48, 36), (50, 30)], B, 3); main(r, 50, 30)
+    membre(r, [(32, 33), (26, 40), (24, 46)], B, 3); main(r, 24, 46)
+    # les cheveux au vent, le bandeau dont les pans flottent
+    art(r, 6, 6, [
+        "......................GGGGGGGG..",
+        "...................GGGGGGGGGGGGG",
+        "..............GGGGGGGGGGGGGGGGGG",
+        "..........GGGGGGGGGGGGGGGGGGGGGG",
+        "......GGGGGGGGG..GGGGGGGGGGGGGGG",
+        "...GGGGGGG...GGGGGGGGGGGGGGGGGGG",
+        ".GGGGG.....GGGGGGG..GGGGGGGGGGGG",
+        "GGG.......GGGG.....GGGGGGGGGGGG.",
+        ".........GGG......GGGGGGGGGGGGG.",
+        "..................GGGGGGGGGGGG..",
+        "..................GGGGGGGGGGG...",
+        "..................GGGGGGGGGG....",
+        "..................GGGGGGGGG.....",
+        "...................GGGGGGG......",
+        "....................GGGGG.......",
+    ])
+    art(r, 10, 14, ["WW......", ".WWW....", "...WWWW.", "......WW"])
+    art(r, 31, 6, [
+        "......WWWWWWWWWWWW..",
+        "....WWWWWWWWWWWWWWW.",
+        "...WWWWWWWWWWWWWWWWW",
+        "..WWkkkkkkkkkkkkkkkk",
+        "..WWGGGWWWWWWWWWWWW.",
+        "..WGGGWWWWWWWWWWWWW.",
+        "..GGGWWWWWWWkkWWWkkW",
+        "..GGGWWWWWWWWWWWWWWW",
+        "..GGkWWWWWWkkkWWWkkWW",
+        "..Gk.WWWWWWWWWWWWkkWWW",
+        "..GGkWWWWWWWWWWWWWWWWW",
+        "..GGGWWWWWWWWWWWWWWWW.",
+        "...GGWWWWWWWWWWWWkWWW.",
+        "...GGWWWWWWkWWWWWWWW..",
+        "....GWWWWWWWkkkkkkW...",
+        ".....WWWWWWWWWWWWW....",
+        ".......WWWWWWWWWW.....",
+        ".........WWWWWW.......",
+        ".........WWWWWW.......",
+    ])
+    sol(r, 66, [(8, 26, 0), (30, 44, 0), (48, 62, 0), (14, 34, 2), (40, 56, 2), (28, 38, 4)])
 
 
 def edson_dessin(r):
-    # le charpentier des cloisons : casquette, bretelles, un panneau de cloison sous le bras et un niveau
-    r(36, 9, 51, 12, V); r(49, 11, 56, 12, V); tete(r, 12, V)
-    r(35, 33, 52, 54, B); r(38, 33, 39, 54, V); r(48, 33, 49, 54, V)
-    bras(r, True, True, 36)
-    r(54, 30, 72, 62, V); r(56, 32, 70, 60, N); r(62, 32, 63, 60, V); r(56, 45, 70, 46, V)
-    r(14, 50, 30, 54, B); r(20, 51, 24, 53, V)
-    jambes(r, B); sol_tirets(r, 68)
+    # le charpentier de marine : l'oreille collée à la cloison, il la frappe du poing, « toc, toc » : elle sonne
+    # creux ; casquette à l'envers, bretelles, crayon sur l'oreille, le niveau à bulle dans l'autre main
+    # la cloison de planches
+    art(r, 60, 6, ["WWWWWWWWWWWWWWWWWWWWWWWWWW"] + [
+        ("WGGGGGGGGGGGGGGGGGGGGGGGGW" if (y // 7) % 2 else "WGGGGGGGGGGGGGGGGGGGGGGGGW") if y % 7 < 6 else "WkkkkkkkkkkkkkkkkkkkkkkkkW" for y in range(56)
+    ] + ["WWWWWWWWWWWWWWWWWWWWWWWWWW"])
+    for y in range(9, 62, 7):
+        r(63, y, 63, y, B); r(82, y, 82, y, B)
+    # les jambes, campées
+    membre(r, [(30, 48), (26, 58), (24, 63)], V, 5); membre(r, [(38, 48), (44, 57), (46, 63)], V, 5)
+    art(r, 18, 62, ["WWWWWWWW", "WWWWWWWW", "kkkkkkkk"]); art(r, 42, 62, ["WWWWWWWW", "WWWWWWWW", "kkkkkkkk"])
+    # le buste penché vers la cloison, les bretelles
+    art(r, 24, 26, [
+        "...........WWWWWW...",
+        ".........WWWWWWWWWW.",
+        ".......WWWWWWWWWWWWW",
+        "......WWGGWWWWWGGWWW",
+        ".....WWWGGWWWWGGWWW.",
+        "....WWWWGGWWWWGGWWW.",
+        "...WWWWGGWWWWGGWWW..",
+        "...WWWWGGWWWWGGWWW..",
+        "..WWWWWGGWWWWGGWWW..",
+        "..WWWWGGWWWWGGWWW...",
+        "..GGGGGGGGGGGGGGG...",
+        "..GGGGGGGGGGGGGGG...",
+        "..GGGGGGGGGGGGGGG...",
+        "..GGGGGGGGGGGGGGG...",
+        "..GGGGGGGkGGGGGGG...",
+        "..GGGGGGGkGGGGGGG...",
+        "..GGGGGGGkGGGGGGG...",
+        "..GGGGGGGkGGGGGGG...",
+        "..GGGGGGGkGGGGGGG...",
+        "..GGGGGGGkGGGGGGG...",
+        "..GGGGGGGkGGGGGGG...",
+        "..GGGGGGGkGGGGGGG...",
+        "..GGGGGGGGGGGGGGG...",
+    ])
+    # le bras qui tient le niveau à bulle
+    membre(r, [(28, 30), (22, 38), (20, 46)], B, 3)
+    art(r, 6, 44, ["WWWWWWWWWWWWWWWWWW", "WGGGGGGWWWWGGGGGGW", "WGGGGGGWkkWGGGGGGW", "WGGGGGGWWWWGGGGGGW", "WWWWWWWWWWWWWWWWWW"])
+    main(r, 20, 45)
+    # la tête contre la cloison, l'œil qui écoute, la casquette à l'envers, le crayon sur l'oreille
+    art(r, 36, 6, [
+        "......GGGGGGGGGGG.......",
+        "....GGGGGGGGGGGGGGG.....",
+        "...GGGGWWGGGGGGGGGGG....",
+        "...GGGGGGGGGGGGGGGGGG...",
+        "GGGGGGGGGGGGGGGGGGGGG...",
+        "GGGWWWWWWWWWWWWWWWWWW...",
+        "...WWWWWWWWWWWWWWWWWWW..",
+        "...WWWWWWWWWWWkkkkWWWW..",
+        "...WWWWWWWWWWWWWWWWWWW..",
+        "...WkWWWWWWWWWWWWkkWWWW.",
+        "...k.WWWWWWWWWWWWkkWWWW.",
+        "...WkWWWWWWWWWWWWWWWWWWW",
+        "...WWWWWWWWWWWWWWWWWWWWW",
+        "....WWWWWWWWWWWWWWWWkWW.",
+        "....WWWWWWWWWWkkWWWWWW..",
+        ".....WWWWWWWWWWkkkWWW...",
+        "......WWWWWWWWWWWWWW....",
+        "........WWWWWWWW........",
+        "........WWWWWW..........",
+    ])
+    ligne_r(r, 36, 14, 44, 10, B, 1); r(35, 14, 36, 15, V)
+    # le poing qui frappe, « toc, toc »
+    membre(r, [(42, 30), (50, 32), (57, 28)], B, 3)
+    art(r, 56, 25, ["WWWW", "WkkW", "WWWW", ".WW."])
+    for (x0, y0, x1, y1) in [(54, 22, 51, 19), (53, 30, 49, 32), (56, 33, 54, 37)]:
+        ligne_r(r, x0, y0, x1, y1, B, 1)
+    sol(r, 66, [(4, 26, 0), (30, 40, 0), (42, 58, 0), (10, 30, 2), (36, 52, 2), (24, 34, 4)])
 
 
 def mina_dessin(r):
-    # la douanière du large : cape à capuche, des jumelles autour du cou, un carnet de relevés
-    r(33, 8, 54, 34, B); r(35, 10, 52, 32, N); tete(r, 12, N)
-    robe_mage(r, 33, 64, B, 34, 53)
-    r(37, 33, 50, 64, V)
-    r(39, 38, 42, 43, N); r(45, 38, 48, 43, N); r(42, 40, 45, 41, N); r(38, 33, 39, 38, N); r(48, 33, 49, 38, N)
-    bras(r, True, True, 36)
-    r(56, 44, 68, 58, B); r(57, 45, 67, 57, N); r(59, 48, 65, 48, V); r(59, 51, 63, 51, V); r(59, 54, 64, 54, V)
-    pieds_robe(r); sol_tirets(r, 68)
+    # la douanière du large : debout face au vent, la cape sombre qui claque derrière elle, des jumelles au cou ;
+    # le regard au loin, elle note dans son carnet sans le regarder
+    # la cape qui vole
+    art(r, 4, 26, [
+        "........................GGGGGGGG",
+        "..................GGGGGGGGGGGGGG",
+        "..............GGGGGGGGGGGGGGGGGG",
+        "..........GGGGGGGGGGGGGGGGGGGGGG",
+        ".......GGGGGGGGGGGGGGGGGGGGGGGGG",
+        ".....GGGGGGGGGGkGGGGGGGGGGGGGGGG",
+        "...GGGGGGGGGGGGGkGGGGGGGGGGGGGGG",
+        ".GGGGGGGGGGGGGGGGkGGGGGGGGGGGGGG",
+        "GGGG..GGGGGGGGGGGGkGGGGGGGGGGGGG",
+        "GG.......GGGGGGGGGkGGGGGGGGGGGGG",
+        "...........GGGGGGGGkGGGGGGGGGGGG",
+        "..............GGGGGGkGGGGGGGGGGG",
+        ".................GGGGGGGGGGGGGGG",
+        "...................GGGGGGGGGGGGG",
+        "....................GGGGGGGGGGGG",
+        "......................GGGGGGGGGG",
+        ".......................GGGGGGGGG",
+        "........................GGGGGGGG",
+        ".........................GGGGGGG",
+        "..........................GGGGGG",
+        "...........................GGGGG",
+        "............................GGGG",
+        ".............................GGG",
+        "..............................GG",
+    ])
+    # le long manteau sous la cape, ceinturé, les bottes
+    art(r, 32, 30, [
+        "...GGGGGGGGGGG...",
+        "..GGGGGGGGGGGGG..",
+        ".GGGGGGGGGGGGGGG.",
+        ".GGGGGGGGGGGGGGG.",
+        ".GGGGGGGGGGGGGGG.",
+        ".GGGGGGGGGGGGGGG.",
+        ".GGGGGGGGGGGGGGG.",
+        ".GGGGGGGGGGGGGGG.",
+        ".GGGGGGGGGGGGGGG.",
+        ".WWWWWWWkWWWWWWW.",
+        ".GGGGGGGGGGGGGGG.",
+        ".GGGGGGGGGGGGGGG.",
+        "GGGGGGGGkGGGGGGGG",
+        "GGGGGGGGkGGGGGGGG",
+        "GGGGGGGGkGGGGGGGG",
+        "GGGGGGGGkGGGGGGGG",
+        "GGGGGGGGkGGGGGGGG",
+        "GGGGGGGGkGGGGGGGG",
+        "GGGGGGGGkGGGGGGGG",
+        "GGGGGGGGkGGGGGGGG",
+        "GGGGGGGGkGGGGGGGGG",
+        "GGGGGGGGkGGGGGGGGG",
+        "...GGGGG..GGGGG...",
+        "...GGGGG..GGGGG...",
+        "...WWWWW..WWWWW...",
+        "...WWWWW..WWWWWWW.",
+        "..WWWWWW..WWWWWWWW",
+        "..kkkkkk..kkkkkkkk",
+    ])
+    # les jumelles qui pendent au cou
+    r(37, 30, 37, 33, B); r(45, 30, 45, 33, B)
+    art(r, 36, 33, ["WWWWWWWWWW", "WGGWWWWGGW", "WGGW..WGGW", "WWWW..WWWW"])
+    # le carnet et le crayon
+    membre(r, [(46, 33), (52, 40), (56, 38)], V, 3)
+    art(r, 54, 32, ["WWWWWWWWW", "WkkkkkkkW", "WWWWWWWWW", "WkkkkkWWW", "WWWWWWWWW", "WkkkWWWWW", "WWWWWWWWW"])
+    membre(r, [(34, 34), (40, 44), (52, 42)], V, 3); main(r, 52, 41)
+    ligne_r(r, 53, 41, 58, 34, V, 1)
+    # la tête, le regard vers le large, les cheveux courts sous la capuche rabattue
+    art(r, 28, 6, [
+        "......GGGGGGGGGG......",
+        "....GGGGGGGGGGGGGG....",
+        "...GGGGGGGGGGGGGGGG...",
+        "..GGGGGGGGGGGGGGGGGG..",
+        "..GGGGGGWWWWWWWWWWWG..",
+        "..GGGGGWWWWWWWWWWWWW..",
+        "..GGGGWWWWWWWWkkkkWWW.",
+        "..GGGGWWWWWWWWWWWWWWW.",
+        "..GGGkWWWWWWWWWWWkkkWW",
+        "..GGk.WWWWWWWWWWWWWWWWW",
+        "..GGGkWWWWWWWWWWWWWWWWW",
+        "..GGGWWWWWWWWWWWWWWWWW.",
+        "..GGGGWWWWWWWWWWWWWWW..",
+        "...GGGWWWWWWWWWkkkWW...",
+        "...GGGGWWWWWWWWWWWW....",
+        "....GGGGWWWWWWWWWW.....",
+        "......GG..WWWWW........",
+        "..........WWWWW........",
+    ])
+    # la ligne d'horizon, la mer qu'elle regarde
+    for (x, y, l) in [(66, 20, 20), (72, 24, 10), (62, 28, 6)]:
+        r(x, y, x + l, y, V)
+    sol(r, 64, [(18, 32, 0), (35, 56, 0), (60, 70, 0), (24, 44, 2), (48, 60, 2), (36, 44, 4)])
 
 
 def ronan_dessin(r):
-    # le voyageur des deux continents : sac à dos, une carte où deux terres se font face
-    r(36, 9, 51, 12, B); tete(r, 12, B)
-    r(35, 33, 52, 54, V); r(31, 34, 35, 52, B); r(52, 34, 56, 52, B)
-    r(28, 36, 33, 50, V); r(27, 38, 29, 48, N)
-    bras(r, False, True, 36)
-    r(12, 38, 34, 56, B); r(13, 39, 33, 55, V)
-    r(15, 42, 21, 52, B); r(17, 41, 20, 44, B); r(25, 43, 31, 50, B); r(27, 50, 29, 53, B)
-    r(22, 46, 24, 46, N)
-    jambes(r); sol_tirets(r, 68)
+    # le voyageur des deux continents : un sac à dos plus haut que lui, chargé d'une couverture roulée, d'une
+    # gamelle et d'une boussole ; il déplie à bout de bras une carte où deux terres se font face
+    # le sac à dos énorme, dans le dos
+    art(r, 8, 8, [
+        "..WWWWWWWWWWWWWWWWWW..",
+        ".WWkWWWWWkWWWWWkWWWWW.",
+        ".WkWkWWWWWkWWWWWkWWWW.",
+        ".WWkWWWWWkWWWWWkWWWWW.",
+        "..WWWWWWWWWWWWWWWWWW..",
+        ".WWGGGGGGGGGGGGGGGGWW.",
+        ".WGGGGGGGGGGGGGGGGGGW.",
+        "WGGGGGGGGGGGGGGGGGGGGW",
+        "WGGGGGGGGGGGGGGGGGGGGW",
+        "WGGGGWWGGGGGGGGWWGGGGW",
+        "WGGGGWWGGGGGGGGWWGGGGW",
+        "WGGGGWWGGGGGGGGWWGGGGW",
+        "WGGGGWWGGGGGGGGWWGGGGW",
+        "WGGGGWWGGGGGGGGWWGGGGW",
+        "WGGGGGGGGGGGGGGGGGGGGW",
+        "WGGGGGGGGGGGGGGGGGGGGW",
+        "WWWWWWWWWWWWWWWWWWWWWW",
+        "WGGGGWWGGGGGGGGWWGGGGW",
+        "WGGGGGGGGGGGGGGGGGGGGW",
+        "WGGGGGGGGGGGGGGGGGGGGW",
+        "WGGGGGGGGGGGGGGGGGGGGW",
+        "WGGGGGGGGGGGGGGGGGGGGW",
+        "WGGGGGGGGGGGGGGGGGGGGW",
+        "WGGGGGGGGGGGGGGGGGGGGW",
+        "WGGGGGGGGGGGGGGGGGGGGW",
+        "WGGGGGGGGGGGGGGGGGGGGW",
+        "WGGGGGGGGGGGGGGGGGGGGW",
+        "WGGGGGGGGGGGGGGGGGGGGW",
+        ".WGGGGGGGGGGGGGGGGGGW.",
+        "..WWWWWWWWWWWWWWWWWW..",
+    ])
+    # la gamelle qui pend au sac
+    art(r, 2, 30, ["..W..", ".W.W.", "WWWWW", "WGGGW", "WGGGW", ".WWW."])
+    # les jambes, le pas décidé
+    membre(r, [(32, 48), (28, 58), (26, 63)], V, 5); membre(r, [(38, 48), (44, 57), (46, 63)], V, 5)
+    art(r, 20, 62, ["WWWWWWWW", "WWWWWWWW", "kkkkkkkk"]); art(r, 42, 62, ["WWWWWWWW", "WWWWWWWW", "kkkkkkkk"])
+    # le buste, les bretelles du sac
+    art(r, 28, 30, [
+        "..WWWWWWWWWWW..",
+        ".GGGGGGGGGGGGG.",
+        "GGWWGGGGGGGGGGG",
+        "GGWWGGGGGGGGGGG",
+        "GGWWGGGGGGGGGGG",
+        "GGWWGGGGGGGGGGG",
+        "GGWWGGGGGGGGGGG",
+        "GGWWGGGGGGGGGGG",
+        "GGWWGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGG",
+        "WWWWWWWWWWWWWWW",
+        "GGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGG",
+        ".GGGGGGGGGGGGG.",
+        ".GGGGGGGGGGGGG.",
+    ])
+    # la tête, le nez au vent, une barbe de trois jours, le chapeau de toile
+    art(r, 26, 6, [
+        ".......GGGGGGGG......",
+        ".....GGGGGGGGGGGG....",
+        "....GGGGGGGGGGGGGG...",
+        "GGGGGGGGGGGGGGGGGGGGG",
+        ".WWWWWWWWWWWWWWWWWWW.",
+        "...WWWWWWWWWWWWWWWW..",
+        "...WWWWWWWWWWkkkkWWW.",
+        "...WkWWWWWWWWWWWWWWW.",
+        "...k.WWWWWWWWWWkkWWWW",
+        "...WkWWWWWWWWWWkkWWWWW",
+        "...WWWWWWWWWWWWWWWWWWW",
+        "...WWWWWWWWWWWWWWWkWW.",
+        "...WkWkWkWkWWWWWWWWW..",
+        "....WkWkWkWkWkkkkkW...",
+        ".....WkWkWkWkWkWkW....",
+        "......WWWWWWWWWWW.....",
+        "........WWWWWWW.......",
+    ])
+    # les bras tendus, la carte dépliée : deux continents de part et d'autre de la mer, une route en pointillés
+    membre(r, [(40, 33), (48, 36), (54, 34)], V, 4); membre(r, [(36, 36), (44, 44), (54, 46)], V, 4)
+    art(r, 54, 26, [
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWW.",
+        "WGGGGGGGGkGGGGGGkGGGGGGGGGW.",
+        "WGGWWWWGGkGGGGGGkGGGGWWWGGW.",
+        "WGWWWWWWGkGGGGGGkGGGWWWWWGW.",
+        "WGWWWWWWWkGGGGGGkGGWWWWWWGW.",
+        "WGGWWWWWWkGGkGGGkGGWWWWWWGW.",
+        "WGGGWWWWWkGGGGkGkGGGWWWWGGW.",
+        "WGGGWWWWGkGkGGGGkkGGWWWGGGW.",
+        "WGGGGWWGGkGGGGGGkGkGGWWGGGW.",
+        "WGGGGWWGGkGGGGGGkGGGGWGGGGW.",
+        "WGGGGGWGGkGGGGGGkGGGGWGGGGW.",
+        "WGGGGGGGGkGGGGGGkGGGGGGGGGW.",
+        "WGGGGGGGGkGGGGGGkGGGGGGGGGW.",
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWW.",
+    ])
+    main(r, 55, 34); main(r, 55, 41)
+    sol(r, 66, [(12, 24, 0), (27, 52, 0), (56, 66, 0), (18, 36, 2), (40, 58, 2), (28, 40, 4)])
 
 
 def idrissa_dessin(r):
-    # le relecteur de plans : lunettes, gilet, un plan annoté de coches et un crayon vert
-    r(36, 9, 51, 12, V); tete(r, 12, V, lunettes=True)
-    r(35, 33, 52, 54, B); r(38, 35, 49, 54, V); r(42, 35, 45, 54, N)
-    bras(r, True, True, 36)
-    r(54, 34, 72, 58, B); r(55, 35, 71, 57, N)
-    for k in range(4):
-        r(57, 38 + k * 5, 64, 38 + k * 5, B)
-        r(66, 38 + k * 5, 67, 39 + k * 5, V); r(68, 36 + k * 5, 69, 37 + k * 5, V)
-    r(20, 30, 21, 48, V); r(20, 48, 21, 50, B)
-    jambes(r); sol_tirets(r, 68)
+    # le relecteur de plans : lunettes relevées sur le front, crayon sur l'oreille, le nez dans une liste si longue
+    # qu'elle se déroule jusqu'au sol ; il coche les cases une à une, la langue sage, l'air très appliqué
+    # la longue liste qui se déroule jusqu'au sol et s'enroule à ses pieds
+    art(r, 50, 20, ["WWWWWWWWWWWWWWWW", "WkkkkkkkkkkkkkkW"] + [
+        ("WWkkkkkkkWWWGWGW" if k % 2 == 0 else "WWkkkkkWWWWGWWGW") if y % 4 == 1 else "WWWWWWWWWWWWWWWW" for k, y in enumerate(range(26))
+    ])
+    for k, y in enumerate(range(21, 46, 4)):
+        art(r, 61, y, ["W.W", "WGW", "GW."] if k < 4 else ["WWW", "W.W", "WWW"])
+    art(r, 50, 46, [
+        "WWWWWWWWWWWWWWWW.",
+        ".WWWWWWWWWWWWWWWW",
+        "..WWkkkkWWWWWWWWW",
+        "...WWWWWWWWWWWWWW",
+        "....WWWWkkkkkWWWW",
+        ".....WWWWWWWWWWWWW",
+        "......WWWkkkkWWWWW",
+        ".......WWWWWWWWWWWW",
+        ".........WWWWWWWWWWWWWWW",
+        "........WWWWWWWWWWWWWWWWW",
+        "........WWkkkkWWWWWWkkWWW",
+        "........WWWWWWWWWWWWWWWWW",
+        ".........WWWWWWWWWWWWWWW.",
+        "...........WWWWWWWWWW....",
+    ])
+    # les jambes, un peu croisées
+    membre(r, [(30, 48), (34, 58), (32, 63)], V, 5); membre(r, [(38, 48), (36, 56), (40, 63)], V, 5)
+    art(r, 26, 62, ["WWWWWWW", "WWWWWWW", "kkkkkkk"]); art(r, 37, 62, ["WWWWWWWW", "WWWWWWWW", "kkkkkkkk"])
+    # le gilet, la chemise
+    art(r, 24, 28, [
+        "......WWWWWW......",
+        "....GGGWWWWGGG....",
+        "...GGGGWWWWGGGG...",
+        "..GGGGGGWWGGGGGG..",
+        "..GGGGGGWWGGGGGG..",
+        "..GGGGGGWWGGGGGG..",
+        "..GGGGGWWWWGGGGG..",
+        "..GGGGGWWWWGGGGG..",
+        "..GGGGGGWWGGGGGG..",
+        "..GGGGGGWWGGGGGG..",
+        "..GGGGGGWWGGGGGG..",
+        "..GGGGGGWWGGGGGG..",
+        "..GGGGGWWWWGGGGG..",
+        "..GGGGWWWWWWGGGG..",
+        "..GGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGG..",
+    ])
+    # la tête penchée sur la liste : lunettes sur le front, crayon sur l'oreille
+    art(r, 26, 6, [
+        "......GGGGGGGGGG......",
+        "....GGGGGGGGGGGGGG....",
+        "...GGGGGGGGGGGGGGGG...",
+        "...GGGWWWWWWWWWWWGGG..",
+        "...GGWWWWWWWWWWWWWWG..",
+        "...GGWWWkkkkkWkkkkkW..",
+        "...GGWWWkWWWkkkWWWkW..",
+        "...GGWWWkkkkkWkkkkkWW.",
+        "...GGWWWWWWWWWWWWWWWW.",
+        "...GkWWWWWWWWWWkkkWWWW",
+        "...k.WWWWWWWWWWWWWWWWW",
+        "...GkWWWWWWWWWWWWkkWWWW",
+        "...GGWWWWWWWWWWWWWWWWW.",
+        "...GGWWWWWWWWWWWWWWWkWW",
+        "....GWWWWWWWWWWWWWWWW..",
+        ".....WWWWWWWWWWkkkkW...",
+        "......WWWWWWWWWWWWW....",
+        "........WWWWWWWW.......",
+        "..........WWWW.........",
+    ])
+    ligne_r(r, 24, 18, 31, 13, B, 1); r(23, 18, 24, 19, V)
+    # le bras qui tient la liste, l'autre qui coche au crayon
+    membre(r, [(40, 31), (46, 30), (51, 24)], V, 4); main(r, 51, 23)
+    membre(r, [(30, 32), (38, 42), (54, 40)], V, 4); main(r, 55, 39)
+    ligne_r(r, 56, 38, 61, 33, V, 1); r(61, 32, 62, 32, B)
+    sol(r, 66, [(16, 30, 0), (33, 50, 0), (54, 78, 0), (22, 44, 2), (56, 70, 2), (30, 38, 4)])
 
 
 def neil_dessin(r):
-    # le vieux marin de la cabine : casquette de capitaine usée, grande barbe, une clé de cabine et une lanterne
-    casquette(r, B, N, N); tete(r, 12, B, barbe=True)
-    r(35, 37, 52, 54, V); r(38, 37, 49, 54, B); r(40, 40, 47, 52, N)
-    bras(r, True, True, 36)
-    cle(r, 58, 42, B)
-    r(20, 32, 22, 38, B); r(15, 38, 27, 52, B); r(17, 40, 25, 50, V); r(19, 42, 23, 48, B); r(14, 52, 28, 53, B)
-    jambes(r, B); sol_tirets(r, 68)
+    # le vieux marin : assis sur un tonneau, voûté, casquette de capitaine fatiguée, grande barbe, la pipe qui fume ;
+    # la lanterne pend au bout d'un bras, la grosse clé de la cabine posée sur le genou
+    # le tonneau
+    art(r, 22, 50, [
+        "...WWWWWWWWWWWWWWW...",
+        "..WGGGGGGGGGGGGGGGW..",
+        ".WGGGGGGGGGGGGGGGGGW.",
+        ".WkkkkkkkkkkkkkkkkkW.",
+        "WGGGGkGGGGGkGGGGGkGGW",
+        "WGGGGkGGGGGkGGGGGkGGW",
+        "WGGGGkGGGGGkGGGGGkGGW",
+        "WGGGGkGGGGGkGGGGGkGGW",
+        "WGGGGkGGGGGkGGGGGkGGW",
+        "WkkkkkkkkkkkkkkkkkkkW",
+        "WGGGGkGGGGGkGGGGGkGGW",
+        "WGGGGkGGGGGkGGGGGkGGW",
+        "WGGGGkGGGGGkGGGGGkGGW",
+        ".WkkkkkkkkkkkkkkkkkW.",
+        ".WGGGGGGGGGGGGGGGGGW.",
+        "..WGGGGGGGGGGGGGGGW..",
+        "...WWWWWWWWWWWWWWW...",
+    ])
+    # les jambes : cuisses vers l'avant, tibias, grosses bottes
+    art(r, 36, 45, [
+        "GGGGGGGGGGGGGGGGGG.",
+        "GGGGGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGkGGGGGG",
+        "GGGGGGGGGGGGkGGGGGG",
+        "............GGGGGGG",
+        "............GGGGGG.",
+        "............GGGGGG.",
+        "............GGGGGG.",
+        "............GGGGGG.",
+        "............GGGGGG.",
+        "............GGGGGG.",
+        "............GGGGGG.",
+        "...........WWWWWWW.",
+        "...........WWWWWWWWW",
+        "...........WkWWWWWWWW",
+        "...........WWWWWWWWWW",
+        "...........WWWWWWWWWW",
+        "...........kkkkkkkkkk",
+    ])
+    # le caban, le dos rond
+    art(r, 22, 24, [
+        ".......GGGGGGGGGGG.....",
+        ".....GGGGGGGGGGGGGGGG..",
+        "...GGGGGGGGGGGGGGGGGGG.",
+        "..GGGGGGGGGGGGGGGGGGGGG",
+        ".GGGGGGGGGGGGGGGGGGGGGG",
+        ".GGGGGGGGGGGGGGGGWGGGGG",
+        "GGGGGGGGGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGGGWGGGGG",
+        "GGGGGGGGGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGGGWGGGGG",
+        "GGGGGGGGGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGGGWGGGGG",
+        "GGGGGGGGGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGGGGGGGGG",
+        "WWWWWWWWWWWWWWWWWWWWWWW",
+        "GGGGGGGGGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGGGGGGGGG",
+        ".GGGGGGGGGGGGGGGGGGGGG.",
+        "..GGGGGGGGGGGGGGGGGGG..",
+    ])
+    art(r, 22, 30, ["W", "W", "W", "W", "W", "W", "W", "W", "W", "W"])
+    # le bras gauche qui tient la lanterne, le bras droit posé sur le genou
+    art(r, 12, 30, [
+        "..........GGGG",
+        ".........GGGG.",
+        "........GGGG..",
+        ".......GGGG...",
+        "......GGGG....",
+        ".....GGGG.....",
+        "....GGGG......",
+        "...GGGG.......",
+        "...GGGG.......",
+        "...WWWW.......",
+        "..WWWWWW......",
+        "..WWkWWW......",
+        "...WWWW.......",
+    ])
+    # la lanterne
+    art(r, 8, 43, [
+        "......W......",
+        ".....W.W.....",
+        "....W...W....",
+        "...WWWWWWW...",
+        "..WWWWWWWWW..",
+        "...W.GGG.W...",
+        "...WGGWGGW...",
+        "...WGWWWGW...",
+        "...WGWWWGW...",
+        "...WGGWGGW...",
+        "...W.GGG.W...",
+        "..WWWWWWWWW..",
+        "...WWWWWWW...",
+    ])
+    art(r, 5, 47, ["G", ".", "..G", ".", "G"]); art(r, 23, 47, ["G", ".", "G..", ".", "..G"])
+    art(r, 40, 32, [
+        "GGGG........",
+        ".GGGG.......",
+        "..GGGG......",
+        "...GGGG.....",
+        "....GGGG....",
+        ".....GGGG...",
+        "......GGGG..",
+        ".......WWWW.",
+        "......WWWWWW",
+        "......WkWkWW",
+        ".......WWWW.",
+    ])
+    # la grosse clé de la cabine, posée en travers du genou
+    art(r, 42, 36, [
+        "...................WWWWW.",
+        "..................WW...WW",
+        "..................W.....W",
+        "WWWWWWWWWWWWWWWWWWW.....W",
+        "WWWWWWWWWWWWWWWWWWW.....W",
+        "W.W..............WW...WW.",
+        "WWW...............WWWWW..",
+        "W.W......................",
+    ])
+    art(r, 46, 38, [".WWWW.", "WWWWWW", "WkWkWW", ".WWWW."])
+    # la tête : casquette usée à visière, sourcils broussailleux, gros nez, moustache et grande barbe
+    art(r, 24, 4, [
+        "........GGGGGGGGG.........",
+        "......GGGGGGGGGGGGG.......",
+        ".....GGWWWGGGGGGGGGG......",
+        ".....GGGGGGGkGGGGGGGG.....",
+        "....WWWWWWWWWWWWWWWWWWWW..",
+        "....GGGGGGGGGGGGGGGGWWWWWW",
+        "....W.WWWWWWWWWWWWWW......",
+        "....W.WWWWWWkkkkWWWWW.....",
+        "...WW.WWWWWWWWkkWWWWWW....",
+        "...W..WWWWWWWWWWWkWWWWWW..",
+        "...WW.WWWWWWWWWWWWWWWWWWW.",
+        "...WWWWWWWWWWWWWWWWWkWWWWW",
+        "...WWWWWWWWWWWWWWWWkkWWWW.",
+        "..WWWWWWWWWWWWkkkkkWWWW...",
+        "..WWWWWWWWWWWWWWWWWWWWW...",
+        "..WWWWWWWkWWWWWWWWWWWWW...",
+        "..WWWWkWWWWkWWWWkWWWWW....",
+        "...WWWWkWWWWkWWWWkWWW.....",
+        "...WkWWWWkWWWWkWWWWkW.....",
+        "....WWWkWWWWkWWWWkWW......",
+        ".....WWWWkWWWkWWWkW.......",
+        "......WWkWWWkWWkWW........",
+        ".......WW.WWW.WW..........",
+        "........W...W.............",
+    ])
+    # la pipe et sa fumée
+    art(r, 44, 16, [
+        "........WWWW",
+        "........WGGW",
+        "kkkkkkkkWGGW",
+        "WWWWWWWWWWWW",
+        "kkkkkkkk.WW.",
+    ])
+    art(r, 50, 2, [
+        "....GG...",
+        "...G..G..",
+        "....G....",
+        "..GG.....",
+        ".G.......",
+        "..G..G...",
+        "...GG.G..",
+        "......G..",
+        ".....G...",
+        "...GG....",
+        "..G......",
+        "...G.....",
+    ])
+    sol(r, 68, [(14, 22, 0), (24, 46, 0), (49, 66, 0), (20, 32, 2), (36, 58, 2), (30, 40, 4), (46, 52, 4)])
 
 
 PORTRAITS = {

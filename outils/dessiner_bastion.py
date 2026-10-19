@@ -517,8 +517,10 @@ def serveur_bastion():
 
 
 # ------------------------------------------------------------------
-# Les douze maîtres, en pied (style dessiner_panne.perso, comme l'Académie)
+# Les douze maîtres, dessinés au pixel près comme ceux de l'Académie (dessiner_academie.pixels), dans le
+# caractère des personnages d'origine : des gardiens de forteresse aux silhouettes et aux accessoires très typés.
 # ------------------------------------------------------------------
+from dessiner_academie import pixels  # noqa: E402
 
 def tete(r, y=12, cheveux=V, barbe=False, lunettes=False):
     r(37, y, 50, y + 17, B); yeux(r, 38, 45, y + 4)
@@ -537,196 +539,1100 @@ def cle(r, x, y, c=V):
 
 
 def fernando_dessin(r):
-    # le gardien des comptes : vieux, calotte, longue barbe, robe ceinturée ; la liste des comptes (des lignes, une
-    # cochée en vert) dans une main, un gros trousseau de clés dans l'autre
-    r(36, 7, 51, 12, V); r(38, 5, 49, 7, V); r(43, 3, 44, 4, B)
-    tete(r, 12, B, barbe=True)
-    r(38, 37, 49, 40, B); r(41, 41, 46, 43, B); r(43, 32, 44, 39, V)
-    robe_plis(r, 33, 64, V, 35, 52)
-    r(36, 24, 51, 36, B); r(38, 37, 49, 40, B); r(41, 41, 46, 43, B)
-    r(40, 25, 47, 25, N); r(40, 30, 40, 35, V); r(44, 31, 44, 39, V); r(47, 30, 47, 35, V)
-    ceinture(r, 46, 35, 52, B, V)
-    manches(r, V, 34, True, True, B, 10)
-    r(16, 36, 30, 60, B); r(17, 37, 29, 59, N); r(15, 35, 31, 37, V); r(15, 59, 31, 61, V)   # la liste des comptes
-    for k, y in enumerate(range(40, 58, 3)):
-        r(19, y, 27 - (k % 3) * 2, y, V if k == 2 else B)
-        r(18, y, 18, y, N if k == 2 else B)
-    r(58, 46, 64, 47, B); r(60, 44, 62, 49, B)                               # l'anneau du trousseau
-    for k, x in enumerate((55, 60, 65)): cle(r, x, 49 + (k % 2) * 2, V if k != 1 else B)
-    r(37, 65, 42, 66, B); r(45, 65, 50, 66, B); sol_tirets(r, 68)
+    # le gardien des comptes, vieux et tout voûté sous sa calotte, la barbe en pointe : il plisse les yeux sur la
+    # liste des comptes, si longue qu'elle se déroule jusqu'au sol ; un gros trousseau pend à sa ceinture
+    pixels(r, 30, 25, """
+        .....ooooooo
+        ...ooooo#ooooo
+        ..ooooooooooooo
+        ..###############
+        .##oooo##ooooo####
+        .#o#####:::##:::###
+        .#oo##############
+        ..#####:#######:###
+        ..###########:######
+        ...#########:########
+        ...########:::::#####
+        ...##:#:#:#:#####:##
+        ...##:#:#:#:#:####
+        ...##:#:#:#:#:##
+        ....#:#:#:#:#:#
+        ....##:#:#:#:#
+        .....#:#:#:##
+        ......##:##
+        .......###
+        """)
+    pixels(r, 49, 29, """
+        .###########
+        .#:::::::::#
+        .#ooooooo::#
+        .#:::::::::#
+        .#oooo:ooo:#
+        .#:::::::::#
+        .#ooooooo::#
+        .#:::::::::#
+        .#oo:oooo::#
+        .#:::::::::#
+        .#ooooooooo#
+        .#:::::::::#
+        .#ooo:oo:::#
+        .#:::::::::#
+        .#oooooooo:#
+        .#:::::::::#
+        .#oooooo:::#
+        ..#::::::::#
+        ..#ooooo:::#
+        ..#:::::::#
+        ...#oooo::#
+        ...#::::::#
+        ...#ooooo:#
+        ...#::::::#
+        ....#ooo::#
+        ....#:::::#
+        ....#oooo:#
+        ....#:::::#
+        ....#oo:o:#
+        .....#::::#
+        .....#ooo:#
+        .....#::::#
+        .....#oo::#
+        .....#::::#
+        ......#::#
+        ......#::#.....#####
+        ......#:::#...#:::::#
+        .......#:::###::ooo:#
+        ........#::::::::::#
+        .........##########
+        """)
+    pixels(r, 42, 34, """
+        ..#######
+        .#########
+        .##:#:####
+        ..#######
+        """)
+    pixels(r, 14, 43, """
+        ...............oooooooooo
+        ............oooooooooooooo
+        ..........oooooooooooooooooo
+        ........ooooo:oooooooooooooooo
+        .......oooooo:ooooooooooooooo##
+        ......ooooooo:oooooooooooooo####
+        .....oooooooo:ooooooooooooo#####
+        ....ooooooooo:oooooooooooo####
+        ....oooooooooo:oooooooooooo
+        ...ooooooooooo:ooooooooooooo
+        ...oooooooooooo:oooooooooooo
+        ...######################ooooo
+        ...#:##:##:##:#:##:##:##oooooo
+        ...######################ooooo
+        ..ooooooooooooo:oooooooooooooo
+        ..oooooooooooooo:ooooooooooooo
+        ..ooooooooooooooo:oooooooooooo
+        ..oooooooooooooooo:oooooooooooo
+        ..ooooooooooooooooo:ooooooooooo
+        ..oooooooooooooooooo:oooooooooo
+        .ooooooooooooooooooooo:oooooooo
+        .oooooooooooooooooooooo:ooooooo
+        .oooooooooooooooooooooooooooooo
+        .##########################.###
+        ###########.####.###########.###
+        """)
+    pixels(r, 30, 55, """
+        ...#####
+        ..#:::::#
+        .#:::::::#
+        .#:::::::#
+        .#:::::::#
+        ..#:::::#
+        ...#####
+        ..#.#.#.#
+        ..#.#.#.#
+        .##.#.##.##
+        .#..##..#.#
+        .##.#...###
+        ..........#
+        """)
+    pixels(r, 10, 71, """
+        .......########.################.....###########
+        .
+        ............##########.....##################
+        .
+        .........................#######
+        """)
 
 
 def butler_dessin(r):
-    # le chancelier du Sceau du Roi : haute toque, longue robe blanche à bande verte, le grand sceau à la main
-    # (la cire frappée d'une couronne), un rouleau scellé sous le bras
-    r(38, 0, 49, 10, V); r(37, 9, 50, 11, B); r(38, 2, 49, 3, B)
-    tete(r, 12, V)
-    robe_plis(r, 33, 64, B, 35, 52, N)
-    r(41, 33, 46, 64, V); r(43, 34, 44, 64, N)
-    for y in (38, 46, 54): r(42, y, 45, y + 1, B)
-    r(35, 33, 52, 35, V)
-    manches(r, B, 34, True, True, B, 10)
-    r(57, 36, 62, 46, B); r(58, 37, 61, 45, N)                               # le manche du sceau
-    r(53, 46, 66, 51, V); r(52, 51, 67, 54, B)
-    r(56, 47, 56, 49, N); r(59, 48, 59, 49, N); r(62, 47, 62, 49, N); r(56, 50, 62, 50, N)   # la couronne
-    r(16, 40, 33, 47, B); r(17, 41, 32, 46, N); r(18, 42, 31, 45, B)          # le rouleau
-    r(14, 40, 16, 47, V); r(33, 40, 35, 47, V)
-    r(23, 46, 26, 50, V)
-    r(37, 65, 42, 66, B); r(45, 65, 50, 66, B); sol_tirets(r, 68)
+    # le chancelier du Sceau du Roi, le nez en l'air sous sa haute toque, longue robe à bande verte : il brandit le
+    # grand sceau comme un marteau de juge, un rouleau scellé sous le bras
+    pixels(r, 26, 25, """
+        ...#######
+        ...#oooo:#
+        ...#oooo:#
+        ...#oooo:#
+        ...#oooo:#
+        ...#oooo:#
+        ...#oooo:#
+        ..##########
+        ..#oooooo::#
+        .############
+        """)
+    pixels(r, 24, 35, """
+        .....#########
+        ....###########
+        ...###:::######
+        ...######:#####
+        ..########:######
+        ..#########:#######
+        ..########::::::##
+        ...##############
+        ...###::::#####
+        ....###########
+        .....#########
+        ......#######
+        """)
+    pixels(r, 20, 47, """
+        .........######.####
+        .......####oo#oo#####
+        ......####:oo#oo:#####
+        .....#####:oo#oo:######
+        .....####:ooo#ooo:#####
+        ....#####:ooo#ooo:######
+        ....####:oooo#oooo:#####
+        ....####:ooo:#:ooo:#####
+        ...#####:oooo#oooo:######
+        ...####:ooooo#ooooo:#####
+        ...####:oooo:#:oooo:######
+        ..#####:ooooo#ooooo:######
+        ..####:oooooo#oooooo:#####
+        ..####:ooooo:#:ooooo:######
+        .#####:oooooo#oooooo:######
+        .####:ooooooo#ooooooo:######
+        .####:oooooo:#:oooooo:######
+        #####:ooooooo#ooooooo:#######
+        ####:oooooooo#oooooooo:######
+        ################################
+        .####...####.......####...####
+        """)
+    pixels(r, 39, 27, """
+        ......#######
+        .....#########
+        .....##ooooo##
+        .....##o#o#o##
+        .....##ooooo##
+        .....#########
+        ......#######
+        ........###
+        ........###
+        ........###
+        ........###
+        ........###
+        ........###
+        ........###
+        ........###
+        ........###
+        .......#####
+        ......#######
+        .....#######
+        .....######
+        ....######
+        ...######
+        ..######
+        .######
+        ######
+        """)
+    pixels(r, 46, 25, """
+        ..o...o
+        o.......o
+        ...o.o
+        """)
+    pixels(r, 20, 55, """
+        ...........######
+        ..oooooooo#######
+        .oo######o#####
+        oo#::::::#o####
+        o#:::::::::#o##
+        o##########oo
+        .ooooooooooo
+        ....#.o
+        ....oo
+        .....#o
+        ......#
+        """)
+    pixels(r, 20, 71, """
+        .......########.#######################
+        .
+        ...........##########......###########
+        .
+        .......................#####
+        """)
 
 
 def tatu_dessin(r):
-    # le passeur du Pont-levis : jeune, cheveux en épis, longue écharpe, gilet ; une grosse clé au bout d'une chaîne
-    for x in range(36, 52, 3): r(x, 8, x + 1, 12, V)
-    tete(r, 12, V)
-    r(35, 31, 52, 35, V); r(47, 35, 51, 46, V); r(48, 46, 51, 48, B)          # l'écharpe et sa frange
-    r(35, 35, 52, 54, B); r(38, 36, 46, 54, N); r(39, 37, 45, 54, V)
-    r(36, 51, 51, 52, V)
-    bras(r, True, True, 36)
-    for k in range(7):                                                       # la chaîne, en maillons alternés
-        if k % 2: r(57, 46 + k * 3, 58, 47 + k * 3, B)
-        else: r(56, 46 + k * 3, 59, 46 + k * 3, B)
-    r(53, 60, 62, 61, V); r(52, 59, 54, 66, V); r(61, 59, 63, 66, V); r(53, 66, 62, 67, V); r(55, 62, 60, 64, N)  # l'anneau
-    r(57, 52, 58, 58, B)
-    r(64, 62, 75, 64, V); r(71, 64, 72, 67, V); r(74, 64, 75, 66, V)          # la tige et le panneton
-    jambes(r); sol_tirets(r, 70)
+    # le passeur du Pont-levis, cheveux en épis, l'écharpe qui vole au vent : il marche à grands pas, la grosse clé
+    # au bout de sa chaîne qui se balance
+    pixels(r, 20, 49, """
+        o
+        .oo
+        ..ooo
+        ...oooo
+        ....ooooooo
+        .....oooooooooooo
+        ...oo.ooooooooooo
+        .oo.....oooo#oooo
+        o........ooooooooo
+        ..........o#oooo
+        """)
+    pixels(r, 30, 31, """
+        ......o.o..o.o
+        ....o.ooooooooo.o
+        ...ooooooooooooooo
+        ..o#############o
+        ..o##::####::###oo
+        ...#:##:##:##:#ooo
+        ...############.oo
+        ...######::#####
+        ...#####:###:####
+        ...######::#######
+        ...##############
+        ....###:::::###
+        .....##:###:##
+        ......#######
+        """)
+    pixels(r, 29, 51, """
+        ......##########
+        ....######oooooo#
+        ...#####oooooooo#
+        ...####:oooooooo##
+        ..#####:ooooooo:###
+        ..####:oooooooo:####
+        .#####:oooooooo:#####
+        .####::ooooooooo::####
+        .###...oooooooooo..####
+        .##....oooooooooo...###
+        .##....oooooooooo....##
+        .##....oooo:ooooo....##
+        .#.....oooo..oooo.....##
+        .#.....oooo...oooo
+        .......oooo....oooo
+        .......oooo.....oooo
+        .......oooo......oooo
+        .......oooo.......oooo
+        ......#####........#####
+        .....######........######
+        """)
+    pixels(r, 47, 33, """
+        ......#####
+        .....#ooooo#
+        ....#oo:::oo#
+        ....#o:::::o#
+        ....#oo:::oo#
+        .....#ooooo#
+        ......#####
+        .......###
+        ........###
+        .........###
+        ..........###
+        ...........###
+        ............####
+        .............#:#:
+        ..............####
+        ...............#:#:
+        ................###
+        ................#:#
+        ...............#####
+        ..............##.###
+        ..............#...#.#
+        ..............##.###
+        ...............#####
+        """)
+    pixels(r, 16, 71, """
+        .......######.###################.....#####
+        .
+        ..........##########.......##########
+        .
+        ............................######
+        """)
 
 
 def jean_dessin(r):
-    # le menuisier des Portes condamnées : casquette, crayon à l'oreille, tablier à outils ; un marteau levé
-    # et une planche à clouer sous le bras, des clous dans la poche
-    r(36, 8, 51, 12, V); r(48, 11, 56, 12, V); r(37, 9, 50, 9, B)
-    tete(r, 12, V); r(51, 14, 53, 20, B); r(52, 14, 52, 15, V)
-    r(35, 33, 52, 54, V); r(38, 35, 49, 57, B); r(40, 44, 47, 50, N); r(41, 45, 42, 49, V); r(45, 45, 46, 49, B)
-    r(38, 35, 39, 37, V); r(48, 35, 49, 37, V)
-    bras(r, True, True, 36)
-    r(57, 26, 58, 48, B); r(58, 26, 58, 48, V); r(53, 22, 62, 27, B); r(53, 23, 54, 26, N); r(61, 22, 63, 24, B)   # le marteau
-    r(10, 43, 34, 49, B); r(10, 49, 34, 50, V); r(13, 45, 14, 46, N); r(30, 45, 31, 46, N)   # la planche
-    for x in range(16, 30, 5): r(x, 47, x + 2, 47, V)
-    jambes(r); sol_tirets(r, 68)
+    # le menuisier des Portes condamnées, casquette, crayon sur l'oreille et des clous entre les dents : le marteau
+    # levé, une planche sous le bras, le tablier à outils
+    pixels(r, 56, 29, """
+        .......##
+        ......#oo
+        .....#ooo
+        ....#oooo
+        ...#ooooo
+        ..#oooooo
+        .....###
+        .....###
+        .....###
+        .....###
+        .....###
+        .....###
+        .....###
+        .....###
+        ....####
+        ...####
+        """)
+    pixels(r, 38, 33, """
+        .....oooooooooo
+        ...oooooooooooooo
+        ...ooooooooooooooooooo
+        ..o#############o
+        ..o#::::####:::#o
+        ..o##:#:####:#:##
+        ..o##############
+        ..o#########:####
+        ...#######:::####
+        ...###:#:#:#:#:##
+        ...###:#:#:#:#:#
+        ....####::::###
+        .....#########
+        """)
+    pixels(r, 50, 43, """
+        ###
+        .###
+        ..###
+        ...###
+        ....###
+        """)
+    pixels(r, 53, 45, """
+        ...##
+        ..##
+        .###
+        ###
+        """)
+    pixels(r, 30, 47, """
+        ............#########
+        ..........######oo#####
+        .........####oo:###oo###
+        ........####ooo:###ooo####
+        .......####oooo:###oooo####
+        ......####:oooo:###oooo:####
+        .....####::oooo:###oooo::####
+        ....####...oooo#####oooo..####
+        ....###...#:::::::::::::#..###
+        ....##....#:o:o:#:o:o:::#...##
+        ...###....#:::::::::::::#...###
+        ...##.....###############....##
+        ..###......ooooooooooooo......###
+        ..##.......oooooo.oooooo.......##
+        ..##.......oooooo.oooooo........##
+        ...........ooooo...ooooo
+        ...........ooooo...ooooo
+        ...........ooooo...ooooo
+        ...........ooooo...ooooo
+        ...........ooooo...ooooo
+        ..........######...######
+        .........#######...#######
+        """)
+    pixels(r, 22, 56, """
+        .
+        ######################
+        #::::::::::::::::::::#
+        #o:o::o:ooo::::o::oo:#
+        ######################
+        """)
+    pixels(r, 30, 71, """
+        .....#######.#############.##########
+        .
+        .........###########......############
+        .
+        ...................#######
+        """)
 
 
 def vint_dessin(r):
-    # Vint, l'administrateur réseau revenu de vacances : casque audio, barbe courte, chemise à fleurs sous le gilet,
-    # une truelle à la main et une brique sous le bras
-    tete(r, 12, B, barbe=True)
-    r(35, 12, 36, 22, V); r(51, 12, 52, 22, V); r(36, 9, 51, 11, V); r(34, 16, 36, 21, B); r(51, 16, 53, 21, B)   # le casque
-    r(35, 33, 52, 54, V); r(41, 33, 46, 54, B)
-    for (x, y) in ((42, 37), (45, 42), (42, 47), (45, 51)): r(x, y, x, y, V); r(x - 1, y, x + 1, y, N); r(x, y, x, y, V)
-    bras(r, True, True, 36)
-    r(57, 46, 58, 51, B); r(53, 51, 63, 55, B); r(54, 52, 62, 54, V); r(56, 55, 60, 57, B)   # la truelle
-    r(14, 43, 32, 53, B); r(14, 53, 32, 54, V)                                # la brique, ses trous
-    r(17, 46, 21, 50, N); r(25, 46, 29, 50, N)
-    jambes(r); sol_tirets(r, 68)
+    # Vint, l'administrateur réseau tout juste rentré de vacances : lunettes de soleil vertes, le nez qui pèle, barbe
+    # courte, chemise à fleurs, le casque autour du cou ; la truelle levée, une brique dans l'autre main
+    pixels(r, 34, 32, """
+        ......########
+        .....##########
+        ....############
+        ....###::##::###
+        ...o###########o
+        ..oo#oooo#oooo#oo
+        ..o##ooo#.#ooo##o
+        ..o###########.##o
+        ..o#######o######o
+        ..o######ooo#####o
+        ..o#######o######o
+        ....###:::::::###
+        ....#o#o#o#o#o#o
+        .....#o#o#o#o#o
+        ......#o#o#o#
+        """)
+    pixels(r, 30, 47, """
+        .......o####o
+        .....oo######oo
+        ....o##########o
+        ...o###:###:####o
+        ..###o:o####o:o###
+        .####:o#####:o####
+        #####o:o####o:o#####
+        ####:o:####:o:o#####
+        ####o:o:###o:o:o####
+        .##.:o:o###:o:o:.###
+        .##.o:o:###o:o:o.##
+        ..#.ooooooooooooo.##
+        ..#.ooooooooooooo..##
+        ....ooooo...ooooo...#
+        ....ooooo...ooooo
+        ....ooooo...ooooo
+        ....ooooo...ooooo
+        ....ooooo...ooooo
+        ....ooooo...ooooo
+        ...######...######
+        ..#######...#######
+        """)
+    pixels(r, 54, 44, """
+        .....#
+        ....##
+        ...###
+        ..###
+        .###
+        ###
+        """)
+    pixels(r, 56, 38, """
+        #########
+        #ooooooo#
+        #ooooooo#
+        .#ooooo#
+        ..#####
+        """)
+    pixels(r, 24, 53, """
+        #############
+        #:::##::::###
+        ##:::##::::##
+        #:::##::::###
+        #############
+        """)
+    pixels(r, 24, 71, """
+        ..#######.##################.#########
+        .
+        .......########......###########
+        ......o.............o.............o
+        ..................#######
+        """)
 
 
 def evelyn_dessin(r):
-    # la gardienne des Coffres : haut chignon, robe longue à ceinture de clés, un gros cadenas en main,
-    # un petit coffre ferré sous le bras
-    r(40, 2, 47, 9, V); r(42, 1, 45, 1, V)
-    tete(r, 12, V)
-    r(35, 12, 36, 24, V); r(51, 12, 52, 24, V)
-    robe_plis(r, 33, 64, B, 35, 52, N)
-    r(35, 40, 52, 41, V)
-    cle(r, 39, 42, V)
-    manches(r, B, 34, True, True, B, 9)
-    r(57, 38, 63, 39, B); r(56, 39, 57, 44, B); r(63, 39, 64, 44, B)          # le cadenas
-    r(54, 44, 66, 54, V); r(64, 44, 66, 54, N); r(59, 47, 61, 51, N)
-    r(14, 42, 32, 56, B); r(15, 48, 31, 55, N); r(14, 46, 32, 47, V)          # le coffre ferré
-    r(22, 49, 24, 52, V); r(16, 42, 17, 56, V); r(29, 42, 30, 56, V)
-    r(37, 65, 42, 66, B); r(45, 65, 50, 66, B); sol_tirets(r, 68)
+    # la gardienne des Coffres, haut chignon piqué d'une clé, robe à ceinture de clés : elle brandit un gros cadenas
+    # d'un air soupçonneux, un petit coffre ferré sous le bras
+    pixels(r, 36, 25, """
+        .......ooooo
+        ......ooooooo
+        ......ooooooo
+        .......ooooo####
+        ........ooo..#:#
+        .....##########
+        ....############
+        ...oo##########oo
+        ..ooo#:::##:::#ooo
+        ..ooo#:##.#:##.ooo
+        ..oo############oo
+        ..oo#####:######oo
+        ..oo####::######oo
+        ..ooo##########ooo
+        ..ooo###::::###ooo
+        ...oo##########oo
+        ....o.########.o
+        """)
+    pixels(r, 32, 42, """
+        ...........####
+        .........########
+        ........###oooo###
+        .......###oooooo###
+        ......###:oooooo:###
+        .....####:oooooo:####
+        .....###:oooooooo:###
+        ....####:oooooooo:####
+        ....###:oooooooooo:###
+        ....#ooooooooooooooooo#
+        ....######################
+        .....oo#ooo#ooo#ooo#ooo
+        .....oo#ooo#ooo#ooo#oo
+        ....ooo:ooooooooooo:oooo
+        ....ooo:ooooooooooo:oooo
+        ...oooo:ooooooooooo:ooooo
+        ...ooo:ooooooooooooo:oooo
+        ..oooo:ooooooooooooo:ooooo
+        ..ooo:ooooooooooooooo:oooo
+        .oooo:ooooooooooooooo:ooooo
+        .ooo:ooooooooooooooooo:oooo
+        oooo:ooooooooooooooooo:ooooo
+        ############################
+        """)
+    pixels(r, 55, 25, """
+        ....#######
+        ...##:::::##
+        ..##:.....:##
+        ..#:.......:#
+        ..#:.......:#
+        ..#:.......:#
+        #################
+        #ooooooooooooooo#
+        #ooooo#####ooooo#
+        #ooooo#:::#ooooo#
+        #oooooo#:#oooooo#
+        #oooooo#:#oooooo#
+        #ooooooo#ooooooo#
+        #ooooooooooooooo#
+        #################
+        .....###
+        .....###
+        .....###
+        .....###
+        .....###
+        ....###
+        ...###
+        """)
+    pixels(r, 18, 47, """
+        ....###
+        ...#####
+        .##########
+        ################
+        #oooo#oooo#ooooo#
+        ################
+        #:::::::###:::::#
+        #:::::::#o#:::::#
+        #:::::::###:::::#
+        #:::::::::::::::#
+        ################
+        """)
+    pixels(r, 18, 71, """
+        .....#######.#######################.######
+        .
+        .........##########.....##############
+        .
+        .......................######
+        """)
 
 
 def edsger_dessin(r):
-    # le mécanicien du Cœur : crâne dégarni, lunettes, bleu de travail à bretelles ; une clé à molette levée et un
-    # engrenage, une burette d'huile à la ceinture
-    r(36, 14, 37, 20, V); r(50, 14, 51, 20, V)
-    tete(r, 12, B, lunettes=True)
-    r(35, 33, 52, 54, B); r(36, 34, 51, 54, V); r(39, 34, 40, 54, N); r(47, 34, 48, 54, N)
-    r(39, 34, 48, 40, V); r(41, 36, 46, 39, N); r(42, 37, 45, 38, B)          # la poche de poitrine
-    bras(r, True, True, 36)
-    r(57, 30, 58, 46, B); r(58, 30, 58, 46, V); r(53, 24, 62, 30, B); r(55, 24, 60, 26, N)   # la clé à molette
-    for k in range(8):                                                       # l'engrenage
-        a = k * math.pi / 4
-        x, y = 23 + int(9 * math.cos(a)), 49 + int(9 * math.sin(a))
-        r(x - 1, y - 1, x + 1, y + 1, B)
-    r(16, 42, 30, 56, B); r(18, 44, 28, 54, V); r(21, 47, 25, 51, N); r(22, 48, 24, 50, B)
-    r(49, 52, 53, 57, B); r(51, 49, 52, 52, B)                                # la burette
-    jambes(r); sol_tirets(r, 68)
+    # le mécanicien du Cœur, crâne dégarni, lunettes, salopette : penché en avant, la main en cornet derrière l'oreille
+    # (chut, le cœur bat), la clé à molette dans l'autre, la burette, un engrenage tombé au sol
+    pixels(r, 34, 37, """
+        ....o.o...o
+        ..o.o#####o.o
+        ...#########
+        ..###########
+        .o###########
+        .oo#oooo#oooo#
+        .o##o::o#o::o###
+        ..##oooo#oooo####
+        ..###########:#####
+        ..##########:#######
+        ...########:::::###
+        ...######:::####
+        ....######:####
+        .....##########
+        ......#######
+        """)
+    pixels(r, 48, 42, """
+        ...##
+        ..#.#
+        ..#.#
+        ..##
+        """)
+    pixels(r, 18, 50, """
+        ...................#####
+        ...............#########ooo
+        ............####ooooooooooooo
+        ..........#####:oooooooooooo:##
+        ........######:ooooooooooooo:####
+        .......######::ooo#oooooooo#ooo####
+        ......######..oooo#oooooooo#oooo.###
+        .....######...ooooooooooooooooooo..##
+        ....#####.....ooooooooooooooooooo...##
+        ...#####......oooooo:####:ooooooo...###
+        ...####.......oooooo:#::#:ooooooo....##
+        ..####........oooooo:####:ooooooo....##
+        ..###.........ooooooooooooooooooo....###
+        .####.........ooooooooooooooooooo
+        .####.........ooooooooo.oooooooooo
+        ..##..........ooooooo....ooooooooo
+        ...............oooooo.....ooooooo
+        ...............oooooo......oooooo
+        ...............oooooo......oooooo
+        ...............oooooo......oooooo
+        ..............#######......#######
+        .............########......########
+        """)
+    pixels(r, 13, 49, """
+        ......####
+        .....##..##
+        ....##....##
+        ....##....##
+        .....##..##
+        ......####
+        ......####
+        ......####
+        ......####
+        ......####
+        ......####
+        ......####
+        ......####
+        ......####
+        ......####
+        ......####
+        ......####
+        .......##
+        """)
+    pixels(r, 30, 67, """
+        .....#
+        ....##
+        ...###
+        ..#####
+        .#ooooo#
+        .#ooooo#
+        .#######
+        """)
+    pixels(r, 60, 62, """
+        .....o.o.o
+        ...o.ooooo.o
+        ....ooooooo
+        ...ooo:::ooo
+        ...oo:::::oo
+        ...ooo:::ooo
+        ....ooooooo
+        ...o.ooooo.o
+        .....o.o.o
+        """)
+    pixels(r, 8, 71, """
+        ....#######.###################.#######
+        .
+        .........##########......############
+        .
+        ...................#######
+        """)
 
 
 def joan_dessin(r):
-    # la gardienne de la Poterne : capuche pointue, cape, une lanterne levée qui éclaire ; un gros cadenas
-    # à la ceinture
-    for k in range(6): r(41 - k, 4 + k, 46 + k, 4 + k, V)
-    r(33, 10, 54, 34, V); r(36, 13, 51, 32, N); tete(r, 14, V)
-    robe_plis(r, 33, 64, V, 34, 53)
-    manches(r, V, 34, True, True, B, 9)
-    r(54, 22, 57, 24, B); r(55, 24, 56, 30, B)                                # la lanterne
-    r(51, 30, 60, 32, B); r(52, 32, 59, 42, B); r(53, 33, 58, 41, V); r(55, 34, 56, 39, B); r(51, 42, 60, 43, B)
-    for (x, y) in ((48, 30), (63, 30), (49, 40), (62, 40), (55, 27)): r(x, y, x, y, V)
-    r(40, 46, 47, 47, B); r(40, 47, 41, 50, B); r(46, 47, 47, 50, B)          # le cadenas
-    r(38, 50, 49, 58, B); r(47, 50, 49, 58, V); r(42, 52, 44, 56, N)
-    r(37, 65, 42, 66, B); r(45, 65, 50, 66, B); sol_tirets(r, 68)
+    # la gardienne de la Poterne, accroupie dans sa grande cape à capuche, un cadenas à la ceinture : elle lève sa
+    # lanterne vers la petite porte basse que personne ne surveille
+    pixels(r, 54, 41, """
+        .......###########
+        ......#ooooooooooo#
+        .....#ooooooooooooo#
+        ....#ooo#########ooo#
+        ....#oo#:::::::::#oo#
+        ....#oo#:::::::::#oo#
+        ....#oo#:::###:::#oo#
+        ....#oo#:::###:::#oo#
+        ....#oo#::::#::::#oo#
+        ....#oo#::::#::::#oo#
+        ....#oo#:::::::::#oo#
+        ....#oo#:::::::::#oo#
+        ....#oo#:::::::::#oo#
+        ...#####:::::::::#####
+        """)
+    pixels(r, 12, 37, """
+        .............ooo
+        ............oooooo
+        ...........oooooooo
+        ..........oooooooooo
+        .........oooooooooooo
+        ........ooooo...ooooooo
+        ........oooo......ooooo
+        .......oooo..#####.oooo
+        .......ooo..###::#..ooo
+        .......ooo..######..ooo
+        .......ooo...###:...ooo
+        .......oooo...####..ooo
+        .......ooooo...##..oooo
+        ......ooooooo.....ooooo
+        .....oooooooooooooooooo
+        ....oooooooooooooooooooo
+        ...ooooooooooooooooooooo#
+        ..ooooooooooooooooooooo###
+        ..oooooooooooooooooooooo###
+        .oooooooooooooooooooooooooo#
+        .ooooooooo:ooooooooooooooooo#
+        oooooooooo:oooo#####oooooo###
+        oooooooooo:oooo#:::#ooooo
+        oooooooooo:oooo#:#:#oooooo
+        ooooooooooo:ooo#####ooooooo
+        ooooooooooo:ooooooooooooooo
+        .ooooooooooo:ooooooooooooo##
+        ..oooooooooooooooooooooo####
+        ...oooooooooooooooooo#####
+        ....ooooooooooo.#######
+        .....#####
+        """)
+    pixels(r, 36, 43, """
+        ......###
+        .....#:::#
+        .....#:::#
+        ......###
+        .....#####
+        ....#ooooo#
+        ....#oo#oo#
+        ....#o###o#
+        ....#oo#oo#
+        ....#ooooo#
+        .....#####
+        ...o.......o
+        .....o...o
+        """)
+    pixels(r, 6, 71, """
+        .....######.#####################.###########
+        .
+        ........###########.......##############
+        .
+        .........................######
+        """)
 
 
 def robert_dessin(r):
-    # le porte-bannière : cheveux courts, tunique à col, un mât à pointe ; la bannière muette, roulée et barrée
-    tete(r, 12, V)
-    r(35, 33, 52, 54, V); r(38, 33, 49, 38, B); r(42, 38, 45, 54, B)
-    ceinture(r, 47, 35, 52, N, B)
-    bras(r, True, True, 36)
-    r(59, 6, 60, 66, B); r(60, 6, 60, 66, V); r(58, 2, 61, 5, B); r(59, 0, 60, 1, B)   # le mât
-    r(61, 8, 76, 28, B); r(62, 9, 75, 27, N)                                  # la bannière
-    for k in range(6): r(64 + k * 2, 12 + k * 2, 65 + k * 2, 13 + k * 2, V); r(73 - k * 2, 12 + k * 2, 74 - k * 2, 13 + k * 2, V)
-    r(61, 28, 76, 29, V); r(66, 30, 67, 33, B); r(72, 30, 73, 33, B)
-    jambes(r, B); sol_tirets(r, 68)
+    # le porte-bannière, petit et fier, le poing sur la hanche : à côté de lui, sur son mât, l'immense bannière couverte
+    # d'inscriptions qu'il ne faudrait pas montrer, barrée d'une croix
+    pixels(r, 36, 17, """
+        ...##
+        ..####
+        ...##
+        ...##
+        ...##################################
+        ...##::::::::::::::::::::::::::::::#
+        ...##:##:###:##:####:##:###:####:::#
+        ...##:o:::::::::::::::::::::::::o::#
+        ...##::o:#:##:###:##:#::##:##::o:::#
+        ...##:::o::::::::::::::::::::o:::::#
+        ...##:##::o:###:#:###:##::#:o::###:#
+        ...##:::::::o:::::::::::::o::::::::#
+        ...##:#:##:##:o:#:####::o:#:##:#:::#
+        ...##:::::::::::o::::::o:::::::::::#
+        ...##:###:##:#:###o::o::##:##:###::#
+        ...##::::::::::::::oo::::::::::::::#
+        ...##:##:#:###::::oo:o::###:#:##:::#
+        ...##::::::::::::o::::o::::::::::::#
+        ...##:#:###:##:o:##:#::o:#:##:###::#
+        ...##:::::::::o::::::::::o:::::::::#
+        ...##:##::#:o:###:##:#:::o:#:###:::#
+        ...##:::::o::::::::::::::::o:::::::#
+        ...##:#::o::##:#:###:##:##::o:##:::#
+        ...##::::::::::::::::::::::::::::::#
+        ...##################################
+        ...##.#o#.#o#.#o#.#o#.#o#.#o#.#o#.#
+        ...##..o...o...o...o...o...o...o
+        ...##
+        ...##
+        ...##
+        ...##
+        ...##
+        ...##
+        ...##
+        ...##
+        ...##
+        ...##
+        ...##
+        ...##
+        ...##
+        ...##
+        ...##
+        ...##
+        ...##
+        ...##
+        ...##
+        ..####
+        """)
+    pixels(r, 16, 43, """
+        .......ooooo
+        ......ooooooo
+        .....#########
+        .....##:::####
+        ....###.##.###
+        ....###########
+        ....#####:#####
+        .....####::####
+        .....##########
+        ......##::::##
+        .......######
+        """)
+    pixels(r, 12, 54, """
+        .......###.....###
+        ...#####oooooooo#####
+        ..####:oooo#ooooo:####
+        .###:::oooooooooo:::###
+        .##...ooooo#oooooo...###
+        ###...oooooooooooo....##
+        .##...ooooo#ooooooo
+        .###..oooooooooooo
+        ..###.##############
+        ...##.ooooooooooooo
+        ......ooooooo.ooooo
+        ......oooooo...oooo
+        ......oooooo...oooo
+        ......oooooo...oooo
+        .....#######..#####
+        ....########..######
+        """)
+    pixels(r, 6, 71, """
+        ......#######.#######################.######
+        .
+        ..........##########......#############
+        .
+        ...........................#######
+        """)
 
 
 def katherine_dessin(r):
-    # la vigie de la Tour de Guet : cheveux longs, manteau, une longue-vue tendue, et le registre où tout s'écrit
-    r(36, 9, 51, 13, V); r(34, 12, 36, 30, V); r(51, 12, 53, 30, V)
-    tete(r, 12, V)
-    robe_plis(r, 33, 64, B, 35, 52, N)
-    r(42, 33, 45, 64, V)
-    manches(r, B, 34, True, False, B, 9)
-    r(53, 33, 57, 36, B)
-    r(54, 28, 72, 33, B); r(56, 29, 71, 32, N); r(56, 29, 71, 29, V)          # la longue-vue, ses bagues
-    r(62, 28, 62, 33, V); r(68, 27, 69, 34, B); r(72, 27, 75, 35, V); r(73, 29, 74, 33, B)
-    r(14, 38, 32, 56, B); r(15, 39, 22, 55, N); r(24, 39, 31, 55, N); r(23, 38, 23, 57, V)   # le registre
-    for y in range(42, 54, 3): r(16, y, 21, y, V); r(25, y, 30, y, B)
-    r(37, 65, 42, 66, B); r(45, 65, 50, 66, B); sol_tirets(r, 68)
+    # la vigie de la Tour de Guet, longs cheveux, assise sur une caisse : l'œil à sa longue-vue, le registre où elle
+    # écrit tout ouvert sur les genoux
+    pixels(r, 24, 32, """
+        .......ooooooooo
+        .....ooooooooooooo
+        ....ooo#########oo
+        ...ooo###########o
+        ...oo####::::####o#########################
+        ...oo###:.::::####::::::::::::::::::::::::#
+        ...oo#####:#######::::::::::::::::::::::::#
+        ...ooo############################:###:####
+        ...oooo#####::::##.................#...#
+        ...ooooo#########..................#...#
+        ...oooooo#######
+        ...ooooooo#####
+        ..oooooooo.##
+        .oooooooooo#######
+        .ooooooooo##ooooo###
+        oooooooooo#ooooooo###
+        ooooooooo##ooooooo:###
+        .ooooooo###ooooooo:####
+        ..ooooo####ooooooo:#####
+        .....####:ooooooo:######
+        .....###:oooooooo:##.###
+        .....###oooooooooo####.##
+        .....##oo###############o
+        .....##o##:::::::#:::::#o
+        .....###:#:o:oo::#:oo::#
+        .....###:#:o:o:o:#::o:o#
+        .....##oo###############
+        .....oooooooooooooooooooo
+        .....oooooooooooooooooooo
+        ....#####################oooo
+        ....#:::::::::::::::::::#oooo
+        ....#:###::###::###:###:#oooo
+        ....#:#:#::#:#::#:#:#:#:#oooo
+        ....#:###::###::###:###:#oooo
+        ....#:::::::::::::::::::#oooo
+        ....#####################oooo
+        .........................oooo
+        ........................######
+        .......................#######
+        """)
+    pixels(r, 18, 71, """
+        .....#######.#####################.#########
+        .
+        .........##########......############
+        .
+        .......................#######
+        """)
 
 
 def ralph_dessin(r):
-    # le gardien des Sceaux : barbe, robe, une chaîne de sceaux de cire en bandoulière, un tampon à empreinte
-    tete(r, 12, B, barbe=True)
-    robe_plis(r, 33, 64, V, 35, 52)
-    r(36, 24, 51, 36, B); r(40, 25, 47, 25, N); r(40, 30, 40, 35, V); r(47, 30, 47, 35, V)
-    for k in range(8): r(36 + k * 2, 36 + k * 3, 37 + k * 2, 37 + k * 3, B)   # la chaîne en bandoulière
-    for x, y in ((37, 39), (43, 48), (49, 57)):
-        r(x, y, x + 4, y + 4, B); r(x + 1, y + 1, x + 3, y + 3, V); r(x + 2, y + 2, x + 2, y + 2, N)
-    manches(r, V, 34, True, True, B, 10)
-    r(58, 36, 62, 44, B); r(59, 37, 61, 43, N)                                # le tampon
-    r(54, 44, 66, 48, B); r(53, 48, 67, 51, V); r(55, 49, 65, 50, N)
-    r(37, 65, 42, 66, B); r(45, 65, 50, 66, B); sol_tirets(r, 68)
+    # le gardien des Sceaux, barbu et massif, une chaîne de sceaux de cire en bandoulière : il appuie son tampon sur
+    # une caisse cachetée pour comparer l'empreinte
+    pixels(r, 25, 34, """
+        ......#########
+        .....###########
+        ....#############
+        ....##:::###:::##
+        ....###:####:####
+        ....#############
+        ....#######:#####
+        ....######::::###
+        ...o##############o
+        ..oo##::::::::####oo
+        ..o################o
+        ..o###:#:#:#:#:###o
+        ...o##:#:#:#:#:##o
+        ....###:#:#:#:###
+        .....##:#:#:#:##
+        ......###:#:###
+        ........#####
+        """)
+    pixels(r, 19, 50, """
+        ..........ooooooooo
+        .......ooooo#oooooooo
+        .....ooooooo#oooooooooo####
+        ....ooooooooo#oooooooooo######
+        ...oooooo#ooo#ooooooooo#ooo####
+        ..oooooooo#ooo#oooooooo##ooooo###
+        ..ooooooooo##oo#oooooooo#ooooo:##
+        .ooooooooooo#oo#oooooooooooooo:.##
+        .ooooooooooo:#ooo#ooooooooooooo..###
+        oooooooooooo:##oo#oooooooooooooo...##
+        oooooooooooo:o#ooo#ooooooooooooo...#
+        oooooooooooo:oo##oo#oooooooooooo
+        oooooooooooo:ooo#ooo#ooooooooooo
+        .ooooooooooo:oooo#oo#ooooooooooo
+        .ooooooooooo:ooooo#oo#oooooooooo
+        ..oooooooooo:oooooo#oo#ooooooooo
+        ..oooooooooo:ooooooo####oooooooo
+        ...ooooooooo:oooooooo#:#ooooooo
+        ...ooooooooo:oooooooo###oooooooo
+        ...oooooooooooooooooooooooooooooo
+        ....##########.......##########
+        ...###########.......###########
+        """)
+    pixels(r, 33, 53, """
+        .....##
+        ....#oo#
+        ....#oo#
+        .....##
+        .........##
+        ........#oo#
+        ........#oo#
+        .........##
+        .............##
+        ............#oo#
+        ............#oo#
+        .............##
+        """)
+    pixels(r, 53, 48, """
+        .......####
+        ......######
+        .......####
+        .......####
+        .......####
+        .......####
+        .......####
+        .....########
+        ....##########
+        ....#oooooooo#
+        ....##########
+        """)
+    pixels(r, 51, 60, """
+        .##################
+        .#oooooooooooooooo#
+        .#o###:o:o:o:###oo#
+        .#o#oo###:###oo#oo#
+        .#o###:o:o:o:###oo#
+        .#oooooooooooooooo#
+        .#o###:o:o:o:###oo#
+        .#o#oo###:###oo#oo#
+        .#o###:o:o:o:###oo#
+        .#oooooooooooooooo#
+        .##################
+        """)
+    pixels(r, 15, 71, """
+        .....#######.######################.#######
+        .
+        ...........##########......##########
+        .
+        ......................#######
+        """)
 
 
 def adele_dessin(r):
-    # la capitaine de la Garde : casque à nasal, cotte de mailles et tabard, un écu à croix, une hallebarde
-    r(36, 6, 51, 13, B); r(37, 6, 50, 7, V); r(43, 13, 44, 19, B); r(35, 12, 52, 13, V)
-    tete(r, 12, B)
-    r(35, 33, 52, 54, B); r(36, 34, 51, 54, N)
-    for y in range(35, 54, 2):
-        for x in range(36 + (y // 2) % 2, 52, 2): r(x, y, x, y, B)
-    r(39, 36, 48, 54, V); r(43, 36, 44, 54, B); r(39, 43, 48, 44, B)          # le tabard à croix
-    bras(r, True, True, 36)
-    r(59, 4, 60, 66, B); r(60, 4, 60, 66, V)                                  # la hallebarde
-    r(59, 0, 60, 3, B); r(55, 6, 59, 13, V); r(61, 6, 64, 9, B); r(56, 7, 58, 11, B)
-    r(14, 37, 32, 50, B); r(16, 39, 30, 49, V); r(19, 50, 27, 55, V); r(21, 55, 25, 57, V)   # l'écu
-    r(22, 39, 24, 56, B); r(16, 44, 30, 45, B)
-    r(15, 50, 18, 51, B); r(28, 50, 31, 51, B)
-    jambes(r); sol_tirets(r, 68)
+    # la capitaine de la Garde, casque à nasal et tresse, cotte de mailles et tabard à croix : l'écu au bras, la
+    # hallebarde bien droite, en pleine ronde
+    pixels(r, 52, 29, """
+        ....#
+        ...###
+        ..#####.##
+        .##:#:####
+        ..#####.##
+        ...###
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        ....#
+        """)
+    pixels(r, 40, 33, """
+        ...######
+        ..########
+        .##########
+        .oooo##oooo
+        .#####.#####
+        .##::#.#::##
+        .#####.#####
+        .######.####
+        .######.####
+        ..########
+        ..##::::##
+        ...######
+        ....####.oo
+        ..........oo
+        ...........o
+        """)
+    pixels(r, 34, 48, """
+        ......########
+        ....############
+        ...#####oooo#####
+        ..##:#:oooooo:#:##
+        ..#:#:#oo##oo#:#:#
+        .##:#:#oo##oo#:#:##
+        .#:#:#:o####o#:#:#:#
+        ##:#:#:oo##oo#:#:#:##
+        #:#:#:#oo##oo#:#:#:#:#
+        ##:#:#:oo##oo#:#:#:##
+        .#:#:#:oo##oo#:#:#:#
+        .##:#:#oooooo#:#:##
+        ..#:#:#oooooo#:#:#
+        ...#####:##:#####
+        ....ooooo..ooooo
+        ....ooooo..ooooo
+        ....ooooo..ooooo
+        ....ooooo..ooooo
+        ....ooooo..ooooo
+        ...######..######
+        ..#######..#######
+        """)
+    pixels(r, 24, 49, """
+        ....#########
+        ...#ooooooooo#
+        ...#ooo#:#ooo#
+        ...#ooo#:#ooo#
+        ...##########
+        ...#ooo#:#ooo#
+        ...#ooo#:#ooo#
+        ....#oo#:#oo#
+        .....#o#:#o#
+        ......#####
+        .......###
+        """)
+    pixels(r, 20, 71, """
+        ......#######.#####################.#######
+        .
+        .........###########......############
+        .
+        .......................#######
+        """)
 
 
 def pierre_dessin(r):
@@ -782,7 +1688,7 @@ if __name__ == "__main__":
         if nom in LIEUX:
             finir(nom, LIEUX[nom]()); n += 1
         elif nom in PORTRAITS:
-            A.perso_fini(nom, PORTRAITS[nom]); n += 1
+            (A.perso_fini if nom == "item_pierre.gif" else perso)(nom, PORTRAITS[nom]); n += 1
         elif nom == "item_lettre_inspection.gif":
             lettre_inspection(nom); n += 1
     print(n, "dessins")
