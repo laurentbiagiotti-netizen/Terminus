@@ -176,10 +176,12 @@ var ZoneAnnexe = fichier(RouteurBind, "annexe.zone",
 	"@          IN NS  routeur.cybersup.lan.\n" +
 	"borne      IN A   " + IP_BORNE + "\n" +
 	"switch     IN A   " + IP_SWITCH + "\n" +
-	"affichage  IN A   10.0.94.300\n");
+	"affichage  IN A   10.0.94.300   ; l'écran de la cafétéria (étiquette au dos de la dalle : " + IP_AFFICHAGE + ")\n");
 fichier(RouteurBind, "MemoZone",
 	"MÉMO DE VINT : LA ZONE DE L'ANNEXE\n" +
-	"Le routeur sert aussi les noms de l'Annexe : named, zone annexe.cybersup.lan.\n\n" +
+	"Le routeur sert aussi les noms de l'Annexe : named, zone annexe.cybersup.lan.\n" +
+	"Les adresses de l'Annexe sont fixes : borne " + IP_BORNE + ", switch " + IP_SWITCH + ", écran de la cafétéria " + IP_AFFICHAGE + ".\n" +
+	"(Les portables reçoivent la leur de la borne, par DHCP : elles ne vont jamais dans la zone.)\n\n" +
 	"  sudo named-checkzone annexe.cybersup.lan annexe.zone   vérifier le fichier\n" +
 	"  sudo nano annexe.zone                                  le corriger\n" +
 	"  sudo systemctl reload named                            le recharger\n\n" +
@@ -866,6 +868,11 @@ Shell.sorts["named-checkzone"] = function(args, io){
 	var z = lireZoneAnnexe();
 	if (z.erreur) return z.erreur + "\nzone annexe.cybersup.lan/IN: loading from master file " + mots[1] + " failed: bad dotted quad\nzone annexe.cybersup.lan/IN: not loaded due to errors." +
 		(io.tty ? "\n" + C.gris("(Ligne " + z.ligne + " : une adresse IP, ce sont quatre nombres de 0 à 255. Corrige-la avec sudo nano, puis recharge : sudo systemctl reload named.)") : "");
+	var ecran = z.noms.affichage;
+	if (ecran && ecran !== IP_AFFICHAGE && io.tty){
+		return "zone annexe.cybersup.lan/IN: loaded serial 2026101001\nOK\n" +
+			C.gris("(La syntaxe est bonne, mais affichage pointe vers " + ecran + " : ce n'est pas l'adresse de l'écran. L'étiquette au dos de la dalle dit " + IP_AFFICHAGE + " (voir aussi le MemoZone). Corrige, puis sudo systemctl reload named.)");
+	}
 	return "zone annexe.cybersup.lan/IN: loaded serial 2026101001\nOK" + (io.tty && !annexe().zone ? "\n" + C.gris("(Le fichier est bon. Reste à le faire relire à named : sudo systemctl reload named.)") : "");
 };
 
@@ -1300,7 +1307,7 @@ function verifierAnnexe(){
 	if (an.ssid === SSID_BON && an.wlan) state.complete("r_ssid");
 	if (an.ssid === SSID_BON && an.adresse && dansReseau(an.adresse, RESEAU_ANNEXE)) state.complete("r_plan");
 	if (an.forward) state.complete("r_forward");
-	if (an.zone && HOTES.routeur.services.named.actif) state.complete("r_zone");
+	if (an.zone && HOTES.routeur.services.named.actif && zoneAffichageJuste()) state.complete("r_zone");
 	if (an.ports[7]) state.complete("r_prise");
 	var synchro = servicePanne("affichage", "synchro-videos");
 	if (!synchro.actif && !synchro.auto) state.complete("r_debit");
@@ -1342,3 +1349,39 @@ GameEvents.addListener("dnsPanne", function(e){ if (e.ok && e.outil === "dig" &&
 [[Borne, "loc_borne.gif"], [Switch, "loc_switch.gif"], [Affichage, "loc_affichage.gif"]].forEach(function(x){ x[0].room_pic = "./static/img/" + x[1]; });
 
 
+
+/* L'écran a une adresse fixe (10.0.94.40). Une zone qui le met ailleurs se charge sans erreur,
+   mais ssh affichage arrive alors sur une autre machine (le portable : Connection refused) ou nulle part.
+   La quête de la zone n'est validée qu'avec la bonne adresse, et ssh ou ping affichage disent quoi corriger. */
+function zoneAffichageJuste(){
+	var an = annexe();
+	return !an.zoneValeurs || !an.zoneValeurs.affichage || an.zoneValeurs.affichage === IP_AFFICHAGE;
+}
+function conseilZoneAffichage(args){
+	var an = annexe();
+	var vise = args.some(function(a){ return a.charAt(0) !== "-" && /^(?:[^@]*@)?affichage(?:\.annexe(?:\.cybersup\.lan)?)?\.?$/.test(a); });
+	if (!vise || !an.zone || zoneAffichageJuste()) return "";
+	return C.gris("(Le nom affichage pointe vers " + an.zoneValeurs.affichage + " dans la zone de l'Annexe : ce n'est pas l'écran. Son adresse fixe est " + IP_AFFICHAGE +
+		" (MemoZone, sur le routeur dans /etc/bind). Corrige annexe.zone avec sudo nano, puis sudo systemctl reload named.)");
+}
+var SSH_AVANT_CONSEIL_ZONE = Shell.sorts.ssh;
+Shell.sorts.ssh = function(args, io){
+	try { return SSH_AVANT_CONSEIL_ZONE(args, io); }
+	catch (e){
+		var conseil = e instanceof ShellError && io && io.tty ? conseilZoneAffichage(args) : "";
+		if (conseil) e.message += "\n" + conseil;
+		throw e;
+	}
+};
+var PING_AVANT_CONSEIL_ZONE = Shell.sorts.ping;
+Shell.sorts.ping = function(args, io){
+	try {
+		var sortie = PING_AVANT_CONSEIL_ZONE(args, io);
+		var conseil = io && io.tty && typeof sortie === "string" ? conseilZoneAffichage(args) : "";
+		return conseil ? sortie + "\n" + conseil : sortie;
+	} catch (e){
+		var c = e instanceof ShellError && io && io.tty ? conseilZoneAffichage(args) : "";
+		if (c) e.message += "\n" + c;
+		throw e;
+	}
+};

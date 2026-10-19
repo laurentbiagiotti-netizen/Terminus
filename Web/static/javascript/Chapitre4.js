@@ -852,11 +852,41 @@ GameEvents.addListener("script", function(e){
 
 /* Le correctif de Grace et le dossier de sortie apparaissent à l'ouverture (déposés dans la Maison). */
 var CorrectifDiff = new Item("correctif.diff", CORRECTIF_DIFF, "item_manuscript.gif").droits("rw-r--r--", JOUEUR);
-GameEvents.addListener("enter", function(e){
-	if (e.room === Academie && state.has("ch4Ouvert") && !Home.hasItem(CorrectifDiff) && Home.getItemFromName("correctif.diff") === -1){
-		poser(Home, CorrectifDiff);
+/* Si le joueur a déjà son propre ~/correctif.diff (fabriqué en s'entraînant avec diff), on ne l'écrase pas :
+   celui de Grace arrive alors sous le nom correctif-grace.diff, et patch le signale. */
+var CorrectifGrace = new Item("correctif-grace.diff", CORRECTIF_DIFF, "item_manuscript.gif").droits("rw-r--r--", JOUEUR);
+function correctifMaisonDeGrace(){
+	var i = Home.getItemFromName("correctif.diff");
+	return i !== -1 && i.getText() === CORRECTIF_DIFF;
+}
+function deposerCorrectifGrace(){
+	if (!state.has("ch4Ouvert")) return;
+	if (Home.getItemFromName("correctif.diff") === -1){
+		if (!Home.hasItem(CorrectifDiff)) poser(Home, CorrectifDiff);
+		return;
 	}
+	if (correctifMaisonDeGrace() || Home.getItemFromName("correctif-grace.diff") !== -1) return;
+	CorrectifGrace.setText(CORRECTIF_DIFF);
+	poser(Home, CorrectifGrace);
+}
+GameEvents.addListener("enter", function(e){
+	if (e.room === Academie) deposerCorrectifGrace();
 });
+var PATCH_AVANT_GRACE = Shell.sorts.patch;
+Shell.sorts.patch = function(args, io){
+	try { return PATCH_AVANT_GRACE(args, io); }
+	catch (e){
+		var visePropre = args.some(function(a){ return /(^|\/)correctif\.diff$/.test(a); }) || (io && io.stdin !== null && /depot\.sh/.test(args.join(" ")));
+		if (e instanceof ShellError && io && io.tty && state.has("ch4Ouvert") && !state.quests["d_archives_patch"] && visePropre && !correctifMaisonDeGrace()){
+			deposerCorrectifGrace();
+			if (Home.getItemFromName("correctif-grace.diff") !== -1){
+				e.message += "\n" + C.gris("(Ce ~/correctif.diff n'est pas celui de Grace : c'est un fichier à toi, d'avant (diff -u ... > correctif.diff, ou une version modifiée). " +
+					"Le sien t'attend dans ta Maison sous le nom correctif-grace.diff : sudo patch /usr/local/bin/depot.sh ~/correctif-grace.diff)");
+			}
+		}
+		throw e;
+	}
+};
 
 /* Le monde est de nouveau figé : ce que le joueur crée ensuite n'a plus d'identifiant fixe. */
 World.fige = true;
