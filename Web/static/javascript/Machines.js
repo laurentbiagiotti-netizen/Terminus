@@ -860,6 +860,7 @@ function texteLanterne(){
 	var c = sCh6(), score = scoreLanterneCh6();
 	var lignes = [C.gras("LE PHARE DE LUMEN"), C.jaune("commande du jeu, pas Linux (man lanterne)"), C.gris("rouge : le quartier est éteint · vert : il est rallumé · l'état est lu sur la machine lumen"), ""];
 	lignes.push("  Il est " + C.gras(heureCh6()) + (c.nuit ? C.gris(" · la Longue Nuit est tombée") : C.gris(" · la Longue Nuit dans " + texteAvantNuit())));
+	if (typeof nuitAttendLaMissionCh6 === "function" && nuitAttendLaMissionCh6()) lignes.push("  " + C.jaune(texteMissionAttendueCh6()));
 	lignes.push("  Lumière de la cité : " + C.gras(score + " / 100") + (c.scoreDepart !== null && c.scoreDepart !== undefined ? C.gris(" (départ : " + c.scoreDepart + ", objectif : plus de 90 après la Nuit)") : C.gris(" (objectif : plus de 90 après la Nuit)")), "");
 	QUARTIERS_CH6.forEach(function(q){
 		var ok = quartierAllumeCh6(q.cle), faites = q.etapes.filter(aFait).length, defis = idsDefisQuartier(q.cle).filter(aFait).length;

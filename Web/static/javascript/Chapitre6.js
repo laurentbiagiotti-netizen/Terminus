@@ -514,6 +514,20 @@ function heureCh6(){
 	return deuxChiffres(Math.floor(total / 60) % 24) + ":" + deuxChiffres(total % 60);
 }
 function minutesAvantNuit(){ return NUIT_CH6 - sCh6().horloge; }
+/* La Longue Nuit ne tombe qu'une fois la mission donnée (m6_lanterne). Le joueur qui n'a pas écouté Laurent
+   pouvait rallumer les seize quartiers, voir passer 14 h, et attendre une Nuit qui ne venait jamais : on le lui dit. */
+function nuitAttendLaMissionCh6(){
+	var c = sCh6();
+	return !!(state.has("ch6Ouvert") && !c.nuit && !state.quests["m6_lanterne"] && (c.horloge >= NUIT_CH6 || c.tousAllumes !== undefined));
+}
+function texteMissionAttendueCh6(){
+	var c = sCh6(), gestes = [];
+	if (!state.has("ch6LaurentLu")) gestes.push("cat Laurent");
+	if (!state.has("ch6MissionLue")) gestes.push("cat Mission");
+	if (c.scoreDepart === null || c.scoreDepart === undefined) gestes.push("lanterne");
+	return "La Longue Nuit ne tombera qu'une fois la mission reçue : écoute Laurent et lis l'ordre de mission, sur la place de Lumen (cd " +
+		Shell.cheminAffiche(HallLumen) + (gestes.length ? ", puis " + gestes.join(", ") : "") + ").";
+}
 function texteAvantNuit(){
 	var m = Math.max(0, minutesAvantNuit());
 	return Math.floor(m / 60) + " h " + deuxChiffres(m % 60);
@@ -1199,6 +1213,10 @@ function validerCh6(){
 	if (c.tousAllumes === undefined && quartiersAllumesCh6().length === QUARTIERS_CH6.length) c.tousAllumes = c.horloge;
 	// La Longue Nuit : à 14 h, ou dès que les seize quartiers sont rallumés.
 	if (!c.nuit && state.quests["m6_lanterne"] && (c.horloge >= NUIT_CH6 || c.tousAllumes !== undefined)) tomberNuitCh6(c.horloge < NUIT_CH6);
+	if (nuitAttendLaMissionCh6() && !c.nuitAttendDit){
+		c.nuitAttendDit = true;
+		if (!state.has("rejeuEnCours")) say(C.gris("(Radio : « Grace : " + texteMissionAttendueCh6() + " »)"));
+	}
 	if (!state.quests["m6_nuit"] && c.nuit && avariesRestantesCh6().length === 0 && vu("nuitUptime") && vu("nuitFree") && vu("nuitTop") && vu("nuitJournal")) state.complete("m6_nuit");
 	if (!state.quests["m6_lanterne_finale"] && c.nuit && avariesRestantesCh6().length === 0 && c.scoreFinalCandidat !== null && c.scoreFinalCandidat !== undefined && c.scoreFinalCandidat >= 90 && scoreLanterneCh6() >= 90){
 		c.scoreFinal = c.scoreFinalCandidat;
@@ -1207,7 +1225,7 @@ function validerCh6(){
 	// Le rapport : contresigné seulement quand la cité a passé la Nuit et que le Phare brille.
 	if (!state.quests["m6_rapport"] && rapportOkCh6()){
 		var reste = [];
-		if (!state.quests["m6_nuit"]) reste.push(c.nuit ? "les avaries de la Longue Nuit ne sont pas toutes réparées, ou personne n'a surveillé en direct" : "la Longue Nuit n'est pas encore passée");
+		if (!state.quests["m6_nuit"]) reste.push(c.nuit ? "les avaries de la Longue Nuit ne sont pas toutes réparées, ou personne n'a surveillé en direct" : "la Longue Nuit n'est pas encore passée" + (state.quests["m6_lanterne"] ? "" : " (elle attend que tu écoutes Laurent et lises l'ordre de mission, sur la place)"));
 		if (!state.quests["m6_lanterne_finale"]) reste.push("le Phare n'a pas encore dépassé 90 après la Nuit (lanterne)");
 		var manque = rapportManqueCh6();
 		if (!reste.length && !manque.length) state.complete("m6_rapport");
@@ -1375,6 +1393,7 @@ var CertificatLumen = new Item("CertificatLumen", "", "item_manuscript.gif");
 function texteHorlogeCh6(){
 	var c = sCh6(), l = "L'HORLOGE DE LA PLACE\n\nIl est " + heureCh6() + ".\n";
 	if (c.nuit) return l + "\nLa Longue Nuit est tombée" + (c.nuitEnAvance ? " (en avance : les seize quartiers étaient rallumés)" : "") + ". Tiens bon jusqu'à ce que le Phare brille.";
+	if (nuitAttendLaMissionCh6()) return l + "\n" + texteMissionAttendueCh6();
 	return l + "\nLa Longue Nuit (14 h) dans " + texteAvantNuit() + " : elle tombera sur chaque quartier encore éteint.\n" +
 		(c.horloge < MIDI_CH6 ? "Défi d'honneur de Laurent : les seize quartiers rallumés avant midi (encore " + (MIDI_CH6 - c.horloge) + " min)." : "Midi est passé.");
 }
@@ -1383,6 +1402,7 @@ function texteRadioCh6(){
 	if (!q) return "La radio grésille. « Grace : rapport contresigné, Phare au maximum. Lumen brille jusqu'à l'école. Beau travail, la recrue. »";
 	var c = sCh6();
 	var heure = "Il est " + heureCh6() + (c.nuit ? ", la Longue Nuit est tombée. " : ", la Longue Nuit à 14 h. ");
+	if (q.id === "m6_lanterne" && nuitAttendLaMissionCh6()) return "La radio grésille. « Grace : Il est " + heureCh6() + ". " + texteMissionAttendueCh6() + " »";
 	return "La radio grésille. « Grace : " + heure + (CONSEILS_CH6[q.id] || "Je te suis.") + (METIER_CH6[q.id] ? " " + METIER_CH6[q.id] : "") + " »";
 }
 function textePhareCh6(){
