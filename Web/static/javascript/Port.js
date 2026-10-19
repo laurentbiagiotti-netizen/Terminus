@@ -685,13 +685,13 @@ function lieuAtteignablePort(lieu){
 }
 function phraseMaitrePort(it, lieu){
 	var parent = lieu.parents[0];
-	return "Il s'apprend " + (it.person ? "auprès de " : "en lisant ") + it.itemname + ", dans " + lieu.room_name + (parent && parent !== Home ? " (du côté de " + parent.room_name + ")" : "") + ".";
+	return "Il s'apprend " + (typeof Shell.chezQui === "function" ? Shell.chezQui(it) : (it.person ? "auprès de " : "en lisant ") + it.itemname) + ", dans " + lieu.room_name + (parent && parent !== Home ? " (du côté de " + parent.room_name + ")" : "") + ".";
 }
 var OU_APPRENDRE_AVANT_PORT = Shell.ouApprendre;
 Shell.ouApprendre = function(sort){
 	var t = OU_APPRENDRE_AVANT_PORT.apply(this, arguments);
 	try {
-		var m = /^Il s'apprend (?:auprès de|en lisant) ([^,]+), dans [^.]*\./.exec(t);
+		var m = /^Il s'apprend (?:auprès (?:de la |de l'|du |de |d')|en lisant )([^,]+), dans [^.]*\./.exec(t);
 		if (m){
 			var maitres = [];
 			Object.keys(World.rooms).forEach(function(id){
