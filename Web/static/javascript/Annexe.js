@@ -307,6 +307,13 @@ function parLaBorne(ip, sauts, options){
 	return { ok: t.ok, erreur: t.erreur, nom: t.nom, sauts: sauts.concat(t.sauts) };
 }
 
+/* ssh vers le switch ou l'écran, depuis le bâtiment B, avant que la borne fasse passer les paquets : dire pourquoi. */
+function astuceAnnexeInjoignable(depuis, ip){
+	if (!annexeOuverte() || !dansReseau(ip, RESEAU_ANNEXE) || ip === IP_BORNE || ["portable", "borne", "switch", "affichage"].indexOf(depuis) > -1 || annexe().forward) return "";
+	return "\n" + C.gris("(Le switch et l'écran de l'Annexe sont derrière la borne : tant qu'elle ne fait pas passer les paquets d'une rue à l'autre (ip_forward), " +
+		"rien ne les joint depuis le bâtiment B. ssh borne, puis sysctl net.ipv4.ip_forward.)");
+}
+
 var CHEMIN_AVANT_ANNEXE = cheminVers;
 cheminVers = function(depuis, ip, options){
 	options = options || {};

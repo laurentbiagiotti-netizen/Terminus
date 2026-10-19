@@ -195,12 +195,12 @@ declarerAnnexe({ id: "a2_carnet", chapitre: 3, titre: "Le carnet d'adresses SSH"
 	merci: "La Documentaliste arrache un post-it de son carnet et le jette. « Un de moins. Merci ! »"
 });
 GameEvents.addListener("read", function(e){
-	if (e.item === AxDocumentaliste && axOuverteCh2() && annexeProposee(annexeParId("a2_carnet")) && !axVu("a2_carnet", "clePosee")){
+	// La clé est (re)posée tant que le joueur n'en a plus de copie intacte (effacée, écrasée, ou un objet à lui portait déjà ce nom).
+	if (e.item === AxDocumentaliste && axOuverteCh2() && annexeProposee(annexeParId("a2_carnet")) && !state.quests["a2_carnet"] && !axClePresente(AX_CLE_DEPOT.privee)){
+		var reposee = axVu("a2_carnet", "clePosee");
 		axNoter("a2_carnet", "clePosee");
-		if (Home.getItemFromName("depot_ed25519") === -1){
-			var cle = new Item("depot_ed25519", AX_CLE_DEPOT.privee, "item_locker.gif").droits("rw-r--r--", JOUEUR);
-			Home.addItem(cle);
-		}
+		poser(Home, new Item("depot_ed25519", AX_CLE_DEPOT.privee, "item_locker.gif").droits("rw-r--r--", JOUEUR));
+		if (reposee) say(C.gris("(Tu n'avais plus la clé du dépôt : la Documentaliste en glisse une copie neuve dans ta Maison, ~/depot_ed25519.)"));
 	}
 	if (e.item === AxDepotLisezmoi && axVu("a2_carnet", "connecte")) axNoter("a2_carnet", "lu");
 	if (e.item === AxColisLille && axVu("a2_rebond", "config")) axNoter("a2_rebond", "colis");

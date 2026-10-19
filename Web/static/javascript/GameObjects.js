@@ -1280,7 +1280,7 @@ Citadelle.addItem(Phylactere);
 var VRAI_NOM = "laurent";
 
 var Laurent = new Item("Laurent",
-    "« Je te dois des explications. Laurent, Directeur Pédagogique de Cybersup.\n\nLe Sorcier Noir, les trolls : c'était ton examen. Le vieil homme du man ? Moi, avec une fausse barbe. L'enfant dans la cage ? Ma stagiaire.\n\nCes sorts n'ont rien de magique : ls, grep, chmod, sudo marchent tels quels sur les vraies machines. Les défendre est un métier, celui qu'on enseigne ici.\n\nTon Diplome est là, le Paradis est ouvert, et je t'offre le sort tree. Une règle : avec sudo, on relit sa ligne avant Entrée. »\n\nP.S. Pendant ton épreuve, le réseau de l'école est tombé. Radia t'attend au BatimentB (cd ~/Cybersup/BatimentB) : ce sera ton chapitre 2.",
+    "« Je te dois des explications. Laurent, Directeur Pédagogique de Cybersup.\n\nLe Sorcier Noir, les trolls : c'était ton examen. Le vieil homme du man ? Moi, avec une fausse barbe. L'enfant dans la cage ? Ma stagiaire.\n\nCes sorts n'ont rien de magique : ls, grep, chmod, sudo marchent tels quels sur les vraies machines. Les défendre est un métier, celui qu'on enseigne ici.\n\nTon Diplome est là, le Paradis est ouvert, et je t'offre le sort tree. Une règle : avec sudo, on relit sa ligne avant Entrée. »",
     "item_mysteryman.gif").personnage();
 Laurent.addCmdText("rm", "Laurent hausse un sourcil. « On ne supprime pas le directeur pédagogique. D'autres ont essayé, à la veille des partiels. »");
 Laurent.addCmdText("mv", "« Je me déplace très bien tout seul, merci. »");
@@ -1367,6 +1367,41 @@ link_rooms(Baie2, Sauvegardes);
 * événements de l'histoire, une seule fois chacun, via state.applyState().
 * Peu importe COMMENT le joueur y est arrivé : c'est le résultat qui compte.
 */
+/*
+ * Après l'épreuve, les habitants de Terminus se présentent sous leur vrai jour. Tant que leur demande
+ * n'est pas finie, ils la gardent, après leur présentation, comme l'Artisane : sinon le joueur perd la
+ * consigne (cut, sort, uniq et le tuyau du Tavernier resservent aux chapitres suivants).
+ */
+var HABITANTS_APRES_EPREUVE = [
+    { item: Tavernier, demande: Tavernier.getText(), fini: function(){ return !!state.quests["s_client"]; },
+      reprise: "« Mais mon meilleur client, tu ne l'as toujours pas trouvé. Je remets le tablier : »",
+      revele: "Le tavernier a tombé le tablier. « Examen terminé, je peux arrêter de faire semblant de savoir tirer une bière. \
+Ken, promo d'il y a trois ans, aujourd'hui analyste dans un centre d'opérations de sécurité. Laurent rappelle toujours quelques anciens \
+pour jouer les habitants. Et entre nous : trier, compter, repérer celui qui revient trop souvent, c'est exactement ce que je fais \
+toute la journée, avec les mêmes sorts. Sauf que ce ne sont pas des chopes. »" },
+    { item: Librarian, demande: Librarian.getText(), fini: function(){ return !!state.quests["s_enquete"]; },
+      reprise: "« Mais mes recherches attendent toujours tes relevés. Je reprends mon rôle : »",
+      revele: "« Tu peux m'appeler Barbara. Je ne suis pas vraiment bibliothécaire : je donne le cours d'analyse de journaux \
+aux B3, et Laurent m'a demandé de garder un œil sur Grep. C'est plutôt lui qui me surveille. » Grep hausse les épaules. « Greeep. »" },
+    { item: Vendor, demande: Vendor.getText(), fini: function(){ return !!(state.quests["s_alias"] && state.quests["s_variables"] && state.quests["s_lien"]); },
+      reprise: "« Mais tu n'as pas fini mes parchemins. Je remets mon dentier : »",
+      revele: "Le marchand retire ses dents en or : un dentier de farces et attrapes. « Tim, M1, trésorier du BDE. \
+Laurent m'a donné le rôle parce que j'ai, paraît-il, une tête à vendre des sorts. Si tu veux un vrai sweat, la boutique est au local du BDE, à l'école. »" },
+    { item: Farmer, demande: Farmer.getText(), fini: function(){ return !!state.quests["s_mais"]; },
+      reprise: "« Mais ma récolte, elle, n'a pas bougé. Je reprends mon rôle : »",
+      revele: "« Alan, B2, en alternance chez un hébergeur. Le coup de l'épi unique, c'est moi qui l'ai proposé : \
+chez nous, on appelle ça ne pas avoir de sauvegarde. Depuis, j'en fais deux. »" }
+];
+function texteApresEpreuve(h){
+    return h.fini() ? h.revele : h.revele + "\n\n" + h.reprise + "\n\n" + h.demande;
+}
+function habitantsApresEpreuve(){
+    HABITANTS_APRES_EPREUVE.forEach(function(h){
+        var t = texteApresEpreuve(h);
+        if (h.item.getText() !== t) h.item.addCmdText("less", t);
+    });
+}
+
 function verifierMonde(){
     function une(nom, condition){
         if (!state.has(nom) && condition) state.applyState(nom);
@@ -1426,6 +1461,8 @@ function verifierMonde(){
     une("demonsMorts", Citadelle.procs.length === 0);
     une("campusVisites", state.visited[CampusLille.id] === true && state.visited[CampusMarseille.id] === true);
     if (state.has("victoire")) Diplome.cmd_text["less"] = state.texteDuDiplome();
+    // Après l'épreuve, les habitants gardent leur demande tant qu'elle n'est pas finie (parties déjà en cours comprises).
+    if (state.has("victoire")) habitantsApresEpreuve();
     // Les objets de l'école qui se tiennent à jour tout seuls.
     CarteEtudiante.cmd_text["less"] = texteCarteEtudiante();
     EcranMural.cmd_text["less"] = texteEcranMural();

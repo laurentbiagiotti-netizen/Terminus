@@ -92,7 +92,8 @@ Shell.sorts.ssh = function(args, io){
 	if (r.erreur) throw new ShellError("ssh: Could not resolve hostname " + cible + ": " + (r.erreur === "temp" ? "Temporary failure in name resolution" : "Name or service not known"));
 	if (r.ip === "127.0.0.1") return AVANT_PANNE.ssh([ici], io);
 	var t = cheminVers(ici, r.ip, { proto: "tcp", port: "22" });
-	if (!t.ok) throw new ShellError("ssh: connect to host " + cible + " port 22: " + ERREURS_TCP[t.erreur]);
+	if (!t.ok) throw new ShellError("ssh: connect to host " + cible + " port 22: " + ERREURS_TCP[t.erreur] +
+		(io.tty && typeof astuceAnnexeInjoignable === "function" ? astuceAnnexeInjoignable(ici, r.ip) : ""));
 	var h = nomDeIp(r.ip);
 	if (!h) throw new ShellError("ssh: connect to host " + cible + " port 22: Connection timed out");
 	return AVANT_PANNE.ssh([(utilisateur ? utilisateur + "@" : "") + h], io);
