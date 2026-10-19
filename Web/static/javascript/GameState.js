@@ -1708,14 +1708,8 @@ Laurent t'y attend ; sa cape noire est posée sur une chaise.");
     		EasternMountains.changeIntroText("Tu suis un sentier de montagne qui finit par te mener à l'entrée d'une grotte. \
 Le rocher où s'asseyait le vieil homme est vide.");
     		// Le rideau tombe : les habitants de Terminus n'ont plus de rôle à tenir.
-    		Tavernier.addCmdText("less", "Le tavernier a tombé le tablier. « Examen terminé, je peux arrêter de faire semblant de savoir tirer une bière. \
-Ken, promo d'il y a trois ans, aujourd'hui analyste dans un centre d'opérations de sécurité. Laurent rappelle toujours quelques anciens \
-pour jouer les habitants. Et entre nous : trier, compter, repérer celui qui revient trop souvent, c'est exactement ce que je fais \
-toute la journée, avec les mêmes sorts. Sauf que ce ne sont pas des chopes. »");
-    		Librarian.addCmdText("less", "« Tu peux m'appeler Barbara. Je ne suis pas vraiment bibliothécaire : je donne le cours d'analyse de journaux \
-aux B3, et Laurent m'a demandé de garder un œil sur Grep. C'est plutôt lui qui me surveille. » Grep hausse les épaules. « Greeep. »");
-    		Vendor.addCmdText("less", "Le marchand retire ses dents en or : un dentier de farces et attrapes. « Tim, M1, trésorier du BDE. \
-Laurent m'a donné le rôle parce que j'ai, paraît-il, une tête à vendre des sorts. Si tu veux un vrai sweat, la boutique est au local du BDE, à l'école. »");
+    		// Le Tavernier, la Bibliothécaire, le Marchand et le Fermier gardent leur demande si elle n'est pas finie (GameObjects.js).
+    		habitantsApresEpreuve();
     		// Si l'atelier n'est pas fini (rouages, remonter.sh), l'Artisane garde sa demande en cours :
     		// c'est elle qui apprend à lancer un script (./), indispensable pour la suite.
     		var demandeArtisane = Artisan.getText();
@@ -1724,8 +1718,6 @@ Laurent m'a donné le rôle parce que j'ai, paraît-il, une tête à vendre des 
 on l'écrit dans un script. Mais toi, tu n'as pas fini mon atelier, et c'est ici qu'on apprend à lancer un script. Je reprends mon rôle. »\n\n" + demandeArtisane) ||
     			"« Annie. Dans la vraie vie, je viens le jeudi parler d'automatisation aux M1 : tout ce qu'on fait deux fois, \
 on l'écrit dans un script. Tu l'as vu avec le dragon. Les horloges, en revanche, sont vraiment à moi. »");
-    		Farmer.addCmdText("less", "« Alan, B2, en alternance chez un hébergeur. Le coup de l'épi unique, c'est moi qui l'ai proposé : \
-chez nous, on appelle ça ne pas avoir de sauvegarde. Depuis, j'en fais deux. »");
     		CheffeDeQuart.addCmdText("less", "« C'était TOI, dans la Citadelle ! On a tout suivi sur l'écran. Les voyants sont repassés au vert, \
 et devine qui est sorti du simulateur en retirant une fausse barbe ? L'intrus, les comptes verrouillés, la crise : \
 il nous faisait passer notre épreuve à nous aussi, pendant que tu passais la tienne. On a eu 14. \

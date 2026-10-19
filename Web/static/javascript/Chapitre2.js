@@ -732,7 +732,9 @@ HOTES["coffre"] = { ip: "10.0.92.250", arrivee: function(){ return Coffre; },
 		var dossier = Home.getChildFromName(".ssh");
 		if (dossier === -1 || dossier.getItemFromName("id_ed25519") === -1){
 			return JOUEUR + "@coffre : Permission denied (publickey).\n" +
-				C.gris("(Le coffre n'accepte que les clés, et tu n'en as pas : rien dans ~/.ssh. Les ConsignesDuCoffre, dans la SalleServeurs, expliquent comment faire.)");
+				C.gris("(Le coffre n'accepte que les clés, et tu n'en as pas : rien dans ~/.ssh. " + (SalleServeurs.hasItem(ConsignesDuCoffre) ?
+					"Les ConsignesDuCoffre, dans la SalleServeurs, expliquent comment faire.)" :
+					"Evi posera ses ConsignesDuCoffre dans la SalleServeurs une fois la clé du Corbeau retirée des clés autorisées de root, dans la Racine.)"));
 		}
 		if (!state.has("cleInstallee")){
 			return JOUEUR + "@coffre : Permission denied (publickey).\n" +

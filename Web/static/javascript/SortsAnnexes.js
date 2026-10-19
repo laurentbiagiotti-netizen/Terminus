@@ -71,6 +71,12 @@ function axDossierSsh(creer){
 	link_rooms(Home, d);
 	return d;
 }
+/* Le joueur a-t-il encore une copie intacte d'une clé confiée par un habitant (dans sa Maison ou dans ~/.ssh) ? */
+function axClePresente(texte){
+	var lieux = [Home], d = axDossierSsh(false);
+	if (d) lieux.push(d);
+	return lieux.some(function(l){ return l.items.some(function(it){ return it.getText() === texte; }); });
+}
 function axCheminMaison(){ return "/home/" + JOUEUR; }
 /* Un texte affiché tel quel par un vrai programme, suivi à l'écran d'une explication grise. */
 function axAstuce(io, texte){ return io && io.tty ? "\n" + C.gris(texte) : ""; }

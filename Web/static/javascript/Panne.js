@@ -1022,6 +1022,8 @@ function texteRadia(){
 		case "r_annexe":
 			return "« " + TALKIE.r_annexe + " »";
 		case "r_fin":
+			// Quelque chose s'est défait depuis : pas de certificat ni de Crypte avant que tout tienne (le détail suit, à la lecture).
+			if (pannesRestantes().length) return "« Toutes les étapes sont faites, bravo. Avant le compte rendu, je vérifie que tout tient encore. »";
 			return "« Tu as remonté les sept étages de la Grande Poste, du câble jusqu'au web, au bâtiment B comme à l'Annexe. C'est comme ça qu'on dépanne un vrai réseau. Ton CertificatReseau t'attend dans ta Maison.\n\n" +
 				"Grace, de la WarRoom, voit du trafic bizarre sous la Citadelle. Une trappe vient de s'ouvrir : ssh citadelle, puis cd Crypte. Ce sera ton troisième chapitre. »";
 	}

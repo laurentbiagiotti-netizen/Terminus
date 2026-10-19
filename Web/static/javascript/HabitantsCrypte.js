@@ -281,9 +281,12 @@ declarerAnnexe({ id: "a3_trousseau", chapitre: 2, titre: "Le trousseau qui se so
 	merci: "Le Passeur sonne la cloche du beffroi, une fois, très loin. « Tu as monté deux fois, et je n'ai rien eu à retaper. Merci. »"
 });
 GameEvents.addListener("read", function(e){
-	if (e.item === AxPasseur && axOuverteCh3() && annexeProposee(annexeParId("a3_trousseau")) && !axVu("a3_trousseau", "clePosee")){
+	// La clé est (re)posée tant que le joueur n'en a plus de copie intacte (effacée, écrasée, ou un objet à lui portait déjà ce nom).
+	if (e.item === AxPasseur && axOuverteCh3() && annexeProposee(annexeParId("a3_trousseau")) && !state.quests["a3_trousseau"] && !axClePresente(AX_CLE_PASSEUR.privee)){
+		var reposee = axVu("a3_trousseau", "clePosee");
 		axNoter("a3_trousseau", "clePosee");
-		if (Home.getItemFromName("cle-du-passeur") === -1) Home.addItem(new Item("cle-du-passeur", AX_CLE_PASSEUR.privee, "item_locker.gif").droits("rw-r--r--", JOUEUR));
+		poser(Home, new Item("cle-du-passeur", AX_CLE_PASSEUR.privee, "item_locker.gif").droits("rw-r--r--", JOUEUR));
+		if (reposee) say(C.gris("(Tu n'avais plus la clé du Passeur : il en glisse une copie neuve dans ta Maison, ~/cle-du-passeur.)"));
 	}
 	if (e.item === AxFossoyeur && axOuverteCh3() && annexeProposee(annexeParId("a3_passages"))) axPoserPassages();
 	// En mission cyber (la panne sautée), openssl ne s'apprend nulle part : le Serrurier le prête.
