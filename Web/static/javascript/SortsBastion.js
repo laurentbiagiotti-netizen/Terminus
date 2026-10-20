@@ -3055,7 +3055,9 @@ function systemctlEdit(h, mots, options, io){
 	var editeur = state.knows("vim") && (state.env.EDITOR === "vim" || state.env.VISUAL === "vim" || state.env.SYSTEMD_EDITOR === "vim") ? "vim" : "nano";
 	var titre = complet ? dossierDe(chemin) + "/." + nomDe(chemin) + "a1b2c3d4e5f6a7b8" : dossierDe(chemin) + "/.#override.conf" + "a1b2c3d4e5f6a7b8";
 	var enregistre = null;
-	term.editer({ titre: titre, texte: modele, mode: editeur, quitter: function(){
+	// Le curseur s'ouvre dans la zone gardée, sur la ligne vide sous « ### Anything between here », comme le vrai systemctl edit.
+	var ligneDepart = complet ? 0 : lignesDe(modele).indexOf(DEBUT) + 1;
+	term.editer({ titre: titre, texte: modele, mode: editeur, ligneDepart: ligneDepart, quitter: function(){
 		if (enregistre === null){ term.echo(C.gris("(Rien d'enregistré : " + chemin + " n'a pas changé.)")); Shell.fin(); return; }
 		var contenu;
 		if (complet) contenu = enregistre;

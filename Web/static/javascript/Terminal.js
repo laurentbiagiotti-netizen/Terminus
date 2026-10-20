@@ -301,7 +301,14 @@ Terminal.prototype.editer = function(options, enregistrer){
 	document.body.appendChild(fond);
 	dire(options.lectureSeule ? "[ Lecture seule : cet objet ne t'appartient pas ]" : "[ " + options.texte.split("\n").length + " lignes lues ]");
 	zone.focus();
-	zone.selectionStart = zone.selectionEnd = 0;
+	// Comme systemctl edit qui ouvre nano sur la bonne ligne (+N) : options.ligneDepart place le curseur en début de cette ligne.
+	var depart = 0;
+	if (options.ligneDepart > 0){
+		var lignesTexte = options.texte.split("\n");
+		for (var i = 0; i < options.ligneDepart && i < lignesTexte.length; i++) depart += lignesTexte[i].length + 1;
+		depart = Math.min(depart, options.texte.length);
+	}
+	zone.selectionStart = zone.selectionEnd = depart;
 };
 
 Terminal.prototype.definirInvite = function(texte){
@@ -471,7 +478,7 @@ Terminal.prototype.touche = function(e){
 Terminal.prototype.editerVim = function(options, enregistrer){
 	var self = this;
 	var lignes = options.texte === "" ? [""] : options.texte.replace(/\n$/, "").split("\n");
-	var l = 0, c = 0, mode = "normal", attente = "", nombre = "", ligneCommande = "";
+	var l = options.ligneDepart > 0 ? Math.min(options.ligneDepart, lignes.length - 1) : 0, c = 0, mode = "normal", attente = "", nombre = "", ligneCommande = "";
 	var registre = null, annulations = [], modifie = false, derniere = null, message = "";
 	var commandes = {}, enregistre = false;
 
