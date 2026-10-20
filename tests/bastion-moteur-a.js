@@ -718,6 +718,13 @@ absent(t("systemctl status apache2"), "changed on disk", "après daemon-reload :
 editer("function(t){ return t.replace(/\\[Service\\][\\s\\S]*?(\\n\\n### Lines below)/, '$1'); }");
 contient(t("sudo systemctl edit apache2"), "canceled: temporary file is empty", "edit vidé : annulé");
 verifier(jeu.lire("texteHote('bastion', '/etc/systemd/system/apache2.service.d/override.conf') !== null"), "edit annulé : override.conf reste");
+// Écrit sous la ligne « Lines below... » : systemd jette ; le jeu dit quoi et où écrire.
+editer("function(t){ return t.replace(/\\[Service\\][\\s\\S]*?(\\n\\n### Lines below)/, '$1') + '[Service]\\nNoNewPrivileges=yes\\n'; }");
+s = t("sudo systemctl edit apache2");
+contient(s, "en dehors de la zone prévue", "edit écrit hors zone : le jeu l'explique");
+contient(s, "NoNewPrivileges=yes", "edit écrit hors zone : les lignes jetées sont montrées");
+editer("function(t){ return t.replace(/\\[Service\\][\\s\\S]*?(\\n\\n### Lines below)/, '$1'); }");
+contient(t("sudo systemctl edit apache2"), "Rien n'a été écrit entre les deux lignes", "edit vide : le jeu donne un exemple");
 editer("function(t){ return t.replace('ExecStart=/usr/sbin/cron -f $EXTRA_OPTS', 'ExecStart=/usr/sbin/cron -f $EXTRA_OPTS\\nNoNewPrivileges=yes'); }");
 t("sudo systemctl edit --full cron");
 contient(jeu.lire("texteHote('bastion', '/etc/systemd/system/cron.service')"), "NoNewPrivileges=yes", "edit --full : une copie complète dans /etc/systemd/system");

@@ -3071,6 +3071,24 @@ function systemctlEdit(h, mots, options, io){
 		}
 		if (contenu.trim() === ""){
 			term.echo("Editing \"" + chemin + "\" canceled: temporary file is empty.");
+			// Comme le vrai systemd : seules les lignes écrites ENTRE les deux commentaires ### comptent. On dit ce qui a été jeté, et où écrire.
+			// Hors de la zone, le modèle ne contient que des commentaires : toute autre ligne a été écrite là par le joueur.
+			var jetees = [];
+			if (!complet){
+				var dansZone = false;
+				lignesDe(enregistre).forEach(function(l){
+					if (l.indexOf("### Anything between here") === 0){ dansZone = true; return; }
+					if (l.indexOf("### Lines below this comment") === 0 || l.indexOf("### Edits below this comment") === 0){ dansZone = false; return; }
+					if (!dansZone && l.trim() !== "" && l.trim().charAt(0) !== "#") jetees.push(l.trim());
+				});
+			}
+			term.echo(C.gris(jetees.length ?
+				"(Tes lignes ont été écrites en dehors de la zone prévue, et systemd les a jetées : " + jetees.join(" | ") + ".\n" +
+				" Seul compte ce qui est ENTRE la ligne « ### Anything between here... » et la ligne « ### Lines below this comment will be discarded ».\n" +
+				" Relance sudo systemctl edit " + info.unite.replace(/\.service$/, "") + ", descends sous la première ligne ###, écris [Service] puis tes protections (une par ligne), et enregistre.)" :
+				"(Rien n'a été écrit entre les deux lignes ###. Il faut y mettre la section et les protections, par exemple :\n" +
+				"   [Service]\n   NoNewPrivileges=yes\n   ProtectSystem=strict\n" +
+				" Relance sudo systemctl edit " + info.unite.replace(/\.service$/, "") + ", écris-les sous la première ligne ###, au-dessus de la seconde, et enregistre.)"));
 			Shell.fin();
 			return;
 		}
