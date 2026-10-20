@@ -977,17 +977,25 @@ function etatReseau(nom){
 }
 
 /* Le texte qui permet de rédiger le rapport : les quatre réponses, chacune sur sa ligne. */
-function rapportComplet(texte){
-	var t = texte.toLowerCase();
+/* Le rapport : chaque ligne est lue avec tolérance (3h30, 03h30, 3:30, 03:30:12 pour l'heure ; adresse exacte, pas un préfixe). */
+function lignesFaussesRapport(texte){
 	function ligne(debut){
 		var l = lignesDe(texte).filter(function(x){ return x.toLowerCase().indexOf(debut) === 0; })[0];
-		return l ? l.toLowerCase() : "";
+		return l ? l.toLowerCase().replace(/^[^:]*:/, " ") : "";
 	}
-	return ligne("adresse du poste").indexOf(ADRESSE_POSTE_CORBEAU) > -1 &&
-		ligne("compte caché").indexOf(COMPTE_CACHE) > -1 &&
-		ligne("port de la porte").indexOf(String(PORT_CORBEAU)) > -1 &&
-		ligne("heure de la première").indexOf(HEURE_PREMIERE) > -1;
+	function heureEgale(l){
+		var m = /(\d{1,2})\s*[h:]\s*(\d{2})/.exec(l), attendue = HEURE_PREMIERE.split(":");
+		return !!m && +m[1] === +attendue[0] && +m[2] === +attendue[1];
+	}
+	var adresse = new RegExp("(^|[^0-9.])" + ADRESSE_POSTE_CORBEAU.replace(/\./g, "\\.") + "($|[^0-9])");
+	var fausses = [];
+	if (!adresse.test(ligne("adresse du poste"))) fausses.push("l'adresse du poste");
+	if (ligne("compte caché").indexOf(COMPTE_CACHE) === -1) fausses.push("le compte caché");
+	if (!new RegExp("(^|[^0-9])" + PORT_CORBEAU + "($|[^0-9])").test(ligne("port de la porte"))) fausses.push("le port");
+	if (!heureEgale(ligne("heure de la première"))) fausses.push("l'heure");
+	return fausses;
 }
+function rapportComplet(texte){ return lignesFaussesRapport(texte).length === 0; }
 
 GameEvents.addListener("read", function(e){
 	if (e.item === AuthLog2 && e.cmd === "zcat") state.complete("c_journaux");
@@ -1093,6 +1101,16 @@ GameEvents.addListener("write", function(e){
 		}
 	}
 	if (nom === "rapport.txt" && e.room === Home && rapportComplet(t) && !state.has("victoireCyber")) state.applyState("victoireCyber");
+	else if (nom === "rapport.txt" && e.room === Home && !state.has("victoireCyber")){
+		// Laurent dit ce qui cloche, sans donner la réponse.
+		var fausses = lignesFaussesRapport(t);
+		var pistes = { "l'adresse du poste": "l'adresse du POSTE du Corbeau, d'où venait sa session sur le labo (who, ou last si elle est coupée), pas celle du labo",
+			"le compte caché": "le compte d'UID 0 qui n'est pas root (dans /etc/passwd de la Citadelle)",
+			"le port": "le port qu'écoutait le faux kworker (sudo ss -tlnp, dans la Racine)",
+			"l'heure": "l'heure de la ligne Accepted pour corbeau dans auth.log.2.gz (zcat), écrite HH:MM, par exemple 03:05" };
+		say("Laurent relit ton rapport. « Presque. Il me manque, ou il y a une erreur sur : " + fausses.join(", ") + ". »\n" +
+			C.gris("(" + fausses.map(function(f){ return pistes[f]; }).join(" ; ") + ". Corrige dans vim, puis :wq.)"));
+	}
 });
 GameEvents.addListener("write", function(e){
 	if (e.vim || e.visudo) return;
