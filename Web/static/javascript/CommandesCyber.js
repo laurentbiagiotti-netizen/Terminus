@@ -809,7 +809,8 @@ Shell.sorts.dig = function(args, io){
 	if (court) return reponses.map(function(r){ return r.v; }).join("\n");
 	return "; <<>> DiG 9.18 <<>> " + args.join(" ") + "\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: " + (reponses.length ? "NOERROR" : "NXDOMAIN") + "\n\n" +
 		";; ANSWER SECTION:\n" + (reponses.length ? reponses.map(function(r){ return completerDroite(r.q, 34) + "300 IN " + completerDroite(r.type, 6) + r.v; }).join("\n") : "(aucune réponse)") +
-		"\n\n;; SERVER: " + ((HOTES["dns"] || {}).ip || "10.0.92.53") + "#53";
+		"\n\n;; SERVER: " + ((HOTES["dns"] || {}).ip || "10.0.92.53") + "#53" +
+		(inverse && !reponses.length && io.tty ? "\n" + C.gris("(Aucune machine de la zone n'a l'adresse " + nom + ". dig NOM donne l'adresse d'un nom (par exemple dig maj.cybersup.lan), puis dig -x sur CETTE adresse dit à quelle machine elle appartient vraiment.)") : "");
 };
 
 /* nmap : quelles machines répondent, et quels ports sont ouverts. Uniquement sur le réseau de l'école. */

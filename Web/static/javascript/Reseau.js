@@ -833,6 +833,17 @@ function verifierReseau(){
 	var manquantes = ZONE_LEGITIME.filter(function(l){ return !zone.some(function(r){ return r.nom === l[0] && r.type === "A" && r.valeur === l[1]; }); });
 	var majPresent = zone.some(function(r){ return r.nom === "maj"; });
 	if (!majPresent && manquantes.length === 0) state.complete("c_dns");
+	// L'étudiant a modifié la zone mais la ligne maj y est encore (gardée, ou remise pour « tester » dig) : c'est elle qu'il faut retirer.
+	var texteZone = ZoneEcole.getText();
+	if (state.zoneEcoleVue === undefined) state.zoneEcoleVue = texteZone;
+	else if (state.zoneEcoleVue !== texteZone){
+		state.zoneEcoleVue = texteZone;
+		if (majPresent && !state.quests["c_dns"] && state.has("reseauOuvert")){
+			say("La radio grésille. C'est Grace : « La ligne maj est toujours dans la zone. dig ne valide rien : il sert seulement à enquêter. " +
+				"C'est la ligne maj qu'il faut retirer de /etc/bind/ecole.zone, et seulement elle. »" +
+				C.gris(" (Dans vim : le curseur sur la ligne maj, dd, puis :wq.)"));
+		}
+	}
 	// La radio reparle à chaque nouvelle version du fichier tant qu'il manque une ligne : une ligne remise dans un format que l'Oracle ne lit pas ne laisse pas l'étudiant sans réponse.
 	else if (manquantes.length && state.texteZoneSignale !== manquantes.join("|") + "#" + ZoneEcole.getText()){
 		state.texteZoneSignale = manquantes.join("|") + "#" + ZoneEcole.getText();

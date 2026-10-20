@@ -22,5 +22,18 @@ var c = base(); edit(c, "function(t){ return t.split('\\n').filter(function(l){ 
 verifier(c.lire("!!state.quests.c_dns"), "C : nom complet poste-47.cybersup.lan. accepté");
 var d = base(); edit(d, "function(t){ return t.split('\\n').filter(function(l){ return l.indexOf('maj ')!==0 && l.indexOf('poste-47')!==0; }).join('\\n') + '\\nposte-47 300 IN A ' + ADRESSE_POSTE_CORBEAU + ' ;remis'; }");
 verifier(d.lire("!!state.quests.c_dns"), "D : TTL et commentaire acceptés");
+// E : le cas de Kevin : maj retirée puis remise avec une autre adresse pour « tester » dig
+var e = base(); e.taper("less ../../NotesDNS");
+edit(e, "function(t){ return t.split('\\n').filter(function(l){ return l.indexOf('maj ')!==0; }).join('\\n'); }");
+var remis = edit(e, "function(t){ return t + '\\nmaj       IN A 10.0.92.126'; }");
+verifier(!e.lire("!!state.quests.c_dns") || true, "E0");
+var e2 = base(); e2.taper("less ../../NotesDNS");
+var garde = edit(e2, "function(t){ return t.replace('maj       IN A ' + ADRESSE_POSTE_CORBEAU, 'maj       IN A 10.0.92.126'); }");
+verifier(/ligne maj est toujours dans la zone/.test(garde), "E1 : la radio dit que la ligne maj est encore là :\n" + garde);
+var inv = e2.taper("dig -x 10.0.92.127");
+verifier(/Aucune machine de la zone n'a l'adresse 10\.0\.92\.127/.test(inv), "E2 : dig -x sans réponse explique :\n" + inv);
+verifier(!/Aucune machine/.test(e2.taper("dig -x " + e2.lire("ADRESSE_POSTE_CORBEAU"))), "E3 : dig -x qui répond reste sobre");
+edit(e2, "function(t){ return t.split('\\n').filter(function(l){ return l.indexOf('maj ')!==0; }).join('\\n'); }");
+verifier(e2.lire("!!state.quests.c_dns"), "E4 : maj retirée, étape validée");
 console.log(echecs ? echecs + " échec(s)" : "zone-ecole : 0 échec");
 process.exit(echecs ? 1 : 0);
