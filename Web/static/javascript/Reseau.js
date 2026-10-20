@@ -833,10 +833,12 @@ function verifierReseau(){
 	var manquantes = ZONE_LEGITIME.filter(function(l){ return !zone.some(function(r){ return r.nom === l[0] && r.type === "A" && r.valeur === l[1]; }); });
 	var majPresent = zone.some(function(r){ return r.nom === "maj"; });
 	if (!majPresent && manquantes.length === 0) state.complete("c_dns");
-	else if (manquantes.length && state.texteZoneSignale !== manquantes.join("|")){
-		state.texteZoneSignale = manquantes.join("|");
+	// La radio reparle à chaque nouvelle version du fichier tant qu'il manque une ligne : une ligne remise dans un format que l'Oracle ne lit pas ne laisse pas l'étudiant sans réponse.
+	else if (manquantes.length && state.texteZoneSignale !== manquantes.join("|") + "#" + ZoneEcole.getText()){
+		state.texteZoneSignale = manquantes.join("|") + "#" + ZoneEcole.getText();
 		say("La radio grésille : « Attention, la zone DNS a perdu des lignes qui servaient : " + manquantes.map(function(l){ return l[0]; }).join(", ") +
-			". Plus personne ne trouve ces machines par leur nom ! Remets-les (par exemple : " + manquantes[0][0] + " IN A " + manquantes[0][1] + "), et ne retire que la ligne maj. »");
+			". Plus personne ne trouve ces machines par leur nom ! Remets-les, une par ligne, sous cette forme exacte : " + manquantes.map(function(l){ return l[0] + " IN A " + l[1]; }).join(" ; ") + ". Et ne retire que la ligne maj. » " +
+			C.gris("(cat /etc/bind/ecole.zone pour vérifier : chaque ligne, c'est NOM IN A ADRESSE.)"));
 	}
 	var pf = state.reseau.parefeu;
 	// Les anciennes sauvegardes ont bloqué le poste avec « ufw deny from » : la règle devient une règle de passage.

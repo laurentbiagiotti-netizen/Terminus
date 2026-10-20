@@ -770,9 +770,16 @@ Shell.sorts.traceroute = function(args, io){
 function zoneDns(){
 	var z = typeof fichierZoneDns === "function" ? fichierZoneDns() : null;
 	if (!z) return [];
+	// Comme BIND : commentaires après « ; », nom court ou complet (poste-47.cybersup.lan.), TTL et classe IN facultatifs, majuscules indifférentes.
 	return lignesDe(z.getText()).map(function(l){
-		var m = /^(\S+)\s+(?:\d+\s+)?IN\s+(A|CNAME|MX|TXT)\s+(.+)$/.exec(l.trim());
-		return m ? { nom: m[1], type: m[2], valeur: m[3].trim() } : null;
+		var ligne = l.replace(/;.*$/, "").trim();
+		if (!ligne || ligne.charAt(0) === "$") return null;
+		var m = /^(\S+)\s+(?:\d+\s+)?(?:IN\s+)?(?:\d+\s+)?(A|CNAME|MX|TXT)\s+(.+)$/i.exec(ligne);
+		if (!m) return null;
+		var nom = m[1].toLowerCase().replace(/\.cybersup\.lan\.?$/, "").replace(/\.$/, "");
+		var type = m[2].toUpperCase(), valeur = m[3].trim();
+		if (type === "A") valeur = valeur.replace(/\.$/, "");
+		return { nom: nom, type: type, valeur: valeur };
 	}).filter(Boolean);
 }
 
