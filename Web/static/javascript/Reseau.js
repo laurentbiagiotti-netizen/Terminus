@@ -650,7 +650,7 @@ var QUETES_CHAPITRE2 = [
 	{ id: "c_dns", titre: "Redresser la boussole de l'Oracle (faux DNS)",
 	  indice: "La zone DNS de l'école est sur la machine dns, dans /etc/bind. Un nom y pointe vers une adresse qui n'a rien à faire là." },
 	{ id: "c_parefeu", titre: "Fermer la Muraille à son nid (pare-feu)",
-	  indice: "Le Corbeau est passé par le labo, mais il venait d'un poste à lui : who, sur le labo, montre d'où venait sa session. C'est ce poste qu'il faut bloquer, sur la machine parefeu." },
+	  indice: "Le Corbeau est passé par le labo, mais il venait d'un poste à lui : who, sur le labo, montre d'où venait sa session (et last, une fois sa session coupée : la colonne de droite garde son adresse). C'est ce poste qu'il faut bloquer, sur la machine parefeu." },
 	{ id: "c_compte", titre: "Détrôner le faux roi (compte d'UID 0)",
 	  indice: "Sur la Citadelle, /etc/passwd liste les comptes. La ProcedureComptes, dans /etc, explique comment repérer un faux root." },
 	{ id: "c_sudo", titre: "Lui retirer ses pouvoirs (sudo)",
@@ -746,7 +746,7 @@ INDICES_CHAPITRE2.c_dns = [
 	"dig maj.cybersup.lan donne une adresse, et dig -x sur cette adresse dit à qui elle est vraiment : poste-47, un simple poste de travail. Le nom maj n'a rien à faire là. La ligne est dans /etc/bind/ecole.zone, à retirer en sudo (et seulement elle).",
 	"ssh dns, sudo vim /etc/bind/ecole.zone, place-toi sur la ligne maj, dd, puis :wq"];
 INDICES_CHAPITRE2.c_parefeu = [
-	"Le pare-feu est désactivé. Il faut bloquer l'adresse du POSTE du Corbeau, celle d'où venait sa session sur le labo (who), et activer le pare-feu. Pas l'adresse du labo : le labo est une machine de l'école qu'il a seulement traversée.",
+	"Le pare-feu est désactivé. Il faut bloquer l'adresse du POSTE du Corbeau, celle d'où venait sa session sur le labo (who tant qu'elle est ouverte, last une fois qu'il est chassé), et activer le pare-feu. Pas l'adresse du labo : le labo est une machine de l'école qu'il a seulement traversée.",
 	"ssh parefeu, sudo ufw route deny from " + ADRESSE_POSTE_CORBEAU + ", puis sudo ufw enable"];
 INDICES_CHAPITRE2.c_compte = [
 	"Un compte d'UID 0 est un root. awk -F: '$3 == 0' /etc/passwd les liste tous.",
@@ -770,7 +770,7 @@ INDICES_CHAPITRE2.c_corbeau = [
 	"Le coffre est une machine : on s'y connecte avec ssh, depuis n'importe où.",
 	"ssh coffre puis less Corbeau"];
 INDICES_CHAPITRE2.c_rapport = [
-	"Les quatre réponses sont dans ton enquête : l'adresse vue par who sur le labo, le compte d'UID 0, le port du faux kworker, l'heure de la ligne Accepted dans auth.log.2.gz.",
+	"Les quatre réponses sont dans ton enquête : l'adresse du poste du Corbeau (who sur le labo, ou last si sa session est déjà coupée), le compte d'UID 0, le port du faux kworker, l'heure de la ligne Accepted dans auth.log.2.gz.",
 	"cp ~/ModeleRapport ~/rapport.txt, vim ~/rapport.txt, place-toi en fin de chaque ligne avec A, écris la réponse, Échap, et :wq à la fin."];
 
 /* ------------------------------------------------------------------ */
@@ -996,7 +996,7 @@ GameEvents.addListener("read", function(e){
 GameEvents.addListener("ufwChange", function(e){
 	if (e.regle && e.regle.de && (e.regle.action === "deny" || e.regle.action === "reject") && adresseDansPlage(e.regle.de, IP_LABO) && !adresseDansPlage(e.regle.de, ADRESSE_POSTE_CORBEAU)){
 		say("La radio grésille. C'est Grace : « Tu viens de bloquer " + e.regle.de + " : c'est le labo de TP, une machine de l'école ! Le Corbeau l'a seulement traversé. " +
-			"Son vrai poste, c'est l'adresse d'où venait sa session sur le labo (who). Retire cette règle : sudo ufw delete N. »");
+			"Son vrai poste, c'est l'adresse d'où venait sa session sur le labo (who, ou last si tu l'as déjà chassé). Retire cette règle : sudo ufw delete N. »");
 	}
 	if (e.regle && (e.regle.action === "allow") && adresseDansPlage(e.regle.de, ADRESSE_POSTE_CORBEAU)){
 		say(C.jaune("Attention : cette règle AUTORISE le poste du Corbeau. Si elle passe avant un deny, c'est elle qui décide."));

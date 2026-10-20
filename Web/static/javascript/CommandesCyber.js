@@ -479,9 +479,14 @@ Shell.sorts.who = function(args, io){
 	var sessions = typeof infoHote().sessions === "function" ? infoHote().sessions() : [];
 	sessions = [{ qui: JOUEUR, tty: "pts/0", depuis: "(" + ((HOTES[Shell.pile_ssh.length ? "cybersup" : Shell.hote()] || {}).ip || "10.0.0.1") + ")" }].concat(sessions);
 	GameEvents.fire({ type: "who", host: Shell.hote(), sessions: sessions });
-	return sessions.map(function(s){
+	var sortie = sessions.map(function(s){
 		return completerDroite(s.qui, 10) + completerDroite(s.tty, 8) + dateDuJour() + " " + (s.heure || "09:12") + " " + s.depuis;
 	}).join("\n");
+	// Sur le labo, une fois le Corbeau chassé, who ne le montre plus : last garde la trace de sa session et de son adresse.
+	if (io && io.tty && Shell.hote() === "labo" && state.quests && state.quests["c_labo"] && !state.quests["c_parefeu"] && !sessions.some(function(s){ return s.qui === "corbeau"; })){
+		sortie += "\n" + C.gris("(Le Corbeau n'est plus connecté : who ne montre que les sessions ouvertes. last montre aussi les sessions passées, et d'où elles venaient.)");
+	}
+	return sortie;
 };
 
 /* Les fichiers et les connexions ouverts par les processus (lsof). */
