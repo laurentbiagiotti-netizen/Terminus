@@ -44,6 +44,10 @@ Shell.cheminAffiche = function(lieu){
 /* Les processus de la machine courante : tous ceux de ses lieux, ou ceux du lieu ici. */
 Shell.procsDeLHote = function(){
 	var racine = racineDe(current_room);
+	// La Citadelle est une seule machine, de sa grande salle jusqu'à la Racine : ss et ps y voient tous ses processus, kill aussi.
+	if (!racine && typeof Citadelle !== "undefined"){
+		for (var l = current_room, garde = 0; l && garde++ < 100; l = l.parents[0]){ if (l === Citadelle){ racine = Citadelle; break; } }
+	}
 	if (!racine) return current_room.procs.map(function(p){ return { proc: p, lieu: current_room }; });
 	var liste = [];
 	(function parcourir(lieu){
