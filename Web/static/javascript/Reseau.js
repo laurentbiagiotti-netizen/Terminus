@@ -634,7 +634,7 @@ var QUETES_CHAPITRE2 = [
 	{ id: "c_racine", titre: "Entrer dans la Racine (devenir root)",
 	  indice: "Une porte dérobée, c'est un programme : il s'exécute." },
 	{ id: "c_ecoute", titre: "Briser l'oreille du mage (port en écoute)",
-	  indice: "Grace, à la radio, voit du trafic sur un port inhabituel. Un sort montre quel processus écoute sur quel port." },
+	  indice: "Grace, à la radio, voit du trafic sur le port " + PORT_CORBEAU + ". Sur la Citadelle (de n'importe quel dossier) : sudo ss -tlnp montre quel processus écoute sur ce port, et son PID (pid=...). Puis sudo kill -9 PID : un simple kill ne suffit pas, il s'accroche." },
 	{ id: "c_journaux", titre: "Retrouver sa première venue (journaux)",
 	  indice: "Les journaux de la Citadelle sont dans son dossier var/log. Les plus anciens sont compressés. Le CarnetDuVeilleur explique comment les lire." },
 	{ id: "c_carto", titre: "Dresser la carte du royaume (nmap)",
@@ -723,7 +723,7 @@ INDICES_CHAPITRE2.c_racine = [
 	"Dans le Caveau : ./.porte puis cd Racine"];
 INDICES_CHAPITRE2.c_ecoute = [
 	"ss -tlnp montre les ports en écoute et le PID du processus. Les processus de root ne s'affichent qu'avec sudo.",
-	"Dans la Racine : sudo ss -tlnp, repère le PID sur le port " + PORT_CORBEAU + ", puis sudo kill -9 PID"];
+	"Sur la Citadelle, de n'importe quel dossier : sudo ss -tlnp, repère le PID (pid=...) sur la ligne du port " + PORT_CORBEAU + ", puis sudo kill -9 PID"];
 INDICES_CHAPITRE2.c_journaux = [
 	"auth.log.2.gz est une archive gzip : zcat la lit sans la décompresser. Cherche la ligne Accepted avec grep.",
 	"ssh citadelle, cd var/log, puis zcat auth.log.2.gz | grep Accepted"];
@@ -781,7 +781,7 @@ var CONSEILS_DE_GRACE = {
 	c_message: "Le gardien est corrompu ! Sa dernière ligne, charge=, cache un message en base64. Déballe-le : base64 -d.",
 	c_suid: "Le mage parle d'une porte et d'un bit. L'Inscription du Caveau t'apprend à les chercher.",
 	c_racine: "Tu as trouvé sa porte. Une porte dérobée est un programme : lance-la (./.porte), puis descends (cd Racine).",
-	c_ecoute: "Mes sondes voient une connexion vers la Citadelle, sur le port " + PORT_CORBEAU + ". Qui l'écoute ? sudo ss -tlnp. Repasse lire la Radio, je t'apprends le sort.",
+	c_ecoute: "Mes sondes voient une connexion vers la Citadelle, sur le port " + PORT_CORBEAU + ". Qui l'écoute ? sudo ss -tlnp te donne son PID, puis sudo kill -9 PID l'abat. Repasse lire la Radio, je t'apprends le sort.",
 	c_journaux: "L'oreille est brisée. Par où est-il entré ? Les journaux de la Citadelle sont dans var/log, les vieux sont compressés.",
 	c_carto: "Il venait de " + IP_LABO + ", une autre machine de l'école. Le MementoReseau, dans la SalleReseau, apprend à dresser la carte.",
 	c_labo: "C'est l'Atelier des Apprentis, le labo ! Va voir qui y traîne encore : ssh labo, et le TableauDuLabo.",
