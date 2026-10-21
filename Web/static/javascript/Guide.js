@@ -754,10 +754,10 @@ var CINEMATIQUES = {
 	9: { titre: "Chapitre 9 · La Chronique d'Éternité", plans: [
 		{ image: "cine9_empreinte.gif", texte: "Une empreinte de clé, deux initiales : P.G. La piste ne mène pas au large. Elle mène sous l'école." },
 		{ image: "cine9_tour_horloge.gif", texte: "Sous la vieille tour de l'horloge, un escalier que personne n'a descendu depuis des années." },
-		{ image: "cine9_chronique.gif", texte: "La Chronique : le grimoire où tout ce qui arrive à l'école est scellé. Chaque page, un sceau. Chaque sceau, une empreinte." },
+		{ image: "cine9_chronique.gif", texte: "La Chronique : le grimoire où tout ce qui arrive à l'école est scellé. Chaque page, un sceau." },
 		{ image: "cine9_page_reecrite.gif", texte: "Cette nuit, une page s'est réécrite toute seule. Dans la nouvelle version, la flotte noire était notre alliée." },
-		{ image: "cine9_sablier.gif", texte: "Le Grand Sablier coule vers le haut. À l'aube du quatrième jour, la Grande Synchronisation : sa version partira vers tous les Royaumes." },
-		{ image: "cine9_salles.gif", texte: "Quatorze portes, quatorze maîtres du temps. Tu ne sais pas encore ce qu'est un commit. Dans trois jours, tu seras Chronomancien." }] }
+		{ image: "cine9_sablier.gif", texte: "À l'aube du quatrième jour, la Grande Synchronisation enverra sa version à tous les Royaumes." },
+		{ image: "cine9_salles.gif", texte: "Quatorze maîtres du temps. Tu ne sais pas ce qu'est un commit. Dans trois jours, Chronomancien." }] }
 };
 /* La carte du chapitre 1 (les autres sont dans SCENES, à l'entrée de chaque chapitre). */
 var SCENE_CHAPITRE_1 = { image: "item_convocation.gif", titre: "Chapitre 1 · Terminus", chapitre: 1,

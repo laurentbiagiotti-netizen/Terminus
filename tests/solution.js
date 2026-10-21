@@ -123,12 +123,21 @@ if (jeu.lire("state.xp9") !== jeu.lire("state.xpMax9()")){
 }
 if (jeu.lire("state.noteTexte(9)") !== "20 / 20") problemes.push("le chapitre 8 n'a pas 20 sur 20 : " + jeu.lire("state.noteTexte(9)"));
 if (jeu.lire("sCh8().rang") !== 5) problemes.push("le chapitre 8 : le joueur n'est pas Amiral (rang " + jeu.lire("sCh8().rang") + ")");
+// Le chapitre 9 (la Chronothèque, numéro 10 dans le code) : enchaîné après le Grand Port, il doit mener au rapport contresigné, à 20 sur 20, Chronomancien.
+if (!jeu.lire("state.quests.n9_rapport")) problemes.push("le chapitre 9 (la Chronothèque) n'atteint pas le rapport contresigné (n9_rapport) ; dernier lieu : " + jeu.lire("current_room.room_name"));
+if (!jeu.lire("state.has('victoireCh9')")) problemes.push("le chapitre 9 : pas de victoire (victoireCh9)");
+var manque10 = jeu.lire("QUETES_CH9.concat(QUETES_SECONDAIRES_CH9).filter(function(q){ return !state.quests[q.id]; }).map(function(q){ return q.id; }).join(' ')");
+if (manque10) problemes.push("étapes ou défis du chapitre 9 manquants : " + manque10);
+if (!jeu.lire("state.has('platine_ch9')")) problemes.push("le badge platine du chapitre 9 n'est pas gagné");
+if (jeu.lire("state.xp10") !== jeu.lire("state.xpMax10()")) problemes.push("le chapitre 9 n'atteint pas le score maximal : " + jeu.lire("state.xp10") + " sur " + jeu.lire("state.xpMax10()"));
+if (jeu.lire("state.noteTexte(10)") !== "20 / 20") problemes.push("le chapitre 9 n'a pas 20 sur 20 : " + jeu.lire("state.noteTexte(10)"));
+if (jeu.lire("rangCh9()") !== 5) problemes.push("le chapitre 9 : le joueur n'est pas Chronomancien (rang " + jeu.lire("rangCh9()") + ")");
 var annexes = jeu.lire("QUETES_ANNEXES.filter(function(a){ return !state.quests[a.id]; }).map(function(a){ return a.id; }).join(' ')");
 if (annexes) problemes.push("quêtes annexes manquantes : " + annexes);
-[["ami_ch2", "Ami du campus"], ["ami_ch3", "Ami de la Crypte"], ["ami_ch4", "Ami de l'Académie"], ["ami_ch5", "Ami du Bastion"], ["ami_ch6", "Ami de Lumen"], ["ami_ch7", "Ami de Port-Aube"], ["ami_ch8", "Ami du Grand Port"]].forEach(function(b){
+[["ami_ch2", "Ami du campus"], ["ami_ch3", "Ami de la Crypte"], ["ami_ch4", "Ami de l'Académie"], ["ami_ch5", "Ami du Bastion"], ["ami_ch6", "Ami de Lumen"], ["ami_ch7", "Ami de Port-Aube"], ["ami_ch8", "Ami du Grand Port"], ["ami_ch9", "Ami de la Chronothèque"]].forEach(function(b){
 	if (!jeu.lire("state.has('" + b[0] + "')")) problemes.push("le badge " + b[1] + " n'est pas gagné");
 });
-if (jeu.lire("QUETES_ANNEXES.length") !== 42) problemes.push("il devrait y avoir 42 quêtes annexes, il y en a " + jeu.lire("QUETES_ANNEXES.length"));
+if (jeu.lire("QUETES_ANNEXES.length") !== 48) problemes.push("il devrait y avoir 48 quêtes annexes, il y en a " + jeu.lire("QUETES_ANNEXES.length"));
 if (jeu.lire("state.xp") !== jeu.lire("state.xpMax()")){
 	problemes.push("la solution n'atteint pas le score maximal. Sorts jamais lancés : [" +
 		jeu.lire("ORDRE_DES_SORTS.filter(function(x){ return !state.usages[x]; }).join(', ')") + "] ; lieux jamais visités : [" +
