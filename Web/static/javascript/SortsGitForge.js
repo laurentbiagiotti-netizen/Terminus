@@ -285,9 +285,21 @@ Shell.sorts.gh = function(args, io){
 					var br = gBrancheCourante(c.R), mien = c.f.prs.filter(function(x){ return x.tete === br && x.etat === "OPEN"; })[0];
 					return "\nRelevant pull requests in " + gForgeNom(c.D) + "\n\nCurrent branch\n  " + (mien ? "#" + mien.n + "  " + mien.titre + " [" + mien.tete + "]" : "There is no pull request associated with [" + br + "]") + "\n\nCreated by you\n  " + (c.f.prs.filter(function(x){ return x.auteur === gJoueur() && x.etat === "OPEN"; }).map(function(x){ return "#" + x.n + "  " + x.titre + " [" + x.tete + "]"; }).join("\n  ") || "You have no open pull requests") + "\n\nRequesting a code review from you\n  " + (c.f.prs.filter(function(x){ return x.auteur !== gJoueur() && x.etat === "OPEN"; }).map(function(x){ return "#" + x.n + "  " + x.titre + " [" + x.tete + "]"; }).join("\n  ") || "You have no pull requests to review");
 				}
-				op = gOptions(args.slice(2), { "-c|--comments": "b", "-w|--web": "b" }, "pr view");
+				op = gOptions(args.slice(2), { "-c|--comments": "b", "-w|--web": "b", "--json": "v" }, "pr view");
 				var p = gGhPR(c, op.p[0]);
 				if (p.etat === "OPEN") gGhBloquant(c, p);
+				var fusionnable = gForgeFusionnable(c.D, p);
+				p.mergeable = fusionnable;
+				if (op.o.json !== undefined){
+					var champs = { number: p.n, title: p.titre, state: p.etat, mergeable: fusionnable, headRefName: p.tete, baseRefName: p.base, isDraft: !!p.brouillon };
+					var demandes = String(op.o.json).split(",").map(function(x){ return x.trim(); }).filter(Boolean);
+					var inconnus = demandes.filter(function(x){ return !champs.hasOwnProperty(x); });
+					if (inconnus.length || !demandes.length) throw new GhErreur("Unknown JSON field: \"" + (inconnus[0] || "") + "\"\nAvailable fields:\n  " + Object.keys(champs).sort().join("\n  "), 1);
+					var objet = {};
+					demandes.slice().sort().forEach(function(x){ objet[x] = champs[x]; });
+					gGhEvenement(c, "pr view", { pr: p.n, json: demandes, mergeable: fusionnable });
+					return JSON.stringify(objet, null, 2);
+				}
 				var commitsPR = gParcours(c.D, [gRef(c.D, "refs/heads/" + p.tete) || ""].filter(Boolean), [gRef(c.D, "refs/heads/" + p.base)].filter(Boolean));
 				var ch = gRef(c.D, "refs/heads/" + p.tete) && gRef(c.D, "refs/heads/" + p.base) ? gComparerCartes(gAplatir(c.D, gCommit(c.D, gBaseFusion(c.D, gRef(c.D, "refs/heads/" + p.base), gRef(c.D, "refs/heads/" + p.tete)) || gRef(c.D, "refs/heads/" + p.base)).arbre), gAplatir(c.D, gCommit(c.D, gRef(c.D, "refs/heads/" + p.tete)).arbre)) : [];
 				var n = gCompteHunks([].concat.apply([], ch.map(function(x){ return gHunks(gLignes(x.a ? gObjet(c.D, x.a.h).c : ""), gLignes(x.b ? gObjet(c.D, x.b.h).c : ""), 0); })));
@@ -298,8 +310,9 @@ Shell.sorts.gh = function(args, io){
 					p.revues.forEach(function(x){ if (x.corps) lignes.push("", x.auteur + " " + { APPROVED: "approved", CHANGES_REQUESTED: "requested changes", COMMENTED: "reviewed" }[x.etat] + " • " + gGhIl(x.date, maintenant), "  " + x.corps.replace(/\n/g, "\n  ")); });
 					p.commentaires.forEach(function(x){ lignes.push("", x.auteur + " • " + gGhIl(x.date, maintenant), "  " + x.corps.replace(/\n/g, "\n  ")); });
 				}
+				if (p.etat === "OPEN" && fusionnable === "CONFLICTING") lignes.push("", "This branch has conflicts that must be resolved" + C.gris("  (la forge : cette requête est en conflit avec " + p.base + " ; fusionne " + p.base + " dans ta ligne, ou rebase-la, tranche, puis pousse)"));
 				lignes.push("", "View this pull request on the forge: " + gForgeUrl(c.D, "/pull/" + p.n));
-				gGhEvenement(c, "pr view", { pr: p.n });
+				gGhEvenement(c, "pr view", { pr: p.n, mergeable: fusionnable });
 				return lignes.join("\n");
 			}
 			if (s2 === "diff"){
@@ -425,6 +438,18 @@ Shell.sorts.gh = function(args, io){
 		throw e;
 	}
 };
+/* La requête peut-elle être fusionnée sans paradoxe ? « MERGEABLE », « CONFLICTING », ou « UNKNOWN » (une ligne disparue, une requête close). */
+function gForgeFusionnable(D, pr){
+	try {
+		if (pr.etat !== "OPEN") return "UNKNOWN";
+		var hb = gRef(D, "refs/heads/" + pr.base), ht = gRef(D, "refs/heads/" + pr.tete);
+		if (!hb || !ht) return "UNKNOWN";
+		if (gEstAncetre(D, hb, ht) || gEstAncetre(D, ht, hb)) return "MERGEABLE";
+		var base = gBaseFusion(D, hb, ht);
+		var res = gFusionArbres(D, base ? gAplatir(D, gCommit(D, base).arbre) : {}, gAplatir(D, gCommit(D, hb).arbre), gAplatir(D, gCommit(D, ht).arbre), ["base", "tete", "ancetre"], "merge");
+		return res.conflits.length ? "CONFLICTING" : "MERGEABLE";
+	} catch (e){ return "UNKNOWN"; }
+}
 function gGhChecksCourt(p){ var v = p.verifications || []; if (!v.length) return "No checks"; var ko = v.filter(function(x){ return x.etat === "failure"; }).length; return ko ? ko + " failing check" + (ko > 1 ? "s" : "") : "Checks passing"; }
 /* La fusion côté forge : un commit de fusion, un squash, ou un rebase des commits de la PR. Renvoie le nouveau hash de la base. */
 function gForgeFusionner(D, pr, methode, hBase, hTete, sujet, corps){

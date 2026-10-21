@@ -149,13 +149,14 @@ var CHAPITRE = ["Chronique.js", "Chapitre9.js", "Chronotheque.js", "HabitantsChr
 	verifier(avant.length > 220, "socle des chapitres 1 à 8 : " + avant.length + " sorts");
 	egal(avant.filter(function(s){ return jeu.lire("state.knows(" + JSON.stringify(s) + ")") !== true; }).length, 0, "socle acquis au départ direct");
 	egal(jeu.lire("QUETES_CH9.length"), 44, "44 étapes");
-	egal(jeu.lire("QUETES_SECONDAIRES_CH9.length"), 47, "47 défis (42 des maîtres, 5 d'honneur)");
+	egal(jeu.lire("QUETES_SECONDAIRES_CH9.length"), 89, "89 défis (84 des maîtres, 5 d'honneur)");
+	egal(jeu.lire("SALLES_CH9.filter(function(s){ return idsDefisSalleCh9(s.cle).length !== 6; }).map(function(s){ return s.cle; }).join(' ')"), "", "six défis par maître");
 	egal(jeu.lire("SALLES_CH9.length"), 14, "quatorze salles");
 	egal(jeu.lire("QUETES_CH9.filter(function(q){ return !/^n9_/.test(q.id); }).length"), 0, "les étapes s'appellent n9_*");
 	egal(jeu.lire("QUETES_SECONDAIRES_CH9.filter(function(q){ return !/^s_n9_/.test(q.id); }).length"), 0, "les défis s'appellent s_n9_*");
 	egal(jeu.lire("chapitreDeQuete('s_n9_rev_parse')"), 10, "chapitreDeQuete d'un défi");
 	egal(jeu.lire("chapitreDeQuete('a9_worktree')"), 10, "chapitreDeQuete d'une annexe");
-	egal(jeu.lire("state.xpMax10()"), 7060, "xpMax10");
+	egal(jeu.lire("state.xpMax10()"), 9160, "xpMax10");
 	egal(jeu.lire("QUETES_CH9[QUETES_CH9.length - 1].id"), "n9_rapport", "la dernière étape est le rapport de la bataille du temps");
 	egal(jeu.lire("Object.keys(INDICES_CH9).length"), 44, "un indice par étape (INDICES_CH9)");
 	egal(jeu.lire("state.xp10"), 105, "l'arrivée rapporte ses 100 XP (et le lieu ses 5) au chapitre 9");
@@ -230,7 +231,7 @@ var CHAPITRE = ["Chronique.js", "Chapitre9.js", "Chronotheque.js", "HabitantsChr
 	contient(g, "Gamaliel", "Gamaliel se présente");
 	contient(g, "git config --global user.name", "Gamaliel donne la syntaxe");
 	vrai(jeu, "state.knows('git')", "Gamaliel apprend git");
-	verifier((g.match(/\[ \]/g) || []).length >= 3, "Gamaliel montre ses défis à faire");
+	verifier((g.match(/\[ \]/g) || []).length >= 6, "Gamaliel montre ses six défis à faire");
 	jeu.taper("cd ..");
 	contient(jeu.taper("cat SalleDesParadoxes/Kenyonn"), "Cette salle s'ouvre aux Archivistes", "Kenyonn attend un Archiviste");
 	contient(jeu.taper("cat HautConseil/Amine"), "Gardien", "Amine attend un Gardien du Temps");

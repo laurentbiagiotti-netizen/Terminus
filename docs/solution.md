@@ -3557,8 +3557,9 @@ Tout est validé sur l'état réel des dépôts : un `.gitignore` qui ne retire 
 | `<pr-poison>` | le numéro de la requête du scribe inconnu (`gh pr list`, à l'épreuve V) |
 | `<integrite>` | l'intégrité de la Chronique après la bataille (`sablier`) |
 | `<empreinte>` | l'empreinte de la clé qui a signé les faux commits (`git log --show-signature`, la ligne « with ED25519 key SHA256:... ») |
+| `<stash-jete>` | le hash d'une besace jetée, aux défis de William (`git stash drop` l'affiche entre parenthèses ; `git fsck --unreachable` la retrouve) |
 
-Les 47 défis de la Chronothèque (quêtes secondaires `s_n9_*`, 50 XP chacun) : trois par maître, révélés en le lisant, et cinq défis d'honneur de Laurent : Scribe avant la première nuit (J1 22:00), Gardien du Temps avant la fin du J2, la bataille gagnée avant l'aube du J4, le rapport remis sans avoir acheté d'indice, et, après la victoire, l'empreinte du Faussaire consignée dans le rapport avec la machine qui porte la même clé.
+Les 89 défis de la Chronothèque (quêtes secondaires `s_n9_*`, 50 XP chacun) : six par maître, révélés en le lisant, et cinq défis d'honneur de Laurent : Scribe avant la première nuit (J1 22:00), Gardien du Temps avant la fin du J2, la bataille gagnée avant l'aube du J4, le rapport remis sans avoir acheté d'indice, et, après la victoire, l'empreinte du Faussaire consignée dans le rapport avec la machine qui porte la même clé.
 
 ### 91. La Chronothèque, Laurent et l'Ordre
 
@@ -3966,27 +3967,44 @@ echo "Signature : l'empreinte <empreinte> est celle de la clé du Bastion." >> ~
 
 ### 105. Les défis des maîtres, salle par salle
 
-Les 42 défis des salles (les cinq défis d'honneur sont déjà gagnés par le chemin ci-dessus), dans l'ordre des maîtres ; la solution les fait après la victoire. Les Sceaux : la version, un alias, une adresse pour un seul grimoire. L'Autel : `diff --staged` (déjà vu aux Runes de Garde), `check-ignore -v`, `git mv`. La Crypte : `ls-tree -r`, `rev-parse`, `count-objects -v`. L'Oracle : un log à sa façon, `--grep`, `--stat`. Les Contre-sorts : `restore --source`, `--amend --no-edit`, un `revert --no-commit` qu'on défait aussitôt (`restore --staged --worktree`). Les Ombres : `HEAD@{2}`, le reflog d'une seule branche, `ORIG_HEAD` (laissé par le `reset --hard` des expériences). Les Lignes : `branch -m`, `--merged`, `switch -`. Les Paradoxes : le style `zdiff3`, puis un paradoxe qu'on fuit (`merge --abort`). La Besace : `stash list`, `stash show -p`, `tag -l`. Les Prophéties : un rebase qui bute sur un paradoxe, qu'on abandonne (`--abort`), qu'on reprend et qu'on tranche (`--continue`), puis un sceau `--fixup` fondu par `--autosquash`. Les Cartes : `branch -a`, `log main..LIGNE` (déjà vu à l'Atelier), `--left-right A...B`. Les Portes : `remote show`, un menhir poussé, `fetch --prune`. La Garde : une rune `commit-msg`, `verify-commit`, et `%G?` qui marque d'un N les sceaux sans cire. Le Conseil : `pr view` (déjà vu), un commentaire, le registre des golems.
+Les 84 défis des salles, six par maître (les cinq défis d'honneur sont déjà gagnés par le chemin ci-dessus), dans l'ordre des maîtres ; la solution les fait après la victoire, sans rien pousser sur `main` de royaume (la Chronique reste à 100). Les Sceaux : la version, un alias, `pull.rebase true` (tirer sans nœud), un dépôt nu `miroir.git` (`init --bare`, il resservira aux Portes), une adresse pour un seul grimoire, puis un seul réglage lu avec `config --get`. La Crypte, dans le même grimoire : `ls-tree -r`, `rev-parse`, `count-objects -v`, le poids d'une pierre (`cat-file -s`), l'index vu d'en dessous (`ls-files -s`) et tous les noms et leurs hash (`show-ref`). L'Autel : `check-ignore -v`, `git mv`, un changement reposé par `add -u` (le journal `cierges.log`, ignoré et non suivi, n'est pas pris) et scellé avec un message conventionnel (`feat:`), puis un `.gitattributes` scellé (`chore:`) que `check-attr -a` relit (`text`, `eol=lf`, et la macro `binary` qui retire `diff`, `merge` et `text`). L'Oracle : un log à sa façon, `--grep`, `--stat`, l'histoire de la seule ligne 12 de `lois.md` (`log -L 12,12:lois.md` : le commit de pg, rien d'autre), les commits d'une période (`--since`, `--until`), et, dans l'autel, l'histoire de `offrandes.py` d'avant son renommage (`log --follow`). Les Contre-sorts : `restore --source`, `--amend --no-edit`, un `revert --no-commit` qu'on défait aussitôt (`restore --staged --worktree`), une ligne écrite trop vite défaite morceau par morceau (`restore -p`, `y`), le dernier commit rendu à son nom (`commit --amend --reset-author --no-edit`), et, dans `lignes`, la fusion de `sceau`, déjà publiée, défaite sans réécrire (`revert -m 1`). Les Ombres : `HEAD@{2}`, le reflog d'une seule branche, le Livre lu comme un journal (`log -g`) et daté (`reflog --date=iso`), une besace jetée (`stash drop` affiche son hash) puis rendue (`stash apply <stash-jete>`), et `ORIG_HEAD` (laissé par le `reset --hard` des expériences). Les Lignes : `branch -m`, `--merged`, `switch -`, une branche réunie effacée sans risque (`branch -d carte`), les branches qui portent un commit (`branch --contains legende`), puis la branche `etoiles` réunie en un seul commit (`merge --squash`, puis `commit`, et `branch -D` : après un squash, Git ne la voit pas réunie). Les Paradoxes : le style `zdiff3`, un paradoxe qu'on fuit (`merge --abort`), puis qu'on rouvre : ses trois versions (`ls-files -u` : 1 l'ancêtre, 2 la nôtre, 3 l'autre), la version de l'autre prise d'un geste (`checkout --theirs`), et un second paradoxe tranché d'avance pour notre ligne (`merge -X ours`). La Besace : `stash list`, `stash show -p`, `tag -l`, puis le verre rouge rangé avec l'esquisse (`stash push -u`) et rouvert sur une branche neuve (`stash branch`), la relique rapportée avec sa provenance (`cherry-pick -x`), la branche réunie à `main`, et un tag de version sémantique : une fonction ajoutée, c'est une version mineure (`v1.1.0`). Les Prophéties : un rebase qui bute sur un paradoxe, qu'on abandonne (`--abort`), qu'on reprend et qu'on tranche (`--continue`), un commit `--fixup` fondu par `--autosquash`, puis la branche `ecume` : rejouée sur `tempete` en éprouvant chaque commit (`rebase -x`), transplantée sur `main` (`rebase --onto main tempete ecume`), et retouchée en chemin (`rebase -i`, le mot `edit` sur « feat: la mer blanche », `commit -a --amend --no-edit`, `rebase --continue`). Les Cartes : `--left-right A...B`, le carrefour de deux branches (`merge-base`), puis, dans `lignes`, la grand-route seule (`log --first-parent`) et les branches de la plus fraîche à la plus ancienne (`for-each-ref --sort=-committerdate`). Les Portes : `branch -a`, `remote show`, un tag poussé, `fetch --prune`, ce que porte royaume (`ls-remote`), puis dans `page-arrachee`, une seconde porte vers `miroir.git` (`remote add`, et un push), et une branche poussée sur `page-arrachee.git` puis effacée du dépôt partagé (`push origin --delete` ; royaume, lui, refuse désormais d'effacer une branche : c'est le rempart). La Garde : une rune `commit-msg`, `verify-commit`, `%G?` qui marque d'un N les commits sans signature, une rune `pre-push` qui refuse d'envoyer une branche `wip` (essayée sur `wip-essai` : rien ne part ; elle laisse passer `main`, dont la bataille a besoin), puis un tag signé de sa clé (`tag -s v1.0.0`) et sa vérification (`verify-tag`). Le Conseil : `pr view` (déjà vu), un commentaire, le registre des golems, la requête de Kévin essayée en local (`gh pr checkout`), puis une requête à soi : la branche `gardiens`, partie de l'ancienne version `v-grand-port`, pose un `.github/CODEOWNERS` (chaque page a ses relecteurs) et une ligne à la Chronique ; poussée et présentée, la forge la dit en conflit avec `main` (`gh pr view --json mergeable` : `CONFLICTING`) ; on fusionne `origin/main` dans la branche, on tranche en gardant les deux côtés (on retire les marqueurs), on scelle, on pousse, et la requête redevient fusionnable (`MERGEABLE`). On revient sur `main`, propre.
 
 ```
 cd ~/Cybersup/Chronotheque
 git --version
 git config --global alias.lg "log --oneline --graph --all"
+git config --global pull.rebase true
+git init --bare ~/chronotheque/miroir.git
 cd ~/chronotheque/premier-sceau
 git config --local user.email "<moi>@premier-sceau.lan"
 git config user.email
+git config --get user.name
 git ls-tree -r HEAD
 git rev-parse HEAD
 git count-objects -v
+git cat-file -s HEAD:grimoire.md
+git ls-files -s
+git show-ref
 cd ~/chronotheque/autel
 touch cierges.log
 git check-ignore -v cierges.log
 git mv autel.py offrandes.py
 git commit -m "autel: renomme l'autel en offrandes"
+echo 'OFFRANDES_DU_SOIR = ["pain", "sel"]' >> offrandes.py
+git add -u
+git commit -m "feat: ajoute les offrandes du soir"
+printf '*.py text eol=lf\n*.pyc binary\n' > .gitattributes
+git add .gitattributes
+git commit -m "chore: dit à Git comment traiter les offrandes"
+git check-attr -a offrandes.py __pycache__/autel.cpython-312.pyc
 cd ~/chronotheque/annales
 git log --format='%h %an %s' -5
 git log --grep=lois --oneline
 git log --stat -2
+git log -L 12,12:lois.md
+git log --since=2026-09-25 --until=2026-09-28 --oneline
+cd ~/chronotheque/autel
+git log --oneline --follow offrandes.py
 cd ~/chronotheque/contresorts
 git restore --source=HEAD~2 sorts.txt
 git restore sorts.txt
@@ -3995,9 +4013,21 @@ git add sorts.txt
 git commit --amend --no-edit
 git revert --no-commit HEAD~1
 git restore --staged --worktree sceau.txt
+echo "- une ligne écrite trop vite" >> sorts.txt
+git restore -p sorts.txt
+git commit --amend --reset-author --no-edit
+cd ~/chronotheque/lignes
+git revert -m 1 --no-edit HEAD
 cd ~/chronotheque/livre-ombres
 git show HEAD@{2}
 git reflog show main
+git log -g --oneline -5
+git reflog --date=iso -3
+echo "Une ombre de passage." >> livre.txt
+git stash
+git stash drop
+git stash apply <stash-jete>
+git restore livre.txt
 cd ~/chronotheque/experiences
 git log --oneline -1 ORIG_HEAD
 cd ~/chronotheque/lignes
@@ -4005,6 +4035,18 @@ git branch -m essai essai-du-soir
 git branch --merged
 git switch carte
 git switch -
+git branch -d carte
+git branch --contains legende
+git switch -c etoiles
+echo "L'étoile du berger." > etoiles.txt
+git add etoiles.txt
+git commit -m "feat: l'étoile du berger"
+echo "L'étoile polaire." >> etoiles.txt
+git commit -am "feat: l'étoile polaire"
+git switch main
+git merge --squash etoiles
+git commit -m "feat: les étoiles du destin"
+git branch -D etoiles
 cd ~/chronotheque/paradoxe
 git config --global merge.conflictStyle zdiff3
 git switch -c brouille
@@ -4015,12 +4057,32 @@ sed -i 's/se retourne/se fige/' prophetie.txt
 git commit -am "prophetie: le sablier se fige"
 git merge brouille
 git merge --abort
+git merge brouille
+git ls-files -u
+git checkout --theirs prophetie.txt
+git add prophetie.txt
+git commit --no-edit
+git switch -c eclipse
+sed -i 's/se brise/se voile/' prophetie.txt
+git commit -am "prophetie: le sablier se voile"
+git switch main
+sed -i 's/se brise/se renverse/' prophetie.txt
+git commit -am "prophetie: le sablier se renverse"
+git merge -X ours --no-edit eclipse
 cd ~/chronotheque/besace
 git stash push -m "vitrail, encore"
 git stash list
 git stash show -p
 git stash pop
 git tag -l "v*"
+git stash push -u -m "le verre rouge"
+git stash branch verre-rouge
+git add vitrail.txt esquisse.txt
+git commit -m "feat: le verre rouge et l'esquisse de l'étoile"
+git cherry-pick -x correctifs~1
+git switch main
+git merge --no-ff --no-edit verre-rouge
+git tag -a v1.1.0 -m "Le vitrail rouge : une nouvelle fonction, une version mineure"
 cd ~/chronotheque/prophetie
 git switch -c tempete main~3
 echo "Le vent d'est : il apporte la tempête." >> vents.txt
@@ -4034,19 +4096,70 @@ git rebase --continue
 sed -i 's/et la tempête/et la grande tempête/' vents.txt
 git commit -a --fixup HEAD
 git rebase -i --autosquash main
+git switch -c ecume main
+echo "La mer blanche." > ecume.txt
+git add ecume.txt
+git commit -m "feat: la mer blanche"
+git rebase -x "grep -q vent vents.txt" tempete
+git rebase --onto main tempete ecume
+git rebase -i main
+echo "Elle brille au soleil." >> ecume.txt
+git commit -a --amend --no-edit
+git rebase --continue
 git log --left-right --oneline main...brouillon
+git merge-base main brouillon
+cd ~/chronotheque/lignes
+git log --first-parent --oneline
+git for-each-ref --sort=-committerdate refs/heads
 cd ~/chronotheque/chronique
 git branch -a
 git remote show origin
 git tag -a v-chronomancien -m "La Chronique tient"
 git push origin v-chronomancien
 git fetch --prune
+git ls-remote origin
+cd ~/chronotheque/page-arrachee
+git remote add miroir ../miroir.git
+git push miroir main
+git switch -c brouillon-de-carte
+git push -u origin brouillon-de-carte
+git push origin --delete brouillon-de-carte
+git switch main
+git branch -D brouillon-de-carte
+cd ~/chronotheque/chronique
 printf '#!/bin/bash\nif [ $(head -1 "$1" | wc -c) -lt 10 ]; then echo "Rune : message trop court."; exit 1; fi\n' > .git/hooks/commit-msg
 chmod +x .git/hooks/commit-msg
 git verify-commit HEAD~3
 git log --format='%h %G? %s' -6
+printf '#!/bin/bash\nwhile read ref sha dest reste; do\n  if echo "$dest" | grep -q "^refs/heads/wip"; then echo "Rune : une ligne wip ne part pas aux Royaumes."; exit 1; fi\ndone\nexit 0\n' > .git/hooks/pre-push
+chmod +x .git/hooks/pre-push
+git switch -c wip-essai
+git push origin wip-essai
+git switch main
+git branch -D wip-essai
+git tag -s v1.0.0 -m "La Chronique 1.0.0, scellée de ma cire"
+git verify-tag v1.0.0
 gh pr comment <pr-kevin> -b "Merci pour la table des marées, Kévin."
 gh run list
+gh pr checkout <pr-kevin>
+git log --oneline -1
+git switch main
+git switch -c gardiens v-grand-port
+mkdir -p .github
+printf '* @amine\nlois.md @laurent @amine\n' > .github/CODEOWNERS
+echo "- les gardiens des pages sont nommés." >> chronique.md
+git add .github/CODEOWNERS chronique.md
+git commit -m "docs: nomme les gardiens des pages"
+git push -u origin gardiens
+gh pr create --title "docs: nomme les gardiens des pages" --body "Un fichier CODEOWNERS : chaque page a ses relecteurs."
+gh pr view --json mergeable
+git merge origin/main
+sed -i -e '/^<<<<<<< /d' -e '/^||||||| /d' -e '/^=======$/d' -e '/^>>>>>>> /d' chronique.md
+git add chronique.md
+git commit --no-edit
+git push
+gh pr view --json mergeable
+git switch main
 ```
 
 ### 106. Les quêtes annexes : l'Ami de la Chronothèque

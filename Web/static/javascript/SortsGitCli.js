@@ -4,7 +4,9 @@
  * Le moteur est dans SortsGit.js. Ici : l'analyse des arguments, le contexte d'une commande (le dépôt, le dossier
  * courant, les chemins relatifs), et les sous-commandes du quotidien : init, clone, config, status, add, rm, mv,
  * restore, commit, log, show, diff, blame, reset, reflog, branch, switch, checkout, tag, cat-file, hash-object,
- * ls-files, ls-tree, rev-parse, check-ignore, grep, shortlog, describe, clean, count-objects, gc, fsck, verify-commit.
+ * ls-files, ls-tree, rev-parse, check-ignore, check-attr (.gitattributes), grep, shortlog, describe, show-ref, for-each-ref, clean,
+ * count-objects, gc, fsck, merge-base, verify-commit, verify-tag (et tag -s, tag -v). log sait aussi -L (l'histoire de quelques
+ * lignes) et --follow ; restore sait -p (à l'écran, ou les réponses dans un tuyau, comme le vrai).
  * La suite (merge, rebase, cherry-pick, revert, stash, bisect, remote, fetch, pull, push, worktree, archive, bundle,
  * filter-repo, notes) : SortsGitCli2.js. Les sorties sont celles du vrai git 2.43, en anglais ; le jeu n'ajoute que
  * de rares indices, en gris.
@@ -874,6 +876,7 @@ GIT_SOUS_COMMANDES.restore = function(ctx){
 	var op = gOptions(ctx.args, { "-S|--staged": "b", "-W|--worktree": "b", "-s|--source": "v", "-p|--patch": "b", "--ours": "b", "--theirs": "b", "-q|--quiet": "b", "--ignore-unmerged": "b", "-m|--merge": "b" }, "restore");
 	var R = ctx.travail();
 	var brut = op.p.concat(op.apres || []);
+	if (op.o.patch && !op.o.staged && !op.o.source) return gRestorePatch(ctx, R, brut);
 	if (!brut.length) throw new GitErreur("fatal: you must specify path(s) to restore", 128);
 	var specs = gPathspecs(ctx, brut);
 	var staged = !!op.o.staged, worktree = !!op.o.worktree || !staged;
@@ -904,7 +907,7 @@ GIT_SOUS_COMMANDES.restore = function(ctx){
 			if (conflits[p] && !source && !staged){
 				var etage = op.o.ours ? 2 : op.o.theirs ? 3 : 0;
 				if (!etage){ aDire.push("error: path '" + ctx.aff(p) + "' is unmerged"); return; }
-				if (conflits[p][etage]) gPoserTravail(R, p, conflits[p][etage].h, conflits[p][etage].m);
+				if (conflits[p][etage]){ gPoserTravail(R, p, conflits[p][etage].h, conflits[p][etage].m); (ctx.ev.paradoxes = ctx.ev.paradoxes || []).push(p); }
 				return;
 			}
 			if (depuis[p]) gPoserTravail(R, p, depuis[p].h, depuis[p].m);
@@ -915,6 +918,95 @@ GIT_SOUS_COMMANDES.restore = function(ctx){
 	ctx.ev.chemins = touches; ctx.ev.staged = staged; ctx.ev.worktree = worktree; ctx.ev.source = op.o.source || null;
 	return "";
 };
+/* Les lettres de la question de add -p et restore -p (add-patch.c du vrai) : k, K, j, J, g, /, s, e selon les morceaux voisins. */
+function gLettresPatch(file, k, decides){
+	var q = file[k], l = "y,n,q,a,d";
+	var memes = []; file.forEach(function(x, i){ if (x.p === q.p) memes.push(i); });
+	var pos = memes.indexOf(k);
+	for (var i = pos - 1; i >= 0; i--) if (!decides[memes[i]]){ l += ",k"; break; }
+	if (pos > 0) l += ",K";
+	for (var j = pos + 1; j < memes.length; j++) if (!decides[memes[j]]){ l += ",j"; break; }
+	if (pos + 1 < memes.length) l += ",J";
+	if (memes.length > 1) l += ",g,/";
+	if (q.h.blocs && q.h.blocs.length > 1) l += ",s";
+	return l + ",e,?";
+}
+/* git restore -p : morceau par morceau, rendre à l'atelier la version de l'autel (y défait le morceau, n le garde).
+   Sur un écran, une question à la fois ; dans un tuyau (printf 'y\nn\n' | git restore -p), les réponses viennent de l'entrée, comme le vrai. */
+function gRestorePatch(ctx, R, brut){
+	var specs = gPathspecs(ctx, brut);
+	var travail = gFichiersTravail(R), idx = gIndexCarte(gIndex(R));
+	var fichiers = Object.keys(idx).sort().filter(function(p){ return gCorrespond(specs, p) && travail[p] && gHashTravail(R, travail[p]) !== idx[p].h; });
+	if (!fichiers.length) return "No changes.";
+	var file = [];
+	fichiers.forEach(function(p){
+		var a = gLignes(gObjet(R, idx[p].h).c), b = gLignes(gContenu(travail[p]));
+		var hunks = gHunks(a, b);
+		hunks.forEach(function(h, i){ file.push({ p: p, a: a, b: b, h: h, i: i, n: hunks.length }); });
+	});
+	var jetes = {}, decides = {}, k = 0, dejaEntete = {}, texte = [], vides = 0;
+	function appliquer(){
+		var parFichier = {};
+		file.forEach(function(q, i){ if (jetes[i]) (parFichier[q.p] = parFichier[q.p] || []).push(q); });
+		Object.keys(parFichier).forEach(function(p){
+			var l = parFichier[p], b = l[0].b, a = l[0].a, res = [], ib = 0;
+			l.forEach(function(q){
+				q.h.blocs.forEach(function(bl){
+					while (ib < bl.b0){ res.push(b[ib]); ib++; }
+					for (var x = bl.a0; x < bl.a1; x++) res.push(a[x]);
+					ib = bl.b1;
+				});
+			});
+			while (ib < b.length){ res.push(b[ib]); ib++; }
+			gEcrireTravailTexte(R, p, res.join(""), gModeItem(travail[p]));
+		});
+		R.cache.travail = null;
+		ctx.ev.chemins = Object.keys(parFichier); ctx.ev.patch = true; ctx.ev.jetes = Object.keys(jetes).length;
+	}
+	function bloc(q){
+		var t = [];
+		if (!dejaEntete[q.p]){ dejaEntete[q.p] = true; t.push("diff --git a/" + q.p + " b/" + q.p, "index " + gCourt(R, idx[q.p].h) + ".." + gCourt(R, gHashObjet("blob", gContenu(travail[q.p]))) + " " + idx[q.p].m, "--- a/" + q.p, "+++ b/" + q.p); }
+		return t.concat(gTexteHunk(q.h));
+	}
+	function invite(){ var q = file[k]; return "(" + (q.i + 1) + "/" + q.n + ") Discard this hunk from worktree [" + gLettresPatch(file, k, decides) + "]? "; }
+	function repondre(r){
+		r = String(r || "").trim().charAt(0);
+		var q = file[k];
+		if (r === "y"){ jetes[k] = decides[k] = true; k++; }
+		else if (r === "n" || r === "j"){ decides[k] = true; k++; }
+		else if (r === "a"){ for (var z = k; z < file.length && file[z].p === q.p; z++) jetes[z] = decides[z] = true; k = z; }
+		else if (r === "d"){ while (k < file.length && file[k].p === q.p){ decides[k] = true; k++; } }
+		else if (r === "q"){ k = file.length; }
+		else if (r === "J"){ k++; }
+		else if (r === "K" || r === "k"){ if (k > 0) k--; }
+		else { vides++; return "y - discard this hunk from worktree\nn - do not discard this hunk from worktree\nq - quit; do not discard this hunk or any of the remaining ones\na - discard this hunk and all later hunks in the file\nd - do not discard this hunk or any of the later hunks in the file\nj - leave this hunk undecided, see next undecided hunk\nk - leave this hunk undecided, see previous undecided hunk\n? - print help"; }
+		vides = 0;
+		return null;
+	}
+	// Dans un tuyau : les réponses sont les lignes de l'entrée ; à la fin de l'entrée, on s'arrête (comme le vrai).
+	if (!ctx.io.tty || (ctx.io.stdin !== null && ctx.io.stdin !== undefined)){
+		var reponses = ctx.io.stdin === null || ctx.io.stdin === undefined ? [] : String(ctx.io.stdin).split("\n");
+		var sortie = "";
+		while (k < file.length){
+			sortie += bloc(file[k]).join("\n") + "\n" + invite();
+			if (!reponses.length){ sortie += "\n"; break; }
+			var aide = repondre(reponses.shift());
+			if (aide !== null) sortie += aide + "\n";
+		}
+		appliquer();
+		return sortie.replace(/\s+$/, "");
+	}
+	function question(){
+		if (k >= file.length || vides >= 3){ appliquer(); return finir(); }
+		if (typeof term === "undefined" || !term.demander){ appliquer(); return finir(); }
+		term.echo(bloc(file[k]).join("\n"));
+		term.demander(invite(), false, function(r){ var aide = repondre(r); if (aide !== null) term.echo(aide); question(); });
+	}
+	function finir(){ gEvenement(ctx, true); if (typeof Shell !== "undefined" && Shell.fin) Shell.fin(); return ""; }
+	ctx.asynchrone = true;
+	question();
+	return "";
+}
 
 /* ================================================================== */
 /* commit                                                              */
@@ -951,21 +1043,23 @@ function gCommitDepuisIndex(R, options){
 	var c = { arbre: arbre, parents: options.parents, auteur: { nom: auteurId.nom, mail: auteurId.mail, s: da.s, tz: da.tz }, commiteur: { nom: commId.nom, mail: commId.mail, s: dc.s, tz: dc.tz }, message: options.message, gpgsig: null };
 	var signer = options.signer;
 	if (signer === undefined) signer = gConfigVrai(R, "commit.gpgsign", false);
-	if (signer){
-		var cle = gConfig(R, "user.signingkey");
-		var fmt = gConfig(R, "gpg.format") || "openpgp";
-		if (fmt !== "ssh") throw new GitErreur("error: gpg failed to sign the data:\n[GNUPG:] KEY_CONSIDERED\ngpg: signing failed: No secret key\n\nfatal: failed to write commit object" + "\n" + C.gris("(Ici, on signe avec une clé ssh : git config gpg.format ssh, puis git config user.signingkey ~/.ssh/id_ed25519.pub.)"), 128);
-		if (!cle) throw new GitErreur("error: user.signingKey needs to be set for ssh signing\n\nfatal: failed to write commit object", 128);
-		var r = gChemin(R.top || R.git, cle), texteCle = null;
-		if (r && r.noeud instanceof Item) texteCle = gContenu(r.noeud).trim();
-		else if (/^ssh-/.test(cle) || /^key::/.test(cle)) texteCle = cle.replace(/^key::/, "");
-		if (!texteCle || !gBlobCle(texteCle)) throw new GitErreur("error: Couldn't load public key " + cle + ": No such file or directory?\n\nfatal: failed to write commit object", 128);
-		var priv = r && r.noeud instanceof Item ? r.dir.getItemFromName(r.nom.replace(/\.pub$/, "")) : -1;
-		if (r && r.noeud instanceof Item && /\.pub$/.test(r.nom) && priv === -1) throw new GitErreur("error: Load key \"" + cle.replace(/\.pub$/, "") + "\": No such file or directory\n\nfatal: failed to write commit object", 128);
-		c.gpgsig = gSigner(gTexteCommit(c), texteCle);
-	}
+	if (signer) c.gpgsig = gSigner(gTexteCommit(c), gCleSignature(R, "\nfatal: failed to write commit object"));
 	var hash = gObjetEcrire(R, "commit", gTexteCommit(c));
 	return { hash: hash, arbre: arbre, carte: carte, commit: c };
+}
+/* La clé publique qui signe (gpg.format ssh, user.signingkey), ou l'erreur du vrai ; fin : la dernière ligne de l'erreur (commit ou tag). */
+function gCleSignature(R, fin){
+	var cle = gConfig(R, "user.signingkey");
+	var fmt = gConfig(R, "gpg.format") || "openpgp";
+	if (fmt !== "ssh") throw new GitErreur("error: gpg failed to sign the data:\n[GNUPG:] KEY_CONSIDERED\ngpg: signing failed: No secret key\n" + fin + "\n" + C.gris("(Ici, on signe avec une clé ssh : git config gpg.format ssh, puis git config user.signingkey ~/.ssh/id_ed25519.pub.)"), 128);
+	if (!cle) throw new GitErreur("error: user.signingKey needs to be set for ssh signing\n" + fin, 128);
+	var r = gChemin(R.top || R.git, cle), texteCle = null;
+	if (r && r.noeud instanceof Item) texteCle = gContenu(r.noeud).trim();
+	else if (/^ssh-/.test(cle) || /^key::/.test(cle)) texteCle = cle.replace(/^key::/, "");
+	if (!texteCle || !gBlobCle(texteCle)) throw new GitErreur("error: Couldn't load public key " + cle + ": No such file or directory?\n" + fin, 128);
+	var priv = r && r.noeud instanceof Item ? r.dir.getItemFromName(r.nom.replace(/\.pub$/, "")) : -1;
+	if (r && r.noeud instanceof Item && /\.pub$/.test(r.nom) && priv === -1) throw new GitErreur("error: Load key \"" + cle.replace(/\.pub$/, "") + "\": No such file or directory\n" + fin, 128);
+	return texteCle;
 }
 /* Le résumé de git commit : « [main abc1234] message » et le --stat court. */
 function gResumeCommit(R, hash, options){
@@ -1231,9 +1325,10 @@ function gLireFormat(op){
 GIT_SOUS_COMMANDES.log = function(ctx){
 	var op = gOptions(ctx.args, { "--oneline": "b", "--graph": "b", "--all": "b", "--decorate": "o", "--no-decorate": "b", "-n|--max-count": "v", "-NOMBRE": "v", "--stat": "b", "-p|-u|--patch": "b", "--author": "v", "--grep": "v", "-S": "v", "-G": "v",
 		"--since|--after": "v", "--until|--before": "v", "--format": "v", "--pretty": "o", "--show-signature": "b", "--first-parent": "b", "--reverse": "b", "--name-only": "b", "--name-status": "b", "--merges": "b", "--no-merges": "b",
-		"--topo-order": "b", "--date-order": "b", "--abbrev-commit": "b", "--date": "v", "-i|--regexp-ignore-case": "b", "--follow": "b", "--shortstat": "b", "-g|--walk-reflogs": "b", "--branches": "b", "--tags": "b", "--remotes": "b", "--simplify-by-decoration": "b", "--left-right": "b", "--cherry-pick": "b", "--no-walk": "b" }, "log");
+		"--topo-order": "b", "--date-order": "b", "--abbrev-commit": "b", "--date": "v", "-i|--regexp-ignore-case": "b", "--follow": "b", "--shortstat": "b", "-g|--walk-reflogs": "b", "--branches": "b", "--tags": "b", "--remotes": "b", "--simplify-by-decoration": "b", "--left-right": "b", "--cherry-pick": "b", "--no-walk": "b", "-L": "l" }, "log");
 	var R = ctx.depot();
 	if (op.o["walk-reflogs"]) return GIT_SOUS_COMMANDES.reflog(ctx);
+	if (op.o.follow && (op.apres ? op.apres.length : 0) + op.p.filter(function(x){ return !gEssayerRevs(R, x); }).length !== 1) throw new GitErreur("fatal: --follow requires exactly one pathspec", 128);
 	var t = gTete(R);
 	var revs = [], chemins = op.apres ? op.apres.slice() : [];
 	op.p.forEach(function(x){
@@ -1262,6 +1357,18 @@ GIT_SOUS_COMMANDES.log = function(ctx){
 	var depuis = op.o.since ? gDateDepuisTexte(op.o.since, maintenant) : null, jusque = op.o.until ? gDateDepuisTexte(op.o.until, maintenant) : null;
 	var reAuteur = op.o.author ? gRegexGit(op.o.author, op.o["regexp-ignore-case"]) : null;
 	var reGrep = op.o.grep ? gRegexGit(op.o.grep, op.o["regexp-ignore-case"]) : null;
+	// --follow : le fichier est suivi à travers ses renommages (de l'histoire la plus récente vers la plus ancienne).
+	var suivis = null;
+	if (op.o.follow && specs.length === 1){
+		suivis = {};
+		var courant = specs[0].rel;
+		liste.forEach(function(h){
+			if (gCommit(R, h).parents.length > 1) return;
+			var x = gChangesCommit(R, h).filter(function(y){ return y.chemin === courant; })[0];
+			if (x){ suivis[h] = true; if (x.ancien) courant = x.ancien; }
+		});
+	}
+	if (op.o.L) return gLogLignes(ctx, R, rv, op);
 	var filtre = function(h){
 		var c = gCommit(R, h);
 		if (op.o.merges && c.parents.length < 2) return false;
@@ -1270,7 +1377,7 @@ GIT_SOUS_COMMANDES.log = function(ctx){
 		if (jusque !== null && c.commiteur.s > jusque) return false;
 		if (reAuteur && !reAuteur.test(c.auteur.nom + " <" + c.auteur.mail + ">")) return false;
 		if (reGrep && !reGrep.test(c.message)) return false;
-		if (!gToucheChemins(R, h, specs)) return false;
+		if (suivis ? !suivis[h] : !gToucheChemins(R, h, specs)) return false;
 		if (op.o.S !== undefined){
 			var compte = function(carte){ var n = 0; Object.keys(carte).forEach(function(p){ if (!gCorrespond(specs, p)) return; var x = gObjet(R, carte[p].h); if (x) n += x.c.split(op.o.S).length - 1; }); return n; };
 			var A = c.parents.length ? gAplatir(R, gCommit(R, c.parents[0]).arbre) : {}, B = gAplatir(R, c.arbre);
@@ -1323,6 +1430,99 @@ GIT_SOUS_COMMANDES.log = function(ctx){
 	});
 	return sortie.join("\n");
 };
+/*
+ * git log -L DEBUT,FIN:FICHIER (ou DEBUT,+N:FICHIER) : l'histoire de quelques lignes (line-log.c du vrai, sur la ligne des premiers parents).
+ * Chaque sceau qui a touché ces lignes est montré avec le diff de ces lignes seulement ; puis les lignes sont suivies dans le parent,
+ * jusqu'au sceau qui les a fait naître.
+ */
+function gLogLignes(ctx, R, rv, op){
+	var specs = op.o.L.map(function(x){
+		var m = /^(\d+)(?:,(\+?)(\d+))?:(.+)$/.exec(x);
+		if (!m) throw new GitErreur("fatal: -L argument not 'start,end:file' or ':funcname:file': " + x, 128);
+		var s = +m[1], e = m[3] === undefined ? Infinity : (m[2] ? s + +m[3] - 1 : +m[3]);
+		if (s < 1 || e < s){ var t = s; s = Math.min(t, e); e = Math.max(t, e); if (s < 1) s = 1; }
+		return { s: s - 1, e: e, chemin: ctx.rel(m[4]) || m[4] };
+	});
+	var chemin = specs[0].chemin;
+	if (specs.some(function(x){ return x.chemin !== chemin; })) throw new GitErreur("fatal: -L sur plusieurs fichiers n'est pas pris en charge ici : un fichier à la fois.", 128);
+	var depart = rv.inclus[0] || gTete(R);
+	var carte0 = gAplatir(R, gCommit(R, depart).arbre);
+	if (!carte0[chemin]) throw new GitErreur("fatal: There is no path " + chemin + " in the commit", 128);
+	var lignes0 = gLignes(gObjet(R, carte0[chemin].h).c);
+	specs.forEach(function(x){ if (x.e === Infinity) x.e = lignes0.length; if (x.e > lignes0.length) throw new GitErreur("fatal: file " + chemin + " has only " + lignes0.length + " line" + (lignes0.length === 1 ? "" : "s"), 128); });
+	// Les plages, triées et réunies quand elles se touchent.
+	var plages = specs.map(function(x){ return [x.s, x.e]; }).sort(function(a, b){ return a[0] - b[0]; });
+	plages = plages.reduce(function(acc, p){ var d = acc[acc.length - 1]; if (d && p[0] <= d[1]) d[1] = Math.max(d[1], p[1]); else acc.push(p.slice()); return acc; }, []);
+	var decorer = op.o["no-decorate"] ? false : (op.o.decorate !== undefined ? op.o.decorate !== false && op.o.decorate !== "no" : (!!ctx.io.tty || gConfig(R, "log.decorate") === "short" || gConfig(R, "log.decorate") === "full" || gConfigVrai(R, "log.decorate", false)));
+	var dec = decorer ? gDecorations(R, op.o.decorate === "full") : null;
+	var fmt = gLireFormat(op);
+	if (op.o.oneline) fmt.oneline = true;
+	if (op.o.date) fmt.date = op.o.date;
+	var compact = fmt.oneline || fmt.format !== undefined;
+	// Une ligne de l'enfant (ou du parent) : où tombe-t-elle de l'autre côté ? blocs : gBlocs(parent, enfant).
+	function versParent(blocs, x, fin){
+		var decal = 0;
+		for (var i = 0; i < blocs.length; i++){
+			var b = blocs[i];
+			if (b.b0 < b.b1 && b.b0 <= x && x < b.b1) return fin ? b.a1 : b.a0;
+			if ((b.b0 < b.b1 && b.b1 <= x) || (b.b0 === b.b1 && b.b0 <= x)) decal = b.a1 - b.b1;
+			else break;
+		}
+		return x + decal + (fin ? 1 : 0);
+	}
+	function touche(blocs, p){ return blocs.some(function(b){ return b.b0 < b.b1 ? (b.b0 < p[1] && b.b1 > p[0]) : (b.b0 > p[0] && b.b0 < p[1]); }); }
+	function hunk(A, B, blocs, pp, p){
+		var l = ["@@ -" + (pp ? pp[0] + 1 : 0) + "," + (pp ? pp[1] - pp[0] : 0) + " +" + (p[0] + 1) + "," + (p[1] - p[0]) + " @@"];
+		if (!pp){ for (var y = p[0]; y < p[1]; y++) l.push("+" + B[y].replace(/\n$/, "")); return l; }
+		var ia = pp[0], ib = p[0];
+		blocs.forEach(function(b){
+			if (b.b1 < p[0] && b.a1 < pp[0] || b.b0 > p[1]) return;
+			while (ib < Math.min(b.b0, p[1]) && ia < Math.min(b.a0, pp[1])){ l.push(" " + B[ib].replace(/\n$/, "")); ia++; ib++; }
+			for (var x = Math.max(b.a0, pp[0]); x < Math.min(b.a1, pp[1]); x++) l.push("-" + A[x].replace(/\n$/, ""));
+			for (var z = Math.max(b.b0, p[0]); z < Math.min(b.b1, p[1]); z++) l.push("+" + B[z].replace(/\n$/, ""));
+			ia = Math.max(ia, Math.min(b.a1, pp[1])); ib = Math.max(ib, Math.min(b.b1, p[1]));
+		});
+		while (ib < p[1]){ l.push(" " + B[ib].replace(/\n$/, "")); ib++; ia++; }
+		return l;
+	}
+	var blocsSortie = [], h = depart, garde = 0, montres = [];
+	while (h && plages.length && garde++ < 10000){
+		var c = gCommit(R, h);
+		var B = gLignes(gObjet(R, gAplatir(R, c.arbre)[chemin].h).c);
+		var parent = c.parents[0] || null;
+		var carteP = parent ? gAplatir(R, gCommit(R, parent).arbre) : {};
+		var diff;
+		if (!carteP[chemin]){
+			diff = ["diff --git a/" + chemin + " b/" + chemin, "--- /dev/null", "+++ b/" + chemin];
+			plages.forEach(function(p){ diff = diff.concat(hunk(null, B, [], null, p)); });
+			blocsSortie.push({ h: h, diff: diff });
+			break;
+		}
+		var A = gLignes(gObjet(R, carteP[chemin].h).c);
+		var blocs = gBlocs(A, B);
+		var nouvelles = [], touchees = [];
+		plages.forEach(function(p){
+			var pp = [versParent(blocs, p[0], false), versParent(blocs, p[1] - 1, true)];
+			if (touche(blocs, p)) touchees.push({ p: p, pp: pp });
+			if (pp[1] > pp[0]) nouvelles.push(pp);
+		});
+		if (touchees.length){
+			diff = ["diff --git a/" + chemin + " b/" + chemin, "--- a/" + chemin, "+++ b/" + chemin];
+			touchees.forEach(function(t){ diff = diff.concat(hunk(A, B, blocs, t.pp, t.p)); });
+			blocsSortie.push({ h: h, diff: diff });
+		}
+		plages = nouvelles;
+		h = parent;
+	}
+	var sortie = [];
+	blocsSortie.forEach(function(b, i){
+		if (i && !compact) sortie.push("");
+		sortie = sortie.concat(gBlocCommit(R, b.h, fmt, dec), [""], b.diff);
+		montres.push(b.h);
+	});
+	ctx.ev.nombre = montres.length; ctx.ev.commits = montres; ctx.ev.lignes = true; ctx.ev.options = Object.keys(op.o);
+	return sortie.join("\n");
+}
 /* Une expression régulière de --grep / --author (POSIX de base, comme le vrai) ; une expression invalide : l'erreur du vrai. */
 function gRegexGit(motif, casse){
 	// En BRE, ( ) { } | + ? sont littéraux ; \( \) \{ \} \| sont spéciaux.
@@ -2236,6 +2436,7 @@ GIT_SOUS_COMMANDES.checkout = function(ctx){
 				var e = op.o.ours ? 2 : op.o.theirs ? 3 : 0;
 				if (!e) throw new GitErreur("error: path '" + p + "' is unmerged", 1);
 				gPoserTravail(R, p, conflits[p][e].h, conflits[p][e].m);
+				(ctx.ev.paradoxes = ctx.ev.paradoxes || []).push(p);
 				return;
 			}
 			gPoserTravail(R, p, src[p].h, src[p].m);
@@ -2267,6 +2468,12 @@ GIT_SOUS_COMMANDES.checkout = function(ctx){
 GIT_SOUS_COMMANDES.tag = function(ctx){
 	var op = gOptions(ctx.args, { "-a|--annotate": "b", "-m|--message": "l", "-l|--list": "b", "-d|--delete": "b", "-f|--force": "b", "-n": "o", "-s|--sign": "b", "-v|--verify": "b", "--contains": "v", "--points-at": "v", "--sort": "v", "-F|--file": "v" }, "tag");
 	var R = ctx.depot();
+	// git tag -v NOM : comme git verify-tag -v.
+	if (op.o.verify){
+		ctx.cmd = "verify-tag";
+		ctx.args = ["-v"].concat(op.p);
+		return GIT_SOUS_COMMANDES["verify-tag"](ctx);
+	}
 	if (op.o["delete"]){
 		if (!op.p.length) return "";
 		var l = [];
@@ -2301,10 +2508,13 @@ GIT_SOUS_COMMANDES.tag = function(ctx){
 			var msg = gNettoyerMessage(message, true);
 			if (!msg) throw new GitErreur("fatal: no tag message?", 128);
 			var id = gIdentite(R, "committer"), d = gDateCommit(R, "committer");
-			h = gObjetEcrire(R, "tag", "object " + cible + "\ntype " + gObjet(R, cible).t + "\ntag " + nom + "\ntagger " + id.nom + " <" + id.mail + "> " + d.s + " " + d.tz + "\n\n" + msg);
+			var charge = "object " + cible + "\ntype " + gObjet(R, cible).t + "\ntag " + nom + "\ntagger " + id.nom + " <" + id.mail + "> " + d.s + " " + d.tz + "\n\n" + msg;
+			// -s : la cire (la signature ssh) suit le message, comme dans le vrai objet tag.
+			if (op.o.sign) charge += gSigner(charge, gCleSignature(R, "error: unable to sign the tag")) + "\n";
+			h = gObjetEcrire(R, "tag", charge);
 		}
 		gEcrire(gCommun(R), "refs/tags/" + nom, h + "\n");
-		ctx.ev.tag = nom; ctx.ev.cible = cible; ctx.ev.annote = !!annote;
+		ctx.ev.tag = nom; ctx.ev.cible = cible; ctx.ev.annote = !!annote; ctx.ev.signe = !!op.o.sign;
 		return avant && op.o.force ? "Updated tag '" + nom + "' (was " + gCourt(R, avant) + ")" : "";
 	}
 	if (!annote) return poser("");
@@ -2461,6 +2671,90 @@ GIT_SOUS_COMMANDES["check-ignore"] = function(ctx){
 	if (aucun) ctx.code = 1;
 	ctx.ev.ignores = l.length;
 	return op.o.quiet ? "" : l.join("\n");
+};
+
+/* ================================================================== */
+/* .gitattributes et git check-attr                                    */
+/* ================================================================== */
+
+/* Un motif de .gitattributes en expression régulière : sans « / », il vise le nom seul ; * ne traverse pas les dossiers, ** si. */
+function gMotifAttribut(motif){
+	var m = motif.replace(/^\//, ""), r = "", i = 0;
+	while (i < m.length){
+		var c = m.charAt(i);
+		if (m.substring(i, i + 3) === "**/"){ r += "(?:.*/)?"; i += 3; continue; }
+		if (m.substring(i, i + 3) === "/**" && i + 3 === m.length){ r += "(?:/.*)?"; i += 3; continue; }
+		if (c === "*"){ r += "[^/]*"; i++; continue; }
+		if (c === "?"){ r += "[^/]"; i++; continue; }
+		if (c === "["){ var j = m.indexOf("]", i + 1); if (j > i){ r += "[" + m.substring(i + 1, j).replace(/^!/, "^").replace(/\\/g, "\\\\") + "]"; i = j + 1; continue; } }
+		r += c.replace(/[.+^${}()|\\\/]/g, "\\$&"); i++;
+	}
+	return { re: new RegExp("^" + r + "$"), nom: motif.indexOf("/") === -1 };
+}
+/* Les attributs d'un chemin du dépôt : { valeurs: { attr: "set" | "unset" | valeur }, ordre: [attr...] } (le dernier mot l'emporte). */
+var GIT_MACROS_ATTRIBUTS = { binary: ["-diff", "-merge", "-text"] };
+function gAttributs(R, p){
+	var ordre = ["binary", "diff", "merge", "text"], valeurs = {};
+	var sources = [{ dossier: "", texte: R.top ? gLire(R.top, ".gitattributes") : null }];
+	var parties = p.split("/");
+	for (var k = 1; k < parties.length; k++){ var d = parties.slice(0, k).join("/"); sources.push({ dossier: d, texte: R.top ? gLire(R.top, d + "/.gitattributes") : null }); }
+	sources.push({ dossier: "", texte: gLire(R.git, "info/attributes") });
+	function poser(mot){
+		var nom, v;
+		if (mot.charAt(0) === "-"){ nom = mot.substring(1); v = "unset"; }
+		else if (mot.charAt(0) === "!"){ nom = mot.substring(1); v = null; }
+		else if (mot.indexOf("=") > -1){ nom = mot.substring(0, mot.indexOf("=")); v = mot.substring(mot.indexOf("=") + 1); }
+		else { nom = mot; v = "set"; }
+		if (!nom) return;
+		if (ordre.indexOf(nom) === -1) ordre.push(nom);
+		if (v === null) delete valeurs[nom]; else valeurs[nom] = v;
+		if (v === "set" && GIT_MACROS_ATTRIBUTS[nom]) GIT_MACROS_ATTRIBUTS[nom].forEach(poser);
+	}
+	sources.forEach(function(s){
+		if (s.texte === null) return;
+		var rel = s.dossier ? (p.indexOf(s.dossier + "/") === 0 ? p.substring(s.dossier.length + 1) : null) : p;
+		s.texte.split("\n").forEach(function(l){
+			l = l.trim();
+			if (!l || l.charAt(0) === "#") return;
+			var mots = l.split(/\s+/), motif = mots.shift();
+			// Les noms d'attributs vus dans un fichier comptent dans l'ordre, même si le motif ne vise pas ce chemin.
+			mots.forEach(function(x){ var n = x.replace(/^[-!]/, "").replace(/=.*$/, ""); if (n && ordre.indexOf(n) === -1) ordre.push(n); });
+			if (rel === null || motif.charAt(0) === "!") return;
+			var mm = gMotifAttribut(motif);
+			if (!(mm.nom ? mm.re.test(rel.split("/").pop()) : mm.re.test(rel))) return;
+			mots.forEach(poser);
+		});
+	});
+	return { valeurs: valeurs, ordre: ordre };
+}
+GIT_SOUS_COMMANDES["check-attr"] = function(ctx){
+	var tous = false, avant = [], apres = null;
+	ctx.args.forEach(function(a){
+		if (apres !== null){ apres.push(a); return; }
+		if (a === "--"){ apres = []; return; }
+		if (a === "-a" || a === "--all"){ tous = true; return; }
+		if (a === "--cached" || a === "--no-cached") return;
+		if (/^-/.test(a)) throw gOptionInconnue("check-attr", a.replace(/^-+/, ""), /^--/.test(a));
+		avant.push(a);
+	});
+	var R = ctx.depot();
+	var usage = "\nusage: git check-attr [--source <tree-ish>] [-a | --all | <attr>...] [--] <pathname>...\n   or: git check-attr --stdin [-z] [--source <tree-ish>] [-a | --all | <attr>...]\n\n" +
+		"    -a, --[no-]all        report all attributes set on file\n    --[no-]cached         use .gitattributes only from the index\n    --[no-]stdin          read file names from stdin\n    -z                    terminate input and output records by a NUL character\n    --[no-]source <tree-ish>\n                          which tree-ish to check attributes at\n";
+	var attrs, chemins;
+	if (tous){ attrs = []; chemins = avant.concat(apres || []); }
+	else if (apres !== null){ attrs = avant; chemins = apres; }
+	else { attrs = avant.slice(0, 1); chemins = avant.slice(1); }
+	if (!tous && !attrs.length) throw new GitErreur("error: No attribute specified" + usage, 129);
+	if (!chemins.length) throw new GitErreur("error: No file specified" + usage, 129);
+	var l = [];
+	chemins.forEach(function(x){
+		var p = ctx.rel(x) || x;
+		var a = gAttributs(R, p);
+		if (tous) a.ordre.forEach(function(n){ if (a.valeurs[n] !== undefined) l.push(x + ": " + n + ": " + a.valeurs[n]); });
+		else attrs.forEach(function(n){ l.push(x + ": " + n + ": " + (a.valeurs[n] !== undefined ? a.valeurs[n] : "unspecified")); });
+	});
+	ctx.ev.attributs = l.length;
+	return l.join("\n");
 };
 
 GIT_SOUS_COMMANDES.grep = function(ctx){
@@ -2766,6 +3060,50 @@ GIT_SOUS_COMMANDES["verify-commit"] = function(ctx){
 	l.forEach(function(m){ ctx.err(m); });
 	ctx.code = code;
 	return "";
+};
+/* git merge-base : le carrefour de deux lignes (leur meilleur ancêtre commun) ; --all, --is-ancestor. */
+GIT_SOUS_COMMANDES["merge-base"] = function(ctx){
+	var op = gOptions(ctx.args, { "-a|--all": "b", "--is-ancestor": "b", "--octopus": "b", "--independent": "b", "--fork-point": "b" }, "merge-base");
+	var R = ctx.depot();
+	var usage = "usage: git merge-base [-a | --all] <commit> <commit>...\n   or: git merge-base [-a | --all] --octopus <commit>...\n   or: git merge-base --is-ancestor <commit> <commit>\n   or: git merge-base --independent <commit>...\n   or: git merge-base --fork-point <ref> [<commit>]\n\n" +
+		"    -a, --[no-]all        output all common ancestors\n    --octopus             find ancestors for a single n-way merge\n    --independent         list revs not reachable from others\n    --is-ancestor         is the first one ancestor of the other?\n    --fork-point          find where <commit> forked from reflog of <ref>\n";
+	if (op.o.octopus || op.o.independent || op.o["fork-point"]) throw new GitErreur("fatal: merge-base : seules les formes A B, --all et --is-ancestor sont prises en charge ici.", 128);
+	var hs = op.p.map(function(x){ var h = gEssayer(R, x, { commit: true }); if (!h) throw new GitErreur("fatal: Not a valid object name " + x, 128); return h; });
+	if (op.o["is-ancestor"]){
+		if (hs.length !== 2) throw new GitErreur("fatal: --is-ancestor takes exactly two commits", 128);
+		ctx.ev.ancetre = gEstAncetre(R, hs[0], hs[1]);
+		return ctx.ev.ancetre ? "" : gCode(ctx, 1);
+	}
+	if (hs.length < 2) throw new GitErreur(usage, 129);
+	var bases = gBasesFusion(R, hs[0], hs[1]);
+	ctx.ev.bases = bases.slice();
+	if (!bases.length) return gCode(ctx, 1);
+	return op.o.all ? bases.join("\n") : bases[0];
+};
+/* git verify-tag : la cire d'un menhir annoté (la signature ssh qui suit son message). -v montre d'abord le tag, sans sa cire. */
+GIT_SOUS_COMMANDES["verify-tag"] = function(ctx){
+	var op = gOptions(ctx.args, { "-v|--verbose": "b", "--raw": "b", "--format": "v" }, "verify-tag");
+	var R = ctx.depot();
+	if (!op.p.length) throw new GitErreur("usage: git verify-tag [-v | --verbose] [--format=<format>] [--raw] <tag>...", 129);
+	var sortie = [], code = 0;
+	op.p.forEach(function(x){
+		var nomRef = gRef(R, "refs/tags/" + x) ? "refs/tags/" + x : null;
+		var h = nomRef ? gRef(R, nomRef) : gEssayer(R, x);
+		if (!h){ ctx.err("error: tag '" + x + "' not found."); code = 1; return; }
+		var o = gObjet(R, h);
+		if (!o || o.t !== "tag"){ ctx.err("error: " + x + ": cannot verify a non-tag object of type " + (o ? { commit: "commit", tree: "tree", blob: "blob" }[o.t] || o.t : "unknown") + "."); code = 1; return; }
+		var i = o.c.indexOf("-----BEGIN SSH SIGNATURE-----");
+		// Avec -v, le tag d'abord, puis le verdict de la cire (dans cet ordre, comme le vrai sur un écran).
+		var dire = op.o.verbose ? function(t){ sortie.push(t); } : function(t){ ctx.err(t); };
+		if (op.o.verbose) sortie.push((i > -1 ? o.c.substring(0, i) : o.c).replace(/\n$/, ""));
+		var v = gVerifierSignature(R, h);
+		ctx.ev.tag = x; ctx.ev.signature = v.etat; ctx.ev.empreinte = v.empreinte || null;
+		if (v.etat === "aucune"){ dire("error: no signature found"); code = 1; return; }
+		gTexteSignature(R, h).forEach(dire);
+		if (v.etat !== "bonne") code = 1;
+	});
+	ctx.code = code;
+	return sortie.join("\n");
 };
 
 GIT_SOUS_COMMANDES.help = function(ctx){

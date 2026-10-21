@@ -1621,7 +1621,7 @@ function gResumeModes(changes){
 /* ================================================================== */
 
 /* base, nous, eux : des contenus ; renvoie { texte, conflits }. style : "merge", "diff3" ou "zdiff3". */
-function gFusionTexte(base, nous, eux, etiquettes, style){
+function gFusionTexte(base, nous, eux, etiquettes, style, faveur){
 	if (nous === eux) return { texte: nous, conflits: 0 };
 	if (base === nous) return { texte: eux, conflits: 0 };
 	if (base === eux) return { texte: nous, conflits: 0 };
@@ -1667,6 +1667,9 @@ function gFusionTexte(base, nous, eux, etiquettes, style){
 		if (!p.cotes[1]) sortie = sortie.concat(lA);
 		else if (!p.cotes[0]) sortie = sortie.concat(lC);
 		else if (lA.join("") === lC.join("")) sortie = sortie.concat(lA);
+		// -X ours / -X theirs : le paradoxe est tranché d'avance en faveur d'un côté (les autres changements se fusionnent normalement).
+		else if (faveur === "ours") sortie = sortie.concat(lA);
+		else if (faveur === "theirs") sortie = sortie.concat(lC);
 		else {
 			// Zélé : les lignes communes au début et à la fin des deux côtés sortent du conflit.
 			var deb = 0;
@@ -2064,16 +2067,26 @@ function gSigner(contenu, cle, empreinte){
 /* Vérifie la signature d'un commit : { etat: "aucune"|"bonne"|"inconnue"|"fausse"|"sansFichier", cle, empreinte, principal } */
 function gVerifierSignature(R, hash){
 	var o = gObjet(R, hash);
-	if (!o || o.t !== "commit") return { etat: "aucune" };
-	var c = gAnalyserCommit(o.c);
-	if (!c.gpgsig) return { etat: "aucune" };
-	if (!/BEGIN SSH SIGNATURE/.test(c.gpgsig)) return { etat: "fausse" };
-	var corps = c.gpgsig.split("\n").filter(function(l){ return !/-----/.test(l); }).join("");
+	if (!o || (o.t !== "commit" && o.t !== "tag")) return { etat: "aucune" };
+	var c = null, gpgsig, sans;
+	if (o.t === "tag"){
+		// Un tag signé : la cire suit le message, dans le corps même de l'objet.
+		var debut = o.c.indexOf("-----BEGIN SSH SIGNATURE-----");
+		if (debut < 0) return /-----BEGIN PGP SIGNATURE-----/.test(o.c) ? { etat: "fausse" } : { etat: "aucune" };
+		gpgsig = o.c.substring(debut).replace(/\n$/, "");
+		sans = o.c.substring(0, debut);
+	} else {
+		c = gAnalyserCommit(o.c);
+		gpgsig = c.gpgsig;
+	}
+	if (!gpgsig) return { etat: "aucune" };
+	if (!/BEGIN SSH SIGNATURE/.test(gpgsig)) return { etat: "fausse" };
+	var corps = gpgsig.split("\n").filter(function(l){ return !/-----/.test(l); }).join("");
 	var charge = null;
 	try { charge = decodeURIComponent(escape(atob(corps))); } catch (e){ return { etat: "fausse" }; }
 	var m = /^SSHSIG\|([^|]*)\|([0-9a-f]+)(?:\|(SHA256:\S+))?$/.exec(charge);
 	if (!m) return { etat: "fausse" };
-	var sans = gTexteCommit({ arbre: c.arbre, parents: c.parents, auteur: c.auteur, commiteur: c.commiteur, message: c.message, gpgsig: null });
+	if (c) sans = gTexteCommit({ arbre: c.arbre, parents: c.parents, auteur: c.auteur, commiteur: c.commiteur, message: c.message, gpgsig: null });
 	var empreinte = m[3] || gEmpreinteCle("ssh-ed25519 " + m[1]);
 	if (sha256(sans).substring(0, 32) !== m[2]) return { etat: "fausse", empreinte: empreinte, blob: m[1] };
 	var fichier = gConfig(R, "gpg.ssh.allowedSignersFile");
@@ -2086,7 +2099,7 @@ function gVerifierSignature(R, hash){
 		if (x && x[3] === m[1] && !principal) principal = x[1];
 	});
 	if (!principal) return { etat: "inconnue", empreinte: empreinte, blob: m[1] };
-	return { etat: "bonne", empreinte: empreinte, principal: principal, blob: m[1], mail: c.commiteur.mail };
+	return { etat: "bonne", empreinte: empreinte, principal: principal, blob: m[1], mail: c ? c.commiteur.mail : ((/^tagger .* <([^>]*)>/m.exec(o.c) || [])[1] || "") };
 }
 /* Les lignes que montre --show-signature pour un commit. */
 function gTexteSignature(R, hash){
