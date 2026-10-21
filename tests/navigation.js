@@ -106,8 +106,8 @@ var stRiche = {};
 var riche = nouveauMonde(stRiche, 52);
 jouerDe(riche, null, "cat ModeleOSI");
 (function(){
-	// Les chapitres 4 à 8 en renfort, l'un après l'autre ; la Crypte, ouverte à la main (elle suit la panne).
-	[4, 5, 6, 7, 8].forEach(function(n){ contient(riche.taper("aller " + n, "oui"), "EN RENFORT : CHAPITRE " + n, "renfort au chapitre " + n); });
+	// Les chapitres 4 à 9 en renfort, l'un après l'autre ; la Crypte, ouverte à la main (elle suit la panne).
+	[4, 5, 6, 7, 8, 9].forEach(function(n){ contient(riche.taper("aller " + n, "oui"), "EN RENFORT : CHAPITRE " + n, "renfort au chapitre " + n); });
 	riche.lire("state.applyState('crypteOuverte'); verifierMonde(); Shell.narration = []");
 	var commandes = riche.lire("SORTS_DU_JEU.concat(['help'])");
 	var essais = [];
