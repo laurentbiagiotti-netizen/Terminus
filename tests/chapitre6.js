@@ -475,7 +475,7 @@ var QUARTIERS = {
 	var bloc = guide.substring(guide.indexOf("var QUIZ = {"), guide.indexOf("var banque"));
 	var i = bloc.search(/\n\t7: \[/);
 	verifier(i > -1, "Guide.js : le quiz du chapitre 6 (QUIZ[7])");
-	egal((bloc.substring(i + 3).split(/\n\t\d: \[/)[0].match(/\n\t\t\["/g) || []).length, 10, "dix questions au quiz du chapitre 6");
+	egal((bloc.substring(i + 3).split(/\n\t\d+: \[/)[0].match(/\n\t\t\["/g) || []).length, 10, "dix questions au quiz du chapitre 6");
 	verifier(/"6"\s*:\s*7/.test(guide), "Guide.js : quiz 6 mène au chapitre interne 7");
 	verifier(guide.indexOf("m6_entree") > -1 && guide.indexOf("loc_lumen_nuit.gif") > -1, "Guide.js : la scène et la cinématique de Lumen");
 })();

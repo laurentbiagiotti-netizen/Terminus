@@ -471,7 +471,7 @@ function jusqua2(jeu, a, b){ var s = []; for (var p = a; p <= b; p++) s = s.conc
 /* 9. La partie complète : la solution documentée, à 20 sur 20          */
 /* ================================================================== */
 (function(){
-	var debut = DOC.indexOf("## Chapitre 8 : la Flotte noire"), fin = DOC.indexOf("## L'épreuve finale");
+	var debut = DOC.indexOf("## Chapitre 8 : la Flotte noire"), fin = DOC.indexOf("## Chapitre 9 : la Chronique");
 	verifier(debut > -1 && fin > debut, "docs/solution.md : la section du chapitre 8 avant l'épreuve finale");
 	var section = DOC.substring(debut, fin);
 	for (var n = 74; n <= 90; n++) verifier(new RegExp("^### " + n + "\\. ", "m").test(section), "docs/solution.md : la partie " + n);
@@ -556,7 +556,7 @@ function jusqua2(jeu, a, b){ var s = []; for (var p = a; p <= b; p++) s = s.conc
 	var bloc = guide.substring(guide.indexOf("var QUIZ = {"), guide.indexOf("var banque"));
 	var i = bloc.search(/\n\t9: \[/);
 	verifier(i > -1, "Guide.js : le quiz du chapitre 8 (QUIZ[9])");
-	egal((bloc.substring(i + 3).split(/\n\t\d: \[/)[0].match(/\n\t\t\["/g) || []).length, 10, "dix questions au quiz du chapitre 8");
+	egal((bloc.substring(i + 3).split(/\n\t\d+: \[/)[0].match(/\n\t\t\["/g) || []).length, 10, "dix questions au quiz du chapitre 8");
 	verifier(/"8"\s*:\s*9/.test(guide), "Guide.js : quiz 8 mène au chapitre interne 9");
 	verifier(guide.indexOf("n8_quai") > -1 && guide.indexOf("cine8_flotte_horizon.gif") > -1, "Guide.js : la scène et la cinématique du Grand Port");
 	verifier(/INDICES_CH8/.test(guide) && /INDICES_CH7/.test(guide), "Guide.js : detailsDeQuete connaît les indices des chapitres 7 et 8");

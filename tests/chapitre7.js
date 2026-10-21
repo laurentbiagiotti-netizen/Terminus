@@ -789,7 +789,7 @@ var FICHIERS = ["SortsIle.js", "SortsIlePoste.js", "SortsIleRegistre.js", "Sorts
 	var bloc = guide.substring(guide.indexOf("var QUIZ = {"), guide.indexOf("var banque"));
 	var i = bloc.search(/\n\t8: \[/);
 	verifier(i > -1, "Guide.js : le quiz du chapitre 7 (QUIZ[8])");
-	egal((bloc.substring(i + 3).split(/\n\t\d: \[/)[0].match(/\n\t\t\["/g) || []).length, 10, "dix questions au quiz du chapitre 7");
+	egal((bloc.substring(i + 3).split(/\n\t\d+: \[/)[0].match(/\n\t\t\["/g) || []).length, 10, "dix questions au quiz du chapitre 7");
 	verifier(/"7"\s*:\s*8/.test(guide), "Guide.js : quiz 7 mène au chapitre interne 8");
 	verifier(guide.indexOf("p7_quai") > -1 && guide.indexOf("cine7_phare_orage.gif") > -1, "Guide.js : la scène et la cinématique de Port-Aube");
 	var cine = guide.substring(guide.indexOf("var CINEMATIQUES"), guide.indexOf("function lancerCinematique"));
