@@ -476,7 +476,6 @@ function noterGitCh9(e){
 		if (depotEstCh9(e, "chronique") && a.some(function(x){ return /\.\./.test(x) && /origin\//.test(x); })){ noterVuCh9("logPlage"); if (c.bataille) noterVuCh9("comparaison"); }
 		if (aOptionCh9(a, ["--show-signature"])){
 			noterVuCh9("showSignature");
-			if (/Good "git" signature/.test(e.sortie || "")) noterVuCh9("signatureBonne");
 			if (c.fauxSceaux && depotEstCh9(e, "chronique")) noterVuCh9("signaturesLues");
 		}
 	}
@@ -486,7 +485,7 @@ function noterGitCh9(e){
 	if (cmd === "show"){
 		if (depotEstCh9(e, "annales") && a.some(function(x){ return /:/.test(x); })) noterVuCh9("showChemin");
 		if (depotEstCh9(e, "besace") && a.some(function(x){ return /^v1\.0/.test(x); })) noterVuCh9("showTag");
-		if (aOptionCh9(a, ["--show-signature"])){ noterVuCh9("showSignature"); if (/Good "git" signature/.test(e.sortie || "")) noterVuCh9("signatureBonne"); if (c.fauxSceaux && depotEstCh9(e, "chronique")) noterVuCh9("signaturesLues"); }
+		if (aOptionCh9(a, ["--show-signature"])){ noterVuCh9("showSignature"); if (c.fauxSceaux && depotEstCh9(e, "chronique")) noterVuCh9("signaturesLues"); }
 	}
 	if (cmd === "cat-file" && ok){
 		if (a.indexOf("-t") > -1) noterVuCh9("catFileT");
@@ -498,7 +497,7 @@ function noterGitCh9(e){
 	if (cmd === "restore" && ok && depotEstCh9(e, "contresorts")){ if (aOptionCh9(a, ["--staged", "-S"])) noterVuCh9("restoreStaged"); else noterVuCh9("restore"); }
 	if (cmd === "commit" && ok && aOptionCh9(a, ["--amend"]) && depotEstCh9(e, "contresorts")) noterVuCh9("amend");
 	if (cmd === "reset" && ok){
-		var mode = (e.reset && e.reset.mode) || (aOptionCh9(a, ["--soft"]) ? "soft" : aOptionCh9(a, ["--hard"]) ? "hard" : "mixed");
+		var mode = e.mode || (aOptionCh9(a, ["--soft"]) ? "soft" : aOptionCh9(a, ["--hard"]) ? "hard" : "mixed");
 		if (mode === "soft") noterVuCh9("resetSoft");
 		if (mode === "mixed" && a.some(function(x){ return x.charAt(0) !== "-"; })) noterVuCh9("resetMixed");
 		if (mode === "hard") noterVuCh9("resetHard");
@@ -509,47 +508,56 @@ function noterGitCh9(e){
 		if (aOptionCh9(a, ["--detach", "-d"]) || e.detache) noterVuCh9("detache");
 	}
 	if (cmd === "merge" && depotEstCh9(e, "lignes")){
-		var m = e.mode || (e.merge && e.merge.mode);
+		var m = e.mode;
 		if (m === "ff") noterVuCh9("mergeFF");
 		if (m === "3voies" && !aOptionCh9(a, ["--no-ff"])) noterVuCh9("merge3");
 		if (aOptionCh9(a, ["--no-ff"]) && ok && m !== "ff") noterVuCh9("mergeNoFF");
 	}
 	if (cmd === "merge" && depotEstCh9(e, "paradoxe") && ((e.conflits || []).length || e.mode === "conflit")) noterVuCh9("conflit");
 	if (cmd === "stash" && ok && depotEstCh9(e, "besace")){
-		var act = (e.stash && e.stash.action) || e.action || a[0] || "push";
+		var act = e.action || (e.stash && e.stash.action) || a[0] || "push";
 		if ((act === "push" || act === "save" || act === undefined) && (aOptionCh9(a, ["-u", "--include-untracked", "-a", "--all"]) || (e.stash && e.stash.nonSuivis))) noterVuCh9("stashU");
 		if (act === "pop" || act === "apply") noterVuCh9("stashPop");
 	}
 	if (cmd === "cherry-pick" && ok && depotEstCh9(e, "besace")) noterVuCh9("cherryPick");
 	if (cmd === "bisect" && depotEstCh9(e, "labyrinthe")){
-		var pm = (e.bisect && e.bisect.premierMauvais) || e.premierMauvais;
+		var pm = e.premierMauvais;
 		if (pm && pm === HASH_CH9("labyrintheFaux")) noterVuCh9("bisectTrouve");
 		noterVuCh9("bisect");
 	}
 	if (cmd === "rebase" && ok){
-		var inter = (e.rebase && e.rebase.interactif) || aOptionCh9(a, ["-i", "--interactive"]);
-		var fini = !e.rebase || !e.rebase.etat || /fini|termine|done|complete/.test(String(e.rebase.etat));
+		var inter = !!e.interactif || aOptionCh9(a, ["-i", "--interactive"]) || !!sCh9().rebaseInteractif;
+		if (e.interactif) sCh9().rebaseInteractif = true;
+		var fini = e.etat === "fini";
+		if (fini) sCh9().rebaseInteractif = false;
 		if (inter && fini && depotEstCh9(e, "prophetie")) noterVuCh9("rebaseI");
 		if (inter && fini && depotEstCh9(e, "epreuve4")) noterVuCh9("rebaseIEpreuve");
 	}
 	if (cmd === "remote" && depotEstCh9(e, "chronique") && aOptionCh9(a, ["-v", "--verbose"])) noterVuCh9("remoteV");
 	if (cmd === "branch" && depotEstCh9(e, "chronique") && aOptionCh9(a, ["-vv"])){ noterVuCh9("branchVV"); if (vuCh9("pushU")) noterVuCh9("branchVVApres"); }
 	if (cmd === "push" && depotEstCh9(e, "chronique")){
-		var p = e.push || e;
-		if (!ok && /rejected|fetch first|non-fast-forward/.test(String(p.rejet || e.erreur || e.sortie || ""))) noterVuCh9("pushRejete");
-		else if (!ok && p.rejet) noterVuCh9("pushRejete");
+		var rejete = (e.resultats || []).some(function(r){ return ["ok", "aJour", "supprime"].indexOf(r.etat) === -1; });
+		if (rejete || (!ok && /rejected|fetch first|non-fast-forward/.test(String(e.erreur || "")))){ noterVuCh9("pushRejete"); ok = false; }
 		if (ok && vuCh9("pushRejete")) noterVuCh9("pushApres");
 		if (ok && aOptionCh9(a, ["-u", "--set-upstream"])) noterVuCh9("pushU");
 	}
 	if (cmd === "fetch" && depotEstCh9(e, "chronique")){
 		noterVuCh9("fetch");
-		var forces = (e.fetch && e.fetch.forces) || e.forces || [];
+		var forces = e.forces || [];
 		if (c.bataille && forces.length) noterVuCh9("fetchForce");
 	}
 	if (cmd === "pull" && depotEstCh9(e, "chronique") && ok && (aOptionCh9(a, ["--rebase", "-r"]) || /rebase/.test(String(e.strategie || "")))) noterVuCh9("pullRebase");
-	if ((cmd === "commit" || cmd === "hook") && depotEstCh9(e, "chronique") && (e.hook === "pre-commit" || (e.hooks && e.hooks["pre-commit"] !== undefined)) && (e.refus || e.code > 0 || (!ok && /hook/i.test(String(e.erreur || e.sortie || ""))))) noterVuCh9("hookRefus");
-	if (cmd === "commit" && !ok && depotEstCh9(e, "chronique") && /Rune de garde/.test(String(e.sortie || "") + String(e.erreur || ""))) noterVuCh9("hookRefus");
+	if (cmd === "commit" && depotEstCh9(e, "chronique") && e.hookRefus === "pre-commit") noterVuCh9("hookRefus");
 }
+/* Ce que seule la sortie dit : une signature vérifiée (Good "git" signature). */
+var APPELER_AVANT_SORTIES_CH9 = Shell.appeler;
+Shell.appeler = function(nom, args, io){
+	var sortie = APPELER_AVANT_SORTIES_CH9.apply(this, arguments);
+	try {
+		if (nom === "git" && chroniqueOuverte() && state.quests["n9_entree"] && typeof sortie === "string" && /Good "git" signature for \S+ with/.test(sansAnsi(sortie))) noterVuCh9("signatureBonne");
+	} catch (x){}
+	return sortie;
+};
 GameEvents.addListener("git", function(e){
 	if (!chroniqueOuverte() || !state.quests["n9_entree"]) return;
 	try { noterGitCh9(e); } catch (x){ /* un constat ne doit jamais casser un sort */ }
@@ -558,8 +566,8 @@ GameEvents.addListener("forge", function(e){
 	if (!chroniqueOuverte() || !state.quests["n9_entree"]) return;
 	try {
 		var c = sCh9(), a = e.args || [];
-		if ((e.cmd === "pr" && (a[0] === "checks" || a[0] === "check")) || e.sous === "checks") noterVuCh9("prChecks");
-		if (e.sous === "diff" || (e.cmd === "pr" && a[0] === "diff")){ var n = +(e.numero || e.pr || a[1]); c.diffsLus = c.diffsLus || {}; if (n) c.diffsLus[n] = true; }
+		if (e.cmd === "pr checks") noterVuCh9("prChecks");
+		if (e.cmd === "pr diff" && e.pr){ c.diffsLus = c.diffsLus || {}; c.diffsLus[+e.pr] = true; }
 	} catch (x){}
 });
 /* Les lectures : HEAD, et les fichiers de .git/refs/heads. */
@@ -679,16 +687,31 @@ function sceauSigneJoueurRCh9(){
 	return G9.historiqueR("main").slice(0, 200).some(function(h){
 		var c = G9.commitR(h);
 		if (!c || !c.signature) return false;
-		var s = c.signature, v = s.verification || s.etat || s.statut || "";
-		var auteurOk = !mail || (c.auteur && (c.auteur.mail === mail || c.auteur.email === mail));
-		return auteurOk && (/bon|good|valide|ok/i.test(String(v)) || s.bonne === true || s.valide === true || (s.cle && clePubliqueCh9() && clePubliqueCh9().indexOf(String(s.cle).split(/\s+/)[1] || "§") > -1));
+		var s = c.signature;
+		var auteurOk = !mail || c.mail === mail;
+		var maCle = clePubliqueCh9(), corps = maCle ? maCle.split(/\s+/)[1] : null;
+		return auteurOk && !!corps && String(s.cle || "").indexOf(corps) > -1;
 	});
 }
 /* La forge (gh) : les requêtes du Haut-Conseil. */
 var F9 = {
-	pr: function(n){ return G9.essai(function(){ return forgePR(ROYAUME_CH9, DEPOT_ROYAUME_CH9, n); }, null); },
-	prs: function(){ return G9.essai(function(){ return forgePRs(ROYAUME_CH9, DEPOT_ROYAUME_CH9) || []; }, []); }
+	prs: function(){ return G9.essai(function(){ var f = forgeEtat(ROYAUME_CH9, DEPOT_ROYAUME_CH9); return f && f.prs ? f.prs : []; }, []); },
+	pr: function(n){ return F9.prs().filter(function(p){ return p.n === +n; })[0] || null; }
 };
+/* Les golems du Haut-Conseil : ils vérifient le format (et refusent un mot de passe), jamais le sens. */
+function forgeVerifications(D, pr){
+	var l = [{ nom: "golem-format", etat: "success", details: "Les fichiers de la Chronique sont bien formés." }];
+	var secret = false;
+	try {
+		var base = gResoudre(D, "refs/heads/" + pr.base, { commit: true }), tete = gResoudre(D, "refs/heads/" + pr.tete, { commit: true });
+		if (base && tete){
+			var a = gAplatir(D, gCommit(D, base).arbre), b = gAplatir(D, gCommit(D, tete).arbre);
+			secret = Object.keys(b).some(function(f){ return (!a[f] || a[f].h !== b[f].h) && /MOT_DE_PASSE=/.test(gObjet(D, b[f].h).c || ""); });
+		}
+	} catch (e){ secret = false; }
+	l.push({ nom: "golem-secrets", etat: secret ? "failure" : "success", details: secret ? "Un mot de passe dans la requête." : "Aucun mot de passe." });
+	return l;
+}
 function auteurPrEstJoueurCh9(pr){ return !!pr && (pr.auteur === JOUEUR || pr.auteur === nomJoueurGitCh9() || pr.parJoueur === true); }
 function revuesDuJoueurCh9(pr){ return ((pr && pr.revues) || []).filter(function(r){ return r.auteur === JOUEUR || r.auteur === nomJoueurGitCh9() || r.parJoueur === true; }); }
 

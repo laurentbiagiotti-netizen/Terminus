@@ -796,7 +796,7 @@ function amineRelitCh9(){
 		var verts = (pr.verifications || []).every(function(v){ return /success|reussi/i.test(v.etat || ""); });
 		if (!verts) return;
 		try {
-			forgeRevue(ROYAUME_CH9, DEPOT_ROYAUME_CH9, pr.numero, { auteur: "Amine", etat: "APPROVED", corps: "Relu. Les golems sont verts, le changement est juste. Tu peux fusionner." });
+			forgeRevue(ROYAUME_CH9, DEPOT_ROYAUME_CH9, pr.n, { auteur: "Amine", etat: "APPROVED", corps: "Relu. Les golems sont verts, le changement est juste. Tu peux fusionner." });
 			if (!state.has("rejeuEnCours")) say(C.gris("(Au Haut-Conseil, Amine pose sa main sur ta requête : « Approuvée. Tu peux fusionner. »)"));
 		} catch (e){}
 	});
