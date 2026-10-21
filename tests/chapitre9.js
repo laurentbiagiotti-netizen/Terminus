@@ -149,13 +149,14 @@ var CHAPITRE = ["Chronique.js", "Chapitre9.js", "Chronotheque.js", "HabitantsChr
 	verifier(avant.length > 220, "socle des chapitres 1 à 8 : " + avant.length + " sorts");
 	egal(avant.filter(function(s){ return jeu.lire("state.knows(" + JSON.stringify(s) + ")") !== true; }).length, 0, "socle acquis au départ direct");
 	egal(jeu.lire("QUETES_CH9.length"), 43, "43 étapes");
-	egal(jeu.lire("QUETES_SECONDAIRES_CH9.length"), 47, "47 défis (42 des maîtres, 5 d'honneur)");
+	egal(jeu.lire("QUETES_SECONDAIRES_CH9.length"), 89, "89 défis (84 des maîtres, 5 d'honneur)");
+	egal(jeu.lire("SALLES_CH9.filter(function(s){ return idsDefisSalleCh9(s.cle).length !== 6; }).map(function(s){ return s.cle; }).join(' ')"), "", "six défis par maître");
 	egal(jeu.lire("SALLES_CH9.length"), 14, "quatorze salles");
 	egal(jeu.lire("QUETES_CH9.filter(function(q){ return !/^n9_/.test(q.id); }).length"), 0, "les étapes s'appellent n9_*");
 	egal(jeu.lire("QUETES_SECONDAIRES_CH9.filter(function(q){ return !/^s_n9_/.test(q.id); }).length"), 0, "les défis s'appellent s_n9_*");
 	egal(jeu.lire("chapitreDeQuete('s_n9_rev_parse')"), 10, "chapitreDeQuete d'un défi");
 	egal(jeu.lire("chapitreDeQuete('a9_worktree')"), 10, "chapitreDeQuete d'une annexe");
-	egal(jeu.lire("state.xpMax10()"), 6960, "xpMax10");
+	egal(jeu.lire("state.xpMax10()"), 9060, "xpMax10");
 	egal(jeu.lire("QUETES_CH9[QUETES_CH9.length - 1].id"), "n9_rapport", "la dernière étape est le rapport de la bataille du temps");
 	egal(jeu.lire("Object.keys(INDICES_CH9).length"), 43, "un indice par étape (INDICES_CH9)");
 	egal(jeu.lire("state.xp10"), 105, "l'arrivée rapporte ses 100 XP (et le lieu ses 5) au chapitre 9");
@@ -230,7 +231,7 @@ var CHAPITRE = ["Chronique.js", "Chapitre9.js", "Chronotheque.js", "HabitantsChr
 	contient(g, "Gamaliel", "Gamaliel se présente");
 	contient(g, "git config --global user.name", "Gamaliel donne la syntaxe");
 	vrai(jeu, "state.knows('git')", "Gamaliel apprend git");
-	verifier((g.match(/\[ \]/g) || []).length >= 3, "Gamaliel montre ses défis à faire");
+	verifier((g.match(/\[ \]/g) || []).length >= 6, "Gamaliel montre ses six défis à faire");
 	jeu.taper("cd ..");
 	contient(jeu.taper("cat SalleDesParadoxes/Kenyonn"), "Cette salle s'ouvre aux Archivistes", "Kenyonn attend un Archiviste");
 	contient(jeu.taper("cat HautConseil/Amine"), "Gardien", "Amine attend un Gardien du Temps");
@@ -479,7 +480,7 @@ var CHAPITRE = ["Chronique.js", "Chapitre9.js", "Chronotheque.js", "HabitantsChr
 	});
 	egal(jeu.lire("QUETES_CH9.filter(function(q){ return !state.quests[q.id]; }).map(function(q){ return q.id; }).join(' ')"), "", "partie complète : toutes les étapes");
 	egal(jeu.lire("QUETES_SECONDAIRES_CH9.filter(function(q){ return !state.quests[q.id]; }).map(function(q){ return q.id; }).join(' ')"), "", "partie complète : tous les défis");
-	egal(jeu.lire("state.xp10"), 6960, "partie complète : 6960 XP");
+	egal(jeu.lire("state.xp10"), 9060, "partie complète : 9060 XP");
 	egal(jeu.lire("state.noteTexte(10)"), "20 / 20", "partie complète : 20 sur 20");
 	egal(jeu.lire("state.malus10"), 0, "partie complète : aucun indice acheté");
 	vrai(jeu, "state.has('platine_ch9')", "partie complète : le platine");
@@ -509,7 +510,7 @@ var CHAPITRE = ["Chronique.js", "Chapitre9.js", "Chronotheque.js", "HabitantsChr
 	// Les quêtes annexes, le badge Ami, les souvenirs : hors note.
 	jeu.lire("QUETES_ANNEXES").filter(function(a){ return a.chapitre === 10; }).forEach(function(a){ fait(jeu, a.id, "partie complète : annexe " + a.id); });
 	vrai(jeu, "state.has('ami_ch9')", "partie complète : Ami de la Chronothèque");
-	egal(jeu.lire("state.xp10"), 6960, "les annexes ne changent pas l'XP du chapitre");
+	egal(jeu.lire("state.xp10"), 9060, "les annexes ne changent pas l'XP du chapitre");
 	verifier(jeu.lire("state.xpAnnexes") >= 300, "les annexes donnent leur bonus (" + jeu.lire("state.xpAnnexes") + ")");
 	vrai(jeu, "(function(){ var ch = DEPOTS_CH9.coffre; return G9.historique(ch, 'HEAD').every(function(h){ return G9.fichier(ch, h, 'secrets.txt') === null; }); })()", "le coffre d'Eva-Lydia : le secret purgé de toute l'histoire");
 	contient(jeu.taper("tar -tf ~/chronotheque/runes-v1.0.tar"), "vitrail", "git archive : tar -tf lit le paquet");

@@ -5,7 +5,7 @@
  *  - les quatorze maîtres du temps, un par salle, ont un texte VIVANT : ils entrent en scène, expliquent leur salle par
  *    une image (avec le vrai mot du métier à côté), donnent la syntaxe, confient la mission, réagissent aux erreurs
  *    fréquentes, puis racontent une histoire du métier ;
- *  - les défis (quêtes secondaires s_n9_*) : trois par maître, révélés par lui, et cinq défis d'honneur de Laurent ;
+ *  - les défis (quêtes secondaires s_n9_*) : six par maître, révélés par lui, et cinq défis d'honneur de Laurent ;
  *  - les badges du chapitre (un par salle tenue, un par sceau de rang, la Chronique, la bataille, le rapport, l'aube) ;
  *  - les commandes du jeu sablier (le plan de la Chronothèque), sceaux (ton rang) et regenerer (un dépôt neuf).
  */
@@ -13,12 +13,35 @@
 World.fige = false;
 
 /* ------------------------------------------------------------------ */
-/* Les défis de la Chronothèque (quêtes secondaires, trois par maître)  */
+/* Les défis de la Chronothèque (quêtes secondaires, six par maître)    */
 /* ------------------------------------------------------------------ */
 
 function argsTexteCh9(a){ return (a || []).join(" "); }
 function sousGitCh9(a){ a = a || []; for (var i = 0; i < a.length; i++){ if (a[i] === "-C" || a[i] === "-c"){ i++; continue; } if (a[i].charAt(0) !== "-") return a[i]; } return a[0] || ""; }
 function aGitCh9(a, opt){ return (a || []).some(function(x){ return x === opt || x.indexOf(opt + "=") === 0; }); }
+
+/* Un message de commit conventionnel (Conventional Commits) : type(portée)!: description. */
+var MESSAGE_CONVENTIONNEL_CH9 = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([\w.\/-]+\))?!?: \S/;
+/* Un fichier CODEOWNERS (à la racine, dans .github/ ou docs/) qui nomme au moins un gardien : « motif @quelqu'un ». */
+function codeownersCh9(D, h){
+	var carte = gAplatir(D, gCommit(D, h).arbre);
+	return ["CODEOWNERS", ".github/CODEOWNERS", "docs/CODEOWNERS"].some(function(p){ return !!carte[p] && /^\s*[^#\s]\S*\s+@\S+/m.test(gObjet(D, carte[p].h).c || ""); });
+}
+/* Une requête du joueur, en conflit avec sa base, puis remise à jour : la base est dans sa ligne, et la forge la dit fusionnable. */
+function requeteRemiseAJourCh9(){
+	if (typeof gForgeFusionnable !== "function") return false;
+	var c = sCh9();
+	c.prConflits = c.prConflits || {};
+	var D = G9.essai(function(){ return gitDepot(ROYAUME_CH9, DEPOT_ROYAUME_CH9); }, null);
+	if (!D) return false;
+	return F9.prs().some(function(pr){
+		if (!auteurPrEstJoueurCh9(pr) || pr.etat !== "OPEN") return false;
+		var f = gForgeFusionnable(D, pr);
+		if (f === "CONFLICTING"){ c.prConflits[pr.n] = true; return false; }
+		var base = gRef(D, "refs/heads/" + pr.base), tete = gRef(D, "refs/heads/" + pr.tete);
+		return f === "MERGEABLE" && !!c.prConflits[pr.n] && !!base && !!tete && gEstAncetre(D, base, tete);
+	});
+}
 
 /* appel(nom, args, sortie, io) : le sort lancé, et sa sortie, le prouvent. monde() : l'état le prouve. */
 var DEFIS_CH9 = [
@@ -32,6 +55,12 @@ var DEFIS_CH9 = [
 		if (n !== "git" || a[0] !== "config" || a.length !== 2 || a[1] !== "user.email" || !/@/.test(s)) return false;
 		try { var r = Shell.chercher(".git/config", {}, "cat"); var local = r.node && !(r.node instanceof Room) ? valeurIniCh9(r.node.getText(), "user", "email") : null; return !!local && s.trim() === local; } catch (e){ return false; }
 	  } },
+	{ id: "s_n9_config_get", m: "sceaux", titre: "Sceaux : lire un seul réglage, sans dérouler tous les anneaux (git config --get user.name)",
+	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "config" && (aGitCh9(a, "--get") || aGitCh9(a, "--get-all")) && s.trim().length > 0; } },
+	{ id: "s_n9_pull_rebase", m: "sceaux", titre: "Sceaux : tirer sans nouer l'histoire, par défaut (git config --global pull.rebase true)",
+	  monde: function(){ return /^true$/i.test(valeurIniCh9(gitconfigGlobalCh9(), "pull", "rebase") || ""); } },
+	{ id: "s_n9_init_bare", m: "sceaux", titre: "Sceaux : un grimoire sans atelier, comme ceux des Royaumes (git init --bare)",
+	  evenement: "git", quand: function(e){ return e.cmd === "init" && e.ok !== false && e.nu === true && !e.reinit; } },
 	// L'Autel des Offrandes (Bénédicte)
 	{ id: "s_n9_diff_staged", m: "autel", titre: "Autel : ce qui est posé sur l'autel, et seulement ça (git diff --staged)",
 	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "diff" && (aGitCh9(a, "--staged") || aGitCh9(a, "--cached")) && /^diff --git/m.test(s); } },
@@ -39,6 +68,15 @@ var DEFIS_CH9 = [
 	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "check-ignore" && /-v|--verbose/.test(argsTexteCh9(a)) && /gitignore:\d+:/.test(s); } },
 	{ id: "s_n9_mv", m: "autel", titre: "Autel : renommer un fichier scellé, et que Git le sache (git mv)",
 	  evenement: "git", quand: function(e){ return e.cmd === "mv" && e.ok !== false; } },
+	{ id: "s_n9_add_u", m: "autel", titre: "Autel : reposer d'un geste tout ce qui est déjà suivi, et rien de neuf (git add -u)",
+	  evenement: "git", quand: function(e){ return e.cmd === "add" && e.ok !== false && (e.args || []).some(function(x){ return x === "--update" || /^-[a-zA-Z]*u[a-zA-Z]*$/.test(x); }) && (e.chemins || []).length > 0; } },
+	{ id: "s_n9_conventionnel", m: "autel", titre: "Autel : un message conventionnel, que les outils savent lire (git commit -m \"feat: ...\", fix:, docs:...)",
+	  evenement: "git", quand: function(e){ return e.cmd === "commit" && e.ok !== false && !!e.hash && MESSAGE_CONVENTIONNEL_CH9.test(String(e.message || "")); } },
+	{ id: "s_n9_gitattributes", m: "autel", titre: "Autel : dire à Git comment traiter chaque offrande (un .gitattributes scellé, puis git check-attr)",
+	  appel: function(n, a, s){
+		if (n !== "git" || sousGitCh9(a) !== "check-attr" || !s.split("\n").some(function(l){ return /: [^:\s]+: (?!unspecified$)\S+$/.test(l); })) return false;
+		return G9.essai(function(){ var R = gTrouverDepot(current_room), t = gTete(R); return !!t && Object.keys(gAplatir(R, gCommit(R, t).arbre)).some(function(p){ return /(^|\/)\.gitattributes$/.test(p); }); }, false);
+	  } },
 	// La Crypte des Runes (Andrii)
 	{ id: "s_n9_ls_tree", m: "runes", titre: "Runes : l'arbre entier d'un sceau (git ls-tree -r HEAD)",
 	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "ls-tree" && /-r/.test(argsTexteCh9(a)) && /\bblob [0-9a-f]{40}/.test(s); } },
@@ -46,6 +84,12 @@ var DEFIS_CH9 = [
 	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "rev-parse" && /^[0-9a-f]{40}$/m.test(s.trim()); } },
 	{ id: "s_n9_count_objects", m: "runes", titre: "Runes : compter les pierres de la crypte (git count-objects -v)",
 	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "count-objects" && /count: \d+/.test(s); } },
+	{ id: "s_n9_cat_file_s", m: "runes", titre: "Runes : le poids d'une pierre, en octets (git cat-file -s HEAD:grimoire.md)",
+	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "cat-file" && a.indexOf("-s") > -1 && /^\d+$/.test(s.trim()); } },
+	{ id: "s_n9_ls_files_s", m: "runes", titre: "Runes : l'autel vu d'en dessous, chaque fichier avec sa rune (git ls-files -s)",
+	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "ls-files" && (aGitCh9(a, "-s") || aGitCh9(a, "--stage")) && /^\d{6} [0-9a-f]{40} \d\t/m.test(s); } },
+	{ id: "s_n9_show_ref", m: "runes", titre: "Runes : tous les noms gravés, et la rune que chacun désigne (git show-ref)",
+	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "show-ref" && /^[0-9a-f]{40} refs\//m.test(s); } },
 	// L'Oracle (Irvan)
 	{ id: "s_n9_log_format", m: "oracle", titre: "Oracle : un log à ta façon (git log --format='%h %an %s')",
 	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "log" && /--(format|pretty)=/.test(argsTexteCh9(a)) && /%an|%ae|%h|%s/.test(argsTexteCh9(a)) && s.trim().length > 0; } },
@@ -53,6 +97,12 @@ var DEFIS_CH9 = [
 	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "log" && /--grep/.test(argsTexteCh9(a)) && s.trim().length > 0; } },
 	{ id: "s_n9_log_stat", m: "oracle", titre: "Oracle : ce que chaque sceau a touché (git log --stat)",
 	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "log" && /--stat/.test(argsTexteCh9(a)) && /changed/.test(s); } },
+	{ id: "s_n9_log_L", m: "oracle", titre: "Oracle : l'histoire d'une seule ligne, et rien d'autre (git log -L 12,12:lois.md)",
+	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "log" && a.some(function(x){ return /^-L/.test(x); }) && /^@@ -\d+,\d+ \+\d+,\d+ @@/m.test(s) && /^(commit )?[0-9a-f]{7,40}\b/m.test(s); } },
+	{ id: "s_n9_log_since", m: "oracle", titre: "Oracle : les sceaux d'une période (git log --since=2026-09-25 --until=2026-09-28)",
+	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "log" && ["--since", "--after", "--until", "--before"].some(function(o){ return aGitCh9(a, o); }) && s.trim().length > 0; } },
+	{ id: "s_n9_log_follow", m: "oracle", titre: "Oracle : l'histoire d'un fichier, même d'avant son nouveau nom (git log --follow)",
+	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "log" && aGitCh9(a, "--follow") && (s.match(/^(commit )?[0-9a-f]{7,40}\b/mg) || []).length >= 2; } },
 	// La Salle des Contre-sorts (Georgette)
 	{ id: "s_n9_restore_source", m: "contresorts", titre: "Contre-sorts : rendre à un fichier une version plus ancienne (git restore --source=HEAD~1)",
 	  appel: function(n, a){ return n === "git" && sousGitCh9(a) === "restore" && /--source[= ]/.test(argsTexteCh9(a)); } },
@@ -60,6 +110,12 @@ var DEFIS_CH9 = [
 	  appel: function(n, a){ return n === "git" && sousGitCh9(a) === "commit" && aGitCh9(a, "--amend") && aGitCh9(a, "--no-edit"); } },
 	{ id: "s_n9_revert_no_commit", m: "contresorts", titre: "Contre-sorts : préparer un contre-sort sans le sceller tout de suite (git revert --no-commit)",
 	  appel: function(n, a){ return n === "git" && sousGitCh9(a) === "revert" && (aGitCh9(a, "--no-commit") || aGitCh9(a, "-n")); } },
+	{ id: "s_n9_restore_p", m: "contresorts", titre: "Contre-sorts : défaire un morceau d'un fichier, pas tout le fichier (git restore -p)",
+	  evenement: "git", quand: function(e){ return e.cmd === "restore" && e.ok !== false && e.patch === true && (e.jetes || 0) > 0; } },
+	{ id: "s_n9_reset_author", m: "contresorts", titre: "Contre-sorts : rendre ton nom au dernier sceau (git commit --amend --reset-author --no-edit)",
+	  evenement: "git", quand: function(e){ return e.cmd === "commit" && e.ok !== false && e.amend === true && (e.args || []).indexOf("--reset-author") > -1 && !!e.hash; } },
+	{ id: "s_n9_revert_fusion", m: "contresorts", titre: "Contre-sorts : défaire une fusion déjà publiée, sans réécrire (git revert -m 1)",
+	  evenement: "git", quand: function(e){ return e.cmd === "revert" && e.ok !== false && !!e.mainline && (e.nouveaux || []).length > 0; } },
 	// Le Livre des Ombres (William)
 	{ id: "s_n9_show_reflog", m: "ombres", titre: "Ombres : regarder où était HEAD il y a deux pas (git show HEAD@{2})",
 	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "show" && /@\{\d+\}/.test(argsTexteCh9(a)) && /^commit [0-9a-f]{40}/m.test(s); } },
@@ -67,6 +123,12 @@ var DEFIS_CH9 = [
 	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "reflog" && a.filter(function(x){ return x.charAt(0) !== "-"; }).length >= 2 && /@\{\d+\}/.test(s); } },
 	{ id: "s_n9_orig_head", m: "ombres", titre: "Ombres : la position d'avant le dernier grand saut (ORIG_HEAD)",
 	  appel: function(n, a, s){ return n === "git" && /ORIG_HEAD/.test(argsTexteCh9(a)) && s.trim().length > 0; } },
+	{ id: "s_n9_log_g", m: "ombres", titre: "Ombres : le Livre, lu comme un journal de sceaux (git log -g)",
+	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "log" && (aGitCh9(a, "-g") || aGitCh9(a, "--walk-reflogs")) && /@\{\d+\}/.test(s); } },
+	{ id: "s_n9_reflog_date", m: "ombres", titre: "Ombres : quand HEAD a bougé, à la minute près (git reflog --date=iso)",
+	  appel: function(n, a, s){ return n === "git" && (sousGitCh9(a) === "reflog" || sousGitCh9(a) === "log") && /--date/.test(argsTexteCh9(a)) && /@\{\d{4}-\d\d-\d\d/.test(s); } },
+	{ id: "s_n9_stash_retrouve", m: "ombres", titre: "Ombres : une besace jetée par erreur, rendue par son hash (git stash drop, puis git stash apply HASH)",
+	  evenement: "git", quand: function(e){ return e.cmd === "stash" && e.ok !== false && e.horsListe === true && !(e.conflits || []).length; } },
 	// Les Lignes du Destin (Marc)
 	{ id: "s_n9_branch_m", m: "lignes", titre: "Lignes : renommer une ligne du destin (git branch -m)",
 	  appel: function(n, a){ return n === "git" && sousGitCh9(a) === "branch" && (aGitCh9(a, "-m") || aGitCh9(a, "-M") || aGitCh9(a, "--move")); } },
@@ -74,6 +136,12 @@ var DEFIS_CH9 = [
 	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "branch" && aGitCh9(a, "--merged") && s.trim().length > 0; } },
 	{ id: "s_n9_switch_moins", m: "lignes", titre: "Lignes : revenir à la ligne d'avant (git switch -)",
 	  appel: function(n, a){ return n === "git" && sousGitCh9(a) === "switch" && a.indexOf("-") > -1; } },
+	{ id: "s_n9_branch_d", m: "lignes", titre: "Lignes : effacer une ligne déjà réunie, sans rien risquer (git branch -d)",
+	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "branch" && (aGitCh9(a, "-d") || aGitCh9(a, "--delete")) && !aGitCh9(a, "-D") && /^Deleted branch /m.test(s); } },
+	{ id: "s_n9_branch_contains", m: "lignes", titre: "Lignes : les lignes qui portent un sceau donné (git branch --contains)",
+	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "branch" && aGitCh9(a, "--contains") && s.trim().length > 0; } },
+	{ id: "s_n9_merge_squash", m: "lignes", titre: "Lignes : réunir toute une ligne en un seul sceau (git merge --squash, puis git commit)",
+	  evenement: "git", quand: function(e){ return e.cmd === "merge" && e.ok !== false && e.mode === "squash"; } },
 	// La Salle des Paradoxes (Kenyonn)
 	{ id: "s_n9_merge_abort", m: "paradoxes", titre: "Paradoxes : fuir un paradoxe, et revenir comme avant (git merge --abort)",
 	  appel: function(n, a){ return n === "git" && sousGitCh9(a) === "merge" && aGitCh9(a, "--abort"); } },
@@ -81,6 +149,12 @@ var DEFIS_CH9 = [
 	  monde: function(){ return /zdiff3|diff3/.test(valeurIniCh9(gitconfigGlobalCh9(), "merge", "conflictStyle") || ""); } },
 	{ id: "s_n9_status_conflit", m: "paradoxes", titre: "Paradoxes : lire un paradoxe dans git status (both modified)",
 	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "status" && /both modified|Unmerged paths|^UU /m.test(s); } },
+	{ id: "s_n9_ls_files_u", m: "paradoxes", titre: "Paradoxes : les trois versions d'un paradoxe, l'ancêtre, la tienne, l'autre (git ls-files -u)",
+	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "ls-files" && (aGitCh9(a, "-u") || aGitCh9(a, "--unmerged")) && /^\d{6} [0-9a-f]{40} [123]\t/m.test(s); } },
+	{ id: "s_n9_ours_theirs", m: "paradoxes", titre: "Paradoxes : prendre d'un geste la version d'un côté, pendant le paradoxe (git checkout --theirs, ou --ours)",
+	  evenement: "git", quand: function(e){ return (e.cmd === "checkout" || e.cmd === "restore") && e.ok !== false && (e.paradoxes || []).length > 0; } },
+	{ id: "s_n9_merge_x", m: "paradoxes", titre: "Paradoxes : trancher d'avance en faveur d'un côté (git merge -X ours, ou -X theirs)",
+	  evenement: "git", quand: function(e){ return e.cmd === "merge" && e.ok !== false && !!e.faveur && e.mode === "3voies" && !!e.hash; } },
 	// La Besace et les Reliques (Anthony)
 	{ id: "s_n9_stash_list", m: "besace", titre: "Besace : ce qui dort dans la besace (git stash list)",
 	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "stash" && a.indexOf("list") > -1 && /stash@\{\d+\}/.test(s); } },
@@ -88,6 +162,12 @@ var DEFIS_CH9 = [
 	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "stash" && a.indexOf("show") > -1 && /^(diff --git|[ +-])/m.test(s); } },
 	{ id: "s_n9_tag_l", m: "besace", titre: "Besace : tous les menhirs d'une forme (git tag -l \"v*\")",
 	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "tag" && (aGitCh9(a, "-l") || aGitCh9(a, "--list")) && s.trim().length > 0; } },
+	{ id: "s_n9_stash_branch", m: "besace", titre: "Besace : ouvrir une ligne neuve avec ce qui dort dans la besace (git stash branch)",
+	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "stash" && a.indexOf("branch") > -1 && /Switched to a new branch/.test(s); } },
+	{ id: "s_n9_cherry_x", m: "besace", titre: "Besace : une relique qui dit d'où elle vient (git cherry-pick -x)",
+	  evenement: "git", quand: function(e){ return e.cmd === "cherry-pick" && e.ok !== false && (e.args || []).indexOf("-x") > -1 && (e.nouveaux || []).length > 0; } },
+	{ id: "s_n9_semver", m: "besace", titre: "Besace : un menhir de version sémantique, MAJEUR.MINEUR.CORRECTIF (git tag -a v1.1.0)",
+	  monde: function(){ return G9.essai(function(){ var R = gitDepot(null, DEPOTS_CH9.besace); return !!R && gRefs(R, "refs/tags/").some(function(r){ var o = gObjet(R, r.hash); return /^v\d+\.\d+\.\d+$/.test(r.nom.substring(10)) && !!o && o.t === "tag"; }); }, false); } },
 	// L'Atelier des Prophéties (Guillaume)
 	{ id: "s_n9_rebase_abort", m: "propheties", titre: "Prophéties : renoncer à une réécriture en cours (git rebase --abort)",
 	  appel: function(n, a){ return n === "git" && sousGitCh9(a) === "rebase" && aGitCh9(a, "--abort"); } },
@@ -95,6 +175,12 @@ var DEFIS_CH9 = [
 	  appel: function(n, a){ return n === "git" && sousGitCh9(a) === "rebase" && aGitCh9(a, "--autosquash"); } },
 	{ id: "s_n9_rebase_continue", m: "propheties", titre: "Prophéties : trancher un paradoxe au milieu d'une réécriture (git rebase --continue)",
 	  appel: function(n, a){ return n === "git" && sousGitCh9(a) === "rebase" && aGitCh9(a, "--continue"); } },
+	{ id: "s_n9_rebase_onto", m: "propheties", titre: "Prophéties : transplanter une ligne sur une autre base (git rebase --onto NOUVELLE ANCIENNE LIGNE)",
+	  evenement: "git", quand: function(e){ return e.cmd === "rebase" && e.ok !== false && e.etat === "fini" && aGitCh9(e.args, "--onto"); } },
+	{ id: "s_n9_rebase_exec", m: "propheties", titre: "Prophéties : éprouver chaque sceau réécrit, un par un (git rebase -x \"COMMANDE\")",
+	  evenement: "git", quand: function(e){ return e.cmd === "rebase" && e.ok !== false && e.etat === "fini" && (e.args || []).some(function(x){ return x === "-x" || x === "--exec" || /^--exec=/.test(x); }); } },
+	{ id: "s_n9_rebase_edit", m: "propheties", titre: "Prophéties : s'arrêter sur un sceau pour le retoucher (git rebase -i, le mot edit)",
+	  evenement: "git", quand: function(e){ return e.cmd === "rebase" && e.ok !== false && e.etat === "edit"; } },
 	// La Salle des Cartes (Moustapha)
 	{ id: "s_n9_branch_a", m: "cartes", titre: "Cartes : toutes les lignes, celles des Royaumes comprises (git branch -a)",
 	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "branch" && (aGitCh9(a, "-a") || aGitCh9(a, "--all")) && /remotes\//.test(s); } },
@@ -102,6 +188,12 @@ var DEFIS_CH9 = [
 	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "log" && a.some(function(x){ return /^[^.\s]+\.\.[^.\s]+$/.test(x); }) && s.trim().length > 0; } },
 	{ id: "s_n9_log_trois_points", m: "cartes", titre: "Cartes : ce que deux lignes ont chacune de leur côté (git log --left-right A...B)",
 	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "log" && a.some(function(x){ return /^[^.\s]+\.\.\.[^.\s]+$/.test(x); }) && s.trim().length > 0; } },
+	{ id: "s_n9_merge_base", m: "cartes", titre: "Cartes : le carrefour où deux routes se sont séparées (git merge-base A B)",
+	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "merge-base" && /^[0-9a-f]{40}$/m.test(s); } },
+	{ id: "s_n9_first_parent", m: "cartes", titre: "Cartes : la grand-route seule, sans les chemins de traverse (git log --first-parent)",
+	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "log" && aGitCh9(a, "--first-parent") && s.trim().length > 0; } },
+	{ id: "s_n9_for_each_ref", m: "cartes", titre: "Cartes : les routes, de la plus fraîche à la plus oubliée (git for-each-ref --sort=-committerdate refs/heads)",
+	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "for-each-ref" && /--sort[= ]\S*date/.test(argsTexteCh9(a)) && s.trim().length > 0; } },
 	// Les Portes des Royaumes (Jeremy)
 	{ id: "s_n9_remote_show", m: "portes", titre: "Portes : tout ce que l'on sait d'un Royaume (git remote show origin)",
 	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "remote" && a.indexOf("show") > -1 && /Fetch URL|HEAD branch/.test(s); } },
@@ -109,6 +201,12 @@ var DEFIS_CH9 = [
 	  monde: function(){ var t = G9.essai(function(){ return gitTags(ROYAUME_CH9, DEPOT_ROYAUME_CH9); }, null); var n = !t ? 0 : (Array.isArray(t) ? t.length : Object.keys(t).length); return n > 1; } },
 	{ id: "s_n9_fetch_prune", m: "portes", titre: "Portes : oublier les lignes que le Royaume a effacées (git fetch --prune)",
 	  appel: function(n, a){ return n === "git" && sousGitCh9(a) === "fetch" && (aGitCh9(a, "--prune") || aGitCh9(a, "-p")); } },
+	{ id: "s_n9_remote_add", m: "portes", titre: "Portes : ouvrir une porte vers un second Royaume (git remote add NOM URL)",
+	  evenement: "git", quand: function(e){ return e.cmd === "remote" && e.ok !== false && e.action === "add" && !!e.nom; } },
+	{ id: "s_n9_ls_remote", m: "portes", titre: "Portes : ce que porte un Royaume, sans rien en rapporter (git ls-remote)",
+	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "ls-remote" && /^[0-9a-f]{40}\t(HEAD|refs\/)/m.test(s); } },
+	{ id: "s_n9_push_delete", m: "portes", titre: "Portes : effacer une ligne dans un Royaume (git push origin --delete LIGNE)",
+	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "push" && / - \[deleted\]/.test(s); } },
 	// Les Runes de Garde (Aurélien)
 	{ id: "s_n9_commit_msg", m: "garde", titre: "Garde : une rune sur les messages (un hook commit-msg qui refuse un message trop court)",
 	  monde: function(){ var t = texteIleCh9(DEPOTS_CH9.chronique + "/.git/hooks/commit-msg") || ""; return /exit 1/.test(t); } },
@@ -116,6 +214,12 @@ var DEFIS_CH9 = [
 	  evenement: "git", quand: function(e){ return e.cmd === "verify-commit" && !!e.signature && e.signature !== "aucune"; } },
 	{ id: "s_n9_sans_cire", m: "garde", titre: "Garde : repérer d'un coup d'œil les sceaux sans cire (git log --format='%h %G? %s' : N pour aucune cire, G pour une bonne)",
 	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "log" && /%G\?/.test(argsTexteCh9(a)) && /(^|\s)N(\s|$)/m.test(s) && /(^|\s)[GU](\s|$)/m.test(s); } },
+	{ id: "s_n9_pre_push", m: "garde", titre: "Garde : une rune avant chaque envoi (un hook pre-push qui refuse d'envoyer une ligne wip)",
+	  evenement: "git", quand: function(e){ return e.cmd === "push" && e.hookRefus === "pre-push"; } },
+	{ id: "s_n9_tag_signe", m: "garde", titre: "Garde : un menhir scellé de ta cire (git tag -s v1.0.0 -m \"...\")",
+	  evenement: "git", quand: function(e){ return e.cmd === "tag" && e.ok !== false && e.signe === true && !!e.tag; } },
+	{ id: "s_n9_verify_tag", m: "garde", titre: "Garde : vérifier la cire d'un menhir (git verify-tag)",
+	  evenement: "git", quand: function(e){ return e.cmd === "verify-tag" && e.signature === "bonne"; } },
 	// Le Haut-Conseil (Amine)
 	{ id: "s_n9_pr_view", m: "conseil", titre: "Conseil : lire une requête en entier (gh pr view N)",
 	  appel: function(n, a, s){ return n === "gh" && a[0] === "pr" && a[1] === "view" && s.trim().length > 0; } },
@@ -123,6 +227,12 @@ var DEFIS_CH9 = [
 	  appel: function(n, a){ return n === "gh" && a[0] === "pr" && a[1] === "comment"; } },
 	{ id: "s_n9_run_list", m: "conseil", titre: "Conseil : le registre des golems (gh run list)",
 	  appel: function(n, a, s){ return n === "gh" && a[0] === "run" && a[1] === "list" && s.trim().length > 0; } },
+	{ id: "s_n9_pr_checkout", m: "conseil", titre: "Conseil : essayer chez toi la requête d'un autre (gh pr checkout N)",
+	  appel: function(n, a, s){ return n === "gh" && a[0] === "pr" && a[1] === "checkout" && /Switched to|Already on/.test(s); } },
+	{ id: "s_n9_codeowners", m: "conseil", titre: "Conseil : nommer les gardiens de chaque page (un fichier CODEOWNERS, poussé sur une ligne)",
+	  monde: function(){ return G9.essai(function(){ var D = gitDepot(ROYAUME_CH9, DEPOT_ROYAUME_CH9); return !!D && gRefs(D, "refs/heads/").some(function(r){ return r.nom !== "refs/heads/main" && codeownersCh9(D, r.hash); }); }, false); } },
+	{ id: "s_n9_pr_a_jour", m: "conseil", titre: "Conseil : remettre à jour une requête en conflit avec main (fusionner main dans sa ligne, trancher, pousser)",
+	  monde: function(){ return requeteRemiseAJourCh9(); } },
 	// Les défis d'honneur de Laurent
 	{ id: "s_n9_sans_indice", m: "honneur", titre: "Honneur : finir la Chronique sans acheter un seul indice" },
 	{ id: "s_n9_scribe_j1", m: "honneur", titre: "Honneur : Scribe avant la première nuit (avant J1 22:00)" },
@@ -210,7 +320,10 @@ var MAITRES_CH9 = {
 			"  git config --global init.defaultBranch main      la ligne principale s'appelle main\n" +
 			"  git config --list --show-origin                  qui a dit quoi, et dans quel fichier\n" +
 			"  git init                                         faire d'un dossier un grimoire (un dépôt)\n" +
-			"  ls -a ; cat .git/HEAD ; git status               ce que init a posé, et où tu te tiens\n\n" +
+			"  ls -a ; cat .git/HEAD ; git status               ce que init a posé, et où tu te tiens\n" +
+			"  git config --get user.name                       un seul réglage, celui qui gagne\n" +
+			"  git config --global pull.rebase true             tirer en se remettant au bout, sans nœud\n" +
+			"  git init --bare DOSSIER.git                      un grimoire sans atelier (celui d'un Royaume)\n\n" +
 			"Je t'enseigne git : la plume du temps. Tous les maîtres de la Chronothèque en parlent une langue. »"; },
 		mission: function(){ return "« Ta mission : nomme-toi, à l'anneau du milieu (--global), et choisis main pour ta ligne principale. Regarde ensuite qui dit quoi : --list --show-origin. " +
 			"Puis va dans ~/chronotheque/premier-sceau, fais-en un grimoire, et regarde ce qui est apparu. »"; },
@@ -240,7 +353,10 @@ var MAITRES_CH9 = {
 			"  git log --oneline                      les sceaux, un par ligne\n" +
 			"  .gitignore                             un motif par ligne : .env, __pycache__/, *.log\n" +
 			"  git rm --cached FICHIER (-r DOSSIER)   retirer de l'autel sans effacer du disque\n" +
-			"  git add -p FICHIER                     poser morceau par morceau : y oui, n non, q fini, s couper\n\n" +
+			"  git add -p FICHIER                     poser morceau par morceau : y oui, n non, q fini, s couper\n" +
+			"  git add -u                             reposer tout ce qui est suivi et modifié, rien de neuf\n" +
+			"  git commit -m \"feat: ...\"              un message conventionnel : feat, fix, docs, refactor, test, chore\n" +
+			"  .gitattributes ; git check-attr -a F   comment traiter chaque fichier : *.sh text eol=lf, *.png binary\n\n" +
 			"Un sceau, une raison. Deux raisons, deux sceaux. »"; },
 		mission: function(){ return "« Trois choses. D'abord, dans ~/chronotheque/premier-sceau, tes deux premiers sceaux : regarde l'état avec git status -s, puis les sceaux avec git log --oneline. " +
 			"Ensuite, dans ~/chronotheque/autel : un .env avec des mots de passe, des journaux, et un dossier __pycache__ que quelqu'un a scellé par erreur. Pose le voile, et retire __pycache__ de l'autel. " +
@@ -269,6 +385,9 @@ var MAITRES_CH9 = {
 			"  git cat-file -p HEAD        le sceau où tu te tiens : son arbre, son parent, son scribe\n" +
 			"  git cat-file -p HEAD^{tree} l'arbre de ce sceau : des blobs et des arbres, avec leurs runes\n" +
 			"  git hash-object FICHIER     la rune qu'aurait ce fichier, s'il devenait un blob\n" +
+			"  git cat-file -s REV:F       le poids d'une pierre, en octets\n" +
+			"  git ls-files -s             l'autel vu d'en dessous : mode, rune, étage, nom\n" +
+			"  git show-ref                tous les noms (branches, tags) et la rune de chacun\n" +
 			"  ls .git/objects             là où dorment les pierres (les deux premiers signes de la rune font le dossier) »"; },
 		mission: function(){ return "« Dans un de tes grimoires (premier-sceau, par exemple) : demande la sorte d'un sceau, puis ouvre trois pierres avec -p : un sceau, son arbre, et un blob de cet arbre. Et calcule la rune d'un fichier avec hash-object : compare-la à celle de l'arbre. »"; },
 		suite: function(){ return "Andrii pose ta main sur une rune. « Tu la sens ? Quarante signes. Descends encore : un sceau, son arbre, un blob. »"; },
@@ -290,7 +409,10 @@ var MAITRES_CH9 = {
 			"  git show HASH                       un sceau et son changement\n" +
 			"  git show v-ete:carte.txt            un fichier tel qu'il était à ce menhir\n" +
 			"  git blame -L 12,12 lois.md          qui a écrit la ligne 12\n" +
-			"  git diff v-ete v-automne --stat     ce qui a changé entre deux moments »"; },
+			"  git diff v-ete v-automne --stat     ce qui a changé entre deux moments\n" +
+			"  git log -L 12,12:lois.md            l'histoire d'une seule ligne\n" +
+			"  git log --since=DATE --until=DATE   les sceaux d'une période\n" +
+			"  git log --follow FICHIER            un fichier, même d'avant son renommage »"; },
 		mission: function(){ return "« Dans ~/chronotheque/annales, cinquante sceaux, et quelque part, une plume grise. Réponds aux quatre questions de REPONSES.md, sur la ligne « Réponse : ». " +
 			"Mais je veux voir comment tu demandes : le graphe, -S, --author, puis blame, show REV:FICHIER, et un diff entre deux moments. »"; },
 		suite: function(){ return "Irvan touche l'eau du bout du doigt. « L'Oracle t'a répondu une fois. Continue : REPONSES.md, et le Miroir des aveux (blame, show, diff). »"; },
@@ -319,7 +441,10 @@ var MAITRES_CH9 = {
 			"  git reset --soft HEAD~1             reculer d'un sceau, l'autel reste plein\n" +
 			"  git reset --mixed HEAD~1            reculer, l'autel se vide, l'atelier reste\n" +
 			"  git reset --hard HEAD~1             reculer, et tout effacer (le sort interdit)\n" +
-			"  git revert --no-edit HASH           le contre-sort : un sceau qui défait HASH »"; },
+			"  git revert --no-edit HASH           le contre-sort : un sceau qui défait HASH\n" +
+			"  git restore -p FICHIER              défaire morceau par morceau (y défait, n garde)\n" +
+			"  git commit --amend --reset-author --no-edit   le dernier sceau, à ton nom\n" +
+			"  git revert -m 1 FUSION              défaire une fusion publiée (1 : la ligne où l'on a fusionné) »"; },
 		mission: function(){ return "« Dans ~/chronotheque/contresorts, lis NOTE.txt : un fichier écrasé, un autre posé trop tôt sur l'autel, un sceau mal nommé, et une porte retirée qu'il faut rendre, sans réécrire l'histoire. " +
 			"Et dans ~/chronotheque/experiences, lance les trois resets, l'un après l'autre, avec git status et git log entre chaque : vois de tes yeux ce que chacun garde. »"; },
 		suite: function(){ return "Georgette te tend une fiole. « Un contre-sort à la fois. Et regarde git status après chacun. »"; },
@@ -342,7 +467,9 @@ var MAITRES_CH9 = {
 			"  git reflog                          tous les pas de HEAD, du plus récent au plus ancien\n" +
 			"  git show HEAD@{3}                   le sceau où tu étais il y a trois pas\n" +
 			"  git branch NOM HASH                 redonner un nom à un sceau perdu\n" +
-			"  git reset --hard HEAD@{1}           revenir là où tu étais juste avant (le sort interdit, au service du Livre) »"; },
+			"  git reset --hard HEAD@{1}           revenir là où tu étais juste avant (le sort interdit, au service du Livre)\n" +
+			"  git log -g ; git reflog --date=iso  le Livre lu comme un journal, et à quelle heure\n" +
+			"  git stash apply HASH                une besace jetée (stash drop dit son hash ; fsck --unreachable aussi) »"; },
 		mission: function(){ return "« Dans ~/chronotheque/livre-ombres, la ligne verite a été effacée cette nuit. Trois témoins y parlaient. Lis le Livre (git reflog), retrouve le sceau du troisième témoin, et rends-lui son nom : verite. »"; },
 		suite: function(){ return "William tourne une page. « Le troisième témoin est dans le Livre. Cherche « checkout: moving from verite » : juste avant, il parlait encore. »"; },
 		erreur: function(){
@@ -369,6 +496,9 @@ var MAITRES_CH9 = {
 			"  git switch main                     revenir sur une ligne\n" +
 			"  git merge NOM                       réunir NOM à ta ligne\n" +
 			"  git merge --no-ff NOM               toujours un sceau de fusion\n" +
+			"  git merge --squash NOM ; git commit toute une ligne en un seul sceau\n" +
+			"  git branch -d NOM                   effacer une ligne déjà réunie (-D : même si elle ne l'est pas)\n" +
+			"  git branch --contains HASH          les lignes qui portent ce sceau\n" +
 			"  git log --oneline --graph --all     dessiner les lignes »"; },
 		mission: function(){ return "« Dans ~/chronotheque/lignes : lis le fichier d'une ligne, crée une ligne, détache-toi sur un sceau, regarde git status, et reviens sur main. " +
 			"Puis réunis à main les trois lignes de NOTE.txt : carte (avancer suffit), legende (trois voies), sceau (--no-ff). Regarde le graphe avant chaque fusion. »"; },
@@ -395,6 +525,9 @@ var MAITRES_CH9 = {
 			"  nano FICHIER                        trancher : la vraie version, sans marqueurs\n" +
 			"  git add FICHIER ; git commit --no-edit    le paradoxe est tranché\n" +
 			"  git merge --abort                   tout annuler, revenir comme avant\n" +
+			"  git ls-files -u                     les trois versions : 1 l'ancêtre, 2 la tienne, 3 l'autre\n" +
+			"  git checkout --theirs FICHIER       prendre la version de l'autre (--ours : la tienne)\n" +
+			"  git merge -X ours LIGNE             trancher d'avance chaque paradoxe pour ta ligne\n" +
 			"  ./verifier.sh                       vérifier le monde après une fusion »"; },
 		mission: function(){ return "« Dans ~/chronotheque/paradoxe, réunis prophetie-sud à main, et tranche le paradoxe : la vraie prophétie est dans NOTE.txt. " +
 			"Puis dans ~/chronotheque/chimere, réunis crepuscule à main, lance ./verifier.sh, et répare ce que la fusion a cassé sans le dire. »"; },
@@ -423,7 +556,10 @@ var MAITRES_CH9 = {
 			"  git stash pop                       ressortir le dernier rangé\n" +
 			"  git cherry-pick HASH                rapporter un seul sceau sur ta ligne\n" +
 			"  git tag -a v1.0 -m \"...\"            planter un menhir annoté sur HEAD\n" +
-			"  git show v1.0                       le menhir, et le sceau qu'il marque »"; },
+			"  git show v1.0                       le menhir, et le sceau qu'il marque\n" +
+			"  git stash branch NOM                une ligne neuve, avec ce qui dort dans la besace\n" +
+			"  git cherry-pick -x HASH             une relique qui dit d'où elle vient\n" +
+			"  git tag -a v1.1.0 -m \"...\"          MAJEUR.MINEUR.CORRECTIF : casse, ajoute, répare »"; },
 		mission: function(){ return "« Dans ~/chronotheque/besace, lis NOTE.txt. Ton travail en cours sur vitrail, une urgence sur main, une relique sur correctifs (une seule !), un menhir à planter, et ton travail à retrouver intact. »"; },
 		suite: function(){ return "Anthony referme la besace. « Ce qui est dans la besace n'est pas perdu. Mais n'oublie pas de le ressortir. »"; },
 		erreur: function(){
@@ -451,7 +587,10 @@ var MAITRES_CH9 = {
 			"     reword ...                 garder, nouveau message\n" +
 			"     fixup ...                  fondre dans le précédent, jeter son message\n" +
 			"     squash ...                 fondre, et réunir les messages\n" +
-			"     drop ...                   jeter »"; },
+			"     edit ...                   s'arrêter dessus : commit --amend, puis rebase --continue\n" +
+			"     drop ...                   jeter\n" +
+			"  git rebase --onto NOUVELLE ANCIENNE LIGNE    transplanter une ligne sur une autre base\n" +
+			"  git rebase -x \"./tests\" main                 éprouver chaque sceau rejoué »"; },
 		mission: function(){ return "« Dans ~/chronotheque/prophetie, lis NOTE.txt : rejoue carte-des-vents au bout de main puis avance main jusqu'à elle, et réécris brouillon : un seul sceau pour le vent du nord, un vrai message, plus de trace de débogage. »"; },
 		suite: function(){ return "Guillaume tend sa plume. « Un rebase a la mémoire courte mais le reflog s'en souvient : si tu te perds, git rebase --abort, ou le Livre des Ombres. »"; },
 		erreur: function(){
@@ -473,7 +612,11 @@ var MAITRES_CH9 = {
 		syntaxe: function(){ return "« Ce que je te demande n'est pas un sort, c'est un jugement. Dans ~/chronotheque/cartes/STRATEGIES.md, pour chaque royaume :\n\n" +
 			"  Stratégie : trunk-based, GitHub flow ou GitFlow\n" +
 			"  Pourquoi : une phrase\n\n" +
-			"Regarde la taille de l'équipe, le rythme de publication, et combien de versions vivent en même temps. »"; },
+			"Regarde la taille de l'équipe, le rythme de publication, et combien de versions vivent en même temps.\n\n" +
+			"Et pour lire les routes d'un grimoire :\n\n" +
+			"  git merge-base A B                              le carrefour où deux lignes se sont séparées\n" +
+			"  git log --first-parent --oneline                la grand-route seule, fusion par fusion\n" +
+			"  git for-each-ref --sort=-committerdate refs/heads   les lignes, de la plus fraîche à la plus oubliée »"; },
 		mission: function(){ return "« Trois royaumes sont dessinés sur ma table. Choisis pour chacun ses routes, et dis pourquoi. Je lirai ta carte. »"; },
 		suite: function(){ return "Moustapha pose un compas sur la carte. « Une équipe, un rythme, des versions : trois questions, une stratégie. »"; },
 		erreur: function(){
@@ -497,7 +640,10 @@ var MAITRES_CH9 = {
 			"  git remote -v ; git branch -vv               les Royaumes, et qui suit qui\n" +
 			"  git fetch ; git log --oneline main..origin/main   ce que le Royaume a et pas toi\n" +
 			"  git pull --rebase                            se remettre au bout\n" +
-			"  git push ; git push -u origin NOM            envoyer ; -u retient l'upstream »"; },
+			"  git push ; git push -u origin NOM            envoyer ; -u retient l'upstream\n" +
+			"  git remote add NOM URL                       une porte vers un second Royaume\n" +
+			"  git ls-remote origin                         ce que porte le Royaume, sans rien rapporter\n" +
+			"  git push origin --delete NOM                 effacer une ligne dans le Royaume »"; },
 		mission: function(){ return "« Pose ta clé sur royaume, et entre une fois (ssh royaume). Clone la Chronique dans ~/chronotheque, regarde ses Royaumes et ses suivis. " +
 			"Puis scelle quelque chose et pousse : je te parie que la porte se fermera. Regarde, synchronise, repasse. Enfin, une ligne à toi, poussée avec -u. »"; },
 		suite: function(){ return "Jeremy te lance un rouleau. « Avant de tirer, regarde ce que tu tires : fetch, puis log. »"; },
@@ -524,7 +670,9 @@ var MAITRES_CH9 = {
 			"  git config --global gpg.format ssh\n" +
 			"  git config --global user.signingkey ~/.ssh/id_ed25519.pub\n" +
 			"  git config --global gpg.ssh.allowedSignersFile ~/.ssh/allowed_signers\n" +
-			"  git commit -S -m \"...\" ; git log --show-signature -1\n\n" +
+			"  git commit -S -m \"...\" ; git log --show-signature -1\n" +
+			"  .git/hooks/pre-push                         une rune avant chaque envoi (elle lit : ref, rune, ref distante, rune)\n" +
+			"  git tag -s v1.0.0 -m \"...\" ; git verify-tag v1.0.0   un menhir scellé de ta cire, et sa vérification\n\n" +
 			"Tout est écrit dans ~/chronotheque/runes/SCEAUX-DE-CIRE.txt. »"; },
 		mission: function(){ return "« Dans ta chronique, pose ma rune pre-commit et essaie de sceller un MOT_DE_PASSE= : elle doit brûler. Puis prépare ta cire, scelle un sceau signé, pousse-le, et vérifie-le. »"; },
 		suite: function(){ return "Aurélien souffle sur une rune pour l'éteindre. « Une rune qui n'est pas exécutable dort. ls -l .git/hooks. »"; },
@@ -555,7 +703,10 @@ var MAITRES_CH9 = {
 			"  gh pr diff N                              ce qu'elle change, ligne par ligne\n" +
 			"  gh pr review N --approve -b \"...\"         approuver\n" +
 			"  gh pr review N --request-changes -b \"...\" demander des changements\n" +
-			"  gh pr merge N --merge --delete-branch     fusionner, et effacer la ligne\n\n" +
+			"  gh pr merge N --merge --delete-branch     fusionner, et effacer la ligne\n" +
+			"  gh pr checkout N                          essayer chez toi la requête d'un autre\n" +
+			"  gh pr view N --json mergeable             CONFLICTING : fusionne main dans ta ligne, tranche, pousse\n" +
+			"  .github/CODEOWNERS                        « lois.md @laurent » : les gardiens de chaque page\n\n" +
 			"Je t'enseigne gh : la voix du Haut-Conseil. »"; },
 		mission: function(){ return "« Présente ta ligne au Conseil. Quand les golems seront verts, je relirai, et si j'approuve, fusionne-la. " +
 			"Puis relis la requête de Kévin, la table des marées : lis son diff, et si elle est juste, approuve-la. »"; },
@@ -688,7 +839,7 @@ function texteSablierPlanCh9(){
 			var ok = etapesSalleFaitesCh9(s), faites = s.etapes.filter(aFait).length, defis = idsDefisSalleCh9(s.cle).filter(aFait).length;
 			var cede = c.assaut && (c.assaut.salles || []).indexOf(s.cle) > -1 && !ok;
 			lignes.push("    " + (ok ? C.vert : C.rouge)("●") + " " + C.gras(completerDroite(s.nom, 22)) + completerDroite(s.maitre, 10) +
-				C.gris("  " + faites + " sur " + s.etapes.length + " étapes · " + defis + " sur 3 défis") + (cede ? C.rouge(" · éteinte à l'aube") : "") + (current_room === s.lieu ? C.jaune("  ◀ toi") : ""));
+				C.gris("  " + faites + " sur " + s.etapes.length + " étapes · " + defis + " sur " + idsDefisSalleCh9(s.cle).length + " défis") + (cede ? C.rouge(" · éteinte à l'aube") : "") + (current_room === s.lieu ? C.jaune("  ◀ toi") : ""));
 		});
 		if (a.epreuve){
 			var etat = aFait(a.epreuve) ? C.vert("réussie") : (epreuveOuverteCh9(a.n) ? C.rouge("EN COURS") : C.gris("fermée (finis l'acte)"));

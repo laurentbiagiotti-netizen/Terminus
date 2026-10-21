@@ -105,6 +105,8 @@ function nouveauMonde(stockage, graine, options){
 				.replace(/<pr-poison>/g, function(){ return String(lire("sCh9().prPoison")); })
 				.replace(/<integrite>/g, function(){ return String(lire("integriteCh9()")); })
 				.replace(/<empreinte>/g, function(){ return lire("signatureBastionPort()"); })
+				// Le hash d'une besace jetée (git stash drop l'affiche ; git fsck --unreachable la retrouve) : le plus récent sceau « WIP on » ou « On » perdu.
+				.replace(/<stash-jete>/g, function(){ return lire("(function(){ var R = gitDepot(null, DEPOTS_CH9.ombres); var tous = gTousObjets(R), at = gAtteignables(R, false), m = null; Object.keys(tous).forEach(function(h){ var o = tous[h]; if (o.t !== 'commit' || at[h]) return; var c = gAnalyserCommit(o.c); if (/^(WIP on|On) /.test(c.message) && (!m || c.commiteur.s >= m.s)) m = { h: h, s: c.commiteur.s }; }); return m ? m.h.slice(0, 7) : ''; })()"); })
 				.replace(/<pid-conteneur:([a-z0-9_.-]+)>/g, function(tout, nom){ return String(lire("(function(){ var c = conteneurPort(portIci() || 'docks', " + JSON.stringify(nom) + "); return c ? c.etat.pid : 0; })()")); })
 				.replace(/<pid:([a-z_-]+)>/g, function(tout, nom){
 					return String(lire("(current_room.procs || []).filter(function(p){ return p.name === " + JSON.stringify(nom) + "; }).map(function(p){ return p.pid; })[0]"));
@@ -119,6 +121,8 @@ function nouveauMonde(stockage, graine, options){
 			vm.runInContext("transformation = null", bac);
 			// La Chronothèque (chapitre 9) : add -p (le premier morceau oui, le second non), le paradoxe tranché dans nano, les rebase -i.
 			if (/^git add -p /.test(commande)) return this.taper(commande, ["y", "n"]);
+			// Les défis de la Chronothèque : restore -p (le seul morceau est défait).
+			if (/^git restore -p /.test(commande)) return this.taper(commande, ["y"]);
 			if (/^nano prophetie\.txt$/.test(commande)) this.editer("function(t){ return t.split('\\n').filter(function(l){ return !/^(<<<<<<<|=======|>>>>>>>)/.test(l) && l !== 'Au nord, le vent se tait.' && l !== 'Au sud, la mer se tait.'; }).join('\\n'); }");
 			if (/^git rebase -i /.test(commande)) this.editer("[" + [REBASE_CH9, REBASE_CH9, REBASE_CH9].join(",") + "]");
 			if (commande === "passwd") return this.taper(commande, ["Une phrase bien longue 42", "Une phrase bien longue 42"]);
@@ -204,7 +208,7 @@ function EDITIONS_VIM(nom, valeurs){
 var REBASE_CH9 = "function(t){" +
 	"if (/^pick /m.test(t)){ var chant = /^pick \\S+ notes$/m.test(t);" +
 	" var actions = chant ? { 'wip refrain': 'reword', 'notes': 'drop', 'wip': 'fixup', 'oups': 'drop', 'refrain fini': 'fixup', 'corrige typo': 'reword', 'ajoute le couplet': 'fixup' }" +
-	" : { 'wip': 'pick', 'wip encore': 'fixup', 'debug: trace temporaire': 'drop', 'corrige typo': 'fixup' };" +
+	" : { 'wip': 'pick', 'wip encore': 'fixup', 'debug: trace temporaire': 'drop', 'corrige typo': 'fixup', 'feat: la mer blanche': 'edit' };" +
 	" return t.split('\\n').map(function(l){ var m = /^pick (\\S+) (.*)$/.exec(l); return m && actions[m[2]] ? actions[m[2]] + ' ' + m[1] + ' ' + m[2] : l; }).join('\\n'); }" +
 	"if (/^wip refrain$/m.test(t)) return t.replace(/^wip refrain$/m, 'refrain: le refrain de la mer');" +
 	"if (/^corrige typo$/m.test(t)) return t.replace(/^corrige typo$/m, 'couplet: les Royaumes chantent avec nous');" +

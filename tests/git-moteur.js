@@ -325,6 +325,22 @@ function sur(jeu, c, r){
 	egal(jeu.lire("gitCommitLu(null, '~/signe', 'HEAD').signature.verification"), "bonne", "gitCommitLu : bonne");
 	egal(jeu.lire("gitCommitLu(null, '~/signe', 'HEAD').signature.empreinte"), fp, "gitCommitLu : l'empreinte de la clé du joueur");
 	contient(t(jeu, "git verify-commit HEAD"), "Good \"git\" signature for ada@x.fr", "verify-commit");
+	// Un tag signé (-s) : la cire suit le message dans l'objet tag ; verify-tag et tag -v la vérifient.
+	egal(t(jeu, "git tag -s v1.0.0 -m 'version signée'"), "", "tag -s");
+	var objTag = t(jeu, "git cat-file -p v1.0.0");
+	contient(objTag, "version signée\n-----BEGIN SSH SIGNATURE-----", "tag -s : la signature suit le message");
+	egal(t(jeu, "git cat-file -t v1.0.0"), "tag", "tag -s : un objet tag");
+	egal(t(jeu, "git verify-tag v1.0.0"), "Good \"git\" signature for ada@x.fr with ED25519 key " + fp, "verify-tag : la bonne cire, et l'empreinte de ssh-keygen -lf");
+	var tv = t(jeu, "git tag -v v1.0.0");
+	verifier(/^object [0-9a-f]{40}\ntype commit\ntag v1\.0\.0\ntagger Ada Test <ada@x\.fr> \d+ \+0200\n\nversion signée\nGood "git" signature for ada@x\.fr/.test(tv), "tag -v : le tag sans sa cire, puis le verdict : " + tv);
+	egal(evt(jeu).signature, "bonne", "tag -v : l'événement verify-tag dit bonne");
+	t(jeu, "git tag -a v1.0.1 -m 'non signée'");
+	contient(t(jeu, "git verify-tag v1.0.1"), "error: no signature found", "verify-tag d'un tag annoté non signé");
+	jeu.lire("(function(){ var R = gitDepot(null, '~/signe'); var h = gRef(R, 'refs/tags/v1.0.0'); var o = gObjet(R, h); var h2 = gObjetEcrire(R, 'tag', o.c.replace('version signée', 'version trafiquée')); gEcrire(gCommun(R), 'refs/tags/v1.0.0', h2 + '\\n'); })()");
+	contient(t(jeu, "git verify-tag v1.0.0"), "Could not verify signature.", "verify-tag d'un tag trafiqué");
+	t(jeu, "git config gpg.format openpgp");
+	contient(t(jeu, "git tag -s v2 -m x"), "error: unable to sign the tag", "tag -s sans gpg.format ssh : refusé");
+	t(jeu, "git config gpg.format ssh");
 	t(jeu, "git config commit.gpgsign true");
 	t(jeu, "git commit -q --allow-empty -m auto");
 	egal(t(jeu, "git log -1 --format=%G?"), "G", "commit.gpgsign signe sans -S");
@@ -358,6 +374,22 @@ function sur(jeu, c, r){
 	t(jeu, "git reset -q");
 	t(jeu, "git add -p", ["zut", "y", "y"]);
 	contient(t(jeu, "git diff --cached"), "+DOUZE", "add -p : une réponse absurde fait reposer la question");
+
+	// restore -p : à l'écran, une question par hunk ; y rend au fichier la version de l'index.
+	t(jeu, "git reset -q");
+	var r = t(jeu, "git restore -p n", ["y", "n"]);
+	var ev = evt(jeu);
+	contient(r, "(1/2) Discard this hunk from worktree [y,n,q,a,d,j,J,g,/,e,?]?", "restore -p : la première question, comme le vrai");
+	contient(r, "(2/2) Discard this hunk from worktree [y,n,q,a,d,K,g,/,e,?]?", "restore -p : la seconde question");
+	egal(t(jeu, "head -1 n"), "1", "restore -p : le premier hunk est défait");
+	contient(t(jeu, "git diff"), "+DOUZE", "restore -p : le second reste");
+	verifier(ev.cmd === "restore" && ev.patch === true && ev.jetes === 1, "restore -p : l'événement (patch, un morceau jeté) : " + JSON.stringify(ev));
+	t(jeu, "git restore -p n", ["q"]);
+	contient(t(jeu, "git diff"), "+DOUZE", "restore -p : q ne défait rien");
+	t(jeu, "git restore -p n", []);
+	contient(t(jeu, "git diff"), "+DOUZE", "restore -p sans réponse : rien n'est défait, et la question ne tourne pas sans fin");
+	t(jeu, "git restore -p n", ["y"]);
+	egal(t(jeu, "git status -s"), "", "restore -p : y défait le dernier morceau");
 })();
 
 /* ================================================================== */

@@ -140,5 +140,34 @@ module.exports = [
 		"git init -q r", "cd r", "~printf 'titre\\n\\nun\\ndeux\\n' > v", "~echo g > g", "~git add .", "~git commit -qm base", "~git switch -qc t", "~echo trois-t >> v", "~git commit -qam t",
 		"~git switch -q main", "~echo trois-m >> v", "~git commit -qam m", "git log --left-right --oneline main...t", "git log --left-right main...t", "~git switch -q t", "git rebase main", "cat v", "git status", "git rebase --abort",
 		"~git switch -q main", "~echo h > h", "~git add h", "~git commit -qm h", "~echo local > g", "git revert --no-edit HEAD", "cat g", "git status -s", "~git add g", "git revert --no-edit HEAD~1"
+	]) },
+	// Les défis de la Chronothèque : merge-base, merge -X ours et -X theirs, revert -m d'une fusion.
+	{ nom: "merge-base, merge -X, revert -m", suite: avec([
+		"git init -q r", "cd r", "~printf 'l1\\nl2\\nl3\\nl4\\nl5\\nl6\\nl7\\nl8\\n' > f", "~git add f", "~git commit -qm base", "~git switch -qc feat",
+		"~printf 'l1\\nFEAT\\nl3\\nl4\\nl5\\nl6\\nl7\\nl8 feat\\n' > f", "~echo g > g", "~git add g", "~git commit -qam feat", "~git switch -q main", "~printf 'l1\\nMAIN\\nl3\\nl4\\nl5\\nl6\\nl7\\nl8\\n' > f", "~git commit -qam main",
+		"git merge-base main feat", "git merge-base --all main feat", "git merge-base --is-ancestor feat main", "git merge-base --is-ancestor HEAD~1 main", "git merge-base main nope",
+		"git merge -X ours feat", "cat f", "git log --oneline --graph", "git revert -m 1 --no-edit HEAD", "git log -1 --format=%B", "git status -s", "git revert -m 3 --no-edit HEAD~1",
+		"git revert -m 1 --no-edit HEAD~2", "~git reset -q --hard HEAD~3", "git merge -X theirs --no-edit feat", "cat f", "git merge -X foo feat", "git log --oneline --graph"
+	]) },
+	// log -L (l'histoire de quelques lignes) et log --follow (un fichier à travers ses renommages).
+	{ nom: "log -L et log --follow", suite: avec([
+		"git init -q r", "cd r", "~printf 'a\\nb\\nc\\nd\\ne\\nf\\n' > f", "~git add f", "~git commit -qm un", "~printf 'a\\nB\\nc\\nd\\ne\\nf\\n' > f", "~git commit -qam deux",
+		"~printf 'a\\nB\\nc\\nx\\ny\\nd\\ne\\nf\\n' > f", "~git commit -qam trois", "~printf 'a\\nB\\nc\\nx\\ny\\nd\\nE\\nf\\n' > f", "~git commit -qam quatre", "~echo autre > g", "~git add g", "~git commit -qm cinq",
+		"git log -L 2,2:f", "git log -L 4,5:f --oneline", "git log -L 1,3:f --format=%s", "git log -L 7,8:f", "git log -L 4,5:f -L 2,2:f --oneline", "git log -L 9,9:f", "git log -L 2,2:nope",
+		"git log -L 2:f", "git log -L 3,+2:f --oneline",
+		"~git mv f lettres.txt", "~git commit -qm renomme", "~echo z >> lettres.txt", "~git commit -qam z",
+		"git log --oneline --follow lettres.txt", "git log --oneline -- lettres.txt", "git log --oneline --follow -- lettres.txt", "git log --follow --format=%s lettres.txt", "git log --oneline --follow lettres.txt g"
+	]) },
+	// restore -p (les réponses dans un tuyau), check-attr et .gitattributes, une besace jetée rendue par son hash, verify-tag et tag -v sans signature.
+	{ nom: "restore -p, check-attr, stash apply HASH, verify-tag", suite: avec([
+		"git init -q r", "cd r", "~printf '1\\n2\\n3\\n4\\n5\\n6\\n7\\n8\\n9\\n10\\n11\\n12\\n' > n", "~git add n", "~git commit -qm n", "~printf 'UN\\n2\\n3\\n4\\n5\\n6\\n7\\n8\\n9\\n10\\n11\\nDOUZE\\n' > n",
+		"printf 'y\\nn\\n' | git restore -p n", "cat n", "git status -s", "printf 'n\\ny\\n' | git restore -p n", "cat n",
+		"~printf 'UN\\n2\\n3\\n4\\n5\\n6\\n7\\n8\\n9\\n10\\n11\\nDOUZE\\n' > n", "printf 'a\\n' | git restore -p n", "git status -s", "printf 'y\\n' | git restore -p n",
+		"~printf '*.sh text eol=lf\\n*.pyc binary\\ndocs/*.md linguist-documentation\\n*.png -text\\nsecret.txt !diff\\n' > .gitattributes", "~mkdir docs", "~printf 'a.txt -text\\n' > docs/.gitattributes",
+		"git check-attr text eol -- run.sh", "git check-attr text eol diff -- cache.pyc", "git check-attr -a cache.pyc", "git check-attr --all run.sh docs/guide.md image.png", "git check-attr diff secret.txt",
+		"git check-attr text docs/a.txt a.txt", "git check-attr linguist-documentation -- docs/guide.md guide.md", "git check-attr -a nothing.c", "git check-attr text", "git check-attr",
+		"~printf '*.sh -text\\n' > .git/info/attributes", "git check-attr text run.sh",
+		"~echo travail >> n", "git stash", "git stash drop", "git stash apply dfd0a20", "cat n", "git stash apply nope", "git stash pop 0123456", "git stash apply HEAD",
+		"git verify-tag nope", "~git tag -a v1 -m 'version un'", "~git tag leger", "git verify-tag v1", "git verify-tag leger", "git tag -v v1", "git tag -v nope"
 	]) }
 ];

@@ -15,7 +15,7 @@
  * Renvoie { carte (le résultat propre, conflits compris avec leurs marqueurs), conflits: [{ p, etages: {1,2,3}, texte, genre }],
  *           messages: [lignes « Auto-merging » et « CONFLICT »], auto: [chemins fusionnés] }.
  */
-function gFusionArbres(R, base, nous, eux, etiquettes, style){
+function gFusionArbres(R, base, nous, eux, etiquettes, style, faveur){
 	var chemins = {};
 	[base, nous, eux].forEach(function(c){ Object.keys(c).forEach(function(p){ chemins[p] = true; }); });
 	var carte = {}, conflits = [], messages = [], auto = [];
@@ -28,7 +28,7 @@ function gFusionArbres(R, base, nous, eux, etiquettes, style){
 		if (a && b){
 			messages.push("Auto-merging " + p);
 			auto.push(p);
-			var f = gFusionTexte(o ? gObjet(R, o.h).c : "", gObjet(R, a.h).c, gObjet(R, b.h).c, etiquettes, style);
+			var f = gFusionTexte(o ? gObjet(R, o.h).c : "", gObjet(R, a.h).c, gObjet(R, b.h).c, etiquettes, style, faveur);
 			var mode = a.m === (o ? o.m : a.m) ? b.m : a.m;
 			if (!f.conflits){ carte[p] = { h: gObjetEcrire(R, "blob", f.texte), m: mode }; return; }
 			messages.push("CONFLICT (" + (o ? "content" : "add/add") + "): Merge conflict in " + p);
@@ -141,7 +141,7 @@ function gFusionner(ctx, R, rev, options){
 	var bases = gBasesFusion(R, t, b);
 	var base = bases.length ? gAplatir(R, gCommit(R, bases[0]).arbre) : {};
 	var nomEux = options.etiquette || rev;
-	var res = gFusionArbres(R, base, H, T, ["HEAD", nomEux, bases.length === 1 ? gCourt(R, bases[0]) : (bases.length ? "merged common ancestors" : "empty tree")], gStyleConflit(R));
+	var res = gFusionArbres(R, base, H, T, ["HEAD", nomEux, bases.length === 1 ? gCourt(R, bases[0]) : (bases.length ? "merged common ancestors" : "empty tree")], gStyleConflit(R), options.faveur);
 	var v = gVerifierAvantFusion(R, H, res, "merge");
 	if (v){
 		if (v.genre === "locales") throw new GitErreur("error: Your local changes to the following files would be overwritten by merge:\n" + v.chemins.map(function(p){ return "  " + p; }).join("\n") + "\nMerge with strategy ort failed.", 2);
@@ -234,7 +234,10 @@ GIT_SOUS_COMMANDES.merge = function(ctx){
 	var ffConf = gConfig(R, "merge.ff");
 	var noFF = !!op.o["no-ff"] || (ffConf === "false" && !op.o.ff), ffOnly = !!op.o["ff-only"] || (ffConf === "only" && !op.o["no-ff"]);
 	ctx.ev.rev = rev;
-	var sortie = gFusionner(ctx, R, rev, { noFF: noFF, ffOnly: ffOnly, message: op.o.message ? op.o.message.join("\n\n") : null, squash: !!op.o.squash, noCommit: !!op.o["no-commit"] });
+	var faveur = op.o["strategy-option"];
+	if (faveur !== undefined && !gEstAncetre(R, b, gTete(R)) && faveur !== "ours" && faveur !== "theirs" && !/^(patience|histogram|minimal|ignore-space-change|ignore-all-space|ignore-space-at-eol|ignore-cr-at-eol|renormalize|no-renormalize|no-renames|find-renames(=\d+%?)?|diff-algorithm=\w+)$/.test(faveur)) throw new GitErreur("fatal: Unknown option for merge-recursive: -X" + faveur, 128);
+	ctx.ev.faveur = faveur === "ours" || faveur === "theirs" ? faveur : null;
+	var sortie = gFusionner(ctx, R, rev, { noFF: noFF, ffOnly: ffOnly, message: op.o.message ? op.o.message.join("\n\n") : null, squash: !!op.o.squash, noCommit: !!op.o["no-commit"], faveur: ctx.ev.faveur });
 	return op.o.quiet ? "" : sortie;
 };
 
@@ -246,11 +249,12 @@ GIT_SOUS_COMMANDES.merge = function(ctx){
  * Applique le changement d'un commit sur HEAD (ou son inverse pour revert) : { ok, carte, conflits, messages }.
  * Ne touche à rien si la copie de travail gênerait (renvoie { gene }).
  */
-function gAppliquerCommit(R, h, inverse, etiquetteEux){
+function gAppliquerCommit(R, h, inverse, etiquetteEux, mainline){
 	var c = gCommit(R, h);
 	var t = gTete(R);
 	var H = t ? gAplatir(R, gCommit(R, t).arbre) : {};
-	var parent = c.parents[0];
+	// -m N (une fusion) : le changement se lit par rapport à son N-ième parent.
+	var parent = c.parents[mainline ? mainline - 1 : 0];
 	var P = parent ? gAplatir(R, gCommit(R, parent).arbre) : {}, C = gAplatir(R, c.arbre);
 	var base = inverse ? C : P, eux = inverse ? P : C;
 	var res = gFusionArbres(R, base, H, eux, ["HEAD", etiquetteEux || (gCourt(R, h) + " (" + gSujet(c.message) + ")"), "parent of " + gCourt(R, h) + " (" + gSujet(c.message) + ")"], gStyleConflit(R));
@@ -281,18 +285,22 @@ function gSequenceur(ctx, R, genre, liste, options){
 		if (c.parents.length > 1 && !options.mainline){
 			throw new GitErreur("error: commit " + h + " is a merge but no -m option was given.\nfatal: " + genre + " failed", 128);
 		}
+		var mainline = options.mainline ? +options.mainline : 0;
+		if (mainline && c.parents.length < 2 && mainline === 1) mainline = 0; // -m 1 sur un commit ordinaire : le vrai l'accepte, comme sans -m.
+		if (mainline && (isNaN(mainline) || mainline < 1 || mainline > c.parents.length)) throw new GitErreur("error: commit " + h + " does not have parent " + options.mainline + "\nfatal: " + genre + " failed", 128);
 		var inverse = genre === "revert";
 		var t = gTete(R);
 		if (!inverse && c.parents[0] === t && !options.n && !options.x){
 			// Le commit s'applique tel quel : une simple avance (comme --ff), seulement si demandé ; sinon on recrée le commit.
 		}
-		var r = gAppliquerCommit(R, h, inverse);
+		if (mainline) ctx.ev.mainline = mainline;
+		var r = gAppliquerCommit(R, h, inverse, undefined, mainline);
 		if (r.gene){ throw gErreurLocales(r.gene, genre === "cherry-pick" ? "cherry-pick" : "revert"); }
 		var sujet = gSujet(c.message);
 		var message;
 		if (inverse){
 			var revertDe = /^Revert "([\s\S]*)"$/.exec(sujet);
-			message = (revertDe ? "Reapply \"" + revertDe[1] + "\"" : "Revert \"" + sujet + "\"") + "\n\nThis reverts commit " + h + ".\n";
+			message = (revertDe ? "Reapply \"" + revertDe[1] + "\"" : "Revert \"" + sujet + "\"") + "\n\nThis reverts commit " + h + (mainline ? ", reversing\nchanges made to " + c.parents[mainline - 1] : "") + ".\n";
 		} else {
 			message = c.message;
 			if (options.x) message = gNettoyerMessage(c.message).replace(/\n$/, "") + "\n\n(cherry picked from commit " + h + ")\n";
@@ -420,13 +428,17 @@ GIT_SOUS_COMMANDES.revert = function(ctx){
 		throw new GitErreur("error: your local changes would be overwritten by revert.\nhint: commit your changes or stash them to proceed.\nfatal: revert failed", 128);
 	}
 	// Le vrai ouvre l'éditeur sur le message proposé (sauf --no-edit) ; le garder tel quel, c'est l'accepter.
-	if (op.o["no-edit"] || op.o["no-commit"] || liste.length > 1 || !ctx.io.tty) return gSequenceur(ctx, R, "revert", liste, { n: !!op.o["no-commit"] });
+	if (op.o["no-edit"] || op.o["no-commit"] || liste.length > 1 || !ctx.io.tty) return gSequenceur(ctx, R, "revert", liste, { n: !!op.o["no-commit"], mainline: op.o.mainline });
 	var h0 = liste[0], c0 = gCommit(R, h0);
 	if (c0.parents.length > 1 && !op.o.mainline) throw new GitErreur("error: commit " + h0 + " is a merge but no -m option was given.\nfatal: revert failed", 128);
-	var r = gAppliquerCommit(R, h0, true);
+	var ml = op.o.mainline ? +op.o.mainline : 0;
+	if (ml && c0.parents.length < 2 && ml === 1) ml = 0;
+	if (ml && (isNaN(ml) || ml < 1 || ml > c0.parents.length)) throw new GitErreur("error: commit " + h0 + " does not have parent " + op.o.mainline + "\nfatal: revert failed", 128);
+	if (ml) ctx.ev.mainline = ml;
+	var r = gAppliquerCommit(R, h0, true, undefined, ml);
 	if (r.gene) throw gErreurLocales(r.gene, "revert");
 	var sujet = gSujet(c0.message), rv2 = /^Revert "([\s\S]*)"$/.exec(sujet);
-	var message = (rv2 ? "Reapply \"" + rv2[1] + "\"" : "Revert \"" + sujet + "\"") + "\n\nThis reverts commit " + h0 + ".\n";
+	var message = (rv2 ? "Reapply \"" + rv2[1] + "\"" : "Revert \"" + sujet + "\"") + "\n\nThis reverts commit " + h0 + (ml ? ", reversing\nchanges made to " + c0.parents[ml - 1] : "") + ".\n";
 	if (!r.ok){
 		var s = r.messages.slice();
 		gEcrire(R.git, "REVERT_HEAD", h0 + "\n");
@@ -828,11 +840,22 @@ function gRebaseAbandon(ctx, R){
 /* ================================================================== */
 
 function gStashListe(R){ return gReflogLire(R, "refs/stash"); }
-function gStashResoudre(R, nom){
+function gStashResoudre(R, nom, refSeulement){
 	var l = gStashListe(R);
+	// Une besace jetée (stash drop) se retrouve par son hash : un commit « à la stash » (deux parents au moins), hors de la liste.
+	if (nom && !/^(?:stash@\{)?(\d+)\}?$/.test(nom) && nom !== "stash" && nom !== "refs/stash"){
+		var h = gEssayer(R, nom, { commit: true });
+		if (!h) throw new GitErreur("error: " + nom + " is not a valid reference", 1);
+		var dans = l.filter(function(e){ return e.nouveau === h; })[0];
+		if (dans) return { n: l.indexOf(dans), hash: h, message: dans.message };
+		if (refSeulement) throw new GitErreur("error: '" + nom + "' is not a stash reference", 1);
+		if (gCommit(R, h).parents.length < 2) throw new GitErreur("fatal: '" + nom + "' is not a stash-like commit", 1);
+		return { n: -1, hash: h, message: gSujet(gCommit(R, h).message) };
+	}
+	if (nom && /^\d+$/.test(nom) && +nom >= l.length) throw new GitErreur("error: refs/stash@{" + nom + "} is not a valid reference", 1);
 	if (!l.length) throw new GitErreur("No stash entries found.", 1);
 	var n = 0;
-	if (nom){ var m = /^(?:stash@\{)?(\d+)\}?$/.exec(nom); if (!m) throw new GitErreur("error: " + nom + " is not a valid reference", 1); n = +m[1]; }
+	if (nom){ var m = /^(?:stash@\{)?(\d+)\}?$/.exec(nom); if (m) n = +m[1]; }
 	if (n >= l.length) throw new GitErreur("error: stash@{" + n + "} is not a valid reference", 1);
 	return { n: n, hash: l[n].nouveau, message: l[n].message };
 }
@@ -856,7 +879,7 @@ GIT_SOUS_COMMANDES.stash = function(ctx){
 	}
 	if (sous === "clear"){ gRefSupprimer(R, "refs/stash"); gSupprimer(gCommun(R), "logs/refs/stash"); return ""; }
 	if (sous === "drop"){
-		var d = gStashResoudre(R, args[0]);
+		var d = gStashResoudre(R, args[0], true);
 		gStashRetirer(R, d.n);
 		return "Dropped " + (args[0] ? "stash@{" + d.n + "}" : "refs/stash@{0}") + " (" + d.hash + ")";
 	}
@@ -870,7 +893,8 @@ GIT_SOUS_COMMANDES.stash = function(ctx){
 	}
 	if (sous === "pop" || sous === "apply"){
 		var opA = gOptions(args, { "--index": "b", "-q|--quiet": "b" }, "stash");
-		var st = gStashResoudre(R, opA.p[0]);
+		var st = gStashResoudre(R, opA.p[0], sous === "pop");
+		ctx.ev.stash = st.hash; ctx.ev.horsListe = st.n === -1;
 		var w = gCommit(R, st.hash);
 		var base = gAplatir(R, gCommit(R, w.parents[0]).arbre), W = gAplatir(R, w.arbre);
 		var I0 = w.parents[1] ? gAplatir(R, gCommit(R, w.parents[1]).arbre) : W;

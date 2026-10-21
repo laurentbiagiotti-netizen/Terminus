@@ -17,13 +17,14 @@ MANUEL["git"] = page("versionner : garder, lire et partager toute l'histoire d'u
 	"  git diff (le non indexé) ; git diff --staged (ce qui partira) ; git rm --cached FICHIER ; .gitignore\n\n" +
 	"Lire l'histoire\n" +
 	"  git log --oneline --graph --all ; git log -p ; git log --stat ; git log -S mot ; git log --author=nom\n" +
-	"  git show COMMIT ; git show COMMIT:fichier ; git blame FICHIER ; git cat-file -p HASH ; git bisect\n\n" +
+	"  git show COMMIT ; git show COMMIT:fichier ; git blame FICHIER ; git cat-file -p HASH ; git bisect\n" +
+	"  git log -L 12,12:fichier (l'histoire d'une ligne) ; git log --follow FICHIER ; git merge-base A B\n\n" +
 	"Annuler\n" +
-	"  git restore FICHIER (jeter un changement) ; git restore --staged FICHIER (le sortir de l'index)\n" +
+	"  git restore FICHIER (jeter un changement) ; git restore -p FICHIER (morceau par morceau) ; git restore --staged FICHIER\n" +
 	"  git commit --amend ; git reset --soft|--mixed|--hard REV ; git revert COMMIT (sans réécrire) ; git reflog\n\n" +
 	"Les branches\n" +
 	"  git branch ; git switch -c nouvelle ; git switch - ; git merge BRANCHE (--no-ff) ; git rebase main ; git rebase -i HEAD~3\n" +
-	"  git stash (pop, list) ; git cherry-pick COMMIT ; git tag -a v1.0 -m \"...\"\n\n" +
+	"  git stash (pop, list) ; git cherry-pick COMMIT ; git tag -a v1.0.0 -m \"...\" (-s : signé ; git verify-tag v1.0.0)\n\n" +
 	"À plusieurs\n" +
 	"  git remote -v ; git fetch ; git pull --rebase ; git push -u origin BRANCHE ; git push --force-with-lease\n\n" +
 	"Les pièges\n" +
@@ -41,6 +42,7 @@ MANUEL["gh"] = page("la forge en ligne de commande : demandes de fusion, revues,
 	"  gh repo view                          le dépôt et son README\n" +
 	"  gh pr create --title \"...\" --body \"...\" [--base main]    proposer la branche courante (poussée d'abord)\n" +
 	"  gh pr list ; gh pr view N ; gh pr diff N ; gh pr checks N ; gh pr checkout N\n" +
+	"  gh pr view N --json mergeable         MERGEABLE, ou CONFLICTING (fusionne la base dans ta branche, tranche, pousse)\n" +
 	"  gh pr review N --approve | --request-changes -b \"...\" | --comment -b \"...\"\n" +
 	"  gh pr merge N --merge | --squash | --rebase [--delete-branch] ; gh pr close N\n" +
 	"  gh run list ; gh run view ID --log-failed\n\n" +
