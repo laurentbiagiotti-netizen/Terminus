@@ -733,7 +733,7 @@ GameState.prototype.demanderIndice = function(){
 		(typeof INDICES_PANNE !== "undefined" && INDICES_PANNE[q.id]) ||
 		(typeof INDICES_CH4 !== "undefined" && INDICES_CH4[q.id]) || (typeof INDICES_CH5 !== "undefined" && INDICES_CH5[q.id]) ||
 		(typeof INDICES_CH6 !== "undefined" && INDICES_CH6[q.id]) || (typeof INDICES_CH7 !== "undefined" && INDICES_CH7[q.id]) ||
-		(typeof INDICES_CH8 !== "undefined" && INDICES_CH8[q.id]) || [];
+		(typeof INDICES_CH8 !== "undefined" && INDICES_CH8[q.id]) || (typeof INDICES_CH9 !== "undefined" && INDICES_CH9[q.id]) || [];
 	var pris = this.indices[q.id] || 0;
 	var lignes = [C.jaune("Étape en cours : " + q.titre), C.gris("Indice gratuit : ") + q.indice];
 	var constats = this.diagnostics();

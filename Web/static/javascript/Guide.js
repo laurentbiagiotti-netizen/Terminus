@@ -120,7 +120,7 @@ function detailsDeQuete(id){
 	return INDICES_DETAILLES[id] || (typeof INDICES_CHAPITRE2 !== "undefined" && INDICES_CHAPITRE2[id]) ||
 		(typeof INDICES_PANNE !== "undefined" && INDICES_PANNE[id]) || (typeof INDICES_CH5 !== "undefined" && INDICES_CH5[id]) ||
 		(typeof INDICES_CH6 !== "undefined" && INDICES_CH6[id]) || (typeof INDICES_CH7 !== "undefined" && INDICES_CH7[id]) ||
-		(typeof INDICES_CH8 !== "undefined" && INDICES_CH8[id]) || [];
+		(typeof INDICES_CH8 !== "undefined" && INDICES_CH8[id]) || (typeof INDICES_CH9 !== "undefined" && INDICES_CH9[id]) || [];
 }
 
 var MAJ_OBJECTIF_SANS_GUIDE = majObjectif;
