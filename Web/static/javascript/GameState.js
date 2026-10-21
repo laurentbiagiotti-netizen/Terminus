@@ -1970,7 +1970,7 @@ function copierTextes(cmd_text, sansLess){
 	return copie;
 }
 
-var PROPRIETES_SAUVEGARDEES = ["gzip", "gpg", "immuable", "format", "age", "heure", "attributs"];
+var PROPRIETES_SAUVEGARDEES = ["gzip", "gpg", "immuable", "format", "age", "heure", "attributs", "gitObjet", "gitPack", "gitIndex", "gitBundle", "gitForge"];
 
 function photographierObjet(item){
 	var gardeTexte = item.modifie || !item.id;
