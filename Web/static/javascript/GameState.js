@@ -394,7 +394,7 @@ GameState.prototype.learn = function(sort){
 
 GameState.prototype.gagner = function(points, raison, chapitre){
 	// En mission cyber, le chapitre 1 n'est pas noté : ses petits gains ne s'affichent ni ne comptent.
-	if (chapitre !== 2 && chapitre !== 3 && chapitre !== 5 && chapitre !== 6 && chapitre !== 7 && chapitre !== 8 && chapitre !== 9 && this.has("chapitre1Saute")) return;
+	if (chapitre !== 2 && chapitre !== 3 && chapitre !== 5 && chapitre !== 6 && chapitre !== 7 && chapitre !== 8 && chapitre !== 9 && chapitre !== 10 && this.has("chapitre1Saute")) return;
 	if (chapitre === 2) this.xp2 += points;
 	else if (chapitre === 3) this.xp3 += points;
 	else if (chapitre === 5) this.xp5 += points;

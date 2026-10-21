@@ -82,7 +82,8 @@ function gPoserFusion(R, H, resultat){
 	Object.keys(H).concat(Object.keys(I)).forEach(function(p){ if (!dans[p] && W[p]) gRetirerTravail(R, p); });
 	Object.keys(resultat.carte).forEach(function(p){
 		var e = resultat.carte[p];
-		if (!gMemeEntree(e, H[p]) || !W[p] || gHashTravail(R, W[p]) !== e.h) gPoserTravail(R, p, e.h, e.m);
+		// Un fichier que la fusion ne change pas garde ce que le joueur y a écrit (comme le vrai git).
+		if (!gMemeEntree(e, H[p]) && (!W[p] || gHashTravail(R, W[p]) !== e.h)) gPoserTravail(R, p, e.h, e.m);
 		entrees.push({ p: p, h: e.h, m: e.m, s: 0 });
 	});
 	resultat.conflits.forEach(function(c){
@@ -414,8 +415,8 @@ GIT_SOUS_COMMANDES.revert = function(ctx){
 	});
 	ctx.ev.source = liste.slice();
 	var etre = gEtatDepot(R);
-	if (etre.indexees.length || etre.modifiees.length){
-		var sales = etre.indexees.concat(etre.modifiees).map(function(x){ return x.chemin; });
+	// Comme le vrai : seul l'index doit être propre ; un fichier modifié que le revert ne touche pas reste tel quel.
+	if (etre.indexees.length){
 		throw new GitErreur("error: your local changes would be overwritten by revert.\nhint: commit your changes or stash them to proceed.\nfatal: revert failed", 128);
 	}
 	// Le vrai ouvre l'éditeur sur le message proposé (sauf --no-edit) ; le garder tel quel, c'est l'accepter.
@@ -1676,7 +1677,8 @@ GIT_SOUS_COMMANDES.archive = function(ctx){
 	it.setText(format === "zip" ? "PK\u0003\u0004" : "ustar\u0000");
 	it.sansFinDeLigne = true;
 	// Le format d'archive du jeu (tar -tf, unzip -l, tar -xf savent le lire).
-	it.archive = { format: format, entrees: entrees.map(function(e){ return { nom: e.nom, texte: e.texte, mode: e.mode }; }) };
+	it.archive = entrees.map(function(e){ return { n: e.nom, x: e.texte, m: e.mode }; });
+	it.formatArchive = format;
 	if (format === "tgz" || format === "tar.gz") it.gzip = true;
 	if (!(r.noeud instanceof Item)) r.dir.addItem(it);
 	return op.o.verbose ? entrees.map(function(e){ return e.nom; }).join("\n") : "";

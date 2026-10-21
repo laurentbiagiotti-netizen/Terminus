@@ -268,6 +268,13 @@ function fichierIleCh9(chemin, texte, options){
 	it.setText(String(texte).replace(/\n$/, ""));
 	it.owner = JOUEUR;
 	it.mode = options.mode || "rw-r--r--";
+	// La note d'un maître, posée dans un dépôt : Git ne la voit pas (.git/info/exclude), pour qu'un git add . ou un git clean ne l'emporte pas.
+	if (nom === "NOTE.txt" && d.getNode(".git") instanceof Room){
+		try {
+			var ex = texteIleCh9(chemin.substring(0, coupe) + "/.git/info/exclude") || "";
+			if (!/^NOTE\.txt$/m.test(ex)) fichierIleCh9(chemin.substring(0, coupe) + "/.git/info/exclude", (ex ? ex + "\n" : "") + "NOTE.txt\n");
+		} catch (e){}
+	}
 	return it;
 }
 function texteIleCh9(chemin){

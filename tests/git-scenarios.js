@@ -133,5 +133,12 @@ module.exports = [
 		"git status", "git log", "git init -q r", "cd r", "git log", "git show", "git rev-parse HEAD", "git commit -m vide", "git branch x", "git switch x", "git checkout nope", "git merge nope",
 		"git frobnicate", "git comit", "git add", "git reset --hard nope", "git diff nope", "git stash", "git tag", "~echo a > a", "~git add a", "~git commit -qm un", "git commit -m rien",
 		"git switch -c main", "git branch -d main", "git rebase --continue", "git cherry-pick --continue", "git merge --abort", "git revert nope", "git push", "git pull", "git remote rm nope"
+	]) },
+	// Trouvés en jouant le chapitre 9 : deux insertions au même endroit (un vrai conflit), un revert avec un fichier
+	// modifié qu'il ne touche pas (le vrai le laisse tel quel), et log --left-right A...B.
+	{ nom: "insertions au même endroit, revert et fichier modifié, left-right", suite: avec([
+		"git init -q r", "cd r", "~printf 'titre\\n\\nun\\ndeux\\n' > v", "~echo g > g", "~git add .", "~git commit -qm base", "~git switch -qc t", "~echo trois-t >> v", "~git commit -qam t",
+		"~git switch -q main", "~echo trois-m >> v", "~git commit -qam m", "git log --left-right --oneline main...t", "git log --left-right main...t", "~git switch -q t", "git rebase main", "cat v", "git status", "git rebase --abort",
+		"~git switch -q main", "~echo h > h", "~git add h", "~git commit -qm h", "~echo local > g", "git revert --no-edit HEAD", "cat g", "git status -s", "~git add g", "git revert --no-edit HEAD~1"
 	]) }
 ];

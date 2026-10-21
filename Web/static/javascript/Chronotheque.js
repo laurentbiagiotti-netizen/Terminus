@@ -113,9 +113,9 @@ var DEFIS_CH9 = [
 	{ id: "s_n9_commit_msg", m: "garde", titre: "Garde : une rune sur les messages (un hook commit-msg qui refuse un message trop court)",
 	  monde: function(){ var t = texteIleCh9(DEPOTS_CH9.chronique + "/.git/hooks/commit-msg") || ""; return /exit 1/.test(t); } },
 	{ id: "s_n9_verify_commit", m: "garde", titre: "Garde : vérifier la cire d'un seul sceau (git verify-commit)",
-	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "verify-commit" && /signature/i.test(s); } },
-	{ id: "s_n9_sans_cire", m: "garde", titre: "Garde : voir un sceau sans cire (git log --show-signature sur un sceau non signé)",
-	  appel: function(n, a, s){ return n === "git" && /--show-signature/.test(argsTexteCh9(a)) && /No signature/.test(s); } },
+	  evenement: "git", quand: function(e){ return e.cmd === "verify-commit" && !!e.signature && e.signature !== "aucune"; } },
+	{ id: "s_n9_sans_cire", m: "garde", titre: "Garde : repérer d'un coup d'œil les sceaux sans cire (git log --format='%h %G? %s' : N pour aucune cire, G pour une bonne)",
+	  appel: function(n, a, s){ return n === "git" && sousGitCh9(a) === "log" && /%G\?/.test(argsTexteCh9(a)) && /(^|\s)N(\s|$)/m.test(s) && /(^|\s)[GU](\s|$)/m.test(s); } },
 	// Le Haut-Conseil (Amine)
 	{ id: "s_n9_pr_view", m: "conseil", titre: "Conseil : lire une requête en entier (gh pr view N)",
 	  appel: function(n, a, s){ return n === "gh" && a[0] === "pr" && a[1] === "view" && s.trim().length > 0; } },
@@ -145,6 +145,8 @@ function reussirDefiCh9(id){
 var APPELER_AVANT_DEFIS_CH9 = Shell.appeler;
 function essayerDefisCh9(nom, args, s, io){
 	if (!chronothequeActive() || (nom !== "git" && nom !== "gh")) return;
+	// Un sort qui échoue ne prouve rien : « fatal: No rebase in progress? » n'est pas un rebase abandonné.
+	if (/^(fatal|error|usage):/m.test(sansAnsi(String(s || "")))) return;
 	try {
 		DEFIS_CH9.forEach(function(d){ if (d.appel && !state.quests[d.id] && d.appel(nom, args || [], s, io || {})) reussirDefiCh9(d.id); });
 	} catch (e){ /* un défi ne doit jamais casser un sort */ }

@@ -44,7 +44,7 @@ function nouveauMonde(stockage, graine, options){
 		"var term = { echo: function(t){ ecran.push(String(t)); }, effacer: function(){}, definirInvite: function(){}," +
 		"  demander: function(texte, masque, rappel){ ecran.push(texte); rappel(reponses.length ? reponses.shift() : ''); }," +
 		// nano : l'éditeur applique la transformation choisie par le test (ou quitte sans rien changer).
-		"  editer: function(options, rappel){ ecran.push('[' + (options.mode || 'nano') + ' ' + options.titre + ']'); var f = transformation; transformation = null;" +
+		"  editer: function(options, rappel){ ecran.push('[' + (options.mode || 'nano') + ' ' + options.titre + ']'); var f = transformation; if (Array.isArray(f)){ f = f.shift(); if (!transformation.length) transformation = null; } else transformation = null;" +
 		"    var r = f ? f(options.texte) : null; var info = { commandes: {} };" +
 		"    if (r !== null && typeof r === 'object'){ info.commandes = r.commandes || {}; r = r.texte === undefined ? null : r.texte; }" +
 		"    if (r !== null) rappel(r, info); if (options.quitter) options.quitter({ commandes: info.commandes, enregistre: r !== null }); } };" +
@@ -97,6 +97,14 @@ function nouveauMonde(stockage, graine, options){
 				.replace(/<jeton-swarm>/g, function(){ return lire("swarmPort() ? swarmPort().jetons.worker : ''"); })
 				.replace(/<puissance>/g, function(){ return String(lire("sCh8().scoreFinal")); })
 				.replace(/<signature>/g, function(){ return lire("signatureBastionPort()"); })
+				// La Chronothèque (chapitre 9) : les hashes, le nombre de commits de Grace, les numéros des requêtes, l'intégrité, l'empreinte.
+				.replace(/<hash-pg>/g, function(){ return lire("(HASH_CH9('annalesPg') || '').slice(0, 7)"); })
+				.replace(/<n-grace>/g, function(){ return String(lire("sCh9().nGraceAnnales")); })
+				.replace(/<hash-labyrinthe>/g, function(){ return lire("(HASH_CH9('labyrintheFaux') || '').slice(0, 7)"); })
+				.replace(/<pr-kevin>/g, function(){ return String(lire("sCh9().prKevin")); })
+				.replace(/<pr-poison>/g, function(){ return String(lire("sCh9().prPoison")); })
+				.replace(/<integrite>/g, function(){ return String(lire("integriteCh9()")); })
+				.replace(/<empreinte>/g, function(){ return lire("signatureBastionPort()"); })
 				.replace(/<pid-conteneur:([a-z0-9_.-]+)>/g, function(tout, nom){ return String(lire("(function(){ var c = conteneurPort(portIci() || 'docks', " + JSON.stringify(nom) + "); return c ? c.etat.pid : 0; })()")); })
 				.replace(/<pid:([a-z_-]+)>/g, function(tout, nom){
 					return String(lire("(current_room.procs || []).filter(function(p){ return p.name === " + JSON.stringify(nom) + "; }).map(function(p){ return p.pid; })[0]"));
@@ -108,6 +116,11 @@ function nouveauMonde(stockage, graine, options){
 			if (brute.trim() === "Ctrl-Z") return String(vm.runInContext("Shell.suspendre() ? '' : ''", bac));
 			var commande = this.remplir(brute);
 			var mdp = vm.runInContext("MOT_DE_PASSE_SUDO", bac);
+			vm.runInContext("transformation = null", bac);
+			// La Chronothèque (chapitre 9) : add -p (le premier morceau oui, le second non), le paradoxe tranché dans nano, les rebase -i.
+			if (/^git add -p /.test(commande)) return this.taper(commande, ["y", "n"]);
+			if (/^nano prophetie\.txt$/.test(commande)) this.editer("function(t){ return t.split('\\n').filter(function(l){ return !/^(<<<<<<<|=======|>>>>>>>)/.test(l) && l !== 'Au nord, le vent se tait.' && l !== 'Au sud, la mer se tait.'; }).join('\\n'); }");
+			if (/^git rebase -i /.test(commande)) this.editer("[" + [REBASE_CH9, REBASE_CH9, REBASE_CH9].join(",") + "]");
 			if (commande === "passwd") return this.taper(commande, ["Une phrase bien longue 42", "Une phrase bien longue 42"]);
 			if (commande === "ssh-keygen") return this.taper(commande, ["Une phrase de passe", "Une phrase de passe"]);
 			if (/^gpg (-d|--decrypt)/.test(commande)) return this.taper(commande, vm.runInContext("PHRASE_CORBEAU", bac));
@@ -183,5 +196,18 @@ function EDITIONS_VIM(nom, valeurs){
 	}
 	return f;
 }
+
+/*
+ * La Chronothèque (chapitre 9) : ce que le joueur écrit dans l'éditeur pendant un rebase -i.
+ * La liste des sceaux (pick, fixup, drop, reword), puis les nouveaux messages des sceaux reformulés.
+ */
+var REBASE_CH9 = "function(t){" +
+	"if (/^pick /m.test(t)){ var chant = /^pick \\S+ notes$/m.test(t);" +
+	" var actions = chant ? { 'wip refrain': 'reword', 'notes': 'drop', 'wip': 'fixup', 'oups': 'drop', 'refrain fini': 'fixup', 'corrige typo': 'reword', 'ajoute le couplet': 'fixup' }" +
+	" : { 'wip': 'pick', 'wip encore': 'fixup', 'debug: trace temporaire': 'drop', 'corrige typo': 'fixup' };" +
+	" return t.split('\\n').map(function(l){ var m = /^pick (\\S+) (.*)$/.exec(l); return m && actions[m[2]] ? actions[m[2]] + ' ' + m[1] + ' ' + m[2] : l; }).join('\\n'); }" +
+	"if (/^wip refrain$/m.test(t)) return t.replace(/^wip refrain$/m, 'refrain: le refrain de la mer');" +
+	"if (/^corrige typo$/m.test(t)) return t.replace(/^corrige typo$/m, 'couplet: les Royaumes chantent avec nous');" +
+	"return null; }";
 
 module.exports = { nouveauMonde: nouveauMonde };

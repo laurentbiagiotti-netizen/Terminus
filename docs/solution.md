@@ -3952,6 +3952,142 @@ git cat-file -p HEAD~2
 echo "Signature : l'empreinte <empreinte> est celle de la clé du Bastion." >> ~/chronotheque/rapport.txt; cp ~/chronotheque/rapport.txt ~/Cybersup/Chronotheque/BoiteDeLaurent
 ```
 
+### 105. Les défis des maîtres, salle par salle
+
+Les 42 défis des salles (les cinq défis d'honneur sont déjà gagnés par le chemin ci-dessus), dans l'ordre des maîtres ; la solution les fait après la victoire. Les Sceaux : la version, un alias, une adresse pour un seul grimoire. L'Autel : `diff --staged` (déjà vu aux Runes de Garde), `check-ignore -v`, `git mv`. La Crypte : `ls-tree -r`, `rev-parse`, `count-objects -v`. L'Oracle : un log à sa façon, `--grep`, `--stat`. Les Contre-sorts : `restore --source`, `--amend --no-edit`, un `revert --no-commit` qu'on défait aussitôt (`restore --staged --worktree`). Les Ombres : `HEAD@{2}`, le reflog d'une seule branche, `ORIG_HEAD` (laissé par le `reset --hard` des expériences). Les Lignes : `branch -m`, `--merged`, `switch -`. Les Paradoxes : le style `zdiff3`, puis un paradoxe qu'on fuit (`merge --abort`). La Besace : `stash list`, `stash show -p`, `tag -l`. Les Prophéties : un rebase qui bute sur un paradoxe, qu'on abandonne (`--abort`), qu'on reprend et qu'on tranche (`--continue`), puis un sceau `--fixup` fondu par `--autosquash`. Les Cartes : `branch -a`, `log main..LIGNE` (déjà vu à l'Atelier), `--left-right A...B`. Les Portes : `remote show`, un menhir poussé, `fetch --prune`. La Garde : une rune `commit-msg`, `verify-commit`, et `%G?` qui marque d'un N les sceaux sans cire. Le Conseil : `pr view` (déjà vu), un commentaire, le registre des golems.
+
+```
+cd ~/Cybersup/Chronotheque
+git --version
+git config --global alias.lg "log --oneline --graph --all"
+cd ~/chronotheque/premier-sceau
+git config --local user.email "<moi>@premier-sceau.lan"
+git config user.email
+git ls-tree -r HEAD
+git rev-parse HEAD
+git count-objects -v
+cd ~/chronotheque/autel
+touch cierges.log
+git check-ignore -v cierges.log
+git mv autel.py offrandes.py
+git commit -m "autel: renomme l'autel en offrandes"
+cd ~/chronotheque/annales
+git log --format='%h %an %s' -5
+git log --grep=lois --oneline
+git log --stat -2
+cd ~/chronotheque/contresorts
+git restore --source=HEAD~2 sorts.txt
+git restore sorts.txt
+echo "- reflog" >> sorts.txt
+git add sorts.txt
+git commit --amend --no-edit
+git revert --no-commit HEAD~1
+git restore --staged --worktree sceau.txt
+cd ~/chronotheque/livre-ombres
+git show HEAD@{2}
+git reflog show main
+cd ~/chronotheque/experiences
+git log --oneline -1 ORIG_HEAD
+cd ~/chronotheque/lignes
+git branch -m essai essai-du-soir
+git branch --merged
+git switch carte
+git switch -
+cd ~/chronotheque/paradoxe
+git config --global merge.conflictStyle zdiff3
+git switch -c brouille
+sed -i 's/se retourne/se brise/' prophetie.txt
+git commit -am "prophetie: le sablier se brise"
+git switch main
+sed -i 's/se retourne/se fige/' prophetie.txt
+git commit -am "prophetie: le sablier se fige"
+git merge brouille
+git merge --abort
+cd ~/chronotheque/besace
+git stash push -m "vitrail, encore"
+git stash list
+git stash show -p
+git stash pop
+git tag -l "v*"
+cd ~/chronotheque/prophetie
+git switch -c tempete main~3
+echo "Le vent d'est : il apporte la tempête." >> vents.txt
+git commit -am "vents: la tempête d'est"
+git rebase main
+git rebase --abort
+git rebase main
+printf 'Le livre des vents\n\nLe vent d'"'"'ouest : il apporte la pluie.\nLe vent du sud : il apporte le sel.\nLe vent d'"'"'est : il apporte les rumeurs et la tempête.\n' > vents.txt
+git add vents.txt
+git rebase --continue
+sed -i 's/et la tempête/et la grande tempête/' vents.txt
+git commit -a --fixup HEAD
+git rebase -i --autosquash main
+git log --left-right --oneline main...brouillon
+cd ~/chronotheque/chronique
+git branch -a
+git remote show origin
+git tag -a v-chronomancien -m "La Chronique tient"
+git push origin v-chronomancien
+git fetch --prune
+printf '#!/bin/bash\nif [ $(head -1 "$1" | wc -c) -lt 10 ]; then echo "Rune : message trop court."; exit 1; fi\n' > .git/hooks/commit-msg
+chmod +x .git/hooks/commit-msg
+git verify-commit HEAD~3
+git log --format='%h %G? %s' -6
+gh pr comment <pr-kevin> -b "Merci pour la table des marées, Kévin."
+gh run list
+```
+
+### 106. Les quêtes annexes : l'Ami de la Chronothèque
+
+Six habitants, six sorts que les maîtres n'enseignent pas. Max (l'Atelier des Prophéties) : un second atelier pour le même dépôt (`worktree`). Paolo (l'Oracle) : `git grep`, `shortlog -sn`, `describe --tags`. Ilian (le Livre des Ombres) : `clean -n` avant `clean -f`, un blob qui flotte trouvé par `fsck` (la ligne effacée ayant retrouvé son nom, on fabrique la poussière : un fichier posé sur l'autel puis retiré), et `gc`. Fabien (les Portes) : un dépôt entier dans un seul fichier (`bundle`), et un clone depuis ce fichier. Wisdom (la Besace) : `git archive` en zip et en tar, depuis le menhir `v1.0`. Eva-Lydia (les Runes de Garde) : une combinaison enfouie trois sceaux plus bas, purgée de toute l'histoire (`filter-repo`), et changée quand même.
+
+```
+cd ~/Cybersup/Chronotheque/AtelierDesPropheties; cat Max
+cd ~/chronotheque/lignes
+git worktree add ../lignes-urgence -b urgence
+git worktree list
+cd ../lignes-urgence
+echo "Réparé en urgence." > urgence.txt
+git add urgence.txt
+git commit -m "urgence: répare la porte"
+cd ../lignes
+git worktree remove ../lignes-urgence
+cd ~/Cybersup/Chronotheque/Oracle; cat Paolo
+cd ~/chronotheque/annales
+git grep -n "Porte d'Argent"
+git shortlog -sn
+git describe --tags
+cd ~/Cybersup/Chronotheque/LivreDesOmbres; cat Ilian
+cd ~/chronotheque/livre-ombres
+touch brouillon.tmp
+git clean -n
+git clean -f
+echo poussière > poussiere.txt
+git add poussiere.txt
+git rm --cached poussiere.txt
+rm poussiere.txt
+git fsck
+git gc
+cd ~/Cybersup/Chronotheque/PortesDesRoyaumes; cat Fabien
+cd ~/chronotheque/annales
+git bundle create ../annales.bundle --all
+git bundle verify ../annales.bundle
+git bundle list-heads ../annales.bundle
+cd ..
+git clone annales.bundle annales-lille
+cd ~/Cybersup/Chronotheque/BesaceEtReliques; cat Wisdom
+cd ~/chronotheque/besace
+git archive --format=zip -o ../runes-v1.0.zip v1.0
+git archive --format=tar -o ../runes-v1.0.tar v1.0
+tar -tf ../runes-v1.0.tar
+cd ~/Cybersup/Chronotheque/RunesDeGarde; cat Eva-Lydia
+cd ~/chronotheque/coffre
+git log -p --all | grep MOT_DE_PASSE
+git filter-repo --path secrets.txt --invert-paths --force
+git log --all --oneline -- secrets.txt
+echo "La combinaison est changée : la nouvelle n'est écrite nulle part." > ROTATION.txt
+```
+
 ## L'épreuve finale : la Forteresse (mission spéciale)
 
 Une partie à part, ouverte avec `examen` et un code d'accès que le formateur donne le jour de l'épreuve. Quarante épreuves sur les trois chapitres, en huit sceaux (dont le Sceau du Grimoire : `man`, `top`, `bash` ; et le Sceau du Réseau : `ip a`, `ip r`, `dig`, `curl`, `iptables`), notées sur 20 (bonus si tout est fini tôt, petit malus au-delà de 30 fausses manœuvres, indices à -0,25), dont le quiz de Steve dans `/dev/random` (chaque bonne réponse compte, même si la copie est rendue avant la troisième question). La note finale compte aussi le parcours : 80 % la note de l'épreuve, 20 % les badges de compétence gagnés dans la partie normale (chapitres 2 et 3, 42 badges platines compris), relevés à l'entrée dans l'épreuve ; `verifier` liste les badges gagnés et ceux qui manquent, avec les notes des chapitres 2 et 3, le temps de jeu et le nombre de commandes de la partie normale (relevés eux aussi à l'entrée), pour juger si les badges sont plausibles. Il termine par des contrôles de vraisemblance : copie rendue après 3 h, horloge du poste reculée pendant l'épreuve, épreuves faites trop vite ou avec trop peu de commandes, badges sans la note de chapitre qui va avec, épreuves cochées que la Forteresse démentait au scellement. Ce sont des signaux à vérifier avec l'étudiant, pas des preuves. La partie est gardée dans le navigateur : l'épreuve se passe sur le poste et le navigateur où l'on a joué, sinon le jeu prévient qu'il ne trouve aucun badge. `kamikaze` rend la copie à tout moment. Dans les quartiers de la recrue, Florimond, le barde de la Taverne du chapitre 1, raconte l'histoire de l'épreuve (`cat Barde`), jamais deux fois de suite de la même façon ; Manon (`/`), Wissam (`/home`), Jean-Baptiste (`/etc`), Gabriel et Cheb Timour (`/opt/atelier`), Laurana (`/var/www`), David (`/tmp`) et Steve (`/dev/random`) parlent aussi avec `cat`.

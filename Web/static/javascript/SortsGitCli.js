@@ -236,7 +236,7 @@ function gEvenement(ctx, ok){
 	if (ctx.ev.silencieux) return;
 	var R = ctx.R || null;
 	var e = { type: "git", hote: R ? R.h : gHoteDe(ctx.lieu), depot: R ? gCheminReel(R.top || R.git) : null, cmd: ctx.cmd, args: ctx.args.slice(), ok: ok && !ctx.code, code: ctx.code || 0 };
-	for (var k in ctx.ev){ if (ctx.ev.hasOwnProperty(k)) e[k] = ctx.ev[k]; }
+	for (var k in ctx.ev){ if (ctx.ev.hasOwnProperty(k) && k !== "type") e[k] = ctx.ev[k]; }
 	try { GameEvents.fire(e); } catch (x){}
 }
 function gUsageCourt(){
@@ -1303,6 +1303,17 @@ GIT_SOUS_COMMANDES.log = function(ctx){
 		if (compact && extra.length && extra[0] === "" && !op.o.stat && !op.o.patch) extra.shift();
 		return { h: h, l: l.concat(extra), compact: compact };
 	});
+	// --left-right avec A...B : « < » pour ce qui vient de A, « > » pour ce qui vient de B.
+	var sym = op.o["left-right"] ? revs.map(function(r){ return /^(.*?)\.\.\.(.*)$/.exec(r); }).filter(Boolean)[0] : null;
+	if (sym){
+		var ga = gResoudre(R, sym[1] || "HEAD", { commit: true }), gb = gResoudre(R, sym[2] || "HEAD", { commit: true }), gauche = {};
+		gParcours(R, [ga], [gb], {}).forEach(function(x){ gauche[x] = true; });
+		blocs.forEach(function(b){
+			var m = gauche[b.h] ? "<" : ">";
+			if (b.compact) b.l[0] = m + " " + b.l[0];
+			else b.l[0] = String(b.l[0]).replace(/^(\x1b\[[0-9;]*m)?commit /, "$1commit " + m + " ");
+		});
+	}
 	ctx.ev.nombre = choisis.length; ctx.ev.graphe = graphe; ctx.ev.tous = !!op.o.all; ctx.ev.oneline = !!fmt.oneline; ctx.ev.options = Object.keys(op.o); ctx.ev.commits = choisis.slice(0, 200);
 	if (graphe) return gDessinerGraphe(R, choisis, blocs, { premierParent: !!op.o["first-parent"] });
 	var sortie = [];
@@ -1343,7 +1354,7 @@ GIT_SOUS_COMMANDES["rev-list"] = function(ctx){
 function gEssayerRevs(R, x){
 	try {
 		var m;
-		if ((m = /^(.*)\.\.\.?(.*)$/.exec(x))){ gResoudre(R, m[1] || "HEAD", { commit: true }); gResoudre(R, (m[2] || "HEAD").replace(/^\./, ""), { commit: true }); return true; }
+		if ((m = /^(.*?)\.\.\.?(.*)$/.exec(x))){ gResoudre(R, m[1] || "HEAD", { commit: true }); gResoudre(R, (m[2] || "HEAD").replace(/^\./, ""), { commit: true }); return true; }
 		gResoudre(R, x.replace(/^\^/, ""), { commit: true });
 		return true;
 	} catch (e){ if (e instanceof GitErreur) return false; throw e; }
@@ -1588,7 +1599,7 @@ GIT_SOUS_COMMANDES.show = function(ctx){
 		var h = gResoudre(R, rv);
 		var o = gObjet(R, h);
 		if (!o) throw gErreurRevision(rv);
-		ctx.ev.objet = h; ctx.ev.type = o.t;
+		ctx.ev.objet = h; ctx.ev.typeObjet = o.t;
 		if (o.t === "blob"){ sortie.push(o.c.replace(/\n$/, "")); return; }
 		if (o.t === "tree"){ sortie.push("tree " + rv, ""); o.c.forEach(function(e){ sortie.push(e[1] + (e[0] === "40000" ? "/" : "")); }); return; }
 		if (o.t === "tag"){
@@ -2334,7 +2345,7 @@ GIT_SOUS_COMMANDES["cat-file"] = function(ctx){
 		throw new GitErreur("fatal: Not a valid object name " + op.p[0], 128);
 	}
 	var o = gObjet(R, h);
-	ctx.ev.objet = h; ctx.ev.type = o.t;
+	ctx.ev.objet = h; ctx.ev.typeObjet = o.t;
 	if (op.o.e) return "";
 	if (op.o.t) return o.t;
 	if (op.o.s) return String(gTailleObjet(o.t, o.c));

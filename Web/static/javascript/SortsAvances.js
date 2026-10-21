@@ -669,7 +669,17 @@ Shell.sorts.tar = function(args, io){
 	var extraits = [], refuses = [];
 	for (k = 0; k < source.archive.length; k++){
 		var entree = source.archive[k];
-		var existant = ici.getNode(entree.n);
+		// Une entrée rangée dans des dossiers (git archive) : on recrée les dossiers, comme le vrai tar.
+		var dest = ici, morceaux = String(entree.n).split("/").filter(function(x){ return x !== "" && x !== "."; });
+		if (!morceaux.length || morceaux.indexOf("..") > -1){ refuses.push("tar : " + entree.n + " : chemin refusé"); continue; }
+		while (morceaux.length > 1){
+			var sous = dest.getNode(morceaux[0]);
+			if (sous === null){ sous = new Room(morceaux[0], "Un dossier sorti d'une archive."); sous.owner = JOUEUR; sous.mode = "rwxr-xr-x"; link_rooms(dest, sous); }
+			if (!(sous instanceof Room)) break;
+			dest = sous; morceaux.shift();
+		}
+		if (morceaux.length > 1){ refuses.push("tar : " + entree.n + " : un objet bloque le chemin"); continue; }
+		var existant = dest.getNode(morceaux[0]);
 		if (existant !== null){
 			if (existant instanceof Room || existant.owner !== JOUEUR || existant.acquis || existant.lien){
 				refuses.push("tar : " + entree.n + " : impossible d'écraser ce qui existe déjà ici");
@@ -677,10 +687,11 @@ Shell.sorts.tar = function(args, io){
 			}
 			existant.setText(entree.x);
 		} else {
-			var nouveau = new Item(entree.n, entree.x);
+			var nouveau = new Item(morceaux[0], entree.x);
 			nouveau.owner = JOUEUR;
 			nouveau.picturename = entree.p || nouveau.picturename;
-			ici.addItem(nouveau);
+			if (entree.m) nouveau.mode = entree.m;
+			dest.addItem(nouveau);
 		}
 		extraits.push(entree.n);
 	}

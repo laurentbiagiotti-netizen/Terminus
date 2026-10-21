@@ -1650,7 +1650,8 @@ function gFusionTexte(base, nous, eux, etiquettes, style){
 			var d = 0;
 			for (var i = 0; i < blocs.length; i++){
 				var b = blocs[i];
-				if (b.a1 <= x && !(fin && b.a0 === x && b.a1 === x)){ d = (b.b1 - b.a1); continue; }
+				// Une insertion pile en x : le début de la région la précède, la fin la comprend.
+				if (b.a1 <= x && !(b.a0 === x && b.a1 === x)){ d = (b.b1 - b.a1); continue; }
 				if (b.a0 < x && x < b.a1) return fin ? b.b1 : b.b0;
 				if (b.a0 === x && b.a1 === x && fin){ d = b.b1 - b.a1; continue; }
 				break;
@@ -2247,6 +2248,8 @@ function gitConstructeur(h, chemin, options){
 	g.remote = function(nom, url){ gConfigLocalePoser(R, "remote." + nom + ".url", url); gConfigLocalePoser(R, "remote." + nom + ".fetch", "+refs/heads/*:refs/remotes/" + nom + "/*"); };
 	g.config = function(cle, valeur){ gConfigLocalePoser(R, cle, valeur); };
 	g.supprimerBranche = function(nom){ gRefSupprimer(R, "refs/heads/" + nom); };
+	// Déplace une branche de force (comme un push --force reçu par ce dépôt), avec sa trace dans le reflog.
+	g.forcerRef = function(nom, rev, o){ var h2 = gResoudre(R, rev, { commit: true }); var x = rl(o); gRefEcrire(R, "refs/heads/" + nom, h2, "push: forced-update", { sansHead: true, id: x.id, quand: x.quand }); return h2; };
 	g.resetDur = function(rev, o){
 		if (typeof o === "string") o = { message: o };
 		o = o || {};

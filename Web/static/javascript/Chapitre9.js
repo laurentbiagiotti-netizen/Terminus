@@ -489,7 +489,7 @@ function noterGitCh9(e){
 	}
 	if (cmd === "cat-file" && ok){
 		if (a.indexOf("-t") > -1) noterVuCh9("catFileT");
-		if (a.indexOf("-p") > -1){ c.catFile = c.catFile || {}; var t = e.type || e.objet || "?"; c.catFile[t] = true; c.catFileN = (c.catFileN || 0) + 1; }
+		if (a.indexOf("-p") > -1){ c.catFile = c.catFile || {}; var t = e.typeObjet || "?"; c.catFile[t] = true; c.catFileN = (c.catFileN || 0) + 1; }
 	}
 	if (cmd === "hash-object" && ok) noterVuCh9("hashObject");
 	if (cmd === "rm" && ok && aOptionCh9(a, ["--cached"])){ if (depotEstCh9(e, "autel")) noterVuCh9("rmCached"); if (depotEstCh9(e, "profane")) noterVuCh9("rmCachedProfane"); }
@@ -744,7 +744,7 @@ var ETATS_CH9 = {
 		var indexe = (s.indexees || []).some(function(f){ return String(f.chemin || f) === "grimoire.md"; });
 		var sceau = G9.historique(ch, "HEAD").filter(function(h){ return /sceau du soir/.test(messageCh9(ch, h)); }).length > 0;
 		var soire = G9.historique(ch, "HEAD").some(function(h){ return /soire\b/.test(messageCh9(ch, h)); });
-		return sorts !== null && sorts === G9.fichier(ch, "HEAD", "sorts.txt") && !indexe && /Une page en cours/.test(grimoire) && sceau && !soire;
+		return sorts !== null && String(sorts).replace(/\s+$/, "") === String(G9.fichier(ch, "HEAD", "sorts.txt") || "").replace(/\s+$/, "") && !indexe && /Une page en cours/.test(grimoire) && sceau && !soire;
 	},
 	n9_reset: function(){ return vuCh9("resetSoft") && vuCh9("resetMixed") && vuCh9("resetHard"); },
 	n9_contresort: function(){
@@ -1031,7 +1031,7 @@ function reecritureFaussaireCh9(){
 			if (n === "chronique.md") t = t.replace("la flotte noire vire de bord devant le Grand Port", "la flotte noire escorte l'école jusqu'au Grand Port");
 			f[n] = t;
 		});
-		faux.push(g.commit({ auteur: orig.auteur && orig.auteur.nom ? { nom: orig.auteur.nom, mail: orig.auteur.mail || orig.auteur.email } : auteurCh9("gris"),
+		faux.push(g.commit({ auteur: orig.auteur ? { nom: typeof orig.auteur === "string" ? orig.auteur : orig.auteur.nom, mail: orig.mail || (orig.auteur && orig.auteur.mail) || "" } : auteurCh9("gris"),
 			date: orig.date || Math.floor(maintenantCh9() / 1000), message: String(orig.message || "chronique: mise à jour").trim(), fichiers: f }));
 	});
 	if (!faux.length) return null;

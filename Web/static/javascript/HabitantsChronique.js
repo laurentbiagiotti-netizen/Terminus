@@ -152,8 +152,9 @@ var IlianCh9 = habitantCh9(salleCh9Par("ombres").lieu, "Ilian", "item_ilian.gif"
 	return "Un garçon passe un balai entre les rayonnages, en faisant bien attention de ne jamais toucher le Livre.\n\n" +
 		"« Ilian. Moi, je fais le ménage. Deux sortes de poussière. Celle de l'atelier : des fichiers que Git ne suit pas, qui traînent. git clean les balaie, mais d'abord on regarde (-n), parce qu'un fichier balayé ne revient JAMAIS. " +
 		"Et celle de la crypte : des sceaux que plus aucune ligne ne nomme, qui flottent (dangling). git fsck les trouve. Et git gc tasse la crypte, range les pierres en paquets. " +
-		"Dans ~/chronotheque/livre-ombres, une ligne a été effacée : la crypte a forcément des sceaux qui flottent. »\n\n" +
-		C.gris("Les outils (dans ~/chronotheque/livre-ombres) : touch brouillon.tmp ; git clean -n ; git clean -f ; git fsck --lost-found ; git gc.");
+		"Dans ~/chronotheque/livre-ombres, tu as rendu son nom à la ligne effacée : ses sceaux ne flottent plus, et le reflog garde tout le reste en vie. " +
+		"Alors fabrique de la poussière : pose un fichier sur l'autel, puis retire-le. Sa pierre reste dans la crypte, et plus rien ne la nomme : un blob qui flotte. »\n\n" +
+		C.gris("Les outils (dans ~/chronotheque/livre-ombres) : touch brouillon.tmp ; git clean -n ; git clean -f ; echo poussière > poussiere.txt ; git add poussiere.txt ; git rm --cached poussiere.txt ; rm poussiere.txt ; git fsck ; git gc.");
 });
 declarerAnnexe({ id: "a9_menage", chapitre: 10, titre: "Ce qui traîne et ce qui flotte", habitant: "Ilian", lieu: "au Livre des Ombres", item: function(){ return IlianCh9; }, ouverte: ouverteCh9,
 	indice: "au Livre des Ombres, quelqu'un balaie sans jamais toucher le Livre.",
