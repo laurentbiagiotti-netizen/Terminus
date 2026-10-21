@@ -1248,7 +1248,18 @@ Shell.sorts.chapitre = function(args, io){
 		});
 		return "";
 	}
-	if (demande !== "2" && demande !== "3") throw new ShellError("chapitre : il n'y a que les chapitres 1, 2, 3, 4, 5, 6, 7 et 8. Tape chapitre pour la liste.");
+	if (demande === "9"){
+		if (state.has("ch9Ouvert")) return "Le chapitre 9 est déjà ouvert : la Chronothèque t'attend (cd " + Shell.cheminAffiche(ChronothequeCh9) + "). aller 9 t'y emmène.";
+		if (!chapitre2Possible()) return "Tu as déjà commencé une partie : le chapitre 9 (la Chronothèque) s'ouvre à la fin du Grand Port, ou se choisit au tout début d'une partie neuve.\n" +
+			C.gris("(Pour partir directement à la Chronothèque : recommencer, puis chapitre 9.)") + "\n" + conseilRenfort(9);
+		if (typeof commencerChapitre9 !== "function") return "Le chapitre 9 n'est pas encore disponible.";
+		term.demander("Partir directement à la Chronothèque (chapitre 9, Git) ? Les chapitres 1 à 8 ne seront pas notés pour toi. Tape oui pour confirmer : ", false, function(reponse){
+			if (String(reponse).trim().toLowerCase() !== "oui"){ term.echo("Bien. Les chapitres précédents t'attendent."); return; }
+			if (commencerChapitre9()) Shell.fin();
+		});
+		return "";
+	}
+	if (demande !== "2" && demande !== "3") throw new ShellError("chapitre : il n'y a que les chapitres 1, 2, 3, 4, 5, 6, 7, 8 et 9. Tape chapitre pour la liste.");
 	if (demande === "2"){
 		if (state.has("panneSautee")) return "Tu es venu en renfort pour la mission cyber : la panne du réseau ne fait pas partie de ta mission.";
 		if (state.has("panneOuverte")) return "Le chapitre 2 est déjà ouvert : Radia t'attend au BatimentB de Cybersup (cd ~/Cybersup/BatimentB). aller 2 t'y emmène.";

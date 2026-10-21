@@ -215,7 +215,9 @@ var SCENES = {
 	p7_quai: { image: "loc_port_aube.gif", titre: "Chapitre 7 · Port-Aube, la cité à bâtir", chapitre: 7,
 		lignes: ["Une île au large, dix maisons debout, et pas une lumière.", "À 14 h, la tempête. À 19 h, la marée, et cinq cents étudiants.", "Dix maîtres bâtisseurs : bâtis, vérifie, sauvegarde. Tu es l'Architecte."] },
 	n8_quai: { image: "loc_grand_port.gif", titre: "Chapitre 8 · La Flotte noire", chapitre: 8,
-		lignes: ["Derrière le phare noir, une flotte de conteneurs se rassemble.", "Elle paraîtra à l'aube du quatrième jour. Il est 6 h, le premier.", "Quatorze quais, cinq épreuves : tu entres Mousse, tu sortiras Amiral."] }
+		lignes: ["Derrière le phare noir, une flotte de conteneurs se rassemble.", "Elle paraîtra à l'aube du quatrième jour. Il est 6 h, le premier.", "Quatorze quais, cinq épreuves : tu entres Mousse, tu sortiras Amiral."] },
+	n9_entree: { image: "loc_chronotheque.gif", titre: "Chapitre 9 · La Chronique d'Éternité", chapitre: 9,
+		lignes: ["Sous la tour de l'horloge dort la Chronique, et quelqu'un la réécrit.", "À l'aube du quatrième jour, la Grande Synchronisation. Il est 6 h, le premier.", "Quatorze salles, cinq épreuves : tu entres Apprenti, tu sortiras Chronomancien."] }
 };
 function sceneDeChapitre(scene){
 	var fond = document.createElement("div");
@@ -299,6 +301,7 @@ function recapChapitre(chapitre){
 	else if (chapitre === 7){ minutes = Math.round((state.tempsMs - (state.debutChapitre7 || 0)) / 60000); }
 	else if (chapitre === 8){ minutes = Math.round((state.tempsMs - (state.debutChapitre8 || 0)) / 60000); }
 	else if (chapitre === 9){ minutes = Math.round((state.tempsMs - (state.debutChapitre9 || 0)) / 60000); }
+	else if (chapitre === 10){ minutes = Math.round((state.tempsMs - (state.debutChapitre10 || 0)) / 60000); }
 	else { minutes = Math.round((state.tempsMs - (state.debutChapitre2 || 0)) / 60000); }
 	if (chapitre === 3 && typeof RELIQUES !== "undefined") badges = Object.keys(RELIQUES).filter(function(id){ return state.quests[id]; });
 	if (chapitre === 2 && typeof TROPHEES_CRYPTE !== "undefined") badges = Object.keys(TROPHEES_CRYPTE).filter(function(id){ return state.quests[id]; });
@@ -307,6 +310,7 @@ function recapChapitre(chapitre){
 	if (chapitre === 7 && typeof TROPHEES_CH6 !== "undefined") badges = Object.keys(TROPHEES_CH6).filter(function(id){ return badgeGagne(id); });
 	if (chapitre === 8 && typeof TROPHEES_CH7 !== "undefined") badges = Object.keys(TROPHEES_CH7).filter(function(id){ return badgeGagne(id); });
 	if (chapitre === 9 && typeof TROPHEES_CH8 !== "undefined") badges = Object.keys(TROPHEES_CH8).filter(function(id){ return badgeGagne(id); });
+	if (chapitre === 10 && typeof TROPHEES_CH9 !== "undefined") badges = Object.keys(TROPHEES_CH9).filter(function(id){ return badgeGagne(id); });
 	sorts = Object.keys(state.frequences || {}).filter(function(s){ return SORTS_DU_JEU.indexOf(s) === -1; }).filter(function(s){ return chapitreDuSort(s) === chapitre || (chapitre === 1 && ["ls", "cd", "cat"].indexOf(s) > -1); });
 	sorts.sort(function(a, b){ return state.frequences[b] - state.frequences[a]; });
 	return { minutes: minutes, badges: badges, top: sorts.slice(0, 3).map(function(s){ return s + " ×" + state.frequences[s]; }) };
@@ -430,6 +434,20 @@ var QUIZ = {
 		["depends_on avec la forme courte, dans compose, attend :", ["Seulement le démarrage du service, pas qu'il soit prêt", "Que le service soit healthy", "Que le service ait fini", "Rien du tout"], 0, "condition: service_healthy attend le bilan de santé de la dépendance."],
 		["Pourquoi ne jamais monter /var/run/docker.sock dans un conteneur ?", ["Qui tient le socket commande le démon, donc toute la machine", "Parce que le conteneur ne démarre pas", "Parce que les journaux se perdent", "Parce que les ports se ferment"], 0, "Le socket, c'est la clé du coffre : un conteneur qui l'a peut en lancer un autre, privilégié, qui monte le disque de l'hôte."],
 		["Le tag nginx:1.27-alpine a changé de contenu sur le registre. Comment déployer à coup sûr l'ancien ?", ["L'épingler par son digest : nginx:1.27-alpine@sha256:...", "Utiliser latest", "Faire docker pull deux fois", "Redémarrer le démon"], 0, "Un tag est une étiquette mobile ; le digest est le sceau du contenu."]
+	],
+	10: [
+		["Que fait git commit ?", ["Il scelle ce qui est sur l'index (la zone de préparation), et seulement ça", "Il envoie les fichiers sur le serveur", "Il scelle tous les fichiers du dossier", "Il crée une branche"], 0, "add pose sur l'index, commit scelle l'index ; push seul parle au serveur."],
+		["Un .env a déjà été commité. On l'ajoute à .gitignore. Git l'oublie-t-il ?", ["Non : .gitignore ne cache que ce qui n'est pas suivi ; il faut git rm --cached .env", "Oui, aussitôt", "Oui, au prochain push", "Non, il faut supprimer le dossier .git"], 0, "Et un secret commité doit être changé : il reste dans l'historique."],
+		["Sur une branche déjà poussée et partagée, comment annuler un commit ?", ["git revert : un nouveau commit qui défait l'ancien", "git reset --hard puis git push --force", "git commit --amend", "git rebase -i et drop"], 0, "On ne réécrit pas ce que d'autres ont déjà : revert allonge l'histoire au lieu de la changer."],
+		["Une branche a été effacée par erreur avec git branch -D. Ses commits ?", ["Toujours là : git reflog les retrouve, git branch NOM HASH leur rend un nom", "Perdus pour toujours", "Dans la corbeille du système", "Sur le serveur uniquement"], 0, "Une branche n'est qu'un nom ; le reflog garde les positions passées de HEAD."],
+		["Qu'est-ce qu'une branche, pour Git ?", ["Un fichier qui contient le hash d'un commit", "Une copie complète du dépôt", "Un dossier à part", "Un serveur distant"], 0, ".git/refs/heads/main : quarante et un octets. C'est pour ça qu'une branche ne coûte rien."],
+		["Après une fusion sans aucun conflit, le code est-il forcément correct ?", ["Non : deux changements compatibles ligne à ligne peuvent être incompatibles en sens ; on lance les tests", "Oui, Git l'a vérifié", "Oui, si la fusion est fast-forward", "Non, il faut toujours tout réécrire"], 0, "C'est le conflit invisible : Git compare des lignes, pas des intentions."],
+		["Que fait git bisect run ./test.sh ?", ["Il coupe l'historique en deux à chaque pas et lance le test pour trouver le premier commit fautif", "Il lance le test sur tous les commits un par un", "Il annule les commits fautifs", "Il fusionne deux branches"], 0, "Recherche dichotomique : 64 commits, six questions."],
+		["Quand a-t-on le droit de réécrire des commits avec rebase -i ?", ["Quand ils n'ont encore été partagés avec personne", "Toujours", "Jamais", "Seulement sur main"], 0, "Rebase crée de nouveaux commits : ceux qui avaient les anciens se retrouvent avec une histoire divergente."],
+		["git push est refusé : « rejected (fetch first) ». Que faire d'abord ?", ["git fetch et regarder (git log main..origin/main), puis git pull --rebase", "git push --force", "Supprimer le dépôt et recloner", "git commit --amend"], 0, "Le serveur a des commits que tu n'as pas : on regarde avant d'intégrer."],
+		["Pourquoi signer ses commits ?", ["Parce que user.name et user.email se changent en une ligne : seule la signature prouve qui a vraiment commité", "Pour les compresser", "Pour qu'ils passent la CI", "Pour pouvoir les rebaser"], 0, "Un commit non signé peut porter n'importe quel nom ; une signature se vérifie contre une clé connue."],
+		["Une Pull Request a tous ses tests verts. Peut-on la fusionner sans la lire ?", ["Non : la CI vérifie ce qu'on lui a appris, pas le sens ; la relecture humaine reste indispensable", "Oui, les tests suffisent", "Oui, si l'auteur est connu", "Non, il faut d'abord la rebaser"], 0, "Une ligne empoisonnée peut passer tous les tests."],
+		["Pourquoi --force-with-lease plutôt que --force ?", ["Il refuse d'écraser la branche distante si elle a bougé depuis ton dernier fetch", "Il est plus rapide", "Il signe le push", "Il crée une sauvegarde sur le serveur"], 0, "Tu n'écrases jamais par surprise le travail que tu n'as pas vu."]
 	]
 };
 
@@ -517,10 +535,10 @@ function lancerQuiz(chapitre){
 }
 
 Shell.sorts.quiz = function(args, io){
-	var choix = { "1": 1, "2": 3, "3": 2, "4": 5, "5": 6, "6": 7, "7": 8, "8": 9 }[args[0]] || (state.chapitreEnCours ? state.chapitreEnCours() : 1);
-	var fini = choix === 1 ? state.has("victoire") : (choix === 3 ? !!state.quests["r_fin"] : (choix === 5 ? !!state.quests["d_fin"] : (choix === 6 ? !!state.quests["h_rapport"] : (choix === 7 ? !!state.quests["m6_rapport"] : (choix === 8 ? !!state.quests["p7_rapport"] : (choix === 9 ? !!state.quests["n8_rapport"] : !!state.quests["c_rapport"]))))));
+	var choix = { "1": 1, "2": 3, "3": 2, "4": 5, "5": 6, "6": 7, "7": 8, "8": 9, "9": 10 }[args[0]] || (state.chapitreEnCours ? state.chapitreEnCours() : 1);
+	var fini = choix === 1 ? state.has("victoire") : (choix === 3 ? !!state.quests["r_fin"] : (choix === 5 ? !!state.quests["d_fin"] : (choix === 6 ? !!state.quests["h_rapport"] : (choix === 7 ? !!state.quests["m6_rapport"] : (choix === 8 ? !!state.quests["p7_rapport"] : (choix === 9 ? !!state.quests["n8_rapport"] : (choix === 10 ? !!state.quests["n9_rapport"] : !!state.quests["c_rapport"])))))));
 	if (choix === 5 && (typeof QUIZ === "undefined" || !QUIZ[5])) return fini ? "Le quiz du chapitre 4 arrivera bientôt." : "Le quiz du chapitre 4 s'ouvrira à la fin du chapitre.";
-	if (!fini) return "Le quiz du chapitre " + numeroAffiche(choix) + " s'ouvre à la fin du chapitre. " + C.gris("(quiz 1, quiz 2, quiz 3, quiz 4, quiz 5, quiz 6, quiz 7 ou quiz 8 pour un chapitre déjà terminé)");
+	if (!fini) return "Le quiz du chapitre " + numeroAffiche(choix) + " s'ouvre à la fin du chapitre. " + C.gris("(quiz 1, quiz 2, quiz 3, quiz 4, quiz 5, quiz 6, quiz 7, quiz 8 ou quiz 9 pour un chapitre déjà terminé)");
 	setTimeout(function(){ lancerQuiz(choix); }, 50);
 	return C.gris("(Le quiz du chapitre " + numeroAffiche(choix) + " : 5 questions tirées au hasard. 1 à 4 pour répondre, Échap pour sortir.)");
 };
@@ -591,6 +609,10 @@ function lancerAmbiance(chapitre){
 		// Le village : un accord tenu, et de temps en temps quelques notes de luth.
 		bourdon(196, "sine", 0.18); bourdon(293.66, "sine", 0.1);
 		ambiance.minuteurs.push(setInterval(function(){ if (Math.random() < 0.6) note(gamme[Math.floor(Math.random() * gamme.length)], 0.9, "triangle", 0.18); }, 2600));
+	} else if (chapitre === 10){
+		// La Chronothèque : un bourdon d'orgue sous la voûte, le sable qui coule, et de temps en temps le tic d'une grande horloge.
+		souffle(900, 0.12); bourdon(65.4, "sine", 0.2); bourdon(98, "sine", 0.08); bourdon(130.8, "triangle", 0.03);
+		ambiance.minuteurs.push(setInterval(function(){ if (Math.random() < 0.8) note(Math.random() < 0.5 ? 1760 : 1568, 0.05, "square", 0.025, 2000); }, 2000));
 	} else if (chapitre === 9){
 		// Le Grand Port : la houle lourde, un bourdon grave de guerre, et de temps en temps la corne d'un navire au loin.
 		souffle(220, 0.48); bourdon(49, "sine", 0.22); bourdon(73.4, "sine", 0.08);
@@ -728,13 +750,20 @@ var CINEMATIQUES = {
 		{ image: "cine8_port_eveil.gif", texte: "Le Grand Port s'éveille. Une à une, les grues allument leurs feux verts dans le soleil levant." },
 		{ image: "cine8_galons.gif", texte: "Laurent te tend une patte d'épaule, nue. « Mousse. Tout le monde commence ici. Même les amiraux. »" },
 		{ image: "cine8_quais_vides.gif", texte: "Quatorze quais vides dans la brume. Une grue immobile. Une caisse oubliée. Tout est à construire." },
-		{ image: "cine8_flotte_horizon.gif", texte: "L'orage gronde sur l'horizon noir de voiles. À l'aube du quatrième jour, ils seront là." }] }
+		{ image: "cine8_flotte_horizon.gif", texte: "L'orage gronde sur l'horizon noir de voiles. À l'aube du quatrième jour, ils seront là." }] },
+	9: { titre: "Chapitre 9 · La Chronique d'Éternité", plans: [
+		{ image: "cine9_empreinte.gif", texte: "Une empreinte de clé, deux initiales : P.G. La piste ne mène pas au large. Elle mène sous l'école." },
+		{ image: "cine9_tour_horloge.gif", texte: "Sous la vieille tour de l'horloge, un escalier que personne n'a descendu depuis des années." },
+		{ image: "cine9_chronique.gif", texte: "La Chronique : le grimoire où tout ce qui arrive à l'école est scellé. Chaque page, un sceau. Chaque sceau, une empreinte." },
+		{ image: "cine9_page_reecrite.gif", texte: "Cette nuit, une page s'est réécrite toute seule. Dans la nouvelle version, la flotte noire était notre alliée." },
+		{ image: "cine9_sablier.gif", texte: "Le Grand Sablier coule vers le haut. À l'aube du quatrième jour, la Grande Synchronisation : sa version partira vers tous les Royaumes." },
+		{ image: "cine9_salles.gif", texte: "Quatorze portes, quatorze maîtres du temps. Tu ne sais pas encore ce qu'est un commit. Dans trois jours, tu seras Chronomancien." }] }
 };
 /* La carte du chapitre 1 (les autres sont dans SCENES, à l'entrée de chaque chapitre). */
 var SCENE_CHAPITRE_1 = { image: "item_convocation.gif", titre: "Chapitre 1 · Terminus", chapitre: 1,
 	lignes: ["Ta Maison d'abord : regarde autour de toi.", "Chaque sort appris ouvre un bout du monde.", "Le tutoriel, à droite, te guide pour les premiers pas."] };
 /* La première carte de chaque chapitre : c'est elle que la cinématique précède. */
-var PREMIERE_SCENE = { 2: "r_batiment", 3: "c_crypte", 4: "d_entree", 5: "h_entree", 6: "m6_entree", 7: "p7_quai", 8: "n8_quai" };
+var PREMIERE_SCENE = { 2: "r_batiment", 3: "c_crypte", 4: "d_entree", 5: "h_entree", 6: "m6_entree", 7: "p7_quai", 8: "n8_quai", 9: "n9_entree" };
 
 function lancerCinematique(n, apres, forcer){
 	var cine = CINEMATIQUES[n];
@@ -843,13 +872,13 @@ sceneDeChapitre = function(scene){
 
 /* La commande du jeu : revoir une cinématique. */
 if (typeof SORTS_DU_JEU !== "undefined" && SORTS_DU_JEU.indexOf("cinematique") === -1) SORTS_DU_JEU.push("cinematique");
-if (typeof COMMANDES_DU_JEU !== "undefined") COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 4, 0, ["cinematique", "revoir l'ouverture d'un chapitre (cinematique 1 à 8)"]);
+if (typeof COMMANDES_DU_JEU !== "undefined") COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 4, 0, ["cinematique", "revoir l'ouverture d'un chapitre (cinematique 1 à 9)"]);
 /* Sa page d'aide (help cinematique) est dans AideDuJeu.js. Les chapitres : 1 (Terminus), 2 (la panne), 3 (la Crypte), 4 (l'Académie),
-   5 (le Bastion), 6 (Lumen), 7 (Port-Aube), 8 (le Grand Port) ; sans numéro, celle du chapitre en cours. */
+   5 (le Bastion), 6 (Lumen), 7 (Port-Aube), 8 (le Grand Port), 9 (la Chronothèque) ; sans numéro, celle du chapitre en cours. */
 Shell.sorts.cinematique = function(args){
-	var affiche = { 1: 1, 2: 3, 3: 2, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8 }[state.chapitreEnCours()] || 1;
+	var affiche = { 1: 1, 2: 3, 3: 2, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8, 10: 9 }[state.chapitreEnCours()] || 1;
 	var n = args && args[0] ? parseInt(args[0], 10) : affiche;
-	if (!CINEMATIQUES[n]) throw new ShellError("cinematique : un numéro de chapitre, de 1 à 8. Exemple : cinematique 3");
+	if (!CINEMATIQUES[n]) throw new ShellError("cinematique : un numéro de chapitre, de 1 à 9. Exemple : cinematique 3");
 	if (calmeDemande) return C.gris("(Ton système demande de réduire les animations : les cinématiques sont coupées.)");
 	setTimeout(function(){ lancerCinematique(n, function(){ var champ = document.getElementById("saisie"); if (champ) champ.focus(); }, true); }, 50);
 	return "";

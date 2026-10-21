@@ -135,6 +135,21 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
   88. [Après la victoire : la signature](#88-après-la-victoire--la-signature)
   89. [Les défis des maîtres, quai par quai](#89-les-défis-des-maîtres-quai-par-quai)
   90. [Les quêtes annexes : l'Ami du Grand Port](#90-les-quêtes-annexes--lami-du-grand-port)
+- [Chapitre 9 : la Chronique d'Éternité, la Chronothèque](#chapitre-9--la-chronique-déternité-la-chronothèque-git-de-zéro-à-chronomancien)
+  91. [La Chronothèque, Laurent et l'Ordre](#91-la-chronothèque-laurent-et-lordre)
+  92. [Acte I, l'Apprenti : les Sceaux, l'Autel, la Crypte des Runes](#92-acte-i-lapprenti--les-sceaux-lautel-la-crypte-des-runes-gamaliel-bénédicte-andrii)
+  93. [Épreuve de rang I : l'Autel profané](#93-épreuve-de-rang-i--lautel-profané-scribe)
+  94. [Acte II, le Scribe : l'Oracle, les Contre-sorts, le Livre des Ombres](#94-acte-ii-le-scribe--loracle-les-contre-sorts-le-livre-des-ombres-irvan-georgette-william)
+  95. [Épreuve de rang II : la Page arrachée](#95-épreuve-de-rang-ii--la-page-arrachée-archiviste)
+  96. [Acte III, l'Archiviste : les Lignes du Destin, les Paradoxes, la Besace](#96-acte-iii-larchiviste--les-lignes-du-destin-les-paradoxes-la-besace-marc-kenyonn-anthony)
+  97. [Épreuve de rang III : le Labyrinthe des Âges](#97-épreuve-de-rang-iii--le-labyrinthe-des-âges-chroniqueur)
+  98. [Acte IV, le Chroniqueur : l'Atelier des Prophéties et la Salle des Cartes](#98-acte-iv-le-chroniqueur--latelier-des-prophéties-et-la-salle-des-cartes-guillaume-moustapha)
+  99. [Épreuve de rang IV : le Chant des marées](#99-épreuve-de-rang-iv--le-chant-des-marées-gardien-du-temps)
+  100. [Acte V, le Gardien du Temps : les Portes, les Runes de Garde, le Haut-Conseil](#100-acte-v-le-gardien-du-temps--les-portes-des-royaumes-les-runes-de-garde-le-haut-conseil-jeremy-aurélien-amine)
+  101. [Épreuve de rang V : la Requête empoisonnée](#101-épreuve-de-rang-v--la-requête-empoisonnée-chronomancien)
+  102. [La bataille du temps](#102-la-bataille-du-temps)
+  103. [Le rapport de la bataille du temps](#103-le-rapport-de-la-bataille-du-temps)
+  104. [Après la victoire : la date de demain](#104-après-la-victoire--la-date-de-demain)
 - [L'épreuve finale : la Forteresse](#lépreuve-finale--la-forteresse-mission-spéciale)
 
 ## Le barème
@@ -3521,6 +3536,421 @@ quetes annexes
 ```
 
 Les six annexes finies, les habitants viennent saluer l'Amiral sur la jetée, et le badge « Ami du Grand Port » s'ajoute à `badges port`.
+
+## Chapitre 9 : la Chronique d'Éternité, la Chronothèque (Git, de zéro à Chronomancien)
+
+Numéro interne 10, affiché 9. Le chapitre s'ouvre à la fin du Grand Port (le rapport de bataille contresigné) : l'empreinte de clé et les initiales P.G. mènent sous la vieille tour de l'horloge de Cybersup, à la Chronothèque (`cd ~/Cybersup/Chronotheque`). On peut aussi y partir directement (la neuvième enveloppe, « Le Sceau de la Chronique », ou `chapitre 9` en début de partie) : les sorts des chapitres 1 à 8 sont alors acquis, et Grace fabrique une paire de clés SSH si besoin. Une cinématique ouvre le chapitre dans les deux cas (`cinematique 9` la rejoue).
+
+Sous la Chronothèque dort la Chronique, le grimoire de l'école : un dépôt Git. Le Faussaire (P.G.) la réécrit ; à l'aube du J4, la Grande Synchronisation enverra sa version à tous les Royaumes. On arrive Apprenti du Temps, sans jamais avoir fait un commit ; on repart Chronomancien. Chaque commande avance l'horloge de 5 minutes (comme au Grand Port) ; à 22 h, on dort, on se lève à 6 h (`cat GrandSablier`, la barre d'état et la radio de Grace donnent l'heure, le rang et le compte à rebours). Les analogies tiennent tout le chapitre : un commit est un sceau, l'index est l'autel des offrandes, HEAD est l'œil du voyageur, une branche est une ligne du destin, une fusion une confluence, un conflit un paradoxe, rebase réécrit une prophétie, stash est la besace, cherry-pick rapporte une relique, un tag est un menhir, bisect est la chasse du Minotaure, le reflog est le Livre des Ombres, reset --hard le sort interdit, revert le contre-sort, un remote un Royaume, une Pull Request une requête au Haut-Conseil, la CI ses golems, un hook une rune de garde, une signature un sceau de cire.
+
+Quatorze salles, quatorze maîtres du temps, en six actes : Gamaliel (la Salle des Sceaux : config, init), Bénédicte (l'Autel des Offrandes : add, commit, .gitignore, rm --cached, add -p), Andrii (la Crypte des Runes : les objets), Irvan (l'Oracle : log, show, blame, diff), Georgette (la Salle des Contre-sorts : restore, amend, reset, revert), William (le Livre des Ombres : reflog), Marc (les Lignes du Destin : branches et fusions), Kenyonn (la Salle des Paradoxes : conflits, et la fusion qui réussit à tort), Anthony (la Besace et les Reliques : stash, cherry-pick, tag), Guillaume (l'Atelier des Prophéties : rebase, rebase -i), Moustapha (la Salle des Cartes : stratégies de branches), Jeremy (les Portes des Royaumes : clé SSH, clone, fetch, pull, push), Aurélien (les Runes de Garde : hooks, commits signés) et Amine (le Haut-Conseil : Pull Requests, revue, CI, avec `gh`). Chaque dépôt d'exercice est dans `~/chronotheque` (un par leçon, comme un kit de TP ; `regenerer NOM` en repose un neuf). Le joueur travaille sur l'île, dans sa Maison ; une seule machine distante, `royaume`, porte la vraie Chronique (`royaume:/srv/git/chronique.git`) et la forge. Chaque acte se termine par une épreuve de rang : Scribe, Archiviste, Chroniqueur, Gardien du Temps, Chronomancien (`sceaux` dit ce qu'il manque). `sablier` (une commande du jeu) montre le plan de la Chronothèque, les épreuves, l'heure, le rang, et l'intégrité de la Chronique sur 100, lue sur l'état réel des dépôts et de royaume.
+
+Tout est validé sur l'état réel des dépôts : un `.gitignore` qui ne retire pas ce qui est déjà suivi ne compte pas, une branche recréée sur le mauvais commit non plus, un commit publié défait par `reset` au lieu de `revert` non plus, une fusion sans conflit dont `./verifier.sh` échoue non plus, un brouillon réécrit qui garde un secret dans un de ses commits non plus. Les variantes légitimes sont acceptées (`git checkout` ou `git switch`, `git reset HEAD fichier` ou `git restore --staged`, `printf`, `cat <<'FIN'`, `nano` ou `sed` pour écrire un fichier...). Une fois Chronomancien (ou, en cas de retard, à l'aube du J4), la Grande Synchronisation sonne : le Faussaire réécrit `main` sur royaume et la force ; il faut voir la réécriture, rendre la vraie histoire (`--force-with-lease`), dresser le rempart côté serveur, puis démasquer et contredire deux faux commits signés d'une clé inconnue.
+
+| Repère | Où le trouver dans le jeu |
+| --- | --- |
+| `<moi>` | ton nom de compte (`whoami`) |
+| `<hash-pg>` | le commit qui a fait entrer « Porte d'Argent » dans les lois des annales (`git log -S "Porte d'Argent" --oneline`) |
+| `<n-grace>` | le nombre de commits de Grace dans les annales (`git log --author=Grace --oneline \| wc -l`) |
+| `<hash-labyrinthe>` | le premier commit faux du labyrinthe (`git bisect run ./epreuve.sh` le nomme) |
+| `<pr-kevin>` | le numéro de la requête de Kévin (`gh pr list`) |
+| `<pr-poison>` | le numéro de la requête du scribe inconnu (`gh pr list`, à l'épreuve V) |
+| `<integrite>` | l'intégrité de la Chronique après la bataille (`sablier`) |
+| `<empreinte>` | l'empreinte de la clé qui a signé les faux commits (`git log --show-signature`, la ligne « with ED25519 key SHA256:... ») |
+
+Les 47 défis de la Chronothèque (quêtes secondaires `s_n9_*`, 50 XP chacun) : trois par maître, révélés en le lisant, et cinq défis d'honneur de Laurent : Scribe avant la première nuit (J1 22:00), Gardien du Temps avant la fin du J2, la bataille gagnée avant l'aube du J4, le rapport remis sans avoir acheté d'indice, et, après la victoire, l'empreinte du Faussaire consignée dans le rapport avec la machine qui porte la même clé.
+
+### 91. La Chronothèque, Laurent et l'Ordre
+
+On descend dans la Chronothèque, on écoute Laurent, on lit l'Ordre, la radio, le Grand Sablier et la Chronique, et on retourne le sablier (c'est l'intégrité de départ).
+
+```
+cd ~/Cybersup/Chronotheque
+cat Laurent; cat Ordre
+cat Radio; cat GrandSablier; cat Chronique
+sablier
+```
+
+### 92. Acte I, l'Apprenti : les Sceaux, l'Autel, la Crypte des Runes (Gamaliel, Bénédicte, Andrii)
+
+On se nomme (à l'anneau du milieu, `--global`), on choisit `main` pour la ligne principale, et on regarde qui dit quoi. Le premier grimoire : `git init` ne pose qu'un dossier `.git`, et `HEAD` dit sur quelle ligne on se tient. Deux premiers commits, `status -s` et `log --oneline`. À l'Autel : le voile (`.gitignore`) ne cache que ce que Git ne suit pas encore, donc `__pycache__`, déjà commité par erreur, se retire de l'index avec `rm --cached` ; puis `autel.py` porte deux changements sans rapport, qui font deux commits (`add -p` : `y` pour le premier morceau, `n` pour le second). À la Crypte : un commit, son arbre, un blob, et le hash d'un fichier.
+
+```
+cd SalleDesSceaux; cat Gamaliel
+git config --global user.name "<moi>"
+git config --global user.email "<moi>@chronique.lan"
+git config --global init.defaultBranch main
+git config --list --show-origin
+cd ~/chronotheque/premier-sceau
+git init
+ls -a
+cat .git/HEAD
+git status
+cd ~/Cybersup/Chronotheque/AutelDesOffrandes; cat Benedicte
+cd ~/chronotheque/premier-sceau
+git add grimoire.md
+git commit -m "grimoire: ouvre le grimoire de l'apprenti"
+git status -s
+git add .
+git commit -m "sorts: ajoute les sorts appris et la carte"
+git log --oneline
+cd ~/chronotheque/autel
+git status
+printf '.env\n__pycache__/\n*.log\n' > .gitignore
+git rm -r --cached __pycache__
+git add .gitignore
+git commit -m "autel: ignore les secrets, les journaux et les caches"
+git add -p autel.py
+git commit -m "autel: dit l'heure à l'allumage d'un cierge"
+git add autel.py
+git commit -m "autel: refuse d'éteindre un cierge inconnu"
+git log --oneline
+cd ~/Cybersup/Chronotheque/CrypteDesRunes; cat Andrii
+cd ~/chronotheque/premier-sceau
+git cat-file -t HEAD
+git cat-file -p HEAD
+git cat-file -p "HEAD^{tree}"
+git cat-file -p HEAD:grimoire.md
+git hash-object grimoire.md
+sceaux
+```
+
+### 93. Épreuve de rang I : l'Autel profané (Scribe)
+
+Les six étapes de l'acte faites, l'épreuve s'ouvre dans `~/chronotheque/autel-profane` : un apprenti pressé a tout commité d'un coup (son `.env`, ses caches, ses journaux), et laissé deux changements sans rapport dans `registre.py`. On retire de l'index ce qui ne devait pas y être, on pose le voile, puis deux commits, un par changement (`add -p` : `y` pour `graver_nom`, `n` pour `effacer_nom`).
+
+```
+cd ~/chronotheque/autel-profane
+cat NOTE.txt
+git status
+git show --stat
+printf '.env\n__pycache__/\n*.log\n' > .gitignore
+git rm --cached .env
+git rm -r --cached __pycache__ logs
+git add .gitignore
+git commit -m "registre: retire les secrets, les caches et les journaux"
+git add -p registre.py
+git commit -m "registre: normalise les noms gravés"
+git add registre.py
+git commit -m "registre: refuse d'effacer un nom inconnu"
+git status
+sceaux
+```
+
+Bénédicte presse le premier sceau : Scribe (avant la première nuit, c'est un défi d'honneur).
+
+### 94. Acte II, le Scribe : l'Oracle, les Contre-sorts, le Livre des Ombres (Irvan, Georgette, William)
+
+Dans les annales (cinquante commits), on interroge l'Oracle : le graphe, les commits qui ont ajouté « Porte d'Argent » (`-S`), ceux de Grace (`--author`), le Miroir des aveux (`blame` de la ligne 12), un fichier tel qu'il était à un tag (`show REV:FICHIER`), et ce qui a changé entre deux tags. Les quatre réponses vont dans `REPONSES.md`. Chez Georgette : un fichier écrasé reprend sa version commitée (`restore`), un autre sort de l'index sans rien perdre (`restore --staged`), le dernier message se corrige (`--amend`), et un commit déjà connu de tous se défait par `revert`. Dans `experiences`, on regarde les trois `reset` de près. Chez William, la branche `verite` effacée se retrouve dans le reflog : le dernier témoin est `HEAD@{1}`, juste avant le retour sur `main`.
+
+```
+cd ~/Cybersup/Chronotheque/Oracle; cat Irvan
+cd ~/chronotheque/annales
+git log --oneline --graph --all
+git log -S "Porte d'Argent" --oneline
+git log --author=Grace --oneline | wc -l
+git blame -L 12,12 lois.md
+git show v-ete:carte.txt
+git diff v-ete v-automne --stat
+cat > REPONSES.md <<'FIN'
+# Les réponses de l'Oracle
+1. Le commit de « Porte d'Argent » :
+   Réponse : <hash-pg>
+2. Le scribe de la ligne 12 de lois.md :
+   Réponse : pg
+3. Les commits de Grace :
+   Réponse : <n-grace>
+4. Le port du sud, au tag v-ete :
+   Réponse : le Vieux Port
+FIN
+cd ~/Cybersup/Chronotheque/SalleDesContresorts; cat Georgette
+cd ~/chronotheque/contresorts
+cat NOTE.txt
+git status
+git restore sorts.txt
+git restore --staged grimoire.md
+git commit --amend -m "sceau: ajoute le sceau du soir"
+git log --oneline
+git revert --no-edit HEAD~2
+cat portes.txt
+cd ~/chronotheque/experiences
+git reset --soft HEAD~1
+git status
+git commit -m "essai 4: tout brûle, encore"
+git reset --mixed HEAD~1
+git status
+git reset --hard HEAD~1
+git log --oneline
+cd ~/Cybersup/Chronotheque/LivreDesOmbres; cat William
+cd ~/chronotheque/livre-ombres
+cat NOTE.txt
+git reflog
+git branch verite HEAD@{1}
+git log --oneline verite
+sceaux
+```
+
+### 95. Épreuve de rang II : la Page arrachée (Archiviste)
+
+Dans `~/chronotheque/page-arrachee`, trois jours du journal ont disparu par un `reset --hard` (le reflog s'en souvient : `HEAD@{1}`), et un commit qui falsifie la carte a été poussé vers le dépôt partagé : on ne le réécrit pas, on le défait par un `revert`, puis on pousse.
+
+```
+cd ~/chronotheque/page-arrachee
+cat NOTE.txt
+git log --oneline
+git reflog
+git reset --hard HEAD@{1}
+git log --oneline origin/main
+git revert --no-edit HEAD~3
+cat carte.txt
+git push
+sceaux
+```
+
+### 96. Acte III, l'Archiviste : les Lignes du Destin, les Paradoxes, la Besace (Marc, Kenyonn, Anthony)
+
+Une branche est un fichier de 41 octets ; `HEAD` détaché, c'est se tenir sur un commit sans branche. Puis trois fusions dans `lignes` : `carte` (main n'a pas bougé : fast-forward), `legende` (les deux ont avancé : fusion à trois voies), `sceau` (`--no-ff`, pour garder la trace). Chez Kenyonn, le paradoxe : `prophetie-sud` et `main` ont changé le même vers ; on tranche dans `nano` (au nord, la tempête se lève ; au sud, la mer se lève ; sans marqueurs). Puis la chimère : la fusion de `crepuscule` réussit sans conflit, mais `./verifier.sh` échoue (le rituel appelle un sort renommé entre-temps) ; on corrige, on commite, et la vérification passe. Chez Anthony : le travail en cours sur `vitrail` part dans la besace (`stash -u`, pour l'esquisse non suivie aussi), la seule réparation de `correctifs` est rapportée sur `main` (`cherry-pick`, pas la rune expérimentale), un tag annoté `v1.0`, puis retour sur `vitrail` et `stash pop`.
+
+```
+cd ~/Cybersup/Chronotheque/LignesDuDestin; cat Marc
+cd ~/chronotheque/lignes
+cat .git/refs/heads/main
+git branch -v
+git switch -c essai
+git switch --detach HEAD~1
+git status
+git switch main
+git log --oneline --graph --all
+git merge carte
+git merge --no-edit legende
+git merge --no-ff --no-edit sceau
+git log --oneline --graph
+cd ~/Cybersup/Chronotheque/SalleDesParadoxes; cat Kenyonn
+cd ~/chronotheque/paradoxe
+cat NOTE.txt
+git merge prophetie-sud
+git status
+nano prophetie.txt
+git add prophetie.txt
+git commit --no-edit
+cd ~/chronotheque/chimere
+git merge --no-edit crepuscule
+./verifier.sh
+sed -i 's/allumer/embraser/' rituels/crepuscule.sh
+git commit -am "rituels: le crépuscule embrase"
+./verifier.sh
+cd ~/Cybersup/Chronotheque/BesaceEtReliques; cat Anthony
+cd ~/chronotheque/besace
+cat NOTE.txt
+git status
+git stash push -u -m "vitrail en cours"
+git switch main
+git log --oneline correctifs
+git cherry-pick correctifs~1
+git tag -a v1.0 -m "La porte réparée"
+git show v1.0
+git switch vitrail
+git stash pop
+git status
+sceaux
+```
+
+### 97. Épreuve de rang III : le Labyrinthe des Âges (Chroniqueur)
+
+Soixante-quatre commits, un seul est faux. On ne fouille pas commit par commit : `bisect` coupe l'historique en deux à chaque pas, et `bisect run` lance l'épreuve à notre place. Le coupable trouvé, on le note dans `BISECT.md`, et on referme la chasse.
+
+```
+cd ~/chronotheque/labyrinthe
+./epreuve.sh
+git bisect start
+git bisect bad HEAD
+git bisect good aube
+git bisect run ./epreuve.sh
+git show --stat <hash-labyrinthe>
+git bisect reset
+cat > BISECT.md <<'FIN'
+# Le Labyrinthe des Âges
+Le premier sceau faux : <hash-labyrinthe>
+Son scribe : le Scribe gris
+Ce qu'il a changé : la prophétie dit que la flotte noire appartient à l'école, caché sous un message de journal.
+FIN
+sceaux
+```
+
+### 98. Acte IV, le Chroniqueur : l'Atelier des Prophéties et la Salle des Cartes (Guillaume, Moustapha)
+
+`carte-des-vents` est partie de `main` avant deux commits : on la rejoue au bout de `main` (`rebase`), puis `main` avance jusqu'à elle sans commit de fusion. `brouillon` (jamais publié) se réécrit avec `rebase -i` : le premier `wip` reste (`pick`), `wip encore` et `corrige typo` s'y fondent (`fixup`), la trace de débogage disparaît (`drop`) ; puis un vrai message, avec `--amend`. Dans la Salle des Cartes, trois royaumes, trois stratégies.
+
+```
+cd ~/Cybersup/Chronotheque/AtelierDesPropheties; cat Guillaume
+cd ~/chronotheque/prophetie
+cat NOTE.txt
+git log --oneline --graph --all
+git switch carte-des-vents
+git rebase main
+git switch main
+git merge --ff-only carte-des-vents
+git switch brouillon
+git rebase -i main
+git commit --amend -m "vents: ajoute le vent du nord"
+git log --oneline main..brouillon
+cd ~/Cybersup/Chronotheque/SalleDesCartes; cat Moustapha
+cat > ~/chronotheque/cartes/STRATEGIES.md <<'FIN'
+# La salle des cartes
+1. Le royaume des Messagers
+   Stratégie : trunk-based
+   Pourquoi : petite équipe, publications continues, tests sur chaque commit.
+2. Le royaume des Grimoires
+   Stratégie : GitFlow
+   Pourquoi : deux versions maintenues en même temps, il faut des branches de release.
+3. Le royaume des Archives
+   Stratégie : GitHub flow
+   Pourquoi : une branche courte et une Pull Request relue par changement, publication quotidienne.
+FIN
+sceaux
+```
+
+### 99. Épreuve de rang IV : le Chant des marées (Gardien du Temps)
+
+Sept commits en désordre, partis d'une `main` qui a avancé, et un mot de passe commité puis effacé au commit suivant : effacé du chant, pas de l'histoire. On rejoue la branche au bout de `main` en la nettoyant (`rebase -i` : les deux commits du secret sont jetés, les `wip` fondus, deux vrais messages), on vérifie qu'aucun commit ne contient plus le secret, puis `main` avance sans commit de fusion.
+
+```
+cd ~/chronotheque/chant-des-marees
+git log --oneline --graph --all
+git log -p main..chant | grep MOT_DE_PASSE
+git switch chant
+git rebase -i main
+git log --oneline main..chant
+git log -p main..chant | grep -c MOT_DE_PASSE
+git switch main
+git merge --ff-only chant
+sceaux
+```
+
+### 100. Acte V, le Gardien du Temps : les Portes des Royaumes, les Runes de Garde, le Haut-Conseil (Jeremy, Aurélien, Amine)
+
+La clé publique sur royaume (`ssh-copy-id`), puis la vraie Chronique clonée. Jeremy pousse aussitôt un commit sur royaume : notre premier `push` est donc refusé ; on regarde (`fetch`, `log main..origin/main`), on se remet au bout (`pull --rebase`), on repasse. Une branche à soi, poussée avec `-u`. Chez Aurélien, une rune `pre-commit` (copiée, rendue exécutable) refuse un mot de passe ; puis la cire : les commits signés avec la clé SSH, et le fichier des signataires autorisés pour les vérifier. Au Haut-Conseil : notre branche devient une Pull Request, les golems la vérifient, Amine l'approuve, on la fusionne ; puis on relit et on approuve celle de Kévin.
+
+```
+cd ~/Cybersup/Chronotheque/PortesDesRoyaumes; cat Jeremy
+ssh-copy-id royaume
+ssh royaume
+exit
+cd ~/chronotheque
+git clone royaume:/srv/git/chronique.git
+cd chronique
+git remote -v
+git branch -vv
+echo "- la Chronothèque se réveille." >> chronique.md
+git commit -am "chronique: la Chronothèque se réveille"
+git push
+git fetch
+git log --oneline main..origin/main
+git pull --rebase
+git push
+git switch -c journal-du-jour
+echo "Le journal du jour : quatorze salles, une Chronique." > journal.txt
+git add journal.txt
+git commit -m "journal: ouvre le journal du jour"
+git push -u origin journal-du-jour
+git branch -vv
+cd ~/Cybersup/Chronotheque/RunesDeGarde; cat Aurelien
+cd ~/chronotheque/chronique
+cp ~/chronotheque/runes/pre-commit .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+echo "MOT_DE_PASSE=essai" > essai.txt
+git add essai.txt
+git commit -m "essai"
+git restore --staged essai.txt
+rm essai.txt
+git config --global gpg.format ssh
+git config --global user.signingkey ~/.ssh/id_ed25519.pub
+printf '%s namespaces="git" ' "<moi>@chronique.lan" > ~/.ssh/allowed_signers
+cat ~/.ssh/id_ed25519.pub >> ~/.ssh/allowed_signers
+git config --global gpg.ssh.allowedSignersFile ~/.ssh/allowed_signers
+git switch main
+echo "- le premier sceau signé." >> chronique.md
+git commit -S -am "chronique: le premier sceau signé"
+git push
+git log --show-signature -1
+cd ~/Cybersup/Chronotheque/HautConseil; cat Amine
+cd ~/chronotheque/chronique
+git switch journal-du-jour
+gh pr create --title "journal: ouvre le journal du jour" --body "Une page de journal, rien d'autre."
+gh pr checks
+gh pr view
+gh pr merge --merge --delete-branch
+git switch main
+git pull
+gh pr list
+gh pr diff <pr-kevin>
+gh pr review <pr-kevin> --approve -b "Relu : la table des marées est juste."
+sceaux
+```
+
+### 101. Épreuve de rang V : la Requête empoisonnée (Chronomancien)
+
+Une requête d'un scribe inconnu arrive au Haut-Conseil : « harmonise le format des dates ». Les golems sont verts. Mais dans le diff, une ligne de `lois.md` change la loi 10 : « sauf le porteur du sceau gris ». On demande des changements, en le disant.
+
+```
+gh pr list
+gh pr view <pr-poison>
+gh pr checks <pr-poison>
+gh pr diff <pr-poison>
+gh pr review <pr-poison> --request-changes -b "La loi 10 est réécrite en douce : le porteur du sceau gris n'a rien à faire dans nos lois. Refusé."
+sceaux
+```
+
+### 102. La bataille du temps
+
+Chronomancien sacré, la Grande Synchronisation sonne (le J2 dans cette solution, bien avant l'aube du J4) : le Faussaire réécrit les quatre derniers commits de `main` sur royaume (la flotte noire y devient l'alliée de l'école) et force la branche. `git fetch` le montre (« forced update ») ; notre `main` locale, elle, a gardé la vraie histoire : on la rend aux Royaumes avec `--force-with-lease`. Puis le rempart, côté serveur : plus aucun push qui réécrit, plus aucune branche effacée (le Faussaire s'y brise aussitôt). Il pousse alors en avant deux commits aux noms de Laurent et de Grace, signés d'une clé que personne ne reconnaît : on les lit (`--show-signature`), on les contredit (`revert`, sans réécrire), on pousse. `sablier` relit la Chronique : 100 sur 100 (il faut au moins 90).
+
+```
+git fetch
+git log --oneline main..origin/main
+git log --oneline origin/main..main
+git push --force-with-lease origin main
+ssh royaume
+cd /srv/git/chronique.git
+git config receive.denyNonFastForwards true
+git config receive.denyDeletes true
+exit
+cd ~/chronotheque/chronique
+git pull
+git log --show-signature -3
+git revert --no-edit HEAD HEAD~1
+git push
+sablier
+```
+
+### 103. Le rapport de la bataille du temps
+
+Le rapport pour Laurent, dans la boîte de la Chronothèque : la Chronique (son intégrité après la bataille), le Faussaire et l'empreinte de sa clé (au moins ses douze premiers caractères après `SHA256:`), la restauration, le rempart, et ce qui reste à faire.
+
+```
+cat > ~/chronotheque/rapport.txt <<'FIN'
+Rapport de la bataille du temps, pour Laurent.
+Chronique : intégrité <integrite> sur 100 après la bataille ; la vraie histoire est rendue aux Royaumes (push --force-with-lease).
+Faussaire : réécriture forcée de main, puis deux faux commits signés de la clé d'empreinte <empreinte>, contredits par revert.
+Rempart : receive.denyNonFastForwards et receive.denyDeletes sur royaume.
+Reste : trouver qui détient cette clé, et protéger aussi les autres dépôts.
+FIN
+cd ~/Cybersup/Chronotheque
+cp ~/chronotheque/rapport.txt BoiteDeLaurent
+cat ~/CertificatChronotheque
+```
+
+La Chronique tient. Laurent contresigne : « Chronomancien. La Chronique est à toi. » Le CertificatChronotheque, posé dans la Maison, porte la note du chapitre 9 et son code de vérification ; le quiz du chapitre (`quiz 9`) s'ouvre, et `badges chronique` relit les leçons.
+
+### 104. Après la victoire : la date de demain
+
+Tard dans la nuit, on relit un faux commit avec `git cat-file -p` : le committer s'appelle P.G., et sa date est celle de demain ; la cire de ses commits porte l'empreinte de la clé du Bastion, la même que sur l'image de l'éclaireur du Grand Port. Tout se constate, rien n'est à réparer : on le consigne dans le rapport (un défi d'honneur). La radio de Grace : « ... Ce sceau est daté de demain. » À suivre.
+
+```
+cd ~/chronotheque/chronique
+git cat-file -p HEAD~2
+echo "Signature : l'empreinte <empreinte> est celle de la clé du Bastion." >> ~/chronotheque/rapport.txt; cp ~/chronotheque/rapport.txt ~/Cybersup/Chronotheque/BoiteDeLaurent
+```
 
 ## L'épreuve finale : la Forteresse (mission spéciale)
 

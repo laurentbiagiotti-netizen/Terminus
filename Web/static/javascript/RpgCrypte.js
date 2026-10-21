@@ -302,6 +302,13 @@ function texteBadges(quel){
 		tous.push({ id: "platine_ch8", chap: "port", nom: COMPETENCES.platine_ch8, image: "tous les badges du Grand Port", couche: "", lecon: "Mousse, Matelot, Quartier-maître, Second, Capitaine, Amiral : tu sais construire, déployer, durcir, inspecter et orchestrer des conteneurs, de zéro à héros." });
 		if (typeof AMIS_ANNEXES !== "undefined" && AMIS_ANNEXES[9]) tous.push({ id: "ami_ch8", chap: "port", nom: COMPETENCES.ami_ch8, image: "les six habitants du Grand Port", couche: "", lecon: "Les quêtes annexes : podman sans démon ni root, les espaces de noms à la main (unshare, nsenter, lsns, ip netns), skopeo, buildx et manifest, hadolint, systemd-nspawn et machinectl. Facultatif, hors note." });
 	}
+	if (state.has("ch9Ouvert") && typeof TROPHEES_CH9 !== "undefined"){
+		Object.keys(TROPHEES_CH9).forEach(function(id){
+			tous.push({ id: id, chap: "chronique", nom: COMPETENCES[id], image: TROPHEES_CH9[id][0], couche: "", lecon: TROPHEES_CH9[id][1] });
+		});
+		tous.push({ id: "platine_ch9", chap: "chronique", nom: COMPETENCES.platine_ch9, image: "tous les badges de la Chronothèque", couche: "", lecon: "Apprenti, Scribe, Archiviste, Chroniqueur, Gardien du Temps, Chronomancien : tu sais versionner, enquêter, réparer, réunir, réécrire proprement, collaborer et protéger un dépôt Git, de zéro à héros." });
+		if (typeof AMIS_ANNEXES !== "undefined" && AMIS_ANNEXES[10]) tous.push({ id: "ami_ch9", chap: "chronique", nom: COMPETENCES.ami_ch9, image: "les six habitants de la Chronothèque", couche: "", lecon: "Les quêtes annexes : git worktree, git grep, shortlog et describe, clean, fsck et gc, git bundle, git archive, git filter-repo. Facultatif, hors note." });
+	}
 	// Les badges « Ami » des quêtes annexes (facultatives, hors note), chapitre par chapitre.
 	[[3, "ami_ch2", "reseau", "panneOuverte", "les six habitants du campus", "Les quêtes annexes : le matériel (lscpu, lspci, lsusb, dmidecode), nc -l, ~/.ssh/config, ssh -J, ssh -L, les sections du manuel. Facultatif, hors note."],
 	 [2, "ami_ch3", "cyber", "crypteOuverte", "les six habitants de la Crypte", "Les quêtes annexes : nombres magiques (hexdump), liens (readlink, realpath, liens durs), tail -F, timeout, ssh-agent, mots de passe (pwgen, openssl). Facultatif, hors note."],
@@ -311,7 +318,7 @@ function texteBadges(quel){
 	});
 	// badges reseau, badges cyber, ou un nom de compétence (badges dns, badges sudo...), ou un numéro de chapitre (badges 2 à badges 8).
 	if (filtre === "1") return "badges : le chapitre 1 ne donne pas de badge de compétence. " + C.gris("Son bilan, c'est bulletin ; les badges commencent au chapitre 2 (badges 2).");
-	var parNumero = { "2": "reseau", "3": "cyber", "4": "arcanes", "5": "bastion", "6": "lumen", "7": "ile", "8": "port" }[filtre];
+	var parNumero = { "2": "reseau", "3": "cyber", "4": "arcanes", "5": "bastion", "6": "lumen", "7": "ile", "8": "port", "9": "chronique" }[filtre];
 	if (parNumero && !tous.some(function(b){ return b.chap === parNumero; })) return "badges : le chapitre " + filtre + " n'est pas ouvert dans ta partie : ses badges apparaîtront avec lui. " + C.gris("(chapitres pour la liste.)");
 	var choisis = tous.filter(function(b){
 		if (!filtre) return true;
@@ -323,10 +330,11 @@ function texteBadges(quel){
 		if (filtre === "lumen" || filtre === "exploitation" || filtre === "machines") return b.chap === "lumen";
 		if (filtre === "port-aube" || filtre === "portaube" || filtre === "ile" || filtre === "services") return b.chap === "ile";
 		if (filtre === "port" || filtre === "grand-port" || filtre === "grandport" || filtre === "conteneurs" || filtre === "docker") return b.chap === "port";
+		if (filtre === "chronique" || filtre === "chronotheque" || filtre === "git" || filtre === "temps") return b.chap === "chronique";
 		return sansAccent(b.nom).indexOf(filtre) > -1;
 	});
 	if (filtre && !choisis.length) return "badges : aucune compétence ne correspond à « " + quel + " ». " + C.gris("Exemples : badges reseau, badges cyber, badges dns, badges sudo.");
-	[["reseau", "RÉSEAU : LA PANNE DE L'ÉCOLE"], ["cyber", "CYBERSÉCURITÉ : LA CHASSE AU CORBEAU"], ["arcanes", "LINUX AVANCÉ : L'ACADÉMIE DES ARCANES"], ["bastion", "DURCISSEMENT LINUX : LE BASTION"], ["lumen", "EXPLOITATION LINUX : LUMEN"], ["ile", "SERVICES RÉSEAU LINUX : PORT-AUBE"], ["port", "CONTENEURS : LE GRAND PORT"]].forEach(function(c){
+	[["reseau", "RÉSEAU : LA PANNE DE L'ÉCOLE"], ["cyber", "CYBERSÉCURITÉ : LA CHASSE AU CORBEAU"], ["arcanes", "LINUX AVANCÉ : L'ACADÉMIE DES ARCANES"], ["bastion", "DURCISSEMENT LINUX : LE BASTION"], ["lumen", "EXPLOITATION LINUX : LUMEN"], ["ile", "SERVICES RÉSEAU LINUX : PORT-AUBE"], ["port", "CONTENEURS : LE GRAND PORT"], ["chronique", "GIT : LA CHRONIQUE D'ÉTERNITÉ"]].forEach(function(c){
 		var liste = choisis.filter(function(b){ return b.chap === c[0]; });
 		if (!liste.length) return;
 		// Le même compte que schema et traque : les badges d'étape ; le platine vient en plus.
