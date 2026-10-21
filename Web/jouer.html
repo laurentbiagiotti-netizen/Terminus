@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <!-- Page publiée, générée par outils/paquet.js à partir de index.html : ne pas l'éditer à la main. -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; worker-src 'self'; manifest-src 'none'; style-src 'self'; img-src 'self'; media-src 'none'; connect-src 'none'; font-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="author" content="Shawn Conrad, Michele Pratusevich (jeu d'origine) ; édition Cybersup : Laurent Biagiotti" />
+    <meta name="description" content="Terminus, édition Cybersup : un jeu d'aventure pour apprendre le terminal Linux." />
+    <title>Terminus, édition Cybersup</title>
+    <link href="./static/css/terminus.css?v=20261020160916" rel="stylesheet" />
+  </head>
+  <body>
+    <main id="jeu">
+      <section id="term" aria-label="Terminal">
+        <div id="sortie" aria-live="polite"></div>
+        <form id="ligne" autocomplete="off">
+          <label id="invite" for="saisie">$ </label>
+          <textarea id="saisie" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off"
+                 spellcheck="false" enterkeyhint="send" aria-label="Tape un sort ici"></textarea>
+        </form>
+        <div id="touches" aria-label="Touches utiles">
+          <button type="button" data-touche="Tab" title="Compléter le nom">Tab</button>
+          <button type="button" data-touche="ArrowUp" title="Sort précédent">↑</button>
+          <button type="button" data-texte="|">|</button>
+          <button type="button" data-texte="~">~</button>
+          <button type="button" data-texte="/">/</button>
+          <button type="button" data-texte="-">-</button>
+          <button type="button" data-texte=">">&gt;</button>
+          <button type="button" data-texte="*">*</button>
+          <button type="button" data-texte=".">.</button>
+          <button type="button" data-texte="$">$</button>
+          <button type="button" data-texte="&quot;">"</button>
+        </div>
+      </section>
+      <aside id="pics">
+        <div id="etat" aria-label="Expérience">
+          <span id="etat-niveau">Niveau 1</span>
+          <span id="etat-barre" role="img" aria-label="Note"></span>
+          <span id="etat-xp">0 XP</span>
+        </div>
+        <div id="objectif" hidden aria-live="polite">
+          <span class="objectif-titre"><span class="objectif-mot">Quête</span> <span class="objectif-nom"></span></span>
+          <span class="objectif-indice"></span>
+        </div>
+        <div id="radio" hidden aria-live="polite">
+          <span class="radio-entete"><span class="radio-voyant"></span><span class="radio-titre">Radio du SOC</span> <span class="radio-qui"></span></span>
+          <span class="radio-texte"></span>
+          <span class="radio-suite" hidden>(touche la radio pour tout lire)</span>
+        </div>
+        <img id="scene" src="./static/img/titlescreen_cybersup.gif" alt="" />
+        <p id="legende"></p>
+      </aside>
+    </main>
+    <!-- Scripts -->
+    <script src="./static/javascript/terminus.paquet.js?v=20261020160916" integrity="sha384-onqg21n9dT4ZuJarLIAzxj2P7wH0JoUuWZKhLcZo/bzUmR8PcF9cbFyp+FtSqSq2"></script>
+  </body>
+</html>
