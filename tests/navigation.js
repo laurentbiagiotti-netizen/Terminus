@@ -80,7 +80,7 @@ function sansCouleur(t){ return String(t).replace(/\x1b\[[0-9;]*m/g, ""); }
 	// help n'est pas plus long qu'avant : une ligne par sort, les commandes du jeu, et pas une ligne de plus.
 	var aide = sansCouleur(jeu.taper("help"));
 	var n = jeu.lire("state.knownSpells().length"), c = jeu.lire("COMMANDES_DU_JEU.length");
-	egal(c, 27, "la liste des commandes du jeu garde sa longueur (chapitres remplace chapitre ; sablier, sceaux et regenerer pour la Chronothèque)");
+	egal(c, 28, "la liste des commandes du jeu garde sa longueur (chapitres remplace chapitre ; sablier, sceaux et regenerer pour la Chronothèque ; graphe pour le graphe git)");
 	egal(aide.split("\n").length, 1 + n + 1 + 1 + 1 + 1 + c + 1, "help garde sa longueur");
 	contient(aide, "help COMMANDE", "help annonce l'aide des commandes du jeu");
 	contient(aide, "help badges", "help donne un exemple");

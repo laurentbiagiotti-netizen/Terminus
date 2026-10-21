@@ -109,6 +109,17 @@ var PAGES_DU_JEU = {
 		"Retourner le sablier relève l'intégrité de la Chronique : la première étape du chapitre le demande.",
 	sceaux: MANUEL_DU_JEU.sceaux + "\n\nAvant l'ouverture de la Chronothèque (chapitre 9), il dit simplement où se gagnent les sceaux.",
 	regenerer: MANUEL_DU_JEU.regenerer + "\n\nAvant l'ouverture de la Chronothèque (chapitre 9), il dit simplement où il sert.",
+	graphe:
+		"graphe n'est PAS une commande Linux : c'est une commande du jeu, comme carte.\n" +
+		"Après chaque commande git, le panneau de l'image montre le graphe vivant du dépôt où tu travailles,\n" +
+		"jusqu'à ton prochain déplacement. Les mots du jeu, et les vrais :\n" +
+		"sceau = commit, ligne du destin = branche, œil = HEAD, menhir = tag ; en pointillés, les branches distantes\n" +
+		"(origin/main) ; en gris, les sceaux orphelins qu'un reset --hard ou un rebase vient d'abandonner (seul le reflog\n" +
+		"s'en souvient encore). En haut, l'état : fusion ou rebase en cours, fichiers en conflit, autel et atelier.\n\n" +
+		"  graphe            réaffiche le graphe du dépôt où tu te tiens, et le résume dans le terminal\n" +
+		"  graphe off        coupe le graphe automatique après les commandes git (graphe non marche aussi)\n" +
+		"  graphe on         le remet (graphe oui marche aussi)\n\n" +
+		"Ton choix est gardé dans ta sauvegarde. Sur un vrai Linux, le même dessin en texte : git log --oneline --graph --all.",
 	examen:
 		"examen n'est PAS une commande Linux : c'est une commande du jeu, l'entrée de l'épreuve finale.\n\n" +
 		"Hors épreuve :\n" +

@@ -201,7 +201,7 @@ function montrerImage(src, legende){
 	var scene = document.getElementById("scene");
 	if (scene) scene.setAttribute("src", sourceImage(src));
 	if (scene) scene.alt = legende || "";
-	["carte", "galerie"].forEach(function(id){ var el = document.getElementById(id); if (el) el.parentNode.removeChild(el); });
+	["carte", "galerie", "graphe"].forEach(function(id){ var el = document.getElementById(id); if (el) el.parentNode.removeChild(el); });
 	if (scene) scene.hidden = false;
 	var texte = document.getElementById("legende");
 	if (texte) texte.textContent = legende || "";

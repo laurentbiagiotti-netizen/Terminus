@@ -461,7 +461,7 @@ function majObjectif(){
 function montrerBadges(liste){
 	var panneau = document.getElementById("pics"), scene = document.getElementById("scene");
 	if (!panneau || !scene || !liste.length) return false;
-	["carte", "galerie"].forEach(function(id){ var el = document.getElementById(id); if (el) el.parentNode.removeChild(el); });
+	["carte", "galerie", "graphe"].forEach(function(id){ var el = document.getElementById(id); if (el) el.parentNode.removeChild(el); });
 	var galerie = document.createElement("div");
 	galerie.id = "galerie";
 	galerie.setAttribute("aria-label", "Tes badges de compétence");
@@ -495,7 +495,7 @@ function montrerBadges(liste){
 function montrerCarte(texte){
 	var panneau = document.getElementById("pics"), scene = document.getElementById("scene");
 	if (!panneau || !scene) return false;
-	var galerieOuverte = document.getElementById("galerie"); if (galerieOuverte) galerieOuverte.parentNode.removeChild(galerieOuverte);
+	["galerie", "graphe"].forEach(function(id){ var el = document.getElementById(id); if (el) el.parentNode.removeChild(el); });
 	var carte = document.getElementById("carte");
 	if (!carte){
 		carte = document.createElement("pre");
