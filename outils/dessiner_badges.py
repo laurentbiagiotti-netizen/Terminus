@@ -1,4 +1,4 @@
-"""Dessine les badges de compétence (chapitres 2 à 8) : des médailles en pixels, une couleur par rang.
+"""Dessine les badges de compétence (chapitres 2 à 9) : des médailles en pixels, une couleur par rang.
 
 Bronze, argent, or et platine, comme les rangs d'un tableau de trophées ; le dessin est propre au jeu :
 une médaille hexagonale, deux rubans, et au centre le sigle de la compétence (OSI, DNS, SUID...).
@@ -66,6 +66,22 @@ BADGES = [
     ('quai_douane', 'SHA', 'or'), ('quai_escadre', 'NODE', 'or'),
     ('n8_port', 'PORT', 'bronze'), ('n8_flotte', 'FLOT', 'or'), ('n8_piege', 'DGST', 'or'), ('n8_rapport', 'DOC', 'or'),
     ('s_n8_avant_aube', 'J4', 'or'), ('platine_ch8', 'CNTR', 'platine'),
+    # chapitre 9 : la Chronothèque, la Chronique d'Éternité (un badge par salle tenue, puis le sablier, l'histoire
+    # restaurée, les faux sceaux, le rapport ; les sigles et les métaux sont ceux de SIGLES_CH9)
+    ('salle_sceaux', 'INIT', 'bronze'), ('salle_autel', 'ADD', 'bronze'), ('salle_runes', 'SHA', 'bronze'),
+    ('salle_oracle', 'LOG', 'argent'), ('salle_contresorts', 'RVRT', 'argent'), ('salle_ombres', 'RFLG', 'argent'),
+    ('salle_lignes', 'MRG', 'argent'), ('salle_paradoxes', '<<<', 'argent'), ('salle_besace', 'TAG', 'argent'),
+    ('salle_propheties', 'RBS', 'or'), ('salle_cartes', 'FLOW', 'argent'), ('salle_portes', 'PUSH', 'or'),
+    ('salle_garde', 'SIGN', 'or'), ('salle_conseil', 'PR', 'or'),
+    ('n9_sablier', 'TIME', 'bronze'), ('n9_restauration', 'HIST', 'or'), ('n9_faux_sceaux', 'SEAL', 'or'),
+    ('n9_rapport', 'DOC', 'or'), ('s_n9_avant_aube', 'J4', 'or'), ('platine_ch9', 'GIT', 'platine'),
+]
+
+# Les sceaux de rang du chapitre 9 (Apprenti du Temps, Scribe, Archiviste, Chroniqueur, Gardien du Temps,
+# Chronomancien) : une forme à part, le sceau de cire festonné, avec le sablier et autant de points que le rang.
+SCEAUX = [
+    ('sceau_apprenti', 0, 'bronze'), ('sceau_scribe', 1, 'bronze'), ('sceau_archiviste', 2, 'argent'),
+    ('sceau_chroniqueur', 3, 'argent'), ('sceau_gardien', 4, 'or'), ('sceau_chronomancien', 5, 'platine'),
 ]
 
 # Les galons du chapitre 8 (un par rang : Mousse, Matelot, Quartier-maître, Second, Capitaine, Amiral) : une forme
@@ -92,9 +108,11 @@ ICONES_AMI = {
     'ami_ch7': ['...###...', '...#.#...', '...###...', '.#######.', '....#....', '#...#...#', '##..#..##', '.##.#.##.', '..#####..'],
     # le Grand Port : une grue à portique et son conteneur suspendu
     'ami_ch8': ['......#..', '.....###.', '#########', '.#...#.#.', '.#...#.#.', '###..###.', '###..#.#.', '###..#.#.', '....##.##'],
+    # la Chronothèque : un sablier
+    'ami_ch9': ['#########', '.#.....#.', '..#####..', '...###...', '....#....', '...#.#...', '..#.#.#..', '.#.###.#.', '#########'],
 }
 RUBANS_AMI = {'ami_ch2': (70, 140, 230), 'ami_ch3': (150, 90, 210), 'ami_ch4': (60, 170, 90), 'ami_ch5': (200, 60, 60), 'ami_ch6': (240, 150, 40),
-              'ami_ch7': (40, 60, 140), 'ami_ch8': (60, 190, 170)}
+              'ami_ch7': (40, 60, 140), 'ami_ch8': (60, 190, 170), 'ami_ch9': (170, 120, 60)}
 NOIR = (0, 0, 0)
 # Une police de 3 x 5 pixels, pour les sigles de quatre caractères.
 PETITE_POLICE = {
@@ -104,7 +122,7 @@ PETITE_POLICE = {
     'K': ['#.#', '#.#', '##.', '#.#', '#.#'], 'L': ['#..', '#..', '#..', '#..', '###'], 'M': ['#.#', '###', '###', '#.#', '#.#'],
     'N': ['##.', '#.#', '#.#', '#.#', '#.#'], 'O': ['###', '#.#', '#.#', '#.#', '###'], 'P': ['###', '#.#', '###', '#..', '#..'],
     'R': ['##.', '#.#', '##.', '#.#', '#.#'], 'S': ['###', '#..', '###', '..#', '###'], 'T': ['###', '.#.', '.#.', '.#.', '.#.'],
-    'U': ['#.#', '#.#', '#.#', '#.#', '###'], 'V': ['#.#', '#.#', '#.#', '#.#', '.#.'], 'Y': ['#.#', '#.#', '.#.', '.#.', '.#.'],
+    'U': ['#.#', '#.#', '#.#', '#.#', '###'], 'V': ['#.#', '#.#', '#.#', '#.#', '.#.'], 'W': ['#.#', '#.#', '###', '###', '#.#'], 'Y': ['#.#', '#.#', '.#.', '.#.', '.#.'],
     '0': ['###', '#.#', '#.#', '#.#', '###'], '3': ['###', '..#', '.##', '..#', '###'], '/': ['..#', '..#', '.#.', '#..', '#..'],
     '?': ['###', '..#', '.#.', '...', '.#.'],
 }
@@ -215,6 +233,38 @@ def badge_galon(n, rang):
     return im.resize((80, 80), Image.NEAREST)
 
 
+def badge_sceau(n, rang):
+    """Un sceau de rang : une galette de cire festonnée au métal du rang, un sablier gravé au centre, n points
+    dessous ; le Chronomancien a en plus quatre éclats."""
+    import math
+    clair, sombre, eclat = RANGS[rang]
+    im = Image.new('RGB', (40, 40), NOIR)
+    d = ImageDraw.Draw(im)
+    d.polygon([(12, 27), (17, 27), (15, 39), (12, 36), (9, 39)], fill=sombre)
+    d.polygon([(23, 27), (28, 27), (31, 39), (28, 36), (25, 39)], fill=sombre)
+    festons = []
+    for k in range(24):
+        a = k * math.pi / 12
+        r = 17 if k % 2 == 0 else 15
+        festons.append((20 + r * math.cos(a), 18 + r * math.sin(a)))
+    d.polygon(festons, fill=clair)
+    d.ellipse([6, 4, 34, 32], fill=sombre)
+    d.ellipse([8, 6, 32, 30], fill=NOIR)
+    d.line([(9, 9), (16, 4)], fill=eclat)
+    # le sablier
+    d.line([(16, 9), (24, 9)], fill=eclat); d.line([(16, 23), (24, 23)], fill=eclat)
+    d.line([(17, 10), (20, 16), (23, 10)], fill=eclat); d.line([(17, 22), (20, 16), (23, 22)], fill=eclat)
+    d.line([(18, 11), (22, 11)], fill=clair)
+    d.line([(19, 21), (21, 21)], fill=clair); d.line([(18, 22), (22, 22)], fill=clair)
+    for k in range(n):
+        x = round(20 + (k - (n - 1) / 2) * 3)
+        d.rectangle([x - 1, 26, x, 27], fill=clair)
+    if rang == 'platine':
+        for x, y in [(4, 4), (35, 6), (36, 30), (3, 31)]:
+            d.point([(x, y), (x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)], fill=eclat)
+    return im.resize((80, 80), Image.NEAREST)
+
+
 if __name__ == '__main__':
     import sys
     choix = sys.argv[1:]
@@ -230,5 +280,10 @@ if __name__ == '__main__':
         if choix and ident not in choix:
             continue
         badge_galon(n, rang).convert('P', palette=Image.ADAPTIVE, colors=16).save(os.path.join(OUT, 'badge_' + ident + '.gif'))
+    for ident, n, rang in SCEAUX:
+        if choix and ident not in choix:
+            continue
+        badge_sceau(n, rang).convert('P', palette=Image.ADAPTIVE, colors=16).save(os.path.join(OUT, 'badge_' + ident + '.gif'))
     print(len([b for b in BADGES if not choix or b[0] in choix]) + len([i for i in ICONES_AMI if not choix or i in choix])
-          + len([g for g in GALONS if not choix or g[0] in choix]), 'badges')
+          + len([g for g in GALONS if not choix or g[0] in choix]) + len([s for s in SCEAUX if not choix or s[0] in choix]),
+          'badges')
