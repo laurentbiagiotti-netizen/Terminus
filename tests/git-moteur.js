@@ -35,6 +35,8 @@ function jeuNeuf(stockage){
 	var jeu = monde.nouveauMonde(stockage || {}, 4242, { avant: ROYAUME });
 	jeu.lire("tousLesSorts().concat(SORTS_GIT, ['bash', 'printf', 'echo', 'cat', 'mkdir', 'cd', 'ls', 'rm', 'sed', 'chmod', 'touch', 'mv', 'cp', 'grep', 'head', 'tail', 'wc', 'test', 'tar', 'ssh-keygen', 'ssh']).forEach(function(s){ state.spells[s] = true; })");
 	jeu.lire("state.env.GIT_AUTHOR_DATE = '1760000000 +0200'; state.env.GIT_COMMITTER_DATE = '1760000000 +0200'; World.fige = true;");
+	// Les aides en français sous les erreurs (ErreursGit.js) ne sont pas du vrai git : coupées, le moteur est comparé seul.
+	jeu.lire("AIDES_ERREURS_GIT = false;");
 	jeu.lire("var EVTS = []; GameEvents.addListener('git', function(e){ EVTS.push(e); }); GameEvents.addListener('forge', function(e){ EVTS.push(e); });");
 	return jeu;
 }

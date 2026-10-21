@@ -19,6 +19,8 @@ function jeuNeuf(){
 	var jeu = monde.nouveauMonde({});
 	jeu.lire("tousLesSorts().concat(SORTS_GIT, ['bash', 'printf', 'echo', 'cat', 'mkdir', 'cd', 'ls', 'rm', 'sed', 'chmod', 'touch', 'mv', 'cp', 'grep', 'head', 'tail', 'wc', 'test', 'tar']).forEach(function(s){ state.spells[s] = true; })");
 	jeu.lire("state.env.GIT_AUTHOR_DATE = '" + DATE + "'; state.env.GIT_COMMITTER_DATE = '" + DATE + "'; World.fige = true;");
+	// Les aides en français sous les erreurs (ErreursGit.js) ne sont pas du vrai git : coupées pour la comparaison.
+	jeu.lire("AIDES_ERREURS_GIT = false;");
 	return jeu;
 }
 /* La sortie d'une commande du jeu, sans ce que le jeu ajoute (XP, quêtes, sorts, radio, lieux). */
