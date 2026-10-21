@@ -3903,7 +3903,7 @@ sceaux
 
 ### 102. La bataille du temps
 
-Chronomancien sacré, la Grande Synchronisation sonne (le J2 dans cette solution, bien avant l'aube du J4) : le Faussaire réécrit les quatre derniers commits de `main` sur royaume (la flotte noire y devient l'alliée de l'école) et force la branche. `git fetch` le montre (« forced update ») ; notre `main` locale, elle, a gardé la vraie histoire : on la rend aux Royaumes avec `--force-with-lease`. Puis le rempart, côté serveur : plus aucun push qui réécrit, plus aucune branche effacée (le Faussaire s'y brise aussitôt). Il pousse alors en avant deux commits aux noms de Laurent et de Grace, signés d'une clé que personne ne reconnaît : on les lit (`--show-signature`), on les contredit (`revert`, sans réécrire), on pousse. `sablier` relit la Chronique : 100 sur 100 (il faut au moins 90).
+Chronomancien sacré, la Grande Synchronisation sonne (le J2 dans cette solution, bien avant l'aube du J4) : le Faussaire réécrit les quatre derniers commits de `main` sur royaume (la flotte noire y devient l'alliée de l'école) et force la branche. `git fetch` le montre (« forced update ») ; notre `main` locale, elle, a gardé la vraie histoire : on la rend aux Royaumes avec `--force-with-lease`. Puis le rempart, côté serveur : plus aucun push qui réécrit, plus aucune branche effacée (le Faussaire s'y brise aussitôt). Il pousse alors en avant deux commits aux noms de Laurent et de Grace, signés d'une clé que personne ne reconnaît : on les lit (`--show-signature`), on les contredit (`revert`, sans réécrire), on pousse. Enfin, la porte : au Haut-Conseil, `main` est protégée par l'API de la forge (`gh api -X PUT .../branches/main/protection --input regles.json`) : plus aucun changement sans requête relue, sans golems au vert (dont le golem des secrets), ni force push ni suppression. `sablier` relit la Chronique : 100 sur 100 (il faut au moins 90). Le Faussaire ne reste pas les bras croisés : si l'on tarde à rendre la vraie histoire (une heure et demie de jeu après la réécriture), il efface le menhir `v-grand-port` sur royaume (on le repousse : `git push origin v-grand-port`) ; si le rempart n'est toujours pas dressé une heure après la restauration, il réécrit `main` une seconde fois.
 
 ```
 git fetch
@@ -3920,6 +3920,18 @@ git pull
 git log --show-signature -3
 git revert --no-edit HEAD HEAD~1
 git push
+cat > ~/chronotheque/regles.json <<'FIN'
+{
+  "required_status_checks": { "strict": true, "contexts": ["golem-format", "golem-secrets"] },
+  "enforce_admins": true,
+  "required_pull_request_reviews": { "required_approving_review_count": 1 },
+  "restrictions": null,
+  "allow_force_pushes": false,
+  "allow_deletions": false
+}
+FIN
+gh api -X PUT repos/{owner}/{repo}/branches/main/protection --input ~/chronotheque/regles.json
+gh api repos/{owner}/{repo}/branches/main/protection
 sablier
 ```
 

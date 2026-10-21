@@ -280,6 +280,8 @@ var QUETES_CH9 = [
 	  indice: "ssh royaume ; cd /srv/git/chronique.git ; git config receive.denyNonFastForwards true ; git config receive.denyDeletes true." },
 	{ id: "n9_faux_sceaux", titre: "La bataille du temps : démasquer et contredire les faux sceaux",
 	  indice: "git pull ; git log --show-signature ; git revert des sceaux dont la cire n'est pas reconnue ; git push." },
+	{ id: "n9_protection", titre: "La bataille du temps : protéger main au Haut-Conseil (relecture et golems obligatoires)",
+	  indice: "Dans ~/chronotheque/chronique : un fichier regles.json, puis gh api -X PUT repos/{owner}/{repo}/branches/main/protection --input regles.json ; gh api ... (GET) pour relire." },
 	{ id: "n9_integrite", titre: "La Chronique au-dessus de 90",
 	  indice: "Après la bataille, sablier doit afficher une intégrité d'au moins 90 : il dit ce qui manque encore." },
 	{ id: "n9_rapport", titre: "Le rapport de la bataille du temps, remis à Laurent",
@@ -358,6 +360,8 @@ var INDICES_CH9 = {
 		"ssh royaume ; cd /srv/git/chronique.git ; git config receive.denyNonFastForwards true ; git config receive.denyDeletes true ; exit"],
 	n9_faux_sceaux: ["Un sceau signé d'une clé que tu ne reconnais pas ne se croit pas. On ne réécrit pas : on contredit (revert).",
 		"git pull ; git log --show-signature -3 ; git revert --no-edit HASH1 HASH2 ; git push"],
+	n9_protection: ["Le rempart refuse les réécritures ; la protection de branche, sur la forge, oblige en plus chaque changement de main à passer par une requête relue, avec les golems au vert (golem-secrets compris). On la pose avec l'API : les quatre clés obligatoires, null pour ce qu'on n'exige pas.",
+		"cat > ~/chronotheque/regles.json <<'FIN' { \"required_status_checks\": { \"strict\": true, \"contexts\": [\"golem-format\", \"golem-secrets\"] }, \"enforce_admins\": true, \"required_pull_request_reviews\": { \"required_approving_review_count\": 1 }, \"restrictions\": null, \"allow_force_pushes\": false, \"allow_deletions\": false } FIN ; gh api -X PUT repos/{owner}/{repo}/branches/main/protection --input ~/chronotheque/regles.json"],
 	n9_integrite: ["sablier, n'importe où, dit ce qui manque encore.", "sablier"],
 	n9_rapport: ["Un here-document écrit le rapport d'un coup ; cp le dépose.", "cat > ~/chronotheque/rapport.txt <<'FIN' ... FIN ; cp ~/chronotheque/rapport.txt ~/Cybersup/Chronotheque/BoiteDeLaurent"]
 };
@@ -404,6 +408,7 @@ var CONSEILS_CH9 = {
 	n9_restauration: "Ta copie garde la vérité. Rends-la aux Royaumes, avec un bail (force-with-lease).",
 	n9_rempart: "Il reviendra. Dresse le rempart sur royaume : plus aucune réécriture.",
 	n9_faux_sceaux: "Il pousse encore, mais en avant, cette fois. Lis la cire de chaque sceau.",
+	n9_protection: "Le rempart tient. Maintenant, la porte : plus rien n'entre dans main sans requête, relecture et golems. gh api, chez Amine.",
 	n9_integrite: "La Chronique doit tenir au-dessus de 90. sablier te dit ce qui manque.",
 	n9_rapport: "Dernière chose, Chronomancien : le rapport pour Laurent. Et l'empreinte de sa clé. Surtout l'empreinte."
 };
@@ -444,6 +449,7 @@ var METIER_CH9 = {
 	n9_restauration: "--force-with-lease au lieu de --force : on n'écrase jamais le travail qu'on n'a pas vu.",
 	n9_rempart: "Sur une forge, cela s'appelle une protection de branche : pas de force push, pas de suppression, relecture obligatoire.",
 	n9_faux_sceaux: "Une signature prouve qui a signé, pas que le contenu est bon : on vérifie les deux.",
+	n9_protection: "Sur GitHub ou GitLab, la protection de main (relecture obligatoire, CI verte, scan de secrets, pas de force push) est la première chose qu'on pose sur un dépôt d'équipe.",
 	n9_rapport: "Un rapport d'incident dit ce qui s'est passé, ce qui a été fait, et ce qui reste à faire."
 };
 
@@ -1117,6 +1123,7 @@ function fauxSceauxContreditsCh9(){
 /* ------------------------------------------------------------------ */
 
 var MESURES_INTEGRITE_CH9 = [
+	{ poids: 6, texte: "main protégée au Haut-Conseil : requête relue, golems au vert, pas de force push", ok: function(){ return protectionOkCh9(); } },
 	{ poids: 15, texte: "la vraie histoire sur royaume (sans réécriture)", ok: function(){ var c = sCh9(); return c.bataille ? restaurationOkCh9() : !!G9.resoudreR("main") && G9.ancetreR(HASH_CH9("royaumeDepart"), G9.resoudreR("main")) || G9.resoudreR("main") === HASH_CH9("royaumeDepart"); } },
 	{ poids: 10, texte: "le rempart : aucun push qui réécrit (receive.denyNonFastForwards)", ok: function(){ return /^true$/i.test(valeurIniCh9(configRoyaumeCh9(), "receive", "denyNonFastForwards") || ""); } },
 	{ poids: 5, texte: "le rempart : aucune ligne effacée (receive.denyDeletes)", ok: function(){ return /^true$/i.test(valeurIniCh9(configRoyaumeCh9(), "receive", "denyDeletes") || ""); } },
@@ -1127,12 +1134,21 @@ var MESURES_INTEGRITE_CH9 = [
 	{ poids: 8, texte: "la requête empoisonnée refusée", ok: function(){ var n = sCh9().prPoison, pr = n ? F9.pr(n) : null; return !!pr && !/merged|fusionn/i.test(pr.etat || "") && !!state.quests["n9_rang5"]; } },
 	{ poids: 6, texte: "les changements passent par le Haut-Conseil (une requête relue et fusionnée)", ok: function(){ return !!state.quests["n9_requete"]; } },
 	{ poids: 6, texte: "aucun mot de passe dans la Chronique publiée", ok: function(){ return ["chronique.md", "lois.md", "registre.txt", "flotte.md", "marees.txt"].every(function(f){ return !/MOT_DE_PASSE=/.test(G9.fichierR("main", f) || ""); }); } },
-	{ poids: 6, texte: "ta chronique locale à jour avec royaume, propre", ok: function(){ var ch = DEPOTS_CH9.chronique; return !!G9.depot(ch) && G9.resoudre(ch, "refs/heads/main") === G9.resoudreR("main") && propreCh9(ch); } },
+	{ poids: 3, texte: "ta chronique locale à jour avec royaume, propre", ok: function(){ var ch = DEPOTS_CH9.chronique; return !!G9.depot(ch) && G9.resoudre(ch, "refs/heads/main") === G9.resoudreR("main") && propreCh9(ch); } },
 	{ poids: 6, texte: "les faux sceaux du Faussaire contredits (revert)", ok: function(){ return !sCh9().fauxSceaux ? !!state.quests["n9_rang5"] : fauxSceauxContreditsCh9(); } },
-	{ poids: 6, texte: "ta clé posée sur royaume, et tes sceaux à ton nom", ok: function(){ return clePoseeRoyaumeCh9() && /@/.test(mailJoueurGitCh9()); } }
+	{ poids: 3, texte: "ta clé posée sur royaume, et tes sceaux à ton nom", ok: function(){ return clePoseeRoyaumeCh9() && /@/.test(mailJoueurGitCh9()); } }
 ];
+/* La protection de main sur la forge : une requête relue (au moins une approbation), les golems obligatoires (dont celui des secrets), ni force push ni suppression. */
+function protectionOkCh9(){
+	var r = null;
+	try { var f = forgeEtat(ROYAUME_CH9, DEPOT_ROYAUME_CH9); r = f && f.protection ? f.protection.main : null; } catch (e){ r = null; }
+	return !!r && r.pr === true && (r.revues || 0) >= 1 && (r.verifications || []).indexOf("golem-secrets") > -1 && !r.forcePush && !r.suppression;
+}
+/* Le menhir v-grand-port, sur royaume (le Faussaire l'efface si l'on tarde). */
+function menhirRoyaumeOkCh9(){ var t = G9.essai(function(){ return gitTags(ROYAUME_CH9, DEPOT_ROYAUME_CH9); }, null); return !!t && !!(Array.isArray(t) ? t.indexOf("v-grand-port") > -1 : t["v-grand-port"]); }
 function incidentsOuvertsCh9(){
 	var c = sCh9(), l = [];
+	if (c.menhirEfface && !menhirRoyaumeOkCh9()) l.push("le menhir v-grand-port a été effacé de royaume");
 	if (c.bataille && !restaurationOkCh9()) l.push("la fausse histoire est sur royaume");
 	if (c.fauxSceaux && !fauxSceauxContreditsCh9()) l.push("des faux sceaux tiennent encore dans la Chronique");
 	return l;
@@ -1176,6 +1192,7 @@ function supprimerDossierCh9(chemin){
 	} catch (e){}
 }
 function regenererCh9(x){
+	var c = sCh9(); c.regenerations = c.regenerations || {}; c.regenerations[x.nom] = (c.regenerations[x.nom] || 0) + 1;
 	supprimerDossierCh9(DEPOTS_CH9[x.cle]);
 	moteurSilencieuxCh9(function(){ x.semer(); });
 }
@@ -1255,13 +1272,15 @@ function validerCh9(){
 	// défendue (les Portes, les Runes et le Haut-Conseil faits) : un joueur en retard ne clone jamais une histoire déjà fausse.
 	if (c.minutes >= AUBE_CH9 && !c.bataille && !c.assaut) lancerAssautCh9();
 	if (c.minutes >= AUBE_CH9 && !c.bataille && state.quests["n9_revue"]) commencerBatailleCh9(true);
+	if (c.bataille) faussaireReagitCh9();
 	if (c.bataille){
 		if (!state.quests["n9_alerte"] && vuCh9("fetchForce") && vuCh9("comparaison")) state.complete("n9_alerte");
 		if (!state.quests["n9_restauration"] && restaurationOkCh9()) state.complete("n9_restauration");
 		if (!state.quests["n9_rempart"] && rempartOkCh9()){ state.complete("n9_rempart"); tentativeBriseeCh9(); }
 		if (state.quests["n9_rempart"] && state.quests["n9_restauration"]) fauxSceauxCh9();
 		if (!state.quests["n9_faux_sceaux"] && fauxSceauxContreditsCh9() && vuCh9("signaturesLues")) state.complete("n9_faux_sceaux");
-		if (!state.quests["n9_integrite"] && state.quests["n9_faux_sceaux"] && incidentsOuvertsCh9().length === 0 && c.scoreFinalCandidat !== null && c.scoreFinalCandidat !== undefined && c.scoreFinalCandidat >= 90 && integriteCh9() >= 90){
+		if (!state.quests["n9_protection"] && state.quests["n9_faux_sceaux"] && protectionOkCh9()) state.complete("n9_protection");
+		if (!state.quests["n9_integrite"] && state.quests["n9_faux_sceaux"] && state.quests["n9_protection"] && incidentsOuvertsCh9().length === 0 && c.scoreFinalCandidat !== null && c.scoreFinalCandidat !== undefined && c.scoreFinalCandidat >= 90 && integriteCh9() >= 90){
 			c.scoreFinal = c.scoreFinalCandidat;
 			state.complete("n9_integrite");
 		}
@@ -1274,6 +1293,7 @@ function validerCh9(){
 			if (!state.quests["n9_restauration"]) reste.push("la vraie histoire n'est pas rendue aux Royaumes");
 			if (!state.quests["n9_rempart"]) reste.push("le rempart n'est pas dressé sur royaume");
 			if (!state.quests["n9_faux_sceaux"]) reste.push("les faux sceaux ne sont pas contredits");
+			if (!state.quests["n9_protection"]) reste.push("main n'est pas encore protégée au Haut-Conseil");
 			if (!state.quests["n9_integrite"]) reste.push("la Chronique n'a pas encore tenu au-dessus de 90 après la bataille");
 		}
 		var manque = rapportManqueCh9();
@@ -1286,6 +1306,36 @@ function validerCh9(){
 		}
 	}
 	if (state.quests["n9_rapport"] && !state.has("victoireCh9")) state.applyState("victoireCh9");
+}
+/*
+ * Le Faussaire ne reste pas les bras croisés.
+ *  - Si la vraie histoire n'est pas rendue une heure et demie après la réécriture, il efface le menhir v-grand-port sur royaume
+ *    (tant que receive.denyDeletes n'est pas posé) : un incident à réparer (git push origin v-grand-port).
+ *  - Si la vraie histoire est rendue mais que le rempart n'est toujours pas dressé une heure plus tard, il réécrit main une
+ *    seconde fois : il faut de nouveau voir (fetch) et rendre (--force-with-lease), puis enfin dresser le rempart.
+ */
+var DELAI_MENHIR_CH9 = 90, DELAI_RECIDIVE_CH9 = 60;
+function faussaireReagitCh9(){
+	var c = sCh9(), b = c.bataille;
+	if (!b || !b.reecriture || typeof gitConstructeur !== "function" || !estRoyaumeCh9()) return;
+	var deletesInterdits = /^true$/i.test(valeurIniCh9(configRoyaumeCh9(), "receive", "denyDeletes") || "");
+	var rempart = rempartOkCh9();
+	if (!c.menhirEfface && !restaurationOkCh9() && !deletesInterdits && c.minutes - b.debut >= DELAI_MENHIR_CH9 && menhirRoyaumeOkCh9()){
+		try {
+			var D = gitDepot(ROYAUME_CH9, DEPOT_ROYAUME_CH9);
+			gRefSupprimer(D, "refs/tags/v-grand-port");
+			c.menhirEfface = c.minutes;
+			if (!state.has("rejeuEnCours")) say(C.rouge("Sur royaume, le Faussaire profite de ton hésitation : le menhir v-grand-port vient d'être effacé.") + " Le jour où la flotte noire a viré de bord n'a plus de borne dans l'histoire publiée.\n" +
+				C.gris("(Radio : « Grace : ton clone a gardé le menhir. Remets-le : git push origin v-grand-port. Et rends la vraie histoire, vite. »)"));
+		} catch (e){}
+	}
+	if (restaurationOkCh9() && !b.restaureA) b.restaureA = c.minutes;
+	if (b.restaureA && !b.recidive && !rempart && c.minutes - b.restaureA >= DELAI_RECIDIVE_CH9){
+		b.recidive = c.minutes;
+		var faux2 = reecritureFaussaireCh9();
+		if (faux2 && !state.has("rejeuEnCours")) say(C.rouge(C.gras("Le Faussaire recommence.")) + " Aucun rempart ne l'arrête : main est réécrite et forcée une seconde fois sur royaume.\n" +
+			C.gris("(Radio : « Grace : il reviendra tant que la porte reste ouverte. git fetch, git push --force-with-lease origin main, puis le rempart sur royaume, tout de suite. »)"));
+	}
 }
 function tentativeBriseeCh9(){
 	var c = sCh9();
@@ -1339,6 +1389,7 @@ function etatChapitre9(nom){
 		case "victoireCh9":
 			if (!state.dateVictoire10) state.dateVictoire10 = dateDuJour();
 			poser(Home, CertificatChronothequeCh9);
+			poser(ChronothequeCh9, PasserelleCh9);
 			if (!state.has("rejeuEnCours")){
 				if (typeof montrerImage === "function") montrerImage("./static/img/loc_chronotheque_victoire.gif", "La Chronique tient");
 				say(C.jaune(C.gras("LA CHRONIQUE TIENT.")) + " Le Grand Sablier se redresse dans un tintement de cristal, et son sable recommence à couler vers le haut, calmement. " +
@@ -1346,7 +1397,7 @@ function etatChapitre9(nom){
 					"Les quatorze lanternes des salles brûlent ensemble, et les maîtres du temps lèvent leur sceau vers toi." +
 					(typeof texteAmiFinaleCh9 === "function" ? texteAmiFinaleCh9() : ""));
 				say("Laurent lit ton rapport jusqu'à la dernière ligne, puis le contresigne. « Il y a trois jours, tu ne savais pas ce qu'était un commit. Aujourd'hui, personne ne réécrit plus notre histoire. Chronomancien. La Chronique est à toi. »");
-				say(C.gris("(Ton CertificatChronothèque est posé dans ta Maison : cat ~/CertificatChronotheque. Il porte la note du chapitre 9 et son code de vérification.)"));
+				say(C.gris("(Ton CertificatChronothèque est posé dans ta Maison : cat ~/CertificatChronotheque. Il porte la note du chapitre 9 et son code de vérification. Laurent a aussi laissé un feuillet près du lutrin : cat ~/Cybersup/Chronotheque/Passerelle, pour refaire tout ça sur une vraie forge.)"));
 				say(C.gras("Tard dans la nuit, seul devant le lutrin,") + " tu relis les deux faux sceaux du Faussaire, avec git cat-file -p. Une ligne t'arrête, celle du committer : pas le nom de Laurent, ni celui de Grace. " +
 					"P.G., et une date. Celle de demain. Et la cire de ses sceaux : l'empreinte de la clé du Bastion, la même que sur l'image de l'éclaireur. " +
 					"Il ne réécrit pas seulement le passé. Il écrit déjà l'avenir.\n" +
@@ -1489,6 +1540,10 @@ GameState.prototype.texteDuCertificat10 = function(){
 		"  Temps du chapitre    : " + (minutes < 60 ? minutes + " min" : Math.floor(minutes / 60) + " h " + deuxChiffres(minutes % 60)) + "\n" +
 		"  Indices payants      : " + (this.malus10 ? this.nbIndices(10) + " (-" + this.malus10 + " XP sur la note)" : "aucun") + "\n" +
 		"\n" +
+		pointsDifficilesCh9(this) +
+		"\n" +
+		"  Et maintenant, le vrai : cat ~/Cybersup/Chronotheque/Passerelle\n" +
+		"\n" +
 		"  Signé : Laurent, Directeur Pédagogique de Cybersup\n" +
 		"          et Grace, cheffe de quart de la WarRoom\n" +
 		"==================================\n" +
@@ -1496,6 +1551,72 @@ GameState.prototype.texteDuCertificat10 = function(){
 		"  " + this.codeDuCertificat10() + "\n" +
 		"==================================";
 };
+/*
+ * Les points difficiles, pour le formateur : les étapes où un indice a été acheté, les dépôts régénérés, et les trois étapes
+ * qui ont pris le plus de temps de jeu. Après une séance, c'est là que se voient les vrais points de friction.
+ */
+var COMPLETE_AVANT_FRICTIONS_CH9 = GameState.prototype.complete;
+GameState.prototype.complete = function(id){
+	var deja = !!(this.quests && this.quests[id]);
+	var r = COMPLETE_AVANT_FRICTIONS_CH9.apply(this, arguments);
+	try { if (!deja && /^n9_/.test(id) && this.quests[id] && this === state){ var c = sCh9(); c.faitA = c.faitA || {}; c.faitA[id] = c.compte || 0; } } catch (e){}
+	return r;
+};
+function titreCourtCh9(id){
+	var q = QUETES_CH9.filter(function(x){ return x.id === id; })[0] || QUETES_SECONDAIRES_CH9.filter(function(x){ return x.id === id; })[0];
+	var t = q ? q.titre.replace(/ \(.*$/, "") : id;
+	return t.length > 46 ? t.substring(0, 45) + "…" : t;
+}
+function pointsDifficilesCh9(st){
+	var c = st.ch9 || {}, l = [];
+	var ind = Object.keys(st.indices || {}).filter(function(id){ return st.indices[id] > 0 && chapitreDeQuete(id) === 10; });
+	l.push("  POINTS DIFFICILES (pour le formateur)");
+	l.push("  Indices achetés      : " + (ind.length ? "" : "aucun"));
+	ind.forEach(function(id){ l.push("    " + titreCourtCh9(id) + " (" + st.indices[id] + ")"); });
+	var reg = c.regenerations || {}, noms = Object.keys(reg);
+	l.push("  Dépôts régénérés     : " + (noms.length ? noms.map(function(n){ return n + (reg[n] > 1 ? " (" + reg[n] + " fois)" : ""); }).join(", ") : "aucun"));
+	var faits = Object.keys(c.faitA || {}).filter(function(id){ return id !== "n9_entree"; }).sort(function(a, b){ return c.faitA[a] - c.faitA[b]; });
+	var avant = c.faitA && c.faitA.n9_entree !== undefined ? c.faitA.n9_entree : 0, durees = [];
+	faits.forEach(function(id){ durees.push({ id: id, d: c.faitA[id] - avant }); avant = c.faitA[id]; });
+	durees.sort(function(a, b){ return b.d - a.d; });
+	var lentes = durees.filter(function(x){ return x.d >= 15; }).slice(0, 3);
+	l.push("  Étapes les plus longues : " + (lentes.length ? "(en commandes tapées)" : "aucune au-delà de 15 commandes"));
+	lentes.forEach(function(x){ l.push("    " + titreCourtCh9(x.id) + " (" + x.d + ")"); });
+	return l.join("\n") + "\n";
+}
+/* Le passage vers le vrai : la même chose, sur une vraie forge (GitHub), pour repartir avec le réflexe. */
+var PasserelleCh9 = new Item("Passerelle", "", "item_manuscript.gif");
+texteVivant(PasserelleCh9, function(){
+	return "LA PASSERELLE : DE LA CHRONOTHÈQUE AU VRAI GITHUB\n\n" +
+		"Laurent a glissé ce feuillet dans ta poche. « Tout ce que tu as fait ici, refais-le une fois sur une vraie forge. Ce soir. »\n\n" +
+		"1. Un compte sur github.com (ou sur la forge de ton école ou de ton entreprise), et ton identité :\n" +
+		"     git config --global user.name \"Prénom Nom\"\n" +
+		"     git config --global user.email \"toi@exemple.fr\"\n" +
+		"     git config --global init.defaultBranch main\n\n" +
+		"2. Une clé SSH à toi, sur TA machine (jamais copiée d'ailleurs, jamais partagée) :\n" +
+		"     ssh-keygen -t ed25519 -C \"toi@exemple.fr\"\n" +
+		"   Puis la clé PUBLIQUE (~/.ssh/id_ed25519.pub, jamais l'autre) dans Settings, SSH and GPG keys, New SSH key.\n" +
+		"     ssh -T git@github.com            le pont répond par ton nom\n\n" +
+		"3. La même clé pour signer tes commits (Settings, SSH and GPG keys, New SSH key, type Signing key) :\n" +
+		"     git config --global gpg.format ssh\n" +
+		"     git config --global user.signingkey ~/.ssh/id_ed25519.pub\n" +
+		"     git config --global commit.gpgsign true\n\n" +
+		"4. Un dépôt à toi (bouton New), avec un README, puis :\n" +
+		"     git clone git@github.com:TON_COMPTE/TON_DEPOT.git\n" +
+		"     cd TON_DEPOT ; git switch -c premiere-page\n" +
+		"     echo \"# Mon premier sceau\" >> README.md ; git commit -am \"docs: ma première page\"\n" +
+		"     git push -u origin premiere-page\n\n" +
+		"5. La requête, comme au Haut-Conseil (avec gh, ou sur le site : Compare and pull request) :\n" +
+		"     gh auth login\n" +
+		"     gh pr create --fill ; gh pr view --web ; gh pr merge --merge --delete-branch\n\n" +
+		"6. La porte, comme pour la Chronique : Settings, Branches (ou Rules), une règle sur main :\n" +
+		"   Require a pull request before merging, Require approvals, Require status checks to pass,\n" +
+		"   Block force pushes, Restrict deletions. Et active Secret scanning et Push protection.\n\n" +
+		"7. Le réflexe du Faussaire : avant de pousser, git status, git diff --staged, et jamais un mot de passe dans un commit.\n" +
+		"   Un secret poussé une fois est un secret à changer, même effacé ensuite.\n\n" +
+		"Garde ce feuillet : c'est la même histoire, sans les sceaux de cire.";
+});
+
 GameState.prototype.codeDuCertificat10 = function(){
 	var f = this.compteursFiges(10, this.xpNet(10), this.nbCommandes, Math.round((this.tempsMs - (this.debutChapitre10 || 0)) / 60000));
 	return fabriquerCode({

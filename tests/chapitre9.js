@@ -148,16 +148,16 @@ var CHAPITRE = ["Chronique.js", "Chapitre9.js", "Chronotheque.js", "HabitantsChr
 	var avant = jeu.lire("tousLesSorts().filter(function(s){ return [1, 2, 3, 5, 6, 7, 8, 9].indexOf(chapitreDuSort(s)) > -1; })");
 	verifier(avant.length > 220, "socle des chapitres 1 à 8 : " + avant.length + " sorts");
 	egal(avant.filter(function(s){ return jeu.lire("state.knows(" + JSON.stringify(s) + ")") !== true; }).length, 0, "socle acquis au départ direct");
-	egal(jeu.lire("QUETES_CH9.length"), 43, "43 étapes");
+	egal(jeu.lire("QUETES_CH9.length"), 44, "44 étapes");
 	egal(jeu.lire("QUETES_SECONDAIRES_CH9.length"), 47, "47 défis (42 des maîtres, 5 d'honneur)");
 	egal(jeu.lire("SALLES_CH9.length"), 14, "quatorze salles");
 	egal(jeu.lire("QUETES_CH9.filter(function(q){ return !/^n9_/.test(q.id); }).length"), 0, "les étapes s'appellent n9_*");
 	egal(jeu.lire("QUETES_SECONDAIRES_CH9.filter(function(q){ return !/^s_n9_/.test(q.id); }).length"), 0, "les défis s'appellent s_n9_*");
 	egal(jeu.lire("chapitreDeQuete('s_n9_rev_parse')"), 10, "chapitreDeQuete d'un défi");
 	egal(jeu.lire("chapitreDeQuete('a9_worktree')"), 10, "chapitreDeQuete d'une annexe");
-	egal(jeu.lire("state.xpMax10()"), 6960, "xpMax10");
+	egal(jeu.lire("state.xpMax10()"), 7060, "xpMax10");
 	egal(jeu.lire("QUETES_CH9[QUETES_CH9.length - 1].id"), "n9_rapport", "la dernière étape est le rapport de la bataille du temps");
-	egal(jeu.lire("Object.keys(INDICES_CH9).length"), 43, "un indice par étape (INDICES_CH9)");
+	egal(jeu.lire("Object.keys(INDICES_CH9).length"), 44, "un indice par étape (INDICES_CH9)");
 	egal(jeu.lire("state.xp10"), 105, "l'arrivée rapporte ses 100 XP (et le lieu ses 5) au chapitre 9");
 	contient(jeu.taper("chapitre 9"), "déjà ouvert", "chapitre 9 déjà ouvert : message clair");
 	contient(jeu.taper("help 9"), "chapitre 9", "help 9");
@@ -406,6 +406,10 @@ var CHAPITRE = ["Chronique.js", "Chapitre9.js", "Chronotheque.js", "HabitantsChr
 	t(jeu, "git revert --no-edit HEAD HEAD~1");
 	t(jeu, "git push");
 	fait(jeu, "n9_faux_sceaux", "contredits par revert, poussés : n9_faux_sceaux");
+	pasFait(jeu, "n9_protection", "sans protection de main au Haut-Conseil : pas encore");
+	t(jeu, "echo '{ \"required_status_checks\": { \"strict\": true, \"contexts\": [\"golem-format\", \"golem-secrets\"] }, \"enforce_admins\": true, \"required_pull_request_reviews\": { \"required_approving_review_count\": 1 }, \"restrictions\": null }' > ~/regles.json");
+	t(jeu, "gh api -X PUT repos/{owner}/{repo}/branches/main/protection --input ~/regles.json");
+	fait(jeu, "n9_protection", "main protégée : n9_protection");
 	t(jeu, "sablier");
 	fait(jeu, "n9_integrite", "la Chronique relue au-dessus de 90");
 	egal(jeu.lire("integriteCh9()"), 100, "intégrité finale : 100");
@@ -479,7 +483,7 @@ var CHAPITRE = ["Chronique.js", "Chapitre9.js", "Chronotheque.js", "HabitantsChr
 	});
 	egal(jeu.lire("QUETES_CH9.filter(function(q){ return !state.quests[q.id]; }).map(function(q){ return q.id; }).join(' ')"), "", "partie complète : toutes les étapes");
 	egal(jeu.lire("QUETES_SECONDAIRES_CH9.filter(function(q){ return !state.quests[q.id]; }).map(function(q){ return q.id; }).join(' ')"), "", "partie complète : tous les défis");
-	egal(jeu.lire("state.xp10"), 6960, "partie complète : 6960 XP");
+	egal(jeu.lire("state.xp10"), jeu.lire("state.xpMax10()"), "partie complète : toute l'XP du chapitre");
 	egal(jeu.lire("state.noteTexte(10)"), "20 / 20", "partie complète : 20 sur 20");
 	egal(jeu.lire("state.malus10"), 0, "partie complète : aucun indice acheté");
 	vrai(jeu, "state.has('platine_ch9')", "partie complète : le platine");
@@ -509,7 +513,7 @@ var CHAPITRE = ["Chronique.js", "Chapitre9.js", "Chronotheque.js", "HabitantsChr
 	// Les quêtes annexes, le badge Ami, les souvenirs : hors note.
 	jeu.lire("QUETES_ANNEXES").filter(function(a){ return a.chapitre === 10; }).forEach(function(a){ fait(jeu, a.id, "partie complète : annexe " + a.id); });
 	vrai(jeu, "state.has('ami_ch9')", "partie complète : Ami de la Chronothèque");
-	egal(jeu.lire("state.xp10"), 6960, "les annexes ne changent pas l'XP du chapitre");
+	egal(jeu.lire("state.xp10"), jeu.lire("state.xpMax10()"), "les annexes ne changent pas l'XP du chapitre");
 	verifier(jeu.lire("state.xpAnnexes") >= 300, "les annexes donnent leur bonus (" + jeu.lire("state.xpAnnexes") + ")");
 	vrai(jeu, "(function(){ var ch = DEPOTS_CH9.coffre; return G9.historique(ch, 'HEAD').every(function(h){ return G9.fichier(ch, h, 'secrets.txt') === null; }); })()", "le coffre d'Eva-Lydia : le secret purgé de toute l'histoire");
 	contient(jeu.taper("tar -tf ~/chronotheque/runes-v1.0.tar"), "vitrail", "git archive : tar -tf lit le paquet");
@@ -549,6 +553,65 @@ var CHAPITRE = ["Chronique.js", "Chapitre9.js", "Chronotheque.js", "HabitantsChr
 	verifier(/n9_entree/.test(guide) && /cine9_/.test(guide), "Guide.js : la scène et la cinématique du chapitre 9");
 	var jeu = neuf();
 	contient(jeu.taper("quiz 9"), "", "quiz 9 se lance");
+})();
+
+/* ================================================================== */
+/* 10. Le Faussaire réagit, la porte du Haut-Conseil, les points difficiles, la Passerelle */
+/* ================================================================== */
+(function(){
+	var jeu = neuf();
+	jusqua(jeu, 101);
+	t(jeu, "cd ~/chronotheque/chronique");
+	// Il tarde : le menhir v-grand-port est effacé de royaume (un incident), et on le repousse.
+	jeu.lire("sCh9().compte = (sCh9().compte || 0) + 19");
+	contient(jeu.taper("ls"), "le menhir v-grand-port vient d'être effacé", "le Faussaire efface un menhir si l'on tarde");
+	verifier(jeu.lire("incidentsOuvertsCh9().join(' ')").indexOf("menhir") > -1, "le menhir effacé est un incident");
+	jouer(jeu, ["git fetch", "git log --oneline main..origin/main", "git push --force-with-lease origin main", "git push origin v-grand-port"]);
+	egal(jeu.lire("incidentsOuvertsCh9().length"), 0, "le menhir repoussé et la vraie histoire rendue : plus d'incident");
+	// Pas de rempart une heure après : il recommence.
+	jeu.lire("sCh9().compte = (sCh9().compte || 0) + 13");
+	contient(jeu.taper("ls"), "Le Faussaire recommence.", "sans rempart, la récidive");
+	faux(jeu, "restaurationOkCh9()", "la récidive a de nouveau réécrit main");
+	contient(t(jeu, "git fetch"), "forced update", "la récidive se voit au fetch");
+	t(jeu, "git push --force-with-lease origin main");
+	vrai(jeu, "restaurationOkCh9()", "rendue une seconde fois");
+	jouer(jeu, ["ssh royaume", "cd /srv/git/chronique.git", "git config receive.denyNonFastForwards true", "git config receive.denyDeletes true", "exit", "cd ~/chronotheque/chronique", "git pull", "git log --show-signature -3", "git revert --no-edit HEAD HEAD~1", "git push"]);
+	fait(jeu, "n9_faux_sceaux", "les faux sceaux contredits");
+	// La porte : une protection incomplète (sans le golem des secrets) ne compte pas.
+	t(jeu, "echo '{ \"required_status_checks\": { \"strict\": true, \"contexts\": [\"golem-format\"] }, \"enforce_admins\": true, \"required_pull_request_reviews\": { \"required_approving_review_count\": 1 }, \"restrictions\": null }' > ~/regles.json");
+	t(jeu, "gh api -X PUT repos/{owner}/{repo}/branches/main/protection --input ~/regles.json");
+	pasFait(jeu, "n9_protection", "une protection sans le golem des secrets : pas encore");
+	contient(t(jeu, "gh api -X PUT repos/{owner}/{repo}/branches/main/protection --input ~/nexistepas.json"), "no such file", "gh api --input d'un fichier absent : l'erreur du vrai");
+	contient(t(jeu, "echo '{}' > ~/vide.json; gh api -X PUT repos/{owner}/{repo}/branches/main/protection --input ~/vide.json"), "HTTP 422", "gh api avec un JSON incomplet : 422");
+	t(jeu, "echo '{ \"required_status_checks\": { \"strict\": true, \"contexts\": [\"golem-format\", \"golem-secrets\"] }, \"enforce_admins\": true, \"required_pull_request_reviews\": { \"required_approving_review_count\": 1 }, \"restrictions\": null, \"allow_force_pushes\": false, \"allow_deletions\": false }' > ~/regles.json");
+	t(jeu, "gh api -X PUT repos/{owner}/{repo}/branches/main/protection --input ~/regles.json");
+	fait(jeu, "n9_protection", "main protégée : n9_protection");
+	contient(t(jeu, "gh api repos/{owner}/{repo}/branches/main/protection"), "golem-secrets", "gh api (GET) relit la protection");
+	jouer(jeu, ["echo x >> chronique.md", "git commit -qam essai"]);
+	contient(t(jeu, "git push"), "Changes must be made through a pull request", "main protégée : un push direct est refusé");
+	t(jeu, "git reset --hard origin/main");
+	t(jeu, "sablier");
+	fait(jeu, "n9_integrite", "la Chronique au-dessus de 90");
+	jusqua2(jeu, 103, 103);
+	fait(jeu, "n9_rapport", "le rapport contresigné après une bataille agitée");
+	var cert = jeu.taper("cat ~/CertificatChronotheque");
+	contient(cert, "POINTS DIFFICILES", "le certificat donne les points difficiles au formateur");
+	contient(cert, "Passerelle", "le certificat renvoie à la Passerelle");
+	var pas = jeu.taper("cat ~/Cybersup/Chronotheque/Passerelle");
+	["ssh-keygen -t ed25519", "id_ed25519.pub", "gpg.format ssh", "gh pr create", "Require a pull request", "Secret scanning"].forEach(function(m){ contient(pas, m, "la Passerelle : " + m); });
+	absent(pas, "—", "la Passerelle : pas de tiret cadratin");
+})();
+(function(){
+	// Les points difficiles : un indice acheté et un dépôt régénéré apparaissent sur le certificat.
+	var jeu = neuf();
+	jusqua(jeu, 93);
+	jeu.taper("indice", "oui");
+	jeu.taper("indice", "oui");
+	jeu.taper("regenerer annales");
+	jusqua2(jeu, 94, 103);
+	var cert = jeu.taper("cat ~/CertificatChronotheque");
+	contient(cert, "Dépôts régénérés     : annales", "le dépôt régénéré est noté");
+	verifier(!/Indices achetés      : aucun/.test(cert), "l'indice acheté est noté");
 })();
 
 console.log("chapitre9 : " + ok + " vérifications réussies, " + ko + " échec(s).");

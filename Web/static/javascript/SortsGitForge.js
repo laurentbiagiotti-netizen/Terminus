@@ -99,6 +99,7 @@ function gForgeLancerCI(D, pr, evenement){
 /* La commande gh                                                       */
 /* ------------------------------------------------------------------ */
 
+function ctxTtyGh(io){ return !!(io && io.tty); }
 function GhErreur(m, code){ this.message = m; this.code = code === undefined ? 1 : code; }
 function gGhContexte(io){
 	var R = gTrouverDepot(current_room);
@@ -169,7 +170,7 @@ Shell.sorts.gh = function(args, io){
 	var c = null;
 	try {
 		var s = args[0], s2 = args[1];
-		if (!s || s === "--help" || s === "help") return "Work seamlessly with the forge from the command line.\n\nUSAGE\n  gh <command> <subcommand> [flags]\n\nCORE COMMANDS\n  auth:        Authenticate gh and git with the forge\n  pr:          Manage pull requests\n  repo:        Manage repositories\n  run:         View details about workflow runs\n\n" + C.gris("(man gh : la page du sort.)");
+		if (!s || s === "--help" || s === "help") return "Work seamlessly with the forge from the command line.\n\nUSAGE\n  gh <command> <subcommand> [flags]\n\nCORE COMMANDS\n  api:         Make an authenticated forge API request\n  auth:        Authenticate gh and git with the forge\n  pr:          Manage pull requests\n  repo:        Manage repositories\n  run:         View details about workflow runs\n\n" + C.gris("(man gh : la page du sort.)");
 		if (s === "--version" || s === "version") return "gh version 2.45.0 (2024-03-04)";
 		if (s === "auth"){
 			if (s2 === "status"){ var R0 = gTrouverDepot(current_room); var h0 = "royaume"; try { var D0 = gGhContexte(io).D; h0 = gForgeHote(D0); } catch (e){} return h0 + "\n  ✓ Logged in to " + h0 + " account " + gJoueur() + " (keyring)\n  - Active account: true\n  - Git operations protocol: ssh\n  - Token: gho_************************************\n  - Token scopes: 'gist', 'read:org', 'repo'"; }
@@ -185,6 +186,66 @@ Shell.sorts.gh = function(args, io){
 			var rm = Object.keys(readme).filter(function(p){ return /^readme(\.md|\.txt)?$/i.test(p); })[0];
 			gGhEvenement(c, "repo view", {});
 			return nomDepot + "\n" + (desc ? desc + "\n" : "") + "\n" + (rm ? gObjet(c.D, readme[rm].h).c.replace(/\n$/, "") : "This repository does not have a README") + "\n\n\nView this repository on the forge: " + gForgeUrl(c.D);
+		}
+		// gh api : la protection d'une branche (GET, PUT --input FICHIER.json, DELETE), comme l'API REST de la vraie forge.
+		if (s === "api"){
+			op = gOptions(args.slice(1), { "-X|--method": "v", "--input": "v", "-H|--header": "l", "--jq": "v", "-q": "v" }, "api");
+			var chemin = String(op.p[0] || "").replace(/^\/+/, "");
+			if (!chemin) throw new GhErreur("usage: gh api <endpoint> [flags]", 1);
+			var methode = String(op.o.method || (op.o.input ? "POST" : "GET")).toUpperCase();
+			var nomF = gForgeNom(c.D);
+			chemin = chemin.replace(/^repos\/\{owner\}\/\{repo\}\//, "repos/" + nomF + "/").replace(/^repos\/:owner\/:repo\//, "repos/" + nomF + "/");
+			var mp = /^repos\/([^\/]+\/[^\/]+)\/branches\/([^\/]+)\/protection$/.exec(chemin);
+			if (!mp) throw new GhErreur("gh: Not Found (HTTP 404)" + (typeof C !== "undefined" && ctxTtyGh(io) ? "\n" + C.gris("(Dans le jeu, gh api connaît la protection d'une branche : repos/{owner}/{repo}/branches/main/protection, en GET, PUT --input FICHIER ou DELETE.)") : ""), 1);
+			if (mp[1] !== nomF) throw new GhErreur("gh: Not Found (HTTP 404)", 1);
+			var branchePr = mp[2], url = "https://api." + gForgeHote(c.D) + "/repos/" + nomF + "/branches/" + branchePr + "/protection";
+			if (!gRef(c.D, "refs/heads/" + branchePr)) throw new GhErreur("gh: Branch not found (HTTP 404)", 1);
+			var montrer = function(r){
+				return JSON.stringify({ url: url,
+					required_status_checks: r.verifications && r.verifications.length ? { strict: true, contexts: r.verifications.slice() } : null,
+					required_pull_request_reviews: r.pr ? { required_approving_review_count: r.revues || 0, dismiss_stale_reviews: false } : null,
+					enforce_admins: { enabled: true },
+					allow_force_pushes: { enabled: !!r.forcePush },
+					allow_deletions: { enabled: !!r.suppression } }, null, 2);
+			};
+			var actuelles = c.f.protection && c.f.protection[branchePr] ? c.f.protection[branchePr] : null;
+			if (methode === "GET"){
+				gGhEvenement(c, "api", { methode: "GET", branche: branchePr, protegee: !!actuelles });
+				if (!actuelles) throw new GhErreur("gh: Branch not protected (HTTP 404)", 1);
+				return montrer(actuelles);
+			}
+			if (methode === "DELETE"){
+				if (c.f.protection) delete c.f.protection[branchePr];
+				gGhEvenement(c, "api", { methode: "DELETE", branche: branchePr });
+				return "";
+			}
+			if (methode !== "PUT") throw new GhErreur("gh: Method Not Allowed (HTTP 405)", 1);
+			if (!op.o.input) throw new GhErreur("gh: Problems parsing JSON (HTTP 400)" + (ctxTtyGh(io) ? "\n" + C.gris("(Écris les règles dans un fichier JSON, puis gh api -X PUT ... --input regles.json.)") : ""), 1);
+			var txt;
+			if (op.o.input === "-") txt = io && io.entree !== undefined ? String(io.entree) : "";
+			else {
+				var rf = Shell.chercher(op.o.input, io || {}, "gh");
+				if (!rf.node || rf.node instanceof Room) throw new GhErreur("open " + op.o.input + ": no such file or directory", 1);
+				txt = rf.node.getText();
+			}
+			var j;
+			try { j = JSON.parse(txt); } catch (eJ){ throw new GhErreur("gh: Problems parsing JSON (HTTP 400)", 1); }
+			if (!j || typeof j !== "object" || !("required_status_checks" in j) || !("enforce_admins" in j) || !("required_pull_request_reviews" in j) || !("restrictions" in j)){
+				throw new GhErreur("gh: Invalid request.\n\nNo subschema in \"anyOf\" matched.\nFor 'properties/required_status_checks', nil is not an object. (HTTP 422)" +
+					(ctxTtyGh(io) ? "\n" + C.gris("(Il faut les quatre clés : required_status_checks, enforce_admins, required_pull_request_reviews, restrictions ; null pour ne rien exiger.)") : ""), 1);
+			}
+			var rsc = j.required_status_checks, rpr = j.required_pull_request_reviews;
+			var regles = {
+				pr: !!rpr,
+				revues: rpr && rpr.required_approving_review_count !== undefined ? +rpr.required_approving_review_count || 0 : 0,
+				verifications: rsc && (rsc.contexts || rsc.checks) ? (rsc.contexts || rsc.checks.map(function(x){ return x.context; })).map(String) : [],
+				forcePush: j.allow_force_pushes === true,
+				suppression: j.allow_deletions === true
+			};
+			c.f.protection = c.f.protection || {};
+			c.f.protection[branchePr] = regles;
+			gGhEvenement(c, "api", { methode: "PUT", branche: branchePr, regles: regles });
+			return montrer(regles);
 		}
 		if (s === "pr"){
 			var maintenant = gSecondes(c.R);
@@ -358,7 +419,7 @@ Shell.sorts.gh = function(args, io){
 			}
 			throw new GhErreur("unknown command \"" + (s2 || "") + "\" for \"gh run\"", 1);
 		}
-		throw new GhErreur("unknown command \"" + s + "\" for \"gh\"\n\nUsage:  gh <command> <subcommand> [flags]\n\nAvailable commands:\n  auth\n  pr\n  repo\n  run", 1);
+		throw new GhErreur("unknown command \"" + s + "\" for \"gh\"\n\nUsage:  gh <command> <subcommand> [flags]\n\nAvailable commands:\n  api\n  auth\n  pr\n  repo\n  run", 1);
 	} catch (e){
 		if (e instanceof GhErreur || e instanceof GitErreur){ gGhEvenement(c, "erreur", { ok: false, erreur: e.message }); throw new ShellError(e.message, e.code || 1); }
 		throw e;
