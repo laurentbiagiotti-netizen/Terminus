@@ -105,6 +105,10 @@ var PAGES_DU_JEU = {
 	port: MANUEL_DU_JEU.port + "\n\nLe plan est affiché dans la capitainerie : il faut d'abord être entré dans le Grand Port.\n" +
 		"Déployer le plan relève la puissance de la flotte : une étape du chapitre le demande.",
 	galons: MANUEL_DU_JEU.galons + "\n\nAvant l'ouverture du Grand Port (chapitre 8), il dit simplement où se gagnent les galons.",
+	sablier: MANUEL_DU_JEU.sablier + "\n\nAvant l'ouverture de la Chronothèque (chapitre 9), il dit simplement quand elle s'ouvrira.\n" +
+		"Retourner le sablier relève l'intégrité de la Chronique : la première étape du chapitre le demande.",
+	sceaux: MANUEL_DU_JEU.sceaux + "\n\nAvant l'ouverture de la Chronothèque (chapitre 9), il dit simplement où se gagnent les sceaux.",
+	regenerer: MANUEL_DU_JEU.regenerer + "\n\nAvant l'ouverture de la Chronothèque (chapitre 9), il dit simplement où il sert.",
 	examen:
 		"examen n'est PAS une commande Linux : c'est une commande du jeu, l'entrée de l'épreuve finale.\n\n" +
 		"Hors épreuve :\n" +
@@ -194,9 +198,9 @@ var PAGES_DU_JEU = {
 		"                    ensuite pour de vrai dans leur chapitre, ils rapportent leurs XP comme d'habitude.\n\n" +
 		"Seul le chapitre où tu es fait avancer son horloge (la bombe, l'aube, la Longue Nuit, la marée, la flotte) :\n" +
 		"les autres t'attendent. Le chapitre en cours suit aussi tes pas : entrer dans l'Académie, le Bastion, Lumen,\n" +
-		"Port-Aube ou le Grand Port, ou y franchir une étape, en fait le chapitre en cours.\n\n" +
+		"Port-Aube, le Grand Port ou la Chronothèque, ou y franchir une étape, en fait le chapitre en cours.\n\n" +
 		"Refusé : pendant l'épreuve finale ; un chapitre 1, 2 ou 3 fermé (ils s'ouvrent dans l'ordre de l'histoire) ;\n" +
-		"un chapitre 4 à 8 tant que l'épreuve de première année n'est pas finie (bats d'abord le Sorcier Noir).\n" +
+		"un chapitre 4 à 9 tant que l'épreuve de première année n'est pas finie (bats d'abord le Sorcier Noir).\n" +
 		"Au tout début d'une partie neuve, aller N fait comme chapitre N : un départ direct.\n\n" +
 		"Exemples : aller 2, aller 5, chapitres"
 };
