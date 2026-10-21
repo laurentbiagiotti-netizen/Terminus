@@ -152,7 +152,7 @@ var FICHIERS = ["SortsIle.js", "SortsIlePoste.js", "SortsIleRegistre.js", "Sorts
 	verifier(/Could not resolve/.test(s) && /chapitre 7/.test(s), "ssh noms avant l'ouverture (à Lumen) : refusé");
 	contient(jl.taper("chantier"), "chapitre 7", "chantier avant l'ouverture : il dit où il sert");
 	contient(jeu.taper("chapitre"), "7. ", "chapitre : la ligne 7");
-	contient(jeu.taper("chapitre 9"), "1, 2, 3, 4, 5, 6, 7 et 8", "chapitre 9 : il n'existe pas");
+	contient(jeu.taper("chapitre 10"), "1, 2, 3, 4, 5, 6, 7, 8 et 9", "chapitre 10 : il n'existe pas");
 })();
 
 /* ================================================================== */

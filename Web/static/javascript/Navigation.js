@@ -232,7 +232,7 @@ function texteDesChapitres(){
 		else if (depart && n > 1) acces = "chapitre " + n + " (départ direct)";
 		else if (n >= 4 && !renfortRefuseNav(n)) acces = "aller " + n + " (en renfort)";
 		var ici = ouvert && k === enCours;
-		lignes.push("  " + n + ". " + completerDroite(CHAPITRES_NAV[k].nom, 15) + couleur(completerDroite(etat, 20)) + " " +
+		lignes.push("  " + n + ". " + completerDroite(CHAPITRES_NAV[k].nom, 17) + couleur(completerDroite(etat, 20)) + " " +
 			completerDroite(note, 26) +(acces ? C.vert(acces) : "") + (ici ? C.cyan("  ◀ tu es ici") : ""));
 		lignes.push(C.gris("     " + CHAPITRES_NAV[k].desc));
 	}

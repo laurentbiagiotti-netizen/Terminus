@@ -335,8 +335,8 @@ var INDICES_CH9 = {
 		"git switch brouillon ; git rebase -i main (pick le premier wip en reword, fixup wip encore et corrige typo, drop debug) ; git log --oneline main..brouillon"],
 	n9_strategies: ["Trunk-based : tout le monde sur main, des lignes courtes, beaucoup de tests. GitHub flow : une ligne par changement, une requête, on fusionne. GitFlow : des lignes de version, pour maintenir plusieurs versions.",
 		"1 : trunk-based (petite équipe, publications continues, tests) ; 2 : GitFlow (deux versions maintenues : des branches de release) ; 3 : GitHub flow (une ligne et une requête relue par changement)"],
-	n9_rang4: ["Rebaser, nettoyer (rebase -i : drop le sceau du secret ET celui qui l'efface, squash les wip), puis avancer main sans sceau de fusion.",
-		"cd ~/chronotheque/chant-des-marees ; git switch chant ; git rebase -i main (drop « notes » et « oups », squash les wip) ; git log -p main..chant | grep MOT_DE_PASSE (rien) ; git switch main ; git merge --ff-only chant"],
+	n9_rang4: ["Rebaser, nettoyer (rebase -i : drop le sceau du secret ET celui qui l'efface, fixup les wip et les retouches, reword pour de vrais messages : plus aucun « wip », « oups » ni « corrige typo »), puis avancer main sans sceau de fusion.",
+		"cd ~/chronotheque/chant-des-marees ; git switch chant ; git rebase -i main (reword « wip refrain », drop « notes », fixup « wip », drop « oups », fixup « refrain fini », reword « corrige typo », fixup « ajoute le couplet » ; dans l'éditeur, deux vrais messages) ; git log -p main..chant | grep MOT_DE_PASSE (rien) ; git switch main ; git merge --ff-only chant"],
 	n9_cle: ["ssh-copy-id pose ta clé publique dans ~/.ssh/authorized_keys de l'autre machine.", "ssh-copy-id royaume ; ssh royaume ; exit"],
 	n9_clone: ["clone copie toute l'histoire et nomme le Royaume origin.", "cd ~/chronotheque ; git clone royaume:/srv/git/chronique.git ; cd chronique ; git remote -v ; git branch -vv"],
 	n9_synchro: ["Un push est refusé quand le Royaume a des sceaux que tu n'as pas : on regarde (fetch, log), puis on se remet au bout (pull --rebase).",
@@ -1075,7 +1075,8 @@ function commencerBatailleCh9(parAube){
 	if (!state.has("rejeuEnCours")){
 		if (typeof montrerImage === "function") montrerImage("./static/img/loc_bataille_temps.gif", "La bataille du temps");
 		say(C.rouge(C.gras("⏳ LA GRANDE SYNCHRONISATION")) + "\n" +
-			(parAube ? "Le soleil se lève, et le Grand Sablier se retourne seul, dans un fracas de verre. " : "Tu n'as pas attendu l'aube. Mais lui non plus. Le Grand Sablier se retourne seul, dans un fracas de verre. ") +
+			(parAube ? (c.minutes - AUBE_CH9 < 60 ? "Le soleil se lève, et le Grand Sablier se retourne seul, dans un fracas de verre. " : "L'aube est passée, et le Faussaire attendait ce moment : la Chronique est clonée, défendue, et il frappe. Le Grand Sablier se retourne seul, dans un fracas de verre. ") :
+				"Tu n'as pas attendu l'aube. Mais lui non plus. Le Grand Sablier se retourne seul, dans un fracas de verre. ") +
 			"Sur le lutrin, les pages de la Chronique se mettent à tourner à toute vitesse, et les dernières se réécrivent sous tes yeux : la flotte noire n'est plus l'ennemie de l'école. Elle est son alliée. " +
 			"Sur royaume, la ligne main vient d'être réécrite, et forcée. Dans une heure, chaque Royaume aura tiré la fausse histoire.\n" +
 			C.gris("(Radio : « Grace : à tous les maîtres : la Chronique est attaquée. Chronomancien, dans ta chronique : git fetch. Ne tire rien avant d'avoir regardé. »)"));
@@ -1086,8 +1087,9 @@ function lancerAssautCh9(){
 	if (c.assaut) return;
 	var cedes = SALLES_CH9.filter(function(s){ return !etapesSalleFaitesCh9(s); });
 	c.assaut = { debut: c.minutes, salles: cedes.map(function(s){ return s.cle; }) };
-	if (!state.has("rejeuEnCours") && cedes.length){
-		say(C.rouge(C.gras("L'AUBE DU QUATRIÈME JOUR.")) + " Chaque salle qui n'est pas tenue s'éteint : " + cedes.map(function(s){ return s.titre + " (" + CONSEQUENCES_SYNCHRO_CH9[s.cle] + ")"; }).join(" ; ") + ".\n" +
+	if (!state.has("rejeuEnCours")){
+		var attente = state.quests["n9_revue"] ? "" : " Sur royaume, la Chronique n'est pas encore réécrite : le Faussaire attend que quelqu'un la tienne, pour que la chute se voie. Il frappera quand tu auras passé les Portes, les Runes et le Haut-Conseil.";
+		say(C.rouge(C.gras("L'AUBE DU QUATRIÈME JOUR.")) + (cedes.length ? " Chaque salle qui n'est pas tenue s'éteint : " + cedes.map(function(s){ return s.titre + " (" + CONSEQUENCES_SYNCHRO_CH9[s.cle] + ")"; }).join(" ; ") + "." : " Le Grand Sablier tremble, mais toutes les salles tiennent.") + attente + "\n" +
 			C.gris("(Radio : « Grace : on n'abandonne rien. Finis ce qui reste, une salle après l'autre : tout ce que tu apprends sert à la bataille. sablier te dit tout. »)"));
 	}
 }
@@ -1249,7 +1251,10 @@ function validerCh9(){
 	});
 	// La bataille : quand le Chronomancien est sacré, ou à l'aube du quatrième jour.
 	if (!c.bataille && state.quests["n9_rang5"]) commencerBatailleCh9(false);
-	if (c.minutes >= AUBE_CH9 && !c.bataille){ lancerAssautCh9(); commencerBatailleCh9(true); }
+	// À l'aube, les salles qui ne sont pas tenues s'éteignent. La réécriture, elle, attend que la Chronique soit clonée et
+	// défendue (les Portes, les Runes et le Haut-Conseil faits) : un joueur en retard ne clone jamais une histoire déjà fausse.
+	if (c.minutes >= AUBE_CH9 && !c.bataille && !c.assaut) lancerAssautCh9();
+	if (c.minutes >= AUBE_CH9 && !c.bataille && state.quests["n9_revue"]) commencerBatailleCh9(true);
 	if (c.bataille){
 		if (!state.quests["n9_alerte"] && vuCh9("fetchForce") && vuCh9("comparaison")) state.complete("n9_alerte");
 		if (!state.quests["n9_restauration"] && restaurationOkCh9()) state.complete("n9_restauration");

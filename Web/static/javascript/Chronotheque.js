@@ -182,6 +182,9 @@ function texteMaitreCh9(g){
 	var s = salleCh9Par(g.s);
 	var defis = "\n\n" + C.gras("Les défis " + (/^[AEIOUHaeiouhÉ]/.test(g.nom) ? "d'" : "de ") + g.nom) + C.gris(" (des quêtes secondaires)") + "\n" + listeDefisSalleCh9(g.s);
 	var rappel = rappelLaurentCh9(), mot = rappel ? "\n\n" + C.jaune(g.nom + " lève les yeux de son ouvrage. « " + rappel + " »") : "";
+	// Un maître dont la salle est encore fermée n'enseigne pas son sort : le texte se calcule avant l'apprentissage,
+	// et l'événement « read » qui suit lui rend sa liste (pour que l'aide sache toujours chez qui s'apprend gh).
+	g.item.teaches = rangCh9() < rangRequisCh9(s) ? [] : sortsDuMaitreCh9(g);
 	if (rangCh9() < rangRequisCh9(s)) return g.entree() + "\n\n" + C.jaune(g.nom + " regarde le sceau sur ta manche. « Cette salle s'ouvre aux " + NOMS_RANGS_PLURIEL_CH9[rangRequisCh9(s)] + ". Tu es " + nomRangCh9() + ". " +
 		"Reviens avec ton sceau : sceaux te dira ce qu'il te manque. »") + mot;
 	var faites = s.etapes.filter(aFait).length;
@@ -565,6 +568,10 @@ var MAITRES_CH9 = {
 };
 
 var SORTS_DES_SALLES_CH9 = { sceaux: ["git"], conseil: ["gh"] };
+function sortsDuMaitreCh9(g){ return (SORTS_DES_SALLES_CH9[g.s] || []).filter(function(x){ return typeof MANUEL !== "undefined" && !!MANUEL[x]; }); }
+GameEvents.addListener("read", function(e){
+	try { Object.keys(MAITRES_CH9).forEach(function(k){ var g = MAITRES_CH9[k]; if (g.item && e.item === g.item && !g.item.teaches.length) g.item.teaches = sortsDuMaitreCh9(g); }); } catch (x){}
+});
 Object.keys(MAITRES_CH9).forEach(function(cle){
 	var g = MAITRES_CH9[cle], s = salleCh9Par(cle);
 	g.item = new Item(sansAccentCh9(g.nom).replace(/^./, function(x){ return x.toUpperCase(); }), "", "item_" + sansAccentCh9(g.nom) + ".gif").personnage();
@@ -782,7 +789,21 @@ if (typeof MANUEL_DU_JEU !== "undefined"){
 /* Dès que le joueur a cloné la Chronique, Jeremy pousse la promotion d'octobre sur royaume : le premier push du joueur sera refusé. */
 function pushJeremyCh9(){
 	var c = sCh9();
-	if (c.jeremy || !G9.depot(DEPOTS_CH9.chronique) || typeof gitConstructeur !== "function" || !estRoyaumeCh9()) return;
+	if (!G9.depot(DEPOTS_CH9.chronique) || typeof gitConstructeur !== "function" || !estRoyaumeCh9()) return;
+	// Le joueur a tiré la promotion de Jeremy avant d'avoir poussé quoi que ce soit : sans refus, pas de leçon.
+	// Jeremy repousse donc (au plus trois fois), tant que le joueur n'a pas vu un push refusé.
+	if (c.jeremy && !vuCh9("pushRejete") && !c.bataille && (c.jeremyEncore || 0) < 3 && G9.resoudre(DEPOTS_CH9.chronique, "refs/remotes/origin/main") === G9.resoudreR("main")){
+		try {
+			var mois = ["novembre", "décembre", "janvier"][c.jeremyEncore || 0];
+			var g2 = gitConstructeur(ROYAUME_CH9, DEPOT_ROYAUME_CH9, { nu: true, branche: "main" });
+			var reg2 = G9.fichierR("main", "registre.txt") || "";
+			g2.commit({ auteur: auteurCh9("jeremy"), date: Math.floor(maintenantCh9() / 1000), message: "registre: ajoute la promotion de " + mois, fichiers: { "registre.txt": reg2.replace(/\n?$/, "\n") + "Promotion de " + mois + " : douze scribes\n" } });
+			c.jeremyEncore = (c.jeremyEncore || 0) + 1;
+			if (!state.has("rejeuEnCours")) say(C.gris("(Jeremy, du pont des Royaumes : « Encore une ! Je viens de pousser la promotion de " + mois + " sur royaume. »)"));
+		} catch (e){}
+		return;
+	}
+	if (c.jeremy) return;
 	try {
 		var g = gitConstructeur(ROYAUME_CH9, DEPOT_ROYAUME_CH9, { nu: true, branche: "main" });
 		var reg = G9.fichierR("main", "registre.txt") || CHRONIQUE_CH9.registre.join("\n") + "\n";

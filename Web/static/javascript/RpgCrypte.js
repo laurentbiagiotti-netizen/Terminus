@@ -238,7 +238,7 @@ var RANGS_DES_BADGES = {
 	c_sudo: "argent", c_cle: "argent", c_preuves: "argent", c_gpg: "or", c_corbeau: "or", platine_reseau: "platine", platine_cyber: "platine"
 };
 function rangDuBadge(id){ return RANGS_DES_BADGES[id] || "bronze"; }
-function badgeGagne(id){ return /^(platine_|tour_|quartier_|maison_|quai_|galon_|ami_)/.test(id) ? state.has(id) : !!state.quests[id]; }
+function badgeGagne(id){ return /^(platine_|tour_|quartier_|maison_|quai_|galon_|salle_|sceau_|ami_)/.test(id) ? state.has(id) : !!state.quests[id]; }
 function idDuBadge(nom){ for (var k in COMPETENCES){ if (COMPETENCES[k] === nom) return k; } return null; }
 function nomDuBadge(id){ return COMPETENCES[id] || ""; }
 

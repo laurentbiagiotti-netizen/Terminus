@@ -94,7 +94,7 @@ var FICHIERS = ["SortsAnnexes.js", "HabitantsCampus.js", "HabitantsCrypte.js", "
 /* ================================================================== */
 (function(){
 	var jeu = monde.nouveauMonde({});
-	egal(jeu.lire("QUETES_ANNEXES.length"), 42, "quarante-deux quêtes annexes en tout (six par chapitre, du 2 au 8)");
+	egal(jeu.lire("QUETES_ANNEXES.length"), 48, "quarante-huit quêtes annexes en tout (six par chapitre, du 2 au 9)");
 	CHAPITRES.forEach(function(c){
 		var a = jeu.lire("QUETES_ANNEXES.filter(function(a){ return a.id.indexOf('" + c.prefixe + "') === 0; }).map(function(a){ return [a.chapitre, a.etapes.length, !!a.souvenir, !!a.merci, !!a.lumiere, typeof a.ouverte]; })");
 		egal(a.length, 6, "chapitre " + c.affiche + " : six annexes");
