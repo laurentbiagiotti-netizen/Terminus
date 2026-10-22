@@ -38,6 +38,8 @@ function terser(){
 }
 
 function finir(code, minifie){
+	// Le caractère de remplacement (U+FFFD) reste écrit en échappement, comme dans les sources : jamais en clair dans le paquet.
+	code = code.replace(/\uFFFD/g, "\\ufffd");
 	var empreinte = "sha384-" + crypto.createHash("sha384").update(code, "utf8").digest("base64");
 	ecrire(path.join(WEB, "static", "javascript", NOM_PAQUET), code);
 	// jouer.html : la même page que index.html, mais un seul script, avec son intégrité.

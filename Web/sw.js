@@ -7,9 +7,9 @@
  *  - les images : le cache d'abord, rafraîchi en arrière-plan ;
  *  - chaque nouvelle version efface les caches des anciennes. Rien d'autre que ce site n'est jamais touché.
  */
-var VERSION = "20261022090320";
+var VERSION = "20261022090509";
 var CACHE = "terminus-" + VERSION;
-var COEUR = ["jouer.html","static/javascript/terminus.paquet.js?v=20261022090320","static/css/terminus.css?v=20261022090320"];
+var COEUR = ["jouer.html","static/javascript/terminus.paquet.js?v=20261022090509","static/css/terminus.css?v=20261022090509"];
 
 self.addEventListener("install", function(e){
 	e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(COEUR); }).then(function(){ return self.skipWaiting(); }));
