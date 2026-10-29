@@ -117,7 +117,7 @@ var CHAPITRE = ["Chronique.js", "Chapitre9.js", "Chronotheque.js", "HabitantsChr
 	faux(jeu, "state.has('ch9Ouvert')", "partie neuve : la Chronothèque est fermée");
 	var liste = jeu.taper("chapitre");
 	contient(liste, "9. La Chronothèque ", "chapitre : la ligne 9, alignée");
-	contient(jeu.taper("chapitre 10"), "1, 2, 3, 4, 5, 6, 7, 8 et 9", "chapitre 10 : il n'existe pas");
+	contient(jeu.taper("chapitre 11"), "chapitres 1 à 10", "chapitre 11 : il n'existe pas");
 	contient(jeu.taper("sablier"), "chapitre 9", "sablier avant l'ouverture : il dit où il sert");
 	contient(jeu.taper("man git"), "git", "man git existe");
 	contient(jeu.taper("man gh"), "gh", "man gh existe");

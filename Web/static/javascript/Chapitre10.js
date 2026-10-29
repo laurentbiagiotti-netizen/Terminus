@@ -130,7 +130,8 @@ var ORDRE_DES_SORTS_11 = (function(){
 	var liste = [];
 	Object.keys(SORTS_DES_POSTES_CH10).forEach(function(k){ SORTS_DES_POSTES_CH10[k].forEach(function(s){ if (liste.indexOf(s) === -1) liste.push(s); }); });
 	if (typeof SORTS_DONNEES !== "undefined") SORTS_DONNEES.forEach(function(s){ if (liste.indexOf(s) === -1) liste.push(s); });
-	return liste.filter(function(s){ return autres.indexOf(s) === -1 && typeof MANUEL !== "undefined" && MANUEL[s]; });
+	// Les sorts déjà enseignés par les habitants des chapitres d'avant restent des sorts d'annexe : hors barème, ici aussi.
+	return liste.filter(function(s){ return autres.indexOf(s) === -1 && typeof MANUEL !== "undefined" && MANUEL[s] && !(typeof SORTS_DES_ANNEXES !== "undefined" && SORTS_DES_ANNEXES[s]); });
 })();
 ORDRE_DES_SORTS_11.forEach(function(s){ if (MANUEL[s]) delete MANUEL[s].horsBareme; });
 

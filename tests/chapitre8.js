@@ -104,7 +104,7 @@ var FICHIERS = ["SortsPort.js", "SortsPortShell.js", "SortsPortProgrammes.js", "
 	// Le décor n'apparaît pas avant l'ouverture.
 	faux(jeu, "state.has('ch8Ouvert')", "partie neuve : le Grand Port est fermé");
 	contient(jeu.taper("chapitre"), "8. ", "chapitre : la ligne 8");
-	contient(jeu.taper("chapitre 10"), "1, 2, 3, 4, 5, 6, 7, 8 et 9", "chapitre 10 : il n'existe pas");
+	contient(jeu.taper("chapitre 11"), "chapitres 1 à 10", "chapitre 11 : il n'existe pas");
 	var jp = monde.nouveauMonde({});
 	jp.taper("chapitre 7", "oui");
 	contient(jp.taper("port"), "chapitre 8", "port avant l'ouverture (à Port-Aube) : il dit où il sert");
