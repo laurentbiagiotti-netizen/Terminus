@@ -225,6 +225,14 @@ var CHAPITRE = ["SortsDonnees.js", "Lac.js", "Chapitre10.js", "Abysses.js", "Hab
 /* 7. La partie complète : la solution documentée, à 20 sur 20          */
 /* ================================================================== */
 (function(){
+	var debut = DOC.indexOf("## Chapitre 10 : le Lac Profond"), fin = DOC.indexOf("## L'épreuve finale");
+	verifier(debut > -1 && fin > debut, "docs/solution.md : la section du chapitre 10 avant l'épreuve finale");
+	var section = DOC.substring(debut, fin);
+	for (var n = PREMIERE; n <= DERNIERE; n++) verifier(new RegExp("^### " + n + "\\. ", "m").test(section), "docs/solution.md : la partie " + n);
+	verifier(section.indexOf("—") === -1, "docs/solution.md (chapitre 10) : pas de tiret cadratin");
+	verifier(section.indexOf(" & ") === -1, "docs/solution.md (chapitre 10) : pas d'esperluette");
+	var blocs = section.split("```").filter(function(x, i){ return i % 2 === 1; }).join("\n");
+	verifier(blocs.split("\n").filter(function(l){ return /^# /.test(l); }).every(function(l){ return /^# (Les réponses|Le Filet)/.test(l); }), "docs/solution.md (chapitre 10) : un # en tête de ligne seulement dans un here-document");
 	var jeu = neuf();
 	jusqua(jeu, DERNIERE);
 	var manque = jeu.lire("QUETES_CH10.concat(QUETES_SECONDAIRES_CH10).filter(function(q){ return !state.quests[q.id]; }).map(function(q){ return q.id; }).join(' ')");

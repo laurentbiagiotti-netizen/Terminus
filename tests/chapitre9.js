@@ -462,7 +462,7 @@ var CHAPITRE = ["Chronique.js", "Chapitre9.js", "Chronotheque.js", "HabitantsChr
 /* 9. La partie complète : la solution documentée, à 20 sur 20          */
 /* ================================================================== */
 (function(){
-	var debut = DOC.indexOf("## Chapitre 9 : la Chronique d'Éternité"), fin = DOC.indexOf("## L'épreuve finale");
+	var debut = DOC.indexOf("## Chapitre 9 : la Chronique d'Éternité"), fin = DOC.indexOf("## Chapitre 10 :");
 	verifier(debut > -1 && fin > debut, "docs/solution.md : la section du chapitre 9 avant l'épreuve finale");
 	var section = DOC.substring(debut, fin);
 	for (var n = PREMIERE; n <= DERNIERE; n++) verifier(new RegExp("^### " + n + "\\. ", "m").test(section), "docs/solution.md : la partie " + n);
