@@ -110,6 +110,9 @@ var PAGES_DU_JEU = {
 		"Retourner le sablier relève l'intégrité de la Chronique : la première étape du chapitre le demande.",
 	sceaux: MANUEL_DU_JEU.sceaux + "\n\nAvant l'ouverture de la Chronothèque (chapitre 9), il dit simplement où se gagnent les sceaux.",
 	regenerer: MANUEL_DU_JEU.regenerer + "\n\nAvant l'ouverture de la Chronothèque (chapitre 9), il dit simplement où il sert.",
+	jauge: MANUEL_DU_JEU.jauge + "\n\nAvant l'ouverture du Lac Profond (chapitre 10), elle dit simplement où elle sert.\n" +
+		"Plonger la jauge donne la Clarté de départ : une des premières étapes du chapitre le demande.",
+	insignes: MANUEL_DU_JEU.insignes + "\n\nAvant l'ouverture du Lac Profond (chapitre 10), elle dit simplement où se gagnent les insignes.",
 	graphe:
 		"graphe n'est PAS une commande Linux : c'est une commande du jeu, comme carte.\n" +
 		"Après chaque commande git, le panneau de l'image montre le graphe vivant du dépôt où tu travailles,\n" +

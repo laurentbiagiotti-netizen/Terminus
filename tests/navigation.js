@@ -75,12 +75,12 @@ function sansCouleur(t){ return String(t).replace(/\x1b\[[0-9;]*m/g, ""); }
 		c[1].forEach(function(o){ verifier(code.indexOf(o) > -1, c[0] + " " + o + " : l'option annoncée existe dans le code"); });
 	});
 	verifier(/CINEMATIQUES\[n\]/.test(guide) && /parseInt\(args\[0\], 10\)/.test(guide), "cinematique N existe dans le code");
-	verifier(/"1": 1, "2": 3, "3": 2, "4": 5, "5": 6, "6": 7, "7": 8, "8": 9, "9": 10 \}\[args\[0\]\]/.test(guide), "quiz N (1 à 9) existe dans le code");
+	verifier(/"1": 1, "2": 3, "3": 2, "4": 5, "5": 6, "6": 7, "7": 8, "8": 9, "9": 10, "10": 11 \}\[args\[0\]\]/.test(guide), "quiz N (1 à 10) existe dans le code");
 
 	// help n'est pas plus long qu'avant : une ligne par sort, les commandes du jeu, et pas une ligne de plus.
 	var aide = sansCouleur(jeu.taper("help"));
 	var n = jeu.lire("state.knownSpells().length"), c = jeu.lire("COMMANDES_DU_JEU.length");
-	egal(c, 28, "la liste des commandes du jeu garde sa longueur (chapitres remplace chapitre ; sablier, sceaux et regenerer pour la Chronothèque ; graphe pour le graphe git)");
+	egal(c, 30, "la liste des commandes du jeu garde sa longueur (chapitres remplace chapitre ; sablier, sceaux et regenerer pour la Chronothèque ; graphe pour le graphe git ; jauge et insignes pour le Lac)");
 	egal(aide.split("\n").length, 1 + n + 1 + 1 + 1 + 1 + c + 1, "help garde sa longueur");
 	contient(aide, "help COMMANDE", "help annonce l'aide des commandes du jeu");
 	contient(aide, "help badges", "help donne un exemple");
@@ -106,8 +106,8 @@ var stRiche = {};
 var riche = nouveauMonde(stRiche, 52);
 jouerDe(riche, null, "cat ModeleOSI");
 (function(){
-	// Les chapitres 4 à 9 en renfort, l'un après l'autre ; la Crypte, ouverte à la main (elle suit la panne).
-	[4, 5, 6, 7, 8, 9].forEach(function(n){ contient(riche.taper("aller " + n, "oui"), "EN RENFORT : CHAPITRE " + n, "renfort au chapitre " + n); });
+	// Les chapitres 4 à 10 en renfort, l'un après l'autre ; la Crypte, ouverte à la main (elle suit la panne).
+	[4, 5, 6, 7, 8, 9, 10].forEach(function(n){ contient(riche.taper("aller " + n, "oui"), "EN RENFORT : CHAPITRE " + n, "renfort au chapitre " + n); });
 	riche.lire("state.applyState('crypteOuverte'); verifierMonde(); Shell.narration = []");
 	var commandes = riche.lire("SORTS_DU_JEU.concat(['help'])");
 	var essais = [];
@@ -194,8 +194,8 @@ jouerDe(jeu, null, "cd Paradis");
 	contient(jeu.taper("aller 3"), "s'ouvre à la fin de la panne", "aller 3 avant la fin de la panne : refusé");
 	contient(jeu.taper("aller 2 3"), "il n'y a que les chapitres", "aller 2 3 : un seul chapitre");
 	contient(jeu.taper("aller"), "quel chapitre", "aller sans numéro");
-	contient(jeu.taper("aller 10"), "il n'y a que les chapitres 1 à 9", "aller 10");
-	contient(jeu.taper("aller x"), "il n'y a que les chapitres 1 à 9", "aller x");
+	contient(jeu.taper("aller 11"), "il n'y a que les chapitres 1 à 10", "aller 11");
+	contient(jeu.taper("aller x"), "il n'y a que les chapitres 1 à 10", "aller x");
 	jeu.taper("aller 2");
 	jouerDe(jeu, "cd ~/Cybersup/BatimentB", "cat ModeleOSI");
 	verifier(jeu.lire("state.quests.r_batiment && state.quests.r_osi"), "la panne avance : r_batiment et r_osi");
