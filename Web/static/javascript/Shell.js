@@ -531,6 +531,8 @@ Shell.cdSimple = function(args, io){
 	// Revenir sur ses pas est toujours permis ; entrer quelque part demande le droit de traverser.
 	if (r.name !== ".." && r.name !== "." && r.node !== current_room) Shell.verifierTraversee(r.node, io, "cd");
 	enterRoom(r.node);
+	// Dans un script, cd ne dit rien (comme sous Linux) : seule la commande tapée raconte le lieu.
+	if (Shell.profondeur_script > 0) return "";
 	return !io.tty ? "" : "Tu es maintenant dans " + current_room.toString() + ". " + current_room.intro_text;
 };
 
@@ -620,7 +622,9 @@ Shell.sorts.ls = function(args, io){
 			}
 			GameEvents.fire({ type: "ls", room: lieu, all: !!p.opts.a, long: !!p.opts.l });
 		} else {
-			blocs.push(p.opts.l ? Shell.ligneLongue(r.node, null, io) : r.node.itemname);
+			// Un objet nommé par un chemin (ls dossier/objet) s'affiche avec ce chemin, comme sous Linux.
+			var nomVu = /\//.test(cibles[i]) ? cibles[i] : r.node.itemname;
+			blocs.push(p.opts.l ? Shell.ligneLongue(r.node, /\//.test(cibles[i]) ? cibles[i] : null, io) : nomVu);
 		}
 	}
 	return blocs.join("\n");

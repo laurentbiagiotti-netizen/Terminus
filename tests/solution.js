@@ -132,12 +132,21 @@ if (!jeu.lire("state.has('platine_ch9')")) problemes.push("le badge platine du c
 if (jeu.lire("state.xp10") !== jeu.lire("state.xpMax10()")) problemes.push("le chapitre 9 n'atteint pas le score maximal : " + jeu.lire("state.xp10") + " sur " + jeu.lire("state.xpMax10()"));
 if (jeu.lire("state.noteTexte(10)") !== "20 / 20") problemes.push("le chapitre 9 n'a pas 20 sur 20 : " + jeu.lire("state.noteTexte(10)"));
 if (jeu.lire("rangCh9()") !== 5) problemes.push("le chapitre 9 : le joueur n'est pas Chronomancien (rang " + jeu.lire("rangCh9()") + ")");
+// Le chapitre 10 (le Lac Profond, numéro 11 dans le code) : enchaîné après la Chronothèque, il doit mener au rapport contresigné, à 20 sur 20, Maître du Lac.
+if (!jeu.lire("state.quests.n10_rapport")) problemes.push("le chapitre 10 (le Lac Profond) n'atteint pas le rapport contresigné (n10_rapport) ; dernier lieu : " + jeu.lire("current_room.room_name"));
+if (!jeu.lire("state.has('victoireCh10')")) problemes.push("le chapitre 10 : pas de victoire (victoireCh10)");
+var manque11 = jeu.lire("QUETES_CH10.concat(QUETES_SECONDAIRES_CH10).filter(function(q){ return !state.quests[q.id]; }).map(function(q){ return q.id; }).join(' ')");
+if (manque11) problemes.push("étapes ou défis du chapitre 10 manquants : " + manque11);
+if (!jeu.lire("state.has('platine_ch10')")) problemes.push("le badge platine du chapitre 10 n'est pas gagné");
+if (jeu.lire("state.xp11") !== jeu.lire("state.xpMax11()")) problemes.push("le chapitre 10 n'atteint pas le score maximal : " + jeu.lire("state.xp11") + " sur " + jeu.lire("state.xpMax11()"));
+if (jeu.lire("state.noteTexte(11)") !== "20 / 20") problemes.push("le chapitre 10 n'a pas 20 sur 20 : " + jeu.lire("state.noteTexte(11)"));
+if (jeu.lire("rangCh10()") !== 5) problemes.push("le chapitre 10 : le joueur n'est pas Maître du Lac (rang " + jeu.lire("rangCh10()") + ")");
 var annexes = jeu.lire("QUETES_ANNEXES.filter(function(a){ return !state.quests[a.id]; }).map(function(a){ return a.id; }).join(' ')");
 if (annexes) problemes.push("quêtes annexes manquantes : " + annexes);
-[["ami_ch2", "Ami du campus"], ["ami_ch3", "Ami de la Crypte"], ["ami_ch4", "Ami de l'Académie"], ["ami_ch5", "Ami du Bastion"], ["ami_ch6", "Ami de Lumen"], ["ami_ch7", "Ami de Port-Aube"], ["ami_ch8", "Ami du Grand Port"], ["ami_ch9", "Ami de la Chronothèque"]].forEach(function(b){
+[["ami_ch2", "Ami du campus"], ["ami_ch3", "Ami de la Crypte"], ["ami_ch4", "Ami de l'Académie"], ["ami_ch5", "Ami du Bastion"], ["ami_ch6", "Ami de Lumen"], ["ami_ch7", "Ami de Port-Aube"], ["ami_ch8", "Ami du Grand Port"], ["ami_ch9", "Ami de la Chronothèque"], ["ami_ch10", "Ami du Lac Profond"]].forEach(function(b){
 	if (!jeu.lire("state.has('" + b[0] + "')")) problemes.push("le badge " + b[1] + " n'est pas gagné");
 });
-if (jeu.lire("QUETES_ANNEXES.length") !== 48) problemes.push("il devrait y avoir 48 quêtes annexes, il y en a " + jeu.lire("QUETES_ANNEXES.length"));
+if (jeu.lire("QUETES_ANNEXES.length") !== 54) problemes.push("il devrait y avoir 54 quêtes annexes, il y en a " + jeu.lire("QUETES_ANNEXES.length"));
 if (jeu.lire("state.xp") !== jeu.lire("state.xpMax()")){
 	problemes.push("la solution n'atteint pas le score maximal. Sorts jamais lancés : [" +
 		jeu.lire("ORDRE_DES_SORTS.filter(function(x){ return !state.usages[x]; }).join(', ')") + "] ; lieux jamais visités : [" +

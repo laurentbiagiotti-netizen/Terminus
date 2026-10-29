@@ -3303,7 +3303,7 @@ function suffixeSplit(n, longueur, chiffres){
 }
 
 Shell.sorts.split = function(args, io){
-	var lignes = null, octets = null, morceaux = null, chiffres = false, longueur = 2, bavard = false, reste = [], suffixe = "";
+	var lignes = null, octets = null, morceaux = null, parLignes = false, chiffres = false, longueur = 2, bavard = false, reste = [], suffixe = "";
 	var taille = function(t){
 		var m = /^(\d+)([KMkm]?)$/.exec(t || "");
 		if (!m || parseInt(m[1], 10) < 1) throw new ShellError("split: invalid number of bytes: ‘" + t + "’");
@@ -3314,7 +3314,14 @@ Shell.sorts.split = function(args, io){
 		if (a === "-l"){ lignes = args[++i]; if (!/^\d+$/.test(lignes || "") || parseInt(lignes, 10) < 1) throw new ShellError("split: invalid number of lines: ‘" + lignes + "’"); lignes = parseInt(lignes, 10); continue; }
 		if (/^-l\d+$/.test(a)){ lignes = parseInt(a.substring(2), 10); continue; }
 		if (a === "-b"){ octets = taille(args[++i]); continue; }
-		if (a === "-n"){ morceaux = args[++i]; if (!/^\d+$/.test(morceaux || "") || parseInt(morceaux, 10) < 1) throw new ShellError("split: invalid number of chunks: ‘" + morceaux + "’"); morceaux = parseInt(morceaux, 10); continue; }
+		// -n N : N morceaux de même taille ; -n l/N : N morceaux sans couper une ligne.
+		if (a === "-n" || /^-n./.test(a) || /^--number=/.test(a)){
+			morceaux = a === "-n" ? args[++i] : a.replace(/^-n|^--number=/, "");
+			var ml = /^l\/(\d+)$/.exec(morceaux || "");
+			if (ml){ parLignes = true; morceaux = ml[1]; }
+			if (!/^\d+$/.test(morceaux || "") || parseInt(morceaux, 10) < 1) throw new ShellError("split: invalid number of chunks: ‘" + (ml ? "l/" : "") + morceaux + "’");
+			morceaux = parseInt(morceaux, 10); continue;
+		}
 		if (a === "-d" || a === "--numeric-suffixes"){ chiffres = true; continue; }
 		if (a === "-a"){ longueur = parseInt(args[++i], 10); if (!(longueur >= 1 && longueur <= 6)) throw new ShellError("split: invalid suffix length"); continue; }
 		if (/^--additional-suffix=/.test(a)){ suffixe = a.substring(20); continue; }
@@ -3327,7 +3334,20 @@ Shell.sorts.split = function(args, io){
 	if (texte === null) throw new ShellError("split : quel objet découper ? Utilisation : split -l 100 OBJET [PRÉFIXE]");
 	var prefixe = reste[1] || "x";
 	var pieces = [];
-	if (octets !== null || morceaux !== null){
+	if (morceaux !== null && parLignes){
+		// Comme GNU split -n l/N : des bornes à chaque N-ième des octets, repoussées jusqu'à la fin de la ligne.
+		var ls = lignesDe(texte), total = 0, bornes = [];
+		ls.forEach(function(x){ total += versOctetsUtf8(x).length + 1; });
+		var cumul = 0, courant = [], k = 1;
+		ls.forEach(function(x){
+			courant.push(x);
+			cumul += versOctetsUtf8(x).length + 1;
+			if (k < morceaux && cumul >= Math.ceil(total * k / morceaux)){ pieces.push(courant.join("\n")); courant = []; k++; }
+		});
+		pieces.push(courant.join("\n"));
+		while (pieces.length < morceaux) pieces.push("");
+		void bornes;
+	} else if (octets !== null || morceaux !== null){
 		var cars = Array.from(contenuExact(texte, false));
 		var pas = octets !== null ? octets : Math.ceil(cars.length / morceaux);
 		for (var d = 0; d < cars.length; d += Math.max(1, pas)) pieces.push(cars.slice(d, d + pas).join(""));

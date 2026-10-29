@@ -3598,7 +3598,8 @@ function lireLogrotate(h, chemins, io){
 		if (n === null){ resultat.erreurs.push("error: cannot stat " + chemin + ": No such file or directory"); return; }
 		if (n instanceof Room){ fichiersDuDossierGuet(h, chemin, "*").filter(function(f){ return !/(\.dpkg-|~$|\.bak$|\.disabled$)/.test(f.nom); }).forEach(function(f){ lireChemin(f.chemin, profondeur + 1); }); return; }
 		if (/[wW]/.test(n.mode.charAt(4)) || /[wW]/.test(n.mode.charAt(7))){ resultat.erreurs.push("error: Ignoring " + chemin + " because of bad file mode - must be 0644 or 0444."); return; }
-		if (n.owner !== "root"){ resultat.erreurs.push("error: Ignoring " + chemin + " because the file owner is wrong (should be root or user with uid 0)."); return; }
+		// Lancé par un utilisateur (sans sudo), logrotate accepte aussi ses propres fichiers de configuration.
+		if (n.owner !== "root" && !(io && !io.sudo && n.owner === JOUEUR)){ resultat.erreurs.push("error: Ignoring " + chemin + " because the file owner is wrong (should be root or user with uid 0)."); return; }
 		resultat.lus.push(chemin);
 		var lignes = n.getText().split("\n"), bloc = null, script = false;
 		for (var i = 0; i < lignes.length; i++){
@@ -3710,7 +3711,8 @@ Shell.sorts.logrotate = function(args, io){
 			if (!aFaire){ if (debug || bavard) sortie.push("  log does not need rotating (log has been rotated at " + dateIsoGuet(derniere || maintenant).substring(0, 16).replace(/:0(\d)$/, ":$1") + ", which is less than " + ({ daily: "a day", weekly: "a week", monthly: "a month", yearly: "a year", hourly: "an hour" }[o.frequence] || "a week") + " ago)"); return; }
 			if (debug || bavard) sortie.push("  log needs rotating", "rotating log " + chemin + ", log->rotateCount is " + (o.rotate || 0));
 			var ext = o.compress ? ".gz" : "";
-			if (!debug && !io.sudo){ echecs.push("error: error renaming " + chemin + " to " + chemin + ".1: Permission denied"); return; }
+			var dossierAMoi = (function(){ var dl = dossierHoteGuet(h, chemin.replace(/\/[^\/]+$/, "")); return !!dl && dl.owner === JOUEUR && item.owner === JOUEUR; })();
+			if (!debug && !io.sudo && !dossierAMoi){ echecs.push("error: error renaming " + chemin + " to " + chemin + ".1: Permission denied"); return; }
 			var n = o.rotate || 0;
 			for (var j = n; j >= 1; j--){
 				var plusVieux = [chemin + "." + j + ext, chemin + "." + j];

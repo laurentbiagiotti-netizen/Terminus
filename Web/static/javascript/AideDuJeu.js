@@ -96,6 +96,7 @@ var PAGES_DU_JEU = {
 		"  badges port-aube  ceux des services réseau Linux (Port-Aube ; badges portaube, badges ile, badges services)\n" +
 		"  badges port       ceux des conteneurs (le Grand Port ; badges grand-port, badges conteneurs, badges docker)\n" +
 		"  badges chronique  ceux de Git (la Chronothèque ; badges git, badges chronotheque)\n" +
+		"  badges lac        ceux de Linux et Docker pour la donnée (le Lac Profond ; badges data, badges donnees)\n" +
 		"  badges MOT        un badge précis, par un mot du nom de sa compétence : relit sa leçon\n\n" +
 		"Exemples : badges 2, badges dns, badges sudo, badges port",
 	grimoire: MANUEL_DU_JEU.grimoire + "\n\nHors du chapitre 4 (avant l'ouverture de l'Académie), il dit simplement quand il s'ouvrira.",
@@ -149,7 +150,7 @@ var PAGES_DU_JEU = {
 	recommencer:
 		"recommencer n'est PAS une commande Linux : c'est une commande du jeu.\n\n" +
 		"  recommencer       efface toute ta progression et repart de zéro (oui pour confirmer) ; ton compte et ton mot de passe\n" +
-		"                    sont gardés. Utile pour choisir un départ direct (chapitre 2 à chapitre 9) sur une partie neuve.\n\n" +
+		"                    sont gardés. Utile pour choisir un départ direct (chapitre 2 à chapitre 10) sur une partie neuve.\n\n" +
 		"Pour ouvrir un autre chapitre sans rien perdre, préfère aller N (le renfort). Refusé pendant l'épreuve finale.",
 	/* La même page que man logout (Shell.js). */
 	logout: PAGE_LOGOUT,
@@ -157,7 +158,7 @@ var PAGES_DU_JEU = {
 		"quiz n'est PAS une commande Linux : c'est une commande du jeu.\n" +
 		"À la fin de chaque chapitre, cinq questions tirées au hasard dans ses leçons. Ton meilleur score est gardé.\n\n" +
 		"  quiz              le quiz du chapitre en cours, s'il est terminé\n" +
-		"  quiz N            le quiz du chapitre N, une fois ce chapitre terminé (quiz 1 à quiz 9)\n\n" +
+		"  quiz N            le quiz du chapitre N, une fois ce chapitre terminé (quiz 1 à quiz 10)\n\n" +
 		"Pendant le quiz : 1 à 4 pour répondre, Échap pour sortir. Avant la fin du chapitre, quiz dit simplement qu'il n'est pas ouvert.\n\n" +
 		"Exemple : quiz 2",
 	ambiance:
@@ -181,14 +182,14 @@ var PAGES_DU_JEU = {
 		"Chaque chapitre s'ouvre une seule fois sur sa cinématique ; cette commande la rejoue.\n\n" +
 		"  cinematique       celle du chapitre en cours\n" +
 		"  cinematique N     celle du chapitre N : 1 (Terminus), 2 (la panne), 3 (la Crypte), 4 (l'Académie), 5 (le Bastion),\n" +
-		"                    6 (Lumen), 7 (Port-Aube), 8 (le Grand Port), 9 (la Chronothèque)\n\n" +
+		"                    6 (Lumen), 7 (Port-Aube), 8 (le Grand Port), 9 (la Chronothèque),\n                    10 (le Lac Profond)\n\n" +
 		"Entrée passe au plan suivant, Échap passe tout. Si ton système demande moins d'animations, elles sont coupées.",
 	chapitre:
 		"chapitre n'est PAS une commande Linux : c'est une commande du jeu.\n\n" +
-		"  chapitre          la liste des neuf chapitres, comme chapitres : leur état, ta note, comment t'y rendre\n" +
+		"  chapitre          la liste des dix chapitres, comme chapitres : leur état, ta note, comment t'y rendre\n" +
 		"  chapitre N        au tout début d'une partie neuve : partir directement au chapitre N (oui pour confirmer).\n" +
 		"                    chapitre 2 : le renfort réseau (la panne) ; chapitre 3 : la mission cyber (la Crypte) ;\n" +
-		"                    chapitre 4 à chapitre 9 : l'Académie, le Bastion, Lumen, Port-Aube, le Grand Port, la Chronothèque.\n" +
+		"                    chapitre 4 à chapitre 10 : l'Académie, le Bastion, Lumen, Port-Aube, le Grand Port, la Chronothèque,\n                    le Lac Profond.\n" +
 		"                    Les chapitres d'avant ne sont alors pas notés pour toi.\n" +
 		"                    En cours de partie : dit où est le chapitre N s'il est ouvert, sinon quand il s'ouvrira.\n\n" +
 		"Pour te rendre à un chapitre, ou en ouvrir un autre en cours de partie sans rien perdre : aller N.\n" +
@@ -196,7 +197,7 @@ var PAGES_DU_JEU = {
 		"Exemples : chapitre, chapitre 3 (sur une partie neuve)",
 	chapitres:
 		"chapitres n'est PAS une commande Linux : c'est une commande du jeu.\n\n" +
-		"  chapitres         les neuf chapitres : leur état (en cours, ouvert, terminé, fermé, non joué), ta note sur 20\n" +
+		"  chapitres         les dix chapitres : leur état (en cours, ouvert, terminé, fermé, non joué), ta note sur 20\n" +
 		"                    s'il y en a une, le chapitre où tu es (◀), et comment t'y rendre (aller N)\n\n" +
 		"Même chose que chapitre sans numéro. Refusé pendant l'épreuve finale.",
 	aller:

@@ -1475,6 +1475,7 @@ function verifierMonde(){
     if (typeof verifierChapitre7 === "function") verifierChapitre7();
     if (typeof verifierChapitre8 === "function") verifierChapitre8();
     if (typeof verifierChapitre9 === "function") verifierChapitre9();
+    if (typeof verifierChapitre10 === "function") verifierChapitre10();
     if (typeof verifierAnnexes === "function") verifierAnnexes();
 }
 

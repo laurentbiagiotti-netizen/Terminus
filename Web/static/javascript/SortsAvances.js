@@ -577,7 +577,11 @@ Shell.sorts.crontab = function(args, io){
 		throw new ShellError("crontab : -e ouvre un éditeur de texte, et il n'y en a pas dans ce monde. Ici, on se contente de lire (-l) et de retirer (-r).");
 	}
 	if (action === "-l"){
-		if (taches.length === 0) return "pas de crontab pour " + utilisateur;
+		if (taches.length === 0){
+			// Dans un tuyau (crontab -l | ...), comme le vrai : le message sur la sortie d'erreur, et le code 1.
+			if (!io.tty){ (io.errFin || io.err)("no crontab for " + utilisateur); io.code = 1; return ""; }
+			return "pas de crontab pour " + utilisateur;
+		}
 		var lignes = ["# min heure jour mois jour_semaine   commande", "# une étoile veut dire « à chaque fois »"].concat(taches);
 		return lignes.join("\n");
 	}

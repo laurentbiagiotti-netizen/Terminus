@@ -150,6 +150,23 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
   102. [La bataille du temps](#102-la-bataille-du-temps)
   103. [Le rapport de la bataille du temps](#103-le-rapport-de-la-bataille-du-temps)
   104. [Après la victoire : la date de demain](#104-après-la-victoire--la-date-de-demain)
+- [Chapitre 10 : le Lac Profond, la grande finale](#chapitre-10--le-lac-profond-la-grande-finale-linux-et-docker-pour-la-donnée)
+  107. [Le Lac, Wissam et l'Ordre](#107-le-lac-wissam-et-lordre)
+  108. [Le quai : poser le pied sur lac](#108-le-quai--poser-le-pied-sur-lac)
+  109. [Acte I, le Riverain : la Grève, le Banc de Tri, le Comptoir des Mesures (Lamia, Younes, Syrine)](#109-acte-i-le-riverain--la-grève-le-banc-de-tri-le-comptoir-des-mesures-lamia-younes-syrine)
+  110. [Épreuve de rang I : le Filet percé (Pêcheur de données)](#110-épreuve-de-rang-i--le-filet-percé-pêcheur-de-données)
+  111. [Acte II, le Pêcheur de données : le Gué des Encres, le Moulin des Doublons, la Vanne des Formats (Noam, Maeva, Kamal)](#111-acte-ii-le-pêcheur-de-données--le-gué-des-encres-le-moulin-des-doublons-la-vanne-des-formats-noam-maeva-kamal)
+  112. [Épreuve de rang II : l'Eau trouble (Plongeur)](#112-épreuve-de-rang-ii--leau-trouble-plongeur)
+  113. [Acte III, le Plongeur : l'Écluse des Scripts, le Bief des Parallèles, la Tour de Garde (Zélia, Miguel, Badis)](#113-acte-iii-le-plongeur--lécluse-des-scripts-le-bief-des-parallèles-la-tour-de-garde-zélia-miguel-badis)
+  114. [Épreuve de rang III : l'Écluse bloquée (Éclusier)](#114-épreuve-de-rang-iii--lécluse-bloquée-éclusier)
+  115. [Acte IV, l'Éclusier : la Fosse du Disque, la Chambre des Pressions, le Coffre des Secrets (Arnaud, Julien, Megane)](#115-acte-iv-léclusier--la-fosse-du-disque-la-chambre-des-pressions-le-coffre-des-secrets-arnaud-julien-megane)
+  116. [Épreuve de rang IV : le Raz-de-marée (Sondeur des Abysses)](#116-épreuve-de-rang-iv--le-raz-de-marée-sondeur-des-abysses)
+  117. [Acte V, le Sondeur des Abysses : le Chantier des Images, la Citerne, le Grand Bassin (Elias, Remi, Eden)](#117-acte-v-le-sondeur-des-abysses--le-chantier-des-images-la-citerne-le-grand-bassin-elias-remi-eden)
+  118. [Épreuve de rang V : la Pile engloutie (Maître du Lac)](#118-épreuve-de-rang-v--la-pile-engloutie-maître-du-lac)
+  119. [La Grande Marée : les huit bras de Pipelinus](#119-la-grande-marée--les-huit-bras-de-pipelinus)
+  120. [Le rapport de la Grande Marée](#120-le-rapport-de-la-grande-marée)
+  121. [Les défis des maîtres, poste par poste](#121-les-défis-des-maîtres-poste-par-poste)
+  122. [Les quêtes annexes : l'Ami du Lac Profond](#122-les-quêtes-annexes--lami-du-lac-profond)
 - [L'épreuve finale : la Forteresse](#lépreuve-finale--la-forteresse-mission-spéciale)
 
 ## Le barème
@@ -203,7 +220,7 @@ Hormis Laurent, tous les personnages sont inventés. Ils portent des prénoms de
 
 Ces commandes du jeu ne font partie d'aucune étape : la solution ci-dessous suit l'ordre de l'histoire et ne s'en sert pas.
 
-- `chapitres` (ou `chapitre` sans numéro) : les huit chapitres, leur état (en cours, ouvert, terminé, fermé, non joué), la note de chacun, le chapitre où l'on est et comment s'y rendre.
+- `chapitres` (ou `chapitre` sans numéro) : les dix chapitres, leur état (en cours, ouvert, terminé, fermé, non joué), la note de chacun, le chapitre où l'on est et comment s'y rendre.
 - `aller N` : pour un chapitre ouvert, emmène à son lieu d'entrée (les connexions `ssh` en cours sont fermées ; pour la Crypte, une connexion à citadelle est ouverte, comme avec `ssh citadelle`), en fait le chapitre en cours et affiche son étape. Pour un chapitre 4 à 8 pas encore ouvert, propose de l'ouvrir en renfort (réponse `oui`) : les autres chapitres gardent leur progression et leur note, les chapitres sautés restent non joués, les sorts des chapitres d'avant sont prêtés et rapportent leurs XP s'ils sont ensuite appris pour de vrai dans leur chapitre. Le chapitre en cours suit ensuite le joueur (une étape franchie, l'entrée de l'Académie, du Bastion, de Lumen, de Port-Aube ou du Grand Port passée), et seule son horloge avance : les autres attendent.
 - Refus : pendant l'épreuve finale ; un chapitre 1, 2 ou 3 fermé (ils s'ouvrent dans l'ordre de l'histoire) ; un chapitre 4 à 8 avant d'avoir battu le Sorcier Noir. Au tout début d'une partie neuve, `aller N` fait un départ direct, comme `chapitre N`.
 - `help COMMANDE`, `COMMANDE --help` et `man COMMANDE` : la page d'une commande du jeu, avec toutes ses sous-commandes (`help badges` : `badges N`, `badges reseau`, `badges dns`...). `help SORT` montre la page d'un sort déjà appris.
@@ -4211,6 +4228,614 @@ git log -p --all | grep MOT_DE_PASSE
 git filter-repo --path secrets.txt --invert-paths --force
 git log --all --oneline -- secrets.txt
 echo "La combinaison est changée : la nouvelle n'est écrite nulle part." > ROTATION.txt
+```
+
+## Chapitre 10 : le Lac Profond, la grande finale (Linux et Docker pour la donnée)
+
+Numéro interne 11, affiché 10. Le chapitre s'ouvre à la fin de la Chronothèque (le rapport de la bataille du temps contresigné) : le sceau daté de demain mène sous la Chronothèque, au Lac Profond (`cd ~/Cybersup/Lac`). On peut aussi y partir directement (la dixième enveloppe, « Le Sceau du Lac », ou `chapitre 10` en début de partie) : les sorts des chapitres 1 à 9 sont alors acquis. Une cinématique ouvre le chapitre dans les deux cas (`cinematique 10` la rejoue).
+
+Sous la Chronothèque dort le lac de données de l'école : dix ans de journaux, d'exports et de sauvegardes, versés sans tri. Dans ses profondeurs vit Pipelinus, une pieuvre dont chaque bras est un pipeline : c'est lui qui signait P.G. (« Pipelinus, Gardien du Lac ») ; la flotte noire et le Faussaire n'étaient que deux de ses bras. À l'aube du J4, la Grande Marée le fait remonter. Le mentor est Wissam, Grace guide à la radio. On arrive Riverain ; on repart Maître du Lac. Chaque commande avance l'horloge de 5 minutes ; à 22 h, on dort, on se lève à 6 h, et pendant la nuit la crontab du joueur sur `lac` tourne vraiment.
+
+Quinze postes, quinze gardiens, en cinq actes : Lamia (la Grève des Fichiers : regarder une donnée), Younes (le Banc de Tri : compter, filtrer), Syrine (le Comptoir des Mesures : sommes, médianes, moyennes), Noam (le Gué des Encres : encodages, CRLF, BOM), Maeva (le Moulin des Doublons : doublons et différences), Kamal (la Vanne des Formats : lignes malformées, JSON), Zélia (l'Écluse des Scripts : scripts sûrs), Miguel (le Bief des Parallèles : découper, paralléliser, compresser), Badis (la Tour de Garde : cron, flock, journaux), Arnaud (la Fosse du Disque : la place disque), Julien (la Chambre des Pressions : priorités et bornes), Megane (le Coffre des Secrets : données personnelles et droits), Elias (le Chantier des Images : une image reproductible), Remi (la Citerne : postgres, sauvegarde et restauration) et Eden (le Grand Bassin : compose). Le travail se fait sur la machine `lac` (`ssh lac`), dans la maison du joueur (`rive/`, `courants/`, `ecluses/`, `bief/`, `profondeurs/`, `arsenal/`) et dans `/srv/lac` ; `regenerer NOM` en repose un dossier neuf. Chaque acte se termine par une épreuve de rang : Pêcheur de données, Plongeur, Éclusier, Sondeur des Abysses, Maître du Lac (`insignes` dit ce qu'il manque). `jauge` (une commande du jeu) montre le plan de la rive, l'heure, le rang et la Clarté du Lac sur 100, lue sur l'état réel de `lac`.
+
+Tout est validé sur l'état réel de la machine : un fichier converti qui garde un BOM ne compte pas, une ligne malformée jetée au lieu d'être mise de côté non plus, un vieux journal effacé au lieu d'être compressé non plus, une image construite en root non plus. Les variantes légitimes sont acceptées (`dos2unix` ou `tr -d '\r'`, `csvstat` ou `datamash`, `nano` ou `sed` pour écrire un fichier, `crontab -e` ou un tuyau vers `crontab -`...). Tout est défensif : Pipelinus et ses bras restent narratifs et inertes.
+
+| Repère | Où le trouver dans le jeu |
+| --- | --- |
+| `<lac-q1>` à `<lac-q5>` | les réponses de la Rive, données par les commandes de la partie 109 |
+| `<lac-comptoir-q2>`, `<lac-espece-q3>`, `<lac-espece-q4>` | le comptoir et les espèces que nomment les questions 2 à 4 de `~/rive/REPONSES.md` |
+| `<filet-q1>` à `<filet-q3>` | les réponses du Filet percé, données par les commandes de la partie 110 |
+| `<lac-captures>` | le nombre de captures restaurées (`SELECT count(*) FROM captures`) |
+| `<lac-clarte>` | la Clarté du Lac après la Marée (`jauge`) |
+
+Les 65 défis du Lac (quêtes secondaires `s_n10_*`, 50 XP chacun) : quatre par gardien, révélés en le lisant, et cinq défis d'honneur de Wissam : Pêcheur de données avant la première nuit (J1 22:00), Sondeur des Abysses avant la fin du J2, la Marée repoussée avant l'aube du J4, sans acheter d'indice, et sans avoir effacé un seul vieux journal du lac.
+
+### 107. Le Lac, Wissam et l'Ordre
+
+On descend sur la rive, on écoute Wissam, on lit l'Ordre, la radio et la jauge, et on plonge la jauge : c'est la Clarté du Lac de départ.
+
+```
+cd ~/Cybersup/Lac
+cat Wissam; cat Ordre
+cat Radio; cat Jauge
+jauge
+```
+
+### 108. Le quai : poser le pied sur lac
+
+Les données vivent sur la machine `lac`. On s'y connecte, on lit le `LISEZMOI` du disque des données et on mesure sa place : le lac déborde déjà (plus de 90 %).
+
+```
+ssh lac
+ls
+cat /srv/lac/LISEZMOI
+df -h /srv/lac
+exit
+```
+
+### 109. Acte I, le Riverain : la Grève, le Banc de Tri, le Comptoir des Mesures (Lamia, Younes, Syrine)
+
+Les trois gardiens de la Rive enseignent leurs sorts sur l'île ; le travail se fait sur `lac`, dans `~/rive`. On regarde une donnée avant de la toucher (`file`, `head`, `wc -l`, `csvlook`), on lit les octets d'un fichier mystère (des tabulations) et on le convertit en CSV, puis on répond aux cinq questions de `REPONSES.md` en comptant, filtrant, sommant (`cut | sort | uniq -c`, `awk`), et avec les bons outils pour la médiane et les moyennes (`csvstat`, `datamash`). Les réponses changent d'une partie à l'autre : les commandes les donnent.
+
+```
+cd ~/Cybersup/Lac/Greve; cat Lamia
+cd ../BancDeTri; cat Younes
+cd ../ComptoirDesMesures; cat Syrine
+cd ..
+ssh lac
+cd ~/rive
+file captures.csv
+head captures.csv
+wc -l captures.csv
+csvlook captures.csv | head
+od -c mystere.txt | head -3
+tr '\t' ',' < mystere.txt > mystere.csv
+head -3 mystere.csv
+cut -d, -f4 captures.csv | tail -n +2 | sort | uniq -c | sort -rn | head -3
+awk -F, '$4 == "<lac-comptoir-q2>" && $6 > 30' captures.csv | wc -l
+awk -F, '$5 == "<lac-espece-q3>" { s += $6 } END { printf "%.0f\n", s }' captures.csv
+csvgrep -c espece -m "<lac-espece-q4>" captures.csv | csvstat -c prix_kg --median
+datamash -t, -H -s -g espece mean poids_kg < captures.csv | sort -t, -k2 -nr
+cat > REPONSES.md <<'FIN'
+# Les réponses de la Rive
+1. Le comptoir
+Réponse : <lac-q1>
+2. Les gros lots
+Réponse : <lac-q2>
+3. Les kilos
+Réponse : <lac-q3>
+4. La médiane
+Réponse : <lac-q4>
+5. Le poids moyen
+Réponse : <lac-q5>
+FIN
+exit
+```
+
+### 110. Épreuve de rang I : le Filet percé (Pêcheur de données)
+
+La mairie envoie un fichier au format « français » : des points-virgules, des virgules décimales. On regarde avant de compter : `cut -d';'`, et `gsub` pour remplacer la virgule par un point avant d'additionner.
+
+```
+ssh lac
+cd ~/filet
+cat NOTE.txt
+head -3 filet.csv
+tail -n +2 filet.csv | cut -d';' -f6 | sort -u | wc -l
+tail -n +2 filet.csv | awk -F';' '{ gsub(",", ".", $4); kg[$1] += $4 } END { for (d in kg) print kg[d], d }' | sort -rn | head -1
+tail -n +2 filet.csv | awk -F';' '{ gsub(",", ".", $5); s[$2] += $5; n[$2]++ } END { for (c in s) print s[c]/n[c], c }' | sort -n | head -1
+cat > REPONSES.md <<'FIN'
+# Le Filet percé
+1. Les pêcheurs
+Réponse : <filet-q1>
+2. Le jour
+Réponse : <filet-q2>
+3. Le comptoir
+Réponse : <filet-q3>
+FIN
+exit
+insignes
+```
+
+### 111. Acte II, le Pêcheur de données : le Gué des Encres, le Moulin des Doublons, la Vanne des Formats (Noam, Maeva, Kamal)
+
+L'encre du nord est en latin-1 (`file -i`, `iconv`), l'arrivée du sud a des fins de ligne Windows et un BOM (`od -c`, `dos2unix`, `sed`). On dédoublonne sans perdre l'en-tête, on trouve les nouvelles captures du jour avec `comm` sur deux fichiers triés, on sépare les lignes justes des malformées sans rien jeter (`awk` : 8 champs, un poids nombre, une date AAAA-MM-JJ), puis on passe au JSON (`mlr`) et on l'interroge (`jq`). La réponse 6 est écrite par `sed`, à partir du résultat de `jq`.
+
+```
+cd ~/Cybersup/Lac/GueDesEncres; cat Noam
+cd ../MoulinDesDoublons; cat Maeva
+cd ../VanneDesFormats; cat Kamal
+cd ..
+ssh lac
+cd ~/courants
+file -i arrivee-nord.csv
+iconv -f ISO-8859-1 -t UTF-8 arrivee-nord.csv > nord.csv
+file -i nord.csv
+grep -c écrevisse nord.csv
+od -c arrivee-sud.csv | head -2
+dos2unix -n arrivee-sud.csv sud.csv
+sed -i '1s/^\xEF\xBB\xBF//' sud.csv
+{ head -n 1 nord.csv; tail -n +2 nord.csv; tail -n +2 sud.csv; } > arrivees.csv
+od -c arrivees.csv | head -2
+tail -n +2 brutes.csv | sort | uniq -d | wc -l
+{ head -n 1 brutes.csv; tail -n +2 brutes.csv | sort -u; } > uniques.csv
+wc -l uniques.csv
+tail -n +2 hier.csv | sort > hier.tri
+tail -n +2 aujourdhui.csv | sort > auj.tri
+{ head -n 1 aujourdhui.csv; comm -13 hier.tri auj.tri; } > nouvelles.csv
+wc -l nouvelles.csv
+awk -F, 'NR == 1 || (NF == 8 && $6 ~ /^[0-9]+(\.[0-9]+)?$/ && $2 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)' vanne.csv > valides.csv
+awk -F, 'NR > 1 && !(NF == 8 && $6 ~ /^[0-9]+(\.[0-9]+)?$/ && $2 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)' vanne.csv > rejets.csv
+wc -l valides.csv rejets.csv
+mlr --icsv --ojson cat valides.csv > captures.json
+jq '[.[] | select(.espece == "sandre")] | length' captures.json
+r=$(jq '[.[] | select(.espece == "sandre")] | length' captures.json)
+sed -i "s/^Réponse : $/Réponse : $r/" REPONSES.md
+cat REPONSES.md
+exit
+```
+
+### 112. Épreuve de rang II : l'Eau trouble (Plongeur)
+
+Tout ce qu'un fichier peut avoir de travers : encre, CRLF, doublons, lignes malformées, dates au mauvais format. `valider.sh` dit ce qui ne va pas ; les rejets vont dans `rejets.csv`.
+
+```
+ssh lac
+cd ~/eau-trouble
+cat NOTE.txt
+file arrivage.csv
+iconv -f ISO-8859-1 -t UTF-8 arrivage.csv | tr -d '\r' > net.csv
+head -n 1 net.csv > propre.csv
+tail -n +2 net.csv | sort -u | awk -F, 'NF == 8 && $6 ~ /^[0-9]+(\.[0-9]+)?$/ && $2 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/' >> propre.csv
+tail -n +2 net.csv | sort -u | awk -F, '!(NF == 8 && $6 ~ /^[0-9]+(\.[0-9]+)?$/ && $2 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)' > rejets.csv
+./valider.sh propre.csv
+exit
+```
+
+### 113. Acte III, le Plongeur : l'Écluse des Scripts, le Bief des Parallèles, la Tour de Garde (Zélia, Miguel, Badis)
+
+Un script sûr échoue bruyamment : `set -euo pipefail`, `"$1"` entre guillemets (le fichier du soir a un espace dans son nom), puis un fichier temporaire au nom unique (`mktemp`) rangé par un piège (`trap ... EXIT`). Au Bief, on coupe un gros fichier (`split`, l'en-tête à part) et on compresse les morceaux en parallèle (`xargs -P`). À la Tour, la nuit de l'écluse planifiée sous verrou (`crontab`, `flock -n`), une trace dans le journal (`logger`, `journalctl -t`) et une rotation (`logrotate`). La crontab se remplit par un tuyau (`crontab -l | ... | crontab -`) ou avec `crontab -e`.
+
+```
+cd ~/Cybersup/Lac/EcluseDesScripts; cat Zelia
+cd ../BiefDesParalleles; cat Miguel
+cd ../TourDeGarde; cat Badis
+cd ..
+ssh lac
+cd ~/ecluses
+cat ecluse.sh
+./ecluse.sh "donnees/arrivee du soir.csv"
+cat > ecluse.sh <<'FIN'
+#!/bin/bash
+# ecluse.sh : le bilan d'une arrivée, en kilos par comptoir. Utilisation : ./ecluse.sh FICHIER
+set -euo pipefail
+fichier="$1"
+tmp=/tmp/ecluse.tmp
+tail -n +2 "$fichier" | cut -d, -f4,6 > "$tmp"
+mkdir -p sortie
+awk -F, '{ kg[$1] += $2 } END { for (c in kg) printf "%s,%.2f\n", c, kg[c] }' "$tmp" | sort > sortie/bilan.csv
+echo "Bilan écrit dans sortie/bilan.csv"
+FIN
+./ecluse.sh donnees/absente.csv
+echo $?
+./ecluse.sh "donnees/arrivee du soir.csv"
+cat sortie/bilan.csv
+cat > ecluse.sh <<'FIN'
+#!/bin/bash
+# ecluse.sh : le bilan d'une arrivée, en kilos par comptoir. Utilisation : ./ecluse.sh FICHIER
+set -euo pipefail
+fichier="$1"
+tmp=$(mktemp)
+trap 'rm -f "$tmp"' EXIT
+tail -n +2 "$fichier" | cut -d, -f4,6 > "$tmp"
+mkdir -p sortie
+awk -F, '{ kg[$1] += $2 } END { for (c in kg) printf "%s,%.2f\n", c, kg[c] }' "$tmp" | sort > sortie/bilan.csv
+echo "Bilan écrit dans sortie/bilan.csv"
+FIN
+./ecluse.sh "donnees/arrivee du soir.csv"
+ls /tmp
+cd ~/bief
+mkdir morceaux
+tail -n +2 sondes.csv | split -l 500 - morceaux/sondes_ --additional-suffix=.csv
+wc -l morceaux/*
+ls morceaux/*.csv | xargs -P 4 -n 1 zstd -q --rm
+ls morceaux
+cd ~/ecluses
+(crontab -l 2>/dev/null; echo '30 2 * * * flock -n /tmp/nuit.lock ~/ecluses/nuit.sh >> ~/ecluses/nuit.log 2>&1') | crontab -
+crontab -l
+flock -n /tmp/nuit.lock ~/ecluses/nuit.sh
+logger -t ecluse "nuit de l'écluse : essai"
+journalctl -t ecluse
+printf '%s\n' "$HOME/ecluses/nuit.log {" '  daily' '  rotate 7' '  compress' '  missingok' '  notifempty' '}' > ~/ecluses/logrotate.conf
+logrotate -d ~/ecluses/logrotate.conf
+exit
+```
+
+### 114. Épreuve de rang III : l'Écluse bloquée (Éclusier)
+
+Le pipeline des sondes dit « tout va bien » alors qu'un relevé est illisible : avec `pipefail`, il échoue enfin. `gzip -t` trouve le relevé corrompu, qui part en quarantaine (on ne jette rien), et la crontab, qui lançait le pipeline deux fois à la même minute, n'en garde qu'une, sous `flock`.
+
+```
+ssh lac
+cd ~/ecluse-bloquee
+cat NOTE.txt
+crontab -l
+cat pipeline.sh
+./pipeline.sh
+cat moyennes.csv
+sed -i '2i set -euo pipefail' pipeline.sh
+./pipeline.sh
+echo $?
+for f in sondes/*.gz; do gzip -t "$f" 2>/dev/null || mv "$f" quarantaine/; done
+ls quarantaine
+./pipeline.sh
+cat moyennes.csv
+crontab -l | grep -v '^#' | grep -v pipeline.sh > ~/crontab.txt
+echo '15 3 * * * flock -n /tmp/pipeline.lock ~/ecluse-bloquee/pipeline.sh > /dev/null 2>&1' >> ~/crontab.txt
+crontab ~/crontab.txt
+crontab -l
+exit
+insignes
+```
+
+### 115. Acte IV, l'Éclusier : la Fosse du Disque, la Chambre des Pressions, le Coffre des Secrets (Arnaud, Julien, Megane)
+
+Le disque : on mesure (`df`, `du | sort -h`), on compresse les vieux journaux au lieu de les effacer (`find -mtime +30 -exec zstd`), puis on retrouve la place qui manque encore : un fichier effacé que le collecteur tient ouvert (`lsof +L1`), libéré en relançant le service. La Chambre : l'agrégateur qui écrase la machine passe après les autres (`renice`, `ionice -c3`), et un job lourd se lance déjà borné (`timeout`, `nice`, `ionice`, `taskset`). Le Coffre : l'export public sans données personnelles (`cut`), le brut en 640, une ACL pour les analystes, la copie oubliée détruite (`shred`), et `umask 027`.
+
+```
+cd ~/Cybersup/Lac/FosseDuDisque; cat Arnaud
+cd ../ChambreDesPressions; cat Julien
+cd ../CoffreDesSecrets; cat Megane
+cd ..
+ssh lac
+df -h /srv/lac
+sudo du -sh /srv/lac/* | sort -h
+sudo find /srv/lac/journaux -name '*.log' -mtime +30
+sudo find /srv/lac/journaux -name '*.log' -mtime +30 -exec zstd -q --rm {} \;
+df -h /srv/lac
+sudo du -sh /srv/lac
+sudo lsof +L1
+sudo systemctl restart collecteur
+df -h /srv/lac
+ps -eo pid,ni,%cpu,comm --sort=-%cpu | head -3
+pid=$(pgrep agregateur)
+renice -n 15 -p $pid
+ionice -c3 -p $pid
+ps -o pid,ni,comm -p $pid
+ionice -p $pid
+cd ~/profondeurs
+timeout 30m nice -n 10 ionice -c3 taskset -c 1 ./agreger.sh
+cat mensuel.csv
+head -3 export-brut.csv
+cut -d, -f1-5 export-brut.csv > export-public.csv
+grep -cE '@|06 ' export-public.csv
+wc -l export-brut.csv export-public.csv
+chmod 640 export-brut.csv
+setfacl -m g:analystes:r export-public.csv
+getfacl export-public.csv
+shred -u /tmp/export-brut-copie.csv
+echo 'umask 027' >> ~/.bashrc
+exit
+```
+
+### 116. Épreuve de rang IV : le Raz-de-marée (Sondeur des Abysses)
+
+Le disque est plein : une mise à jour a passé l'ingestion en DEBUG. On lit le journal, on remet `INFO`, on vide le journal ouvert (`truncate`, pas `rm`), on relance, et on pose une rotation dans `/etc/logrotate.d` (avec `copytruncate`).
+
+```
+ssh lac
+df -h /srv/lac
+journalctl -u ingestion | tail -5
+sudo du -sh /srv/lac/journaux/* | sort -h | tail -3
+cat /etc/lac/ingestion.conf
+sudo sed -i 's/^LOG_LEVEL=DEBUG/LOG_LEVEL=INFO/' /etc/lac/ingestion.conf
+sudo truncate -s 0 /srv/lac/journaux/ingestion-debug.log
+sudo systemctl restart ingestion
+printf '%s\n' '/srv/lac/journaux/*.log {' '  daily' '  rotate 7' '  compress' '  missingok' '  notifempty' '  copytruncate' '}' > ~/lac.logrotate
+sudo cp ~/lac.logrotate /etc/logrotate.d/lac
+sudo logrotate -d /etc/logrotate.d/lac
+df -h /srv/lac
+exit
+insignes
+```
+
+### 117. Acte V, le Sondeur des Abysses : le Chantier des Images, la Citerne, le Grand Bassin (Elias, Remi, Eden)
+
+Une image reproductible : la base et la dépendance épinglées, un `.dockerignore`, pas root, `CMD` en forme exec ; on la lance avec les données en lecture seule. La Citerne : postgres dans un volume nommé, la table remplie par `awk` et `docker exec -i`, une sauvegarde `pg_dump | gzip`, et la preuve qu'elle se restaure dans une base d'essai. Le Grand Bassin : la pile compose, l'ETL qui attend que la base soit EN BONNE SANTÉ (`condition: service_healthy`), et le carnet publié sur 127.0.0.1 seulement, avec son jeton.
+
+```
+cd ~/Cybersup/Lac/ChantierDesImages; cat Elias
+cd ../Citerne; cat Remi
+cd ../GrandBassin; cat Eden
+cd ..
+ssh lac
+cd ~/arsenal/etl
+cat Dockerfile
+ls -a
+echo 'epuisette==1.4.2' > requirements.txt
+printf 'essais/\n.env\n' > .dockerignore
+cat > Dockerfile <<'FIN'
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY etl.py .
+USER 10001
+CMD ["python", "etl.py"]
+FIN
+docker build -t etl:1.0 .
+docker run --rm --user "$(id -u):$(id -g)" --memory 256m -v ~/arsenal/donnees:/data:ro -v ~/arsenal/sortie:/sortie etl:1.0
+cat ~/arsenal/sortie/agregats.csv
+docker volume create citerne
+docker run -d --name citerne --env-file ~/arsenal/bassin/db.env -v citerne:/var/lib/postgresql/data postgres:16-alpine
+docker exec -i citerne psql -U lac -d lac < ~/arsenal/citerne/schema.sql
+tail -n +2 ~/arsenal/donnees/captures.csv | awk -F, '{ printf "INSERT INTO captures VALUES (%s%s%s, %s%s%s, %s%s%s, %s%s%s, %s%s%s, %s, %s, %s%s%s);\n", q,$1,q, q,$2,q, q,$3,q, q,$4,q, q,$5,q, $6, $7, q,$8,q }' q="'" | docker exec -i citerne psql -U lac -d lac
+docker exec citerne psql -U lac -d lac -c 'SELECT count(*) FROM captures'
+docker exec citerne pg_dump -U lac lac | gzip > ~/arsenal/sauvegardes/lac.sql.gz
+docker exec citerne createdb -U lac essai
+gunzip -c ~/arsenal/sauvegardes/lac.sql.gz | docker exec -i citerne psql -U lac -d essai
+docker exec citerne psql -U lac -d essai -c 'SELECT count(*) FROM captures'
+docker build -t carnet:1.0 ~/arsenal/carnet
+cd ~/arsenal/bassin
+cat > compose.yaml <<'FIN'
+services:
+  db:
+    image: postgres:16-alpine
+    env_file: db.env
+    volumes:
+      - citerne-bassin:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lac -d lac"]
+      interval: 5s
+      retries: 10
+
+  etl:
+    image: etl:1.0
+    env_file: db.env
+    environment:
+      DB_HOST: db
+      DB_NAME: lac
+    volumes:
+      - ./donnees:/data:ro
+      - ./sortie:/sortie
+    depends_on:
+      db:
+        condition: service_healthy
+
+  carnet:
+    image: carnet:1.0
+    ports:
+      - "127.0.0.1:8888:8888"
+    env_file: carnet.env
+    volumes:
+      - ./sortie:/sortie:ro
+
+volumes:
+  citerne-bassin:
+FIN
+docker compose up -d
+docker compose ps -a
+curl "http://127.0.0.1:8888/?token=$(cut -d= -f2 carnet.env)"
+exit
+```
+
+### 118. Épreuve de rang V : la Pile engloutie (Maître du Lac)
+
+Quatre fautes, lues dans `docker compose ps` et `docker compose logs` : une base étranglée (`mem_limit: 16m`), un dossier mal nommé, un ETL qui part avant que la base réponde, un carnet ouvert à tout le réseau et sans jeton (il se publie sur le port 8889 : le 8888 est celui du Grand Bassin).
+
+```
+ssh lac
+cd ~/pile-engloutie
+cat NOTE.txt
+ls
+docker compose up -d
+docker compose ps -a
+docker compose logs db
+docker compose logs etl
+sed -i 's/mem_limit: 16m/mem_limit: 256m/' compose.yaml
+sed -i 's|./donees:/data:ro|./donnees:/data:ro|' compose.yaml
+sed -i 's|      - db$|      db:\n        condition: service_healthy|' compose.yaml
+sed -i 's|"8889:8888"|"127.0.0.1:8889:8888"\n    env_file: carnet.env|' compose.yaml
+cat compose.yaml
+docker compose up -d
+docker compose ps -a
+cat sortie/agregats.csv
+exit
+insignes
+```
+
+### 119. La Grande Marée : les huit bras de Pipelinus
+
+Maître du Lac, la Grande Marée commence (à l'aube du J4 au plus tard). Pipelinus lance ses bras : deux d'abord, puis un nouveau dès que tous ceux qui sont sortis sont tranchés, ou toutes les 45 minutes ; un bras laissé 90 minutes s'étend. Chaque bras se tranche avec ce qu'un poste a enseigné : le déversoir arrêté et désactivé, les doublons, l'encre, le poison (les lignes datées de demain et les poids négatifs en quarantaine), le brouillard (l'export public), la fourche (un conteneur que personne n'a lancé), le mimétisme (une image qui porte le nom de la tienne : on la reconstruit), le néant (la citerne et son volume effacés : on restaure la sauvegarde). Une sauvegarde planifiée chaque nuit fait passer la Clarté au-dessus de 90.
+
+```
+jauge
+cat Radio
+ssh lac
+df -h /srv/lac
+ls -l /srv/lac/entree /srv/lac/public
+docker ps
+systemctl status deversoir
+sudo systemctl disable --now deversoir
+sudo truncate -s 0 /srv/lac/journaux/maree.log
+df -h /srv/lac
+{ head -n 1 /srv/lac/entree/captures-maree.csv; tail -n +2 /srv/lac/entree/captures-maree.csv | sort -u; } > /srv/lac/propre/captures-maree.csv
+wc -l /srv/lac/propre/captures-maree.csv
+file /srv/lac/entree/releve-sonar.csv
+iconv -f ISO-8859-1 -t UTF-8 /srv/lac/entree/releve-sonar.csv | tr -d '\r' > /srv/lac/propre/releve-sonar.csv
+file /srv/lac/propre/releve-sonar.csv
+head -3 /srv/lac/entree/captures-demain.csv
+date +%F
+d=$(date -d tomorrow +%F)
+f=/srv/lac/entree/captures-demain.csv
+awk -F, -v d="$d" 'NR == 1 || ($2 != d && $6 >= 0)' $f > /srv/lac/propre/captures-demain.csv
+awk -F, -v d="$d" 'NR > 1 && ($2 == d || $6 < 0)' $f > /srv/lac/quarantaine/captures-demain.rejets.csv
+wc -l $f /srv/lac/propre/captures-demain.csv /srv/lac/quarantaine/captures-demain.rejets.csv
+ls -l /srv/lac/public
+cut -d, -f1-5 /srv/lac/public/export-du-jour.csv > /tmp/export-propre.csv
+mv /tmp/export-propre.csv /srv/lac/public/export-du-jour.csv
+grep -rlE '@|06 ' /srv/lac/public
+docker stats --no-stream
+docker ps --filter label=lac.bras
+docker rm -f bras-fourche
+docker image inspect etl:1.0 --format '{{json .Config.Labels}}'
+docker history etl:1.0
+docker build -t etl:1.0 ~/arsenal/etl
+docker run --rm --user "$(id -u):$(id -g)" -v ~/arsenal/donnees:/data:ro -v ~/arsenal/sortie:/sortie etl:1.0
+docker ps -a
+docker volume ls
+docker volume create citerne
+docker run -d --name citerne --env-file ~/arsenal/bassin/db.env -v citerne:/var/lib/postgresql/data postgres:16-alpine
+gunzip -c ~/arsenal/sauvegardes/lac.sql.gz | docker exec -i citerne psql -U lac -d lac
+docker exec citerne psql -U lac -d lac -c 'SELECT count(*) FROM captures'
+crontab -l | grep -v '^#' > ~/crontab.txt
+echo '0 1 * * * docker exec citerne pg_dump -U lac lac | gzip > ~/arsenal/sauvegardes/lac-nuit.sql.gz' >> ~/crontab.txt
+crontab ~/crontab.txt
+crontab -l
+exit
+jauge
+```
+
+### 120. Le rapport de la Grande Marée
+
+Le rapport, dans la boîte de Laurent sur l'île : Pipelinus, les huit bras, ce qui reste, la Clarté finale et le nombre de captures restaurées.
+
+```
+cat > ~/Cybersup/Lac/BoiteDeLaurent/rapport.txt <<'FIN'
+Rapport de la Grande Marée, pour Laurent.
+Pipelinus, le Gardien du Lac, est remonté avec ses huit bras.
+Le Déluge : le déversoir arrêté et désactivé, son journal vidé.
+Les Doublons : captures-maree dédoublonné, l'en-tête gardé.
+L'Encre : le relevé sonar converti en UTF-8, sans CRLF.
+Le Poison : les lignes de demain et les poids négatifs en quarantaine.
+Le Brouillard : l'export public sans emails ni téléphones.
+La Fourche : le conteneur bras-fourche retiré.
+Le Mimétisme : etl:1.0 reconstruite depuis mon Dockerfile.
+Le Néant : la base restaurée depuis la sauvegarde, <lac-captures> captures.
+Clarté du Lac après la Marée : <lac-clarte>.
+Ce qui reste : vérifier la sauvegarde de chaque nuit, et tourner les journaux.
+FIN
+jauge
+```
+
+### 121. Les défis des maîtres, poste par poste
+
+Quatre défis par gardien, révélés en le lisant. Les sorts qui n'avaient pas encore servi (`hexdump`, `csvsort`, `sha512sum`, `unzstd`) servent ici.
+
+```
+ssh lac
+cd ~/rive
+wc -c captures.csv
+hexdump -C mystere.txt | head -2
+csvsort -c poids_kg -r captures.csv | head -3
+sha512sum captures.csv
+csvlook -l comptoirs.csv
+stat -c %s captures.csv
+csvcut -n captures.csv
+datamash -t, -H -s -g comptoir count comptoir < captures.csv
+csvstat -c espece --freq captures.csv
+numfmt --to=iec 123456789
+cd ~/courants
+iconv -f UTF-8 -t ASCII//TRANSLIT nord.csv | head -3
+unix2dos -n nord.csv nord-windows.csv
+od -An -t x1 arrivee-sud.csv | head -2
+tail -n +2 brutes.csv | sort | uniq -D | head -4
+tail -n +2 ~/rive/captures.csv | sort -t, -k4,4 > /tmp/captures.tri
+tail -n +2 ~/rive/comptoirs.csv | sort -t, -k1,1 > /tmp/comptoirs.tri
+join -t, -1 4 -2 1 /tmp/captures.tri /tmp/comptoirs.tri | head -3
+comm -12 hier.tri auj.tri | head -3
+sha256sum ~/rive/captures.csv ~/arsenal/donnees/captures.csv
+mlr --c2p head -n 3 valides.csv
+mlr --icsv --opprint filter '$poids_kg > 30' valides.csv
+jq 'group_by(.espece) | map({espece: .[0].espece, captures: length})' captures.json
+csvjson ~/rive/comptoirs.csv
+cd ~/ecluses
+bash -n ecluse.sh
+bash -x ./ecluse.sh "donnees/arrivee du soir.csv"
+sed -i 's|^fichier="$1"$|fichier="${1:?Utilisation : ./ecluse.sh FICHIER}"|' ecluse.sh
+grep fichier= ecluse.sh
+mktemp -d
+cd ~/bief
+split -n l/4 sondes.csv /tmp/quart_
+pv sondes.csv | wc -l
+zstdcat morceaux/sondes_aa.csv.zst | head -2
+unzstd -c morceaux/sondes_ab.csv.zst | head -2
+parallel --dry-run zstd {} ::: un.csv deux.csv
+journalctl -t ecluse --since today
+logrotate -s ~/logrotate.etat -f ~/ecluses/logrotate.conf
+ncdu /srv/lac
+sudo du -h --max-depth=1 /srv/lac
+sudo find /srv/lac -size +1G
+pid=$(pgrep agregateur)
+taskset -cp $pid
+nice -n 19 wc -l ~/rive/captures.csv
+uptime
+echo -n ugo.roselier@lac.lan | sha256sum
+umask
+echo brouillon > ~/brouillon.txt
+shred -z -u ~/brouillon.txt
+hadolint ~/arsenal/etl/Dockerfile
+docker image ls --format '{{.Repository}}:{{.Tag}}'
+docker build --no-cache -t etl:1.0 ~/arsenal/etl
+docker volume inspect citerne
+docker exec citerne psql -U lac -d lac -c '\dt'
+docker exec citerne pg_isready -U lac -d lac
+cd ~/arsenal/bassin
+docker compose config
+yq '.services | keys' compose.yaml
+docker compose down
+docker compose up -d
+exit
+xp
+```
+
+### 122. Les quêtes annexes : l'Ami du Lac Profond
+
+Six habitants, six notions que les gardiens n'enseignent pas. Amina (la Grève) : prouver qu'un transfert est intact (`cksum`, un manifeste `b2sum`, `b2sum -c`). Kylian (le Banc) : voir et dompter les tabulations (`cat -A`, `expand`, `unexpand`). Chahla (le Bief) : couper un journal au sens, pas à la taille (`csplit`). Adonis (la Chambre) : mesurer avant d'optimiser (`time`). Déborah (le Moulin) : vérifier l'ordre avant de joindre (`sort -c`, `sort -o`, `sort -m`). Soufiane (le Comptoir) : la forme d'un tableau et le tableau croisé (`datamash check`, `crosstab`, `transpose`).
+
+```
+cd ~/Cybersup/Lac/Greve; cat Amina
+cd ../BancDeTri; cat Kylian
+cd ../BiefDesParalleles; cat Chahla
+cd ../ChambreDesPressions; cat Adonis
+cd ../MoulinDesDoublons; cat Deborah
+cd ../ComptoirDesMesures; cat Soufiane
+cd ..
+ssh lac
+cd ~/annexes/transfert/depart
+cksum nord.csv
+b2sum *.csv > MANIFESTE.b2
+cd ../arrivee
+b2sum -c ../depart/MANIFESTE.b2
+cp ../depart/sud.csv .
+b2sum -c ../depart/MANIFESTE.b2
+cd ~/annexes/tabulations
+cat -A releve.tsv | head -3
+expand -t 14 releve.tsv
+expand -t 14 releve.tsv > releve.txt
+unexpand -a -t 14 releve.txt | head -3
+cd ~/annexes/journal
+grep -n '^== SONDE' sondes-du-jour.txt
+csplit -z -f sonde- sondes-du-jour.txt '/^== SONDE/' '{*}'
+ls
+head -n 1 sonde-*
+time wc -l ~/rive/captures.csv
+time -p sort -t, -k6,6n ~/rive/captures.csv > /dev/null
+time -p sort -t, -k6,6n ~/rive/captures.csv > /dev/null 2> ~/annexes/chrono.txt
+cat ~/annexes/chrono.txt
+cd ~/annexes/ordre
+sort -c lundi.txt
+sort -o lundi.txt lundi.txt
+sort -o mardi.txt mardi.txt
+sort -c lundi.txt
+sort -m lundi.txt mardi.txt > semaine.txt
+cd ~/annexes/croise
+datamash -t, --header-in check < prises.csv
+datamash -t, -s --header-in crosstab 1,2 < prises.csv
+datamash -t, -s --header-in crosstab 1,2 < prises.csv | datamash -t, transpose
+datamash -t, -s --header-in crosstab 1,2 < prises.csv > croise.csv
+exit
+quetes annexes
 ```
 
 ## L'épreuve finale : la Forteresse (mission spéciale)

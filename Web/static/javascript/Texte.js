@@ -1350,9 +1350,10 @@ function extraireCle(ligne, cle, sep){
 }
 
 Shell.sorts.sort = function(args, io){
-	var p = lireOptionsGNU(args, "sort", "bdfghinMRrsuVcCz", "tko", {
+	// -m (--merge) fusionne des fichiers déjà triés : le résultat est le même qu'un tri de l'ensemble.
+	var p = lireOptionsGNU(args, "sort", "bdfghimnMRrsuVcCz", "tko", {
 		"reverse": "r", "numeric-sort": "n", "unique": "u", "ignore-case": "f", "field-separator": "t", "key": "k",
-		"output": "o", "human-numeric-sort": "h", "version-sort": "V", "stable": "s", "check": "c",
+		"output": "o", "human-numeric-sort": "h", "version-sort": "V", "stable": "s", "check": "c", "merge": "m",
 		"general-numeric-sort": "g", "ignore-leading-blanks": "b", "dictionary-order": "d", "ignore-nonprinting": "i"
 	}, "k");
 	var o = p.opts;

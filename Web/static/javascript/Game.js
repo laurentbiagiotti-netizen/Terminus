@@ -158,12 +158,12 @@ function ecranDeVictoire(chapitre){
 	var cadre = document.createElement("div");
 	cadre.className = "victoire-cadre";
 	var image = document.createElement("img");
-	var images = { 1: "item_grad.gif", 2: "item_locker.gif", 3: "loc_batimentb_ok.gif", 5: "item_historybook.gif", 6: "loc_bastion.gif", 7: "loc_lumen_rallumee.gif", 8: "loc_port_aube_fete.gif", 9: "loc_grand_port_victoire.gif", 10: "loc_chronotheque_victoire.gif" };
+	var images = { 1: "item_grad.gif", 2: "item_locker.gif", 3: "loc_batimentb_ok.gif", 5: "item_historybook.gif", 6: "loc_bastion.gif", 7: "loc_lumen_rallumee.gif", 8: "loc_port_aube_fete.gif", 9: "loc_grand_port_victoire.gif", 10: "loc_chronotheque_victoire.gif", 11: "loc_lac_victoire.gif" };
 	image.src = sourceImage("./static/img/" + images[chapitre]);
 	image.alt = "";
 	var titre = document.createElement("p");
 	titre.className = "victoire-titre";
-	titre.textContent = chapitre === 2 ? "Incident clos" : (chapitre === 3 ? "Réseau rétabli" : (chapitre === 5 ? "La Nuée repoussée" : (chapitre === 6 ? "Le Bastion a tenu" : (chapitre === 7 ? "Lumen brille" : (chapitre === 8 ? "Port-Aube s'allume" : (chapitre === 9 ? "La flotte noire vire de bord" : (chapitre === 10 ? "La Chronique tient" : "Le Sorcier Noir est vaincu")))))));
+	titre.textContent = chapitre === 2 ? "Incident clos" : (chapitre === 3 ? "Réseau rétabli" : (chapitre === 5 ? "La Nuée repoussée" : (chapitre === 6 ? "Le Bastion a tenu" : (chapitre === 7 ? "Lumen brille" : (chapitre === 8 ? "Port-Aube s'allume" : (chapitre === 9 ? "La flotte noire vire de bord" : (chapitre === 10 ? "La Chronique tient" : (chapitre === 11 ? "Le lac est clair" : "Le Sorcier Noir est vaincu"))))))));
 	var note = document.createElement("p");
 	note.className = "victoire-note";
 	note.textContent = state.noteTexte(chapitre === 1 ? undefined : chapitre);
@@ -174,7 +174,7 @@ function ecranDeVictoire(chapitre){
 	commande.className = "victoire-commande";
 	commande.appendChild(document.createTextNode(chapitre === 1 ? "Ton diplôme : " : "Ton certificat : "));
 	var code = document.createElement("code");
-	code.textContent = chapitre === 2 ? "cat ~/CertificatCyber" : (chapitre === 3 ? "cat ~/CertificatReseau" : (chapitre === 5 ? "cat ~/CertificatAvance" : (chapitre === 6 ? "cat ~/CertificatBastion" : (chapitre === 7 ? "cat ~/CertificatLumen" : (chapitre === 8 ? "cat ~/CertificatPortAube" : (chapitre === 9 ? "cat ~/CertificatGrandPort" : (chapitre === 10 ? "cat ~/CertificatChronotheque" : "cat Diplome")))))));
+	code.textContent = chapitre === 2 ? "cat ~/CertificatCyber" : (chapitre === 3 ? "cat ~/CertificatReseau" : (chapitre === 5 ? "cat ~/CertificatAvance" : (chapitre === 6 ? "cat ~/CertificatBastion" : (chapitre === 7 ? "cat ~/CertificatLumen" : (chapitre === 8 ? "cat ~/CertificatPortAube" : (chapitre === 9 ? "cat ~/CertificatGrandPort" : (chapitre === 10 ? "cat ~/CertificatChronotheque" : (chapitre === 11 ? "cat ~/CertificatLac" : "cat Diplome"))))))));
 	commande.appendChild(code);
 	var suite = document.createElement("p");
 	suite.className = "victoire-suite";
@@ -246,8 +246,8 @@ var completerSansFete = GameState.prototype.complete;
 GameState.prototype.complete = function(id){
 	var deja = this.quests[id];
 	completerSansFete.call(this, id);
-	if (!deja && (id === "m_boss" || id === "c_rapport" || id === "r_fin" || id === "d_fin" || id === "h_rapport" || id === "m6_rapport" || id === "p7_rapport" || id === "n8_rapport" || id === "n9_rapport") && !Shell.sauvegardeBloquee && !this.has("rejeuEnCours")){
-		setTimeout(function(){ ecranDeVictoire(id === "c_rapport" ? 2 : (id === "r_fin" ? 3 : (id === "d_fin" ? 5 : (id === "h_rapport" ? 6 : (id === "m6_rapport" ? 7 : (id === "p7_rapport" ? 8 : (id === "n8_rapport" ? 9 : (id === "n9_rapport" ? 10 : 1)))))))); }, 700);
+	if (!deja && (id === "m_boss" || id === "c_rapport" || id === "r_fin" || id === "d_fin" || id === "h_rapport" || id === "m6_rapport" || id === "p7_rapport" || id === "n8_rapport" || id === "n9_rapport" || id === "n10_rapport") && !Shell.sauvegardeBloquee && !this.has("rejeuEnCours")){
+		setTimeout(function(){ ecranDeVictoire(id === "c_rapport" ? 2 : (id === "r_fin" ? 3 : (id === "d_fin" ? 5 : (id === "h_rapport" ? 6 : (id === "m6_rapport" ? 7 : (id === "p7_rapport" ? 8 : (id === "n8_rapport" ? 9 : (id === "n9_rapport" ? 10 : (id === "n10_rapport" ? 11 : 1))))))))); }, 700);
 	}
 	if (!deja && id === "c_corbeau" && !Shell.sauvegardeBloquee) revelationDuCorbeau();
 };
@@ -325,7 +325,16 @@ function majEtat(){
 		var dernier = texteTalkie();
 		if (radio.dataset.dernier !== dernier){ radio.dataset.dernier = dernier; radioSOC(dernier); }
 	}
-	etat.classList.toggle("etat-alerte", (enCours === 2 && !state.quests["c_rapport"]) || (enCours === 3 && !state.quests["r_fin"]) || (enCours === 5 && !state.quests["d_fin"]) || (enCours === 6 && !state.quests["h_rapport"]) || (enCours === 7 && !state.quests["m6_rapport"]) || (enCours === 8 && !state.quests["p7_rapport"]) || (enCours === 9 && !state.quests["n8_rapport"]) || (enCours === 10 && !state.quests["n9_rapport"]));
+	etat.classList.toggle("etat-alerte", (enCours === 2 && !state.quests["c_rapport"]) || (enCours === 3 && !state.quests["r_fin"]) || (enCours === 5 && !state.quests["d_fin"]) || (enCours === 6 && !state.quests["h_rapport"]) || (enCours === 7 && !state.quests["m6_rapport"]) || (enCours === 8 && !state.quests["p7_rapport"]) || (enCours === 9 && !state.quests["n8_rapport"]) || (enCours === 10 && !state.quests["n9_rapport"]) || (enCours === 11 && !state.quests["n10_rapport"]));
+	if (enCours === 11){
+		var c10 = state.ch10 || {};
+		niveau.textContent = state.quests["n10_rapport"] ? "Chapitre 10 · Le lac est clair" : "Chapitre 10 · " + (typeof heureCh10 === "function" ? heureCh10() : "") +
+			(typeof nomRangCh10 === "function" ? " · " + nomRangCh10() : "") + (c10.maree ? " · la Grande Marée" : (typeof texteAvantMareeCh10 === "function" ? " · " + texteAvantMareeCh10().replace("la Grande Marée", "Marée") : ""));
+		remplirBarre(state.note(11));
+		document.getElementById("etat-xp").textContent = state.xpNet(11) + " XP · " + state.noteTexte(11) + (state.malus11 ? " (indices -" + state.malus11 + ")" : "");
+		document.getElementById("etat").title = "Note du chapitre 10 (le Lac Profond). Tape xp pour le détail, jauge pour le plan, insignes pour ton rang.";
+		return;
+	}
 	if (enCours === 10){
 		var c9 = state.ch9 || {};
 		niveau.textContent = state.quests["n9_rapport"] ? "Chapitre 9 · La Chronique tient" : "Chapitre 9 · " + (typeof heureCh9 === "function" ? heureCh9() : "") +
@@ -685,7 +694,7 @@ function nouvellePartie(prenom, motDePasse, nomComplet, email){
 	demanderParcours();
 }
 
-/* Les neuf enveloppes, à choisir au clavier (1 à 9) ou d'un clic. */
+/* Les dix enveloppes, à choisir au clavier (1 à 10) ou d'un clic. */
 function enveloppes(){
 	var boite = document.createElement("div");
 	boite.className = "enveloppes";
@@ -697,7 +706,8 @@ function enveloppes(){
 	 ["6", "item_lanterne_lumen.gif", "La Lanterne de Lumen", "Une cité souterraine s'éteint : disques pleins, mémoire, services, sauvegardes, RAID, mesures. Chapitre 6 directement (exploitation Linux)."],
 	 ["7", "item_billet_traversee.gif", "Le Billet de traversée", "Une île, dix maisons vides, un navire à la marée : DNS, courrier, NFS, Samba, LDAP, TLS, sauvegardes. Chapitre 7 directement (services réseau Linux)."],
 	 ["8", "item_ordre_embarquement.gif", "L'Ordre d'embarquement", "Une flotte noire à l'horizon, quatorze quais, trois jours et une aube : les conteneurs, de zéro à héros. Chapitre 8 directement (conteneurs)."],
-	 ["9", "item_sceau_chronique.gif", "Le Sceau de la Chronique", "Quelqu'un réécrit l'histoire de l'école : quatorze salles, trois jours et une aube pour la défendre. Git, de zéro à Chronomancien. Chapitre 9 directement (Git)."]].forEach(function(e){
+	 ["9", "item_sceau_chronique.gif", "Le Sceau de la Chronique", "Quelqu'un réécrit l'histoire de l'école : quatorze salles, trois jours et une aube pour la défendre. Git, de zéro à Chronomancien. Chapitre 9 directement (Git)."],
+	 ["10", "item_sceau_lac.gif", "Le Sceau du Lac", "Sous l'école dort un lac de données, et dedans une pieuvre qui prépare sa marée : quinze postes, trois jours et une aube. Linux et Docker pour la donnée, la grande finale. Chapitre 10 directement (Linux et Docker data)."]].forEach(function(e){
 		var bouton = document.createElement("button");
 		bouton.type = "button";
 		bouton.className = "enveloppe";
@@ -724,18 +734,18 @@ function enveloppes(){
 	return boite;
 }
 
-/* Neuf convocations possibles : l'épreuve de première année, ou un renfort (réseau, cyber, Linux avancé, durcissement, exploitation, services réseau, conteneurs ou Git) pour ceux qui connaissent les bases. */
+/* Dix convocations possibles : l'épreuve de première année, ou un renfort (réseau, cyber, Linux avancé, durcissement, exploitation, services réseau, conteneurs, Git ou Linux et Docker pour la donnée) pour ceux qui connaissent les bases. */
 function demanderParcours(){
-	term.echo("Dans ta boîte aux lettres, neuf enveloppes portent ton nom. Une seule est pour toi.");
+	term.echo("Dans ta boîte aux lettres, dix enveloppes portent ton nom. Une seule est pour toi.");
 	term.ajouterElement(enveloppes());
-	term.demander("Tape 1, 2, 3, 4, 5, 6, 7, 8 ou 9 (ou choisis une enveloppe) : ", false, function(reponse){
+	term.demander("Tape un nombre de 1 à 10 (ou choisis une enveloppe) : ", false, function(reponse){
 		var choix = String(reponse).trim();
 		Array.prototype.forEach.call(document.querySelectorAll(".enveloppes"), function(b){
 			b.classList.add("enveloppes-choisi");
 			Array.prototype.forEach.call(b.querySelectorAll(".enveloppe"), function(e, i){ if (String(i + 1) === choix) e.classList.add("enveloppe-choisie"); e.disabled = true; });
 		});
-		if (["1", "2", "3", "4", "5", "6", "7", "8", "9"].indexOf(choix) === -1){
-			term.echo(C.jaune("Réponds 1, 2, 3, 4, 5, 6, 7, 8 ou 9. En cas de doute, choisis 1 : c'est le début de l'histoire."));
+		if (["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"].indexOf(choix) === -1){
+			term.echo(C.jaune("Réponds par un nombre de 1 à 10. En cas de doute, choisis 1 : c'est le début de l'histoire."));
 			demanderParcours();
 			return;
 		}
@@ -769,7 +779,12 @@ function demanderParcours(){
 			majEtat();
 			return;
 		}
-		if (choix !== "1" && choix !== "4" && choix !== "5" && choix !== "6" && choix !== "7" && choix !== "8" && choix !== "9" && commencerChapitre2(choix === "2" ? 3 : 2)){
+		if (choix === "10" && typeof commencerChapitre10 === "function" && commencerChapitre10()){
+			Shell.fin();
+			majEtat();
+			return;
+		}
+		if (choix !== "1" && choix !== "4" && choix !== "5" && choix !== "6" && choix !== "7" && choix !== "8" && choix !== "9" && choix !== "10" && commencerChapitre2(choix === "2" ? 3 : 2)){
 			Shell.fin();
 			// L'ordre de mission commence à la WarRoom, avant la Crypte : son ouverture se joue tout de suite.
 			if (choix === "3" && typeof lancerCinematique === "function") lancerCinematique(3);

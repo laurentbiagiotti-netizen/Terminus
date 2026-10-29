@@ -120,7 +120,7 @@ function detailsDeQuete(id){
 	return INDICES_DETAILLES[id] || (typeof INDICES_CHAPITRE2 !== "undefined" && INDICES_CHAPITRE2[id]) ||
 		(typeof INDICES_PANNE !== "undefined" && INDICES_PANNE[id]) || (typeof INDICES_CH5 !== "undefined" && INDICES_CH5[id]) ||
 		(typeof INDICES_CH6 !== "undefined" && INDICES_CH6[id]) || (typeof INDICES_CH7 !== "undefined" && INDICES_CH7[id]) ||
-		(typeof INDICES_CH8 !== "undefined" && INDICES_CH8[id]) || (typeof INDICES_CH9 !== "undefined" && INDICES_CH9[id]) || [];
+		(typeof INDICES_CH8 !== "undefined" && INDICES_CH8[id]) || (typeof INDICES_CH9 !== "undefined" && INDICES_CH9[id]) || (typeof INDICES_CH10 !== "undefined" && INDICES_CH10[id]) || [];
 }
 
 var MAJ_OBJECTIF_SANS_GUIDE = majObjectif;
@@ -217,7 +217,9 @@ var SCENES = {
 	n8_quai: { image: "loc_grand_port.gif", titre: "Chapitre 8 · La Flotte noire", chapitre: 8,
 		lignes: ["Derrière le phare noir, une flotte de conteneurs se rassemble.", "Elle paraîtra à l'aube du quatrième jour. Il est 6 h, le premier.", "Quatorze quais, cinq épreuves : tu entres Mousse, tu sortiras Amiral."] },
 	n9_entree: { image: "loc_chronotheque.gif", titre: "Chapitre 9 · La Chronique d'Éternité", chapitre: 9,
-		lignes: ["Sous la tour de l'horloge dort la Chronique, et quelqu'un la réécrit.", "À l'aube du quatrième jour, la Grande Synchronisation. Il est 6 h, le premier.", "Quatorze salles, cinq épreuves : tu entres Apprenti, tu sortiras Chronomancien."] }
+		lignes: ["Sous la tour de l'horloge dort la Chronique, et quelqu'un la réécrit.", "À l'aube du quatrième jour, la Grande Synchronisation. Il est 6 h, le premier.", "Quatorze salles, cinq épreuves : tu entres Apprenti, tu sortiras Chronomancien."] },
+	n10_entree: { image: "loc_lac.gif", titre: "Chapitre 10 · Le Lac Profond", chapitre: 10,
+		lignes: ["Sous la Chronothèque dort le lac de données de l'école, et Pipelinus avec.", "À l'aube du quatrième jour, la Grande Marée. Il est 6 h, le premier.", "Quinze postes, cinq épreuves : tu entres Riverain, tu sortiras Maître du Lac."] }
 };
 function sceneDeChapitre(scene){
 	var fond = document.createElement("div");
@@ -302,6 +304,7 @@ function recapChapitre(chapitre){
 	else if (chapitre === 8){ minutes = Math.round((state.tempsMs - (state.debutChapitre8 || 0)) / 60000); }
 	else if (chapitre === 9){ minutes = Math.round((state.tempsMs - (state.debutChapitre9 || 0)) / 60000); }
 	else if (chapitre === 10){ minutes = Math.round((state.tempsMs - (state.debutChapitre10 || 0)) / 60000); }
+	else if (chapitre === 11){ minutes = Math.round((state.tempsMs - (state.debutChapitre11 || 0)) / 60000); }
 	else { minutes = Math.round((state.tempsMs - (state.debutChapitre2 || 0)) / 60000); }
 	if (chapitre === 3 && typeof RELIQUES !== "undefined") badges = Object.keys(RELIQUES).filter(function(id){ return state.quests[id]; });
 	if (chapitre === 2 && typeof TROPHEES_CRYPTE !== "undefined") badges = Object.keys(TROPHEES_CRYPTE).filter(function(id){ return state.quests[id]; });
@@ -311,6 +314,7 @@ function recapChapitre(chapitre){
 	if (chapitre === 8 && typeof TROPHEES_CH7 !== "undefined") badges = Object.keys(TROPHEES_CH7).filter(function(id){ return badgeGagne(id); });
 	if (chapitre === 9 && typeof TROPHEES_CH8 !== "undefined") badges = Object.keys(TROPHEES_CH8).filter(function(id){ return badgeGagne(id); });
 	if (chapitre === 10 && typeof TROPHEES_CH9 !== "undefined") badges = Object.keys(TROPHEES_CH9).filter(function(id){ return badgeGagne(id); });
+	if (chapitre === 11 && typeof TROPHEES_CH10 !== "undefined") badges = Object.keys(TROPHEES_CH10).filter(function(id){ return badgeGagne(id); });
 	sorts = Object.keys(state.frequences || {}).filter(function(s){ return SORTS_DU_JEU.indexOf(s) === -1; }).filter(function(s){ return chapitreDuSort(s) === chapitre || (chapitre === 1 && ["ls", "cd", "cat"].indexOf(s) > -1); });
 	sorts.sort(function(a, b){ return state.frequences[b] - state.frequences[a]; });
 	return { minutes: minutes, badges: badges, top: sorts.slice(0, 3).map(function(s){ return s + " ×" + state.frequences[s]; }) };
@@ -448,6 +452,20 @@ var QUIZ = {
 		["Pourquoi signer ses commits ?", ["Parce que user.name et user.email se changent en une ligne : seule la signature prouve qui a vraiment commité", "Pour les compresser", "Pour qu'ils passent la CI", "Pour pouvoir les rebaser"], 0, "Un commit non signé peut porter n'importe quel nom ; une signature se vérifie contre une clé connue."],
 		["Une Pull Request a tous ses tests verts. Peut-on la fusionner sans la lire ?", ["Non : la CI vérifie ce qu'on lui a appris, pas le sens ; la relecture humaine reste indispensable", "Oui, les tests suffisent", "Oui, si l'auteur est connu", "Non, il faut d'abord la rebaser"], 0, "Une ligne empoisonnée peut passer tous les tests."],
 		["Pourquoi --force-with-lease plutôt que --force ?", ["Il refuse d'écraser la branche distante si elle a bougé depuis ton dernier fetch", "Il est plus rapide", "Il signe le push", "Il crée une sauvegarde sur le serveur"], 0, "Tu n'écrases jamais par surprise le travail que tu n'as pas vu."]
+	],
+	11: [
+		["Un CSV s'ouvre avec des caractères bizarres (Ã©) et des ^M en fin de ligne. Que faire d'abord ?", ["Le regarder octet par octet (file, od -c), puis iconv -f ISO-8859-1 -t UTF-8 et dos2unix", "Le supprimer et le redemander", "Le passer tel quel au pipeline", "Remplacer les accents à la main"], 0, "On mesure avant de corriger : file et od disent l'encodage et les fins de ligne."],
+		["Pourquoi trier avant uniq ?", ["uniq ne supprime que les doublons qui se suivent", "uniq trie déjà", "Pour aller plus vite", "uniq ne marche que sur des nombres"], 0, "sort | uniq, ou sort -u ; uniq -c compte, uniq -d montre les doublons."],
+		["Que garantit set -euo pipefail dans un script ?", ["Il s'arrête à la première erreur, refuse les variables non définies et voit l'échec au milieu d'un tube", "Il rend le script plus rapide", "Il le lance en root", "Il cache les erreurs"], 0, "Sans pipefail, cmd_qui_echoue | sort renvoie 0 : l'erreur passe inaperçue."],
+		["Un script lancé par cron marche à la main mais pas la nuit. Cause la plus probable ?", ["L'environnement de cron est minimal : PATH court, pas de répertoire courant ; chemins absolus et journal 2>&1", "cron est en panne", "Le script est trop long", "cron ne lance que du Python"], 0, "On écrit des chemins absolus et on redirige la sortie vers un journal pour voir ce qui se passe."],
+		["df dit 100 % mais du ne trouve rien de gros. Où chercher ?", ["Un fichier supprimé encore ouvert par un processus : lsof +L1, puis redémarrer le service", "Dans la corbeille", "Dans /proc/cpuinfo", "Nulle part : df se trompe"], 0, "L'espace n'est rendu qu'à la fermeture du dernier descripteur ouvert."],
+		["Un export doit partir vers l'extérieur et contient des emails de pêcheurs. Que faire ?", ["Pseudonymiser ou retirer la colonne avant l'export, et ne donner les droits qu'à qui en a besoin", "L'envoyer tel quel, c'est interne", "Le compresser", "Le renommer"], 0, "Minimisation des données : on n'exporte que ce qui sert."],
+		["Pourquoi épingler une image par sa version (etl:1.0) ou son digest plutôt que latest ?", ["latest peut changer de contenu sans prévenir ; une version fixe rend le pipeline reproductible", "latest est plus lent", "latest n'existe pas", "Pour gagner de la place"], 0, "Et le digest garantit que personne n'a remplacé l'image sous le même nom."],
+		["Le volume de la base PostgreSQL a été effacé. Qu'est-ce qui sauve les données ?", ["Une sauvegarde faite avant (pg_dump) et testée par une restauration", "docker restart", "Le cache du conteneur", "docker logs"], 0, "Une sauvegarde qu'on n'a jamais restaurée n'est qu'un espoir."],
+		["Dans un compose, depends_on sans condition garantit-il que la base est prête ?", ["Non : il attend le démarrage du conteneur, pas sa santé ; il faut un healthcheck et condition: service_healthy", "Oui, toujours", "Oui, si la base est PostgreSQL", "Non, il faut un sleep 30"], 0, "Démarré ne veut pas dire prêt."],
+		["Un conteneur sature la machine. Quelle protection mettre ?", ["Des limites de ressources (mem_limit, cpus) et une politique de redémarrage raisonnable", "Plus de swap", "Le lancer en root", "Le supprimer à chaque fois"], 0, "Une limite empêche un bras de tout emporter."],
+		["Pourquoi ne pas mettre un mot de passe dans le compose.yaml ?", ["Le fichier finit dans Git et partout ; on le met dans un env_file non suivi, aux droits 600", "Ça ralentit Docker", "YAML refuse les mots de passe", "C'est interdit par Linux"], 0, "Les secrets vivent à part, et ne se commitent pas."],
+		["Que fait parallel -j4 ./traiter.sh ::: *.csv ?", ["Il lance le script sur chaque fichier, quatre à la fois", "Il découpe chaque fichier en quatre", "Il fusionne les CSV", "Il lance quatre fois le même fichier"], 0, "Et flock empêche deux lancements du même travail de se marcher dessus."]
 	]
 };
 
@@ -535,10 +553,10 @@ function lancerQuiz(chapitre){
 }
 
 Shell.sorts.quiz = function(args, io){
-	var choix = { "1": 1, "2": 3, "3": 2, "4": 5, "5": 6, "6": 7, "7": 8, "8": 9, "9": 10 }[args[0]] || (state.chapitreEnCours ? state.chapitreEnCours() : 1);
-	var fini = choix === 1 ? state.has("victoire") : (choix === 3 ? !!state.quests["r_fin"] : (choix === 5 ? !!state.quests["d_fin"] : (choix === 6 ? !!state.quests["h_rapport"] : (choix === 7 ? !!state.quests["m6_rapport"] : (choix === 8 ? !!state.quests["p7_rapport"] : (choix === 9 ? !!state.quests["n8_rapport"] : (choix === 10 ? !!state.quests["n9_rapport"] : !!state.quests["c_rapport"])))))));
+	var choix = { "1": 1, "2": 3, "3": 2, "4": 5, "5": 6, "6": 7, "7": 8, "8": 9, "9": 10, "10": 11 }[args[0]] || (state.chapitreEnCours ? state.chapitreEnCours() : 1);
+	var fini = choix === 1 ? state.has("victoire") : (choix === 3 ? !!state.quests["r_fin"] : (choix === 5 ? !!state.quests["d_fin"] : (choix === 6 ? !!state.quests["h_rapport"] : (choix === 7 ? !!state.quests["m6_rapport"] : (choix === 8 ? !!state.quests["p7_rapport"] : (choix === 9 ? !!state.quests["n8_rapport"] : (choix === 10 ? !!state.quests["n9_rapport"] : (choix === 11 ? !!state.quests["n10_rapport"] : !!state.quests["c_rapport"]))))))));
 	if (choix === 5 && (typeof QUIZ === "undefined" || !QUIZ[5])) return fini ? "Le quiz du chapitre 4 arrivera bientôt." : "Le quiz du chapitre 4 s'ouvrira à la fin du chapitre.";
-	if (!fini) return "Le quiz du chapitre " + numeroAffiche(choix) + " s'ouvre à la fin du chapitre. " + C.gris("(quiz 1, quiz 2, quiz 3, quiz 4, quiz 5, quiz 6, quiz 7, quiz 8 ou quiz 9 pour un chapitre déjà terminé)");
+	if (!fini) return "Le quiz du chapitre " + numeroAffiche(choix) + " s'ouvre à la fin du chapitre. " + C.gris("(quiz 1, quiz 2, quiz 3, quiz 4, quiz 5, quiz 6, quiz 7, quiz 8, quiz 9 ou quiz 10 pour un chapitre déjà terminé)");
 	setTimeout(function(){ lancerQuiz(choix); }, 50);
 	return C.gris("(Le quiz du chapitre " + numeroAffiche(choix) + " : 5 questions tirées au hasard. 1 à 4 pour répondre, Échap pour sortir.)");
 };
@@ -609,6 +627,11 @@ function lancerAmbiance(chapitre){
 		// Le village : un accord tenu, et de temps en temps quelques notes de luth.
 		bourdon(196, "sine", 0.18); bourdon(293.66, "sine", 0.1);
 		ambiance.minuteurs.push(setInterval(function(){ if (Math.random() < 0.6) note(gamme[Math.floor(Math.random() * gamme.length)], 0.9, "triangle", 0.18); }, 2600));
+	} else if (chapitre === 11){
+		// Le Lac Profond : l'eau noire qui respire sous la voûte, un bourdon très grave, des gouttes, et parfois une bulle qui remonte.
+		souffle(180, 0.3); bourdon(41.2, "sine", 0.22); bourdon(61.7, "sine", 0.07);
+		ambiance.minuteurs.push(setInterval(function(){ if (Math.random() < 0.7) note(Math.random() < 0.5 ? 1318.5 : 1174.7, 0.12, "sine", 0.05, 1600); }, 2300));
+		ambiance.minuteurs.push(setInterval(function(){ if (Math.random() < 0.3) note(220 + Math.random() * 110, 0.5, "triangle", 0.03, 500); }, 6100));
 	} else if (chapitre === 10){
 		// La Chronothèque : un bourdon d'orgue sous la voûte, le sable qui coule, et de temps en temps le tic d'une grande horloge.
 		souffle(900, 0.12); bourdon(65.4, "sine", 0.2); bourdon(98, "sine", 0.08); bourdon(130.8, "triangle", 0.03);
@@ -757,13 +780,20 @@ var CINEMATIQUES = {
 		{ image: "cine9_chronique.gif", texte: "La Chronique : le grimoire où tout ce qui arrive à l'école est scellé. Chaque page, un sceau." },
 		{ image: "cine9_page_reecrite.gif", texte: "Cette nuit, une page s'est réécrite toute seule. Dans la nouvelle version, la flotte noire était notre alliée." },
 		{ image: "cine9_sablier.gif", texte: "À l'aube du quatrième jour, la Grande Synchronisation enverra sa version à tous les Royaumes." },
-		{ image: "cine9_salles.gif", texte: "Quatorze maîtres du temps. Tu ne sais pas ce qu'est un commit. Dans trois jours, Chronomancien." }] }
+		{ image: "cine9_salles.gif", texte: "Quatorze maîtres du temps. Tu ne sais pas ce qu'est un commit. Dans trois jours, Chronomancien." }] },
+	10: { titre: "Chapitre 10 · Le Lac Profond", plans: [
+		{ image: "cine10_sceau_demain.gif", texte: "Un dernier sceau, daté de demain. Signé P.G. Quelqu'un savait ce qui allait arriver." },
+		{ image: "cine10_escalier_lac.gif", texte: "Sous la Chronothèque, un escalier descend en spirale vers une lueur verte." },
+		{ image: "cine10_lac.gif", texte: "Le lac de données de l'école : dix ans de journaux, d'exports et de sauvegardes, versés sans tri." },
+		{ image: "cine10_oeil.gif", texte: "Sous la surface, un œil s'ouvre. Pipelinus, Gardien du Lac. P.G." },
+		{ image: "cine10_bras.gif", texte: "Huit bras, huit pipelines. À l'aube du quatrième jour, la Grande Marée les lancera sur l'école." },
+		{ image: "cine10_wissam.gif", texte: "Wissam lève sa lanterne. « Quinze postes, trois jours. Tu sortiras d'ici Maître du Lac. »" }] }
 };
 /* La carte du chapitre 1 (les autres sont dans SCENES, à l'entrée de chaque chapitre). */
 var SCENE_CHAPITRE_1 = { image: "item_convocation.gif", titre: "Chapitre 1 · Terminus", chapitre: 1,
 	lignes: ["Ta Maison d'abord : regarde autour de toi.", "Chaque sort appris ouvre un bout du monde.", "Le tutoriel, à droite, te guide pour les premiers pas."] };
 /* La première carte de chaque chapitre : c'est elle que la cinématique précède. */
-var PREMIERE_SCENE = { 2: "r_batiment", 3: "c_crypte", 4: "d_entree", 5: "h_entree", 6: "m6_entree", 7: "p7_quai", 8: "n8_quai", 9: "n9_entree" };
+var PREMIERE_SCENE = { 2: "r_batiment", 3: "c_crypte", 4: "d_entree", 5: "h_entree", 6: "m6_entree", 7: "p7_quai", 8: "n8_quai", 9: "n9_entree", 10: "n10_entree" };
 
 function lancerCinematique(n, apres, forcer){
 	var cine = CINEMATIQUES[n];
@@ -872,13 +902,13 @@ sceneDeChapitre = function(scene){
 
 /* La commande du jeu : revoir une cinématique. */
 if (typeof SORTS_DU_JEU !== "undefined" && SORTS_DU_JEU.indexOf("cinematique") === -1) SORTS_DU_JEU.push("cinematique");
-if (typeof COMMANDES_DU_JEU !== "undefined") COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 4, 0, ["cinematique", "revoir l'ouverture d'un chapitre (cinematique 1 à 9)"]);
+if (typeof COMMANDES_DU_JEU !== "undefined") COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 4, 0, ["cinematique", "revoir l'ouverture d'un chapitre (cinematique 1 à 10)"]);
 /* Sa page d'aide (help cinematique) est dans AideDuJeu.js. Les chapitres : 1 (Terminus), 2 (la panne), 3 (la Crypte), 4 (l'Académie),
-   5 (le Bastion), 6 (Lumen), 7 (Port-Aube), 8 (le Grand Port), 9 (la Chronothèque) ; sans numéro, celle du chapitre en cours. */
+   5 (le Bastion), 6 (Lumen), 7 (Port-Aube), 8 (le Grand Port), 9 (la Chronothèque), 10 (le Lac Profond) ; sans numéro, celle du chapitre en cours. */
 Shell.sorts.cinematique = function(args){
-	var affiche = { 1: 1, 2: 3, 3: 2, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8, 10: 9 }[state.chapitreEnCours()] || 1;
+	var affiche = { 1: 1, 2: 3, 3: 2, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8, 10: 9, 11: 10 }[state.chapitreEnCours()] || 1;
 	var n = args && args[0] ? parseInt(args[0], 10) : affiche;
-	if (!CINEMATIQUES[n]) throw new ShellError("cinematique : un numéro de chapitre, de 1 à 9. Exemple : cinematique 3");
+	if (!CINEMATIQUES[n]) throw new ShellError("cinematique : un numéro de chapitre, de 1 à 10. Exemple : cinematique 3");
 	if (calmeDemande) return C.gris("(Ton système demande de réduire les animations : les cinématiques sont coupées.)");
 	setTimeout(function(){ lancerCinematique(n, function(){ var champ = document.getElementById("saisie"); if (champ) champ.focus(); }, true); }, 50);
 	return "";

@@ -2745,6 +2745,40 @@ INTEGREES["true"] = function(){ return ""; };
 INTEGREES[":"] = INTEGREES["true"];
 INTEGREES["false"] = function(args, io){ io.code = 1; return ""; };
 
+/* trap : poser un piège qui se déclenche quand le script se termine (EXIT), comme bash. Les signaux (INT, TERM, HUP, ERR)
+ * sont acceptés et listés ; seul EXIT se déclenche ici (la fin du script, normale, par exit ou par set -e). */
+var SIGNAUX_TRAP = { EXIT: "EXIT", "0": "EXIT", INT: "SIGINT", SIGINT: "SIGINT", TERM: "SIGTERM", SIGTERM: "SIGTERM", HUP: "SIGHUP", SIGHUP: "SIGHUP", ERR: "ERR", QUIT: "SIGQUIT", SIGQUIT: "SIGQUIT", RETURN: "RETURN" };
+function cadrePieges(){
+	for (var k = Interpreteur.cadres.length - 1; k >= 0; k--) if (Interpreteur.cadres[k].limite) return Interpreteur.cadres[k];
+	if (!Interpreteur.piegesPrompt) Interpreteur.piegesPrompt = { pieges: {} };
+	return Interpreteur.piegesPrompt;
+}
+INTEGREES.trap = function(args, io){
+	var cadre = cadrePieges();
+	cadre.pieges = cadre.pieges || {};
+	var a = args.slice();
+	if (a[0] === "--") a.shift();
+	if (!a.length || a[0] === "-p"){
+		var noms = a[0] === "-p" && a.length > 1 ? a.slice(1).map(function(s){ return SIGNAUX_TRAP[String(s).toUpperCase()] || s; }) : Object.keys(cadre.pieges);
+		return noms.filter(function(n){ return cadre.pieges[n] !== undefined; }).map(function(n){ return "trap -- " + citer(cadre.pieges[n]) + " " + n; }).join("\n");
+	}
+	if (a[0] === "-l") return "1) SIGHUP\t 2) SIGINT\t 3) SIGQUIT\t 9) SIGKILL\t15) SIGTERM";
+	var action = a.shift();
+	if (!a.length){
+		// trap SIGNAL seul : remettre le comportement par défaut (comme trap - SIGNAL).
+		var seul = SIGNAUX_TRAP[String(action).toUpperCase()];
+		if (seul){ delete cadre.pieges[seul]; return ""; }
+		throw new ShellError("trap : utilisation : trap 'commandes' SIGNAL... (par exemple : trap 'rm -f \"$tmp\"' EXIT)", 2);
+	}
+	a.forEach(function(s){
+		var n = SIGNAUX_TRAP[String(s).toUpperCase()];
+		if (!n){ io.err("bash : trap : " + s + " : spécification de signal non valable"); io.code = 1; return; }
+		if (action === "-") delete cadre.pieges[n];
+		else cadre.pieges[n] = action;
+	});
+	return "";
+};
+
 INTEGREES.test = function(args, io){
 	io.code = evaluerTest(args, "test") ? 0 : 1;
 	return "";
@@ -2937,6 +2971,13 @@ INTEGREES.set = function(args, io){
 		if (/^[-+][a-zA-Z]+$/.test(a)){
 			for (var k = 1; k < a.length; k++){
 				var lettre = a.charAt(k);
+				// -euo pipefail : le o, dans un paquet de lettres, prend le mot suivant (comme bash).
+				if (lettre === "o"){
+					var nomO = args[++i];
+					if (nomO === undefined || !NOMS[nomO]) throw new ShellError("set : " + (nomO === undefined ? "-o attend un nom" : nomO + " : nom d'option inconnu") + " (errexit, nounset, pipefail, xtrace)", 2);
+					poser(NOMS[nomO], a.charAt(0) === "-");
+					continue;
+				}
 				if (!LETTRES[lettre]) throw new ShellError("set : -" + lettre + " : option inconnue ici (-e, -u, -x, -o pipefail)", 2);
 				poser(LETTRES[lettre], a.charAt(0) === "-");
 			}
@@ -3210,6 +3251,13 @@ Interpreteur.lancerScript = function(texte, io, options){
 					else if (e instanceof SignalBoucle) code = 0;
 					else throw e;
 				} finally {
+					// trap ... EXIT : le piège posé par le script se déclenche à sa sortie (fin normale, exit, ou set -e), avant que ses variables ne disparaissent.
+					if (cadre.pieges && cadre.pieges.EXIT){
+						var piege = cadre.pieges.EXIT, codeAvant = code;
+						delete cadre.pieges.EXIT;
+						try { Shell.statut = codeAvant === null ? 0 : codeAvant; executerTexte(piege, { prefixe: prefixe, tolerant: true }); }
+						catch (e2){ if (!(e2 instanceof SignalSortie || e2 instanceof SignalRetour || e2 instanceof SignalBoucle)) throw e2; if (e2 instanceof SignalSortie) code = e2.code; }
+					}
 					var k = Interpreteur.cadres.lastIndexOf(cadre);
 					if (k > -1) Interpreteur.cadres.splice(k, 1);
 					Interpreteur.boucles = boucles;
