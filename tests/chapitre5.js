@@ -895,7 +895,7 @@ function fermer(jeu, tours){ (tours || ORDRE_TOURS).forEach(function(cle){ jouer
 	});
 	var guide = guideSrc;
 	contient(guide, 'h_entree: { image: "loc_bastion.gif", titre: "Chapitre 5 · Le Bastion", chapitre: 5', "scène d'entrée du Bastion");
-	contient(guide, '"4": 5, "5": 6, "6": 7, "7": 8, "8": 9, "9": 10 }[args[0]]', "quiz 5 : le chapitre interne 6");
+	contient(guide, '"4": 5, "5": 6, "6": 7, "7": 8, "8": 9, "9": 10, "10": 11 }[args[0]]', "quiz 5 : le chapitre interne 6");
 	contient(guide, "INDICES_CH5[id]", "les pistes du Bastion dans detailsDeQuete");
 	contient(guide, 'chapitre === 6 && typeof TROPHEES_CH5', "le récapitulatif de fin compte les badges du Bastion");
 	contient(guide, '["Terminus", "La panne", "La Crypte", "L\'Académie", "Le Bastion", "Lumen", "Port-Aube", "Le Grand Port"]', "la carte des huit chapitres");
