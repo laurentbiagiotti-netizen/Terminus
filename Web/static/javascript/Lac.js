@@ -585,10 +585,13 @@ function exportBrutCh10(){
 	return "id,date,comptoir,espece,poids_kg,pecheur,telephone\n" + l.map(function(c){ return [c.id, c.date, c.comptoir, c.espece, c.poids, emailPecheurCh10(c.pecheur), telephonePecheurCh10(c.pecheur)].join(","); }).join("\n") + "\n";
 }
 
+/* La maison du joueur sur lac : son texte et son image (posés à chaque tour : la maison peut naître après les dossiers). */
+function habillerMaisonLacCh10(){
+	var maison = dossierHote(LAC_CH10, homeLacCh10());
+	if (maison && maison.room_pic !== "loc_lac_machine.gif"){ maison.intro_text = "Ta maison sur lac : rive/, courants/, ecluses/, bief/, profondeurs/, arsenal/, un dossier par acte. Les données vives du lac sont dans /srv/lac."; maison.room_pic = "loc_lac_machine.gif"; }
+}
 function semerMaisonLacCh10(){
 	var D = donneesCh10(), A = arrivagesCh10();
-	var maison = dossierHote(LAC_CH10, homeLacCh10());
-	if (maison){ maison.intro_text = "Ta maison sur lac : rive/, courants/, ecluses/, bief/, profondeurs/, arsenal/, un dossier par acte. Les données vives du lac sont dans /srv/lac."; maison.room_pic = "loc_lac_machine.gif"; }
 	// L'acte I : la Rive.
 	fichierLacCh10("rive/captures.csv", texteCapturesCh10(D.captures));
 	fichierLacCh10("rive/comptoirs.csv", texteComptoirsCh10());

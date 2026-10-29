@@ -1294,7 +1294,7 @@ function verifierChapitre10(){
 	if (!c.base) c.base = baseJourCh10();
 	relierLacCh10();
 	if (!state.quests["n10_entree"]) return;
-	try { semerLac(); declarerUnitesLacCh10(); } catch (e){ if (typeof console !== "undefined" && console.error) console.error(e); }
+	try { semerLac(); declarerUnitesLacCh10(); habillerMaisonLacCh10(); } catch (e){ if (typeof console !== "undefined" && console.error) console.error(e); }
 	var r = avancerHorlogeCh10();
 	for (var i = 0; i < r.nuits; i++) nuitCh10(c.nuitsVues - r.nuits + i + 1);
 	annoncerHeureCh10();
