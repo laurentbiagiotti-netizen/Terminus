@@ -702,7 +702,7 @@ verifier(jr5.lire("state.xp2 === state.xpMax2()"), "vieille sauvegarde : la note
 	var guide = fs.readFileSync(path.join(__dirname, "..", "Web", "static", "javascript", "Guide.js"), "utf8");
 	var bloc = guide.substring(guide.indexOf("var CINEMATIQUES = {"), guide.indexOf("var SCENE_CHAPITRE_1"));
 	var images = bloc.match(/image: "([^"]+)"/g) || [];
-	verifier(images.length === 41, "cinématiques : 9 chapitres, quatre plans pour les six premiers, cinq pour Port-Aube, six pour le Grand Port et la Chronothèque (" + images.length + " images)");
+	verifier(images.length === 47, "cinématiques : 10 chapitres, quatre plans pour les six premiers, cinq pour Port-Aube, six pour le Grand Port, la Chronothèque et le Lac Profond (" + images.length + " images)");
 	images.forEach(function(m){
 		var f = /image: "([^"]+)"/.exec(m)[1];
 		verifier(fs.existsSync(path.join(__dirname, "..", "Web", "static", "img", f)), "cinématique : l'image " + f + " existe");
@@ -722,11 +722,11 @@ verifier(jr5.lire("state.xp2 === state.xpMax2()"), "vieille sauvegarde : la note
 	["cine7_mer_aube.gif", "cine7_quai_laurent.gif", "cine7_maisons_vides.gif", "cine7_phare_orage.gif", "cine7_maree.gif"].forEach(function(f){ verifier(!!vus[f], "cinématique 7 : le plan " + f); });
 	verifier(/île/.test(c7.split("}] }")[0]) && /Laurent/.test(c7) && /14 h/.test(c7) && /19 h/.test(c7), "cinématique 7 : l'île, Laurent, l'orage de 14 h, la marée de 19 h");
 	verifier(/PREMIERE_SCENE = \{[^}]*7: "p7_quai"/.test(guide) && /\n\tp7_quai: \{ image:/.test(guide), "cinématique 7 : elle précède la scène de l'arrivée sur le quai (p7_quai)");
-	verifier(/cinematique 1 à 9/.test(guide) && /7 \(Port-Aube\)/.test(guide), "la commande cinematique connaît le chapitre 7");
+	verifier(/cinematique 1 à 10/.test(guide) && /7 \(Port-Aube\)/.test(guide), "la commande cinematique connaît le chapitre 7");
 	// Le Grand Port (chapitre 8) : six plans, chacun avec son image (outils/dessiner_port.py), des textes courts et épiques.
 	var c8 = bloc.substring(bloc.search(/\n\t8: \{/), bloc.search(/\n\t9: \{/));
 	// La Chronothèque (chapitre 9) : six plans, chacun avec son image (outils/dessiner_chronique.py), des textes courts.
-	var c9 = bloc.substring(bloc.search(/\n\t9: \{/));
+	var c9 = bloc.substring(bloc.search(/\n\t9: \{/), bloc.search(/\n\t10: \{/));
 	var plans9 = c9.match(/\{ image: "([^"]+)", texte: "((?:[^"\\]|\\.)*)" \}/g) || [];
 	verifier(plans9.length === 6, "cinématique 9 : six plans (" + plans9.length + ")");
 	var vus9 = {};
@@ -737,6 +737,16 @@ verifier(jr5.lire("state.xp2 === state.xpMax2()"), "vieille sauvegarde : la note
 		verifier(m[2].length <= 110, "cinématique 9 : un texte court (" + m[2].length + " caractères) : " + m[2]);
 	});
 	verifier(/9 \(la Chronothèque\)/.test(guide) && /PREMIERE_SCENE = \{[^}]*9: "n9_entree"/.test(guide), "cinématique 9 : la commande la connaît, elle précède l'arrivée (n9_entree)");
+	// Le Lac Profond (chapitre 10) : six plans, chacun avec son image (outils/dessiner_lac.py), des textes courts.
+	var c10 = bloc.substring(bloc.search(/\n\t10: \{/));
+	var plans10 = c10.match(/\{ image: "([^"]+)", texte: "((?:[^"\\]|\\.)*)" \}/g) || [];
+	verifier(plans10.length === 6, "cinématique 10 : six plans (" + plans10.length + ")");
+	plans10.forEach(function(p){
+		var m = /image: "([^"]+)", texte: "((?:[^"\\]|\\.)*)"/.exec(p);
+		verifier(/^cine10_/.test(m[1]) && fs.existsSync(path.join(__dirname, "..", "Web", "static", "img", m[1])), "cinématique 10 : une image dédiée par plan (" + m[1] + ")");
+		verifier(m[2].length <= 110, "cinématique 10 : un texte court (" + m[2].length + " caractères) : " + m[2]);
+	});
+	verifier(/10 \(le Lac Profond\)/.test(guide) && /PREMIERE_SCENE = \{[^}]*10: "n10_entree"/.test(guide), "cinématique 10 : la commande la connaît, elle précède l'arrivée (n10_entree)");
 	var plans8 = c8.match(/\{ image: "([^"]+)", texte: "((?:[^"\\]|\\.)*)" \}/g) || [];
 	verifier(plans8.length === 6, "cinématique 8 : six plans (" + plans8.length + ")");
 	var vus8 = {};
