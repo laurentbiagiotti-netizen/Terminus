@@ -336,7 +336,7 @@ var tousLesPersonnages = neuf.lire("(function(){ var n = {}; Object.keys(World.i
 Object.keys(tousLesPersonnages).forEach(function(nom){
 	// Un nom de métier (un mot en -eur, -euse, -ice, -iste, -ier...) prend son article : pas de « auprès de Logeuse ».
 	var metier = /(eur|euse|ice|iste|ane|ier|iere|aire|elle|ante|ent|aut|in|de|ste|SSI)$/.test(nom) && /^[A-Z][a-z]+([A-Z][a-z]+)?$|^RSSI$/.test(nom) &&
-		["Adele", "Butler", "Kylian", "Robert", "Laurent", "Clara", "Remi"].indexOf(nom) === -1;
+		["Adele", "Butler", "Kylian", "Robert", "Laurent", "Clara", "Remi", "Megane"].indexOf(nom) === -1;
 	verifier(!/auprès de le /.test(tousLesPersonnages[nom]) && (!metier || tousLesPersonnages[nom] !== "auprès de " + nom),
 		"grammaire : " + nom + " => " + tousLesPersonnages[nom]);
 });
