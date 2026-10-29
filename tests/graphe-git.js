@@ -65,7 +65,7 @@ function depot(jeu, nom, n){
 	var v = /HabitantsChronique\.js\?v=(\w+)/.exec(index), w = /GrapheGit\.js\?v=(\w+)/.exec(index);
 	verifier(v && w && v[1] === w[1], "index.html : GrapheGit.js porte le même suffixe ?v= que les autres");
 	var mondeJs = fs.readFileSync(path.join(__dirname, "monde.js"), "utf8");
-	verifier(mondeJs.indexOf("\"HabitantsChronique.js\", \"GrapheGit.js\"") > -1 && mondeJs.indexOf("\"GrapheGit.js\"") < mondeJs.indexOf("\"AideDuJeu.js\""), "tests/monde.js charge GrapheGit.js au même endroit");
+	verifier(mondeJs.indexOf("\"HabitantsLac.js\", \"GrapheGit.js\"") > -1 && mondeJs.indexOf("\"GrapheGit.js\"") < mondeJs.indexOf("\"AideDuJeu.js\""), "tests/monde.js charge GrapheGit.js au même endroit");
 	var css = fs.readFileSync(path.join(RACINE, "Web", "static", "css", "terminus.css"), "utf8");
 	verifier(css.indexOf("#graphe") > -1 && css.indexOf(".gg-orphelin") > -1, "terminus.css habille le graphe");
 	["Room.js", "Game.js"].forEach(function(f){ verifier(/"graphe"\]/.test(fs.readFileSync(path.join(JS, f), "utf8")), f + " : montrer une image (ou la carte) retire le graphe"); });
