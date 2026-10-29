@@ -4407,7 +4407,6 @@ cat ecluse.sh
 ./ecluse.sh "donnees/arrivee du soir.csv"
 cat > ecluse.sh <<'FIN'
 #!/bin/bash
-# ecluse.sh : le bilan d'une arrivée, en kilos par comptoir. Utilisation : ./ecluse.sh FICHIER
 set -euo pipefail
 fichier="$1"
 tmp=/tmp/ecluse.tmp
@@ -4422,7 +4421,6 @@ echo $?
 cat sortie/bilan.csv
 cat > ecluse.sh <<'FIN'
 #!/bin/bash
-# ecluse.sh : le bilan d'une arrivée, en kilos par comptoir. Utilisation : ./ecluse.sh FICHIER
 set -euo pipefail
 fichier="$1"
 tmp=$(mktemp)
