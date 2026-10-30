@@ -588,7 +588,7 @@ function exportBrutCh10(){
 /* La maison du joueur sur lac : son texte et son image (posés à chaque tour : la maison peut naître après les dossiers). */
 function habillerMaisonLacCh10(){
 	var maison = dossierHote(LAC_CH10, homeLacCh10());
-	if (maison && maison.room_pic !== "loc_lac_machine.gif"){ maison.intro_text = "Ta maison sur lac : rive/, courants/, ecluses/, bief/, profondeurs/, arsenal/, un dossier par acte. Les données vives du lac sont dans /srv/lac."; maison.room_pic = "loc_lac_machine.gif"; }
+	if (maison && maison.room_pic !== "./static/img/loc_lac_machine.gif"){ maison.intro_text = "Ta maison sur lac : rive/, courants/, ecluses/, bief/, profondeurs/, arsenal/, un dossier par acte. Les données vives du lac sont dans /srv/lac."; maison.room_pic = "./static/img/loc_lac_machine.gif"; }
 }
 function semerMaisonLacCh10(){
 	var D = donneesCh10(), A = arrivagesCh10();

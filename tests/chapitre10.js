@@ -245,6 +245,7 @@ var CHAPITRE = ["SortsDonnees.js", "Lac.js", "Chapitre10.js", "Abysses.js", "Hab
 	egal(jeu.lire("ORDRE_DES_SORTS_11.filter(function(s){ return !state.usages[s]; }).join(' ')"), "", "chaque sort du chapitre a servi");
 	contient(nu(jeu.taper("badges lac")), "LINUX ET DOCKER POUR LA DONNÉE", "badges lac");
 	t(jeu, "ssh lac");
+	egal(jeu.lire("current_room.room_pic"), "./static/img/loc_lac_machine.gif", "l'image de la maison sur lac a le bon chemin");
 	contient(t(jeu, "printf 'a,x\\nb,y\\na,y\\n' | datamash -t, -s crosstab 1,2"), "a,1,1", "datamash crosstab");
 	t(jeu, "exit");
 	contient(nu(jeu.taper("chapitres")), "terminé", "chapitres : le Lac est terminé");
