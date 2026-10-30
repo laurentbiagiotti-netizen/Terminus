@@ -1051,6 +1051,45 @@ def sceau_lac(nom="item_sceau_lac.gif"):
     im.resize((w * 2, h * 2), Image.NEAREST).save(OUT + nom)
 
 
+def ponton_echos():
+    """Le Ponton des Échos : un ponton de bois noirci qui s'avance loin sur l'eau calme, une lanterne au bout ; sur
+    l'eau, sept reflets en arc de cercle, sept silhouettes pâles tête en bas, chacune dans son halo : les sept
+    chapitres qui remontent du lac."""
+    im, d = toile()
+    d.rectangle([0, 0, W, H], fill=N)
+    voute_grotte(d, im, 50, graine=71)
+    horizon = 56
+    degrade(d, 0, 30, W, horizon, V, 0.0, 0.25)
+    eau(d, horizon, H, graine=71, reflet=None, larg=6, dense=0.6)
+    brume(d, horizon + 4, 6, 0.25, B, 71)
+    # les sept reflets, en arc au-dessus de l'eau calme
+    for k in range(7):
+        a = math.pi * (0.12 + 0.76 * k / 6)
+        x = int(88 - 74 * math.cos(a))
+        y = int(100 - 34 * math.sin(a))
+        halo(d, x, y, 11, V, 0.55, 8)
+        h = 13 - abs(k - 3)
+        d.rectangle([x - 2, y + h - 4, x + 2, y + h], fill=B)                              # la tête, en bas
+        d.polygon([(x - 4, y + h - 5), (x + 4, y + h - 5), (x + 3, y - 2), (x - 3, y - 2)], fill=B)
+        for t in range(0, 5):
+            d.point((x - 4 + 2 * t, y - 4 - (t % 2)), fill=V)                              # les rides
+    # le ponton, en perspective, du bas de l'image jusqu'au milieu de l'eau
+    for i in range(12):
+        y0 = H - i * 6
+        l0 = 34 - i * 1.6
+        d.rectangle([88 - l0, y0 - 5, 88 + l0, y0 - 1], fill=V)
+        d.line([(88 - l0, y0 - 5), (88 + l0, y0 - 5)], fill=B)
+    for sgn in (-1, 1):
+        for i in range(0, 12, 3):
+            y0 = H - i * 6
+            l0 = 34 - i * 1.6
+            d.rectangle([88 + sgn * l0 - 1, y0 - 1, 88 + sgn * l0 + 1, y0 + 5], fill=N)
+    # au bout, une silhouette penchée sur l'eau, et la lanterne
+    silhouette(d, 92, 104, 15, B)
+    lanterne(d, 80, 88, 0.8, True)
+    return im
+
+
 LIEUX = {
     "loc_lac.gif": lambda: lac(False), "loc_lac_victoire.gif": victoire, "loc_lac_dossier.gif": dossier_lac,
     "loc_lac_machine.gif": machine_lac, "loc_maree.gif": maree,
@@ -1058,7 +1097,7 @@ LIEUX = {
     "loc_gue_encres.gif": gue_encres, "loc_moulin_doublons.gif": moulin_doublons, "loc_vanne_formats.gif": vanne_formats,
     "loc_ecluse_scripts.gif": ecluse_scripts, "loc_bief.gif": bief, "loc_tour_de_garde.gif": tour_garde,
     "loc_fosse.gif": fosse, "loc_chambre_pressions.gif": chambre_pressions, "loc_coffre_secrets.gif": coffre,
-    "loc_chantier_images.gif": chantier_images, "loc_citerne.gif": citerne, "loc_grand_bassin.gif": grand_bassin,
+    "loc_chantier_images.gif": chantier_images, "loc_ponton_echos.gif": ponton_echos, "loc_citerne.gif": citerne, "loc_grand_bassin.gif": grand_bassin,
     "rang_pecheur.gif": lambda: rang(1), "rang_plongeur.gif": lambda: rang(2), "rang_eclusier.gif": lambda: rang(3),
     "rang_sondeur.gif": lambda: rang(4), "rang_maitre_lac.gif": lambda: rang(5),
     "scene_lac_nuit1.gif": lambda: nuit(1), "scene_lac_nuit2.gif": lambda: nuit(2), "scene_lac_nuit3.gif": lambda: nuit(3),

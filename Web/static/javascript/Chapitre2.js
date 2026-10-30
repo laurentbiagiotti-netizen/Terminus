@@ -222,10 +222,12 @@ COMMANDES_REELLES = COMMANDES_REELLES.filter(function(c){ return COMMANDES_REELL
 
 /* --- sha256sum --- */
 Shell.sorts.sha256sum = function(args, io){
-	var verifier = false, objets = [];
+	var verifier = false, objets = [], discret = false, muet = false;
 	for (var i = 0; i < args.length; i++){
 		if (args[i] === "-c" || args[i] === "--check") verifier = true;
-		else if (args[i].charAt(0) === "-" && args[i] !== "-") throw new ShellError("sha256sum : option inconnue « " + args[i] + " ». Celle qui existe ici : -c");
+		else if (args[i] === "--quiet") discret = true;
+		else if (args[i] === "--status") muet = true;
+		else if (args[i].charAt(0) === "-" && args[i] !== "-") throw new ShellError("sha256sum : option inconnue « " + args[i] + " ». Celles qui existent ici : -c, --quiet, --status");
 		else objets.push(args[i]);
 	}
 	if (!verifier){
@@ -286,6 +288,9 @@ Shell.sorts.sha256sum = function(args, io){
 			" de contrôle calculée" + (echecs.length > 1 ? "s ne correspondent" : " ne correspond") + " PAS");
 	}
 	GameEvents.fire({ type: "sha256sum", check: true, room: current_room, failed: echecs });
+	if (echecs.length > 0) io.code = 1;
+	if (muet) return "";
+	if (discret) resultats = resultats.filter(function(r){ return !/: OK$/.test(r); });
 	return resultats.join("\n");
 };
 

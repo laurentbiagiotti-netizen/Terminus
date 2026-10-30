@@ -908,6 +908,7 @@ Shell.sorts.journalctl = function(args, io){
 		if (a === "--list-boots") return listeDemarrages(h, io);
 		if (a === "--rotate" || a === "--flush" || a === "--sync"){ if (!io.sudo) throw new ShellError("Failed to " + a.substring(2) + " journal: Permission denied", 1); return ""; }
 		if (a === "--verify") return "PASS: " + dossierJournal(h) + "/system.journal";
+		if (/^-[xefrkaqm]+u$/.test(a) && i + 1 < args.length){ if (a.indexOf("f") > -1) o.suivre = true; if (a.indexOf("e") > -1) o.fin = true; if (a.indexOf("r") > -1) o.inverse = true; args = args.slice(0, i + 1).concat(["-u"], args.slice(i + 1)); continue; }
 		if (/^-[xaqm]+$/.test(a) || a === "--no-pager" || a === "--no-hostname" || a === "--utc" || a === "--all" || a === "--quiet" || a === "--catalog") continue;
 		if (/^-[a-zA-Z]+$/.test(a) && /^-[xefrk]+$/.test(a)){ if (a.indexOf("f") > -1) o.suivre = true; if (a.indexOf("e") > -1) o.fin = true; if (a.indexOf("r") > -1) o.inverse = true; if (a.indexOf("k") > -1) o.noyau = true; continue; }
 		if (a.charAt(0) === "-") throw new ShellError("journalctl: unrecognized option '" + a + "'", 1);

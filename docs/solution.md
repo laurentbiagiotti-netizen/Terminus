@@ -167,6 +167,7 @@ Recopier la solution du voisin ne marche donc pas : il faut refaire chaque reche
   120. [Le rapport de la Grande Marée](#120-le-rapport-de-la-grande-marée)
   121. [Les défis des maîtres, poste par poste](#121-les-défis-des-maîtres-poste-par-poste)
   122. [Les quêtes annexes : l'Ami du Lac Profond](#122-les-quêtes-annexes--lami-du-lac-profond)
+  123. [Les Sept Échos : le rappel des chapitres 1 à 7 (facultatif)](#123-les-sept-échos--le-rappel-des-chapitres-1-à-7-facultatif)
 - [L'épreuve finale : la Forteresse](#lépreuve-finale--la-forteresse-mission-spéciale)
 
 ## Le barème
@@ -4832,6 +4833,80 @@ datamash -t, --header-in check < prises.csv
 datamash -t, -s --header-in crosstab 1,2 < prises.csv
 datamash -t, -s --header-in crosstab 1,2 < prises.csv | datamash -t, transpose
 datamash -t, -s --header-in crosstab 1,2 < prises.csv > croise.csv
+exit
+quetes annexes
+```
+
+### 123. Les Sept Échos : le rappel des chapitres 1 à 7 (facultatif)
+
+Pour la classe qui arrive au Lac sans les chapitres d'avant, ou qui les a oubliés. Au Ponton des Échos, sept reflets montent de l'eau, un par chapitre, sans le réseau : chacun rejoue ce qu'il a appris, puis donne une mission sur lac, dans `~/echos`. C'est facultatif et hors note, et l'horloge du lac s'arrête sur le ponton et tant qu'on reste dans `~/echos` (d'où le `cd ~/echos` avant le phare, qui est dans `/etc`). Le Terminus : les bases (`mkdir -p`, `mv` avec `*`, `find`, `cp`, `grep` et `wc -l`, `chmod +x`). La Panne : un service en échec (`systemctl status`, `journalctl -u`, la configuration corrigée, `restart`, `enable`). La Crypte : l'enquête (`file`, `sha256sum -c`, `zcat`, `setfacl`). L'Académie : les données (`jq`, `awk`, `sed -i`, `comm`). Le Bastion : les droits et les traces (`chmod 600`, `umask 027`, `logger -t`, `journalctl -t`). Lumen : l'exploitation (`du -sh` et `sort -h`, `free`, `df`, `ps`, `renice`, `kill`). Port-Aube : les sauvegardes (`tar czf`, `sha256sum`, `tar xzf -C`, `diff -r`, `crontab`). Les sept faits : le badge « Gardien des Sept Échos ».
+
+```
+cd ~/Cybersup/Lac/PontonDesEchos
+cat Stele
+cat Terminus; cat Panne; cat Crypte; cat Academie
+cat Bastion; cat Lumen; cat PortAube
+ssh lac
+cd ~/echos/terminus
+ls -la grenier
+mkdir -p rangement/journaux rangement/donnees
+mv grenier/*.log rangement/journaux/
+mv grenier/*.csv rangement/donnees/
+find grenier -name 'carte*'
+cp grenier/malles/vieille/fond/carte-du-passeur.txt carte.txt
+grep -h ERREUR rangement/journaux/*.log | wc -l > erreurs.txt
+cat erreurs.txt
+chmod +x passeur.sh
+./passeur.sh
+cat passage.txt
+cd ~/echos
+systemctl status phare
+sudo journalctl -u phare -n 5
+sudo sed -i 's/^COULEUR=.*/COULEUR=vert/' /etc/phare/phare.conf
+sudo systemctl restart phare
+sudo systemctl enable phare
+systemctl is-active phare
+cd ~/echos/crypte
+file reliques/*
+echo grimoire.txt > imposteur.txt
+sha256sum -c SHA256SUMS
+LC_ALL=C sha256sum -c SHA256SUMS 2> /dev/null | grep -v ': OK$' | cut -d: -f1 > alteree.txt
+zcat journal.gz | grep forcée
+zcat journal.gz | grep forcée | awk '{ print $NF }' > intrus.txt
+setfacl -m u:wissam:r secret.txt
+getfacl secret.txt
+cd ~/echos/academie
+jq '[.[] | select(.ecole == "runes")] | length' grimoire.json > runes.txt
+awk -F, 'NR > 1 { s += $3 } END { print s }' sorts.csv > total.txt
+sed -i 's/Corbeau/Phénix/g' prophetie.txt
+comm -13 eleves-hier.txt eleves-auj.txt > nouveaux.txt
+cat runes.txt total.txt nouveaux.txt
+cd ~/echos/bastion
+chmod 600 coffre.txt
+umask 027
+touch consigne.txt
+ls -l
+logger -t sentinelle "Le Bastion veille sur le Lac"
+journalctl -t sentinelle
+cd ~/echos/lumen
+du -sh quartiers/* | sort -h
+du -sh quartiers/* | sort -h | tail -n 1 | awk -F/ '{ print $NF }' > lourd.txt
+free -h
+df -h
+ps aux --sort=-%cpu | head -n 5
+renice -n 10 -p $(pgrep devoreur)
+pkill spectre
+pgrep spectre || echo parti
+cd ~/echos/portaube
+tar czf registre.tar.gz registre
+tar tzf registre.tar.gz
+sha256sum registre.tar.gz > registre.tar.gz.sha256
+sha256sum -c registre.tar.gz.sha256
+mkdir restauration
+tar xzf registre.tar.gz -C restauration
+diff -r registre restauration/registre
+(crontab -l; echo '30 2 * * * tar czf ~/echos/portaube/registre.tar.gz -C ~/echos/portaube registre') | crontab -
+crontab -l
 exit
 quetes annexes
 ```

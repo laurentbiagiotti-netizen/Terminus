@@ -315,6 +315,8 @@ function texteBadges(quel){
 		});
 		tous.push({ id: "platine_ch10", chap: "lac", nom: COMPETENCES.platine_ch10, image: "tous les badges du Lac Profond", couche: "", lecon: "Riverain, Pêcheur de données, Plongeur, Éclusier, Sondeur des Abysses, Maître du Lac : tu sais lire, nettoyer, transformer, automatiser, protéger et conteneuriser un pipeline de données sous Linux, de zéro à héros." });
 		if (typeof AMIS_ANNEXES !== "undefined" && AMIS_ANNEXES[11] && COMPETENCES.ami_ch10) tous.push({ id: "ami_ch10", chap: "lac", nom: COMPETENCES.ami_ch10, image: "les six habitants du Lac Profond", couche: "", lecon: typeof LECON_AMI_CH10 !== "undefined" ? LECON_AMI_CH10 : "Les quêtes annexes du lac. Facultatif, hors note." });
+		if (COMPETENCES.echos_ch10) tous.push({ id: "echos_ch10", chap: "lac", nom: COMPETENCES.echos_ch10, image: "les sept reflets du Ponton des Échos", couche: "",
+			lecon: "Le rappel des chapitres 1 à 7, sans le réseau : les bases, les services, l'enquête, les données, les droits, l'exploitation, les sauvegardes. Facultatif, hors note." });
 	}
 	// Les badges « Ami » des quêtes annexes (facultatives, hors note), chapitre par chapitre.
 	[[3, "ami_ch2", "reseau", "panneOuverte", "les six habitants du campus", "Les quêtes annexes : le matériel (lscpu, lspci, lsusb, dmidecode), nc -l, ~/.ssh/config, ssh -J, ssh -L, les sections du manuel. Facultatif, hors note."],

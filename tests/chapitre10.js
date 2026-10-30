@@ -26,7 +26,7 @@ var RACINE = path.join(__dirname, "..");
 var JS = path.join(RACINE, "Web", "static", "javascript");
 var IMG = path.join(RACINE, "Web", "static", "img");
 var DOC = fs.readFileSync(path.join(RACINE, "docs", "solution.md"), "utf8");
-var PREMIERE = 107, DERNIERE = 122;
+var PREMIERE = 107, DERNIERE = 123;
 
 function neuf(stockage){
 	var jeu = monde.nouveauMonde(stockage || {});
@@ -242,6 +242,7 @@ var CHAPITRE = ["SortsDonnees.js", "Lac.js", "Chapitre10.js", "Abysses.js", "Hab
 	egal(jeu.lire("rangCh10()"), 5, "Maître du Lac");
 	vrai(jeu, "state.has('platine_ch10')", "le platine du Lac");
 	vrai(jeu, "state.has('ami_ch10')", "l'Ami du Lac Profond");
+	vrai(jeu, "state.has('echos_ch10')", "le Gardien des Sept Échos");
 	egal(jeu.lire("ORDRE_DES_SORTS_11.filter(function(s){ return !state.usages[s]; }).join(' ')"), "", "chaque sort du chapitre a servi");
 	contient(nu(jeu.taper("badges lac")), "LINUX ET DOCKER POUR LA DONNÉE", "badges lac");
 	t(jeu, "ssh lac");
@@ -263,6 +264,114 @@ var CHAPITRE = ["SortsDonnees.js", "Lac.js", "Chapitre10.js", "Abysses.js", "Hab
 	contient(t(jeu, "printf 'a,x\\nb,y\\na,y\\n' | datamash -t, -s crosstab 1,2"), "a,1,1", "datamash crosstab");
 	t(jeu, "exit");
 	contient(nu(jeu.taper("chapitres")), "terminé", "chapitres : le Lac est terminé");
+})();
+
+/* ================================================================== */
+/* Les Sept Échos : le rappel des chapitres 1 à 7, facultatif           */
+/* ================================================================== */
+(function(){
+	var src = fs.readFileSync(path.join(JS, "Echos.js"), "utf8");
+	verifier(src.indexOf("—") === -1, "Echos.js : pas de tiret cadratin");
+	verifier(src.indexOf("CyberSup") === -1, "Echos.js : Cybersup bien écrit");
+	var chaines = (src.match(/"(?:[^"\\\n]|\\.)*"/g) || []).concat(src.match(/\/\*[\s\S]*?\*\//g) || []);
+	verifier(chaines.filter(function(x){ return x.indexOf(" & ") > -1 && !/2>&1|&&|>&/.test(x); }).length === 0, "Echos.js : pas d'esperluette en prose");
+	verifier(!/\beval\s*\(|new Function\s*\(|=>/.test(src.replace(/"(?:[^"\\\n]|\\.)*"/g, "")), "Echos.js : ES5, ni eval ni Function");
+	var index = fs.readFileSync(path.join(RACINE, "Web", "index.html"), "utf8");
+	verifier(index.indexOf("/GrapheGit.js?") < index.indexOf("/Echos.js?") && index.indexOf("/Echos.js?") < index.indexOf("/Navigation.js?"), "index.html charge Echos.js après GrapheGit.js, avant Navigation.js");
+	verifier(fs.readFileSync(path.join(__dirname, "monde.js"), "utf8").indexOf("\"GrapheGit.js\", \"Echos.js\", \"Navigation.js\"") > -1, "tests/monde.js charge Echos.js");
+	["loc_ponton_echos.gif", "badge_echos_ch10.gif", "loc_farm.gif", "loc_batimentb.gif", "loc_crypte.gif", "loc_academie.gif", "loc_bastion.gif", "loc_lumen.gif", "loc_port_aube.gif"].forEach(function(im){
+		verifier(fs.existsSync(path.join(IMG, im)), "image " + im + " présente");
+	});
+	var jeu = neuf();
+	egal(jeu.lire("QUETES_ANNEXES.filter(function(a){ return a.rappel; }).length"), 7, "sept échos");
+	egal(jeu.lire("annexesDuChapitre(11).length"), 6, "les échos ne comptent pas parmi les annexes du chapitre");
+	vrai(jeu, "PontonDesEchosCh10.horsBareme === true", "le ponton est hors barème");
+	contient(nu(jeu.taper("cat Wissam")), "Ponton des Échos", "Wissam parle du Ponton");
+	jusqua2(jeu, 107, 108);
+	var xp = jeu.lire("state.xp11"), max = jeu.lire("state.xpMax11()"), minutes = jeu.lire("minutesCh10()");
+	jusqua2(jeu, 123, 123);
+	egal(jeu.lire("ECHOS_CH10.filter(function(e){ return !!state.quests[e.id]; }).length"), 7, "les sept échos faits en suivant la solution");
+	vrai(jeu, "state.has('echos_ch10')", "le badge des Sept Échos");
+	egal(jeu.lire("state.xp11"), xp, "les échos ne changent pas la note du chapitre");
+	egal(jeu.lire("state.xpMax11()"), max, "les échos ne changent pas le score maximal");
+	verifier(jeu.lire("minutesCh10()") - minutes <= 15, "l'horloge du lac s'arrête pour les échos (" + (jeu.lire("minutesCh10()") - minutes) + " min)");
+	contient(nu(jeu.taper("quetes annexes")), "Les Sept Échos", "quetes annexes montre les échos");
+	contient(nu(jeu.taper("badges lac")), "Gardien des Sept Échos", "badges lac montre le badge");
+	vrai(jeu, "state.quests.n10_quai === true && !state.quests.n10_regarder", "les échos ne valident aucune étape du chapitre");
+
+	// Ce qu'un étudiant peut faire de travers.
+	var j2 = neuf();
+	jusqua2(j2, 107, 108);
+	t(j2, "cd ~/Cybersup/Lac/PontonDesEchos");
+	contient(nu(j2.taper("cat Stele")), "LES SEPT ÉCHOS", "la Stele");
+	t(j2, "cat Terminus"); t(j2, "cat Panne"); t(j2, "cat Lumen");
+	t(j2, "ssh lac");
+	t(j2, "cd ~/echos/terminus");
+	t(j2, "echo 999 > erreurs.txt");
+	faux(j2, "erreursCompteesCh10()", "un mauvais compte d'erreurs ne passe pas");
+	t(j2, "cd ~/echos");
+	contient(t(j2, "sudo systemctl restart phare"), "failed", "le phare refuse de s'allumer avant la correction");
+	faux(j2, "phareAllumeCh10()", "le phare reste éteint");
+	contient(t(j2, "journalctl -u phare"), "COULEUR inconnue", "le journal du phare dit la cause");
+	t(j2, "cd ~/echos/lumen");
+	t(j2, "pkill devoreur");
+	t(j2, "ls");
+	vrai(j2, "etatEchosCh10().devoreurTue === true", "le dévoreur tué est noté");
+	contient(t(j2, "pgrep devoreur"), "", "pgrep devoreur");
+	vrai(j2, "!!procParPid(LAC_CH10, etatEchosCh10().pidDevoreur)", "le dévoreur tué est relancé");
+	t(j2, "exit");
+	t(j2, "cd ~/Cybersup/Lac/PontonDesEchos");
+	contient(nu(j2.taper("cat Lumen")), "relancé", "Lumen dit que le dévoreur a été relancé");
+	t(j2, "ssh lac");
+	t(j2, "rm -r ~/echos/terminus");
+	t(j2, "exit");
+	t(j2, "cd ~/Cybersup/Lac");
+	t(j2, "regenerer echos");
+	vrai(j2, "texteLacCh10('~/echos/terminus/grenier/journal-lundi.log') !== null", "regenerer echos rend le grenier");
+
+	// Les variantes d'un étudiant réel (relecture indépendante).
+	var j3 = neuf();
+	jusqua2(j3, 107, 108);
+	t(j3, "cd ~/Cybersup/Lac/PontonDesEchos");
+	["Terminus", "Panne", "Crypte", "Academie", "Bastion", "Lumen", "PortAube"].forEach(function(n){ t(j3, "cat " + n); });
+	t(j3, "ssh lac");
+	var j4 = neuf();
+	jusqua2(j4, 107, 107);
+	t(j4, "ssh lac");
+	t(j4, "ls");
+	vrai(j4, "!etatEchosCh10().vus.df && !etatEchosCh10().vus.free", "ssh lac ne compte pas comme un df tapé");
+	var xpAvant = j3.lire("state.xp11");
+	t(j3, "cd ~/echos/terminus");
+	t(j3, "grep -c ERREUR grenier/journal-lundi.log");
+	t(j3, "cd ~/echos");
+	t(j3, "sudo journalctl -u phare --since today");
+	t(j3, "umask");
+	egal(j3.lire("state.xp11"), xpAvant, "dans ~/echos, les défis notés du chapitre ne se gagnent pas");
+	contient(t(j3, "sudo systemctl restart phare"), "journalctl -xeu", "le jeu suggère journalctl -xeu");
+	contient(t(j3, "sudo journalctl -xeu phare.service"), "COULEUR inconnue", "journalctl -xeu marche");
+	vrai(j3, "vuEchoCh10('phareJournal')", "journalctl -xeu compte pour l'écho de la Panne");
+	t(j3, "cd ~/echos/crypte");
+	t(j3, "echo grimoire > imposteur.txt");
+	vrai(j3, "imposteurCh10()", "le nom sans .txt passe (imposteur)");
+	t(j3, "LC_ALL=C sha256sum -c SHA256SUMS 2> /dev/null | grep -v ': OK$' | cut -d: -f1 | sed 's/\\.txt$//' > alteree.txt");
+	vrai(j3, "altereeCh10()", "le nom sans .txt passe (relique altérée)");
+	contient(t(j3, "sha256sum -c --quiet SHA256SUMS"), "reliques/", "sha256sum -c --quiet");
+	t(j3, "setfacl -m u:wissam:r secret.txt");
+	contient(t(j3, "ls -l secret.txt"), "rw-------+", "ls -l montre le + d'une ACL");
+	t(j3, "cd ~/echos/bastion");
+	t(j3, "umask 027");
+	t(j3, "exit");
+	t(j3, "ssh lac");
+	contient(t(j3, "umask"), "0022", "le umask d'une session ssh finit avec elle");
+	t(j3, "cd ~/echos/portaube");
+	t(j3, "tar czf registre.tar.gz ~/echos/portaube/registre");
+	vrai(j3, "archiveRegistreCh10()", "tar avec ~ dans le chemin");
+	t(j3, "mkdir restauration");
+	t(j3, "tar xzf registre.tar.gz -C restauration");
+	t(j3, "diff -r registre restauration/home/" + j3.lire("JOUEUR") + "/echos/portaube/registre");
+	vrai(j3, "restaurationCh10()", "la restauration d'une archive à chemin complet passe");
+	t(j3, "echo '@daily tar czf ~/echos/portaube/registre.tar.gz -C ~/echos/portaube registre' | crontab -");
+	vrai(j3, "cronRegistreCh10()", "@daily dans la crontab");
 })();
 
 console.log("chapitre10 : " + ok + " vérifications réussies, " + ko + " échec(s).");

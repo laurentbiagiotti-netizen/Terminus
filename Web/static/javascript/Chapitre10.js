@@ -1405,7 +1405,9 @@ function texteWissamCh10(){
 		"Les données vivent sur la machine lac : ssh lac. Quinze gardiens tiennent les postes de la rive ; chacun t'enseigne ses sorts (cat leur nom). Chaque acte finit par une épreuve de rang. " +
 		"Commence par plonger la jauge : jauge. C'est ton point zéro.\n\n" +
 		"Trois défis d'honneur : Pêcheur de données avant ta première nuit, Sondeur des Abysses avant la fin du deuxième jour, et la Marée repoussée avant l'aube du quatrième. " +
-		"Et deux à part : repousser la Marée sans acheter un seul indice, et finir sans avoir effacé un seul vieux journal du lac (compressés, tous). »";
+		"Et deux à part : repousser la Marée sans acheter un seul indice, et finir sans avoir effacé un seul vieux journal du lac (compressés, tous).\n\n" +
+		"Une dernière chose. Si les chapitres d'avant sont loin, ou si tu arrives au Lac sans eux : à l'écart des quais, il y a le Ponton des Échos (cd PontonDesEchos). " +
+		"Sept reflets t'y rejouent ce qu'il faut savoir, des premiers cd jusqu'aux sauvegardes, sans le réseau. C'est facultatif, hors note, et là-bas l'horloge s'arrête : le lac attendra. »";
 }
 texteVivant(JaugeLacCh10, texteJaugeObjetCh10);
 texteVivant(RadioLacCh10, texteRadioCh10);
@@ -1571,6 +1573,7 @@ function commencerChapitre10(){
 		"Sous la Chronothèque dort le lac de données de l'école : dix ans de journaux, d'exports et de sauvegardes, versés sans tri. " +
 		"Dans ses profondeurs vit Pipelinus, celui qui signait P.G. À l'aube du quatrième jour, la Grande Marée le fera remonter, et ses huit bras attaqueront les données de l'école. Il est 6 h, le premier jour.\n\n" +
 		"Tu es sur la rive, au bout du ponton. " + C.vert("cat Wissam") + ", puis " + C.vert("cat Ordre") + ". Grace te guide à la radio ; quinze gardiens tiennent les postes du lac, et ton travail t'attend sur la machine lac (ssh lac).\n\n" +
+		"Si les chapitres d'avant sont loin : le Ponton des Échos (cd PontonDesEchos), sept reflets pour tout se rappeler, facultatifs, et l'horloge s'y arrête.\n\n" +
 		C.gris("Ce chapitre a sa propre note sur 20. quetes pour le journal, indice si tu bloques, xp pour ta note, jauge pour le plan, insignes pour ton rang. Chaque commande avance l'horloge de cinq minutes."));
 	return true;
 }

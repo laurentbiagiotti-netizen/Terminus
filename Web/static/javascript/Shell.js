@@ -546,7 +546,7 @@ Shell.ligneLongue = function(noeud, nom, io){
 	var taille = estLieu ? (noeud.children.length + noeud.items.length) : noeud.getText().length;
 	if (estLieu) affiche = io.tty ? C.bleu(affiche + "/") : affiche + "/";
 	else if (io.tty && !noeud.person && noeud.mode.indexOf("x") > -1) affiche = C.vert(affiche);
-	return (estLieu ? "d" : "-") + noeud.mode + "  " + completerDroite(noeud.owner, 9) + " " +
+	return (estLieu ? "d" : "-") + noeud.mode + (noeud.acl && noeud.acl.length ? "+ " : "  ") + completerDroite(noeud.owner, 9) + " " +
 		completerGauche(taille, 6) + "  " + affiche;
 };
 
@@ -1072,6 +1072,19 @@ Shell.sorts.mkdir = function(args, io){
 	var p = lireOptions(args, "pv", "mkdir");
 	if (p.reste.length === 0) throw new ShellError("mkdir : quel nom donner au nouveau lieu ? Utilisation : mkdir LIEU");
 	var messages = [];
+	// mkdir -p a/b/c : comme le vrai, chaque dossier manquant du chemin est créé, dans l'ordre.
+	if (p.opts.p){
+		var etendus = [];
+		p.reste.forEach(function(chemin){
+			var morceaux = String(chemin).split("/"), acc = "";
+			morceaux.forEach(function(m, k){
+				acc = k === 0 ? m : acc + "/" + m;
+				if (m === "" || m === "." || m === ".." || (k === 0 && m === "~")) return;
+				etendus.push(acc);
+			});
+		});
+		p.reste = etendus.filter(function(x, k){ return etendus.indexOf(x) === k; });
+	}
 	for (var i = 0; i < p.reste.length; i++){
 		var r = Shell.chercher(p.reste[i], io, "mkdir");
 		if (r.node !== null){

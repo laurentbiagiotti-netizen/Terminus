@@ -773,7 +773,7 @@ Shell.ligneLongue = function(noeud, nom, io){
 	var affiche = nom || noeud.toString();
 	if (io.tty && !noeud.person && noeud.mode.indexOf("x") > -1) affiche = C.vert(affiche);
 	var t = tailleObjetMachine(noeud);
-	return "-" + noeud.mode + "  " + completerDroite(noeud.owner, 9) + " " + completerGauche(LS_HUMAIN_MACHINES ? humain(t) : t, 6) + "  " + affiche;
+	return "-" + noeud.mode + (noeud.acl && noeud.acl.length ? "+ " : "  ") + completerDroite(noeud.owner, 9) + " " + completerGauche(LS_HUMAIN_MACHINES ? humain(t) : t, 6) + "  " + affiche;
 };
 var LS_AVANT_MACHINES = Shell.sorts.ls;
 Shell.sorts.ls = function(args, io){
