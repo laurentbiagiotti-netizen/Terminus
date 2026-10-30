@@ -4339,7 +4339,7 @@ insignes
 
 ### 111. Acte II, le Pêcheur de données : le Gué des Encres, le Moulin des Doublons, la Vanne des Formats (Noam, Maeva, Kamal)
 
-L'encre du nord est en latin-1 (`file -i`, `iconv`), l'arrivée du sud a des fins de ligne Windows et un BOM (`od -c`, `dos2unix`, `sed`). On dédoublonne sans perdre l'en-tête, on trouve les nouvelles captures du jour avec `comm` sur deux fichiers triés, on sépare les lignes justes des malformées sans rien jeter (`awk` : 8 champs, un poids nombre, une date AAAA-MM-JJ), puis on passe au JSON (`mlr`) et on l'interroge (`jq`). La réponse 6 est écrite par `sed`, à partir du résultat de `jq`.
+L'encre du nord est en latin-1 (`file -i`, `iconv`), l'arrivée du sud a des fins de ligne Windows et un BOM (`od -c`, puis `dos2unix`, qui retire les deux). On dédoublonne sans perdre l'en-tête, on trouve les nouvelles captures du jour avec `comm` sur deux fichiers triés, on sépare les lignes justes des malformées sans rien jeter (`awk` : 8 champs, un poids nombre, une date AAAA-MM-JJ), puis on passe au JSON (`mlr`) et on l'interroge (`jq`). La réponse 6 est écrite par `sed`, à partir du résultat de `jq`.
 
 ```
 cd ~/Cybersup/Lac/GueDesEncres; cat Noam
@@ -4354,7 +4354,7 @@ file -i nord.csv
 grep -c écrevisse nord.csv
 od -c arrivee-sud.csv | head -2
 dos2unix -n arrivee-sud.csv sud.csv
-sed -i '1s/^\xEF\xBB\xBF//' sud.csv
+od -c sud.csv | head -2
 { head -n 1 nord.csv; tail -n +2 nord.csv; tail -n +2 sud.csv; } > arrivees.csv
 od -c arrivees.csv | head -2
 tail -n +2 brutes.csv | sort | uniq -d | wc -l
@@ -4819,7 +4819,7 @@ ls
 head -n 1 sonde-*
 time wc -l ~/rive/captures.csv
 time -p sort -t, -k6,6n ~/rive/captures.csv > /dev/null
-time -p sort -t, -k6,6n ~/rive/captures.csv > /dev/null 2> ~/annexes/chrono.txt
+{ time -p sort -t, -k6,6n ~/rive/captures.csv > /dev/null; } 2> ~/annexes/chrono.txt
 cat ~/annexes/chrono.txt
 cd ~/annexes/ordre
 sort -c lundi.txt

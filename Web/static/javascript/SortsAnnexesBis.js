@@ -222,24 +222,29 @@ Shell.sorts.iconv = function(args, io){
 function axDos2unix(sens){
 	var cmd = sens === "unix" ? "dos2unix" : "unix2dos";
 	return function(args, io){
-		var calme = false, nouveau = false, noms = [];
+		var calme = false, nouveau = false, noms = [], garderBom = sens !== "unix";
 		args.forEach(function(a){
 			if (a === "-q" || a === "--quiet") calme = true;
+			else if (a === "-b" || a === "--keep-bom") garderBom = true;
+			else if (a === "-r" || a === "--remove-bom") garderBom = false;
 			else if (a === "-n" || a === "--newfile") nouveau = true;
 			else if (a === "-k" || a === "-o" || a === "--keepdate") return;
-			else if (/^-/.test(a)) throw new ShellError(cmd + ": option inconnue « " + a + " »" + axAstuce(io, "(Les options courantes : -n ANCIEN NOUVEAU, -q.)"));
+			else if (/^-/.test(a)) throw new ShellError(cmd + ": option inconnue « " + a + " »" + axAstuce(io, "(Les options courantes : -n ANCIEN NOUVEAU, -q, -b pour garder le BOM.)"));
 			else noms.push(a);
 		});
 		if (!noms.length){
 			if (io.stdin === null) throw new ShellError(cmd + " : quel fichier ? Utilisation : " + cmd + " FICHIER (le fichier est converti sur place)");
-			return sens === "unix" ? io.stdin.replace(/\r\n/g, "\n") : io.stdin.replace(/\r?\n/g, "\r\n");
+			var flux = garderBom ? io.stdin : io.stdin.replace(/^\ufeff/, "");
+			return sens === "unix" ? flux.replace(/\r\n/g, "\n") : flux.replace(/\r?\n/g, "\r\n");
 		}
 		var paires = [];
 		if (nouveau){ for (var i = 0; i + 1 < noms.length; i += 2) paires.push([noms[i], noms[i + 1]]); }
 		else noms.forEach(function(n){ paires.push([n, n]); });
 		paires.forEach(function(p){
 			var t = Shell.objetLisible(p[0], io, cmd), texte = t.item.getText();
-			var converti = sens === "unix" ? texte.replace(/\r\n/g, "\n").replace(/\r$/, "") : texte.replace(/\r?\n/g, "\r\n") + (t.item.sansFinDeLigne || /\r\n$/.test(texte) ? "" : "\r");
+			// Comme le vrai dos2unix : vers Unix, le BOM est retiré par défaut (-b le garde) ; unix2dos le garde.
+			var source = garderBom ? texte : texte.replace(/^\ufeff/, "");
+			var converti = sens === "unix" ? source.replace(/\r\n/g, "\n").replace(/\r$/, "") : source.replace(/\r?\n/g, "\r\n") + (t.item.sansFinDeLigne || /\r\n$/.test(texte) ? "" : "\r");
 			if (p[0] === p[1]){
 				if (!Shell.bit(t.item, "w", io)) throw new ShellError(cmd + ": Failed to open temporary output file: Permission denied");
 				t.item.setText(converti);
@@ -1212,8 +1217,9 @@ MANUEL["iconv"] = page("changer l'encodage d'un texte", "Internationalization CO
 	"file FICHIER dit l'encodage d'un texte. « illegal input sequence » : ce n'est pas l'encodage annoncé par -f.");
 MANUEL["dos2unix"] = page("retirer les fins de ligne CRLF", "DOS TO UNIX",
 	"Sous Linux, une ligne finit par \\n. Certains systèmes écrivent \\r\\n (CRLF) : le \\r invisible casse les scripts (« bad interpreter ») et les comparaisons.\n\n" +
-	"  dos2unix FICHIER           converti sur place\n  dos2unix -n ANCIEN NOUVEAU dans un nouveau fichier\n  unix2dos FICHIER           l'inverse\n\n" +
-	"cat -A montre le \\r : un ^M avant le $ de fin de ligne. file dit « with CRLF line terminators ».");
+	"  dos2unix FICHIER           converti sur place\n  dos2unix -n ANCIEN NOUVEAU dans un nouveau fichier\n  unix2dos FICHIER           l'inverse\n  dos2unix -b FICHIER        en gardant le BOM\n\n" +
+	"cat -A montre le \\r : un ^M avant le $ de fin de ligne. file dit « with CRLF line terminators ». " +
+	"Par défaut, dos2unix retire aussi le BOM (trois octets invisibles en tête, 357 273 277 dans od -c) ; tr -d '\\r', lui, le laisse.");
 MANUEL["unix2dos"] = page("ajouter les fins de ligne CRLF", "UNIX TO DOS", "L'inverse de dos2unix : chaque \\n devient \\r\\n.\n\n  unix2dos FICHIER");
 MANUEL["envsubst"] = page("remplir un modèle avec des variables", "ENVironment SUBSTitute",
 	"envsubst lit un texte et remplace $NOM et ${NOM} par la valeur des variables d'ENVIRONNEMENT (celles qu'on a exportées).\n\n" +

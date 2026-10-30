@@ -256,8 +256,8 @@ var AdonisCh10 = habitantCh10("chambre", "Adonis", "item_adonis.gif", function()
 		"« Adonis. Tout le monde ici veut que les traitements aillent plus vite. Personne ne les mesure. Alors on optimise au hasard. " +
 		"time lance une commande et dit combien de temps elle a pris : real, le temps qui s'est écoulé à l'horloge ; user, le temps de calcul ; sys, le temps passé dans le noyau. " +
 		"Si real est bien plus grand que user plus sys, la commande attendait : le disque, le réseau. time -p donne le même relevé en format court, facile à lire pour un script. " +
-		"Et time écrit sur la sortie d'erreur : 2> pour garder la mesure dans un fichier. Mesure-moi un tri des captures, et note-le dans ~/annexes/chrono.txt. »\n\n" +
-		C.gris("Les outils (sur lac) : time wc -l ~/rive/captures.csv ; time -p sort -t, -k6,6n ~/rive/captures.csv > /dev/null ; time -p sort -t, -k6,6n ~/rive/captures.csv > /dev/null 2> ~/annexes/chrono.txt ; cat ~/annexes/chrono.txt.");
+		"Et time écrit sa mesure sur la sortie d'erreur. Mais time est un mot du shell : un 2> collé à la commande ne prend que les erreurs de sort, la mesure file à l'écran. Pour la garder, entoure la commande d'accolades : { time -p sort ... > /dev/null; } 2> fichier. Mesure-moi un tri des captures, et note-le dans ~/annexes/chrono.txt. »\n\n" +
+		C.gris("Les outils (sur lac) : time wc -l ~/rive/captures.csv ; time -p sort -t, -k6,6n ~/rive/captures.csv > /dev/null ; { time -p sort -t, -k6,6n ~/rive/captures.csv > /dev/null; } 2> ~/annexes/chrono.txt ; cat ~/annexes/chrono.txt.");
 }, ["time"]);
 declarerAnnexe({ id: "a10_chrono", chapitre: 11, titre: "Le chronomètre", habitant: "Adonis", lieu: "à la Chambre des Pressions", item: function(){ return AdonisCh10; }, ouverte: ouverteCh10,
 	indice: "à la Chambre des Pressions, quelqu'un note des temps à la craie.",

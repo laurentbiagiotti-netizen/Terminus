@@ -2982,6 +2982,8 @@ if (Shell.sorts.zstd){
 		"  yq '.services.db.image' compose.yaml         une valeur\n" +
 		"  yq -o json '.services.db' compose.yaml       en JSON\n" +
 		"  yq -i '.services.etl.mem_limit = \"512m\"' compose.yaml   changer sur place\n\n" +
-		"Les filtres sont ceux de jq. Avec -i, les commentaires du fichier disparaissent : relis-le après.");
+		"Les filtres sont ceux de jq. Avec -i, relis le fichier après : selon l'outil, des commentaires peuvent disparaître.\n\n" +
+		"Attention, deux outils différents s'appellent yq. Ces exemples sont ceux du yq écrit en Go (un seul binaire à télécharger). " +
+		"Le paquet yq de Debian et d'Ubuntu est un autre outil, écrit en Python : il prend les mêmes filtres que jq, mais ne connaît pas -o, et sort du JSON sauf si on lui donne -y.");
 	if (typeof COMMANDES_REELLES !== "undefined") COMMANDES_REELLES = COMMANDES_REELLES.filter(function(c){ return SORTS_DONNEES.indexOf(c) === -1; });
 })();

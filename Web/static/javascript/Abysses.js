@@ -32,7 +32,7 @@ var DEFIS_CH10 = [
 	  appel: function(n, a, s){ return n === "stat" && aCh10(a, /%s/) && /^\d+$/.test(s.trim()); } },
 	// Le Banc de Tri (Younes)
 	{ id: "s_n10_sort_k", m: "banc", titre: "Banc : trier sur une seule colonne, en nombre et à rebours (sort -t, -k6,6nr)",
-	  appel: function(n, a, s){ return n === "sort" && aCh10(a, /^-t/) && aCh10(a, /^-k\d+(,\d+)?[a-z]*n|^-k/) && aCh10(a, /n/) && s.trim().length > 0; } },
+	  appel: function(n, a, s){ return n === "sort" && aCh10(a, /^-t/) && aCh10(a, /^-k\d/) && aCh10(a, /^-k\d+(\.\d+)?(,\d+)?[a-z]*n|^-[a-zA-Z]*n[a-zA-Z]*$|^--numeric-sort$/) && aCh10(a, /^-k\d+(\.\d+)?(,\d+)?[a-z]*r|^-[a-zA-Z]*r[a-zA-Z]*$|^--reverse$/) && s.trim().length > 0; } },
 	{ id: "s_n10_csvcut_n", m: "banc", titre: "Banc : les colonnes, leurs noms et leurs numéros (csvcut -n)",
 	  appel: function(n, a, s){ return n === "csvcut" && aCh10(a, /^-n$|^--names$/) && /^\s*1:/m.test(s); } },
 	{ id: "s_n10_grep_c", m: "banc", titre: "Banc : compter les lignes qui répondent, sans les afficher (grep -c)",
@@ -89,7 +89,7 @@ var DEFIS_CH10 = [
 	  appel: function(n, a){ return n === "split" && aCh10(a, /^-n$|^-nl\/\d+$|^--number/) && /l\/\d/.test(argsTexteCh10(a)); } },
 	{ id: "s_n10_pv", m: "bief", titre: "Bief : voir le flux avancer, avec sa barre (pv dans un tuyau)",
 	  appel: function(n){ return n === "pv"; } },
-	{ id: "s_n10_zstdcat", m: "bief", titre: "Bief : lire un morceau compressé sans le décompresser (zstdcat)",
+	{ id: "s_n10_zstdcat", m: "bief", titre: "Bief : lire un morceau compressé sans écrire de fichier décompressé (zstdcat)",
 	  appel: function(n, a, s){ return n === "zstdcat" && s.trim().length > 0; } },
 	{ id: "s_n10_parallel_dry", m: "bief", titre: "Bief : demander à parallel ce qu'il ferait, sans rien faire (parallel --dry-run)",
 	  appel: function(n, a, s){ return n === "parallel" && aCh10(a, /^--dry-run$|^--dryrun$/) && s.trim().length > 0; } },
@@ -300,14 +300,14 @@ var MAITRES_CH10 = {
 		entree: function(){ return "Un homme se tient au milieu du gué, de l'eau jusqu'aux genoux, et regarde trois rivières d'encre se mêler autour de lui. « Noam. Le Gué des Encres. Chaque rivière apporte sa manière d'écrire. Mon travail : qu'elles parlent toutes la même. »"; },
 		image: function(){ return "« Une lettre, sur le disque, ce sont des octets. Mais pas les mêmes selon l'encre : « é » s'écrit avec un seul octet en latin1 (ISO-8859-1), et avec deux en UTF-8. " +
 			"Lu dans la mauvaise encre, il devient un losange, ou deux lettres bizarres. iconv traduit d'une encre à l'autre : -f d'où l'on part, -t où l'on va.\n\n" +
-			"Et il y a deux pièges invisibles. Les fins de ligne Windows : \\r\\n au lieu de \\n (CRLF) ; dos2unix les retire. Et le BOM : trois octets, 357 273 277 dans od -c, qu'un tableur glisse en tête du fichier. " +
+			"Et il y a deux pièges invisibles. Les fins de ligne Windows : \\r\\n au lieu de \\n (CRLF) ; dos2unix les retire. Et le BOM : trois octets, 357 273 277 dans od -c, qu'un tableur glisse en tête du fichier ; dos2unix le retire aussi, par défaut, mais tr -d '\\r' le laisse. " +
 			"Invisibles à l'écran, ils collent à la première colonne : ton en-tête ne s'appelle plus « id », mais « \\ufeffid ». »"; },
 		syntaxe: function(){ return "« Les sorts de mon gué (dans ~/courants) :\n\n" +
 			"  file -i FICHIER                                l'encre (charset)\n" +
 			"  iconv -f ISO-8859-1 -t UTF-8 A > B             traduire\n" +
 			"  od -c FICHIER | head -2                        voir \\r, \\n et le BOM\n" +
-			"  dos2unix -n A B                                retirer les CRLF (dans un nouveau fichier)\n" +
-			"  sed -i '1s/^\\xEF\\xBB\\xBF//' FICHIER           retirer le BOM de la première ligne\n" +
+			"  dos2unix -n A B                                retirer les CRLF et le BOM (nouveau fichier)\n" +
+			"  sed -i '1s/^\\xEF\\xBB\\xBF//' FICHIER           le BOM, si on a pris tr -d '\\r'\n" +
 			"  { head -n 1 A; tail -n +2 A; tail -n +2 B; } > C    deux fichiers, un seul en-tête\n\n" +
 			sortsTexteCh10("gue") + " »"; },
 		mission: function(){ return "« Ta mission : arrivee-nord.csv est en latin1, fais-en nord.csv, en UTF-8. arrivee-sud.csv a des CRLF et un BOM : fais-en sud.csv, propre. Puis une seule arrivée, arrivees.csv : l'en-tête une fois, les lignes du nord et du sud. »"; },
@@ -397,6 +397,7 @@ var MAITRES_CH10 = {
 			var t = texteLacCh10("~/ecluses/ecluse.sh") || "";
 			if (/set -euo/.test(t) && !vuCh10("ecluseEchoue")) return "Zélia croise les bras. « Ton écluse a ses sûretés. Prouve-le : ./ecluse.sh donnees/absente.csv doit échouer (echo $? : pas 0). »";
 			if (ecluseSureCh10(t) && vuCh10("ecluseEchoue") && !vuCh10("ecluseOk")) return "Zélia écoute l'eau. « Elle se ferme sur l'absent, c'est bien. Mais l'arrivée du soir doit passer : des guillemets autour de $1 et de $fichier, et lance-la entre guillemets. »";
+			if (ecluseRangeeCh10(t) && vuCh10("ecluseOk") && !vuCh10("ecluseOkPiege") && tmpOrphelinsCh10().length) return "Zélia soulève une trappe. « Ton piège range bien. Mais tes anciens essais ont laissé des orphelins dans /tmp : ls /tmp, rm /tmp/tmp.*, puis relance l'arrivée du soir. »";
 			return null;
 		},
 		fin: function(){ return "Zélia te confie une petite clé de laiton. « Ton écluse ne ment plus.\n\n" +
@@ -414,7 +415,7 @@ var MAITRES_CH10 = {
 			"  wc -l morceaux/*                                 chaque morceau, et le total\n" +
 			"  ls morceaux/*.csv | xargs -P 4 -n 1 zstd -q --rm\n" +
 			"  parallel zstd -q --rm ::: morceaux/*.csv         la même chose, avec parallel\n" +
-			"  zstdcat morceaux/sondes_aa.csv.zst | head        lire sans décompresser\n" +
+			"  zstdcat morceaux/sondes_aa.csv.zst | head        lire, sans écrire de fichier\n" +
 			"  pv sondes.csv | wc -l                            voir le flux avancer\n\n" +
 			sortsTexteCh10("bief") + " »"; },
 		mission: function(){ return "« Ta mission : ~/bief/sondes.csv, en morceaux de 500 lignes au plus, dans ~/bief/morceaux/, sans l'en-tête et sans perdre une ligne. Puis compresse tous les morceaux en parallèle, avec zstd, et qu'il ne reste que les .zst. »"; },
@@ -464,7 +465,7 @@ var MAITRES_CH10 = {
 			"  df -h /srv/lac                                          le disque du lac\n" +
 			"  sudo du -sh /srv/lac/* | sort -h                        ce qui pèse le plus, en dernier\n" +
 			"  sudo find /srv/lac/journaux -name '*.log' -mtime +30    les vieux journaux\n" +
-			"  sudo find ... -mtime +30 -exec zstd -q --rm {} \;       les compresser, sans rien effacer\n" +
+			"  sudo find ... -mtime +30 -exec zstd -q --rm {} \\;      les compresser, sans rien effacer\n" +
 			"  sudo lsof +L1                                           les fichiers effacés, encore ouverts\n" +
 			"  sudo systemctl restart SERVICE                          relâcher ce qu'il tient\n\n" +
 			sortsTexteCh10("fosse") + " »"; },

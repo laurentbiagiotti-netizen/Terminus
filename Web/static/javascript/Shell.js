@@ -743,27 +743,37 @@ Shell.sorts.echo = function(args, io){
 
 /* Les caractères spéciaux d'echo -e et de printf : \n, \t, \\, \0NNN, \xHH... \c arrête tout. */
 function echappements(texte){
-	var sortie = "", i = 0, m;
+	var sortie = "", i = 0, m, octets = [];
+	// Des octets écrits en \xHH ou \NNN à la suite : s'ils forment de l'UTF-8 valide (\xef\xbb\xbf, \xc3\xa9), ils redeviennent le caractère.
+	var vider = function(){
+		if (!octets.length) return;
+		var t = null;
+		if (octets.some(function(o){ return o > 127; })){ try { t = decodeURIComponent(octets.map(function(o){ return "%" + (o < 16 ? "0" : "") + o.toString(16); }).join("")); } catch (e){ t = null; } }
+		sortie += t !== null ? t : octets.map(function(o){ return String.fromCharCode(o); }).join("");
+		octets = [];
+	};
 	var simples = { "n": "\n", "t": "\t", "\\": "\\", "a": "\x07", "b": "\b", "r": "\r", "v": "\v", "f": "\f", "e": "\x1b", "E": "\x1b", "\"": "\"", "'": "'" };
 	while (i < texte.length){
 		var c = texte.charAt(i);
-		if (c !== "\\" || i + 1 >= texte.length){ sortie += c; i++; continue; }
+		if (c !== "\\" || i + 1 >= texte.length){ vider(); sortie += c; i++; continue; }
 		var s = texte.charAt(i + 1), reste = texte.substring(i + 1);
-		if (s === "c") return { texte: sortie, arret: true };
-		if (simples.hasOwnProperty(s)){ sortie += simples[s]; i += 2; continue; }
+		if (s === "c"){ vider(); return { texte: sortie, arret: true }; }
+		if (simples.hasOwnProperty(s)){ vider(); sortie += simples[s]; i += 2; continue; }
 		if ((m = /^0([0-7]{0,3})/.exec(reste)) || (m = /^([0-7]{1,3})/.exec(reste))){
-			sortie += String.fromCharCode(parseInt(m[1] || "0", 8));
+			octets.push(parseInt(m[1] || "0", 8) & 255);
 			i += 1 + m[0].length;
 			continue;
 		}
 		if ((m = /^x([0-9A-Fa-f]{1,2})/.exec(reste))){
-			sortie += String.fromCharCode(parseInt(m[1], 16));
+			octets.push(parseInt(m[1], 16));
 			i += 1 + m[0].length;
 			continue;
 		}
+		vider();
 		sortie += c;
 		i++;
 	}
+	vider();
 	return { texte: sortie, arret: false };
 }
 

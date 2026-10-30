@@ -190,7 +190,7 @@ var QUETES_CH10 = [
 	{ id: "n10_encre", titre: "Gué des Encres : rendre l'encre du nord lisible (iconv)",
 	  indice: "Gué (Noam). Dans ~/courants : file -i arrivee-nord.csv ; iconv -f ISO-8859-1 -t UTF-8 arrivee-nord.csv > nord.csv ; file -i nord.csv." },
 	{ id: "n10_lignes", titre: "Gué des Encres : les fins de ligne et le BOM, puis une seule arrivée",
-	  indice: "od -c arrivee-sud.csv | head -2 ; dos2unix -n arrivee-sud.csv sud.csv ; sed -i '1s/^\\xEF\\xBB\\xBF//' sud.csv ; puis arrivees.csv : l'en-tête une fois, les lignes de nord.csv et de sud.csv." },
+	  indice: "od -c arrivee-sud.csv | head -2 ; dos2unix -n arrivee-sud.csv sud.csv (CRLF et BOM partent) ; od -c sud.csv | head -2 ; puis arrivees.csv : l'en-tête une fois, les lignes de nord.csv et de sud.csv." },
 	{ id: "n10_doublons", titre: "Moulin des Doublons : dédoublonner sans perdre l'en-tête",
 	  indice: "Moulin (Maeva). tail -n +2 brutes.csv | sort | uniq -d | wc -l ; puis { head -n 1 brutes.csv; tail -n +2 brutes.csv | sort -u; } > uniques.csv." },
 	{ id: "n10_differences", titre: "Moulin des Doublons : ce qui est arrivé depuis hier (comm)",
@@ -238,9 +238,9 @@ var QUETES_CH10 = [
 	{ id: "n10_sauvegarde", titre: "Citerne : une sauvegarde, et la preuve qu'elle se restaure",
 	  indice: "docker exec citerne pg_dump -U lac lac | gzip > ~/arsenal/sauvegardes/lac.sql.gz ; docker exec citerne createdb -U lac essai ; gunzip -c ~/arsenal/sauvegardes/lac.sql.gz | docker exec -i citerne psql -U lac -d essai." },
 	{ id: "n10_compose", titre: "Grand Bassin : la pile qui démarre dans l'ordre",
-	  indice: "Bassin (Eden). Dans ~/arsenal/bassin, compose.yaml : un volume pour db, un healthcheck pg_isready, etl en depends_on db condition: service_healthy ; docker compose up -d ; docker compose ps." },
+	  indice: "Bassin (Eden). Dans ~/arsenal/bassin, compose.yaml : un volume pour db, un healthcheck pg_isready, etl en depends_on db condition: service_healthy ; docker build -t carnet:1.0 ~/arsenal/carnet (le service carnet en a besoin) ; docker compose up -d ; docker compose ps." },
 	{ id: "n10_carnet", titre: "Grand Bassin : le carnet, sur 127.0.0.1 seulement, avec son jeton",
-	  indice: "carnet : ports \"127.0.0.1:8888:8888\", env_file carnet.env, le volume sortie en :ro ; docker compose up -d ; curl \"http://127.0.0.1:8888/?token=...\"." },
+	  indice: "carnet : ports \"127.0.0.1:8888:8888\", env_file carnet.env, le volume sortie en :ro ; l'image carnet:1.0 construite (docker build -t carnet:1.0 ~/arsenal/carnet) ; docker compose up -d ; curl \"http://127.0.0.1:8888/?token=...\"." },
 	{ id: "n10_rang5", titre: "ÉPREUVE DE RANG V : la Pile engloutie (rang Maître du Lac)",
 	  indice: "Épreuve de rang : quatre fautes dans une pile. ~/pile-engloutie, docker compose ps, docker compose logs." },
 	{ id: "n10_maree", titre: "La Grande Marée : voir Pipelinus remonter",
@@ -287,8 +287,8 @@ var INDICES_CH10 = {
 		"cd ~/filet ; head -3 filet.csv ; tail -n +2 filet.csv | cut -d';' -f6 | sort -u | wc -l ; tail -n +2 filet.csv | awk -F';' '{ gsub(\",\", \".\", $4); kg[$1] += $4 } END { for (d in kg) print kg[d], d }' | sort -rn | head -1 ; tail -n +2 filet.csv | awk -F';' '{ gsub(\",\", \".\", $5); s[$2] += $5; n[$2]++ } END { for (c in s) print s[c]/n[c], c }' | sort -n | head -1"],
 	n10_encre: ["file -i dit l'encodage (charset). iconv convertit d'un encodage à un autre : -f d'où l'on part, -t où l'on va.",
 		"cd ~/courants ; file -i arrivee-nord.csv ; iconv -f ISO-8859-1 -t UTF-8 arrivee-nord.csv > nord.csv ; file -i nord.csv ; grep -c écrevisse nord.csv"],
-	n10_lignes: ["CRLF : \\r\\n à chaque fin de ligne (dos2unix les retire). Le BOM : trois octets invisibles en tête (357 273 277 dans od -c), que sed retire.",
-		"od -c arrivee-sud.csv | head -2 ; dos2unix -n arrivee-sud.csv sud.csv ; sed -i '1s/^\\xEF\\xBB\\xBF//' sud.csv ; { head -n 1 nord.csv; tail -n +2 nord.csv; tail -n +2 sud.csv; } > arrivees.csv ; od -c arrivees.csv | head -2"],
+	n10_lignes: ["CRLF : \\r\\n à chaque fin de ligne (dos2unix les retire). Le BOM : trois octets invisibles en tête (357 273 277 dans od -c), que dos2unix retire aussi par défaut (avec tr -d '\\r', il reste : sed -i '1s/^\\xEF\\xBB\\xBF//').",
+		"od -c arrivee-sud.csv | head -2 ; dos2unix -n arrivee-sud.csv sud.csv ; od -c sud.csv | head -2 ; { head -n 1 nord.csv; tail -n +2 nord.csv; tail -n +2 sud.csv; } > arrivees.csv ; od -c arrivees.csv | head -2"],
 	n10_doublons: ["sort -u garde une seule ligne de chaque. Mais l'en-tête doit rester en tête : on le met de côté (head -n 1), on trie le reste.",
 		"tail -n +2 brutes.csv | sort | uniq -d | wc -l ; { head -n 1 brutes.csv; tail -n +2 brutes.csv | sort -u; } > uniques.csv ; wc -l uniques.csv"],
 	n10_differences: ["comm compare deux fichiers TRIÉS : colonne 1, seulement dans le premier ; 2, seulement dans le second ; 3, dans les deux. -13 garde la colonne 2.",
@@ -299,10 +299,10 @@ var INDICES_CH10 = {
 		"mlr --icsv --ojson cat valides.csv > captures.json ; jq '[.[] | select(.espece == \"sandre\")] | length' captures.json ; puis la réponse 6"],
 	n10_rang2: ["Dans l'ordre : l'encre (iconv), les fins de ligne (tr -d '\\r' ou dos2unix), les doublons (sort -u, l'en-tête à part), la vanne (awk : 8 champs, un poids nombre, une date AAAA-MM-JJ). Les rejets dans rejets.csv.",
 		"cd ~/eau-trouble ; iconv -f ISO-8859-1 -t UTF-8 arrivage.csv | tr -d '\\r' > net.csv ; head -n 1 net.csv > propre.csv ; tail -n +2 net.csv | sort -u | awk -F, 'NF == 8 && $6 ~ /^[0-9]+(\\.[0-9]+)?$/ && $2 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/' >> propre.csv ; tail -n +2 net.csv | sort -u | awk -F, '!(NF == 8 && $6 ~ /^[0-9]+(\\.[0-9]+)?$/ && $2 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)' > rejets.csv ; ./valider.sh propre.csv"],
-	n10_script: ["set -e arrête à la première erreur, -u refuse une variable vide, -o pipefail fait échouer un tuyau dès qu'une de ses commandes échoue. Et \"$1\" garde les espaces d'un nom de fichier.",
+	n10_script: ["set -e arrête à la première erreur, -u refuse une variable jamais définie, -o pipefail fait échouer un tuyau dès qu'une de ses commandes échoue. Et \"$1\" garde les espaces d'un nom de fichier.",
 		"cd ~/ecluses ; nano ecluse.sh (set -euo pipefail sous #!/bin/bash ; fichier=\"$1\" ; tail -n +2 \"$fichier\") ; ./ecluse.sh donnees/absente.csv ; echo $? ; ./ecluse.sh \"donnees/arrivee du soir.csv\" ; cat sortie/bilan.csv"],
 	n10_piege: ["mktemp crée un fichier temporaire au nom unique ; trap 'commande' EXIT lance la commande quand le script se termine, qu'il réussisse ou qu'il échoue.",
-		"nano ecluse.sh : tmp=$(mktemp) puis trap 'rm -f \"$tmp\"' EXIT, et \"$tmp\" partout à la place de /tmp/ecluse.tmp ; ./ecluse.sh \"donnees/arrivee du soir.csv\" ; ls /tmp"],
+		"nano ecluse.sh : tmp=$(mktemp) puis trap 'rm -f \"$tmp\"' EXIT, et \"$tmp\" partout à la place de /tmp/ecluse.tmp ; ./ecluse.sh \"donnees/arrivee du soir.csv\" ; ls /tmp (et si d'anciens essais ont laissé des /tmp/tmp.*, rm /tmp/tmp.* puis relance)"],
 	n10_decouper: ["split -l N coupe un flux en morceaux de N lignes ; le - lit l'entrée standard ; --additional-suffix ajoute l'extension. L'en-tête ne doit pas se retrouver au milieu.",
 		"cd ~/bief ; mkdir morceaux ; tail -n +2 sondes.csv | split -l 500 - morceaux/sondes_ --additional-suffix=.csv ; wc -l morceaux/*"],
 	n10_parallele: ["xargs -P 4 lance quatre commandes à la fois ; -n 1 donne un fichier à chacune. parallel fait pareil avec ::: . zstd --rm retire l'original une fois compressé.",
@@ -314,7 +314,7 @@ var INDICES_CH10 = {
 	n10_rang3: ["Trois choses : un pipeline qui échoue quand un relevé est illisible (pipefail), le relevé illisible mis en quarantaine (gzip -t le trouve), et une seule ligne de cron, sous flock.",
 		"cd ~/ecluse-bloquee ; gzip -t sondes/*.gz ; mv sondes/LE_MAUVAIS quarantaine/ ; nano pipeline.sh (set -euo pipefail) ; ./pipeline.sh ; crontab -e (une seule ligne : 15 3 * * * flock -n /tmp/pipeline.lock ~/ecluse-bloquee/pipeline.sh > /dev/null 2>&1)"],
 	n10_disque: ["df dit la place prise par système de fichiers ; du, la place prise par dossier ; find -mtime +30 trouve ce qui n'a pas bougé depuis plus de trente jours.",
-		"df -h /srv/lac ; sudo du -sh /srv/lac/* | sort -h ; sudo find /srv/lac/journaux -name '*.log' -mtime +30 ; sudo find /srv/lac/journaux -name '*.log' -mtime +30 -exec zstd -q --rm {} \; ; df -h /srv/lac"],
+		"df -h /srv/lac ; sudo du -sh /srv/lac/* | sort -h ; sudo find /srv/lac/journaux -name '*.log' -mtime +30 ; sudo find /srv/lac/journaux -name '*.log' -mtime +30 -exec zstd -q --rm {} \\; ; df -h /srv/lac"],
 	n10_fantome: ["Un fichier effacé qu'un processus tient encore ouvert garde sa place sur le disque : lsof +L1 le montre. Le processus relâché, la place revient.",
 		"df -h /srv/lac ; sudo du -sh /srv/lac ; sudo lsof +L1 ; sudo systemctl restart collecteur ; df -h /srv/lac"],
 	n10_pression: ["nice (de -20 à 19) règle la part de processeur : plus il est haut, plus le processus est gentil. ionice -c3 (idle) ne lit le disque que quand personne d'autre ne le fait.",
@@ -336,9 +336,9 @@ var INDICES_CH10 = {
 	n10_sauvegarde: ["Une sauvegarde qu'on n'a jamais restaurée n'est qu'un espoir. pg_dump écrit la base en SQL ; on la recharge dans une base d'essai, et on compte.",
 		"docker exec citerne pg_dump -U lac lac | gzip > ~/arsenal/sauvegardes/lac.sql.gz ; docker exec citerne createdb -U lac essai ; gunzip -c ~/arsenal/sauvegardes/lac.sql.gz | docker exec -i citerne psql -U lac -d essai ; docker exec citerne psql -U lac -d essai -c 'SELECT count(*) FROM captures'"],
 	n10_compose: ["depends_on seul attend que la base DÉMARRE ; condition: service_healthy attend qu'elle RÉPONDE (son healthcheck).",
-		"cd ~/arsenal/bassin ; nano compose.yaml (db : volumes - citerne-bassin:/var/lib/postgresql/data, healthcheck test [\"CMD-SHELL\", \"pg_isready -U lac -d lac\"] ; etl : depends_on: db: condition: service_healthy, environment DB_HOST db DB_PASSWORD..., volumes ./donnees:/data:ro et ./sortie:/sortie ; volumes: citerne-bassin:) ; docker compose up -d ; docker compose ps"],
+		"cd ~/arsenal/bassin ; nano compose.yaml (db : volumes - citerne-bassin:/var/lib/postgresql/data, healthcheck test [\"CMD-SHELL\", \"pg_isready -U lac -d lac\"] ; etl : depends_on: db: condition: service_healthy, environment DB_HOST db DB_PASSWORD..., volumes ./donnees:/data:ro et ./sortie:/sortie ; volumes: citerne-bassin:) ; docker build -t carnet:1.0 ~/arsenal/carnet ; docker compose up -d ; docker compose ps"],
 	n10_carnet: ["127.0.0.1:8888:8888 publie le port pour la machine seule, pas pour tout le réseau. Le jeton se passe par un env_file, jamais en clair dans compose.yaml.",
-		"nano compose.yaml (carnet : ports - \"127.0.0.1:8888:8888\", env_file: carnet.env, volumes - ./sortie:/sortie:ro) ; docker compose up -d ; docker compose ps ; curl \"http://127.0.0.1:8888/?token=$(cut -d= -f2 carnet.env)\""],
+		"nano compose.yaml (carnet : ports - \"127.0.0.1:8888:8888\", env_file: carnet.env, volumes - ./sortie:/sortie:ro) ; docker build -t carnet:1.0 ~/arsenal/carnet (si ce n'est pas fait) ; docker compose up -d ; docker compose ps ; curl \"http://127.0.0.1:8888/?token=$(cut -d= -f2 carnet.env)\""],
 	n10_rang5: ["Quatre fautes : une base étranglée (mem_limit), un ETL qui part avant que la base réponde, un dossier mal nommé, un carnet ouvert à tous et sans jeton.",
 		"cd ~/pile-engloutie ; docker compose up -d ; docker compose ps ; docker compose logs db etl carnet ; nano compose.yaml (mem_limit 256m, condition: service_healthy, ./donnees, ports 127.0.0.1:8889:8888 et env_file carnet.env) ; docker compose up -d ; docker compose ps ; cat sortie/agregats.csv"],
 	n10_maree: ["La jauge dit ce que Pipelinus attaque ; sur lac, on regarde avant d'agir.", "jauge ; ssh lac ; df -h /srv/lac ; ls -l /srv/lac/entree /srv/lac/public ; docker ps"],
@@ -1405,7 +1405,7 @@ function texteWissamCh10(){
 		"Les données vivent sur la machine lac : ssh lac. Quinze gardiens tiennent les postes de la rive ; chacun t'enseigne ses sorts (cat leur nom). Chaque acte finit par une épreuve de rang. " +
 		"Commence par plonger la jauge : jauge. C'est ton point zéro.\n\n" +
 		"Trois défis d'honneur : Pêcheur de données avant ta première nuit, Sondeur des Abysses avant la fin du deuxième jour, et la Marée repoussée avant l'aube du quatrième. " +
-		"Et un quatrième, à part : finir sans acheter un seul indice. »";
+		"Et deux à part : repousser la Marée sans acheter un seul indice, et finir sans avoir effacé un seul vieux journal du lac (compressés, tous). »";
 }
 texteVivant(JaugeLacCh10, texteJaugeObjetCh10);
 texteVivant(RadioLacCh10, texteRadioCh10);
@@ -1500,7 +1500,7 @@ texteVivant(PasserelleLacCh10, function(){
 		"Wissam a glissé ce feuillet sous ta lanterne. « Tout ce que tu as fait ici, refais-le une fois chez toi, sur une vraie machine Linux (ou WSL). Ce soir. »\n\n" +
 		"1. Les outils (Debian ou Ubuntu) :\n" +
 		"     sudo apt install csvkit miller datamash jq pv parallel zstd acl\n" +
-		"     sudo apt install docker.io docker-compose-v2 ; sudo usermod -aG docker \"$USER\" (puis reconnecte-toi)\n\n" +
+		"     sudo apt install docker.io docker-compose-v2 (sous Debian : docker-compose) ; sudo usermod -aG docker \"$USER\" (puis reconnecte-toi)\n\n" +
 		"2. Un vrai jeu de données (un export ouvert, data.gouv.fr par exemple), et les quatre regards :\n" +
 		"     file -i f.csv ; head f.csv ; wc -l f.csv ; csvlook f.csv | head ; csvstat f.csv\n\n" +
 		"3. Le nettoyage, toujours dans un nouveau fichier :\n" +
