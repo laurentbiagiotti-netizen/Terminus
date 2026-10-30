@@ -146,7 +146,8 @@ if (annexes) problemes.push("quêtes annexes manquantes : " + annexes);
 [["ami_ch2", "Ami du campus"], ["ami_ch3", "Ami de la Crypte"], ["ami_ch4", "Ami de l'Académie"], ["ami_ch5", "Ami du Bastion"], ["ami_ch6", "Ami de Lumen"], ["ami_ch7", "Ami de Port-Aube"], ["ami_ch8", "Ami du Grand Port"], ["ami_ch9", "Ami de la Chronothèque"], ["ami_ch10", "Ami du Lac Profond"]].forEach(function(b){
 	if (!jeu.lire("state.has('" + b[0] + "')")) problemes.push("le badge " + b[1] + " n'est pas gagné");
 });
-if (jeu.lire("QUETES_ANNEXES.length") !== 54) problemes.push("il devrait y avoir 54 quêtes annexes, il y en a " + jeu.lire("QUETES_ANNEXES.length"));
+if (jeu.lire("QUETES_ANNEXES.filter(function(a){ return !a.rappel; }).length") !== 54) problemes.push("il devrait y avoir 54 quêtes annexes (hors Sept Échos), il y en a " + jeu.lire("QUETES_ANNEXES.filter(function(a){ return !a.rappel; }).length"));
+if (jeu.lire("QUETES_ANNEXES.filter(function(a){ return a.rappel; }).length") !== 7) problemes.push("il devrait y avoir sept échos");
 if (jeu.lire("state.xp") !== jeu.lire("state.xpMax()")){
 	problemes.push("la solution n'atteint pas le score maximal. Sorts jamais lancés : [" +
 		jeu.lire("ORDRE_DES_SORTS.filter(function(x){ return !state.usages[x]; }).join(', ')") + "] ; lieux jamais visités : [" +

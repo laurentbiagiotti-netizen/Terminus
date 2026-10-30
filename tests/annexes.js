@@ -94,7 +94,8 @@ var FICHIERS = ["SortsAnnexes.js", "HabitantsCampus.js", "HabitantsCrypte.js", "
 /* ================================================================== */
 (function(){
 	var jeu = monde.nouveauMonde({});
-	egal(jeu.lire("QUETES_ANNEXES.length"), 54, "cinquante-quatre quêtes annexes en tout (six par chapitre, du 2 au 10)");
+	egal(jeu.lire("QUETES_ANNEXES.filter(function(a){ return !a.rappel; }).length"), 54, "cinquante-quatre quêtes annexes en tout (six par chapitre, du 2 au 10)");
+	egal(jeu.lire("QUETES_ANNEXES.filter(function(a){ return a.rappel; }).length"), 7, "et les Sept Échos du Lac, à part");
 	CHAPITRES.forEach(function(c){
 		var a = jeu.lire("QUETES_ANNEXES.filter(function(a){ return a.id.indexOf('" + c.prefixe + "') === 0; }).map(function(a){ return [a.chapitre, a.etapes.length, !!a.souvenir, !!a.merci, !!a.lumiere, typeof a.ouverte]; })");
 		egal(a.length, 6, "chapitre " + c.affiche + " : six annexes");
