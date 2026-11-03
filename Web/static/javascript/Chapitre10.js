@@ -1060,9 +1060,10 @@ function commencerMareeCh10(parAube){
 			"Sa voix n'est pas un son : c'est une ligne qui apparaît dans tous les journaux de l'école à la fois. « Je sais ce qui arrivera demain. Je l'ai lu. »\n" +
 			C.gris("(Radio : « Grace : à tous les postes : la Marée. Maître du Lac, jauge d'abord, puis sur lac : df, ls /srv/lac/entree, docker ps. Un bras à la fois. »)"));
 	}
+	// Le temps est figé : un bras à la fois, le suivant quand celui-ci est tranché.
 	lancerBrasCh10("deluge");
-	lancerBrasCh10("doublons");
-	annoncerBrasCh10(["deluge", "doublons"]);
+	if (!TEMPS_FIGE_CH10) lancerBrasCh10("doublons");
+	annoncerBrasCh10(TEMPS_FIGE_CH10 ? ["deluge"] : ["deluge", "doublons"]);
 }
 function annoncerBrasCh10(cles){
 	if (state.has("rejeuEnCours") || !cles.length) return;
@@ -1202,6 +1203,7 @@ function rappelWissamCh10(){
 }
 function validerCh10(){
 	var c = sCh10();
+	if (typeof laurentMaitreDuTempsCh10 === "function") laurentMaitreDuTempsCh10();
 	if (!state.quests["n10_jauge"] && state.has("ch10WissamLu") && state.has("ch10OrdreLu") && c.scoreDepart !== null && c.scoreDepart !== undefined){
 		state.complete("n10_jauge");
 		if (!state.has("insigne_riverain")){ state.set("insigne_riverain"); if (!state.has("rejeuEnCours")) say(C.jaune("Wissam accroche à ta veste une goutte de verre, vide. « Riverain. Tout le monde commence au bord. Même ceux qui finissent au fond. »")); }
@@ -1356,8 +1358,8 @@ LacCh10.addItem(WissamLacCh10);
 var OrdreLacCh10 = objetCh10(LacCh10, "Ordre",
 	"ORDRE DE MISSION · LE LAC PROFOND\n\n" +
 	"Sous la Chronothèque dort le lac de données de l'école, sur la machine lac (ssh lac). Dans ses profondeurs, Pipelinus,\n" +
-	"celui qui signait P.G. À l'aube du quatrième jour, la Grande Marée le fera remonter. Il est J1 06:00. Chaque sort prend\n" +
-	"cinq minutes ; à 22 h, on dort ; on se lève à 6 h. Pendant la nuit, ta crontab sur lac tourne vraiment.\n\n" +
+	"celui qui signait P.G. Il est J1 06:00, et Laurent, maître du temps, l'a figé : essaie, trompe-toi, recommence,\n" +
+	"pas une minute ne passe. Pour voir ta crontab tourner vraiment, demande une nuit (nuit, une commande du jeu).\n\n" +
 	"1. Plonger la jauge (jauge, une commande du jeu) : la Clarté du Lac, au départ.\n" +
 	"2. Tenir les quinze postes : chaque gardien t'enseigne ses sorts (cat GARDIEN) ; ton travail t'attend sur lac, dans ta maison.\n" +
 	"3. Monter en rang : chaque acte finit par une épreuve. Riverain, Pêcheur de données, Plongeur, Éclusier, Sondeur des Abysses,\n" +
@@ -1379,7 +1381,7 @@ var CertificatLacCh10 = new Item("CertificatLac", "", "item_manuscript.gif");
 function texteJaugeObjetCh10(){
 	var c = sCh10(), l = "LA JAUGE DU LAC\n\nIl est " + heureCh10() + ". Tu es " + nomRangCh10() + ".\n";
 	if (c.maree) return l + "\nLa Grande Marée est là" + (c.maree.avantAube ? ", avant l'aube." : ", à l'aube du quatrième jour.") + "\n(jauge, la commande, pour la situation.)";
-	l += "\n" + majusculeCh10(texteAvantMareeCh10()) + " (l'aube du J4, 06:00).\nÀ 22 h, on dort ; on se lève à 6 h.\n\n";
+	l += "\n" + majusculeCh10(texteAvantMareeCh10()) + " : Laurent a arrêté le sablier. Essaie autant de commandes que tu veux.\nUne nuit, quand tu veux : nuit (ta crontab tourne pendant ce temps).\n\n";
 	l += "Défis d'honneur de Wissam :\n";
 	l += "  Pêcheur de données avant la nuit du J1 : " + (aFait("s_n10_pecheur_j1") ? "réussi" : (c.minutes >= 1320 ? "manqué" : "en cours")) + "\n";
 	l += "  Sondeur des Abysses avant la fin du J2 : " + (aFait("s_n10_sondeur_j2") ? "réussi" : (c.minutes >= 1440 + 1320 ? "manqué" : "en cours")) + "\n";
@@ -1574,6 +1576,6 @@ function commencerChapitre10(){
 		"Dans ses profondeurs vit Pipelinus, celui qui signait P.G. À l'aube du quatrième jour, la Grande Marée le fera remonter, et ses huit bras attaqueront les données de l'école. Il est 6 h, le premier jour.\n\n" +
 		"Tu es sur la rive, au bout du ponton. " + C.vert("cat Wissam") + ", puis " + C.vert("cat Ordre") + ". Grace te guide à la radio ; quinze gardiens tiennent les postes du lac, et ton travail t'attend sur la machine lac (ssh lac).\n\n" +
 		"Si les chapitres d'avant sont loin : le Ponton des Échos (cd PontonDesEchos), sept reflets pour tout se rappeler, facultatifs, et l'horloge s'y arrête.\n\n" +
-		C.gris("Ce chapitre a sa propre note sur 20. quetes pour le journal, indice si tu bloques, xp pour ta note, jauge pour le plan, insignes pour ton rang. Chaque commande avance l'horloge de cinq minutes."));
+		C.gris("Ce chapitre a sa propre note sur 20. quetes pour le journal, indice si tu bloques, xp pour ta note, jauge pour le plan, insignes pour ton rang. Le temps est figé : essaie autant de commandes que tu veux."));
 	return true;
 }

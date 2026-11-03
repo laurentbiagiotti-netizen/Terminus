@@ -1090,6 +1090,53 @@ def ponton_echos():
     return im
 
 
+def cine_temps_sablier():
+    """Le temps s'arrête : au-dessus du lac, le Grand Sablier de la Chronothèque, son filet de sable figé en l'air ;
+    sous lui, des gouttes suspendues entre l'eau et la voûte, et des rides qui ne bougent plus."""
+    im, d = toile()
+    d.rectangle([0, 0, W, H], fill=N)
+    voute_grotte(d, im, 46, graine=161)
+    eau(d, 120, H, graine=161, reflet=88, larg=10, dense=0.7)
+    halo(d, 88, 72, 46, V, 0.7)
+    sablier(d, 88, 30, 78, 40, 0.5, B, montant=False)
+    for k in range(9):                                                                     # le filet de sable, figé
+        d.point((88, 70 + k * 2), fill=B)
+    rnd = random.Random(161)
+    for _ in range(14):                                                                    # des gouttes suspendues
+        x, y = rnd.randint(14, 162), rnd.randint(54, 116)
+        if abs(x - 88) < 26:
+            continue
+        d.ellipse([x - 1, y - 2, x + 1, y + 1], fill=B)
+        d.point((x, y + 3), fill=V)
+    for (x, y) in ((46, 132), (130, 138), (88, 150)):                                      # des rides arrêtées
+        d.arc([x - 14, y - 3, x + 14, y + 3], 180, 360, fill=B)
+    return im
+
+
+def cine_temps_laurent():
+    """Laurent sur le ponton, de face, une main levée vers le sablier arrêté au-dessus de l'eau ; autour de lui, un halo
+    blanc, et les lanternes de la rive immobiles."""
+    im, d = toile()
+    d.rectangle([0, 0, W, H], fill=N)
+    voute_grotte(d, im, 50, graine=171)
+    eau(d, 96, 140, graine=171, reflet=None, larg=8, dense=0.6)
+    sablier(d, 130, 30, 44, 24, 0.5, B, montant=False)
+    halo(d, 130, 52, 24, V, 0.6)
+    quai(d, 140, 0, W, 12, graine=172)
+    d.rectangle([0, 152, W, H], fill=N)
+    x, y = 70, 140                                                                        # Laurent, de face
+    halo(d, x, y - 34, 34, B, 0.35)
+    d.ellipse([x - 7, y - 60, x + 7, y - 46], fill=B)
+    d.polygon([(x - 15, y), (x + 15, y), (x + 12, y - 46), (x - 12, y - 46)], fill=V)
+    d.line([(x - 12, y - 46), (x - 15, y)], fill=B)
+    d.line([(x + 12, y - 46), (x + 15, y)], fill=B)
+    d.line([(x + 11, y - 42), (x + 30, y - 66)], fill=V, width=3)                         # la main levée vers le sablier
+    d.ellipse([x + 28, y - 70, x + 34, y - 64], fill=B)
+    for (lx, ly) in ((20, 60), (156, 64)):
+        lanterne(d, lx, ly, 0.8, True)
+    return im
+
+
 LIEUX = {
     "loc_lac.gif": lambda: lac(False), "loc_lac_victoire.gif": victoire, "loc_lac_dossier.gif": dossier_lac,
     "loc_lac_machine.gif": machine_lac, "loc_maree.gif": maree,
@@ -1103,7 +1150,7 @@ LIEUX = {
     "scene_lac_nuit1.gif": lambda: nuit(1), "scene_lac_nuit2.gif": lambda: nuit(2), "scene_lac_nuit3.gif": lambda: nuit(3),
     "item_pipelinus.gif": portrait_pipelinus, "item_jauge.gif": objet_jauge,
     "cine10_sceau_demain.gif": cine_sceau_demain, "cine10_escalier_lac.gif": cine_escalier_lac, "cine10_lac.gif": cine_lac,
-    "cine10_oeil.gif": cine_oeil, "cine10_bras.gif": cine_bras, "cine10_wissam.gif": cine_wissam,
+    "cine10_oeil.gif": cine_oeil, "cine10_temps_sablier.gif": cine_temps_sablier, "cine10_temps_laurent.gif": cine_temps_laurent, "cine10_bras.gif": cine_bras, "cine10_wissam.gif": cine_wissam,
 }
 
 if __name__ == "__main__":

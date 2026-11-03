@@ -113,6 +113,7 @@ var PAGES_DU_JEU = {
 	jauge: MANUEL_DU_JEU.jauge + "\n\nAvant l'ouverture du Lac Profond (chapitre 10), elle dit simplement où elle sert.\n" +
 		"Plonger la jauge donne la Clarté de départ : une des premières étapes du chapitre le demande.",
 	insignes: MANUEL_DU_JEU.insignes + "\n\nAvant l'ouverture du Lac Profond (chapitre 10), elle dit simplement où se gagnent les insignes.",
+	nuit: MANUEL_DU_JEU.nuit,
 	graphe:
 		"graphe n'est PAS une commande Linux : c'est une commande du jeu, comme carte.\n" +
 		"Après chaque commande git, le panneau de l'image montre le graphe vivant du dépôt où tu travailles,\n" +

@@ -797,8 +797,36 @@ Shell.sorts.regenerer = function(args, io){
 	regenererCh10(x);
 	return "~/" + x.nom + " sur lac : un dossier neuf, tel que le gardien l'avait préparé." + C.gris(" (ssh lac ; ls ~/" + x.nom + ")");
 };
-["jauge", "insignes"].forEach(function(s){ if (SORTS_DU_JEU.indexOf(s) === -1) SORTS_DU_JEU.push(s); });
+/* nuit : le temps est figé ; Laurent prête une nuit à qui la demande, pour voir sa crontab tourner. */
+Shell.sorts.nuit = function(args, io){
+	if (!lacActif()) throw new ShellError("nuit : une commande du jeu, au Lac Profond (chapitre 10) : elle fait passer une nuit au bord du lac.");
+	var c = sCh10();
+	if (c.maree) throw new ShellError("nuit : pendant la Grande Marée, Laurent ne prête plus de nuit. Les bras attendent, un par un.");
+	var jour = Math.floor(c.minutes / 1440), matin = (jour + 1) * 1440 + 360;
+	if (matin >= AUBE_CH10) throw new ShellError("nuit : Laurent garde la dernière nuit pour lui. L'aube du quatrième jour est celle de la Grande Marée.");
+	var avant = c.minutes;
+	c.minutes = matin;
+	c.nuitsVues = (c.nuitsVues || 0) + 1;
+	try { cronLacCh10(avant, c.minutes); } catch (e){}
+	nuitCh10(c.nuitsVues);
+	return "";
+};
+/* Laurent, maître du temps : la première fois qu'on joue au Lac depuis que le temps est figé. */
+function laurentMaitreDuTempsCh10(){
+	if (!lacActif() || state.has("ch10TempsFige") || state.has("rejeuEnCours")) return;
+	state.set("ch10TempsFige");
+	if (typeof montrerImage === "function") montrerImage("./static/img/cine10_temps_laurent.gif", "Laurent, maître du temps");
+	say(C.jaune(C.gras("⧗ LAURENT, MAÎTRE DU TEMPS")) + "\n" +
+		"Sur le ponton, le Grand Sablier de la Chronothèque se met à trembler au-dessus de l'eau. Une silhouette que tu connais s'avance entre les lanternes : Laurent.\n" +
+		"« On n'apprend pas en ayant peur de se tromper. Alors trompez-vous. Essayez, cassez, recommencez. » Il lève la main. Le sable s'arrête en l'air, les gouttes restent suspendues, " +
+		"et le lac retient son souffle.\n« À partir de maintenant, au Lac, plus une seule minute ne passe. Pipelinus attendra : un bras après l'autre, pas un de plus. " +
+		"Et si vous voulez voir votre crontab tourner, demandez-moi une nuit : nuit. »\n" +
+		C.gris("(Le temps est figé : une commande ne coûte plus rien. Pendant la Grande Marée, un bras ne sort que quand le précédent est tranché.)"));
+	if (typeof lancerCinematique === "function" && typeof document !== "undefined" && document.body) try { lancerCinematique("temps10"); } catch (e){}
+}
+["jauge", "insignes", "nuit"].forEach(function(s){ if (SORTS_DU_JEU.indexOf(s) === -1) SORTS_DU_JEU.push(s); });
 if (typeof COMMANDES_DU_JEU !== "undefined"){
+	COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 4, 0, ["nuit", "au Lac Profond, faire passer une nuit (le temps y est figé) : ta crontab tourne pendant ce temps"]);
 	COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 4, 0, ["jauge", "le plan du Lac Profond : les postes, l'heure, la Grande Marée, la Clarté du Lac (chapitre 10)"]);
 	COMMANDES_DU_JEU.splice(COMMANDES_DU_JEU.length - 4, 0, ["insignes", "ton rang au Lac Profond, et ce qu'il faut pour le suivant"]);
 }
@@ -889,5 +917,10 @@ Shell.appeler = function(nom, args, io){
 	} catch (e){}
 	return APPELER_AVANT_RADIO_CH10.apply(this, arguments);
 };
+
+if (typeof MANUEL_DU_JEU !== "undefined") MANUEL_DU_JEU.nuit = "nuit n'est PAS une commande Linux : c'est une commande du jeu, au Lac Profond (chapitre 10).\n" +
+	"Au Lac, Laurent a figé le temps : taper une commande ne fait plus passer une seule minute. nuit fait passer une nuit au bord du lac : " +
+	"on se lève le lendemain à 6 h, et pendant ce temps ta crontab sur lac tourne vraiment (crontab -l pour la relire, puis regarde ce qu'elle a écrit).\n" +
+	"Pas pendant la Grande Marée, et pas la dernière nuit : l'aube du quatrième jour est celle de la Marée.";
 
 World.fige = true;

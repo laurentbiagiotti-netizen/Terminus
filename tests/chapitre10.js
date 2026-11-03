@@ -117,10 +117,21 @@ var CHAPITRE = ["SortsDonnees.js", "Lac.js", "Chapitre10.js", "Abysses.js", "Hab
 	contient(t(jeu, "ls ~/annexes"), "transfert", "les dossiers des annexes sont semés");
 	contient(t(jeu, "df -h /srv/lac"), "/srv/lac", "df voit le disque des données");
 	egal(jeu.lire("epreuveOuverteCh10(1)"), false, "l'épreuve I est fermée avant la fin de l'acte I");
-	// Une commande avance l'horloge de cinq minutes.
+	// Laurent, maître du temps : une commande ne coûte plus rien ; nuit fait passer une nuit, et la crontab tourne.
 	var avant = jeu.lire("minutesCh10()");
-	t(jeu, "pwd");
-	egal(jeu.lire("minutesCh10()") - avant, 5, "une commande : cinq minutes");
+	t(jeu, "pwd"); t(jeu, "ls"); t(jeu, "cat /nexiste/pas");
+	egal(jeu.lire("minutesCh10()") - avant, 0, "le temps est figé : une commande ne coûte rien");
+	vrai(jeu, "state.has('ch10TempsFige')", "la scène de Laurent, maître du temps, a eu lieu");
+	t(jeu, "echo '30 2 * * * date >> ~/nuit-test.txt' | crontab -");
+	t(jeu, "exit");
+	contient(nu(jeu.taper("nuit")), "LA NUIT 1 AU BORD DU LAC", "nuit fait passer une nuit");
+	egal(jeu.lire("minutesCh10()"), 1440 + 360, "le lendemain, 6 h");
+	vrai(jeu, "texteLacCh10('~/nuit-test.txt') !== null", "la crontab a tourné pendant la nuit");
+	t(jeu, "crontab -r");
+	contient(nu(jeu.taper("nuit")), "LA NUIT 2", "une deuxième nuit");
+	contient(nu(jeu.taper("nuit")), "dernière nuit", "la dernière nuit est gardée pour la Marée");
+	egal(jeu.lire("minutesCh10()"), 2 * 1440 + 360, "jamais l'aube du quatrième jour par nuit");
+	t(jeu, "ssh lac");
 	// Le direct start ne note pas les chapitres précédents.
 	vrai(jeu, "state.has('chapitre1Saute')", "départ direct : les chapitres d'avant ne sont pas notés");
 })();
@@ -202,7 +213,7 @@ var CHAPITRE = ["SortsDonnees.js", "Lac.js", "Chapitre10.js", "Abysses.js", "Hab
 	var jeu = neuf(st);
 	jusqua(jeu, 118);
 	vrai(jeu, "!!sCh10().maree", "Maître du Lac : la Grande Marée commence");
-	egal(jeu.lire("Object.keys(sCh10().bras).length"), 2, "deux bras d'abord (le Déluge, les Doublons)");
+	egal(jeu.lire("Object.keys(sCh10().bras).join(' ')"), "deluge", "le temps figé : un seul bras d'abord, le Déluge");
 	// Sauvegarde et rechargement au milieu de la Marée.
 	jeu.lire("state.save()");
 	var jeu2 = monde.nouveauMonde(st);

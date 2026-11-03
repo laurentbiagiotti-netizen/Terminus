@@ -61,11 +61,16 @@ function heureCh10(){ var m = minutesCh10(); return "J" + (Math.floor(m / 1440) 
 function texteAvantMareeCh10(){
 	var reste = AUBE_CH10 - minutesCh10();
 	if (reste <= 0) return "la Grande Marée est là";
+	if (TEMPS_FIGE_CH10 && !sCh10().maree) return "le temps est figé";
 	var j = Math.floor(reste / 1440), h = Math.floor(reste % 1440 / 60), mn = reste % 60;
 	return "la Grande Marée dans " + (j ? j + " j " + h + " h" : (h ? h + " h " + deuxChiffres(mn) : mn + " min"));
 }
 /* Compter une commande (chaque commande simple au premier niveau ; ; && et tubes compris), plafonné par ligne. */
+/* Laurent, maître du temps : au Lac, le temps est figé. Taper une commande ne coûte plus rien, pour qu'on ose essayer.
+   Le temps ne passe plus qu'avec nuit (une commande du jeu), pour voir sa crontab tourner. */
+var TEMPS_FIGE_CH10 = true;
 function compterCommandeCh10(n){
+	if (TEMPS_FIGE_CH10) return;
 	if (!lacOuvert()) return;
 	if (!(state.quests && state.quests["n10_entree"])) return;
 	var c = sCh10();

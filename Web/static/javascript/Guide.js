@@ -787,7 +787,10 @@ var CINEMATIQUES = {
 		{ image: "cine10_lac.gif", texte: "Le lac de données de l'école : dix ans de journaux, d'exports et de sauvegardes, versés sans tri." },
 		{ image: "cine10_oeil.gif", texte: "Sous la surface, un œil s'ouvre. Pipelinus, Gardien du Lac. P.G." },
 		{ image: "cine10_bras.gif", texte: "Huit bras, huit pipelines. À l'aube du quatrième jour, la Grande Marée les lancera sur l'école." },
-		{ image: "cine10_wissam.gif", texte: "Wissam lève sa lanterne. « Quinze postes, trois jours. Tu sortiras d'ici Maître du Lac. »" }] }
+		{ image: "cine10_wissam.gif", texte: "Wissam lève sa lanterne. « Quinze postes, trois jours. Tu sortiras d'ici Maître du Lac. »" }] },
+	temps10: { titre: "Le Lac Profond · Le maître du temps", plans: [
+		{ image: "cine10_temps_sablier.gif", texte: "Au-dessus du lac, le Grand Sablier tremble. Puis le sable s'arrête, en plein vol." },
+		{ image: "cine10_temps_laurent.gif", texte: "Laurent lève la main. « On apprend en se trompant. Alors trompez-vous : ici, le temps attendra. »" }] }
 };
 /* La carte du chapitre 1 (les autres sont dans SCENES, à l'entrée de chaque chapitre). */
 var SCENE_CHAPITRE_1 = { image: "item_convocation.gif", titre: "Chapitre 1 · Terminus", chapitre: 1,
