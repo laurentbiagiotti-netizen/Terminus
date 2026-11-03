@@ -702,7 +702,7 @@ verifier(jr5.lire("state.xp2 === state.xpMax2()"), "vieille sauvegarde : la note
 	var guide = fs.readFileSync(path.join(__dirname, "..", "Web", "static", "javascript", "Guide.js"), "utf8");
 	var bloc = guide.substring(guide.indexOf("var CINEMATIQUES = {"), guide.indexOf("var SCENE_CHAPITRE_1"));
 	var images = bloc.match(/image: "([^"]+)"/g) || [];
-	verifier(images.length === 47, "cinématiques : 10 chapitres, quatre plans pour les six premiers, cinq pour Port-Aube, six pour le Grand Port, la Chronothèque et le Lac Profond (" + images.length + " images)");
+	verifier(images.length === 49, "cinématiques : 10 chapitres, quatre plans pour les six premiers, cinq pour Port-Aube, six pour le Grand Port, la Chronothèque et le Lac Profond, et deux pour Laurent, maître du temps (" + images.length + " images)");
 	images.forEach(function(m){
 		var f = /image: "([^"]+)"/.exec(m)[1];
 		verifier(fs.existsSync(path.join(__dirname, "..", "Web", "static", "img", f)), "cinématique : l'image " + f + " existe");
@@ -738,7 +738,7 @@ verifier(jr5.lire("state.xp2 === state.xpMax2()"), "vieille sauvegarde : la note
 	});
 	verifier(/9 \(la Chronothèque\)/.test(guide) && /PREMIERE_SCENE = \{[^}]*9: "n9_entree"/.test(guide), "cinématique 9 : la commande la connaît, elle précède l'arrivée (n9_entree)");
 	// Le Lac Profond (chapitre 10) : six plans, chacun avec son image (outils/dessiner_lac.py), des textes courts.
-	var c10 = bloc.substring(bloc.search(/\n\t10: \{/));
+	var c10 = bloc.substring(bloc.search(/\n\t10: \{/), bloc.search(/\n\ttemps10: \{/));
 	var plans10 = c10.match(/\{ image: "([^"]+)", texte: "((?:[^"\\]|\\.)*)" \}/g) || [];
 	verifier(plans10.length === 6, "cinématique 10 : six plans (" + plans10.length + ")");
 	plans10.forEach(function(p){
