@@ -1142,7 +1142,7 @@ def cine_temps_laurent():
     im, d = toile()
     d.rectangle([0, 0, W, H], fill=N)
     voute_grotte(d, im, 34, graine=171)
-    degrade(d, 0, 26, W, 120, V, 0.0, 0.22)
+    degrade(d, 0, 26, W, 120, V, 0.0, 0.12)
     eau(d, 112, 146, graine=171, reflet=None, larg=8, dense=0.5)
     # deux bras de Pipelinus, figés en l'air
     tentacule(d, [(0, 140), (14, 104), (26, 76), (44, 58), (58, 60)], 11, 2, V)
@@ -1165,20 +1165,53 @@ def cine_temps_laurent():
         if 50 < x < 124 and y > 70:
             continue
         d.ellipse([x - 1, y - 1, x + 1, y + 1], fill=B)
-    # le ponton, et Laurent en contre-plongée, à contre-jour
-    quai(d, 146, 0, W, 10, graine=172)
-    d.rectangle([0, 156, W, H], fill=N)
-    x, y = 82, 158
-    halo(d, x, y - 50, 44, V, 0.4)
-    d.polygon([(x - 26, y), (x - 8, y - 70), (x + 8, y - 70), (x + 30, y), (x + 14, y - 6), (x, y - 2), (x - 12, y - 6)], fill=N)   # le manteau
-    d.line([(x - 26, y), (x - 8, y - 70)], fill=B, width=2)
-    d.line([(x + 30, y), (x + 8, y - 70)], fill=B, width=2)
-    d.line([(x - 8, y - 70), (x + 8, y - 70)], fill=B)
-    d.ellipse([x - 8, y - 88, x + 8, y - 70], fill=N, outline=B, width=2)                  # la tête
-    d.line([(x + 8, y - 66), (x + 18, y - 92), (cx - 6, cy + 22)], fill=B, width=4)       # le bras levé
-    d.line([(x + 8, y - 66), (x + 18, y - 92), (cx - 6, cy + 22)], fill=N, width=2)
-    d.ellipse([cx - 10, cy + 18, cx - 2, cy + 26], fill=B)                                 # la main ouverte
-    d.line([(x - 8, y - 64), (x - 18, y - 40)], fill=B, width=2)                           # l'autre bras, le long du corps
+    # le ponton, et Laurent en contre-plongée, éclairé de dos par le cadran (une lumière de contour à droite)
+    quai(d, 150, 0, W, 8, graine=172)
+    d.rectangle([0, 158, W, H], fill=N)
+    fx = 66                                                                                 # l'axe du corps
+    # les jambes et les chaussures
+    d.polygon([(fx - 13, 158), (fx - 11, 124), (fx - 2, 124), (fx - 4, 158)], fill=N)
+    d.polygon([(fx + 3, 158), (fx + 2, 124), (fx + 11, 124), (fx + 13, 158)], fill=N)
+    d.line([(fx - 4, 158), (fx - 2, 124)], fill=V)
+    d.line([(fx + 13, 158), (fx + 11, 124)], fill=B)
+    d.polygon([(fx - 16, 158), (fx - 4, 158), (fx - 3, 161), (fx - 17, 161)], fill=B)
+    d.polygon([(fx + 3, 158), (fx + 15, 158), (fx + 17, 161), (fx + 2, 161)], fill=B)
+    # la veste ouverte, un peu soulevée par le souffle du temps qui s'arrête
+    d.polygon([(fx - 15, 82), (fx + 15, 82), (fx + 18, 128), (fx + 24, 134), (fx + 9, 130), (fx, 126), (fx - 9, 130), (fx - 22, 134), (fx - 17, 126)], fill=N)
+    d.polygon([(fx - 4, 82), (fx + 4, 82), (fx + 2, 118), (fx - 2, 118)], fill=B)        # la chemise
+    d.line([(fx - 4, 82), (fx - 7, 96), (fx - 2, 118)], fill=V)                            # les revers
+    d.line([(fx + 4, 82), (fx + 7, 96), (fx + 2, 118)], fill=V)
+    for k in range(3):
+        d.point((fx, 98 + k * 7), fill=N)                                                  # les boutons de la chemise
+    d.line([(fx + 15, 82), (fx + 18, 128), (fx + 24, 134)], fill=B)                        # le contour éclairé, à droite
+    d.line([(fx - 15, 82), (fx - 17, 126), (fx - 22, 134)], fill=V)
+    d.line([(fx - 15, 82), (fx - 10, 80), (fx - 3, 79)], fill=V)                            # l'épaule gauche
+    d.line([(fx + 3, 79), (fx + 10, 80), (fx + 16, 80)], fill=B)                           # l'épaule droite, éclairée
+    # le bras gauche, le long du corps, la main entrouverte
+    d.polygon([(fx - 15, 84), (fx - 20, 104), (fx - 18, 118), (fx - 14, 118), (fx - 15, 104), (fx - 11, 88)], fill=N)
+    d.line([(fx - 20, 104), (fx - 18, 118)], fill=V)
+    d.ellipse([fx - 20, 117, fx - 13, 123], fill=V)
+    # le bras droit, levé vers le cadran : épaule, manche, poignet, main ouverte aux doigts écartés
+    d.polygon([(fx + 10, 82), (fx + 16, 80), (fx + 30, 60), (fx + 36, 46), (fx + 31, 43), (fx + 25, 56), (fx + 11, 74)], fill=N)
+    d.line([(fx + 16, 80), (fx + 30, 60), (fx + 36, 46)], fill=B)
+    d.line([(fx + 31, 43), (fx + 37, 45)], fill=B)                                         # le poignet de chemise
+    d.polygon([(fx + 31, 43), (fx + 37, 45), (fx + 39, 38), (fx + 33, 36)], fill=B)       # la paume
+    for (dx, dy) in ((-1, -6), (2, -8), (5, -8), (8, -6), (9, -1)):                          # les doigts
+        d.line([(fx + 33 + dx * 0.4, 37), (fx + 33 + dx, 37 + dy)], fill=B)
+    # le cou, la tête de trois quarts, les cheveux courts, l'oreille ; la lumière du cadran sur la joue droite
+    d.rectangle([fx - 3, 76, fx + 3, 82], fill=N)
+    d.line([(fx + 3, 76), (fx + 3, 82)], fill=B)
+    d.ellipse([fx - 8, 58, fx + 8, 78], fill=N)
+    d.arc([fx - 8, 58, fx + 8, 78], 280, 80, fill=B, width=2)                             # le contour éclairé du visage
+    d.chord([fx - 9, 55, fx + 9, 69], 180, 360, fill=N)                                    # les cheveux courts
+    d.arc([fx - 9, 55, fx + 9, 69], 230, 360, fill=B)
+    d.arc([fx - 9, 55, fx + 9, 69], 180, 230, fill=V)
+    for (px, py) in ((fx + 5, 69), (fx + 6, 70), (fx + 5, 71), (fx + 4, 75)):
+        d.point((px, py), fill=V)                                                          # la joue éclairée
+    d.point((fx - 8, 68), fill=V); d.point((fx - 8, 69), fill=V)                           # l'oreille
+    d.line([(fx + 2, 72), (fx + 5, 73)], fill=V)                                           # la bouche, fermée, calme
+    d.point((fx + 4, 66), fill=B)                                                          # le regard, levé vers le sablier
+    d.line([(fx + 3, 64), (fx + 6, 63)], fill=V)                                           # le sourcil
     return im
 
 

@@ -918,7 +918,8 @@ Shell.appeler = function(nom, args, io){
 	return APPELER_AVANT_RADIO_CH10.apply(this, arguments);
 };
 
-if (typeof MANUEL_DU_JEU !== "undefined") MANUEL_DU_JEU.nuit = "nuit n'est PAS une commande Linux : c'est une commande du jeu, au Lac Profond (chapitre 10).\n" +
+if (typeof MANUEL_DU_JEU !== "undefined") MANUEL_DU_JEU.nuit = "nuit n'est PAS une commande Linux : c'est une commande du jeu, au Lac Profond (chapitre 10).\n\n" +
+	"  nuit          faire passer une nuit au bord du lac (ta crontab tourne pendant ce temps)\n\n" +
 	"Au Lac, Laurent a figé le temps : taper une commande ne fait plus passer une seule minute. nuit fait passer une nuit au bord du lac : " +
 	"on se lève le lendemain à 6 h, et pendant ce temps ta crontab sur lac tourne vraiment (crontab -l pour la relire, puis regarde ce qu'elle a écrit).\n" +
 	"Pas pendant la Grande Marée, et pas la dernière nuit : l'aube du quatrième jour est celle de la Marée.";
