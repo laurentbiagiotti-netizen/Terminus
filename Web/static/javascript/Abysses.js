@@ -867,4 +867,27 @@ nomRpg = function(sort, chapitre){
 	return NOM_RPG_AVANT_CH10(sort, chapitre);
 };
 
+/* Un sort du Lac pas encore appris : le gardien le passe par la radio, sur place. On n'a pas à ressortir de lac,
+   aller au poste, revenir et retaper la commande : elle part tout de suite. La leçon complète reste au poste. */
+function gardienDuSortCh10(nom){
+	for (var i = 0; i < POSTES_CH10.length; i++){
+		var items = POSTES_CH10[i].lieu.items;
+		for (var k = 0; k < items.length; k++) if (items[k].person && items[k].teaches.indexOf(nom) > -1) return { item: items[k], poste: POSTES_CH10[i] };
+	}
+	return null;
+}
+var APPELER_AVANT_RADIO_CH10 = Shell.appeler;
+Shell.appeler = function(nom, args, io){
+	try {
+		if (lacActif() && Shell.sorts.hasOwnProperty(nom) && SORTS_DU_JEU.indexOf(nom) === -1 && !state.knows(nom) && chapitreDuSort(nom) === 11){
+			var g = gardienDuSortCh10(nom);
+			if (g){
+				state.learn(nom);
+				if (!state.has("rejeuEnCours")) say(C.gris("(Radio : « Grace : " + nom + ", c'est le sort de " + g.item.itemname + ", " + g.poste.titre.replace(/^le /, "au ").replace(/^la /, "à la ").replace(/^l'/, "à l'") + ". Je te le passe. Pour sa leçon complète : cat " + g.item.itemname + ", à son poste. »)"));
+			}
+		}
+	} catch (e){}
+	return APPELER_AVANT_RADIO_CH10.apply(this, arguments);
+};
+
 World.fige = true;

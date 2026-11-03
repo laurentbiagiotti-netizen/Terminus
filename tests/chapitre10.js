@@ -329,6 +329,17 @@ var CHAPITRE = ["SortsDonnees.js", "Lac.js", "Chapitre10.js", "Abysses.js", "Hab
 	t(j2, "regenerer echos");
 	vrai(j2, "texteLacCh10('~/echos/terminus/grenier/journal-lundi.log') !== null", "regenerer echos rend le grenier");
 
+	// Un sort du Lac jamais appris : la radio le passe, la commande part (pas besoin de ressortir de lac).
+	var j5 = neuf();
+	jusqua2(j5, 107, 108);
+	t(j5, "ssh lac");
+	var r5 = t(j5, "csvlook ~/rive/comptoirs.csv | head -3");
+	contient(r5, "comptoir", "csvlook marche sans avoir lu Lamia");
+	contient(r5, "c'est le sort de Lamia, à la Grève des Fichiers", "la radio dit qui l'enseigne");
+	vrai(j5, "state.knows('csvlook')", "csvlook est appris");
+	contient(t(j5, "datamash -t, -H count 1 < ~/rive/comptoirs.csv"), "au Comptoir des Mesures", "la radio pour datamash");
+	t(j5, "exit");
+
 	// Les variantes d'un étudiant réel (relecture indépendante).
 	var j3 = neuf();
 	jusqua2(j3, 107, 108);
