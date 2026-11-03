@@ -1090,50 +1090,95 @@ def ponton_echos():
     return im
 
 
+def rayons(d, cx, cy, n, r0, r1, c=B, pas=2, decalage=0.0):
+    """Des rayons pointillés qui partent d'un centre : la lumière d'un instant arrêté."""
+    for k in range(n):
+        a = decalage + k * 2 * math.pi / n
+        for r in range(r0, r1, pas):
+            x, y = cx + r * math.cos(a), cy + r * math.sin(a)
+            if 0 <= x < W and 0 <= y < H:
+                d.point((int(x), int(y)), fill=c)
+
+
 def cine_temps_sablier():
-    """Le temps s'arrête : au-dessus du lac, le Grand Sablier de la Chronothèque, son filet de sable figé en l'air ;
-    sous lui, des gouttes suspendues entre l'eau et la voûte, et des rides qui ne bougent plus."""
+    """Le temps s'arrête : le Grand Sablier de la Chronothèque, immense, flotte au-dessus du lac ; son sable s'est figé
+    en plein vol et tourne en spirale autour de lui, grain par grain ; des rayons partent du col ; à droite, une vague
+    de la Marée s'est arrêtée au moment de déferler, son écume suspendue au-dessus de l'eau."""
     im, d = toile()
     d.rectangle([0, 0, W, H], fill=N)
-    voute_grotte(d, im, 46, graine=161)
-    eau(d, 120, H, graine=161, reflet=88, larg=10, dense=0.7)
-    halo(d, 88, 72, 46, V, 0.7)
-    sablier(d, 88, 30, 78, 40, 0.5, B, montant=False)
-    for k in range(9):                                                                     # le filet de sable, figé
-        d.point((88, 70 + k * 2), fill=B)
-    rnd = random.Random(161)
-    for _ in range(14):                                                                    # des gouttes suspendues
-        x, y = rnd.randint(14, 162), rnd.randint(54, 116)
-        if abs(x - 88) < 26:
-            continue
-        d.ellipse([x - 1, y - 2, x + 1, y + 1], fill=B)
-        d.point((x, y + 3), fill=V)
-    for (x, y) in ((46, 132), (130, 138), (88, 150)):                                      # des rides arrêtées
-        d.arc([x - 14, y - 3, x + 14, y + 3], 180, 360, fill=B)
+    voute_grotte(d, im, 34, graine=161)
+    cx, cy = 76, 70
+    rayons(d, cx, cy, 20, 34, 150, B, 5, 0.12)
+    halo(d, cx, cy, 44, V, 0.45)
+    sablier(d, cx, 28, 84, 40, 0.5, B, montant=False)
+    for k in range(0, 22, 3):                                                               # le filet de sable, arrêté
+        d.point((cx, cy + 2 + k), fill=B)
+    for k in range(54):                                                                    # la spirale de grains suspendus
+        a = k * 0.5
+        r = 30 + k * 1.1
+        x, y = cx + r * math.cos(a), cy + r * 0.55 * math.sin(a)
+        if 4 <= x < W - 6 and 30 <= y < 120 and not (cx - 24 < x < cx + 24 and 24 < y < 116):
+            d.rectangle([int(x), int(y), int(x) + 1, int(y) + 1], fill=B)
+    # le lac, calme à gauche
+    eau(d, 120, H, graine=161, reflet=None, larg=8, dense=0.5)
+    # la vague figée, à droite : un mur d'eau qui se recourbe, son écume en l'air
+    d.polygon([(70, 170), (92, 140), (112, 118), (130, 96), (148, 82), (166, 78), (176, 82), (176, 170)], fill=N)
+    trame(d, 100, 120, W, H, V, 0.3)
+    d.line([(70, 170), (92, 140), (112, 118), (130, 96), (148, 82), (166, 78), (176, 82)], fill=B, width=2)
+    d.arc([138, 70, 176, 104], 190, 300, fill=B, width=2)                                  # la crête qui se recourbe
+    for (x0, y0, x1) in ((96, 150, 176), (110, 134, 176), (124, 116, 176)):                # les lignes de la vague
+        d.line([(x0 + 6, y0), (x1, y0 - 8)], fill=V)
+    rnd = random.Random(162)
+    for _ in range(30):                                                                    # l'écume suspendue
+        x, y = rnd.randint(122, 174), rnd.randint(56, 92)
+        d.ellipse([x - 1, y - 1, x + 1, y + 1], fill=B)
     return im
 
 
 def cine_temps_laurent():
-    """Laurent sur le ponton, de face, une main levée vers le sablier arrêté au-dessus de l'eau ; autour de lui, un halo
-    blanc, et les lanternes de la rive immobiles."""
+    """Laurent, maître du temps, vu d'en bas sur le ponton : un long manteau qui claque, la main levée ; au-dessus de sa
+    main, un cadran de lumière aux douze heures, le sablier arrêté en son centre ; de part et d'autre, deux bras de
+    Pipelinus jaillis de l'eau, figés en pleine attaque, et les gouttes qui ne retombent plus."""
     im, d = toile()
     d.rectangle([0, 0, W, H], fill=N)
-    voute_grotte(d, im, 50, graine=171)
-    eau(d, 96, 140, graine=171, reflet=None, larg=8, dense=0.6)
-    sablier(d, 130, 30, 44, 24, 0.5, B, montant=False)
-    halo(d, 130, 52, 24, V, 0.6)
-    quai(d, 140, 0, W, 12, graine=172)
-    d.rectangle([0, 152, W, H], fill=N)
-    x, y = 70, 140                                                                        # Laurent, de face
-    halo(d, x, y - 34, 34, B, 0.35)
-    d.ellipse([x - 7, y - 60, x + 7, y - 46], fill=B)
-    d.polygon([(x - 15, y), (x + 15, y), (x + 12, y - 46), (x - 12, y - 46)], fill=V)
-    d.line([(x - 12, y - 46), (x - 15, y)], fill=B)
-    d.line([(x + 12, y - 46), (x + 15, y)], fill=B)
-    d.line([(x + 11, y - 42), (x + 30, y - 66)], fill=V, width=3)                         # la main levée vers le sablier
-    d.ellipse([x + 28, y - 70, x + 34, y - 64], fill=B)
-    for (lx, ly) in ((20, 60), (156, 64)):
-        lanterne(d, lx, ly, 0.8, True)
+    voute_grotte(d, im, 34, graine=171)
+    degrade(d, 0, 26, W, 120, V, 0.0, 0.22)
+    eau(d, 112, 146, graine=171, reflet=None, larg=8, dense=0.5)
+    # deux bras de Pipelinus, figés en l'air
+    tentacule(d, [(0, 140), (14, 104), (26, 76), (44, 58), (58, 60)], 11, 2, V)
+    tentacule(d, [(176, 136), (164, 100), (150, 70), (134, 52), (122, 56)], 11, 2, V)
+    # le cadran de lumière au-dessus de la main
+    cx, cy, r = 104, 40, 24
+    rayons(d, cx, cy, 24, r + 6, r + 46, B, 4)
+    halo(d, cx, cy, r + 8, V, 0.5)
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], outline=B, width=2)
+    d.ellipse([cx - r + 4, cy - r + 4, cx + r - 4, cy + r - 4], outline=V)
+    for k in range(12):
+        a = k * math.pi / 6
+        x0, y0 = cx + (r - 1) * math.cos(a), cy + (r - 1) * math.sin(a)
+        x1, y1 = cx + (r - 6) * math.cos(a), cy + (r - 6) * math.sin(a)
+        d.line([(x0, y0), (x1, y1)], fill=B, width=2 if k % 3 == 0 else 1)
+    sablier(d, cx, cy - 12, 24, 14, 0.5, B, montant=False)
+    rnd = random.Random(173)
+    for _ in range(30):                                                                    # les gouttes suspendues
+        x, y = rnd.randint(4, 172), rnd.randint(60, 118)
+        if 50 < x < 124 and y > 70:
+            continue
+        d.ellipse([x - 1, y - 1, x + 1, y + 1], fill=B)
+    # le ponton, et Laurent en contre-plongée, à contre-jour
+    quai(d, 146, 0, W, 10, graine=172)
+    d.rectangle([0, 156, W, H], fill=N)
+    x, y = 82, 158
+    halo(d, x, y - 50, 44, V, 0.4)
+    d.polygon([(x - 26, y), (x - 8, y - 70), (x + 8, y - 70), (x + 30, y), (x + 14, y - 6), (x, y - 2), (x - 12, y - 6)], fill=N)   # le manteau
+    d.line([(x - 26, y), (x - 8, y - 70)], fill=B, width=2)
+    d.line([(x + 30, y), (x + 8, y - 70)], fill=B, width=2)
+    d.line([(x - 8, y - 70), (x + 8, y - 70)], fill=B)
+    d.ellipse([x - 8, y - 88, x + 8, y - 70], fill=N, outline=B, width=2)                  # la tête
+    d.line([(x + 8, y - 66), (x + 18, y - 92), (cx - 6, cy + 22)], fill=B, width=4)       # le bras levé
+    d.line([(x + 8, y - 66), (x + 18, y - 92), (cx - 6, cy + 22)], fill=N, width=2)
+    d.ellipse([cx - 10, cy + 18, cx - 2, cy + 26], fill=B)                                 # la main ouverte
+    d.line([(x - 8, y - 64), (x - 18, y - 40)], fill=B, width=2)                           # l'autre bras, le long du corps
     return im
 
 
